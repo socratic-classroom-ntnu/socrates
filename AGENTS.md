@@ -50,6 +50,21 @@
 - 未經 Fizzy 明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
 - 手寫 `frontend/src/api/types.ts`（它是產生物，跑 `./scripts/gen_types.sh`）
 
+## 分支流程
+
+| 分支 | 規則 |
+|---|---|
+| **`main`** | 穩定分支。**只能透過 PR 進入**，CI 三個檢查必須綠燈 |
+| **`develop`** | 整合分支。**可以直接推**，但 CI 一樣會跑 |
+| `feature/*` | 較大的改動從 `develop` 開，PR 回 `develop` |
+
+**推 `develop` 之前請在本機把檢查跑過**（見下方指令）。直接推代表沒有 PR 擋著，
+紅燈會直接留在共用分支上——後面的人接著推就會踩到別人的紅燈，而且分不清是誰弄的。
+
+**develop 紅燈時第一優先是修好它**，不是繼續往上疊。
+
+`develop → main` 由核心組在功能告一段落時開 PR 合併。
+
 ## 指令與 git 慣例
 
 ```bash

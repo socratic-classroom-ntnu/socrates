@@ -1,0 +1,10 @@
+id: broken
+version: 1
+title: 壞掉的階梯
+stages:
+  - key: first
+    title: 缺少開場白
+    teaching_goal: 測試用
+    max_turns: 4
+wrap_up:
+  extra_turns_cap: 3

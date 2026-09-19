@@ -1,0 +1,21 @@
+id: fixture
+version: 1
+title: 測試用階梯
+stages:
+  - key: first
+    title: 第一個情境
+    opening_statement: |
+      一輛電車失控了。
+      你會怎麼做？
+    teaching_goal: 測試用
+    probe_hints: ["提示一"]
+    max_turns: 4
+  - key: second
+    title: 第二個情境
+    opening_statement: |
+      這次不一樣。
+    teaching_goal: 測試用
+    probe_hints: ["提示二"]
+    max_turns: 4
+wrap_up:
+  extra_turns_cap: 3

@@ -1,0 +1,12 @@
+:root { font-family: system-ui, "Noto Sans TC", sans-serif; line-height: 1.7; }
+body { margin: 0; background: #faf9f7; color: #22201d; }
+.page { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.message { padding: 0.75rem 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; white-space: pre-wrap; }
+.message--tutor { background: #fff; border: 1px solid #e3ded6; }
+.message--student { background: #eef2f7; margin-left: 2rem; }
+.message--system { background: #fdf6e3; font-size: 0.9rem; }
+.actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+button { font: inherit; padding: 0.5rem 1rem; border-radius: 0.375rem; border: 1px solid #22201d; background: #fff; cursor: pointer; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid #c9c2b6; }
+.progress { color: #6b6257; font-size: 0.9rem; }

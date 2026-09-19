@@ -32,8 +32,11 @@ class CountingProvider:
         return {
             "reply_text": "不應該產生",
             "observations": {
-                "has_position": True, "has_reason": False, "reason_tested": False,
-                "principle_label": "未明", "position_shifted": False,
+                "has_position": True,
+                "has_reason": False,
+                "reason_tested": False,
+                "principle_label": "未明",
+                "position_shifted": False,
             },
         }
 
@@ -44,9 +47,7 @@ def test_end_returns_immediately_without_summary(client, learner_id):
     接上真 LLM 後，同步版會讓學生盯著轉圈好幾秒——而那是整段體驗的最後一刻。
     """
     session_id = _create(client, learner_id)
-    response = client.post(
-        f"/api/sessions/{session_id}/end", headers={"X-Learner-Id": learner_id}
-    )
+    response = client.post(f"/api/sessions/{session_id}/end", headers={"X-Learner-Id": learner_id})
     assert response.status_code == 200
     body = response.json()
     assert body["session"]["status"] == "ended"
@@ -134,7 +135,8 @@ def test_wrap_up_cap_ends_as_completed(client, learner_id):
     for _ in range(5):
         response = client.post(
             f"/api/sessions/{session_id}/messages",
-            json={"text": "我的想法"}, headers={"X-Learner-Id": learner_id},
+            json={"text": "我的想法"},
+            headers={"X-Learner-Id": learner_id},
         )
         assert response.status_code == 200
     before_cap = client.get(f"/api/sessions/{session_id}", headers={"X-Learner-Id": learner_id})
@@ -142,7 +144,8 @@ def test_wrap_up_cap_ends_as_completed(client, learner_id):
 
     final_turn = client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"text": "最後補充"}, headers={"X-Learner-Id": learner_id},
+        json={"text": "最後補充"},
+        headers={"X-Learner-Id": learner_id},
     )
     assert final_turn.status_code == 200
     detail = client.get(f"/api/sessions/{session_id}", headers={"X-Learner-Id": learner_id})

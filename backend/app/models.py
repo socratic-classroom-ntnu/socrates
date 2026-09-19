@@ -3,7 +3,13 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import (
-    Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -91,9 +97,7 @@ class Message(Base):
 class Summary(Base):
     __tablename__ = "summaries"
 
-    session_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("sessions.id"), primary_key=True
-    )
+    session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id"), primary_key=True)
     core_principle: Mapped[str] = mapped_column(Text)
     tension: Mapped[str] = mapped_column(Text)
     stance_by_stage: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)

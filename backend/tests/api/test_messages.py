@@ -37,9 +37,7 @@ def test_overlong_message_is_rejected(client, learner_id):
     assert response.status_code == 422
 
 
-def test_cannot_send_while_previous_message_awaits_reply(
-    client, learner_id, exploding_service
-):
+def test_cannot_send_while_previous_message_awaits_reply(client, learner_id, exploding_service):
     """待回覆時再送一則必須被拒絕，否則會有兩則學生發言共用一輪。"""
     session_id = _create(client, learner_id)
     first = client.post(
@@ -187,20 +185,25 @@ def test_send_response_is_snapshot_before_rival_end(client, db, learner_id, monk
 
     session_id = _create(client, learner_id)
     _interleave_after_turn_commit(
-        db, monkeypatch,
+        db,
+        monkeypatch,
         lambda: get_service(db).end(uuid.UUID(session_id), uuid.UUID(learner_id)),
     )
 
     response = client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"text": "第一個想法"}, headers={"X-Learner-Id": learner_id},
+        json={"text": "第一個想法"},
+        headers={"X-Learner-Id": learner_id},
     )
     assert response.status_code == 200
     body = response.json()
     assert body["session"]["status"] == "active"
     assert body["session"]["flow_state"] == "active_in_stage"
     assert body["available_actions"] == ["send_message", "end"]
-    assert [m["content"] for m in body["appended_messages"]] == ["第一個想法", "所以你會把電車轉向。為什麼？"]
+    assert [m["content"] for m in body["appended_messages"]] == [
+        "第一個想法",
+        "所以你會把電車轉向。為什麼？",
+    ]
     detail = client.get(f"/api/sessions/{session_id}", headers={"X-Learner-Id": learner_id})
     assert detail.json()["session"]["status"] == "ended"
 
@@ -213,7 +216,8 @@ def test_send_response_does_not_return_rival_messages(client, db, learner_id, mo
 
     session_id = _create(client, learner_id)
     _interleave_after_turn_commit(
-        db, monkeypatch,
+        db,
+        monkeypatch,
         lambda: get_service(db).send_message(
             uuid.UUID(session_id), uuid.UUID(learner_id), "第二個想法"
         ),
@@ -221,13 +225,16 @@ def test_send_response_does_not_return_rival_messages(client, db, learner_id, mo
 
     response = client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"text": "第一個想法"}, headers={"X-Learner-Id": learner_id},
+        json={"text": "第一個想法"},
+        headers={"X-Learner-Id": learner_id},
     )
     assert response.status_code == 200
     assert [m["content"] for m in response.json()["appended_messages"]] == [
-        "第一個想法", "所以你會把電車轉向。為什麼？"
+        "第一個想法",
+        "所以你會把電車轉向。為什麼？",
     ]
     detail = client.get(f"/api/sessions/{session_id}", headers={"X-Learner-Id": learner_id})
     assert [m["content"] for m in detail.json()["messages"]][-2:] == [
-        "第二個想法", "一條命換五條命——你用的是數量。那如果岔道上站的是一百個人，而直行只會撞到一個人呢？"
+        "第二個想法",
+        "一條命換五條命——你用的是數量。那如果岔道上站的是一百個人，而直行只會撞到一個人呢？",
     ]

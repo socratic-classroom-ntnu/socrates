@@ -1,18 +1,24 @@
-
 from app.domain.ladder import Stage
 from app.domain.tutor import ProviderRequest, ProviderResponse
 from app.tutor.gateway import TutorGateway
 
 STAGE = Stage(
-    key="s1", title="T", opening_statement="O", teaching_goal="G",
-    probe_hints=[], max_turns=4,
+    key="s1",
+    title="T",
+    opening_statement="O",
+    teaching_goal="G",
+    probe_hints=[],
+    max_turns=4,
 )
 
 GOOD = {
     "reply_text": "為什麼？",
     "observations": {
-        "has_position": True, "has_reason": False, "reason_tested": False,
-        "principle_label": "未明", "position_shifted": False,
+        "has_position": True,
+        "has_reason": False,
+        "reason_tested": False,
+        "principle_label": "未明",
+        "position_shifted": False,
     },
 }
 

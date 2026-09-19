@@ -3,8 +3,13 @@ import uuid
 from sqlalchemy.orm import Session as OrmSession
 
 from app.api.schemas import (
-    MessageView, SessionDetail, SessionInfo, SessionView, StageView,
-    StageOutcomeView, SummaryView,
+    MessageView,
+    SessionDetail,
+    SessionInfo,
+    SessionView,
+    StageView,
+    StageOutcomeView,
+    SummaryView,
 )
 from app.domain.session_state import SessionState, actions_for
 from app.domain.tutor import PromptMessage, SummaryDraft
@@ -67,25 +72,31 @@ class ConversationService:
             messages=[
                 MessageView(seq=m.seq, role=m.role, content=m.content) for m in session.messages
             ],
-            available_actions=list(actions_for(
-                state.flow_state,
-                pending_reply=bool(session.messages and session.messages[-1].role == "student"),
-            )),
+            available_actions=list(
+                actions_for(
+                    state.flow_state,
+                    pending_reply=bool(session.messages and session.messages[-1].role == "student"),
+                )
+            ),
             summary=self._summary(session, state),
         )
 
     def view(self, session: Session, state: SessionState, appended_count: int) -> SessionView:
-        appended = session.messages[len(session.messages) - appended_count :] if appended_count else []
+        appended = (
+            session.messages[len(session.messages) - appended_count :] if appended_count else []
+        )
         return SessionView(
             session=self._info(session, state),
             stage=self._stage(state),
             appended_messages=[
                 MessageView(seq=m.seq, role=m.role, content=m.content) for m in appended
             ],
-            available_actions=list(actions_for(
-                state.flow_state,
-                pending_reply=bool(session.messages and session.messages[-1].role == "student"),
-            )),
+            available_actions=list(
+                actions_for(
+                    state.flow_state,
+                    pending_reply=bool(session.messages and session.messages[-1].role == "student"),
+                )
+            ),
             summary=self._summary(session, state),
         )
 
@@ -141,15 +152,19 @@ class ConversationService:
         self._db.commit()
 
         # 2. 才呼叫 provider。這一步失敗時，上面那則訊息已經安全了
-        return self._run_turn(session_id, learner_id, appended_count=2,
-                              expected_student_seq=student_seq)
+        return self._run_turn(
+            session_id, learner_id, appended_count=2, expected_student_seq=student_seq
+        )
 
     def retry(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionView:
         """只在最後一則學生發言尚無教授回覆時重試。"""
         return self._run_turn(session_id, learner_id, appended_count=1)
 
     def _run_turn(
-        self, session_id: uuid.UUID, learner_id: uuid.UUID, appended_count: int,
+        self,
+        session_id: uuid.UUID,
+        learner_id: uuid.UUID,
+        appended_count: int,
         expected_student_seq: int | None = None,
     ) -> SessionView:
         # 學生發言已在上一個 transaction 提交；此處重新取得列鎖，
@@ -176,7 +191,8 @@ class ConversationService:
             raise
         self._repo.append_messages(session, outcome.appended)
         self._repo.save_state(
-            session, outcome.state,
+            session,
+            outcome.state,
             end_reason="completed" if outcome.state.flow_state == "ended" else None,
         )
         # Materialize the response before commit releases the row lock. A later

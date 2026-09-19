@@ -28,13 +28,9 @@ _COLUMNS = (
 
 def upgrade() -> None:
     for table, column in _COLUMNS:
-        op.execute(
-            f"alter table {table} alter column {column} type jsonb using {column}::jsonb"
-        )
+        op.execute(f"alter table {table} alter column {column} type jsonb using {column}::jsonb")
 
 
 def downgrade() -> None:
     for table, column in _COLUMNS:
-        op.execute(
-            f"alter table {table} alter column {column} type json using {column}::json"
-        )
+        op.execute(f"alter table {table} alter column {column} type json using {column}::json")

@@ -19,7 +19,5 @@ def _dumps(value: object) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-engine = create_engine(
-    settings.database_url, pool_pre_ping=True, json_serializer=_dumps
-)
+engine = create_engine(settings.database_url, pool_pre_ping=True, json_serializer=_dumps)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)

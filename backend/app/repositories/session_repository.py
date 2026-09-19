@@ -54,7 +54,9 @@ class SessionRepository:
     def get_for_update(self, session_id: uuid.UUID) -> Session | None:
         """同一 session 的並發請求以列鎖序列化——學生連點兩下不會產生兩條分岔的對話。"""
         stmt = (
-            select(Session).where(Session.id == session_id).with_for_update()
+            select(Session)
+            .where(Session.id == session_id)
+            .with_for_update()
             .execution_options(populate_existing=True)
         )
         session = self._db.execute(stmt).scalar_one_or_none()

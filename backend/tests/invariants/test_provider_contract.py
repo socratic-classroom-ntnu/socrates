@@ -4,8 +4,12 @@ from app.domain.ladder import Stage
 from app.tutor.gateway import TutorGateway, TutorUnavailable
 
 STAGE = Stage(
-    key="s1", title="T", opening_statement="O", teaching_goal="G",
-    probe_hints=[], max_turns=4,
+    key="s1",
+    title="T",
+    opening_statement="O",
+    teaching_goal="G",
+    probe_hints=[],
+    max_turns=4,
 )
 
 
@@ -19,7 +23,9 @@ class MissingFieldProvider:
         return {
             "reply_text": "少一個欄位",
             "observations": {
-                "has_position": True, "has_reason": True, "reason_tested": True,
+                "has_position": True,
+                "has_reason": True,
+                "reason_tested": True,
                 "principle_label": "後果主義",
             },
         }

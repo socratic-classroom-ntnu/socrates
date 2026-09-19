@@ -4,7 +4,10 @@ from pydantic import BaseModel
 
 from app.domain.ladder import Stage
 from app.domain.tutor import (
-    ProviderRequest, PromptMessage, SummaryDraft, TutorTurn,
+    ProviderRequest,
+    PromptMessage,
+    SummaryDraft,
+    TutorTurn,
 )
 from app.tutor.provider import LLMProvider
 
@@ -28,16 +31,12 @@ class TutorGateway:
     def __init__(self, provider: LLMProvider) -> None:
         self._provider = provider
 
-    def respond(
-        self, stage: Stage, history: list[PromptMessage], turn_index: int
-    ) -> TutorTurn:
+    def respond(self, stage: Stage, history: list[PromptMessage], turn_index: int) -> TutorTurn:
         request = self._build_respond_request(stage, history, turn_index)
         return self._call(request, TutorTurn)
 
     def summarize(self, history: list[PromptMessage]) -> SummaryDraft:
-        request = ProviderRequest(
-            kind="summarize", stage_key=None, turn_index=0, messages=history
-        )
+        request = ProviderRequest(kind="summarize", stage_key=None, turn_index=0, messages=history)
         return self._call(request, SummaryDraft)
 
     def _build_respond_request(

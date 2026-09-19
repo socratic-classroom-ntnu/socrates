@@ -1,4 +1,3 @@
-
 from app.orchestrator.orchestrator import Orchestrator
 from tests.orchestrator.conftest import FakeGateway, make_ladder, obs, speak
 

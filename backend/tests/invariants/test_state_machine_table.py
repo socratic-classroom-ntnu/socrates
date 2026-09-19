@@ -49,10 +49,12 @@ def test_turn_limit_marks_capped_not_goal_met():
 @XFAIL_LINE_A
 def test_turn_limit_wins_when_position_shifts_on_same_turn():
     """Fizzy 已確認：立場改變與硬上限同輪發生時，以上限優先。"""
-    gateway = FakeGateway([
-        obs(reason_tested=False),
-        obs(reason_tested=True, shifted=True),
-    ])
+    gateway = FakeGateway(
+        [
+            obs(reason_tested=False),
+            obs(reason_tested=True, shifted=True),
+        ]
+    )
     orch = Orchestrator(make_ladder(stage_count=2, max_turns=2), gateway)
     _, first = speak(orch, orch.start().state, "一")
     _, second = speak(orch, first.state, "二")

@@ -13,8 +13,11 @@ class CapturingProvider:
             return {
                 "reply_text": "為什麼？",
                 "observations": {
-                    "has_position": True, "has_reason": False, "reason_tested": False,
-                    "principle_label": "未明", "position_shifted": False,
+                    "has_position": True,
+                    "has_reason": False,
+                    "reason_tested": False,
+                    "principle_label": "未明",
+                    "position_shifted": False,
                 },
             }
         raise AssertionError("此測試不應產生總結")
@@ -61,9 +64,7 @@ def test_retry_resumes_without_retyping(client, learner_id, exploding_service):
     )
     assert response.status_code == 200
     assert response.json()["appended_messages"][0]["role"] == "tutor"
-    again = client.post(
-        f"/api/sessions/{session_id}/retry", headers={"X-Learner-Id": learner_id}
-    )
+    again = client.post(f"/api/sessions/{session_id}/retry", headers={"X-Learner-Id": learner_id})
     assert again.status_code == 409
 
 
@@ -83,11 +84,13 @@ def test_second_message_cannot_skip_pending_reply(client, learner_id, exploding_
     ).json()["session"]["id"]
     client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"text": "先前的發言"}, headers={"X-Learner-Id": learner_id},
+        json={"text": "先前的發言"},
+        headers={"X-Learner-Id": learner_id},
     )
     response = client.post(
         f"/api/sessions/{session_id}/messages",
-        json={"text": "新發言"}, headers={"X-Learner-Id": learner_id},
+        json={"text": "新發言"},
+        headers={"X-Learner-Id": learner_id},
     )
     assert response.status_code == 409
 
@@ -102,11 +105,13 @@ def test_provider_receives_latest_persisted_student_message(client, learner_id, 
     )
     try:
         session_id = client.post(
-            "/api/sessions", json={"ladder_id": "trolley"},
+            "/api/sessions",
+            json={"ladder_id": "trolley"},
             headers={"X-Learner-Id": learner_id},
         ).json()["session"]["id"]
         response = client.post(
-            f"/api/sessions/{session_id}/messages", json={"text": "我最新的發言"},
+            f"/api/sessions/{session_id}/messages",
+            json={"text": "我最新的發言"},
             headers={"X-Learner-Id": learner_id},
         )
         assert response.status_code == 200

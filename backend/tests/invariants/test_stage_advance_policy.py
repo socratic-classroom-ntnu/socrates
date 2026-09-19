@@ -45,9 +45,7 @@ def test_should_advance_truth_table(
     此時放人走等於把最好的鏡子收起來。
     """
     obs = _obs(has_position, has_reason, reason_tested, shifted)
-    expected = (
-        turn_count >= 1 and (not shifted) and has_position and has_reason and reason_tested
-    )
+    expected = turn_count >= 1 and (not shifted) and has_position and has_reason and reason_tested
     assert should_advance(obs, turn_count) is expected
 
 
@@ -58,7 +56,5 @@ def test_first_turn_cannot_advance_even_if_provider_misreports():
     **假設**，不是保證。模型錯報時學生會一輪過關——鏡子根本沒照到，
     而那正是這個產品唯一要做的事。所以地板必須被執行，不能被推論。
     """
-    misreported = _obs(
-        has_position=True, has_reason=True, reason_tested=True, shifted=False
-    )
+    misreported = _obs(has_position=True, has_reason=True, reason_tested=True, shifted=False)
     assert should_advance(misreported, turn_count=0) is False

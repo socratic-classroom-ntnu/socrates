@@ -1,7 +1,10 @@
 from dataclasses import replace
 
 from app.domain.session_state import (
-    Outcome, OutgoingMessage, SessionState, StageState,
+    Outcome,
+    OutgoingMessage,
+    SessionState,
+    StageState,
 )
 from app.domain.tutor import PromptMessage
 from app.domain.types import FlowState
@@ -42,9 +45,7 @@ class Orchestrator:
             )
             for i in range(self._ladder.total_stages)
         )
-        state = SessionState(
-            flow_state="active_in_stage", current_stage_index=0, stages=stages
-        )
+        state = SessionState(flow_state="active_in_stage", current_stage_index=0, stages=stages)
         opening = OutgoingMessage(role="tutor", content=stage.opening_statement, stage_index=0)
         return Outcome(state=state, appended=(opening,))
 
@@ -56,9 +57,7 @@ class Orchestrator:
         service 才能先落地再呼叫模型。
         """
         self._guard_can_speak(state)
-        return OutgoingMessage(
-            role="student", content=text, stage_index=state.current_stage_index
-        )
+        return OutgoingMessage(role="student", content=text, stage_index=state.current_stage_index)
 
     def advance_turn(self, state: SessionState, history: list[PromptMessage]) -> Outcome:
         """呼叫 gateway 取得教授的回應並裁決推進。history 需已包含學生的最新發言。"""
@@ -101,9 +100,7 @@ class Orchestrator:
 
         stages = tuple(updated if s.index == index else s for s in state.stages)
         return Outcome(
-            state=replace(
-                state, flow_state=flow, stages=stages, extra_turns_used=extra_used
-            ),
+            state=replace(state, flow_state=flow, stages=stages, extra_turns_used=extra_used),
             appended=(tutor,),
         )
 
@@ -123,9 +120,7 @@ class Orchestrator:
             raise ConversationEnded("這段討論已經結束了")
 
         stages = tuple(self._close(stage) for stage in state.stages)
-        return Outcome(
-            state=replace(state, flow_state="ended", stages=stages), appended=()
-        )
+        return Outcome(state=replace(state, flow_state="ended", stages=stages), appended=())
 
     def _guard_can_speak(self, state: SessionState) -> None:
         if state.flow_state == "ended":

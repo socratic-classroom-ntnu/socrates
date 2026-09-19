@@ -18,10 +18,8 @@ def test_orchestrator_does_not_import_llm_modules():
             if isinstance(node, ast.Import):
                 names = [a.name for a in node.names]
             elif isinstance(node, ast.ImportFrom) and node.module:
-                names = [node.module] + [
-                    f"{node.module}.{alias.name}" for alias in node.names
-                ]
+                names = [node.module] + [f"{node.module}.{alias.name}" for alias in node.names]
             for name in names:
-                assert not any(name.startswith(f) for f in FORBIDDEN), (
-                    f"{path.name} 不得 import {name}"
-                )
+                assert not any(
+                    name.startswith(f) for f in FORBIDDEN
+                ), f"{path.name} 不得 import {name}"

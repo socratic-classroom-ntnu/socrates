@@ -1,13 +1,22 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import (
-    JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
+from app.domain.types import (
+    EndReason,
+    FlowState,
+    MessageRole,
+    PrincipleLabel,
+    SessionStatus,
+    StageStatus,
+)
 
 
 def _now() -> datetime:
@@ -26,8 +35,8 @@ class Session(Base):
     learner_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("learners.id"), index=True)
     ladder_id: Mapped[str] = mapped_column(String(64))
     ladder_version: Mapped[int] = mapped_column(Integer)
-    status: Mapped[str] = mapped_column(String(16))
-    flow_state: Mapped[str] = mapped_column(String(32))
+    status: Mapped[SessionStatus] = mapped_column(String(16))
+    flow_state: Mapped[FlowState] = mapped_column(String(32))
     current_stage_index: Mapped[int] = mapped_column(Integer, default=0)
     extra_turns_used: Mapped[int] = mapped_column(Integer, default=0)
     parent_session_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -35,7 +44,7 @@ class Session(Base):
     )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    end_reason: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    end_reason: Mapped[EndReason | None] = mapped_column(String(32), nullable=True)
 
     stage_progress: Mapped[list["StageProgress"]] = relationship(
         back_populates="session", order_by="StageProgress.stage_index", lazy="selectin"
@@ -53,9 +62,9 @@ class StageProgress(Base):
     session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id"), index=True)
     stage_index: Mapped[int] = mapped_column(Integer)
     stage_key: Mapped[str] = mapped_column(String(64))
-    status: Mapped[str] = mapped_column(String(32))
+    status: Mapped[StageStatus] = mapped_column(String(32))
     turn_count: Mapped[int] = mapped_column(Integer, default=0)
-    principle_label: Mapped[str] = mapped_column(String(16), default="未明")
+    principle_label: Mapped[PrincipleLabel] = mapped_column(String(16), default="未明")
     position_shifted: Mapped[bool] = mapped_column(Boolean, default=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -71,9 +80,9 @@ class Message(Base):
     session_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("sessions.id"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
     stage_index: Mapped[int] = mapped_column(Integer)
-    role: Mapped[str] = mapped_column(String(16))
+    role: Mapped[MessageRole] = mapped_column(String(16))
     content: Mapped[str] = mapped_column(Text)
-    observations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    observations: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     session: Mapped["Session"] = relationship(back_populates="messages")
@@ -87,7 +96,7 @@ class Summary(Base):
     )
     core_principle: Mapped[str] = mapped_column(Text)
     tension: Mapped[str] = mapped_column(Text)
-    stance_by_stage: Mapped[list] = mapped_column(JSON)
+    stance_by_stage: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
     shifted: Mapped[bool] = mapped_column(Boolean)
-    raw: Mapped[dict] = mapped_column(JSON)
+    raw: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

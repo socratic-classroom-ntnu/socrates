@@ -1,4 +1,4 @@
-docs/superpowers/plans/
+docs/superpowers/
 .env
 .env.*
 !.env.example
@@ -10,5 +10,5 @@ __pycache__/
 node_modules/
 dist/
 *.pyc
-
-
+.DS_Store
+*.tsbuildinfo

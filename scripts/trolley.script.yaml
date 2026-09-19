@@ -1,0 +1,32 @@
+stages:
+  trolley_basic:
+    turns:
+      - reply_text: "所以你會把電車轉向。為什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "一條命換五條命——你用的是數量。那如果岔道上站的是一百個人，而直行只會撞到一個人呢？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "後果主義"
+          position_shifted: false
+      - reply_text: "你堅持用人數決定。你想在這裡收尾，還是再補充一下這個原則？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "後果主義"
+          position_shifted: false
+summary:
+  core_principle: "你用結果的好壞來判斷行為的對錯——救下的人愈多，行為就愈正當。"
+  tension: "當「救更多人」必須靠親手把某個人當成手段時，這個原則開始讓你不安。"
+  stance_by_stage:
+    - stage_key: "trolley_basic"
+      label: "後果主義"
+      note: "以人數決定"
+  shifted: false

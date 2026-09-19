@@ -1,6 +1,5 @@
 from dataclasses import replace
 
-from app.domain.ladder import Stage
 from app.domain.session_state import (
     Outcome, OutgoingMessage, SessionState, StageState,
 )

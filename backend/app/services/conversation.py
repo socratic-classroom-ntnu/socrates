@@ -26,6 +26,20 @@ class NotFound(RuntimeError):
     pass
 
 
+def _provider_history(session: Session) -> list[PromptMessage]:
+    """送進 provider 的對話歷史只含師生發言。
+
+    `system`（路口提示）是給畫面看的，不是對話的一部分——把它送進去會讓
+    模型以為那是教授說過的話。用明確的 if 收斂而不是 `in (...)`，
+    是為了讓型別檢查真的擋得住多送一種角色進來。
+    """
+    history: list[PromptMessage] = []
+    for message in session.messages:
+        if message.role == "student" or message.role == "tutor":
+            history.append(PromptMessage(role=message.role, content=message.content))
+    return history
+
+
 class ConversationService:
     def __init__(self, db: OrmSession, ladder: LadderRepository, gateway: TutorGateway) -> None:
         self._db = db
@@ -154,11 +168,7 @@ class ConversationService:
         if not session.messages or session.messages[-1].role != "student":
             raise InvalidAction("沒有待重試的學生發言")
         state = SessionRepository.to_state(session)
-        history = [
-            PromptMessage(role=m.role, content=m.content)
-            for m in session.messages
-            if m.role in ("student", "tutor")
-        ]
+        history = _provider_history(session)
         try:
             outcome = self._orchestrator.advance_turn(state, history)
         except TutorUnavailable:
@@ -202,11 +212,7 @@ class ConversationService:
             return self._summary_view(session, existing)
 
         has_student_message = any(m.role == "student" for m in session.messages)
-        history = [
-            PromptMessage(role=m.role, content=m.content)
-            for m in session.messages
-            if m.role in ("student", "tutor")
-        ]
+        history = _provider_history(session)
         # 無發言時只存固定的中性佔位內容，不呼叫 provider 猜測學生立場。
         draft = (
             self._gateway.summarize(history)

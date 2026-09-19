@@ -1,8 +1,7 @@
-import pytest
 
 from app.domain.ladder import Stage
 from app.domain.tutor import ProviderRequest, ProviderResponse
-from app.tutor.gateway import TutorGateway, TutorUnavailable
+from app.tutor.gateway import TutorGateway
 
 STAGE = Stage(
     key="s1", title="T", opening_statement="O", teaching_goal="G",

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -12,7 +13,7 @@ class ScriptedProvider:
     切換到真 provider（設計規格 §12）。
     """
 
-    def __init__(self, script: dict) -> None:
+    def __init__(self, script: dict[str, Any]) -> None:
         self._script = script
 
     @classmethod

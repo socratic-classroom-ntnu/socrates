@@ -1,0 +1,253 @@
+import uuid
+
+from sqlalchemy.orm import Session as OrmSession
+
+from app.api.schemas import (
+    MessageView, SessionDetail, SessionInfo, SessionView, StageView,
+    StageOutcomeView, SummaryView,
+)
+from app.domain.session_state import SessionState, actions_for
+from app.domain.tutor import PromptMessage, SummaryDraft
+from app.ladders.repository import LadderRepository
+from app.models import Session, Summary
+from app.orchestrator.orchestrator import ConversationEnded, InvalidAction, Orchestrator
+from app.repositories.session_repository import SessionRepository
+from app.tutor.gateway import TutorGateway, TutorUnavailable
+
+
+MAX_MESSAGES_PER_SESSION = 200
+
+
+class Forbidden(RuntimeError):
+    pass
+
+
+class NotFound(RuntimeError):
+    pass
+
+
+class ConversationService:
+    def __init__(self, db: OrmSession, ladder: LadderRepository, gateway: TutorGateway) -> None:
+        self._db = db
+        self._ladder = ladder
+        self._repo = SessionRepository(db)
+        self._gateway = gateway
+        self._orchestrator = Orchestrator(ladder, gateway)
+
+    def start(self, learner_id: uuid.UUID) -> SessionView:
+        self._repo.ensure_learner(learner_id)
+        outcome = self._orchestrator.start()
+        ladder = self._ladder.get()
+        session = self._repo.create(learner_id, ladder.id, ladder.version, outcome.state)
+        self._repo.append_messages(session, outcome.appended)
+        self._db.commit()
+        self._db.refresh(session)  # commit 後關聯已過期，view() 需要最新的 messages
+        return self.view(session, outcome.state, appended_count=len(outcome.appended))
+
+    def detail(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionDetail:
+        session = self._load(session_id, learner_id)
+        state = SessionRepository.to_state(session)
+        return SessionDetail(
+            session=self._info(session, state),
+            stage=self._stage(state),
+            messages=[
+                MessageView(seq=m.seq, role=m.role, content=m.content) for m in session.messages
+            ],
+            available_actions=list(actions_for(
+                state.flow_state,
+                pending_reply=bool(session.messages and session.messages[-1].role == "student"),
+            )),
+            summary=self._summary(session, state),
+        )
+
+    def view(self, session: Session, state: SessionState, appended_count: int) -> SessionView:
+        appended = session.messages[len(session.messages) - appended_count :] if appended_count else []
+        return SessionView(
+            session=self._info(session, state),
+            stage=self._stage(state),
+            appended_messages=[
+                MessageView(seq=m.seq, role=m.role, content=m.content) for m in appended
+            ],
+            available_actions=list(actions_for(
+                state.flow_state,
+                pending_reply=bool(session.messages and session.messages[-1].role == "student"),
+            )),
+            summary=self._summary(session, state),
+        )
+
+    def _load(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> Session:
+        session = self._repo.get(session_id)
+        if session is None:
+            raise NotFound(str(session_id))
+        if session.learner_id != learner_id:
+            raise Forbidden(str(session_id))
+        return session
+
+    def _info(self, session: Session, state: SessionState) -> SessionInfo:
+        return SessionInfo(
+            id=session.id,
+            status=session.status,
+            flow_state=state.flow_state,
+            current_stage_index=state.current_stage_index,
+            total_stages=self._ladder.total_stages,
+            end_reason=session.end_reason,
+        )
+
+    def _stage(self, state: SessionState) -> StageView | None:
+        """只回傳學生已經進入的那一階。未進入的階連 title 都不外流（§4.1）。"""
+        if state.flow_state == "ended":
+            return None
+        current = state.stages[state.current_stage_index]
+        if current.status == "not_started":
+            return None
+        stage = self._ladder.stage(current.index)
+        return StageView(
+            index=current.index,
+            key=stage.key,
+            title=stage.title,
+            opening_statement=stage.opening_statement,
+        )
+
+    def _summary(self, session: Session, state: SessionState) -> SummaryView | None:
+        row = self._db.get(Summary, session.id)
+        return None if row is None else self._summary_view(session, row)
+
+    def send_message(self, session_id: uuid.UUID, learner_id: uuid.UUID, text: str) -> SessionView:
+        session = self._lock(session_id, learner_id)
+        if len(session.messages) >= MAX_MESSAGES_PER_SESSION:
+            raise ConversationEnded("這段討論的訊息數已達上限")
+        if session.messages and session.messages[-1].role == "student":
+            raise InvalidAction("上一則發言尚未得到回覆，請先重試")
+        state = SessionRepository.to_state(session)
+
+        # 1. 學生訊息先落地並 commit —— 設計規格 §10，順序不可調換
+        student_seq = self._repo.next_seq(session.id)
+        student = self._orchestrator.accept_student_message(state, text)
+        self._repo.append_messages(session, (student,))
+        self._db.commit()
+
+        # 2. 才呼叫 provider。這一步失敗時，上面那則訊息已經安全了
+        return self._run_turn(session_id, learner_id, appended_count=2,
+                              expected_student_seq=student_seq)
+
+    def retry(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionView:
+        """只在最後一則學生發言尚無教授回覆時重試。"""
+        return self._run_turn(session_id, learner_id, appended_count=1)
+
+    def _run_turn(
+        self, session_id: uuid.UUID, learner_id: uuid.UUID, appended_count: int,
+        expected_student_seq: int | None = None,
+    ) -> SessionView:
+        # 學生發言已在上一個 transaction 提交；此處重新取得列鎖，
+        # 並持有到 provider 回覆與狀態寫入完成，避免同一輪產生兩則教授回覆。
+        session = self._lock(session_id, learner_id)
+        if expected_student_seq is not None:
+            last_seq = session.messages[-1].seq
+            if last_seq == expected_student_seq + 1 and session.messages[-1].role == "tutor":
+                # 同輪 retry 搶先完成；可回傳它剛寫好的學生與教授兩則。
+                return self.view(session, SessionRepository.to_state(session), appended_count=2)
+            if last_seq != expected_student_seq:
+                # 其他請求已推進到下一輪；原 send 不得拿下一輪的學生發言再呼叫 provider。
+                raise InvalidAction("對話狀態已更新，請重新載入")
+        if session.status == "ended":
+            raise ConversationEnded("這段討論已經結束了")
+        if not session.messages or session.messages[-1].role != "student":
+            raise InvalidAction("沒有待重試的學生發言")
+        state = SessionRepository.to_state(session)
+        history = [
+            PromptMessage(role=m.role, content=m.content)
+            for m in session.messages
+            if m.role in ("student", "tutor")
+        ]
+        try:
+            outcome = self._orchestrator.advance_turn(state, history)
+        except TutorUnavailable:
+            self._db.rollback()  # 釋放列鎖；先前 commit 的學生發言仍在。
+            raise
+        self._repo.append_messages(session, outcome.appended)
+        self._repo.save_state(
+            session, outcome.state,
+            end_reason="completed" if outcome.state.flow_state == "ended" else None,
+        )
+        # Materialize the response before commit releases the row lock. A later
+        # request may otherwise change the session or message tail before we read it.
+        response = self.view(session, outcome.state, appended_count=appended_count)
+        self._db.commit()
+        return response
+
+    def _lock(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> Session:
+        session = self._repo.get_for_update(session_id)
+        if session is None:
+            raise NotFound(str(session_id))
+        if session.learner_id != learner_id:
+            raise Forbidden(str(session_id))
+        return session
+
+    def end(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionView:
+        session = self._lock(session_id, learner_id)
+        outcome = self._orchestrator.handle_end(SessionRepository.to_state(session))
+        self._repo.save_state(session, outcome.state, end_reason="student_ended")
+        # Materialize the response before commit releases the row lock. A later
+        # request may otherwise change the session or message tail before we read it.
+        response = self.view(session, outcome.state, appended_count=0)
+        self._db.commit()
+        return response
+
+    def generate_summary(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SummaryView:
+        session = self._lock(session_id, learner_id)
+        if session.status != "ended":
+            raise InvalidAction("討論尚未結束，不能產生總結")
+        existing = self._db.get(Summary, session.id)
+        if existing is not None:
+            return self._summary_view(session, existing)
+
+        has_student_message = any(m.role == "student" for m in session.messages)
+        history = [
+            PromptMessage(role=m.role, content=m.content)
+            for m in session.messages
+            if m.role in ("student", "tutor")
+        ]
+        # 無發言時只存固定的中性佔位內容，不呼叫 provider 猜測學生立場。
+        draft = (
+            self._gateway.summarize(history)
+            if has_student_message
+            else SummaryDraft(
+                core_principle="尚未提出立場", tension="", stance_by_stage=[], shifted=False
+            )
+        )
+        row = Summary(
+            session_id=session.id,
+            core_principle=draft.core_principle,
+            tension=draft.tension,
+            stance_by_stage=[s.model_dump() for s in draft.stance_by_stage],
+            shifted=draft.shifted,
+            raw=draft.model_dump(),
+        )
+        self._db.add(row)
+        self._db.commit()
+        return self._summary_view(session, row)
+
+    def get_summary(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SummaryView:
+        session = self._load(session_id, learner_id)
+        row = self._db.get(Summary, session.id)
+        if row is None:
+            raise NotFound("summary")
+        return self._summary_view(session, row)
+
+    def _summary_view(self, session: Session, row: Summary) -> SummaryView:
+        state = SessionRepository.to_state(session)
+        return SummaryView(
+            core_principle=row.core_principle,
+            stage_outcomes=[
+                StageOutcomeView(
+                    index=stage.index,
+                    status=stage.status,
+                    title=(
+                        None
+                        if stage.status in ("skipped", "not_started")
+                        else self._ladder.stage(stage.index).title
+                    ),
+                )
+                for stage in state.stages
+            ],
+        )

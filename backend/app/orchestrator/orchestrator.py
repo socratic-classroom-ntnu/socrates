@@ -84,16 +84,28 @@ class Orchestrator:
             position_shifted=stage_state.position_shifted or turn.observations.position_shifted,
         )
         flow = state.flow_state
+        extra_used = state.extra_turns_used
 
-        if state.flow_state == "active_in_stage" and should_advance(
-            turn.observations, stage_state.turn_count
-        ):
+        if state.flow_state == "awaiting_wrap_up":
+            extra_used += 1
+            if extra_used >= self._ladder.get().extra_turns_cap:
+                stages = tuple(updated if s.index == index else s for s in state.stages)
+                return Outcome(
+                    state=replace(
+                        state, flow_state="ended", stages=stages, extra_turns_used=extra_used
+                    ),
+                    appended=(tutor,),
+                )
+        elif should_advance(turn.observations, stage_state.turn_count):
             updated = replace(updated, status="goal_met")
             flow = self._after_stage_completed(index)
 
         stages = tuple(updated if s.index == index else s for s in state.stages)
         return Outcome(
-            state=replace(state, flow_state=flow, stages=stages), appended=(tutor,)
+            state=replace(
+                state, flow_state=flow, stages=stages, extra_turns_used=extra_used
+            ),
+            appended=(tutor,),
         )
 
     def handle_advance(self, state: SessionState) -> Outcome:
@@ -106,8 +118,26 @@ class Orchestrator:
         has_next = index + 1 < self._ladder.total_stages
         return "at_crossroad" if has_next else "awaiting_wrap_up"
 
+    def handle_end(self, state: SessionState) -> Outcome:
+        """「結束討論」從任何未結束狀態皆可觸發，不經過模型（設計規格 §8）。"""
+        if state.flow_state == "ended":
+            raise ConversationEnded("這段討論已經結束了")
+
+        stages = tuple(self._close(stage) for stage in state.stages)
+        return Outcome(
+            state=replace(state, flow_state="ended", stages=stages), appended=()
+        )
+
     def _guard_can_speak(self, state: SessionState) -> None:
         if state.flow_state == "ended":
             raise ConversationEnded("這段討論已經結束了")
         if state.flow_state not in ("active_in_stage", "awaiting_wrap_up"):
             raise InvalidAction(f"{state.flow_state} 不接受發言")
+
+    @staticmethod
+    def _close(stage: StageState) -> StageState:
+        if stage.status == "in_progress":
+            return replace(stage, status="stopped_early")
+        if stage.status == "not_started":
+            return replace(stage, status="skipped")
+        return stage

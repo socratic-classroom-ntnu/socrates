@@ -76,6 +76,34 @@ def test_completed_stage_moves_to_crossroad_when_more_stages_remain():
     assert outcome.state.flow_state == "at_crossroad"
 
 
+def test_unmet_turn_limit_is_capped_and_opens_crossroad():
+    orch = Orchestrator(
+        make_ladder(stage_count=2, max_turns=2), FakeGateway([obs(reason_tested=False)])
+    )
+    _, first = speak(orch, orch.start().state, "第一輪")
+    _, second = speak(orch, first.state, "第二輪")
+    assert second.state.stages[0].status == "capped"
+    assert second.state.flow_state == "at_crossroad"
+
+
+def test_shift_on_last_allowed_turn_is_recorded_but_capped():
+    gateway = FakeGateway([obs(reason_tested=False), obs(shifted=True)])
+    orch = Orchestrator(make_ladder(stage_count=2, max_turns=2), gateway)
+    _, first = speak(orch, orch.start().state, "原本的想法")
+    _, second = speak(orch, first.state, "我改變想法")
+    assert second.state.stages[0].status == "capped"
+    assert second.state.stages[0].position_shifted is True
+    assert second.state.flow_state == "at_crossroad"
+
+
+def test_last_stage_limit_enters_wrap_up_without_claiming_goal_met():
+    orch = Orchestrator(make_ladder(max_turns=2), FakeGateway([obs(reason_tested=False)]))
+    _, first = speak(orch, orch.start().state, "第一輪")
+    _, second = speak(orch, first.state, "第二輪")
+    assert second.state.stages[0].status == "capped"
+    assert second.state.flow_state == "awaiting_wrap_up"
+
+
 def test_available_actions_are_decided_by_flow_state():
     assert actions_for("active_in_stage") == ("send_message", "end")
     assert actions_for("active_in_stage", pending_reply=True) == ("retry", "end")

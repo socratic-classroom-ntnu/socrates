@@ -47,7 +47,7 @@
 - 在前端由 `flow_state` 推導按鈕
 - 讓 LLM 改寫情境開場白
 - `git commit --no-verify`
-- 未經 Fizzy 明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
+- 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
 - 手寫 `frontend/src/api/types.ts`（它是產生物，跑 `./scripts/gen_types.sh`）
 
 ## 分支流程

@@ -1,5 +1,6 @@
 stages:
   trolley_basic:
+    # 固定驗收輸入依序為：會轉向；因為少死四人；若岔道一百人就不轉，並說明仍願承擔此次轉向的代價。
     turns:
       - reply_text: "所以你會把電車轉向。為什麼？"
         observations:
@@ -15,18 +16,93 @@ stages:
           reason_tested: false
           principle_label: "後果主義"
           position_shifted: false
-      - reply_text: "你堅持用人數決定。你想在這裡收尾，還是再補充一下這個原則？"
+      - reply_text: "你仍把減少死亡人數放在首位，也看見轉向會使另一人死亡。你要在這裡結束，還是進入另一個情境，由你決定。"
         observations:
           has_position: true
           has_reason: true
           reason_tested: true
           principle_label: "後果主義"
           position_shifted: false
+  footbridge:
+    # 固定驗收輸入依序為：不會推人；不能把無辜的人當工具；說明改變車的路線與用人的身體擋車有何不同。
+    turns:
+      - reply_text: "你說不會推他。這一次讓你停下來的理由是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你說不能把一個人當成擋車的工具。可是轉向岔道時，那名工人原本也不會被電車撞上；你如何區分這兩個決定？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "義務論"
+          position_shifted: false
+      - reply_text: "你把差別放在是否利用一個人的身體來擋車。這個理由先留在這裡；要不要進入另一個情境，由你決定。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
+  transplant:
+    # 固定驗收輸入依序為：不摘器官；醫生不能殺害健康的人；說明與轉向的差別，及救五人也不能殺害健康者。
+    turns:
+      - reply_text: "你說不會摘取他的器官。讓你拒絕的最關鍵理由是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你認為醫生不能為了救人而殺害一名健康者。可是在失控電車上，你願意讓一人死亡以救五人；你認為差別在哪裡？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "義務論"
+          position_shifted: false
+      - reply_text: "你提出了一條界線：不能為了救人，主動把一名原本安全的人當成器官來源。我們可以先在這裡收尾；如果還有沒說清楚的地方，你也可以補充。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
+      - reply_text: "還有哪些地方讓你覺得這條界線不夠清楚？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
+      - reply_text: "如果你願意，可以說說三個情境裡哪一個決定最難下，為什麼。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
+      - reply_text: "謝謝你把仍有疑問的地方說出來。我們先在這裡結束。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
 summary:
-  core_principle: "你用結果的好壞來判斷行為的對錯——救下的人愈多，行為就愈正當。"
-  tension: "當「救更多人」必須靠親手把某個人當成手段時，這個原則開始讓你不安。"
+  core_principle: "你願意轉向以減少死亡，卻不願為救更多人而推人或摘取器官；你的界線不只在人數，也在於如何對待那一個人。"
+  tension: "轉向也使一名原本安全的工人死亡；它與推人、摘器官的差別，仍值得你繼續釐清。"
   stance_by_stage:
     - stage_key: "trolley_basic"
       label: "後果主義"
-      note: "以人數決定"
-  shifted: false
+      note: "選擇轉向以減少死亡人數"
+    - stage_key: "footbridge"
+      label: "義務論"
+      note: "拒絕把旁觀者當成擋車工具"
+    - stage_key: "transplant"
+      label: "義務論"
+      note: "拒絕為救五人殺害健康者"
+  shifted: true

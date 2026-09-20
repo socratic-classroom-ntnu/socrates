@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.api.deps import get_learner_id, get_service
 from app.api.schemas import SessionView
 from app.orchestrator.orchestrator import ConversationEnded, InvalidAction
-from app.services.conversation import ConversationService, Forbidden, NotFound
+from app.services.conversation import ConversationService, Forbidden, NotFound, RetryLimitReached
 from app.tutor.gateway import TutorUnavailable
 
 router = APIRouter(prefix="/api/sessions", tags=["messages"])
@@ -43,6 +43,22 @@ def send_message(
         raise HTTPException(status_code=503, detail="教授那邊斷線了，請稍後重試")
 
 
+@router.post("/{session_id}/advance", response_model=SessionView)
+def advance(
+    session_id: uuid.UUID,
+    learner_id: Annotated[uuid.UUID, Depends(get_learner_id)],
+    service: Annotated[ConversationService, Depends(get_service)],
+) -> SessionView:
+    try:
+        return service.advance(session_id, learner_id)
+    except Forbidden:
+        raise HTTPException(status_code=403, detail="不是你的 session")
+    except NotFound:
+        raise HTTPException(status_code=404, detail="找不到 session")
+    except (ConversationEnded, InvalidAction) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 @router.post("/{session_id}/retry", response_model=SessionView)
 def retry(
     session_id: uuid.UUID,
@@ -55,7 +71,9 @@ def retry(
         raise HTTPException(status_code=403, detail="不是你的 session")
     except NotFound:
         raise HTTPException(status_code=404, detail="找不到 session")
+    except RetryLimitReached as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except (ConversationEnded, InvalidAction) as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except TutorUnavailable:
         raise HTTPException(status_code=503, detail="教授那邊還是斷線，請稍後重試")

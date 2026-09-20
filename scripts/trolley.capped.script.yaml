@@ -1,0 +1,101 @@
+# 驗收路徑：第一階六輪都說不清理由，達上限後在路口結束；後兩階僅備妥合法回覆。
+stages:
+  trolley_basic:
+    # 固定輸入：不轉向；說不上來；仍說不上來；只是直覺；無法指出原則；仍沒有定見。
+    turns:
+      - reply_text: "你說不會轉向。你最在意的是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "說不上來也沒關係。你可以試著說說，轉向這件事讓你哪裡不安嗎？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "如果你不轉向，五名工人會死；這個結果會影響你的判斷嗎？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你提到這是直覺。它比較像是不願意主動傷人，還是另有你還說不出的原因？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "我們先不替你的直覺取名字。即使兩邊都會有人死亡，你現在仍會選擇不轉向嗎？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你還沒有找到能說清這個選擇的理由，我們就誠實地把這份模糊留下來。要進入另一個情境，或在此結束，由你決定。"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+  footbridge:
+    turns:
+      - reply_text: "這一次你會不會推他？最先讓你想到的是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你能再說清楚這個理由嗎？如果結果仍是一人死亡、五人獲救，你會改變選擇嗎？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "混合"
+          position_shifted: false
+      - reply_text: "你已經回應了這個挑戰。要進入另一個情境，或在此結束，由你決定。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "混合"
+          position_shifted: false
+  transplant:
+    turns:
+      - reply_text: "你會不會摘取他的器官？這個決定的理由是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "如果只看能救活多少人，你的理由仍然成立嗎？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "混合"
+          position_shifted: false
+      - reply_text: "你回應了這個疑問。我們可以在此收尾，也可以繼續釐清。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "混合"
+          position_shifted: false
+summary:
+  core_principle: "你已表明不願轉向，卻還說不清這條界線的理由；目前沒有定見本身，就是這次討論留下的重要發現。"
+  tension: "不轉向會讓五人死亡；你尚未釐清為何仍傾向這個選擇。"
+  stance_by_stage:
+    - stage_key: "trolley_basic"
+      label: "未明"
+      note: "表態不轉向，仍未形成可說明的理由"
+  shifted: false

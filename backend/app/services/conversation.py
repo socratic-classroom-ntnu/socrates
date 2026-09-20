@@ -13,6 +13,7 @@ from app.api.schemas import (
 )
 from app.domain.session_state import SessionState, actions_for
 from app.domain.tutor import PromptMessage, SummaryDraft
+from app.domain.types import Action
 from app.ladders.repository import LadderRepository
 from app.models import Session, Summary
 from app.orchestrator.orchestrator import ConversationEnded, InvalidAction, Orchestrator
@@ -21,6 +22,7 @@ from app.tutor.gateway import TutorGateway, TutorUnavailable
 
 
 MAX_MESSAGES_PER_SESSION = 200
+MAX_RETRIES_PER_PENDING_MESSAGE = 3
 
 
 class Forbidden(RuntimeError):
@@ -28,6 +30,16 @@ class Forbidden(RuntimeError):
 
 
 class NotFound(RuntimeError):
+    pass
+
+
+class ActiveSessionExists(RuntimeError):
+    def __init__(self, session_id: uuid.UUID) -> None:
+        self.session_id = session_id
+        super().__init__(str(session_id))
+
+
+class RetryLimitReached(RuntimeError):
     pass
 
 
@@ -53,15 +65,26 @@ class ConversationService:
         self._gateway = gateway
         self._orchestrator = Orchestrator(ladder, gateway)
 
-    def start(self, learner_id: uuid.UUID) -> SessionView:
-        self._repo.ensure_learner(learner_id)
-        outcome = self._orchestrator.start()
-        ladder = self._ladder.get()
-        session = self._repo.create(learner_id, ladder.id, ladder.version, outcome.state)
-        self._repo.append_messages(session, outcome.appended)
-        self._db.commit()
-        self._db.refresh(session)  # commit 後關聯已過期，view() 需要最新的 messages
-        return self.view(session, outcome.state, appended_count=len(outcome.appended))
+    def start(self, learner_id: uuid.UUID, restart_existing: bool = False) -> SessionView:
+        try:
+            self._repo.lock_learner(learner_id)
+            previous = self._repo.get_active_for_learner(learner_id)
+            if previous is not None and not restart_existing:
+                raise ActiveSessionExists(previous.id)
+            if previous is not None:
+                closed = self._orchestrator.handle_end(SessionRepository.to_state(previous))
+                self._repo.save_state(previous, closed.state, end_reason="restarted")
+
+            outcome = self._orchestrator.start()
+            ladder = self._ladder.get()
+            session = self._repo.create(learner_id, ladder.id, ladder.version, outcome.state)
+            self._repo.append_messages(session, outcome.appended)
+            response = self.view(session, outcome.state, appended_count=len(outcome.appended))
+            self._db.commit()
+            return response
+        except Exception:
+            self._db.rollback()
+            raise
 
     def detail(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionDetail:
         session = self._load(session_id, learner_id)
@@ -72,12 +95,7 @@ class ConversationService:
             messages=[
                 MessageView(seq=m.seq, role=m.role, content=m.content) for m in session.messages
             ],
-            available_actions=list(
-                actions_for(
-                    state.flow_state,
-                    pending_reply=bool(session.messages and session.messages[-1].role == "student"),
-                )
-            ),
+            available_actions=self._actions(session, state),
             summary=self._summary(session, state),
         )
 
@@ -91,14 +109,16 @@ class ConversationService:
             appended_messages=[
                 MessageView(seq=m.seq, role=m.role, content=m.content) for m in appended
             ],
-            available_actions=list(
-                actions_for(
-                    state.flow_state,
-                    pending_reply=bool(session.messages and session.messages[-1].role == "student"),
-                )
-            ),
+            available_actions=self._actions(session, state),
             summary=self._summary(session, state),
         )
+
+    def _actions(self, session: Session, state: SessionState) -> list[Action]:
+        pending = bool(session.messages and session.messages[-1].role == "student")
+        allowed = not pending or (
+            session.messages[-1].retry_count < MAX_RETRIES_PER_PENDING_MESSAGE
+        )
+        return list(actions_for(state.flow_state, pending_reply=pending, retry_allowed=allowed))
 
     def _load(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> Session:
         session = self._repo.get(session_id)
@@ -184,10 +204,21 @@ class ConversationService:
             raise InvalidAction("沒有待重試的學生發言")
         state = SessionRepository.to_state(session)
         history = _provider_history(session)
+        is_retry = expected_student_seq is None
+        if is_retry:
+            pending = session.messages[-1]
+            if pending.retry_count >= MAX_RETRIES_PER_PENDING_MESSAGE:
+                self._db.rollback()
+                raise RetryLimitReached("重試次數已用完")
+            pending.retry_count += 1
+            self._db.flush()
         try:
             outcome = self._orchestrator.advance_turn(state, history)
         except TutorUnavailable:
-            self._db.rollback()  # 釋放列鎖；先前 commit 的學生發言仍在。
+            if is_retry:
+                self._db.commit()  # 保留本次 retry 計數；原學生訊息早已落地。
+            else:
+                self._db.rollback()  # 釋放列鎖；先前 commit 的學生發言仍在。
             raise
         self._repo.append_messages(session, outcome.appended)
         self._repo.save_state(
@@ -208,6 +239,15 @@ class ConversationService:
         if session.learner_id != learner_id:
             raise Forbidden(str(session_id))
         return session
+
+    def advance(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionView:
+        session = self._lock(session_id, learner_id)
+        outcome = self._orchestrator.handle_advance(SessionRepository.to_state(session))
+        self._repo.append_messages(session, outcome.appended)
+        self._repo.save_state(session, outcome.state)
+        response = self.view(session, outcome.state, appended_count=len(outcome.appended))
+        self._db.commit()
+        return response
 
     def end(self, session_id: uuid.UUID, learner_id: uuid.UUID) -> SessionView:
         session = self._lock(session_id, learner_id)

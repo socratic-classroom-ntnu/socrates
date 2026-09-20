@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/advance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Advance */
+        post: operations["advance_api_sessions__session_id__advance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/retry": {
         parameters: {
             query?: never;
@@ -132,6 +149,8 @@ export interface components {
         CreateSessionRequest: {
             /** Ladder Id */
             ladder_id: string;
+            /** Restart Existing */
+            restart_existing?: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -340,6 +359,39 @@ export interface operations {
                 "application/json": components["schemas"]["SendMessageRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    advance_api_sessions__session_id__advance_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-learner-id": string;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

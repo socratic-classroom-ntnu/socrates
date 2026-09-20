@@ -6,8 +6,8 @@
 # 注意：帳號寫錯時 GitHub 不會擋下，只會在本檔頁面顯示警告，
 # 規則會靜靜地不生效。新增成員後請確認頁面沒有警告。
 
-/AGENTS.md                  @Fizzy143
-/backend/tests/invariants/  @Fizzy143
-/frontend/src/invariants/   @Fizzy143
-/backend/migrations/        @Fizzy143
-/backend/app/orchestrator/  @Fizzy143
+/AGENTS.md                  @Fizzy143 @arthur0824hao
+/backend/tests/invariants/  @Fizzy143 @arthur0824hao
+/frontend/src/invariants/   @Fizzy143 @arthur0824hao
+/backend/migrations/        @Fizzy143 @arthur0824hao
+/backend/app/orchestrator/  @Fizzy143 @arthur0824hao

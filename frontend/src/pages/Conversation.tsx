@@ -4,7 +4,7 @@ import ActionBar from '../components/ActionBar'
 import MessageList from '../components/MessageList'
 import ProgressIndicator from '../components/ProgressIndicator'
 import {
-  endSession, getSession, retry, sendMessage,
+  advanceSession, endSession, getSession, retry, sendMessage,
   type Action, type SessionDetail,
 } from '../api/client'
 
@@ -80,6 +80,22 @@ export default function Conversation() {
       await resend()
       return
     }
+    if (action === 'advance') {
+      setBusy(true)
+      setFailed(false)
+      try {
+        await advanceSession(sessionId)
+        await refresh()
+      } catch {
+        try {
+          const detail = await refresh()
+          if (detail.available_actions.includes('advance')) setFailed(true)
+        } catch { setFailed(true) }
+      } finally {
+        setBusy(false)
+      }
+      return
+    }
     if (action !== 'end') return
     const ok = window.confirm(
       '結束後這次討論會封存並產生總結，之後可以再開新的一輪，但無法回到這一次。要結束嗎？',
@@ -101,6 +117,7 @@ export default function Conversation() {
   if (!view) return <main className="page">{failed ? '讀取對話失敗，請重新整理。' : '載入中…'}</main>
 
   const canSpeak = view.available_actions.includes('send_message')
+  const canAdvance = view.available_actions.includes('advance')
   return (
     <main className="page">
       <ProgressIndicator
@@ -108,6 +125,7 @@ export default function Conversation() {
         total={view.session.total_stages}
       />
       <MessageList messages={view.messages} />
+      {canAdvance && <p>{`還有 ${view.session.total_stages - view.session.current_stage_index - 1} 個情境`}</p>}
       {failed && <p role="alert">操作失敗，請依目前可用動作重試。</p>}
       {canSpeak && (
         <>

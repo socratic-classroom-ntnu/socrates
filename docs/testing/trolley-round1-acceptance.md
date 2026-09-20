@@ -42,4 +42,4 @@ docker compose up -d --force-recreate backend  # 恢復預設腳本
 docker compose exec -T backend python -m pytest tests/ladders/test_repository.py tests/tutor/test_scripted.py tests/api/test_advance.py tests/orchestrator/test_in_stage.py -q
 ```
 
-後端已有 `POST /advance`，也會在 `max_turns` 到達且未達成時標記 `capped`；可用 API 和上述測試驗證。前端雖會依 `available_actions` 顯示「進入下一個情境」，但尚未將點擊接到 `/advance`，所以一般路徑從畫面仍只能走到第一個路口；完整九步驗收須待學生端流程補完後再執行。固定腳本的摘要目前不依實際造訪階段調整；提早結束時，**不要把預設腳本提及後兩階的摘要文字當作合格結果**。故障後重試可先跑既有後端測試，人工注入故障的操作仍待補齊。
+後端已有 `POST /advance`，也會在 `max_turns` 到達且未達成時標記 `capped`；前端「進入下一個情境」按鈕已接到 API，成功後會重新讀取完整對話。三階一般路徑可從畫面試跑；完整九步驗收仍須補齊歷史紀錄等流程。固定腳本的摘要目前不依實際造訪階段調整；提早結束時，**不要把預設腳本提及後兩階的摘要文字當作合格結果**。故障後重試可先跑既有後端測試，人工注入故障的操作仍待補齊。

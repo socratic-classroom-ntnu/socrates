@@ -39,6 +39,9 @@ export const sendMessage = (id: string, text: string) =>
     body: JSON.stringify({ text }),
   })
 
+export const advanceSession = (id: string) =>
+  request<SessionView>(`/sessions/${id}/advance`, { method: 'POST' })
+
 export const retry = (id: string) =>
   request<SessionView>(`/sessions/${id}/retry`, { method: 'POST' })
 

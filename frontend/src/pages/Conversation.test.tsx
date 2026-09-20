@@ -32,6 +32,99 @@ describe('Conversation', () => {
     expect(screen.queryByText(/天橋/)).not.toBeInTheDocument()
   })
 
+  it('路口只提示剩餘情境數量，不揭露下一階標題', async () => {
+    const crossroad = {
+      ...detail,
+      session: { ...detail.session, flow_state: 'at_crossroad' },
+      available_actions: ['advance', 'end'],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => crossroad }))
+    renderPage()
+
+    expect(await screen.findByText('還有 2 個情境')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '進入下一個情境' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: '你的回應' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/天橋/)).not.toBeInTheDocument()
+  })
+
+  it('進入下一階時等待後端並重新讀取完整對話', async () => {
+    const crossroad = {
+      ...detail,
+      session: { ...detail.session, flow_state: 'at_crossroad' },
+      available_actions: ['advance', 'end'],
+    }
+    const nextOpening = '天橋上的男子。你會怎麼做？'
+    const entered = {
+      ...crossroad,
+      session: { ...crossroad.session, flow_state: 'active_in_stage', current_stage_index: 1 },
+      stage: { index: 1, key: 'footbridge', title: '天橋上的男子', opening_statement: nextOpening },
+      messages: [...crossroad.messages, { seq: 1, role: 'tutor', content: nextOpening }],
+      available_actions: ['send_message', 'end'],
+    }
+    let current = crossroad
+    let finishAdvance!: (value: unknown) => void
+    const pendingAdvance = new Promise((resolve) => { finishAdvance = resolve })
+    const fetchMock = vi.fn((path: string, init?: RequestInit) => {
+      if (init?.method === 'POST' && path.endsWith('/advance')) return pendingAdvance
+      return Promise.resolve({ ok: true, json: async () => current })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    const advanceButton = await screen.findByRole('button', { name: '進入下一個情境' })
+    expect(screen.queryByText(nextOpening)).not.toBeInTheDocument()
+    fireEvent.click(advanceButton)
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      '/api/sessions/s1/advance', expect.objectContaining({ method: 'POST' }),
+    ))
+    expect(advanceButton).toBeDisabled()
+    expect(screen.getByRole('button', { name: '結束討論' })).toBeDisabled()
+
+    current = entered
+    finishAdvance({
+      ok: true,
+      json: async () => ({
+        session: entered.session,
+        stage: entered.stage,
+        appended_messages: [entered.messages.at(-1)],
+        available_actions: entered.available_actions,
+        summary: null,
+      }),
+    })
+    expect(await screen.findByText('情境 2 / 3')).toBeInTheDocument()
+    expect(screen.getAllByText(nextOpening)).toHaveLength(1)
+    expect(screen.getByRole('textbox', { name: '你的回應' })).toBeInTheDocument()
+  })
+
+  it('另一分頁已進階時以最新狀態更新畫面，不顯示誤導性的失敗警示', async () => {
+    const crossroad = {
+      ...detail,
+      session: { ...detail.session, flow_state: 'at_crossroad' },
+      available_actions: ['advance', 'end'],
+    }
+    const entered = {
+      ...crossroad,
+      session: { ...crossroad.session, flow_state: 'active_in_stage', current_stage_index: 1 },
+      stage: { index: 1, key: 'footbridge', title: '天橋上的男子', opening_statement: '天橋開場白' },
+      messages: [...crossroad.messages, { seq: 1, role: 'tutor', content: '天橋開場白' }],
+      available_actions: ['send_message', 'end'],
+    }
+    let current = crossroad
+    vi.stubGlobal('fetch', vi.fn((path: string, init?: RequestInit) => {
+      if (init?.method === 'POST' && path.endsWith('/advance')) {
+        current = entered
+        return Promise.resolve({ ok: false, status: 409 })
+      }
+      return Promise.resolve({ ok: true, json: async () => current })
+    }))
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: '進入下一個情境' }))
+    expect(await screen.findByText('情境 2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('天橋開場白')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('依 available_actions 顯示結束鈕', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => detail }))
     renderPage()

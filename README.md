@@ -46,8 +46,8 @@
 
 **第一輪的垂直切片，能從首頁走到總結。** 但要知道現在還不是完整的產品：
 
-- **只有一個情境**（失控的電車）。原課堂的力量來自「天橋上的胖子」翻轉你在第一題的答案，
-  那兩階還沒放進來
+- **三階情境內容與固定回覆腳本已備妥**；後端已支援路口進入下一階與達上限的狀態轉換，
+  但前端尚未接上「進入下一個情境」按鈕，目前仍無法從畫面走完三階
 - **教授的回覆是固定腳本**。你打什麼內容，回應都一樣——這是為了讓驗收可重現，
   接真實模型是後續的工作
 - 免註冊，身分存在瀏覽器裡。換裝置或清掉網站資料，紀錄就找不回來
@@ -74,13 +74,9 @@ cd frontend && npm test -- --run                        # 前端測試
 | 要動手改程式 | [`AGENTS.md`](AGENTS.md)——不可妥協條款與範本索引，動手前必讀 |
 | 新加入團隊 | [`docs/onboarding.md`](docs/onboarding.md)——六站閱讀路徑，順序是刻意排的 |
 | 想理解產品 | [`docs/product/product-overview.md`](docs/product/product-overview.md) |
+| 要驗收三階腳本 | [`docs/testing/trolley-round1-acceptance.md`](docs/testing/trolley-round1-acceptance.md) |
 | 想理解實作 | [`docs/superpowers/specs/2026-09-19-socratic-tutor-design.md`](docs/superpowers/specs/2026-09-19-socratic-tutor-design.md) |
 
-有一條規則值得在這裡先講，因為它最容易被好意破壞：
-
-**進度指示器只顯示「情境 1 / 3」，絕不顯示還沒進入的情境叫什麼名字。**
-變形題的整個效果，依賴學生在答第一題時不知道第二題會怎麼翻轉他的答案。
-這個保證做在後端——未進入的階段，API 根本不回傳標題。
 
 ## 技術
 

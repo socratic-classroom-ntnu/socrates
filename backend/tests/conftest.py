@@ -44,8 +44,6 @@ _DEFAULT_URL = "postgresql+psycopg://socrates:socrates@localhost:5432/socrates"
 _TEST_URL = _to_test_database_url(os.environ.get("DATABASE_URL", _DEFAULT_URL))
 
 # 機械守衛：規則只能降低犯錯率，擋得住的只有會當場失敗的檢查。
-# 有人（或某個 AI）日後把上面改成指回開發資料庫時，第一次跑測試就會被擋下來，
-# 而不是等資料沒了才發現。
 if not urlsplit(_TEST_URL).path.endswith("_test"):
     raise RuntimeError(f"測試只能對 *_test 資料庫執行，目前是 {_TEST_URL}")
 

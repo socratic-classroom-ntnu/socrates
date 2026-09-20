@@ -1,0 +1,87 @@
+# 驗收路徑：第一階第三輪改變立場，第四輪解釋轉變後才可達成；在路口結束。
+stages:
+  trolley_basic:
+    # 固定輸入：會轉向；因為少死四人；現在改為不轉向；說明改變的原因。
+    turns:
+      - reply_text: "你說會轉向。為什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你想把死亡人數降到最低。那名側軌工人原本不會被撞上；讓他因你的轉向而死，這一點會影響你的理由嗎？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "後果主義"
+          position_shifted: false
+      - reply_text: "你剛才說會轉向，現在改為不轉向。是哪個差別讓你改變？先把這一步說清楚，我們不急著往下走。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "混合"
+          position_shifted: true
+      - reply_text: "你說明了轉變的原因，也看見新選擇仍有代價。要在這裡結束，或進入另一個情境，由你決定。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "義務論"
+          position_shifted: false
+  footbridge:
+    turns:
+      - reply_text: "面對這個選擇，你會不會推他？為什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "如果結果是一人死亡、五人獲救，你提出的理由還能成立嗎？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "混合"
+          position_shifted: false
+      - reply_text: "你回應了這個挑戰。要進入另一個情境，或在此結束，由你決定。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "混合"
+          position_shifted: false
+  transplant:
+    turns:
+      - reply_text: "你會不會摘取他的器官？理由是什麼？"
+        observations:
+          has_position: true
+          has_reason: false
+          reason_tested: false
+          principle_label: "未明"
+          position_shifted: false
+      - reply_text: "你的理由放到其他一人救五人的情境時，還能一致嗎？"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: false
+          principle_label: "混合"
+          position_shifted: false
+      - reply_text: "你已回應這個疑問。我們可以在此收尾，也可以繼續釐清。"
+        observations:
+          has_position: true
+          has_reason: true
+          reason_tested: true
+          principle_label: "混合"
+          position_shifted: false
+summary:
+  core_principle: "你原先願意轉向以減少死亡，後來注意到轉向也會使原本安全的人喪命，於是改變了選擇；你正在釐清人數與主動傷害之間的界線。"
+  tension: "不轉向仍會讓五人死亡；新立場沒有消除這項道德代價。"
+  stance_by_stage:
+    - stage_key: "trolley_basic"
+      label: "義務論"
+      note: "在第一階由轉向改為不轉向，並解釋了原因"
+  shifted: true

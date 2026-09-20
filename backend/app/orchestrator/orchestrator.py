@@ -97,6 +97,9 @@ class Orchestrator:
         elif should_advance(turn.observations, stage_state.turn_count):
             updated = replace(updated, status="goal_met")
             flow = self._after_stage_completed(index)
+        elif updated.turn_count >= stage.max_turns:
+            updated = replace(updated, status="capped")
+            flow = self._after_stage_completed(index)
 
         stages = tuple(updated if s.index == index else s for s in state.stages)
         return Outcome(
@@ -105,9 +108,31 @@ class Orchestrator:
         )
 
     def handle_advance(self, state: SessionState) -> Outcome:
-        raise NotImplementedError(
-            "路口推進由線 A 實作：進入下一階、標記 in_progress、逐字輸出開場白。"
-            "對應的狀態轉換測試已存在並標為 xfail。"
+        if state.flow_state == "ended":
+            raise ConversationEnded("這段討論已經結束了")
+        if state.flow_state != "at_crossroad":
+            raise InvalidAction("目前不在情境路口")
+        next_index = state.current_stage_index + 1
+        if next_index >= self._ladder.total_stages:
+            raise InvalidAction("沒有下一個情境")
+
+        stage = self._ladder.stage(next_index)
+        stages = tuple(
+            replace(item, status="in_progress") if item.index == next_index else item
+            for item in state.stages
+        )
+        return Outcome(
+            state=replace(
+                state,
+                flow_state="active_in_stage",
+                current_stage_index=next_index,
+                stages=stages,
+            ),
+            appended=(
+                OutgoingMessage(
+                    role="tutor", content=stage.opening_statement, stage_index=next_index
+                ),
+            ),
         )
 
     def _after_stage_completed(self, index: int) -> FlowState:

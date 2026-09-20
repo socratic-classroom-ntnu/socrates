@@ -44,11 +44,13 @@ _ACTIONS: dict[FlowState, tuple[Action, ...]] = {
 }
 
 
-def actions_for(flow_state: FlowState, pending_reply: bool = False) -> tuple[Action, ...]:
+def actions_for(
+    flow_state: FlowState, pending_reply: bool = False, retry_allowed: bool = True
+) -> tuple[Action, ...]:
     """設計規格 §9.1：可用動作由後端決定，前端不自行推導。
 
     「結束討論」在所有未結束狀態皆可用——與 §8 的狀態機一致。
     """
     if pending_reply and flow_state in ("active_in_stage", "awaiting_wrap_up"):
-        return ("retry", "end")
+        return ("retry", "end") if retry_allowed else ("end",)
     return _ACTIONS[flow_state]

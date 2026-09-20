@@ -174,6 +174,59 @@
         }
       }
     },
+    "/api/sessions/{session_id}/advance": {
+      "post": {
+        "tags": [
+          "messages"
+        ],
+        "summary": "Advance",
+        "operationId": "advance_api_sessions__session_id__advance_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sessions/{session_id}/retry": {
       "post": {
         "tags": [
@@ -414,6 +467,10 @@
           "ladder_id": {
             "type": "string",
             "title": "Ladder Id"
+          },
+          "restart_existing": {
+            "type": "boolean",
+            "title": "Restart Existing"
           }
         },
         "type": "object",

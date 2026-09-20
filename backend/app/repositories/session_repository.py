@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session as OrmSession
 
 from app.domain.session_state import OutgoingMessage, SessionState, StageState
@@ -17,6 +18,28 @@ class SessionRepository:
         if self._db.get(Learner, learner_id) is None:
             self._db.add(Learner(id=learner_id))
             self._db.flush()
+
+    def lock_learner(self, learner_id: uuid.UUID) -> None:
+        self._db.execute(
+            insert(Learner)
+            .values(id=learner_id)
+            .on_conflict_do_nothing(index_elements=[Learner.id])
+        )
+        self._db.execute(
+            select(Learner).where(Learner.id == learner_id).with_for_update()
+        ).scalar_one()
+
+    def get_active_for_learner(self, learner_id: uuid.UUID) -> Session | None:
+        stmt = (
+            select(Session)
+            .where(Session.learner_id == learner_id, Session.status == "active")
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        session = self._db.execute(stmt).scalar_one_or_none()
+        if session is not None:
+            self._db.expire(session, ["messages", "stage_progress"])
+        return session
 
     def create(
         self, learner_id: uuid.UUID, ladder_id: str, ladder_version: int, state: SessionState

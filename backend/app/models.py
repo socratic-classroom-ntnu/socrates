@@ -6,10 +6,12 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -60,6 +62,14 @@ class Session(Base):
     )
 
 
+Index(
+    "uq_sessions_one_active_per_learner",
+    Session.learner_id,
+    unique=True,
+    postgresql_where=text("status = 'active'"),
+)
+
+
 class StageProgress(Base):
     __tablename__ = "stage_progress"
     __table_args__ = (UniqueConstraint("session_id", "stage_index"),)
@@ -88,6 +98,7 @@ class Message(Base):
     stage_index: Mapped[int] = mapped_column(Integer)
     role: Mapped[MessageRole] = mapped_column(String(16))
     content: Mapped[str] = mapped_column(Text)
+    retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     observations: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 

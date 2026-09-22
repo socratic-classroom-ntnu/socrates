@@ -294,9 +294,40 @@ class ConversationService:
         state = SessionRepository.to_state(session)
         points: list[str] = []
         for item in row.stance_by_stage:
-            if not isinstance(item, dict): continue
-            value = item.get("principle_label") or item.get("principle") or item.get("stance")
-            if value and str(value) not in points: points.append(str(value))
-        if not points: points = [row.core_principle]
-        student_lines = [m.content.strip() for m in session.messages if m.role == "student" and m.content.strip()]
-        return SummaryView(discussion_topic="電車難題：選擇、責任與原則",core_principle=row.core_principle,key_points=points[:4],tension=row.tension,reflection_excerpt="；".join(student_lines[-3:]) if student_lines else None,stage_outcomes=[StageOutcomeView(index=s.index,status=s.status,title=(None if s.status in ("skipped","not_started") else self._ladder.stage(s.index).title)) for s in state.stages])
+            if not isinstance(item, dict):
+                continue
+            value = (
+                item.get("principle_label")
+                or item.get("principle")
+                or item.get("stance")
+            )
+            if value and str(value) not in points:
+                points.append(str(value))
+        if not points:
+            points = [row.core_principle]
+        student_lines = [
+            message.content.strip()
+            for message in session.messages
+            if message.role == "student" and message.content.strip()
+        ]
+        return SummaryView(
+            discussion_topic="電車難題：選擇、責任與原則",
+            core_principle=row.core_principle,
+            key_points=points[:4],
+            tension=row.tension,
+            reflection_excerpt=(
+                "；".join(student_lines[-3:]) if student_lines else None
+            ),
+            stage_outcomes=[
+                StageOutcomeView(
+                    index=stage.index,
+                    status=stage.status,
+                    title=(
+                        None
+                        if stage.status in ("skipped", "not_started")
+                        else self._ladder.stage(stage.index).title
+                    ),
+                )
+                for stage in state.stages
+            ],
+        )

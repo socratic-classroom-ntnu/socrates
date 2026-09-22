@@ -36,6 +36,8 @@ export default function Summary() {
 
   if (!summary) return <main className="round1-page" data-testid="summary-loading"><section className="round1-card">教授正在整理你剛剛說的…</section></main>
 
+  const keyPoints = summary.key_points ?? []
+
   return (
     <main className="round1-page" data-testid="summary-page">
       <section className="round1-card round1-summary-card">
@@ -44,7 +46,7 @@ export default function Summary() {
         <blockquote>{summary.core_principle}</blockquote>
         <section>
           <h2>討論重點</h2>
-          <ul data-testid="discussion-key-points">{summary.key_points.map((point) => <li key={point}>{point}</li>)}</ul>
+          <ul data-testid="discussion-key-points">{keyPoints.map((point) => <li key={point}>{point}</li>)}</ul>
         </section>
         {summary.tension && <section><h2>核心張力</h2><p>{summary.tension}</p></section>}
         {summary.reflection_excerpt && <section><h2>你的原話</h2><p>{summary.reflection_excerpt}</p></section>}

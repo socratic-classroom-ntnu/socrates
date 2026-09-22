@@ -1,0 +1,64 @@
+name: Stage Deploy
+
+on:
+  workflow_run:
+    workflows: ["Stage Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Exact stage commit SHA
+        required: true
+        default: stage
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: socrates-stage-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+           (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'stage') }}
+    environment: stage
+    runs-on: [self-hosted, linux, socrates-stage]
+    timeout-minutes: 20
+    env:
+      RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy exact two-container release
+        env:
+          DATABASE_URL: ${{ secrets.SOCRATES_DATABASE_URL }}
+          SOCRATES_HTTP_PORT: ${{ vars.SOCRATES_HTTP_PORT || '8080' }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$DATABASE_URL"
+          cat > deploy/stage/.env.runtime <<EOF
+          DATABASE_URL=$DATABASE_URL
+          SOCRATES_HTTP_PORT=$SOCRATES_HTTP_PORT
+          SOCRATES_SOURCE_SHA=$RELEASE_SHA
+          SOCRATES_RELEASE_ID=socrates-stage-$RELEASE_SHA
+          SOCRATES_ALEMBIC_REVISION=head
+          BACKEND_IMAGE=ghcr.io/socratic-classroom-ntnu/socrates-backend:sha-$RELEASE_SHA
+          FRONTEND_IMAGE=ghcr.io/socratic-classroom-ntnu/socrates-frontend:sha-$RELEASE_SHA
+          EOF
+          docker compose --env-file deploy/stage/.env.runtime -f deploy/stage/compose.yml pull
+          docker compose --env-file deploy/stage/.env.runtime -f deploy/stage/compose.yml up -d
+          for i in $(seq 1 90); do
+            curl -fsS "http://127.0.0.1:$SOCRATES_HTTP_PORT/api/health" && break
+            sleep 2
+          done
+          curl -fsS "http://127.0.0.1:$SOCRATES_HTTP_PORT/api/health"
+          curl -fsS "http://127.0.0.1:$SOCRATES_HTTP_PORT/api/release"

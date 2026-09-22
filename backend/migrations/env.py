@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.db import Base
-from app import models  # noqa: F401  確保所有 model 被註冊
+from app import interaction_models, models  # noqa: F401  確保所有 model 被註冊
 from app.config import settings
 
 # this is the Alembic Config object, which provides

@@ -1,0 +1,62 @@
+name: socrates-round1-local
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: socrates
+      POSTGRES_PASSWORD: socrates
+      POSTGRES_DB: socrates
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socrates"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - socrates-round1-db:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ../../backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://socrates:socrates@db:5432/socrates
+      LADDER_PATH: /app/ladders/trolley.yaml
+      SCRIPT_PATH: /app/scripts/trolley.script.yaml
+      SOCRATES_ENVIRONMENT: local-dev
+      SOCRATES_SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local}
+      SOCRATES_RELEASE_ID: ${SOCRATES_RELEASE_ID:-socrates-local}
+      SOCRATES_ALEMBIC_REVISION: ${SOCRATES_ALEMBIC_REVISION:-head}
+    volumes:
+      - ../../backend:/app
+      - ../../ladders:/app/ladders:ro
+      - ../../scripts:/app/scripts:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -lc "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  frontend:
+    build:
+      context: ../../frontend
+    restart: unless-stopped
+    volumes:
+      - ../../frontend/src:/app/src
+      - ../../frontend/public:/app/public
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    command: npm run dev
+
+volumes:
+  socrates-round1-db:

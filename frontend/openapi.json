@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Socrates API",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "paths": {
     "/api/sessions": {
@@ -41,6 +41,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SessionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List Sessions",
+        "operationId": "list_sessions_api_sessions_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionHistoryPage"
                 }
               }
             }
@@ -437,6 +506,248 @@
         }
       }
     },
+    "/api/sessions/{session_id}/room": {
+      "get": {
+        "tags": [
+          "room"
+        ],
+        "summary": "Get Room",
+        "operationId": "get_room_api_sessions__session_id__room_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationRoomView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/transcript-drafts": {
+      "post": {
+        "tags": [
+          "transcripts"
+        ],
+        "summary": "Create Transcript Draft",
+        "operationId": "create_transcript_draft_api_sessions__session_id__transcript_drafts_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptDraftCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptDraftView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/transcript-drafts/{draft_id}/confirm": {
+      "post": {
+        "tags": [
+          "transcripts"
+        ],
+        "summary": "Confirm Transcript Draft",
+        "operationId": "confirm_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__confirm_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptDraftView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/transcript-drafts/{draft_id}": {
+      "delete": {
+        "tags": [
+          "transcripts"
+        ],
+        "summary": "Discard Transcript Draft",
+        "operationId": "discard_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "draft_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Draft Id"
+            }
+          },
+          {
+            "name": "x-learner-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Learner-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptDraftView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health",
@@ -458,10 +769,44 @@
           }
         }
       }
+    },
+    "/api/release": {
+      "get": {
+        "summary": "Release",
+        "operationId": "release_api_release_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseView"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ConversationRoomView": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/SessionDetail"
+          },
+          "room": {
+            "$ref": "#/components/schemas/RoomProjection"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail",
+          "room"
+        ],
+        "title": "ConversationRoomView"
+      },
       "CreateSessionRequest": {
         "properties": {
           "ladder_id": {
@@ -519,6 +864,96 @@
           "content"
         ],
         "title": "MessageView"
+      },
+      "ReleaseView": {
+        "properties": {
+          "release_id": {
+            "type": "string",
+            "title": "Release Id"
+          },
+          "source_sha": {
+            "type": "string",
+            "title": "Source Sha"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "alembic_revision": {
+            "type": "string",
+            "title": "Alembic Revision"
+          },
+          "built_at": {
+            "type": "string",
+            "title": "Built At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "release_id",
+          "source_sha",
+          "environment",
+          "alembic_revision",
+          "built_at"
+        ],
+        "title": "ReleaseView"
+      },
+      "RoomCapabilities": {
+        "properties": {
+          "history": {
+            "type": "boolean",
+            "title": "History",
+            "default": true
+          },
+          "text_input": {
+            "type": "boolean",
+            "title": "Text Input",
+            "default": true
+          },
+          "voice_input": {
+            "type": "boolean",
+            "title": "Voice Input",
+            "default": true
+          },
+          "transcript_draft": {
+            "type": "boolean",
+            "title": "Transcript Draft",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "RoomCapabilities"
+      },
+      "RoomProjection": {
+        "properties": {
+          "room_revision": {
+            "type": "string",
+            "title": "Room Revision",
+            "default": "ce-room-v1"
+          },
+          "tutor_state": {
+            "type": "string",
+            "enum": [
+              "idle",
+              "listening",
+              "thinking",
+              "speaking"
+            ],
+            "title": "Tutor State",
+            "default": "idle"
+          },
+          "avatar_id": {
+            "type": "string",
+            "const": "brunette",
+            "title": "Avatar Id",
+            "default": "brunette"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/RoomCapabilities"
+          }
+        },
+        "type": "object",
+        "title": "RoomProjection"
       },
       "SendMessageRequest": {
         "properties": {
@@ -589,8 +1024,145 @@
           "available_actions",
           "summary"
         ],
-        "title": "SessionDetail",
-        "description": "GET 專用：回傳完整訊息而非增量。"
+        "title": "SessionDetail"
+      },
+      "SessionHistoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "ended"
+            ],
+            "title": "Status"
+          },
+          "flow_state": {
+            "type": "string",
+            "enum": [
+              "active_in_stage",
+              "at_crossroad",
+              "awaiting_wrap_up",
+              "ended"
+            ],
+            "title": "Flow State"
+          },
+          "current_stage_index": {
+            "type": "integer",
+            "title": "Current Stage Index"
+          },
+          "total_stages": {
+            "type": "integer",
+            "title": "Total Stages"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "end_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "student_ended",
+                  "completed",
+                  "restarted"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "summary_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Preview"
+          },
+          "stage_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "flow_state",
+          "current_stage_index",
+          "total_stages",
+          "started_at",
+          "updated_at",
+          "ended_at",
+          "end_reason",
+          "summary_preview",
+          "stage_title"
+        ],
+        "title": "SessionHistoryItem"
+      },
+      "SessionHistoryPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SessionHistoryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "SessionHistoryPage"
       },
       "SessionInfo": {
         "properties": {
@@ -640,6 +1212,42 @@
               }
             ],
             "title": "End Reason"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           }
         },
         "type": "object",
@@ -706,8 +1314,7 @@
           "available_actions",
           "summary"
         ],
-        "title": "SessionView",
-        "description": "所有會改變狀態的端點共用的回應形狀（設計規格 §9.1）。"
+        "title": "SessionView"
       },
       "StageOutcomeView": {
         "properties": {
@@ -774,13 +1381,41 @@
           "opening_statement"
         ],
         "title": "StageView",
-        "description": "只描述學生**已經進入**的那一階。未進入的階不會出現在任何回應裡。"
+        "description": "只描述學生已經進入的情境。"
       },
       "SummaryView": {
         "properties": {
+          "discussion_topic": {
+            "type": "string",
+            "title": "Discussion Topic",
+            "default": "電車難題：選擇、責任與原則"
+          },
           "core_principle": {
             "type": "string",
             "title": "Core Principle"
+          },
+          "key_points": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Points"
+          },
+          "tension": {
+            "type": "string",
+            "title": "Tension",
+            "default": ""
+          },
+          "reflection_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflection Excerpt"
           },
           "stage_outcomes": {
             "items": {
@@ -796,6 +1431,132 @@
           "stage_outcomes"
         ],
         "title": "SummaryView"
+      },
+      "TranscriptDraftCreate": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "adapter": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Adapter",
+            "default": "browser-speech"
+          },
+          "locale": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 2,
+            "title": "Locale",
+            "default": "zh-TW"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "TranscriptDraftCreate"
+      },
+      "TranscriptDraftView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Session Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "adapter": {
+            "type": "string",
+            "title": "Adapter"
+          },
+          "locale": {
+            "type": "string",
+            "title": "Locale"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "discarded_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discarded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "session_id",
+          "text",
+          "adapter",
+          "locale",
+          "confidence",
+          "status",
+          "created_at",
+          "confirmed_at",
+          "discarded_at"
+        ],
+        "title": "TranscriptDraftView"
       },
       "ValidationError": {
         "properties": {

@@ -1,0 +1,74 @@
+name: Stage Release
+
+on:
+  push:
+    branches: [stage]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact stage commit SHA
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: socrates-stage-release
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: backend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/stage/backend.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/socratic-classroom-ntnu/socrates-backend:stage
+            ghcr.io/socratic-classroom-ntnu/socrates-backend:sha-${{ env.SOURCE_SHA }}
+      - id: frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/stage/frontend.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/socratic-classroom-ntnu/socrates-frontend:stage
+            ghcr.io/socratic-classroom-ntnu/socrates-frontend:sha-${{ env.SOURCE_SHA }}
+      - name: Write release manifest
+        env:
+          BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.frontend.outputs.digest }}
+        run: |
+          python - <<'PY'
+          import json, os
+          manifest = {
+            "schema": "socrates/stage-release/v1",
+            "source_sha": os.environ["SOURCE_SHA"],
+            "backend_image": "ghcr.io/socratic-classroom-ntnu/socrates-backend@" + os.environ["BACKEND_DIGEST"],
+            "frontend_image": "ghcr.io/socratic-classroom-ntnu/socrates-frontend@" + os.environ["FRONTEND_DIGEST"],
+            "public_url": "https://socratic.arthur0824hao.com"
+          }
+          open("RELEASE.json", "w", encoding="utf-8").write(json.dumps(manifest, indent=2) + "\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: socrates-stage-release-${{ env.SOURCE_SHA }}
+          path: RELEASE.json
+          retention-days: 30

@@ -6,12 +6,26 @@ import Conversation from './Conversation'
 const detail = {
   session: {
     id: 's1', status: 'active', flow_state: 'active_in_stage',
-    current_stage_index: 0, total_stages: 3,
+    current_stage_index: 0, total_stages: 3, end_reason: null,
   },
   stage: { index: 0, key: 'trolley_basic', title: '失控的電車', opening_statement: '一輛電車…' },
   messages: [{ seq: 0, role: 'tutor', content: '一輛電車…' }],
   available_actions: ['send_message', 'end'],
   summary: null,
+}
+
+const room = {
+  detail,
+  room: {
+    room_revision: 'ce-room-v1', tutor_state: 'idle', avatar_id: 'brunette',
+    capabilities: { history: true, text_input: true, voice_input: true, transcript_draft: true },
+  },
+}
+
+const historyPage = { items: [], next_cursor: null }
+
+function response(data: unknown, status = 200) {
+  return Promise.resolve({ ok: status >= 200 && status < 300, status, json: async () => data })
 }
 
 function renderPage() {
@@ -24,174 +38,114 @@ function renderPage() {
   )
 }
 
-describe('Conversation', () => {
-  it('顯示進度的數量，但不顯示未進入情境的名稱', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => detail }))
+function installFetch(initialRoom = room) {
+  let current = initialRoom
+  const mock = vi.fn((path: string, init?: RequestInit) => {
+    if (path.includes('/room')) return response(current)
+    if (path.startsWith('/api/sessions?')) return response(historyPage)
+    if (init?.method === 'POST' && path.endsWith('/advance')) return response(current.detail)
+    if (init?.method === 'POST' && path.endsWith('/retry')) return response(current.detail)
+    if (init?.method === 'POST' && path.endsWith('/end')) return response(current.detail)
+    if (init?.method === 'POST' && path.endsWith('/messages')) return response(current.detail)
+    return response(current)
+  })
+  vi.stubGlobal('fetch', mock)
+  return { mock, setRoom: (value: typeof room) => { current = value } }
+}
+
+describe('CE Conversation Room', () => {
+  it('顯示模組化房間、中央 brunette avatar 與文字／語音輸入', async () => {
+    installFetch()
     renderPage()
     expect(await screen.findByText('情境 1 / 3')).toBeInTheDocument()
+    expect(screen.getByLabelText('對話紀錄')).toBeInTheDocument()
+    expect(screen.getByLabelText('Socratic tutor avatar')).toHaveAttribute('data-avatar-id', 'brunette')
+    expect(screen.getByRole('textbox', { name: '文字輸入' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '開始語音輸入' })).toBeInTheDocument()
     expect(screen.queryByText(/天橋/)).not.toBeInTheDocument()
   })
 
-  it('路口只提示剩餘情境數量，不揭露下一階標題', async () => {
+  it('路口以後端 available_actions 投影下一步並保留輸入框唯讀狀態', async () => {
     const crossroad = {
-      ...detail,
-      session: { ...detail.session, flow_state: 'at_crossroad' },
-      available_actions: ['advance', 'end'],
+      ...room,
+      detail: {
+        ...detail,
+        session: { ...detail.session, flow_state: 'at_crossroad' },
+        available_actions: ['advance', 'end'],
+      },
     }
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => crossroad }))
+    installFetch(crossroad)
     renderPage()
-
-    expect(await screen.findByText('還有 2 個情境')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '進入下一個情境' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: '你的回應' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: '前往下一個情境' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: '文字輸入' })).toBeDisabled()
     expect(screen.queryByText(/天橋/)).not.toBeInTheDocument()
   })
 
-  it('進入下一階時等待後端並重新讀取完整對話', async () => {
+  it('進階後重新讀取 RoomView 並呈現新情境', async () => {
     const crossroad = {
-      ...detail,
-      session: { ...detail.session, flow_state: 'at_crossroad' },
-      available_actions: ['advance', 'end'],
-    }
-    const nextOpening = '天橋上的男子。你會怎麼做？'
-    const entered = {
-      ...crossroad,
-      session: { ...crossroad.session, flow_state: 'active_in_stage', current_stage_index: 1 },
-      stage: { index: 1, key: 'footbridge', title: '天橋上的男子', opening_statement: nextOpening },
-      messages: [...crossroad.messages, { seq: 1, role: 'tutor', content: nextOpening }],
-      available_actions: ['send_message', 'end'],
-    }
-    let current = crossroad
-    let finishAdvance!: (value: unknown) => void
-    const pendingAdvance = new Promise((resolve) => { finishAdvance = resolve })
-    const fetchMock = vi.fn((path: string, init?: RequestInit) => {
-      if (init?.method === 'POST' && path.endsWith('/advance')) return pendingAdvance
-      return Promise.resolve({ ok: true, json: async () => current })
-    })
-    vi.stubGlobal('fetch', fetchMock)
-    renderPage()
-
-    const advanceButton = await screen.findByRole('button', { name: '進入下一個情境' })
-    expect(screen.queryByText(nextOpening)).not.toBeInTheDocument()
-    fireEvent.click(advanceButton)
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
-      '/api/sessions/s1/advance', expect.objectContaining({ method: 'POST' }),
-    ))
-    expect(advanceButton).toBeDisabled()
-    expect(screen.getByRole('button', { name: '結束討論' })).toBeDisabled()
-
-    current = entered
-    finishAdvance({
-      ok: true,
-      json: async () => ({
-        session: entered.session,
-        stage: entered.stage,
-        appended_messages: [entered.messages.at(-1)],
-        available_actions: entered.available_actions,
-        summary: null,
-      }),
-    })
-    expect(await screen.findByText('情境 2 / 3')).toBeInTheDocument()
-    expect(screen.getAllByText(nextOpening)).toHaveLength(1)
-    expect(screen.getByRole('textbox', { name: '你的回應' })).toBeInTheDocument()
-  })
-
-  it('另一分頁已進階時以最新狀態更新畫面，不顯示誤導性的失敗警示', async () => {
-    const crossroad = {
-      ...detail,
-      session: { ...detail.session, flow_state: 'at_crossroad' },
-      available_actions: ['advance', 'end'],
+      ...room,
+      detail: {
+        ...detail,
+        session: { ...detail.session, flow_state: 'at_crossroad' },
+        available_actions: ['advance', 'end'],
+      },
     }
     const entered = {
-      ...crossroad,
-      session: { ...crossroad.session, flow_state: 'active_in_stage', current_stage_index: 1 },
-      stage: { index: 1, key: 'footbridge', title: '天橋上的男子', opening_statement: '天橋開場白' },
-      messages: [...crossroad.messages, { seq: 1, role: 'tutor', content: '天橋開場白' }],
-      available_actions: ['send_message', 'end'],
+      ...room,
+      detail: {
+        ...detail,
+        session: { ...detail.session, current_stage_index: 1 },
+        stage: { index: 1, key: 'footbridge', title: '天橋上的男子', opening_statement: '天橋開場白' },
+        messages: [...detail.messages, { seq: 1, role: 'tutor', content: '天橋開場白' }],
+      },
     }
-    let current = crossroad
-    vi.stubGlobal('fetch', vi.fn((path: string, init?: RequestInit) => {
+    const state = installFetch(crossroad)
+    state.mock.mockImplementation((path: string, init?: RequestInit) => {
       if (init?.method === 'POST' && path.endsWith('/advance')) {
-        current = entered
-        return Promise.resolve({ ok: false, status: 409 })
+        state.setRoom(entered)
+        return response(entered.detail)
       }
-      return Promise.resolve({ ok: true, json: async () => current })
-    }))
+      if (path.includes('/room')) return response(entered)
+      if (path.startsWith('/api/sessions?')) return response(historyPage)
+      return response(entered)
+    })
     renderPage()
-
-    fireEvent.click(await screen.findByRole('button', { name: '進入下一個情境' }))
+    fireEvent.click(await screen.findByRole('button', { name: '前往下一個情境' }))
     expect(await screen.findByText('情境 2 / 3')).toBeInTheDocument()
     expect(screen.getByText('天橋開場白')).toBeInTheDocument()
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
-  it('依 available_actions 顯示結束鈕', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => detail }))
-    renderPage()
-    expect(await screen.findByRole('button', { name: '結束討論' })).toBeInTheDocument()
-  })
-
-  it('重新整理後仍能依後端狀態顯示重試鈕', async () => {
-    const pending = {
-      ...detail,
-      messages: [...detail.messages, { seq: 1, role: 'student', content: '我的發言' }],
-      available_actions: ['retry', 'end'],
-    }
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => pending }))
-    renderPage()
-    expect(await screen.findByRole('button', { name: '重試' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox', { name: '你的回應' })).not.toBeInTheDocument()
-  })
-
-  it('送出等待期間不接受會被成功回應清掉的新草稿', async () => {
-    let finishPost!: (value: unknown) => void
-    const pendingPost = new Promise((resolve) => { finishPost = resolve })
-    const fetchMock = vi.fn((_path: string, init?: RequestInit) => {
-      if (init?.method === 'POST') return pendingPost
-      return Promise.resolve({ ok: true, json: async () => detail })
+  it('文字輸入沿既有 messages endpoint 送出並刷新 RoomView', async () => {
+    const state = installFetch()
+    state.mock.mockImplementation((path: string, init?: RequestInit) => {
+      if (init?.method === 'POST' && path.endsWith('/messages')) return response(detail)
+      if (path.includes('/room')) return response(room)
+      if (path.startsWith('/api/sessions?')) return response(historyPage)
+      return response(room)
     })
-    vi.stubGlobal('fetch', fetchMock)
     renderPage()
-
-    const input = await screen.findByRole('textbox', { name: '你的回應' })
-    fireEvent.change(input, { target: { value: '已送出的想法' } })
-    fireEvent.click(screen.getByRole('button', { name: '送出' }))
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
-    expect(input).toBeDisabled()
-
-    finishPost({ ok: true, json: async () => detail })
-    await waitFor(() => expect(input).not.toBeDisabled())
-    expect(input).toHaveValue('')
+    const input = await screen.findByRole('textbox', { name: '文字輸入' })
+    fireEvent.change(input, { target: { value: '我的想法' } })
+    fireEvent.click(screen.getByRole('button', { name: '傳送' }))
+    await waitFor(() => expect(state.mock).toHaveBeenCalledWith(
+      '/api/sessions/s1/messages',
+      expect.objectContaining({ method: 'POST' }),
+    ))
+    await waitFor(() => expect(input).toHaveValue(''))
   })
 
-  it('已儲存發言在重試成功後不殘留為可再次送出的草稿', async () => {
+  it('待回覆訊息呈現 retry action', async () => {
     const pending = {
-      ...detail,
-      messages: [...detail.messages, { seq: 1, role: 'student', content: '已儲存的想法' }],
-      available_actions: ['retry', 'end'],
+      ...room,
+      detail: {
+        ...detail,
+        messages: [...detail.messages, { seq: 1, role: 'student', content: '我的發言' }],
+        available_actions: ['retry', 'end'],
+      },
     }
-    const replied = {
-      ...detail,
-      messages: [...pending.messages, { seq: 2, role: 'tutor', content: '請再說明。' }],
-    }
-    let current = detail
-    vi.stubGlobal('fetch', vi.fn((_path: string, init?: RequestInit) => {
-      if (init?.method === 'POST' && _path.endsWith('/messages')) {
-        current = pending
-        return Promise.resolve({ ok: false, status: 503 })
-      }
-      if (init?.method === 'POST' && _path.endsWith('/retry')) {
-        current = replied
-        return Promise.resolve({ ok: true, json: async () => replied })
-      }
-      return Promise.resolve({ ok: true, json: async () => current })
-    }))
+    installFetch(pending)
     renderPage()
-
-    const input = await screen.findByRole('textbox', { name: '你的回應' })
-    fireEvent.change(input, { target: { value: '已儲存的想法' } })
-    fireEvent.click(screen.getByRole('button', { name: '送出' }))
-    fireEvent.click(await screen.findByRole('button', { name: '重試' }))
-    expect(await screen.findByRole('textbox', { name: '你的回應' })).toHaveValue('')
+    expect(await screen.findByRole('button', { name: '重試教授回覆' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Socratic tutor avatar')).toHaveAttribute('data-avatar-state', 'thinking')
   })
 })

@@ -1,0 +1,8 @@
+{
+  "schema": "socrates/avatar-binding/v1",
+  "avatar_id": "brunette",
+  "source_kind": "existing-socratic-v35-css-lineage",
+  "lineage": "socratic-7df743497664:AvatarStage.tsx",
+  "render_mode": "css",
+  "states": ["idle", "listening", "thinking", "speaking"]
+}

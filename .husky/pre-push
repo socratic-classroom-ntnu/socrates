@@ -1,0 +1,13 @@
+echo "▶ frontend lint + typecheck + test"
+(cd frontend && npm run lint && npm run typecheck && npm test -- --run) || exit 1
+
+if ! docker compose exec -T backend true 2>/dev/null; then
+  echo "✗ backend 容器未啟動，請先執行: docker compose up -d"
+  exit 1
+fi
+
+echo "▶ backend ruff check + format check + mypy + pytest"
+docker compose exec -T backend ruff check . || exit 1
+docker compose exec -T backend ruff format --check . || exit 1
+docker compose exec -T backend mypy app || exit 1
+docker compose exec -T backend python -m pytest tests -q || exit 1

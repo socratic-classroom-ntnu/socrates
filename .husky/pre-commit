@@ -1,0 +1,16 @@
+CHANGED=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if echo "$CHANGED" | grep -q '^frontend/'; then
+  echo "▶ frontend lint + typecheck"
+  (cd frontend && npm run lint && npm run typecheck) || exit 1
+fi
+
+if echo "$CHANGED" | grep -q '^backend/'; then
+  if ! docker compose exec -T backend true 2>/dev/null; then
+    echo "✗ backend 容器未啟動，請先執行: docker compose up -d"
+    exit 1
+  fi
+  echo "▶ backend ruff check + format check"
+  docker compose exec -T backend ruff check . || exit 1
+  docker compose exec -T backend ruff format --check . || exit 1
+fi

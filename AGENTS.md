@@ -87,6 +87,13 @@ cd frontend && npm run lint && npm run typecheck
 **後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** 不要為了跑測試而手動
 設 `DATABASE_URL` 指向 `socrates`——`conftest.py` 有守衛會直接拒絕啟動。
 
+**上面這組檢查已經用 husky 掛成 git hook，commit／push 前會自動跑**（`.husky/pre-commit`、`.husky/pre-push`）：
+- `pre-commit` 只檢查有變更的部分（改了 `frontend/` 就跑 lint+typecheck，改了 `backend/` 就跑 ruff），不含測試，速度快。
+- `pre-push` 固定跑滿整組，跟 CI 對齊。
+
+**第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
+**push 前 backend 容器要是開著的**（先跑 `docker compose up -d`），`pre-push` 會用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
+
 PR 送出前請把上面那一整組跑過一次，CI 跑的是同一組。
 
 Commit 訊息用 conventional commits：`type(scope): description`。

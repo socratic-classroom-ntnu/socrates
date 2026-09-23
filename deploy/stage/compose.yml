@@ -1,0 +1,45 @@
+name: socrates-stage
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-socrates-backend:stage-local}
+    build:
+      context: ../..
+      dockerfile: deploy/stage/backend.Dockerfile
+      args:
+        SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local}
+    restart: unless-stopped
+    extra_hosts: ['host.docker.internal:host-gateway']
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Fill the external PostgreSQL DATABASE_URL}
+      SOCRATES_SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local}
+      SOCRATES_ENVIRONMENT: stage
+      SOCRATES_PUBLIC_ORIGIN: ${SOCRATES_PUBLIC_ORIGIN:-https://socratic.arthur0824hao.com}
+      SOCRATES_ALLOWED_ORIGINS: ${SOCRATES_ALLOWED_ORIGINS:-https://socratic.arthur0824hao.com}
+      RUN2_COOKIE_SECURE: ${RUN2_COOKIE_SECURE:-true}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      RUN2_LLM_DAILY_BUDGET: ${RUN2_LLM_DAILY_BUDGET:-50}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    healthcheck:
+      test: ['CMD','python','-c',"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v2/readiness',timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+      start_period: 25s
+  frontend:
+    image: ${FRONTEND_IMAGE:-socrates-frontend:stage-local}
+    build:
+      context: ../..
+      dockerfile: deploy/stage/frontend.Dockerfile
+      args:
+        SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local}
+    restart: unless-stopped
+    ports: ['127.0.0.1:${SOCRATES_HTTP_PORT:-8080}:80']
+    depends_on:
+      backend:
+        condition: service_healthy

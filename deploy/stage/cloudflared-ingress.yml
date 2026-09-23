@@ -1,0 +1,4 @@
+# Add this hostname entry to the server owner's existing tunnel ingress list.
+# Preserve other hostname routes and the existing terminal fallback entry.
+- hostname: socratic.arthur0824hao.com
+  service: http://127.0.0.1:8080

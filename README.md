@@ -1,3 +1,9 @@
+<!-- SOCRATES_STAGE_OPERATOR -->
+## 伺服器組員：從這裡架設 Stage
+
+部署分支為 `stage`。完整步驟請讀 [Stage 部署指南](deploy/stage/README.md)。
+展示架構與講稿：[報告速記](docs/architecture/REPORT-BRIEF.zh-TW.md)。
+
 # 蘇格拉底式對話機器人
 
 一個會反問你的哲學課堂。
@@ -80,7 +86,7 @@ cd frontend && npm test -- --run                        # 前端測試
 
 ## 技術
 
-React + Vite · FastAPI · PostgreSQL · Docker Compose
+React + Rsbuild · FastAPI · PostgreSQL · Docker Compose
 
 對話的推進由後端的狀態機決定，不交給語言模型——「現在第幾階」是事實不是判斷，
 而且換一家模型不該改變闖關的節奏。模型只負責產生教授的話，以及回報對學生的觀察。

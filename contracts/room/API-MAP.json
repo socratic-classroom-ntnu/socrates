@@ -1,0 +1,11 @@
+{
+  "schema": "socrates/room-api-map/v1",
+  "endpoints": [
+    "GET /api/sessions/{session_id}/room",
+    "GET /api/sessions",
+    "POST /api/sessions/{session_id}/transcript-drafts",
+    "POST /api/sessions/{session_id}/transcript-drafts/{draft_id}/confirm",
+    "DELETE /api/sessions/{session_id}/transcript-drafts/{draft_id}",
+    "POST /api/sessions/{session_id}/messages"
+  ]
+}

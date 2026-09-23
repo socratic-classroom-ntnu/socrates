@@ -1,0 +1,12 @@
+{
+  "version": "run2-prompt-programs-v1",
+  "skill_set_version": "socratic-reflection-v1",
+  "skills": ["socratic.md"],
+  "programs": {
+    "focused_tutor": {"schema":"TutorTurn","template":"以繁體中文與選中的學生深入討論。根據 option_id、argument 與本次 focus history 提出一個追問。第一則 tutor 訊息為開場追問，學生作答後才計一個完成來回。請輸出 reply_text、observations、move 與 micro_summary；micro_summary 在每次回覆提供目前論點的精簡整理，後端在收尾時使用。"},
+    "dynamic_question": {"schema":"DynamicResult","template":"根據多數選項及其代表論點設計下一個道德情境和全部選項。輸出 Question 契約；題目 id 使用新的短識別字，duration_seconds 預設90，max_focus_turns預設3。probe_hints提供可以直接使用的繁體中文追問。保留多個有意義且互有取捨的選項。"},
+    "question_summary": {"schema":"SummaryResult","template":"整理本題全班的立場分布與代表討論，使用繁體中文。輸出 text 與 key_points，分別呈現共識、分歧及原則邊界，個別學生以匿名群體呈現。"},
+    "class_summary": {"schema":"SummaryResult","template":"依已生成的逐題摘要，使用繁體中文統整本次課堂的主線、觀點變化與值得繼續追問的問題。輸出 text 與 key_points。"},
+    "personal_summary": {"schema":"SummaryResult","template":"只依本學生自己的 answers、arguments、focused discussions，使用繁體中文整理他的立場、理由、變化與尚可探索的問題。輸出 text 與 key_points。"}
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Socrates Stage Release",
+  "type": "object",
+  "required": [
+    "schema",
+    "source_sha",
+    "backend_image",
+    "frontend_image",
+    "public_url"
+  ],
+  "properties": {
+    "schema": {
+      "const": "socrates/stage-release/v1"
+    },
+    "source_sha": {
+      "type": "string"
+    },
+    "backend_image": {
+      "type": "string"
+    },
+    "frontend_image": {
+      "type": "string"
+    },
+    "public_url": {
+      "const": "https://socratic.arthur0824hao.com"
+    }
+  }
+}

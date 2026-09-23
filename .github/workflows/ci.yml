@@ -1,79 +1,186 @@
 name: CI
-
 on:
   pull_request:
   push:
-    branches: [main, develop]
-
+    branches: [master, develop, stage, 'backend/**']
+permissions:
+  contents: read
+concurrency:
+  group: socrates-ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_USER: socrates
-          POSTGRES_PASSWORD: socrates
+          POSTGRES_PASSWORD: socrates-ci
           POSTGRES_DB: socrates
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U socrates"
-          --health-interval 3s --health-timeout 3s --health-retries 10
+          --health-cmd "pg_isready -U socrates" --health-interval 3s
+          --health-timeout 3s --health-retries 20
     env:
-      DATABASE_URL: postgresql+psycopg://socrates:socrates@localhost:5432/socrates
+      DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
+      RUN2_TEST_DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
       SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
       - run: python -m pip install -r backend/requirements-dev.txt
-      - run: python -m ruff check backend
-      - run: python -m ruff format --check backend
-      - run: python -m mypy backend/app
-      - run: python -m pytest tests -v
-        working-directory: backend
-
+      - name: Ruff lint, complete backend
+        run: python -m ruff check backend
+      - name: Ruff format, complete backend
+        run: python -m ruff format --check backend
+      - name: Strict Round1 types and Run2 contracts
+        run: |
+          cd backend
+          python -m mypy app --exclude 'app/run2/|app/classroom_server.py'
+          python -m mypy --config-file mypy-run2.ini app/run2 app/classroom_server.py
+      - name: Database migration and domain/API regression
+        run: |
+          cd backend
+          python -m alembic upgrade head
+          python -m pytest tests -v --junitxml=backend-tests.xml
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-evidence
+          path: backend/backend-tests.xml
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-        working-directory: frontend
+          node-version: '22'
+      - name: Install exact lock, or materialize the first migration lock
+        run: |
+          cd frontend
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+      - name: Fetch source-pinned local avatar
+        run: python scripts/fetch_avatar.py
       - run: npm run lint
         working-directory: frontend
       - run: npm run typecheck
         working-directory: frontend
-      - run: npm test -- --run
+      - run: npm test -- --runInBand
         working-directory: frontend
-
+      - run: npm run build
+        working-directory: frontend
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-lock
+          path: |
+            frontend/package-lock.json
+            frontend/dist
   contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
       SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
+        with: {python-version: '3.12'}
       - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+        with: {node-version: '22'}
       - run: python -m pip install -r backend/requirements.txt
-      - run: npm ci
+      - run: if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
         working-directory: frontend
       - run: ./scripts/gen_types.sh
-      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts
+      - run: python scripts/gen_run2_types.py
+      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/run2-openapi.json frontend/src/run2/generated.ts
+  round1-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Wait for a positive health response
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/api/health; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/api/health
+      - run: python scripts/round1_smoke.py http://127.0.0.1:8000/api
+      - if: always()
+        run: docker compose logs --no-color > round1-compose.log
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: {name: round1-evidence, path: round1-compose.log, retention-days: 7}
+      - if: always()
+        run: docker compose down
+  run2-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: socrates, POSTGRES_PASSWORD: socrates-ci, POSTGRES_DB: socrates_load}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U socrates" --health-interval 3s
+          --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates_load
+      RUN2_COOKIE_SECURE: 'false'
+      SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:8099
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - name: Two-worker, real PostgreSQL 2×60 workload
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE/backend"
+          python scripts/run2_load.py --output run2-load.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run2-load-evidence
+          path: |
+            run2-load.json
+            run2-server.log
+  ci-required:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, contract, round1-e2e, run2-load]
+    steps:
+      - env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python - <<'PY'
+          import json,os
+          jobs=json.loads(os.environ['RESULTS'])
+          print(json.dumps({k:v['result'] for k,v in jobs.items()},indent=2))
+          assert all(v['result']=='success' for v in jobs.values())
+          PY
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
+    needs: [ci-required]
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/stage-release.yml
+    with: {source_sha: '${{ github.sha }}'}
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/stage' && vars.SOCRATES_STAGE_RUNNER_ADMITTED == 'true'
+    needs: [release]
+    permissions: {contents: read, packages: read}
+    uses: ./.github/workflows/stage-deploy.yml
+    with:
+      source_sha: ${{ github.sha }}
+      backend_image: ${{ needs.release.outputs.backend_image }}
+      frontend_image: ${{ needs.release.outputs.frontend_image }}
+    secrets: inherit

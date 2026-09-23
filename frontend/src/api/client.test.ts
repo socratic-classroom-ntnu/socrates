@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { vi } from '../testkit'
 import { createSession } from './client'
 
 describe('api client', () => {

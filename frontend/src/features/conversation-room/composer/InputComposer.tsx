@@ -1,0 +1,3 @@
+import { DraftComposer } from '../../../shared/input/DraftComposer'
+interface Props {value:string;busy:boolean;enabled:boolean;onChange:(value:string)=>void;onListening:(active:boolean)=>void;onTranscript:(text:string,confidence?:number)=>void|Promise<void>;onSend:()=>void}
+export function InputComposer({value,busy,enabled,onChange,onListening,onTranscript,onSend}:Props){return <footer className="input-composer" data-sticky-composer="true"><DraftComposer value={value} busy={busy} enabled={enabled} onChange={onChange} onListening={onListening} onTranscript={(text,meta)=>{if(meta.final)void onTranscript(text,meta.confidence)}} onSend={onSend}/></footer>}

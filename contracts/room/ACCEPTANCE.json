@@ -1,0 +1,6 @@
+{
+  "schema": "socrates/room-acceptance/v1",
+  "milestone": "SOCRATES_BACKEND_ARTHUR_CE_ROOM_READY",
+  "journey": ["home", "start", "room", "text", "thinking", "reply", "speaking", "voice", "transcript", "history", "refresh", "resume", "end", "summary"],
+  "avatar": {"id": "brunette", "states": ["idle", "listening", "thinking", "speaking"]}
+}

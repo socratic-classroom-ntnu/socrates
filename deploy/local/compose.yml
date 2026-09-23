@@ -1,0 +1,58 @@
+name: socrates-local
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: socrates
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:-socrates-local}
+      POSTGRES_DB: socrates_local
+    volumes: [socratic-local-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U socrates -d socrates_local']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  backend:
+    build:
+      context: ../..
+      dockerfile: deploy/stage/backend.Dockerfile
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://socrates:${LOCAL_DB_PASSWORD:-socrates-local}@db:5432/socrates_local
+      SOCRATES_ENVIRONMENT: local-dev
+      SOCRATES_SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local-worktree}
+      SOCRATES_WORKTREE_SHA256: ${SOCRATES_WORKTREE_SHA256:-live-worktree}
+      SOCRATES_PUBLIC_ORIGIN: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-5173}
+      SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-5173},http://localhost:${SOCRATES_LOCAL_PORT:-5173}
+      RUN2_COOKIE_SECURE: 'false'
+      LADDER_PATH: /data/ladders/trolley.yaml
+      SCRIPT_PATH: /data/scripts/trolley.script.yaml
+    volumes:
+      - ../../backend:/app
+      - ../../ladders:/data/ladders:ro
+      - ../../scripts:/data/scripts:ro
+    depends_on:
+      db: {condition: service_healthy}
+    command: ['sh','-c','alembic upgrade head && exec uvicorn app.classroom_server:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app']
+  frontend:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    init: true
+    volumes:
+      - ../../frontend:/app
+      - socratic-local-node:/app/node_modules
+      - socratic-local-npm:/root/.npm
+    environment:
+      SOCRATES_DEV_API_ORIGIN: http://backend:8000
+      CHOKIDAR_USEPOLLING: 'true'
+      npm_config_fetch_retries: '1'
+      npm_config_fetch_timeout: '45000'
+    ports: ['127.0.0.1:${SOCRATES_LOCAL_PORT:-5173}:5173']
+    depends_on: [backend]
+    command: ['sh','/app/tools/local-dev.sh']
+volumes:
+  socratic-local-db:
+  socratic-local-node:
+  socratic-local-npm:

@@ -61,7 +61,7 @@ def cmd(c, r, kind, data=None, aid=None):
 
 
 def test_registration_verification_reset_and_revocation(client):
-    a = user(client)
+    user(client)
     r = client.get("/api/v2/auth/me")
     assert r.json()["verified"]
     assert (

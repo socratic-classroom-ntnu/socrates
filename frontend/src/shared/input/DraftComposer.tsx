@@ -61,7 +61,7 @@ export function DraftComposer({value,onChange,onSend,enabled=true,busy=false,can
     <div className="socratic-composer-row">
       <button className={'socratic-mic '+(active?'listening':'')} type="button" aria-label={active?'停止語音輸入':'開始語音輸入'} aria-pressed={active} disabled={!enabled||busy} title={supported?'語音輸入':'文字輸入可用；語音請使用支援的瀏覽器'} onClick={toggle}><MicIcon active={active}/></button>
       <label className="socratic-visually-hidden" htmlFor={id}>{label}</label>
-      <textarea id={id} autoFocus={autoFocus} value={value} placeholder={placeholder} readOnly={!enabled||busy} onChange={e=>{if(active)stop(true);latest.current=e.target.value;onChange(e.target.value)}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&e.keyCode!==229){e.preventDefault();void send()}}}/>
+      <textarea id={id} autoFocus={autoFocus} value={value} placeholder={placeholder} disabled={!enabled||busy} onChange={e=>{if(active)stop(true);latest.current=e.target.value;onChange(e.target.value)}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&e.keyCode!==229){e.preventDefault();void send()}}}/>
       <button className="socratic-enter" type="button" aria-label="傳送" title="Enter 傳送；Shift＋Enter 換行" disabled={!enabled||busy||sending||(canSend===undefined?!value.trim():!canSend)} onClick={()=>void send()}><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 4v8a3 3 0 0 1-3 3H5m5-5-5 5 5 5"/></svg></button>
     </div>
     <div className="socratic-composer-caption"><span role="status" aria-live="polite">{active?'正在聆聽…':note||'文字／語音輸入'}</span><span>Enter 傳送 · Shift＋Enter 換行</span></div>

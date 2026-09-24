@@ -16,11 +16,17 @@ PostgreSQL、SMTP 郵件服務及既有 Cloudflare Tunnel 由伺服器環境提�
 | SMTP | HOST／PORT／FROM／USER／PASSWORD | Email 驗證、忘記密碼；註冊後由郵件連結啟用 |
 | OpenRouter 平台 key | `OPENROUTER_API_KEY` | `openrouter/free` live Tutor、動態題與總結 |
 | 現有 Tunnel 路由權限 | 管理員的 Cloudflare 帳號 | 將公開網域接到本機8080 |
+| 建置主機對外 HTTPS | 能連到 `raw.githubusercontent.com`（備援 `api.github.com`） | 前端 image 在 build 期下載釘選版 avatar（CC-BY-NC-4.0，非商業教學用） |
 
 應用僅對 host `127.0.0.1:8080`提供入口，資料庫由 backend 內部連接。
 `DATABASE_URL` 的 hostname 應能從 backend 容器解析；host PostgreSQL 可用
 `host.docker.internal`，Compose 已配置 Linux host-gateway。
 SMTP 與模型 key 留在伺服器 `.env`／credential store，GitHub source 只收 `.env.example`。
+
+`frontend/public/avatars/ce-brunette/avatar.glb`（4.7 MB）不在 repo 內，前端 image 會在 build 期
+依 `SOURCE.json` 的釘選 URL 下載並驗證 blob SHA。**建置主機沒有對外連線就無法建置**；
+離線主機請先自行把 `avatar.glb` 放進 `frontend/public/avatars/ce-brunette/` 再跑 `up.sh`，
+preflight 偵測到檔案已存在就會跳過連線檢查。
 
 ## 2. 首次部署
 
@@ -30,6 +36,7 @@ cd socrates
 cp deploy/stage/.env.example deploy/stage/.env
 chmod 600 deploy/stage/.env
 # 用伺服器的安全編輯器填入 DATABASE_URL、SMTP 與 OPENROUTER_API_KEY。
+bash deploy/stage/preflight.sh
 bash deploy/stage/up.sh
 ```
 
@@ -44,6 +51,22 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml ps
 curl -fsS http://127.0.0.1:8080/api/v2/readiness
 curl -fsS http://127.0.0.1:8080/api/release
 ```
+
+`preflight.sh` 在建置前就擋下不完整的 checkout／環境：缺 `docker`／`git`／`curl`／`python3`、
+Docker daemon 沒起來、`deploy/stage/.env` 不存在或 `DATABASE_URL` 還是 `REPLACE_ME`、
+缺 `frontend/package-lock.json`、`scripts/gen_types.sh` 沒有執行位元、或 avatar 來源連不到，
+都會在這一步失敗而不是 build 到一半才爆。
+
+部署驗收要求下面兩條都通過：
+
+```bash
+bash deploy/stage/smoke.sh
+docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml exec backend python -m alembic current
+```
+
+`smoke.sh` 會依序驗前端首頁、`/api/health`、`/api/v2/readiness`、`/api/release`，
+再跑 `scripts/round1_smoke.py` 走一次 Round 1 的持久化流程。
+預期的 migration 輸出是 `0006 (head)`。
 
 ## 3. 接入既有 Tunnel
 

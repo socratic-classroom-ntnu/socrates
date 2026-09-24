@@ -224,18 +224,19 @@ _FACTORY: Any = None
 
 def configure(url: str | None = None, *, create: bool = False):
     global _ENGINE, _FACTORY
-    url = url or os.environ.get(
+    from_environment = os.environ.get(
         "RUN2_DATABASE_URL",
         os.environ.get("DATABASE_URL", "postgresql+psycopg://socrates@localhost/socrates"),
     )
+    resolved = url if url else from_environment
     kw: dict[str, Any] = {"pool_pre_ping": True}
-    if url.startswith("sqlite"):
+    if resolved.startswith("sqlite"):
         from sqlalchemy.pool import StaticPool
 
         kw.update(connect_args={"check_same_thread": False}, poolclass=StaticPool)
     else:
         kw.update(pool_size=5, max_overflow=5, pool_timeout=10)
-    _ENGINE = create_engine(url, **kw)
+    _ENGINE = create_engine(resolved, **kw)
     _FACTORY = sessionmaker(_ENGINE, expire_on_commit=False)
     if create:
         Base.metadata.create_all(_ENGINE)

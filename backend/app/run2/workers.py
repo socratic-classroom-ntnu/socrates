@@ -134,7 +134,7 @@ async def process_job(item):
         last_flush = time.monotonic()
 
     provider = OpenRouterProvider()
-    error = None
+    error: ProviderWait | None = None
     for attempt in range(2):
         try:
             await asyncio.to_thread(reserve_call, item)
@@ -168,6 +168,9 @@ async def process_job(item):
             if offset:
                 break
             await asyncio.sleep(1)
+    if error is None:
+        # 迴圈的成功路徑會 return，所以到得了這裡就代表某次嘗試留下了 ProviderWait。
+        raise RuntimeError("provider loop exited without a result or a wait")
     if item["kind"] == "focused_tutor":
         result = fallback(item["context"])
         await asyncio.to_thread(

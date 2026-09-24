@@ -5,7 +5,7 @@ import secrets
 import time
 from uuid import uuid4
 from sqlalchemy import func, select
-from .contracts import RoomView
+from .contracts import MemberView, RoomView
 from .orchestrator import DomainError, GameOrchestrator, fresh_state
 from .policy import distribution
 from .storage import (
@@ -80,21 +80,19 @@ def view(db, room, account_id, mode="student") -> dict:
     active = s["runs"][qi] if 0 <= qi < len(s["runs"]) else None
     q = s["questions"][qi] if active else None
     focus = next((f for f in active["focuses"] if f["id"] == s["focus"]), None) if active else None
-    members = []
-    for mid, m in s["members"].items():
-        row = {
-            "id": mid,
-            "alias": m["alias"],
-            "avatar": m["avatar"],
-            "seat": m["seat"],
-            "online": now - m["last_seen"] <= 30,
-            "points": m.get("points", 0),
-            "achievements": m.get("achievements", []),
-            "username": None,
-        }
-        if as_teacher:
-            row["username"] = m["username"]
-        members.append(row)
+    members = [
+        MemberView(
+            id=mid,
+            alias=m["alias"],
+            avatar=m["avatar"],
+            seat=m["seat"],
+            online=now - m["last_seen"] <= 30,
+            points=m.get("points", 0),
+            achievements=m.get("achievements", []),
+            username=m["username"] if as_teacher else None,
+        )
+        for mid, m in s["members"].items()
+    ]
     summaries = deepcopy(s["summaries"])
     # Only own personal synthesis reaches a student projection.
     if not as_teacher:
@@ -128,7 +126,7 @@ def view(db, room, account_id, mode="student") -> dict:
         elif s["phase"] in {"answering", "distribution", "focus", "focus_summary"}:
             actions = ["next"]
     if member and not as_teacher:
-        if s["phase"] == "answering" and member.id not in active["answers"]:
+        if s["phase"] == "answering" and active and member.id not in active["answers"]:
             actions = ["draft", "answer"]
         if s["phase"] in {"focus", "focus_summary", "arena"}:
             actions += ["barrage", "reaction"]

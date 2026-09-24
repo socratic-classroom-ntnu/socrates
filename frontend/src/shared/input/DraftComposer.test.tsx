@@ -40,7 +40,8 @@ test('pending send 持有單一 effect',async()=>{
 })
 test('麥克風逐字輸入最後停回文字框',async()=>{
   let current:{onresult?: (e:unknown)=>void;onend?:()=>void}|undefined
-  class SpeechMock {lang='';continuous=false;interimResults=false;onresult=undefined;onend=undefined;onerror=undefined;start(){current=this}stop(){}abort(){}}
+  function register(r:{onresult?: (e:unknown)=>void;onend?:()=>void}){current=r}
+  class SpeechMock {lang='';continuous=false;interimResults=false;onresult=undefined;onend=undefined;onerror=undefined;start(){register(this)}stop(){}abort(){}}
   Object.defineProperty(window,'SpeechRecognition',{configurable:true,writable:true,value:SpeechMock})
   render(<Harness/>)
   fireEvent.click(screen.getByRole('button',{name:'開始語音輸入'}))

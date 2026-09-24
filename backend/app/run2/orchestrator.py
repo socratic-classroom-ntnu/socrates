@@ -276,7 +276,7 @@ class GameOrchestrator:
             s.pop("preview", None)
             self.phase("question_summary")
             return
-        if member_id not in s["members"]:
+        if member_id is None or member_id not in s["members"]:
             raise DomainError("STUDENT_MEMBERSHIP_REQUIRED", 403)
         if kind in {"draft", "answer"}:
             if s["phase"] != "answering" or self.now > float(self.current()["deadline_at"]) + 0.1:

@@ -4,6 +4,7 @@ import json
 import os
 import re
 import time
+from typing import Any
 from uuid import uuid4
 import httpx
 from .contracts import TutorTurn, Observations
@@ -94,7 +95,7 @@ class OpenRouterProvider:
         }
         raw = ""
         shown = ""
-        usage = {}
+        usage: dict[str, Any] = {}
         model = None
         remote_id = None
         async with httpx.AsyncClient(timeout=httpx.Timeout(45, connect=10)) as client:

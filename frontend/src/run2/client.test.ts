@@ -3,9 +3,9 @@ afterEach(()=>jest.restoreAllMocks())
 test('Run2 command carries one stable action identity and same-origin credentials',async()=>{
  const fn=jest.fn().mockResolvedValue({ok:true,json:async()=>({status:'RECORDED'})})
  globalThis.fetch=fn;setCSRF('csrf-fixture')
- await command('room','answer',{option_id:'a'},'action-fixture')
+ await command('room','answer',{option_id:'a'},'11111111-1111-4111-8111-111111111111')
  expect(fn).toHaveBeenCalledWith('/api/v2/classrooms/room/commands',expect.objectContaining({method:'POST',credentials:'same-origin'}))
- const init=fn.mock.calls[0][1];expect(JSON.parse(init.body).action_id).toBe('action-fixture')
+ const init=fn.mock.calls[0][1];expect(JSON.parse(init.body).action_id).toBe('11111111-1111-4111-8111-111111111111')
  expect(init.headers['X-CSRF-Token']).toBe('csrf-fixture')
 })
 test('Run2 API presents domain error without converting it to a successful receipt',async()=>{

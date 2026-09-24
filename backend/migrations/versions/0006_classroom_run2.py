@@ -4,7 +4,7 @@ from alembic import op
 from app.run2.storage import Base
 
 revision = "0006"
-down_revision = "0005"
+down_revision = "9a0c1d2e3f42"
 branch_labels = None
 depends_on = None
 

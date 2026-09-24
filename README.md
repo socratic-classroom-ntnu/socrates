@@ -67,6 +67,11 @@ cd frontend && npm test -- --run                        # 前端測試
 
 後端測試會自己用獨立的 `socrates_test` 資料庫，不會動到你的開發資料。
 
+**第一次 clone 下來，在 repo 根目錄跑一次 `npm install`**，啟用 git hook（husky）：
+commit 前自動跑有變更部分的 lint/typecheck，push 前自動跑滿整組（比照 CI）。
+push 前 backend 容器要是開著的（`docker compose up -d`），`pre-push` 會用
+`docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
+
 ## 接下來讀什麼
 
 | 你是 | 從這裡開始 |

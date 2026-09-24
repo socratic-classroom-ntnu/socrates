@@ -4,6 +4,11 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+# CI 跑的是 `ruff check backend`，範圍不含 repo 根目錄的 scripts/。
+# 但 root compose 把 ./scripts 掛進容器的 /app/scripts，容器內的 `ruff check .`
+# 因此會多掃到 CI 不檢查的檔案。在設定裡排除，讓兩邊範圍一致，
+# 也讓 check 與 format 行為相同（`ruff format` 只有會覆寫預設的 --exclude）。
+extend-exclude = ["scripts"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,13 +1,34 @@
-echo "▶ frontend lint + typecheck + test"
-(cd frontend && npm run lint && npm run typecheck && npm test -- --run) || exit 1
+# 這組必須與 .github/workflows/ci.yml 的 backend / frontend job 同一組指令。
+# 後端走容器是因為主機通常沒裝 Python 依賴（見 AGENTS.md）。
+# 容器內 /app 就是 backend/，但 root compose 另外把 ./scripts 掛進 /app/scripts，
+# 而 CI 只檢查 backend，所以這裡要把 scripts 排除掉才等價。
 
+if ! command -v npm >/dev/null 2>&1; then
+  echo "✗ 找不到 npm。Homebrew 的 node@22 是 keg-only，不會自動進 PATH。"
+  echo "  請在 ~/.zshrc 加上: export PATH=\"/opt/homebrew/opt/node@22/bin:\$PATH\""
+  exit 1
+fi
+echo "▶ frontend lint + typecheck + test + build"
+(cd frontend && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build) || exit 1
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "✗ 找不到 docker 指令。Docker Desktop 的 CLI 裝在 ~/.docker/bin，"
+  echo "  而該路徑只由 ~/.zprofile 加入，login shell 以外的終端讀不到。"
+  echo "  請在 ~/.zshrc 加上: export PATH=\"\$HOME/.docker/bin:\$PATH\""
+  exit 1
+fi
 if ! docker compose exec -T backend true 2>/dev/null; then
   echo "✗ backend 容器未啟動，請先執行: docker compose up -d"
   exit 1
 fi
 
-echo "▶ backend ruff check + format check + mypy + pytest"
+echo "▶ backend ruff check + format check"
 docker compose exec -T backend ruff check . || exit 1
 docker compose exec -T backend ruff format --check . || exit 1
-docker compose exec -T backend mypy app || exit 1
+
+echo "▶ backend mypy（Round1 strict，Run2 走 mypy-run2.ini）"
+docker compose exec -T backend python -m mypy app --exclude 'app/run2/|app/classroom_server.py' || exit 1
+docker compose exec -T backend python -m mypy --config-file mypy-run2.ini app/run2 app/classroom_server.py || exit 1
+
+echo "▶ backend pytest"
 docker compose exec -T backend python -m pytest tests -q || exit 1

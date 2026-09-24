@@ -71,12 +71,15 @@
 docker compose up -d                                  # 起全棧（db / backend / frontend）
 
 docker compose exec backend python -m pytest tests -q # 後端測試
-docker compose exec backend ruff check .              # 後端 lint
-docker compose exec backend ruff format --check .     # 後端格式
-docker compose exec backend mypy app                  # 後端型別
+docker compose exec backend ruff check .          # 後端 lint
+docker compose exec backend ruff format --check . # 後端格式
+docker compose exec backend python -m mypy app \
+  --exclude 'app/run2/|app/classroom_server.py'       # Round1 型別（strict）
+docker compose exec backend python -m mypy \
+  --config-file mypy-run2.ini app/run2 app/classroom_server.py # Run2 型別
 
-cd frontend && npm test -- --run                      # 前端測試
-cd frontend && npm run lint && npm run typecheck
+cd frontend && npm test -- --runInBand                # 前端測試
+cd frontend && npm run lint && npm run typecheck && npm run build
 
 ./scripts/gen_types.sh                                # 後端 schema 改了就跑這個
 ```
@@ -89,7 +92,15 @@ cd frontend && npm run lint && npm run typecheck
 
 **上面這組檢查已經用 husky 掛成 git hook，commit／push 前會自動跑**（`.husky/pre-commit`、`.husky/pre-push`）：
 - `pre-commit` 只檢查有變更的部分（改了 `frontend/` 就跑 lint+typecheck，改了 `backend/` 就跑 ruff），不含測試，速度快。
-- `pre-push` 固定跑滿整組，跟 CI 對齊。
+- `pre-push` 固定跑滿整組，跟 CI 對齊——**包含 `npm run build`**，因為那是唯一會抓到
+  「production build 壞掉、image 建不起來」的檢查。
+
+**hook 的指令必須與 `.github/workflows/ci.yml` 逐條對應。** 型別檢查是兩條而不是一條：
+Round 1 走 `strict`，Run 2 走較寬的 `backend/mypy-run2.ini`。lint 的範圍是 `backend`，
+不含 `scripts/`；`backend/pyproject.toml` 已用 `extend-exclude` 排除，因為 root compose 把 `./scripts`
+掛進了 `/app/scripts`。**CI 改了就要同時改 hook**，反之亦然——2026-09 曾經因為 CI 隨
+Run 2／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `--run` 餵給 Jest
+而無條件失敗，並且用 strict mypy 掃 Run 2 而多報數百個 CI 不在意的錯。
 
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
 **push 前 backend 容器要是開著的**（先跑 `docker compose up -d`），`pre-push` 會用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。

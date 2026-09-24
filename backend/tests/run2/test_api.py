@@ -152,3 +152,15 @@ def test_yaml_roundtrip_and_revision_conflict(client):
         ).status_code
         == 409
     )
+
+
+def test_teacher_with_a_long_username_can_open_a_classroom(client):
+    # 註冊契約允許 username 到 64 字，所以 membership 的 alias 必須裝得下它；
+    # alias 是由 username 推導的，不經過 join body 的 40 字限制。
+    long_name = "t" * 64
+    user(client, long_name)
+    room = create(client)
+    assert room["code"]
+    with storage.transaction() as db:
+        alias = db.scalars(select(storage.Membership.alias)).one()
+    assert alias == long_name

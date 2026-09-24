@@ -274,6 +274,10 @@ def execute(db, a, room_id, cmd):
             content_hash=digest(script.document),
         )
         db.add(snapshot)
+        # snapshot_id 是直接指派的欄位值，ClassroomRun 與 Snapshot 之間沒有 relationship()，
+        # 所以 unit of work 不知道這個 INSERT 必須排在 room 的 UPDATE 之前。先 flush，
+        # 否則 autoflush 可能先送出 UPDATE，在強制外鍵的資料庫上違反 FK。
+        db.flush()
         room.snapshot_id = snapshot.id
         data["script_document"] = snapshot.document
     state = hydrate(db, room)

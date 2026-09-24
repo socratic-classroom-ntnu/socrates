@@ -112,7 +112,8 @@ class Membership(Base):
     room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
     account_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
     role: Mapped[str] = mapped_column(String(12))
-    alias: Mapped[str] = mapped_column(String(40))
+    # 教師的 alias 取自 username，註冊契約允許到 64 字（見 0007 migration）。
+    alias: Mapped[str] = mapped_column(String(64))
     avatar: Mapped[str] = mapped_column(String(64))
     seat: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_seen: Mapped[float] = mapped_column(Float, default=time.time)

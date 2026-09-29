@@ -58,7 +58,6 @@
             "type": "string"
           },
           "data": {
-            "additionalProperties": true,
             "title": "Data",
             "type": "object"
           },
@@ -461,7 +460,6 @@
           },
           "distribution": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "title": "Distribution",
@@ -470,7 +468,6 @@
           "focus": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -515,7 +512,6 @@
           "my_answer": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -527,7 +523,6 @@
           "my_draft": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -600,7 +595,6 @@
             "type": "string"
           },
           "summaries": {
-            "additionalProperties": true,
             "title": "Summaries",
             "type": "object"
           },
@@ -610,7 +604,6 @@
           },
           "transcript": {
             "items": {
-              "additionalProperties": true,
               "type": "object"
             },
             "title": "Transcript",
@@ -739,13 +732,6 @@
       },
       "ValidationError": {
         "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
           "loc": {
             "items": {
               "anyOf": [

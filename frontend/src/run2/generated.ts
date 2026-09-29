@@ -17,5 +17,5 @@ export interface components { schemas: {
   "ScriptDocument": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
   "ScriptSave": { "document": components["schemas"]["ScriptDocument"]; "expected_revision"?: (number | null) };
   "TokenRequest": { "token": string };
-  "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string; "input"?: unknown; "ctx"?: Record<string, unknown> };
+  "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
 } }

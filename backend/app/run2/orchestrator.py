@@ -446,3 +446,7 @@ class GameOrchestrator:
             m = key.split(":", 1)[1]
             s["summaries"]["personal"][m] = {"status": "READY", **result, "provenance": provider}
             self.emit("summary.ready", kind=kind)
+
+# PORTAL-R70-GROUP-EXTENSION
+from .portal_group_domain import extend as _extend_group_run
+GameOrchestrator = _extend_group_run(GameOrchestrator)

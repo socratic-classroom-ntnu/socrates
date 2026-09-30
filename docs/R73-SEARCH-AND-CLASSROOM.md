@@ -1,0 +1,4 @@
+# 常駐 Google 搜尋接線
+
+公開設定 SOCRATES_GOOGLE_CSE_ID 使用既有 Programmable Search engine ID。SOCRATES_GOOGLE_CSE_SCOPE 記錄 sites 或 entitled-full-web。
+設定只投影引擎 ID 與範圍。圖 3／4 共用 Search Element，查詢由學生送出。正式 Google 結果及 full-web 權益按實際帳號驗收。

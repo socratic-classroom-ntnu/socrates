@@ -1,0 +1,7 @@
+/* Portal R80: R78 desktop fidelity plus bounded mobile projection. */
+:root{--r80-page-max:1280px;--r80-gutter:clamp(1rem,3vw,3rem)}
+.r2-home,.r2-classroom,.r2-auth{max-width:var(--r80-page-max);margin-inline:auto}
+.r73-answer-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(18rem,25rem);gap:clamp(1rem,2vw,2rem);align-items:start}
+.r73-research{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
+@media (max-width:820px){.r73-answer-layout{grid-template-columns:1fr}.r73-research{position:relative;top:auto;max-height:none}.r2-top{flex-wrap:wrap}.r2-home-hero h1,.r2-answer h1{font-size:clamp(2rem,9vw,4rem)}.r2-drawer{width:min(92vw,28rem)}.r2-seat-grid,.r2-script-grid{grid-template-columns:1fr}.r2-stage-caption{max-width:80vw}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

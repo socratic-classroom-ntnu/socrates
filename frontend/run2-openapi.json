@@ -48,6 +48,87 @@
         "title": "AccountView",
         "type": "object"
       },
+      "AddAIStudents": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "count": {
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "model": {
+            "default": "openrouter/free",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "count"
+        ],
+        "title": "AddAIStudents",
+        "type": "object"
+      },
+      "AttachScript": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "AttachScript",
+        "type": "object"
+      },
+      "ClearAIStudents": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "ClearAIStudents",
+        "type": "object"
+      },
       "Command": {
         "additionalProperties": false,
         "properties": {
@@ -84,6 +165,96 @@
         "title": "Command",
         "type": "object"
       },
+      "Configure": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "assignments": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Assignments",
+            "type": "object"
+          },
+          "avatar_pack_id": {
+            "default": "stickman",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Avatar Pack Id",
+            "type": "string"
+          },
+          "expected_roster_digest": {
+            "title": "Expected Roster Digest",
+            "type": "string"
+          },
+          "group_count": {
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Group Count",
+            "type": "integer"
+          },
+          "members_per_group": {
+            "maximum": 40.0,
+            "minimum": 1.0,
+            "title": "Members Per Group",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id",
+          "expected_roster_digest",
+          "group_count",
+          "members_per_group"
+        ],
+        "title": "Configure",
+        "type": "object"
+      },
+      "CreateBatch": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "script_id": {
+            "title": "Script Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id"
+        ],
+        "title": "CreateBatch",
+        "type": "object"
+      },
+      "CreateClassroom": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "title"
+        ],
+        "title": "CreateClassroom",
+        "type": "object"
+      },
       "CreateRoom": {
         "additionalProperties": false,
         "properties": {
@@ -96,6 +267,30 @@
           "script_id"
         ],
         "title": "CreateRoom",
+        "type": "object"
+      },
+      "GroupCommand": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "data": {
+            "title": "Data",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "kind"
+        ],
+        "title": "GroupCommand",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -180,6 +375,15 @@
             "title": "Achievements",
             "type": "array"
           },
+          "actor_type": {
+            "default": "human",
+            "enum": [
+              "human",
+              "llm_student"
+            ],
+            "title": "Actor Type",
+            "type": "string"
+          },
           "alias": {
             "title": "Alias",
             "type": "string"
@@ -195,6 +399,17 @@
           "online": {
             "title": "Online",
             "type": "boolean"
+          },
+          "persona_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persona Id"
           },
           "points": {
             "title": "Points",
@@ -249,6 +464,43 @@
           "text"
         ],
         "title": "Option",
+        "type": "object"
+      },
+      "OtherSuggestionRequest": {
+        "properties": {
+          "existing_options": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Existing Options",
+            "type": "array"
+          },
+          "question_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question_id",
+          "title",
+          "scenario"
+        ],
+        "title": "OtherSuggestionRequest",
         "type": "object"
       },
       "Question": {
@@ -714,6 +966,31 @@
           "document"
         ],
         "title": "ScriptSave",
+        "type": "object"
+      },
+      "Start": {
+        "properties": {
+          "accept_temporary_aliases": {
+            "default": false,
+            "title": "Accept Temporary Aliases",
+            "type": "boolean"
+          },
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "expected_roster_digest": {
+            "title": "Expected Roster Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "expected_roster_digest"
+        ],
+        "title": "Start",
         "type": "object"
       },
       "TokenRequest": {
@@ -1349,6 +1626,558 @@
         "summary": "Reaction"
       }
     },
+    "/api/v2/groups/classrooms/{rid}": {
+      "get": {
+        "operationId": "view_api_v2_groups_classrooms__rid__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "View"
+      }
+    },
+    "/api/v2/groups/classrooms/{rid}/ai-students": {
+      "post": {
+        "operationId": "add_ai_students_api_v2_groups_classrooms__rid__ai_students_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAIStudents"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Ai Students"
+      }
+    },
+    "/api/v2/groups/classrooms/{rid}/ai-students/clear": {
+      "post": {
+        "operationId": "clear_ai_students_api_v2_groups_classrooms__rid__ai_students_clear_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearAIStudents"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clear Ai Students"
+      }
+    },
+    "/api/v2/groups/classrooms/{rid}/analysis": {
+      "get": {
+        "operationId": "analysis_api_v2_groups_classrooms__rid__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analysis"
+      }
+    },
+    "/api/v2/groups/classrooms/{rid}/configure": {
+      "post": {
+        "operationId": "configure_api_v2_groups_classrooms__rid__configure_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Configure"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Configure"
+      }
+    },
+    "/api/v2/groups/classrooms/{rid}/start": {
+      "post": {
+        "operationId": "start_api_v2_groups_classrooms__rid__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Start"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start"
+      }
+    },
+    "/api/v2/groups/runs/{rid}/commands": {
+      "post": {
+        "operationId": "command_api_v2_groups_runs__rid__commands_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Command"
+      }
+    },
+    "/api/v2/groups/runs/{rid}/members/{mid}/identity": {
+      "get": {
+        "operationId": "identity_api_v2_groups_runs__rid__members__mid__identity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "title": "Rid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mid",
+            "required": true,
+            "schema": {
+              "title": "Mid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Identity"
+      }
+    },
+    "/api/v2/library/classrooms": {
+      "get": {
+        "operationId": "list_classrooms_api_v2_library_classrooms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Classrooms"
+      },
+      "post": {
+        "operationId": "create_classroom_api_v2_library_classrooms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassroom"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Classroom"
+      }
+    },
+    "/api/v2/library/classrooms/{cid}": {
+      "get": {
+        "operationId": "classroom_api_v2_library_classrooms__cid__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cid",
+            "required": true,
+            "schema": {
+              "title": "Cid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Classroom"
+      }
+    },
+    "/api/v2/library/classrooms/{cid}/batches": {
+      "post": {
+        "operationId": "create_batch_api_v2_library_classrooms__cid__batches_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cid",
+            "required": true,
+            "schema": {
+              "title": "Cid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Batch"
+      }
+    },
+    "/api/v2/library/classrooms/{cid}/scripts": {
+      "post": {
+        "operationId": "attach_script_api_v2_library_classrooms__cid__scripts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cid",
+            "required": true,
+            "schema": {
+              "title": "Cid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachScript"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attach Script"
+      }
+    },
+    "/api/v2/public-config": {
+      "get": {
+        "operationId": "public_config_api_v2_public_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Config"
+      }
+    },
     "/api/v2/readiness": {
       "get": {
         "operationId": "readiness_api_v2_readiness_get",
@@ -1568,6 +2397,42 @@
           }
         },
         "summary": "Export Yaml"
+      }
+    },
+    "/api/v2/suggestions/other": {
+      "post": {
+        "operationId": "other_suggestion_api_v2_suggestions_other_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtherSuggestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Other Suggestion"
       }
     }
   }

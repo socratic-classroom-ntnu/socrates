@@ -11,7 +11,7 @@ export async function api<T>(path: string, method = 'GET', body?: unknown): Prom
     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
   const data = await res.json()
-  if (!res.ok) throw new Error(typeof data.detail === 'string' ? data.detail : `API ${res.status}`)
+  if (!res.ok) throw Object.assign(new Error(typeof data.detail === 'string' ? data.detail : `API ${res.status}`), {status:res.status})
   return data as T
 }
 export function command(room: string, kind: CommandKind, data: Record<string, unknown> = {}, actionId = crypto.randomUUID()) {

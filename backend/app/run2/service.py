@@ -90,6 +90,8 @@ def view(db, room, account_id, mode="student") -> dict:
             points=m.get("points", 0),
             achievements=m.get("achievements", []),
             username=m["username"] if as_teacher else None,
+            actor_type=m.get("actor_type", "human"),
+            persona_id=(m.get("persona") or {}).get("id"),
         )
         for mid, m in s["members"].items()
     ]
@@ -239,6 +241,7 @@ def join(db, a, body):
         "achievements": [],
         "reactions_sent": 0,
         "reactions_received": 0,
+        "actor_type": "human",
     }
     room.state = state
     append_event(db, room, {"type": "member.joined", "payload": {"member_id": m.id}})
@@ -266,12 +269,15 @@ def execute(db, a, room_id, cmd):
     data = deepcopy(cmd.data)
     if cmd.kind == "start":
         script = db.get(Script, room.script_id)
+        from .portal_ai_students import ensure_other_options
+
+        document = ensure_other_options(script.document)
         snapshot = Snapshot(
             id=str(uuid4()),
             script_id=script.id,
             revision=script.revision,
-            document=deepcopy(script.document),
-            content_hash=digest(script.document),
+            document=deepcopy(document),
+            content_hash=digest(document),
         )
         db.add(snapshot)
         # snapshot_id 是直接指派的欄位值，ClassroomRun 與 Snapshot 之間沒有 relationship()，

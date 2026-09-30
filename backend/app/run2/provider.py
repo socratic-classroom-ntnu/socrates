@@ -65,14 +65,14 @@ def fallback(context):
 
 
 class OpenRouterProvider:
-    async def generate(self, messages, schema, on_delta):
+    async def generate(self, messages, schema, on_delta, model=None):
         key = os.environ.get("OPENROUTER_API_KEY", "")
         if not key:
             raise ProviderWait("OPENROUTER_KEY_BINDING", 60)
         started = time.monotonic()
         request_id = str(uuid4())
         body = {
-            "model": "openrouter/free",
+            "model": model or os.environ.get("RUN2_MODEL", "openrouter/free"),
             "messages": messages,
             "stream": True,
             "max_tokens": int(os.environ.get("RUN2_MAX_OUTPUT_TOKENS", "2048")),

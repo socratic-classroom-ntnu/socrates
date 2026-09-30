@@ -378,3 +378,21 @@ async def websocket(ws: WebSocket, room_id: str):
     finally:
         BUS.clients[room_id].discard(ws)
         BUS.send_locks.pop(ws, None)
+
+
+# PORTAL-R70-GROUP-ROUTER
+from .portal_group_api import router as _portal_group_router  # noqa: E402
+
+router.include_router(_portal_group_router)
+
+# PORTAL-R73-CLASSROOM-LIBRARY
+from .portal_classroom_library import router as _classroom_library_router  # noqa: E402
+from .portal_public_config import router as _public_config_router  # noqa: E402
+
+router.include_router(_classroom_library_router)
+router.include_router(_public_config_router)
+
+# PORTAL-R88-AI-STUDENTS
+from .portal_ai_students import router as _portal_ai_students_router  # noqa: E402
+
+router.include_router(_portal_ai_students_router)

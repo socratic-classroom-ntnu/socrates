@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, command, setCSRF, type Account, type Room, type ScriptDoc } from './client'
 import { Arena } from './Arena'
-import { ScriptBuilder } from './ScriptBuilder'
 import { DraftComposer } from '../shared/input/DraftComposer'
 import './style.css'
+import {ClassroomLibrary} from './ClassroomLibrary'
+import {AnswerWithResearch} from './ResearchSidebar'
+import './design-r73.css'
+import {GroupClassroomGate} from './GroupClassroom'
 
 type ScriptRow={id:string;revision:number;document:ScriptDoc}
 type Focus={id:string;member_id:string;turn_index:number;status:string;messages:{role:string;text:string}[];micro_summary:string}
@@ -35,20 +38,19 @@ function Auth({onLogin}:{onLogin:(a:Account)=>void}) {
     </form></main>
 }
 function Home({user}:{user:Account}) {
-  const [mode,setMode]=useState<'teacher'|'student'>('student'),[scripts,setScripts]=useState<ScriptRow[]>([])
+  const [mode,setMode]=useState<'teacher'|'student'>('student'),[,setScripts]=useState<ScriptRow[]>([])
   const [rooms,setRooms]=useState<{id:string;title:string;phase:string;teacher:boolean}[]>([])
-  const [editing,setEditing]=useState<ScriptRow|null|undefined>(),[code,setCode]=useState(''),[alias,setAlias]=useState('')
+  const [code,setCode]=useState(''),[alias,setAlias]=useState('')
   const [note,setNote]=useState('')
   const refresh=useCallback(()=>{void api<ScriptRow[]>('/scripts').then(setScripts).catch(e=>setNote(errorText(e)));void api<typeof rooms>('/classrooms').then(setRooms).catch(e=>setNote(errorText(e)))},[])
   useEffect(refresh,[refresh])
   const enter=(id:string,role:string)=>{location.href=`/classrooms/${id}?mode=${role}`}
-  async function join(){try{const r=await api<Room>('/classrooms/join','POST',{code,alias:alias||user.username,avatar:'scholar'});enter(r.id,'student')}catch(e){setNote(errorText(e))}}
+  async function join(){try{const r=await api<Room>('/classrooms/join','POST',{code,alias:alias.trim()||('~pending-'+crypto.randomUUID().slice(0,8)),avatar:'scholar'});enter(r.id,'student')}catch(e){setNote(errorText(e))}}
   return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={()=>void api('/auth/logout','POST').then(()=>location.reload())}>登出</button></header>
     <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode==='student'} onClick={()=>setMode('student')}>學生入口</button><button aria-pressed={mode==='teacher'} onClick={()=>setMode('teacher')}>教師工作室</button></div></section>
     {!user.verified&&<section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={()=>void api('/auth/verification-email','POST',{email:user.email}).then(()=>setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
     {mode==='student'?<section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e=>setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e=>setAlias(e.target.value)}/></label><button onClick={()=>void join()}>進入教室 →</button></section>:
-      <><div className="r2-section-title"><h2>我的劇本</h2><button onClick={()=>setEditing(null)}>＋ 建立劇本</button></div><div className="r2-script-grid">{scripts.map(s=><article key={s.id} className="r2-card"><small>草稿 v{s.revision} · {s.document.mode}</small><h3>{s.document.title}</h3><p>{s.document.questions.length} 道已編輯題目</p><div className="r2-row"><button className="quiet" onClick={()=>setEditing(s)}>編輯</button><button onClick={()=>void api<Room>('/classrooms','POST',{script_id:s.id}).then(r=>enter(r.id,'teacher')).catch(e=>setNote(errorText(e)))}>開教室</button></div></article>)}</div>
-      {editing!==undefined&&<ScriptBuilder key={editing?.id||'new'} initial={editing||undefined} onSaved={refresh}/>}</>}
+      <ClassroomLibrary/>}
     <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r=><button className="r2-card" key={r.id} onClick={()=>enter(r.id,r.teacher?mode:'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>Run2 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>
 }
 function useRoom(id:string,mode:string){
@@ -99,7 +101,7 @@ function AnswerPanel({room,refresh,setNote,offset}:{room:Room;refresh:()=>Promis
   if(!allowed)return <section className="r2-dialog"><small>ANSWER RECORDED</small><h2>你的觀點，已經有了位置。</h2><p>等待大家完成作答，接著一起看看各種立場。</p></section>
   return <section className="r2-answer"><article className="r2-prompt"><small>情境 {room.question_index+1} / {room.question_count}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p></article>
     {!writing?<div className="r2-options">{room.question?.options.map((o,i)=><button key={o.id} className={'r2-option '+(choice===o.id?'chosen':'')} onClick={()=>{setChoice(o.id);setWriting(true)}}><small>{String.fromCharCode(65+i)}</small>{o.text}</button>)}</div>:
-    <div className="r2-dialog r2-expand"><button className="quiet" onClick={()=>setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o=>o.id===choice)?.text}</small><DraftComposer value={text} onChange={setText} onSend={submit} enabled={allowed} canSend={Boolean(choice)&&(!room.question?.argument_required||Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus/></div>}
+    <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o,i)=><button type="button" className={o.id===choice?"selected":"dimmed"} key={o.id} onClick={()=>setChoice(o.id)}><small>{String.fromCharCode(65+i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={()=>setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o=>o.id===choice)?.text}</small><DraftComposer value={text} onChange={setText} onSend={submit} enabled={allowed} canSend={Boolean(choice)&&(!room.question?.argument_required||Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus/></div>}
   </section>
 }
 function SummaryText({value}:{value:Summary|undefined}){
@@ -125,21 +127,22 @@ function SummaryPanel({room,refresh}:{room:Room;refresh:()=>Promise<Room|null>})
     {open!==null&&<div className="r2-zen-backdrop" onClick={()=>setOpen(null)}><article role="dialog" aria-modal="true" aria-label="單題深度回顧" className="r2-zen" onClick={e=>e.stopPropagation()}><button autoFocus className="r2-zen-close" onClick={()=>setOpen(null)}>關閉 ×</button>{stats.find(s=>s.index===open)&&card(stats.find(s=>s.index===open)!)}</article></div>}
   </section>
 }
-function Classroom({user,id}:{user:Account;id:string}) {
+function Classroom({user,id}:{user:Account;id:string}) { return <GroupClassroomGate user={user} id={id} Legacy={LegacyClassroom}/> }
+function LegacyClassroom({id}:{user:Account;id:string}) {
   const mode=new URLSearchParams(location.search).get('mode')||'student'
   const {room,note,setNote,refresh,buffer,barrage,offset}=useRoom(id,mode)
   const [left,setLeft]=useState(false),[right,setRight]=useState(false),[menu,setMenu]=useState(false),[text,setText]=useState('')
-  const [alias,setAlias]=useState(user.username)
+  const [alias,setAlias]=useState('')
   const f=room?.focus as unknown as Focus|null
   const selected=!!room?.member_id&&f?.member_id===room.member_id&&mode==='student'
   const run=(kind:Parameters<typeof command>[1],data:Record<string,unknown>={})=>command(id,kind,data).then(async()=>{await refresh();return true}).catch(e=>{setNote(errorText(e));return false})
   if(!room)return <main className="r2-loading"><div className="r2-pulse"/><h2>正在進入教室</h2><p>{note}</p><a href="/">首頁</a></main>
   return <main className="r2-classroom"><header className="r2-top"><button className="quiet" aria-label="展開教室側欄" onClick={()=>setLeft(!left)}>☷</button><a className="r2-wordmark" href="/">Socrates</a><span>{room.title}</span><Clock deadline={room.deadline_at} offset={offset}/><button className="r2-hamburger" aria-label="三槓選單" onClick={()=>setMenu(!menu)}>☰</button>{menu&&<nav className="r2-menu"><button onClick={()=>{setLeft(!left);setMenu(false)}}>教室成員</button><button onClick={()=>{setRight(!right);setMenu(false)}}>完整對話</button><a href="/">回首頁</a>{room.role==='teacher'&&room.code&&<button onClick={()=>{location.href=`/classrooms/${id}?mode=student`}}>以學生視角加入</button>}</nav>}</header>
-    {left&&<aside className="r2-drawer left"><button className="quiet" onClick={()=>setLeft(false)}>收合 ←</button><h2>同一個教室</h2><p>{room.members.length} 位學生</p>{room.members.map(m=><div className="r2-member" key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0,1)}</span><span>{m.alias}{m.username&&<small> @{m.username}</small>}<small>{m.points} 點 · {m.online?'在線':'離席'}</small></span></div>)}</aside>}
+    {left&&<aside className="r2-drawer left"><button className="quiet" onClick={()=>setLeft(false)}>收合 ←</button><h2>同一個教室</h2><p>{room.members.length} 位學生</p>{room.members.map(m=><div className="r2-member" key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0,1)}</span><span>{m.alias}{m.username&&<span title={m.username} tabIndex={0} aria-label="教師身分對照"> ⓘ</span>}<small>{m.points} 點 · {m.online?'在線':'離席'}</small></span></div>)}</aside>}
     {right&&<aside className="r2-drawer right"><button className="quiet" onClick={()=>setRight(false)}>收合 →</button><h2>本題對話</h2>{(room.transcript as unknown as Focus[]).map(x=><div key={x.id}>{x.messages.map((m,i)=><article className={'r2-message '+m.role} key={i}><small>{m.role==='tutor'?'導師':'同學'}</small><p>{m.text}</p></article>)}</div>)}</aside>}
     {room.phase==='lobby'&&<section className="r2-lobby"><small>WELCOME TO THE CLASSROOM</small><h1>觀點在此相遇。</h1><div className="r2-code-display">{room.code}</div><p>分享課程代碼，邀請同學入座。</p><div className="r2-seat-grid">{room.members.map(m=><div key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0,1)}</span>{m.alias}</div>)}</div>{room.role==='teacher'?<button onClick={()=>void run('start')}>開始課堂 →</button>:room.member_id?<p>已入座，等待老師開始。</p>:<div className="r2-row"><input value={alias} onChange={e=>setAlias(e.target.value)} aria-label="匿名名稱"/><button onClick={()=>void api('/classrooms/join','POST',{code:room.code,alias,avatar:'scholar'}).then(refresh).catch(e=>setNote(errorText(e)))}>以學生身份入座</button></div>}</section>}
     {room.phase==='countdown'&&<section className="r2-countdown"><small>讓我們開始思考</small><Clock deadline={room.deadline_at} offset={offset}/></section>}
-    {room.phase==='answering'&&(room.role==='teacher'?<section className="r2-lobby"><small>QUESTION {room.question_index+1}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p><p>學員正在作答，倒數由伺服器同步。</p></section>:<AnswerPanel key={room.question_run_id} room={room} refresh={refresh} setNote={setNote} offset={offset}/>)}
+    {room.phase==='answering'&&(room.role==='teacher'?<section className="r2-lobby"><small>QUESTION {room.question_index+1}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p><p>學員正在作答，倒數由伺服器同步。</p></section>:<AnswerWithResearch sessionId={room.id}><AnswerPanel key={room.question_run_id} room={room} refresh={refresh} setNote={setNote} offset={offset}/></AnswerWithResearch>)}
     {room.phase==='distribution'&&<section className="r2-distribution"><small>OUR PERSPECTIVES</small><h1>同一個問題，不同的看法。</h1>{room.distribution.map((raw,i)=>{const d=raw as {text:string;percent:number;count:number;members:{alias:string;avatar:string}[]};return <article className="r2-card" key={i}><h2>{d.text}</h2><b>{d.percent.toFixed(1)}% · {d.count} 人</b><div className="r2-bar"><i style={{width:d.percent+'%'}}/></div><div className="r2-row">{d.members?.map((m,j)=><span className="r2-mini-person" key={j}><i>{m.alias.slice(0,1)}</i>{m.alias}</span>)}</div></article>})}</section>}
     {['arena','focus','focus_summary'].includes(room.phase)&&<><Arena room={room}/><div className="r2-barrage-layer">{barrage.map((b,i)=><span key={b.id} style={{top:(12+(i%6)*10)+'%'}}>{b.text}</span>)}</div>
       {selected&&<aside className="r2-focus-chat"><small>你的深入討論</small>{f?.messages.map((m,i)=><article className={'r2-message '+m.role} key={i}><small>{m.role==='tutor'?'導師':'你'}</small><p>{m.text}</p></article>)}</aside>}

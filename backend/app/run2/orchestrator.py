@@ -100,6 +100,7 @@ class GameOrchestrator:
                     "submitted_at": self.now,
                     "via": "server-finalize",
                     "revision": d["revision"],
+                    "suggestion": deepcopy(d.get("suggestion")),
                 }
                 self.award(m, "first_answer")
         r["phase"] = "distribution"
@@ -300,6 +301,7 @@ class GameOrchestrator:
                 "option_id": data["option_id"],
                 "revision": rev,
                 "saved_at": self.now,
+                "suggestion": deepcopy(data.get("suggestion")),
             }
             if kind == "answer":
                 if q["argument_required"] and not text.strip():
@@ -310,6 +312,7 @@ class GameOrchestrator:
                     "submitted_at": self.now,
                     "via": "submit",
                     "revision": rev,
+                    "suggestion": deepcopy(data.get("suggestion")),
                 }
                 self.award(member_id, "first_answer")
                 self.emit("answer.recorded", member_id=member_id)
@@ -360,7 +363,9 @@ class GameOrchestrator:
         raise DomainError("KNOWN_ACTION_REQUIRED", 422)
 
     def accept_preview(self):
-        q = Question.model_validate(self.s.pop("preview")).model_dump()
+        from .portal_ai_students import ensure_other_question
+
+        q = Question.model_validate(ensure_other_question(self.s.pop("preview"))).model_dump()
         # Generated questions are run-owned; copying into a teacher draft is an explicit endpoint.
         self.s["questions"].append(q)
         self.s["question_index"] += 1
@@ -429,7 +434,11 @@ class GameOrchestrator:
         elif kind == "dynamic_question":
             if key != s.get("pending_generation"):
                 return
-            s["preview"] = Question.model_validate(result["question"]).model_dump()
+            from .portal_ai_students import ensure_other_question
+
+            s["preview"] = Question.model_validate(
+                ensure_other_question(result["question"])
+            ).model_dump()
             s["last_error"] = None
             self.phase("preview", s["script"]["preview_seconds"])
         elif kind == "question_summary":
@@ -446,3 +455,14 @@ class GameOrchestrator:
             m = key.split(":", 1)[1]
             s["summaries"]["personal"][m] = {"status": "READY", **result, "provenance": provider}
             self.emit("summary.ready", kind=kind)
+
+
+# PORTAL-R70-GROUP-EXTENSION
+from .portal_group_domain import extend as _extend_group_run  # noqa: E402
+
+GameOrchestrator = _extend_group_run(GameOrchestrator)  # type: ignore[misc]
+
+# PORTAL-R88-AI-STUDENT-EXTENSION
+from .portal_ai_students import extend as _extend_ai_students  # noqa: E402
+
+GameOrchestrator = _extend_ai_students(GameOrchestrator)  # type: ignore[misc]

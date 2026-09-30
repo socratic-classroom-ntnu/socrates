@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { Room } from './client'
+import {GroupAvatar} from './GroupAvatar'
+// PORTAL-R73-SELECTED-STAGE
 
 /** Shared seats/focus are projected from the server; camera is local to this tab. */
 export function Arena({room}:{room:Room}) {
@@ -26,14 +27,9 @@ export function Arena({room}:{room:Room}) {
     const platform=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,.16,64),new THREE.MeshStandardMaterial({color:0x776382,metalness:.2,roughness:.7}))
     platform.position.y=.03;scene.add(platform)
     const tutor=new THREE.Group();scene.add(tutor)
-    let loaded=false,disposed=false
-    new GLTFLoader().load('/avatars/ce-brunette/avatar.glb',(gltf)=>{
-      if(disposed)return
-      const model=gltf.scene; const box=new THREE.Box3().setFromObject(model);const size=box.getSize(new THREE.Vector3());const center=box.getCenter(new THREE.Vector3())
-      const scale=2.4/Math.max(.1,size.y);model.scale.setScalar(scale)
-      model.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);tutor.add(model);loaded=true
-      container.dataset.renderer='gltf'
-    },undefined,()=>{container.dataset.renderer='portrait-loading'})
+    const loaded=false
+    // The selected catalog presenter owns the tutor; native seats and camera persist.
+    container.dataset.renderer="native-seats-with-selected-presenter"
     const seatGroup=new THREE.Group();scene.add(seatGroup);let seatSignature=''
     const disposables:{dispose:()=>void}[]=[]
     function seats(){
@@ -71,9 +67,9 @@ export function Arena({room}:{room:Room}) {
       tutor.position.y=Math.min(.1,elapsed*.5-1.5)+Math.sin(elapsed*1.2)*.012
       tutor.visible=loaded;controls.update();renderer.render(scene,camera)
     };animate()
-    return ()=>{disposed=true;cancelAnimationFrame(frame);ro.disconnect();controls.dispose();renderer.dispose();
+    return ()=>{cancelAnimationFrame(frame);ro.disconnect();controls.dispose();renderer.dispose();
       scene.traverse((o)=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose())}})
       disposables.forEach(x=>x.dispose());renderer.domElement.remove()}
   },[])
-  return <div className="r2-arena" ref={host} aria-label="共享教室舞台"><div className="r2-stage-caption">SOCRATES · 共思劇場</div></div>
+  return <div className="r2-arena" ref={host} aria-label="共享教室舞台"><div className="r73-native-avatar"><GroupAvatar roomId={room.id}/></div><div className="r2-stage-caption">SOCRATES · 共思劇場</div></div>
 }

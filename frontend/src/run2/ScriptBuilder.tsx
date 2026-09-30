@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import {ScriptAssist} from './ScriptAssist'
 import { api, exportYAML, importYAML, type ScriptDoc, type Question } from './client'
 const question=():Question=>({id:crypto.randomUUID(),title:'新的問題',scenario:'在這裡寫下情境。',
   options:[{id:'a',text:'選項 A'},{id:'b',text:'選項 B'},{id:'c',text:'選項 C'}],duration_seconds:90,
@@ -13,6 +14,7 @@ export function ScriptBuilder({initial,onSaved}:{initial?:{id:string;revision:nu
   function edit(index:number,patch:Partial<Question>){setDoc(x=>({...x,questions:x.questions.map((q,i)=>i===index?{...q,...patch}:q)}))}
   async function save(){try{const x=await api<{id:string;revision:number}>(identity?`/scripts/${identity.id}`:'/scripts',identity?'PUT':'POST',{document:doc,...(identity?{expected_revision:identity.revision}:{})});setIdentity(x);setMessage('草稿已儲存；開始教室時固定本次版本。');onSaved()}catch(e){setMessage(String(e))}}
   return <section className="r2-builder"><div className="r2-section-title"><div><small>TEACHER STUDIO</small><h2>設計一場值得討論的課</h2></div><button onClick={()=>void save()}>儲存草稿</button></div>
+    <ScriptAssist document={doc} onApply={setDoc}/>
     <label>劇本名稱<input value={doc.title} onChange={e=>setDoc({...doc,title:e.target.value})}/></label>
     <div className="r2-grid"><label>題目模式<select value={doc.mode} onChange={e=>setDoc({...doc,mode:e.target.value as ScriptDoc['mode']})}><option value="static">教師預先編輯</option><option value="dynamic">初始題＋LLM 動態出題</option></select></label>
     <label>動態題目總數<input type="number" min="1" value={doc.max_questions} onChange={e=>setDoc({...doc,max_questions:+e.target.value})}/></label>

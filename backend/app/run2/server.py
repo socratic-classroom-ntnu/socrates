@@ -1,6 +1,7 @@
 """Application composition. Legacy Round1 routers remain available alongside /api/v2."""
 
 import asyncio
+import os
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -14,9 +15,9 @@ from .workers import clock_loop, llm_loop, mail_loop
 @asynccontextmanager
 async def lifespan(app):
     engine()
-    tasks = [
-        asyncio.create_task(fn()) for fn in (BUS.listen, BUS.sweep, clock_loop, llm_loop, mail_loop)
-    ]
+    worker_count = max(1, int(os.environ.get("RUN2_LLM_WORKERS", "4")))
+    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop] + [llm_loop] * worker_count
+    tasks = [asyncio.create_task(fn()) for fn in loops]
     try:
         yield
     finally:

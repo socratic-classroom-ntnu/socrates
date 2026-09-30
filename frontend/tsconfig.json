@@ -15,7 +15,7 @@
     "types": [
       "jest",
       "node",
-      "@rsbuild/core/types",
+      "vite/client",
       "@testing-library/jest-dom"
     ]
   },

@@ -1,11 +1,1 @@
-module.exports = {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
-  testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.test.tsx'],
-  transform: { '^.+\\.(t|j)sx?$': ['@swc/jest', {
-    jsc: { parser: { syntax: 'typescript', tsx: true }, transform: { react: { runtime: 'automatic' } } },
-    module: { type: 'commonjs' },
-  }] },
-  moduleNameMapper: { '\\.(css|scss)$': '<rootDir>/test/styleMock.cjs' },
-  clearMocks: true,
-}
+module.exports={testEnvironment:'jsdom',testMatch:['<rootDir>/src/**/*.test.{js,jsx}'],setupFilesAfterEnv:['<rootDir>/src/setupTests.js'],transform:{'^.+\\.[jt]sx?$':['@swc/jest',{jsc:{parser:{syntax:'ecmascript',jsx:true},transform:{react:{runtime:'automatic'}}}}]},moduleNameMapper:{'\\.(css)$':'<rootDir>/test/styleMock.cjs'},moduleFileExtensions:['js','jsx','json','ts','tsx']}

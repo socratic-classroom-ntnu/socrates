@@ -154,6 +154,19 @@ class DynamicResult(Strict):
     question: Question
 
 
+# PORTAL-R88-LLM-STUDENT-CONTRACTS
+class LLMStudentTurn(Strict):
+    action_mode: Literal["answer", "focus", "viewpoint", "final_reflection"]
+    option_id: str = ""
+    text: str = Field(min_length=1, max_length=12000)
+    relation: Literal["supports", "challenges", "qualifies", "revises"] = "qualifies"
+    should_confirm: bool = False
+
+
+class OtherSuggestionResult(Strict):
+    suggestion_text: str = Field(min_length=1, max_length=1000)
+
+
 class MemberView(Strict):
     id: str
     alias: str
@@ -163,6 +176,8 @@ class MemberView(Strict):
     points: int
     achievements: list[str]
     username: str | None = None
+    actor_type: Literal["human", "llm_student"] = "human"
+    persona_id: str | None = None
 
 
 class RoomView(Strict):

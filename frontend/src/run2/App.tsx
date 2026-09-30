@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, command, setCSRF, type Account, type Room, type ScriptDoc } from './client'
 import { Arena } from './Arena'
-import { ScriptBuilder } from './ScriptBuilder'
 import { DraftComposer } from '../shared/input/DraftComposer'
 import './style.css'
 import {ClassroomLibrary} from './ClassroomLibrary'
@@ -39,9 +38,9 @@ function Auth({onLogin}:{onLogin:(a:Account)=>void}) {
     </form></main>
 }
 function Home({user}:{user:Account}) {
-  const [mode,setMode]=useState<'teacher'|'student'>('student'),[scripts,setScripts]=useState<ScriptRow[]>([])
+  const [mode,setMode]=useState<'teacher'|'student'>('student'),[,setScripts]=useState<ScriptRow[]>([])
   const [rooms,setRooms]=useState<{id:string;title:string;phase:string;teacher:boolean}[]>([])
-  const [editing,setEditing]=useState<ScriptRow|null|undefined>(),[code,setCode]=useState(''),[alias,setAlias]=useState('')
+  const [code,setCode]=useState(''),[alias,setAlias]=useState('')
   const [note,setNote]=useState('')
   const refresh=useCallback(()=>{void api<ScriptRow[]>('/scripts').then(setScripts).catch(e=>setNote(errorText(e)));void api<typeof rooms>('/classrooms').then(setRooms).catch(e=>setNote(errorText(e)))},[])
   useEffect(refresh,[refresh])
@@ -129,7 +128,7 @@ function SummaryPanel({room,refresh}:{room:Room;refresh:()=>Promise<Room|null>})
   </section>
 }
 function Classroom({user,id}:{user:Account;id:string}) { return <GroupClassroomGate user={user} id={id} Legacy={LegacyClassroom}/> }
-function LegacyClassroom({user,id}:{user:Account;id:string}) {
+function LegacyClassroom({id}:{user:Account;id:string}) {
   const mode=new URLSearchParams(location.search).get('mode')||'student'
   const {room,note,setNote,refresh,buffer,barrage,offset}=useRoom(id,mode)
   const [left,setLeft]=useState(false),[right,setRight]=useState(false),[menu,setMenu]=useState(false),[text,setText]=useState('')

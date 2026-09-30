@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { Room } from './client'
 import {GroupAvatar} from './GroupAvatar'
@@ -28,7 +27,7 @@ export function Arena({room}:{room:Room}) {
     const platform=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,.16,64),new THREE.MeshStandardMaterial({color:0x776382,metalness:.2,roughness:.7}))
     platform.position.y=.03;scene.add(platform)
     const tutor=new THREE.Group();scene.add(tutor)
-    let loaded=false,disposed=false
+    const loaded=false
     // The selected catalog presenter owns the tutor; native seats and camera persist.
     container.dataset.renderer="native-seats-with-selected-presenter"
     const seatGroup=new THREE.Group();scene.add(seatGroup);let seatSignature=''
@@ -68,7 +67,7 @@ export function Arena({room}:{room:Room}) {
       tutor.position.y=Math.min(.1,elapsed*.5-1.5)+Math.sin(elapsed*1.2)*.012
       tutor.visible=loaded;controls.update();renderer.render(scene,camera)
     };animate()
-    return ()=>{disposed=true;cancelAnimationFrame(frame);ro.disconnect();controls.dispose();renderer.dispose();
+    return ()=>{cancelAnimationFrame(frame);ro.disconnect();controls.dispose();renderer.dispose();
       scene.traverse((o)=>{if(o instanceof THREE.Mesh){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose())}})
       disposables.forEach(x=>x.dispose());renderer.domElement.remove()}
   },[])

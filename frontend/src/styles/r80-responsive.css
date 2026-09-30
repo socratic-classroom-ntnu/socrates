@@ -5,3 +5,11 @@
 .r73-research{position:sticky;top:1rem;max-height:calc(100vh - 2rem);overflow:auto}
 @media (max-width:820px){.r73-answer-layout{grid-template-columns:1fr}.r73-research{position:relative;top:auto;max-height:none}.r2-top{flex-wrap:wrap}.r2-home-hero h1,.r2-answer h1{font-size:clamp(2rem,9vw,4rem)}.r2-drawer{width:min(92vw,28rem)}.r2-seat-grid,.r2-script-grid{grid-template-columns:1fr}.r2-stage-caption{max-width:80vw}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* PORTAL-R88-AI-STUDENTS-AND-GHOST */
+.r88-ai-badge{display:inline-flex;margin-left:.45rem;padding:.1rem .45rem;border:1px solid currentColor;border-radius:999px;font-size:.72rem;letter-spacing:.08em}
+.r88-ai-roster-controls{flex-wrap:wrap;margin-block:1rem}
+.r88-lessons .r88-lesson-card{display:grid;gap:.35rem}
+.r88-ghost-accept{margin-top:.5rem;border:1px dashed currentColor;background:transparent;color:#a7a1a9}
+textarea::placeholder{color:#8e8992;opacity:1}
+@media(max-width:820px){.r88-ai-roster-controls>*{flex:1 1 12rem}.r88-ghost-accept{width:100%}}

@@ -182,13 +182,28 @@ function Clock({ deadline, offset }) {
 function AnswerPanel({ room, refresh, setNote, offset }) {
     const initial = room.my_draft;
     const [choice, setChoice] = useState(initial?.option_id || ''), [text, setText] = useState(initial?.text || ''), [writing, setWriting] = useState(!!initial?.option_id);
+    const [ghost, setGhost] = useState(''), [suggestion, setSuggestion] = useState(initial?.suggestion || null);
     const revision = useRef(initial?.revision || 0), sent = useRef(false), finalAction = useRef(crypto.randomUUID());
-    const latest = useRef({ choice, text });
-    latest.current = { choice, text };
+    const latest = useRef({ choice, text, suggestion });
+    latest.current = { choice, text, suggestion };
+    useEffect(() => {
+        if (choice !== '__other__') { setGhost(''); setSuggestion(null); return; }
+        if (text || ghost) return;
+        const question = room.question;
+        void api('/suggestions/other', 'POST', {
+            question_id: question?.id || room.question_run_id,
+            title: question?.title || '其他觀點',
+            scenario: question?.scenario || '提出另一個判斷角度。',
+            existing_options: (question?.options || []).filter(o => o.id !== '__other__').map(o => o.text)
+        }).then(result => {
+            setGhost(result.suggestion_text || '');
+            setSuggestion({ ...result, suggestion_accepted: false, suggestion_accepted_at: null, suggestion_edited: false });
+        }).catch(() => undefined);
+    }, [choice, room.question_run_id, room.question, text, ghost]);
     const allowed = room.available_actions.includes('answer');
     const submit = useCallback(async () => { const v = latest.current; if (sent.current || !v.choice)
         return; sent.current = true; try {
-        await command(room.id, 'answer', { question_run_id: room.question_run_id, option_id: v.choice, text: v.text, revision: ++revision.current }, finalAction.current);
+        await command(room.id, 'answer', { question_run_id: room.question_run_id, option_id: v.choice, text: v.text, revision: ++revision.current, suggestion: v.suggestion }, finalAction.current);
         await refresh();
     }
     catch (e) {
@@ -197,13 +212,13 @@ function AnswerPanel({ room, refresh, setNote, offset }) {
         await refresh();
     } }, [room.id, room.question_run_id, refresh, setNote]);
     useEffect(() => { if (!choice || !allowed)
-        return; const v = ++revision.current; const timer = setTimeout(() => void command(room.id, 'draft', { question_run_id: room.question_run_id, option_id: choice, text, revision: v }).catch(e => setNote(errorText(e))), 350); return () => clearTimeout(timer); }, [choice, text, allowed, room.id, room.question_run_id, setNote]);
+        return; const v = ++revision.current; const timer = setTimeout(() => void command(room.id, 'draft', { question_run_id: room.question_run_id, option_id: choice, text, revision: v, suggestion }).catch(e => setNote(errorText(e))), 350); return () => clearTimeout(timer); }, [choice, text, allowed, room.id, room.question_run_id, setNote]);
     useEffect(() => { const flush = () => void submit(); window.addEventListener('r2-final-sync', flush); const timer = setTimeout(flush, Math.max(0, (room.deadline_at || 0) * 1000 - (Date.now() + offset.current))); return () => { window.removeEventListener('r2-final-sync', flush); clearTimeout(timer); }; }, [room.deadline_at, submit, offset]);
     if (!allowed)
         return <section className="r2-dialog"><small>ANSWER RECORDED</small><h2>你的觀點，已經有了位置。</h2><p>等待大家完成作答，接著一起看看各種立場。</p></section>;
     return <section className="r2-answer"><article className="r2-prompt"><small>情境 {room.question_index + 1} / {room.question_count}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p></article>
     {!writing ? <div className="r2-options">{room.question?.options.map((o, i) => <button key={o.id} className={'r2-option ' + (choice === o.id ? 'chosen' : '')} onClick={() => { setChoice(o.id); setWriting(true); }}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div> :
-            <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o, i) => <button type="button" className={o.id === choice ? "selected" : "dimmed"} key={o.id} onClick={() => setChoice(o.id)}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={() => setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o => o.id === choice)?.text}</small><DraftComposer value={text} onChange={setText} onSend={submit} enabled={allowed} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus/></div>}
+            <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o, i) => <button type="button" className={o.id === choice ? "selected" : "dimmed"} key={o.id} onClick={() => setChoice(o.id)}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={() => setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o => o.id === choice)?.text}</small><DraftComposer value={text} onChange={value => { setText(value); if (suggestion?.suggestion_accepted) setSuggestion(current => ({ ...current, suggestion_edited: value !== ghost })); }} onSend={submit} enabled={allowed} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus ghostText={choice === '__other__' ? ghost : ''} onGhostAccepted={() => setSuggestion(current => ({ ...current, suggestion_accepted: true, suggestion_accepted_at: Date.now() / 1000, suggestion_edited: false }))}/></div>}
   </section>;
 }
 function SummaryText({ value }) {

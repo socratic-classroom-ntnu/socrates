@@ -292,6 +292,7 @@ def persist_machine(db, room, machine):
     for e in machine.events:
         append_event(db, room, e)
     priority = {
+        "llm_student_turn": 0,
         "focused_tutor": 1,
         "dynamic_question": 2,
         "question_summary": 3,

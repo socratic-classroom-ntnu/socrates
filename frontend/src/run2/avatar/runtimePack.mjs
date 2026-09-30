@@ -59,6 +59,6 @@ export class AudioLane {
       }
     });
   }
-  stop(){this.generation++;if(this.current){const old=this.current;this.current=null;old.finish('STOPPED');try{old.source.stop()}catch{}}}
+  stop(){this.generation++;if(this.current){const old=this.current;this.current=null;old.finish('STOPPED');try{old.source.stop()}catch{/* source already stopped */}}}
   async dispose(){this.stop();await this.context?.close();this.context=null}
 }

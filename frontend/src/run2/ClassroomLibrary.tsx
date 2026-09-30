@@ -14,6 +14,7 @@ export function ClassroomLibrary(){
   const key=JSON.stringify([path,body]);if(busy)return null
   if(pending.current&&pending.current.key!==key){setNote('先配對前一操作回執。');return null}
   pending.current??={key,action_id:crypto.randomUUID()};setBusy(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   try{const result=await api<any>(path,'POST',{...body,action_id:pending.current.action_id});pending.current=null;setNote('已保存。');await refresh();return result}
   catch(e){if((e as {status?:number}).status&&Number((e as {status:number}).status)<500)pending.current=null;setNote(String(e));return null}
   finally{setBusy(false)}

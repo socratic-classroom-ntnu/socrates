@@ -2,11 +2,16 @@
 
 import json
 from pathlib import Path
-from .contracts import TutorTurn, SummaryResult, DynamicResult
+from .contracts import TutorTurn, SummaryResult, DynamicResult, LLMStudentTurn
 from .storage import Program, digest
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMAS = {"TutorTurn": TutorTurn, "SummaryResult": SummaryResult, "DynamicResult": DynamicResult}
+SCHEMAS = {
+    "TutorTurn": TutorTurn,
+    "SummaryResult": SummaryResult,
+    "DynamicResult": DynamicResult,
+    "LLMStudentTurn": LLMStudentTurn,
+}
 
 
 def compile_program(db, kind, context):

@@ -11,6 +11,7 @@ from sqlalchemy import or_, select
 from .orchestrator import GameOrchestrator
 from .prompts import compile_program
 from .provider import OpenRouterProvider, ProviderWait, fallback
+from .portal_ai_students import fallback_turn
 from .realtime import BUS
 from .service import hydrate, tick_due
 from .storage import Budget, CallAudit, Job, Mail, Room, persist_machine, transaction
@@ -66,6 +67,8 @@ def reserve_call(item):
             raise ProviderWait("JOB_LEASE_RECONCILIATION", 30)
         room = db.scalar(select(Room).where(Room.id == item["room"]).with_for_update())
         limit = room.state["script"]["live_llm_call_budget"]
+        if item["kind"] == "llm_student_turn":
+            limit = max(limit, int(os.environ.get("PORTAL_AI_CALL_BUDGET", "240")))
         if room.llm_used >= limit:
             raise ProviderWait("CLASSROOM_BUDGET_AVAILABILITY", max(60, seconds))
         from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -139,7 +142,13 @@ async def process_job(item):
         try:
             await asyncio.to_thread(reserve_call, item)
             result, audit = await asyncio.wait_for(
-                provider.generate(item["messages"], item["schema"], on_delta), 120
+                provider.generate(
+                    item["messages"],
+                    item["schema"],
+                    on_delta,
+                    model=item["context"].get("model"),
+                ),
+                120,
             )
             if pending:
                 await BUS.emit_ephemeral(item["room"], item["key"], pending, offset)
@@ -179,6 +188,22 @@ async def process_job(item):
             result,
             {
                 "provider": "scripted-probe-hints",
+                "actual_model": None,
+                "request_id": None,
+                "latency_ms": 0,
+                "token_usage": {},
+                "fallback_used": True,
+                "reason": error.reason,
+            },
+        )
+    elif item["kind"] == "llm_student_turn":
+        result = fallback_turn(item["context"])
+        await asyncio.to_thread(
+            finish_job,
+            item,
+            result,
+            {
+                "provider": "deterministic-ai-student",
                 "actual_model": None,
                 "request_id": None,
                 "latency_ms": 0,

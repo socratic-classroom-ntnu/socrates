@@ -210,6 +210,7 @@ def _master_key(version: str | None = None) -> tuple[bytes, str]:
     legacy = _legacy_key()
     if legacy is None:
         raise DomainError("PROVIDER_CREDENTIAL_REENTRY_REQUIRED", 409)
+    assert version is not None
     return legacy, version
 
 

@@ -5,14 +5,13 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import os
-import smtplib
 import time
-from email.message import EmailMessage
 from uuid import uuid4
 
 from sqlalchemy import or_, select
 
 from .contracts import DynamicResult, SummaryResult
+from .email_delivery import send_mail_once as _send_transactional_mail_once
 from .orchestrator import GameOrchestrator
 from .portal_ai_students import fallback_turn
 from .prompts import compile_program
@@ -28,7 +27,6 @@ from .storage import (
     Budget,
     CallAudit,
     Job,
-    Mail,
     Room,
     persist_machine,
     transaction,
@@ -448,45 +446,7 @@ async def clock_loop():
 
 
 def send_mail_once():
-    host = os.environ.get("SMTP_HOST", "")
-    if not host:
-        return
-    with transaction() as db:
-        row = db.scalar(
-            select(Mail)
-            .where(
-                Mail.state == "PENDING",
-                Mail.next_at <= time.time(),
-            )
-            .limit(1)
-            .with_for_update(skip_locked=True)
-        )
-        if row is None:
-            return
-        message = EmailMessage()
-        message["From"] = os.environ.get("SMTP_FROM", "socrates@localhost")
-        message["To"] = row.recipient
-        message["Subject"] = row.subject
-        message.set_content(row.body)
-        try:
-            port = int(os.environ.get("SMTP_PORT", "587"))
-            with smtplib.SMTP(host, port, timeout=10) as smtp:
-                if os.environ.get("SMTP_STARTTLS", "true") == "true":
-                    smtp.starttls()
-                if os.environ.get("SMTP_USER"):
-                    smtp.login(
-                        os.environ["SMTP_USER"],
-                        os.environ.get("SMTP_PASSWORD", ""),
-                    )
-                smtp.send_message(message)
-            row.state = "SENT"
-            row.body = "DELIVERED"
-        except Exception:
-            row.attempts += 1
-            row.next_at = time.time() + min(
-                3600,
-                30 * 2 ** min(row.attempts, 6),
-            )
+    return _send_transactional_mail_once()
 
 
 async def mail_loop():

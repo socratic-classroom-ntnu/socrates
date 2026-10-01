@@ -30,6 +30,8 @@ services:
       SOCRATES_PROVIDER_KEY_VERSION: ${SOCRATES_PROVIDER_KEY_VERSION:-local-v1}
       SOCRATES_PROVIDER_LOCAL_ALLOWLIST: ${SOCRATES_PROVIDER_LOCAL_ALLOWLIST:-127.0.0.1,localhost,host.docker.internal}
       RUN2_COOKIE_SECURE: 'false'
+      SOCRATES_MAIL_TRANSPORT: fixture
+      RESEND_FROM: Socratic Classroom <verify@mail.socrates.driseam.com>
       RUN2_LLM_DAILY_BUDGET: ${RUN2_LLM_DAILY_BUDGET:-1000000}
       LADDER_PATH: /data/ladders/trolley.yaml
       SCRIPT_PATH: /data/scripts/trolley.script.yaml

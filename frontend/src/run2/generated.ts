@@ -1,6 +1,6 @@
 // Generated from FastAPI /api/v2. Regenerate with scripts/gen_run2_types.py.
 export interface components { schemas: {
-  "AccountView": { "id": string; "username": string; "email": string; "verified": boolean; "csrf_token": string; "points": number; "achievements": Array<string> };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
   "ClearAIStudents": { "action_id": string };
@@ -31,4 +31,5 @@ export interface components { schemas: {
   "TokenRequest": { "token": string };
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
+  "VerificationDelivery": { "mail_id": string; "delivery_state": string; "expires_at": number };
 } }

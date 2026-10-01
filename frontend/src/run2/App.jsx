@@ -8,6 +8,7 @@ import { AnswerWithResearch } from './ResearchSidebar';
 import './design-r73.css';
 import { GroupClassroomGate } from './GroupClassroom';
 import { ProviderSettings } from './ProviderSettings';
+import { VerificationGate } from './VerificationGate';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -30,9 +31,13 @@ function Auth({ onLogin }) {
                 onLogin(a);
             }
             if (mode === 'register') {
-                await api('/auth/register', 'POST', { username: name, email, password });
-                setNote('帳號已建立，請從 Email 開啟驗證連結。');
-                setMode('login');
+                const account = await api('/auth/register', 'POST', {
+                    username: name,
+                    email,
+                    password
+                });
+                setCSRF(account.csrf_token);
+                onLogin(account);
             }
             if (mode === 'forgot') {
                 await api('/auth/forgot-password', 'POST', { email });
@@ -69,6 +74,8 @@ function Home({ user }) {
     const [note, setNote] = useState('');
     const refresh = useCallback(() => { void api('/scripts').then(setScripts).catch(e => setNote(errorText(e))); void api('/classrooms').then(setRooms).catch(e => setNote(errorText(e))); }, []);
     useEffect(refresh, [refresh]);
+    if (!user.verified)
+        return <VerificationGate user={user} onVerified={() => location.reload()}/>;
     const enter = (id, role) => { location.href = `/classrooms/${id}?mode=${role}`; };
     async function join() { try {
         const r = await api('/classrooms/join', 'POST', { code, alias: alias.trim() || ('~pending-' + crypto.randomUUID().slice(0, 8)), avatar: 'scholar' });

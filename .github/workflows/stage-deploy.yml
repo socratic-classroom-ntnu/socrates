@@ -31,11 +31,13 @@ jobs:
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          PUBLIC_ORIGIN: ${{ vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
+          ALLOWED_ORIGINS: ${{ vars.SOCRATES_ALLOWED_ORIGINS || vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
         run: |
           set -Eeuo pipefail
           export SOCRATES_SOURCE_SHA="$SOURCE_SHA"
-          export SOCRATES_PUBLIC_ORIGIN=https://socratic.arthur0824hao.com
-          export SOCRATES_ALLOWED_ORIGINS=https://socratic.arthur0824hao.com
+          export SOCRATES_PUBLIC_ORIGIN="$PUBLIC_ORIGIN"
+          export SOCRATES_ALLOWED_ORIGINS="$ALLOWED_ORIGINS"
           export RUN2_COOKIE_SECURE=true
           docker compose -f deploy/stage/compose.yml pull
           docker compose -f deploy/stage/compose.yml up -d --no-build

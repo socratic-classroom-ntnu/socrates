@@ -23,7 +23,9 @@
       "type": "string"
     },
     "public_url": {
-      "const": "https://socratic.arthur0824hao.com"
+      "type": "string",
+      "format": "uri",
+      "default": "https://socrates.driseam.com"
     }
   }
 }

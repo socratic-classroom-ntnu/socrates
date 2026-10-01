@@ -41,4 +41,24 @@ body{margin:0;background:radial-gradient(ellipse at 72% 0%,#51445c 0%,#292333 42
 .r2-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:90;padding:14px 25px;max-width:85vw;background:#403444;color:#fff;border:1px solid #c7adc8;border-radius:16px;box-shadow:0 8px 30px #0004}.r2-loading{display:grid;place-content:center;text-align:center;gap:20px}.r2-loading .r2-pulse{margin:auto}.r2-summary pre{font-size:12px;overflow:auto;max-height:500px}.sr-only{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip:rect(0,0,0,0)}
 @keyframes r2-expand{from{opacity:0;scale:.94;translate:0 16px}to{opacity:1;scale:1;translate:0 0}}@keyframes r2-breathe{50%{opacity:.35;scale:.88}}@keyframes r2-fly{to{transform:translateX(calc(-100vw - 100%))}}@keyframes r2-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(max-width:760px){.r2-home{padding:0 18px 40px}.r2-auth{display:block;padding:35px 22px;max-width:530px}.r2-auth>form{margin-top:35px}.r2-top{padding:0 15px;height:70px;gap:12px}.r2-top>span{max-width:30vw;font-size:12px}.r2-wordmark{font-size:22px}.r2-home h1{font-size:32px}.r2-focus-chat{top:85px;left:10px;width:180px;max-height:190px;bottom:auto;font-size:12px;padding:10px}.r2-live-dialog{padding:15px;bottom:12px;width:calc(100% - 22px)}.r2-live-dialog>p{font-size:16px;max-height:110px}.r2-arena{height:calc(100dvh - 70px);min-height:560px}.r2-drawer{top:70px;width:min(310px,90vw)}.r2-answer{margin-top:25px;padding:0 20px}.r2-prompt>p{font-size:18px}.r2-option{min-height:95px}.r2-dialog{padding:20px}.r2-zen{padding:40px 22px}.r2-zen-backdrop{padding:3vh 12px}.r2-lobby{padding:40px 20px}.r2-code-display{font-size:32px}.r2-question-card{padding:18px}.r2-builder{padding:15px}.r2-section-title{align-items:flex-start}.r2-clock{font-size:26px}.r2-countdown .r2-clock{font-size:150px}}
+/* tend: visual polish. Appended overrides; no behaviour or markup changes. */
+.r2-top>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r2-home .r2-top>span:first-of-type{text-align:right;color:var(--r2-muted);font-size:14px}
+.r2-top .quiet{padding:9px 16px}.r2-top .r2-hamburger{padding:6px 14px}
+.r2-classroom .r2-top .r2-clock{flex-shrink:0;width:58px;height:58px;padding:0;display:grid;place-content:center;justify-items:center;gap:0;font-size:22px;line-height:1;border-width:4px}
+.r2-classroom .r2-top .r2-clock small{font-size:10px;letter-spacing:0;color:#6b5a4a}
+main.r2-classroom{max-width:none}
+.r2-home button.r2-card,.r2-classroom button.r2-card{display:grid;gap:6px;justify-items:start;width:100%;text-align:left;font-weight:500;color:var(--r2-ink);background:linear-gradient(140deg,#ffffff0d,#ffffff04);border:1px solid var(--r2-line);padding:20px 24px}
+.r2-home button.r2-card:hover{background:#ffffff12;border-color:#e8c79a66}
+.r2-home button.r2-card[aria-pressed=true]{border-color:var(--r2-accent);box-shadow:inset 0 0 0 1px var(--r2-accent)}
+.r2-home button.r2-card>span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--r2-muted);border:1px solid var(--r2-line);border-radius:999px;padding:1px 10px}
+.r2-section-title{flex-wrap:wrap}.r73-library .r2-section-title{justify-content:flex-start;align-items:flex-end}
+.r2-home .r2-section-title h2{margin:0 auto 0 0;white-space:nowrap}.r2-section-title label{margin:0;flex:0 1 320px}.r2-section-title>button{white-space:nowrap}
+.r2-grid>label{margin:0}
+.r73-selected-rail button small{display:block;margin:0 0 4px;color:inherit;opacity:.85}.r73-selected-rail .dimmed{opacity:1;background:#6f5f48}
+.r2-classroom .r2-focus-chat small{color:#6f5f6e}
+.g70-evidence button{background:#4a3f5c;color:#faf4ff;border:1px solid #756487;font:inherit;font-weight:600}.g70-evidence button:hover{background:#574a6c}.g70-evidence button:disabled{opacity:.5;cursor:default}
+.g70-evidence.floating:has(>button:only-child){width:auto;max-width:calc(100vw - 32px);padding:8px;border-radius:14px}
+.r73-library article.r2-card>button+button,.r73-library article.r2-card>article>button+button{margin-left:10px}.r73-library .r88-lesson-card p,.r73-library .r88-lesson-card h3{margin:0}
+body:has(.g70-evidence.floating) .r2-classroom:not(:has(.r2-arena)){padding-bottom:88px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.r2-barrage-layer span{animation-duration:7s!important}}

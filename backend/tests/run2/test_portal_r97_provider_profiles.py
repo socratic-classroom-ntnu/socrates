@@ -26,11 +26,8 @@ from app.run2.storage import (
 
 @pytest.fixture(autouse=True)
 def database(monkeypatch):
-    monkeypatch.setenv(
-        "SOCRATES_PROVIDER_MASTER_KEY",
-        base64.urlsafe_b64encode(b"r97-test-master-key-32-bytes!!!!").decode(),
-    )
-    monkeypatch.setenv("SOCRATES_PROVIDER_KEY_VERSION", "test-v1")
+    monkeypatch.delenv("SOCRATES_PROVIDER_MASTER_KEY", raising=False)
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@db/socrates")
     configure("sqlite+pysqlite:///:memory:", create=True)
 
 
@@ -75,7 +72,7 @@ def test_encryption_round_trip_and_masked_view():
         profile_id="profile-1",
         owner_id="owner-1",
     )
-    assert version == "test-v1"
+    assert version == "derived-v1"
     assert "sk-r97-example" not in encrypted
     assert (
         _open(
@@ -207,3 +204,11 @@ def test_local_allowlist_accepts_local_openai_compatible(monkeypatch):
         )
         == "http://127.0.0.1:11434/v1"
     )
+
+
+def test_derived_key_roundtrip_without_master_key():
+    from app.run2.provider_profiles import DERIVED_VERSION, _open, _seal
+
+    payload, version = _seal("sk-test", profile_id="p1", owner_id="o1")
+    assert version == DERIVED_VERSION
+    assert _open(payload, profile_id="p1", owner_id="o1") == "sk-test"

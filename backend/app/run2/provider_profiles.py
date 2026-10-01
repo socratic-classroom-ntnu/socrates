@@ -175,19 +175,42 @@ class SettingsUpdate(BaseModel):
 router = APIRouter()
 
 
-def _master_key() -> tuple[bytes, str]:
+DERIVED_VERSION = "derived-v1"
+
+
+def _derived_key() -> bytes:
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+    ikm = os.environ.get("DATABASE_URL", "").strip()
+    if not ikm:
+        raise DomainError("PROVIDER_KEY_SOURCE_REQUIRED", 503)
+    return HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"socrates",
+        info=b"socrates/provider-profiles/v1",
+    ).derive(ikm.encode())
+
+
+def _legacy_key() -> bytes | None:
     raw = os.environ.get("SOCRATES_PROVIDER_MASTER_KEY", "").strip()
     if not raw:
-        raise DomainError("PROVIDER_MASTER_KEY_REQUIRED", 503)
-    version = os.environ.get("SOCRATES_PROVIDER_KEY_VERSION", "v1")
+        return None
     try:
-        padded = raw + "=" * (-len(raw) % 4)
-        key = base64.urlsafe_b64decode(padded)
-    except ValueError as exc:
-        raise DomainError("PROVIDER_MASTER_KEY_FORMAT", 503) from exc
-    if len(key) != 32:
-        raise DomainError("PROVIDER_MASTER_KEY_32_BYTES", 503)
-    return key, version
+        key = base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
+    except ValueError:
+        return None
+    return key if len(key) == 32 else None
+
+
+def _master_key(version: str | None = None) -> tuple[bytes, str]:
+    if version in (None, DERIVED_VERSION):
+        return _derived_key(), DERIVED_VERSION
+    legacy = _legacy_key()
+    if legacy is None:
+        raise DomainError("PROVIDER_CREDENTIAL_REENTRY_REQUIRED", 409)
+    return legacy, version
 
 
 def _seal(secret: str, *, profile_id: str, owner_id: str) -> tuple[str, str]:
@@ -204,9 +227,9 @@ def _seal(secret: str, *, profile_id: str, owner_id: str) -> tuple[str, str]:
 
 
 def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
-    key, current_version = _master_key()
     data = json.loads(payload)
-    version = str(data.get("version") or current_version)
+    version = str(data.get("version") or DERIVED_VERSION)
+    key, _ = _master_key(version)
     nonce = base64.urlsafe_b64decode(str(data["nonce"]) + "=" * (-len(str(data["nonce"])) % 4))
     ciphertext = base64.urlsafe_b64decode(
         str(data["ciphertext"]) + "=" * (-len(str(data["ciphertext"])) % 4)

@@ -143,3 +143,18 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml logs --t
 
 2×60容量驗收在專用CI資料庫與兩worker上進行。20ms controlled、100–150ms public是測量目標；
 請讀實際receipt中的延遲資料與適用網路範圍。此README本身提供部署程序。
+
+## Provider credential key migration
+
+Provider Profile credentials use AES-GCM with a `derived-v1` key produced by
+HKDF-SHA256 from the existing stage `DATABASE_URL` secret
+(`info=socrates/provider-profiles/v1`). During the transition deployment,
+`SOCRATES_PROVIDER_MASTER_KEY` remains available only as a legacy decrypt key.
+Startup rewrites legacy persistent and live session ciphertext to `derived-v1`;
+`/api/v2/readiness.provider_key_migration.legacy_remaining` must read back `0`.
+After that receipt, remove `SOCRATES_PROVIDER_MASTER_KEY` and
+`SOCRATES_PROVIDER_KEY_VERSION` from the `stage` environment.
+
+Resend stage inputs are `RESEND_API_KEY`, `RESEND_FROM`, and
+`RESEND_WEBHOOK_SECRET`. The canonical webhook is
+`https://socrates.driseam.com/api/v2/webhooks/resend`.

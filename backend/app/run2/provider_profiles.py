@@ -11,7 +11,9 @@ import time
 from typing import Any, Literal
 from uuid import uuid4
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import (
@@ -72,6 +74,10 @@ DEFAULT_BUDGET = {
     "estimated_cost_ceiling": None,
     "fallback_policy": "owner-profile-then-deterministic",
 }
+
+DERIVED_KEY_VERSION = "derived-v1"
+HKDF_INFO = b"socrates/provider-profiles/v1"
+HKDF_SALT = b"socrates/provider-profiles/hkdf-salt/v1"
 
 
 class ProviderProfile(Base):
@@ -175,23 +181,66 @@ class SettingsUpdate(BaseModel):
 router = APIRouter()
 
 
-def _master_key() -> tuple[bytes, str]:
-    raw = os.environ.get("SOCRATES_PROVIDER_MASTER_KEY", "").strip()
-    if not raw:
-        raise DomainError("PROVIDER_MASTER_KEY_REQUIRED", 503)
-    version = os.environ.get("SOCRATES_PROVIDER_KEY_VERSION", "v1")
+def _decode_legacy_key(raw: str) -> bytes:
     try:
         padded = raw + "=" * (-len(raw) % 4)
         key = base64.urlsafe_b64decode(padded)
-    except ValueError as exc:
+    except (ValueError, TypeError) as exc:
         raise DomainError("PROVIDER_MASTER_KEY_FORMAT", 503) from exc
     if len(key) != 32:
         raise DomainError("PROVIDER_MASTER_KEY_32_BYTES", 503)
-    return key, version
+    return key
 
 
-def _seal(secret: str, *, profile_id: str, owner_id: str) -> tuple[str, str]:
-    key, version = _master_key()
+def _legacy_key() -> tuple[bytes, str] | None:
+    raw = os.environ.get("SOCRATES_PROVIDER_MASTER_KEY", "").strip()
+    if not raw:
+        return None
+    version = os.environ.get("SOCRATES_PROVIDER_KEY_VERSION", "v1").strip() or "v1"
+    return _decode_legacy_key(raw), version
+
+
+def _derivation_material() -> tuple[bytes, str]:
+    for name in ("RUN2_DATABASE_URL", "DATABASE_URL"):
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value.encode(), name
+    raise DomainError("PROVIDER_DERIVATION_SECRET_REQUIRED", 503)
+
+
+def _derived_key() -> tuple[bytes, str]:
+    material, _ = _derivation_material()
+    key = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=HKDF_SALT,
+        info=HKDF_INFO,
+    ).derive(material)
+    return key, DERIVED_KEY_VERSION
+
+
+def _keyring() -> tuple[dict[str, bytes], str]:
+    current_key, current_version = _derived_key()
+    keys = {current_version: current_key}
+    legacy = _legacy_key()
+    if legacy is not None:
+        legacy_key, legacy_version = legacy
+        keys[legacy_version] = legacy_key
+    return keys, current_version
+
+
+def _master_key() -> tuple[bytes, str]:
+    return _derived_key()
+
+
+def _seal_with_key(
+    secret: str,
+    *,
+    profile_id: str,
+    owner_id: str,
+    key: bytes,
+    version: str,
+) -> tuple[str, str]:
     nonce = secrets.token_bytes(12)
     aad = f"socrates-provider:{profile_id}:{owner_id}:{version}".encode()
     ciphertext = AESGCM(key).encrypt(nonce, secret.encode(), aad)
@@ -203,14 +252,31 @@ def _seal(secret: str, *, profile_id: str, owner_id: str) -> tuple[str, str]:
     return json.dumps(payload, separators=(",", ":")), version
 
 
-def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
-    key, current_version = _master_key()
-    data = json.loads(payload)
-    version = str(data.get("version") or current_version)
-    nonce = base64.urlsafe_b64decode(str(data["nonce"]) + "=" * (-len(str(data["nonce"])) % 4))
-    ciphertext = base64.urlsafe_b64decode(
-        str(data["ciphertext"]) + "=" * (-len(str(data["ciphertext"])) % 4)
+def _seal(secret: str, *, profile_id: str, owner_id: str) -> tuple[str, str]:
+    key, version = _master_key()
+    return _seal_with_key(
+        secret,
+        profile_id=profile_id,
+        owner_id=owner_id,
+        key=key,
+        version=version,
     )
+
+
+def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
+    keys, current_version = _keyring()
+    try:
+        data = json.loads(payload)
+        version = str(data.get("version") or current_version)
+        key = keys[version]
+        nonce_text = str(data["nonce"])
+        cipher_text = str(data["ciphertext"])
+        nonce = base64.urlsafe_b64decode(nonce_text + "=" * (-len(nonce_text) % 4))
+        ciphertext = base64.urlsafe_b64decode(
+            cipher_text + "=" * (-len(cipher_text) % 4)
+        )
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise DomainError("PROVIDER_CREDENTIAL_KEY_VERSION_REQUIRED", 503) from exc
     aad = f"socrates-provider:{profile_id}:{owner_id}:{version}".encode()
     try:
         clear = AESGCM(key).decrypt(nonce, ciphertext, aad)
@@ -218,6 +284,103 @@ def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
         raise DomainError("PROVIDER_CREDENTIAL_DECRYPTION", 503) from exc
     return clear.decode()
 
+
+def _payload_version(payload: str, fallback: str) -> str:
+    try:
+        return str(json.loads(payload).get("version") or fallback)
+    except (ValueError, TypeError, AttributeError):
+        return fallback
+
+
+def migrate_provider_credentials() -> dict:
+    """Move legacy provider ciphertext to the HKDF-derived application key."""
+    _, source_name = _derivation_material()
+    _, current_version = _derived_key()
+    now = time.time()
+    result: dict[str, Any] = {
+        "schema": "socrates/provider-key-migration/v1",
+        "state": "CURRENT",
+        "current_key_version": current_version,
+        "derivation_source": source_name,
+        "legacy_key_available": _legacy_key() is not None,
+        "persistent_scanned": 0,
+        "persistent_migrated": 0,
+        "session_scanned": 0,
+        "session_migrated": 0,
+        "expired_sessions_removed": 0,
+        "legacy_remaining": 0,
+    }
+    with transaction() as db:
+        profiles = db.scalars(select(ProviderProfile).with_for_update()).all()
+        by_id = {row.id: row for row in profiles}
+        for row in profiles:
+            if not row.encrypted_secret:
+                continue
+            result["persistent_scanned"] += 1
+            version = _payload_version(row.encrypted_secret, row.key_version)
+            if version == current_version:
+                row.key_version = current_version
+                continue
+            clear = _open(
+                row.encrypted_secret,
+                profile_id=row.id,
+                owner_id=row.owner_id,
+            )
+            row.encrypted_secret, row.key_version = _seal(
+                clear,
+                profile_id=row.id,
+                owner_id=row.owner_id,
+            )
+            row.updated_at = now
+            result["persistent_migrated"] += 1
+
+        sessions = db.scalars(
+            select(SessionProviderSecret).with_for_update()
+        ).all()
+        for row in sessions:
+            if row.expires_at <= now:
+                db.delete(row)
+                result["expired_sessions_removed"] += 1
+                continue
+            result["session_scanned"] += 1
+            profile = by_id.get(row.profile_id)
+            if profile is None:
+                raise DomainError("PROVIDER_PROFILE_OWNER_REQUIRED", 503)
+            version = _payload_version(row.encrypted_secret, row.key_version)
+            if version == current_version:
+                row.key_version = current_version
+                continue
+            clear = _open(
+                row.encrypted_secret,
+                profile_id=row.profile_id,
+                owner_id=profile.owner_id,
+            )
+            row.encrypted_secret, row.key_version = _seal(
+                clear,
+                profile_id=row.profile_id,
+                owner_id=profile.owner_id,
+            )
+            row.updated_at = now
+            result["session_migrated"] += 1
+
+        for row in profiles:
+            if row.encrypted_secret and _payload_version(
+                row.encrypted_secret,
+                row.key_version,
+            ) != current_version:
+                result["legacy_remaining"] += 1
+        for row in sessions:
+            if row.expires_at > now and _payload_version(
+                row.encrypted_secret,
+                row.key_version,
+            ) != current_version:
+                result["legacy_remaining"] += 1
+
+    if result["legacy_remaining"]:
+        result["state"] = "PARTIAL"
+    elif result["persistent_migrated"] or result["session_migrated"]:
+        result["state"] = "MIGRATED"
+    return result
 
 def _account(db, request: Request, mutation=False):
     from .api import account

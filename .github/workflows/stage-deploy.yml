@@ -26,6 +26,12 @@ jobs:
           FRONTEND_IMAGE: ${{ inputs.frontend_image }}
           DATABASE_URL: ${{ secrets.SOCRATES_DATABASE_URL }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SOCRATES_PROVIDER_MASTER_KEY: ${{ secrets.SOCRATES_PROVIDER_MASTER_KEY }}
+          SOCRATES_PROVIDER_KEY_VERSION: ${{ vars.SOCRATES_PROVIDER_KEY_VERSION }}
+          SOCRATES_MAIL_TRANSPORT: resend
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ vars.RESEND_FROM }}
+          RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ vars.SMTP_PORT || '587' }}
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
@@ -45,5 +51,15 @@ jobs:
             if curl -fsS http://127.0.0.1:8080/api/v2/readiness; then break; fi
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8080/api/v2/readiness
+          readiness="$(curl -fsS http://127.0.0.1:8080/api/v2/readiness)"
+          printf '%s\n' "$readiness"
+          python - "$readiness" <<'PY'
+          import json, sys
+          value = json.loads(sys.argv[1])
+          migration = value.get("provider_key_migration", {})
+          if migration.get("legacy_remaining") != 0:
+              raise SystemExit(f"PROVIDER_KEY_MIGRATION_PARTIAL:{migration}")
+          if migration.get("state") not in {"CURRENT", "MIGRATED"}:
+              raise SystemExit(f"PROVIDER_KEY_MIGRATION_STATE:{migration}")
+          PY
           curl -fsS http://127.0.0.1:8080/api/release

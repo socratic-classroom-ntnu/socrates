@@ -15,6 +15,9 @@ from .workers import clock_loop, llm_loop, mail_loop
 @asynccontextmanager
 async def lifespan(app):
     engine()
+    from .provider_profiles import migrate_provider_credentials
+
+    app.state.provider_key_migration = migrate_provider_credentials()
     worker_count = max(1, int(os.environ.get("RUN2_LLM_WORKERS", "4")))
     loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop] + [llm_loop] * worker_count
     tasks = [asyncio.create_task(fn()) for fn in loops]
@@ -43,7 +46,16 @@ def create_app(legacy=False, background=True):
         with engine().connect() as c:
             c.execute(text("SELECT 1"))
             c.execute(text("SELECT 1 FROM r2_accounts LIMIT 1"))
-        return {"status": "ready", "database": "connected", "runtime": "classroom-run2"}
+        return {
+            "status": "ready",
+            "database": "connected",
+            "runtime": "classroom-run2",
+            "provider_key_migration": getattr(
+                app.state,
+                "provider_key_migration",
+                {"state": "BACKGROUND_DISABLED"},
+            ),
+        }
 
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):

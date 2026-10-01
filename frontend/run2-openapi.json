@@ -68,6 +68,17 @@
             "minLength": 1,
             "title": "Model",
             "type": "string"
+          },
+          "provider_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Profile Id"
           }
         },
         "required": [
@@ -255,6 +266,91 @@
         "title": "CreateClassroom",
         "type": "object"
       },
+      "CreateProfile": {
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "credential": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential"
+          },
+          "credential_mode": {
+            "default": "PERSISTENT",
+            "enum": [
+              "PERSISTENT",
+              "SESSION"
+            ],
+            "title": "Credential Mode",
+            "type": "string"
+          },
+          "default_model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Default Model",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          }
+        },
+        "required": [
+          "name",
+          "adapter",
+          "default_model"
+        ],
+        "title": "CreateProfile",
+        "type": "object"
+      },
       "CreateRoom": {
         "additionalProperties": false,
         "properties": {
@@ -267,6 +363,30 @@
           "script_id"
         ],
         "title": "CreateRoom",
+        "type": "object"
+      },
+      "CredentialUpdate": {
+        "properties": {
+          "credential": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Credential",
+            "type": "string"
+          },
+          "credential_mode": {
+            "enum": [
+              "PERSISTENT",
+              "SESSION"
+            ],
+            "title": "Credential Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "credential",
+          "credential_mode"
+        ],
+        "title": "CredentialUpdate",
         "type": "object"
       },
       "GroupCommand": {
@@ -481,6 +601,17 @@
             "minLength": 1,
             "title": "Question Id",
             "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
           },
           "scenario": {
             "maxLength": 12000,
@@ -968,6 +1099,56 @@
         "title": "ScriptSave",
         "type": "object"
       },
+      "SettingsUpdate": {
+        "properties": {
+          "active_room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Room Id"
+          },
+          "budgets": {
+            "title": "Budgets",
+            "type": "object"
+          },
+          "default_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Profile Id"
+          },
+          "fallback_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Profile Id"
+          },
+          "model_matrix": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Model Matrix",
+            "type": "object"
+          }
+        },
+        "title": "SettingsUpdate",
+        "type": "object"
+      },
       "Start": {
         "properties": {
           "accept_temporary_aliases": {
@@ -1005,6 +1186,85 @@
           "token"
         ],
         "title": "TokenRequest",
+        "type": "object"
+      },
+      "UpdateProfile": {
+        "properties": {
+          "base_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "default_model": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          }
+        },
+        "title": "UpdateProfile",
         "type": "object"
       },
       "ValidationError": {
@@ -1048,6 +1308,56 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v2/ai-settings/account": {
+      "get": {
+        "operationId": "account_settings_api_v2_ai_settings_account_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Account Settings"
+      },
+      "put": {
+        "operationId": "update_account_settings_api_v2_ai_settings_account_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Account Settings"
+      }
+    },
     "/api/v2/auth/forgot-password": {
       "post": {
         "operationId": "forgot_api_v2_auth_forgot_password_post",
@@ -2068,6 +2378,88 @@
         "summary": "Classroom"
       }
     },
+    "/api/v2/library/classrooms/{cid}/ai-settings": {
+      "get": {
+        "operationId": "classroom_settings_api_v2_library_classrooms__cid__ai_settings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cid",
+            "required": true,
+            "schema": {
+              "title": "Cid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Classroom Settings"
+      },
+      "put": {
+        "operationId": "update_classroom_settings_api_v2_library_classrooms__cid__ai_settings_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cid",
+            "required": true,
+            "schema": {
+              "title": "Cid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Classroom Settings"
+      }
+    },
     "/api/v2/library/classrooms/{cid}/batches": {
       "post": {
         "operationId": "create_batch_api_v2_library_classrooms__cid__batches_post",
@@ -2160,6 +2552,275 @@
           }
         },
         "summary": "Attach Script"
+      }
+    },
+    "/api/v2/meta/revision": {
+      "get": {
+        "operationId": "revision_metadata_api_v2_meta_revision_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Revision Metadata"
+      }
+    },
+    "/api/v2/provider-profiles": {
+      "get": {
+        "operationId": "list_profiles_api_v2_provider_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Profiles"
+      },
+      "post": {
+        "operationId": "create_profile_api_v2_provider_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Profile"
+      }
+    },
+    "/api/v2/provider-profiles/{profile_id}": {
+      "delete": {
+        "operationId": "delete_profile_api_v2_provider_profiles__profile_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Profile"
+      },
+      "patch": {
+        "operationId": "update_profile_api_v2_provider_profiles__profile_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfile"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Profile"
+      }
+    },
+    "/api/v2/provider-profiles/{profile_id}/credential": {
+      "post": {
+        "operationId": "update_credential_api_v2_provider_profiles__profile_id__credential_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Credential"
+      }
+    },
+    "/api/v2/provider-profiles/{profile_id}/models": {
+      "get": {
+        "operationId": "provider_models_api_v2_provider_profiles__profile_id__models_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Models"
+      }
+    },
+    "/api/v2/provider-profiles/{profile_id}/test": {
+      "post": {
+        "operationId": "test_profile_api_v2_provider_profiles__profile_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Profile"
       }
     },
     "/api/v2/public-config": {

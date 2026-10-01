@@ -5,7 +5,7 @@
 `stage` 是伺服器組員採用的來源。應用服務固定為 **frontend＋backend 兩個容器**。
 PostgreSQL、SMTP 郵件服務及既有 Cloudflare Tunnel 由伺服器環境提供。
 
-公開入口：`https://socratic.arthur0824hao.com`。
+公開入口：`https://socrates.driseam.com`。
 
 ## 1. 準備一次性的環境資料
 
@@ -73,7 +73,7 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml exec bac
 由 Tunnel owner 將下列hostname route加入現有 ingress，再使用自己的服務管理程序重載：
 
 ```yaml
-- hostname: socratic.arthur0824hao.com
+- hostname: socrates.driseam.com
   service: http://127.0.0.1:8080
 ```
 
@@ -81,8 +81,8 @@ Cloudflare DNS／Tunnel 綁定由該環境的 owner 執行，保留其他既有 
 本配置的 cloudflared 在host執行；containerized cloudflared可使用能抵達frontend的同網路service位址。
 
 ```bash
-curl -fsS https://socratic.arthur0824hao.com/api/v2/readiness
-curl -fsS https://socratic.arthur0824hao.com/api/release
+curl -fsS https://socrates.driseam.com/api/v2/readiness
+curl -fsS https://socrates.driseam.com/api/release
 ```
 
 ## 4. 最小公開 smoke

@@ -24,9 +24,13 @@ services:
       SOCRATES_ENVIRONMENT: local-dev
       SOCRATES_SOURCE_SHA: ${SOCRATES_SOURCE_SHA:-local-worktree}
       SOCRATES_WORKTREE_SHA256: ${SOCRATES_WORKTREE_SHA256:-live-worktree}
-      SOCRATES_PUBLIC_ORIGIN: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-5173}
-      SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-5173},http://localhost:${SOCRATES_LOCAL_PORT:-5173}
+      SOCRATES_PUBLIC_ORIGIN: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-18980}
+      SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-18980},http://localhost:${SOCRATES_LOCAL_PORT:-18980}
+      SOCRATES_PROVIDER_MASTER_KEY: ${SOCRATES_PROVIDER_MASTER_KEY:?Local provider master key is created by the R97 Loom}
+      SOCRATES_PROVIDER_KEY_VERSION: ${SOCRATES_PROVIDER_KEY_VERSION:-local-v1}
+      SOCRATES_PROVIDER_LOCAL_ALLOWLIST: ${SOCRATES_PROVIDER_LOCAL_ALLOWLIST:-127.0.0.1,localhost,host.docker.internal}
       RUN2_COOKIE_SECURE: 'false'
+      RUN2_LLM_DAILY_BUDGET: ${RUN2_LLM_DAILY_BUDGET:-1000000}
       LADDER_PATH: /data/ladders/trolley.yaml
       SCRIPT_PATH: /data/scripts/trolley.script.yaml
     volumes:
@@ -47,9 +51,9 @@ services:
     environment:
       SOCRATES_DEV_API_ORIGIN: http://backend:8000
       CHOKIDAR_USEPOLLING: 'true'
-      npm_config_fetch_retries: '1'
+      npm_config_fetch_retries: '4'
       npm_config_fetch_timeout: '45000'
-    ports: ['127.0.0.1:${SOCRATES_LOCAL_PORT:-5173}:5173']
+    ports: ['127.0.0.1:${SOCRATES_LOCAL_PORT:-18980}:5173']
     depends_on: [backend]
     command: ['sh','/app/tools/local-dev.sh']
 volumes:

@@ -436,6 +436,13 @@ def view(rid: str, request: Request):
                         "settlement": p["settlement"]["state"],
                     }
                 )
+        asset_id = state.get("asset_classroom_id")
+        asset_classroom = db.get(ClassroomAssets, asset_id) if asset_id else None
+        from .provider_profiles import _classroom_settings_view
+
+        ai_settings = _classroom_settings_view(
+            asset_classroom.assets.get("ai_settings") if asset_classroom else {}
+        )
         return {
             "kind": "GroupCollection",
             "id": rid,
@@ -443,6 +450,8 @@ def view(rid: str, request: Request):
             "title": state["title"],
             "phase": state["phase"],
             "code": room.code if state["phase"] == "lobby" else None,
+            "asset_classroom_id": asset_id,
+            "ai_settings": ai_settings,
             "roster": [
                 {
                     "id": r.id,

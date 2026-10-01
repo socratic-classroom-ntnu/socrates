@@ -10,7 +10,6 @@ import time
 from typing import Any
 from uuid import UUID, uuid5
 
-import httpx
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, select
@@ -84,6 +83,9 @@ class AIStudentProfile(Base):
     )
     persona: Mapped[dict] = mapped_column(JSON)
     model: Mapped[str] = mapped_column(String(160), default="openrouter/free")
+    provider_profile_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("r97_provider_profiles.id"), nullable=True
+    )
     seed: Mapped[int] = mapped_column(Integer)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
@@ -93,6 +95,7 @@ class AddAIStudents(BaseModel):
     action_id: str = Field(min_length=8, max_length=100)
     count: int = Field(ge=1, le=40)
     model: str = Field(default="openrouter/free", min_length=1, max_length=160)
+    provider_profile_id: str | None = None
 
 
 class ClearAIStudents(BaseModel):
@@ -104,6 +107,7 @@ class OtherSuggestionRequest(BaseModel):
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
     existing_options: list[str] = Field(default_factory=list, max_length=20)
+    room_id: str | None = None
 
 
 router = APIRouter()
@@ -209,6 +213,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
                     parent_room_id=rid,
                     persona=persona,
                     model=body.model,
+                    provider_profile_id=body.provider_profile_id,
                     seed=persona["seed"],
                     enabled=True,
                 )
@@ -242,6 +247,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
                     "actor_type": "llm_student",
                     "persona": persona,
                     "model": body.model,
+                    "provider_profile_id": body.provider_profile_id,
                 }
             created.append(
                 {
@@ -250,6 +256,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
                     "alias": alias,
                     "persona_id": persona["id"],
                     "model": body.model,
+                    "provider_profile_id": body.provider_profile_id,
                 }
             )
 
@@ -352,77 +359,67 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 
 
 @router.post("/suggestions/other")
-def other_suggestion(body: OtherSuggestionRequest, request: Request):
-    from .api import account
+async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from . import service
+    from .api import account
+    from .contracts import OtherSuggestionResult
+    from .provider import ProviderWait
+    from .provider_gateway import generate
+    from .provider_profiles import resolve_request_chain
 
     with transaction() as db:
-        actor, _ = account(db, request, True)
+        actor, session = account(db, request, True)
         service.limit(db, f"other-suggestion:{actor.id}", 30, 60)
+        room = None
+        if body.room_id:
+            room, _, _ = service.load(db, body.room_id, actor.id)
+        bindings, routing = resolve_request_chain(
+            db,
+            account=actor,
+            session=session,
+            role="other_suggestion",
+            room=room,
+        )
 
-    key = os.environ.get("OPENROUTER_API_KEY", "")
-    if not key:
-        return fallback_other_suggestion(body)
-
-    model = os.environ.get("PORTAL_OTHER_SUGGESTION_MODEL", "openrouter/free")
-    schema = {
-        "name": "OtherSuggestion",
-        "strict": True,
-        "schema": {
-            "type": "object",
-            "properties": {"suggestion_text": {"type": "string"}},
-            "required": ["suggestion_text"],
-            "additionalProperties": False,
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "請以繁體中文提出一個簡短、有啟發性、可由學生自行修改的其他觀點。"
+                "內容保持一到兩句，聚焦新的判斷角度。"
+            ),
         },
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "請以繁體中文提出一個簡短、有啟發性、可由學生自行修改的其他觀點。"
-                    "內容保持一到兩句，聚焦新的判斷角度。"
-                ),
-            },
-            {
-                "role": "user",
-                "content": json.dumps(body.model_dump(), ensure_ascii=False),
-            },
-        ],
-        "stream": False,
-        "max_tokens": 200,
-        "response_format": {"type": "json_schema", "json_schema": schema},
-        "provider": {"require_parameters": True},
-    }
-    headers = {
-        "Authorization": "Bearer " + key,
-        "Content-Type": "application/json",
-        "X-Title": "Socrates Other Suggestion",
-        "HTTP-Referer": os.environ.get("SOCRATES_PUBLIC_ORIGIN", "http://localhost"),
-    }
-    try:
-        with httpx.Client(timeout=httpx.Timeout(12, connect=5)) as client:
-            response = client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                json=payload,
-                headers=headers,
+        {
+            "role": "user",
+            "content": json.dumps(body.model_dump(), ensure_ascii=False),
+        },
+    ]
+
+    async def no_delta(_):
+        return None
+
+    for binding in bindings:
+        try:
+            result, audit = await generate(
+                binding,
+                messages,
+                OtherSuggestionResult,
+                no_delta,
             )
-            response.raise_for_status()
-            raw = response.json()
-        content = raw["choices"][0]["message"]["content"]
-        data = json.loads(content)
-        suggestion = str(data["suggestion_text"]).strip()
-        if not suggestion:
-            return fallback_other_suggestion(body)
-        return {
-            "suggestion_text": suggestion[:1000],
-            "suggestion_id": raw.get("id") or sha256(content.encode()).hexdigest()[:16],
-            "suggestion_model": raw.get("model") or model,
-            "suggestion_provider": "openrouter",
-        }
-    except (httpx.HTTPError, KeyError, ValueError, TypeError):
-        return fallback_other_suggestion(body)
+            return {
+                "suggestion_text": result["suggestion_text"],
+                "suggestion_id": audit.get("request_id")
+                or sha256(result["suggestion_text"].encode()).hexdigest()[:16],
+                "suggestion_model": audit.get("actual_model"),
+                "suggestion_provider": audit.get("provider"),
+                "provider_profile_id": audit.get("provider_profile_id"),
+                "classroom_owner_id": routing.get("owner_id"),
+            }
+        except ProviderWait:
+            continue
+        except Exception:
+            continue
+    return fallback_other_suggestion(body)
 
 
 def fallback_turn(context: dict) -> dict:
@@ -518,6 +515,7 @@ def extend(Native):
                     "persona": member.get("persona", {}),
                     "seed": member.get("persona", {}).get("seed", 0),
                     "model": member.get("model", "openrouter/free"),
+                    "provider_profile_id": member.get("provider_profile_id"),
                     "phase": phase,
                     "question": self.question() if self.s.get("questions") else {},
                     "arguments": [
@@ -676,3 +674,7 @@ def extend(Native):
 
     AIStudentOrchestrator.__name__ = "GameOrchestrator"
     return AIStudentOrchestrator
+
+
+# PORTAL-R97-PROVIDER-METADATA
+from . import provider_profiles as _provider_profiles  # noqa: E402,F401

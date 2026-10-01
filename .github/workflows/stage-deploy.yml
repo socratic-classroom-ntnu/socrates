@@ -26,8 +26,6 @@ jobs:
           FRONTEND_IMAGE: ${{ inputs.frontend_image }}
           DATABASE_URL: ${{ secrets.SOCRATES_DATABASE_URL }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          SOCRATES_PROVIDER_MASTER_KEY: ${{ secrets.SOCRATES_PROVIDER_MASTER_KEY }}
-          SOCRATES_PROVIDER_KEY_VERSION: ${{ vars.SOCRATES_PROVIDER_KEY_VERSION }}
           SOCRATES_MAIL_TRANSPORT: resend
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ vars.RESEND_FROM }}

@@ -148,12 +148,12 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml logs --t
 
 Provider Profile credentials use AES-GCM with a `derived-v1` key produced by
 HKDF-SHA256 from the existing stage `DATABASE_URL` secret
-(`info=socrates/provider-profiles/v1`). During the transition deployment,
-`SOCRATES_PROVIDER_MASTER_KEY` remains available only as a legacy decrypt key.
-Startup rewrites legacy persistent and live session ciphertext to `derived-v1`;
-`/api/v2/readiness.provider_key_migration.legacy_remaining` must read back `0`.
-After that receipt, remove `SOCRATES_PROVIDER_MASTER_KEY` and
-`SOCRATES_PROVIDER_KEY_VERSION` from the `stage` environment.
+(`info=socrates/provider-profiles/v1`). Stage has never projected a standalone
+`SOCRATES_PROVIDER_MASTER_KEY`, so this deployment introduces no new provider-key
+secret. The runtime still accepts that variable as a legacy decrypt key for other
+existing environments, rewrites legacy persistent and live session ciphertext to
+`derived-v1`, and reports the result at
+`/api/v2/readiness.provider_key_migration`; `legacy_remaining` must read back `0`.
 
 Resend stage inputs are `RESEND_API_KEY`, `RESEND_FROM`, and
 `RESEND_WEBHOOK_SECRET`. The canonical webhook is

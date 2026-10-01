@@ -114,7 +114,9 @@ def _claim_mail() -> dict | None:
             )
             .order_by(Mail.next_at, Mail.id)
             .limit(1)
-            .with_for_update(skip_locked=True)
+            # Only the outbox row owns the claim; PostgreSQL cannot lock the
+            # nullable delivery side of this outer join.
+            .with_for_update(of=Mail, skip_locked=True)
         )
         if mail is None:
             return None

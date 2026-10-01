@@ -23,6 +23,20 @@ PostgreSQL、SMTP 郵件服務及既有 Cloudflare Tunnel 由伺服器環境提�
 `host.docker.internal`，Compose 已配置 Linux host-gateway。
 SMTP 與模型 key 留在伺服器 `.env`／credential store，GitHub source 只收 `.env.example`。
 
+### Resend SMTP 與 Kubernetes
+
+使用 Resend SMTP 時，backend 必須明確設定 `SOCRATES_MAIL_TRANSPORT=smtp`，
+以及 `SMTP_HOST=smtp.resend.com`、`SMTP_PORT=587`、`SMTP_STARTTLS=true`、
+`SMTP_USER=resend`、`SMTP_PASSWORD`（Resend API key）與 `SMTP_FROM`
+（Resend 已驗證網域下的寄件地址）。只有 SMTP 憑證並不會啟用 SMTP transport；
+未設定 transport 的 worker 預設使用 `fixture`。
+
+Flux/Kubernetes 請將 transport 放進 backend Deployment 的環境變數，
+憑證放進 SOPS Secret。Secret 的 `envFrom` 更新後須重啟 backend，才會載入新值。
+啟用前先檢查既有 outbox 的測試收件人與過期驗證信；恢復 worker 會處理到期佇列。
+驗收應確認 outbox 的 `state=SENT` 與 delivery 的 `provider=smtp`、
+`provider_status=ACCEPTED`，再確認收件；SMTP 登入和健康檢查成功並不等於信已寄出。
+
 `frontend/public/avatars/ce-brunette/avatar.glb`（4.7 MB）不在 repo 內，前端 image 會在 build 期
 依 `SOURCE.json` 的釘選 URL 下載並驗證 blob SHA。**建置主機沒有對外連線就無法建置**；
 離線主機請先自行把 `avatar.glb` 放進 `frontend/public/avatars/ce-brunette/` 再跑 `up.sh`，

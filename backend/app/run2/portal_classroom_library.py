@@ -237,11 +237,13 @@ def classroom(cid: str, request: Request):
                         "created_at": link.created_at,
                     }
                 )
+        assets_view = deepcopy(classroom.assets)
+        assets_view.get("ai_settings", {}).pop("session_token_hash", None)
         return {
             "id": classroom.id,
             "title": classroom.title,
             "revision": classroom.revision,
-            "assets": classroom.assets,
+            "assets": assets_view,
             "scripts": scripts,
             "sessions": sessions,
             "lessons": _lesson_projection(db, cid),

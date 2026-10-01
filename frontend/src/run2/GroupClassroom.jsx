@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from './client';
 import { GroupAnalytics } from './GroupAnalytics';
 import { GroupAvatar } from './GroupAvatar';
+import { ClassroomAISettings } from './ClassroomAISettings';
 import './group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
@@ -94,7 +95,8 @@ function GroupCollection({ view, refresh }) {
             return;
         if (await mutation.send(`/groups/classrooms/${view.id}/ai-students`, {
             count: countToAdd,
-            model: 'openrouter/free'
+            model: view.ai_settings?.model_matrix?.ai_student || 'openrouter/free',
+            provider_profile_id: view.ai_settings?.default_profile_id || null
         }))
             await refresh();
     }
@@ -149,6 +151,7 @@ function GroupCollection({ view, refresh }) {
       <p>每組各自擁有倒數、作答與舞台；每組一人沿同一個人舞台流程。先保存分組，確認名單後開課。</p>
       <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || !(view.roster || []).some(m => m.actor_type === 'llm_student')} onClick={() => void clearAI()}>清除 AI 學生</button></div>
       <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前名單為全 AI；開始課堂後會沿同一狀態機自動完成一局。' : '真人與 AI 學生可共同分組，全部為 AI 時自然成為自動局。'}</p>
+      <ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/>
       <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>Group {g + 1}</option>)}</select></label></article>)}</div>
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>

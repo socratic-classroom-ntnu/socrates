@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from './client'
 import { ScriptBuilder, newDocument } from './ScriptBuilder'
+import { ClassroomAISettings } from './ClassroomAISettings'
 
 export function ClassroomLibrary() {
   const [rows, setRows] = useState([])
@@ -108,6 +109,8 @@ export function ClassroomLibrary() {
             劇本與題庫依教室保存；每次上課保留 immutable Lesson snapshot，
             各組 Session 保存完整遊戲。
           </p>
+
+          <ClassroomAISettings classroomId={selected} />
 
           <button
             disabled={busy}

@@ -396,3 +396,8 @@ router.include_router(_public_config_router)
 from .portal_ai_students import router as _portal_ai_students_router  # noqa: E402
 
 router.include_router(_portal_ai_students_router)
+
+# PORTAL-R97-PROVIDER-PROFILES
+from .provider_profiles import router as _provider_profiles_router  # noqa: E402
+
+router.include_router(_provider_profiles_router)

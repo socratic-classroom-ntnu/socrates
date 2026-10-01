@@ -120,7 +120,10 @@ Stage Deploy消費這兩個digest。
 
 自動CD入口由repo owner設定 `SOCRATES_STAGE_RUNNER_ADMITTED=true`，
 並先註冊專用 `[self-hosted, linux, socrates-stage]` runner以及stage environment secrets：
-`SOCRATES_DATABASE_URL`, `OPENROUTER_API_KEY`, `SMTP_HOST`, `SMTP_FROM`, `SMTP_USER`, `SMTP_PASSWORD`。
+`SOCRATES_DATABASE_URL`, `OPENROUTER_API_KEY`, `SMTP_HOST`, `SMTP_FROM`, `SMTP_USER`, `SMTP_PASSWORD`、
+`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET`（選填 variables：`RESEND_FROM`、`SOCRATES_MAIL_TRANSPORT`）。
+人工部署模式下，`RESEND_API_KEY`／`RESEND_WEBHOOK_SECRET` 寫進伺服器的 `deploy/stage/.env`；
+未設定時部署不會失敗，Email 驗證回 `RESEND_API_KEY_REFERENCE_REQUIRED`。
 尚在人工部署模式時，直接使用本README。首次驗收在host smoke完成後記錄actual source與images。
 
 兩個應用容器保持2個；郵件與DB為外部服務。

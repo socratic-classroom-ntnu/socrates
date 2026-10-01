@@ -149,7 +149,6 @@ def test_session_secret_expires_with_login_session():
         )
 
 
-
 def test_legacy_credentials_migrate_to_derived_key(monkeypatch):
     owner_id, _, token_hash = seed()
     legacy = _legacy_key()
@@ -208,10 +207,7 @@ def test_legacy_credentials_migrate_to_derived_key(monkeypatch):
         session = db.get(SessionProviderSecret, (profile_id, token_hash))
         assert profile.key_version == "derived-v1"
         assert session.key_version == "derived-v1"
-        assert (
-            profile_secret(db, profile, session_token_hash=token_hash)
-            == "persistent-secret"
-        )
+        assert profile_secret(db, profile, session_token_hash=token_hash) == "persistent-secret"
         assert (
             _open(
                 session.encrypted_secret,
@@ -220,6 +216,7 @@ def test_legacy_credentials_migrate_to_derived_key(monkeypatch):
             )
             == "session-secret"
         )
+
 
 def test_classroom_owner_profile_and_model_precedence():
     owner_id, room_id, _ = seed()

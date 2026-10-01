@@ -272,9 +272,7 @@ def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
         nonce_text = str(data["nonce"])
         cipher_text = str(data["ciphertext"])
         nonce = base64.urlsafe_b64decode(nonce_text + "=" * (-len(nonce_text) % 4))
-        ciphertext = base64.urlsafe_b64decode(
-            cipher_text + "=" * (-len(cipher_text) % 4)
-        )
+        ciphertext = base64.urlsafe_b64decode(cipher_text + "=" * (-len(cipher_text) % 4))
     except (KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
         raise DomainError("PROVIDER_CREDENTIAL_KEY_VERSION_REQUIRED", 503) from exc
     aad = f"socrates-provider:{profile_id}:{owner_id}:{version}".encode()
@@ -334,9 +332,7 @@ def migrate_provider_credentials() -> dict:
             row.updated_at = now
             result["persistent_migrated"] += 1
 
-        sessions = db.scalars(
-            select(SessionProviderSecret).with_for_update()
-        ).all()
+        sessions = db.scalars(select(SessionProviderSecret).with_for_update()).all()
         for row in sessions:
             if row.expires_at <= now:
                 db.delete(row)
@@ -364,16 +360,24 @@ def migrate_provider_credentials() -> dict:
             result["session_migrated"] += 1
 
         for row in profiles:
-            if row.encrypted_secret and _payload_version(
-                row.encrypted_secret,
-                row.key_version,
-            ) != current_version:
+            if (
+                row.encrypted_secret
+                and _payload_version(
+                    row.encrypted_secret,
+                    row.key_version,
+                )
+                != current_version
+            ):
                 result["legacy_remaining"] += 1
         for row in sessions:
-            if row.expires_at > now and _payload_version(
-                row.encrypted_secret,
-                row.key_version,
-            ) != current_version:
+            if (
+                row.expires_at > now
+                and _payload_version(
+                    row.encrypted_secret,
+                    row.key_version,
+                )
+                != current_version
+            ):
                 result["legacy_remaining"] += 1
 
     if result["legacy_remaining"]:
@@ -381,6 +385,7 @@ def migrate_provider_credentials() -> dict:
     elif result["persistent_migrated"] or result["session_migrated"]:
         result["state"] = "MIGRATED"
     return result
+
 
 def _account(db, request: Request, mutation=False):
     from .api import account

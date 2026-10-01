@@ -20,7 +20,7 @@ services:
       RUN2_COOKIE_SECURE: ${RUN2_COOKIE_SECURE:-true}
       RUN2_LLM_DAILY_BUDGET: ${RUN2_LLM_DAILY_BUDGET:-1000000}
       SOCRATES_MAIL_TRANSPORT: ${SOCRATES_MAIL_TRANSPORT:-resend}
-      RESEND_API_KEY: ${RESEND_API_KEY:?Set the Resend sending key reference}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM: ${RESEND_FROM:-Socratic Classroom <verify@mail.socrates.driseam.com>}
       RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-}

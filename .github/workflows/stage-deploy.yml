@@ -31,6 +31,10 @@ jobs:
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SOCRATES_MAIL_TRANSPORT: ${{ vars.SOCRATES_MAIL_TRANSPORT || 'resend' }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ vars.RESEND_FROM || 'Socratic Classroom <verify@mail.socrates.driseam.com>' }}
+          RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
           PUBLIC_ORIGIN: ${{ vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
           ALLOWED_ORIGINS: ${{ vars.SOCRATES_ALLOWED_ORIGINS || vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
         run: |

@@ -36,5 +36,8 @@ if [ ! -f frontend/public/avatars/ce-brunette/avatar.glb ]; then
     exit 1
   }
 fi
+if grep -Eq '^SOCRATES_MAIL_TRANSPORT=resend' deploy/stage/.env && ! grep -Eq '^RESEND_API_KEY=.+' deploy/stage/.env; then
+  echo "warning: RESEND_API_KEY is empty; email verification returns RESEND_API_KEY_REFERENCE_REQUIRED until it is set" >&2
+fi
 docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml config --quiet
 echo "stage preflight passed"

@@ -73,7 +73,7 @@ def test_registration_verification_reset_and_revocation(client):
     client.post("/api/v2/auth/forgot-password", json={"email": "teacher@example.org"})
     with storage.transaction() as db:
         mail = db.scalars(
-            select(storage.Mail).where(storage.Mail.subject == "Socrates 重設密碼")
+            select(storage.Mail).where(storage.Mail.subject == "Socratic Classroom 重設密碼")
         ).one()
         token = re.search(r"reset_token=(\S+)", mail.body)[1]
     r = client.post(

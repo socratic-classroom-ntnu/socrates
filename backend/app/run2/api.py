@@ -45,6 +45,19 @@ def same_origin(request):
         raise DomainError("ORIGIN_BINDING_REQUIRED", 403)
 
 
+# PORTAL-R104-SESSION-COOKIE
+def _set_session_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        auth.COOKIE,
+        token,
+        httponly=True,
+        secure=os.environ.get("RUN2_COOKIE_SECURE", "true") == "true",
+        samesite="lax",
+        max_age=43200,
+        path="/",
+    )
+
+
 def account(db, request, mutation=False, verified=True):
     if mutation:
         same_origin(request)
@@ -64,25 +77,19 @@ def auth_limit(request, kind):
         service.limit(db, "auth:" + kind + ":" + host, 300, 60)
 
 
-@router.post("/auth/register")
-def register(body: Register, request: Request):
+@router.post("/auth/register", response_model=AccountView)
+def register(body: Register, request: Request, response: Response):
     auth_limit(request, "register")
-    return auth.register(body)
+    token, result = auth.register(body)
+    _set_session_cookie(response, token)
+    return result
 
 
 @router.post("/auth/login", response_model=AccountView)
 def login(body: Login, request: Request, response: Response):
     auth_limit(request, "login")
     token, result = auth.login(body)
-    response.set_cookie(
-        auth.COOKIE,
-        token,
-        httponly=True,
-        secure=os.environ.get("RUN2_COOKIE_SECURE", "true") == "true",
-        samesite="lax",
-        max_age=43200,
-        path="/",
-    )
+    _set_session_cookie(response, token)
     return result
 
 
@@ -111,7 +118,29 @@ def verify(body: TokenRequest, request: Request):
 @router.post("/auth/verification-email")
 def verification_email(body: MailRequest, request: Request):
     auth_limit(request, "mail")
-    return auth.request_email(body.email, "verify")
+    with transaction() as db:
+        current, _ = account(db, request, True, False)
+        service.limit(
+            db,
+            "verification-resend:" + current.id,
+            3,
+            900,
+        )
+        account_id = current.id
+        email = current.email
+    return auth.request_email(
+        email,
+        "verify",
+        expected_account_id=account_id,
+    )
+
+
+@router.get("/auth/verification-status")
+def verification_status(request: Request):
+    with transaction() as db:
+        current, _ = account(db, request, verified=False)
+        account_id = current.id
+    return auth.verification_status(account_id)
 
 
 @router.post("/auth/forgot-password")
@@ -124,6 +153,14 @@ def forgot(body: MailRequest, request: Request):
 def reset(body: ResetRequest, request: Request):
     auth_limit(request, "reset")
     return auth.use_token(body.token, "reset", body.password)
+
+
+@router.post("/webhooks/resend")
+async def resend_webhook(request: Request):
+    from .email_delivery import apply_resend_webhook
+
+    body = await request.body()
+    return apply_resend_webhook(body, request.headers)
 
 
 @router.get("/scripts")

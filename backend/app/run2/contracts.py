@@ -82,11 +82,20 @@ class ResetRequest(TokenRequest):
     password: str = Field(min_length=12, max_length=256)
 
 
+class VerificationDelivery(Strict):
+    mail_id: str
+    delivery_state: str
+    expires_at: float
+
+
 class AccountView(Strict):
     id: str
     username: str
     email: str
+    email_masked: str = ""
     verified: bool
+    authority_state: Literal["EMAIL_VERIFICATION", "FULL_PRODUCT"] = "EMAIL_VERIFICATION"
+    verification_delivery: VerificationDelivery | None = None
     csrf_token: str
     points: int
     achievements: list[str]

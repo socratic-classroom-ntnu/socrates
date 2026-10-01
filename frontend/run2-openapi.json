@@ -11,12 +11,26 @@
             "title": "Achievements",
             "type": "array"
           },
+          "authority_state": {
+            "default": "EMAIL_VERIFICATION",
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
           "csrf_token": {
             "title": "Csrf Token",
             "type": "string"
           },
           "email": {
             "title": "Email",
+            "type": "string"
+          },
+          "email_masked": {
+            "default": "",
+            "title": "Email Masked",
             "type": "string"
           },
           "id": {
@@ -30,6 +44,16 @@
           "username": {
             "title": "Username",
             "type": "string"
+          },
+          "verification_delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "verified": {
             "title": "Verified",
@@ -1299,6 +1323,30 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VerificationDelivery": {
+        "additionalProperties": false,
+        "properties": {
+          "delivery_state": {
+            "title": "Delivery State",
+            "type": "string"
+          },
+          "expires_at": {
+            "title": "Expires At",
+            "type": "number"
+          },
+          "mail_id": {
+            "title": "Mail Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mail_id",
+          "delivery_state",
+          "expires_at"
+        ],
+        "title": "VerificationDelivery",
+        "type": "object"
       }
     }
   },
@@ -1483,7 +1531,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
               }
             },
             "description": "Successful Response"
@@ -1572,6 +1622,22 @@
           }
         },
         "summary": "Verification Email"
+      }
+    },
+    "/api/v2/auth/verification-status": {
+      "get": {
+        "operationId": "verification_status_api_v2_auth_verification_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Verification Status"
       }
     },
     "/api/v2/auth/verify": {
@@ -3094,6 +3160,22 @@
           }
         },
         "summary": "Other Suggestion"
+      }
+    },
+    "/api/v2/webhooks/resend": {
+      "post": {
+        "operationId": "resend_webhook_api_v2_webhooks_resend_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Resend Webhook"
       }
     }
   }

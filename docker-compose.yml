@@ -10,11 +10,15 @@ services:
       test: ["CMD-SHELL", "pg_isready -U socrates"]
       interval: 3s
       retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   backend:
     build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg://socrates:socrates@db:5432/socrates
+      SOCRATES_PUBLIC_ORIGIN: http://localhost:5173
+      SOCRATES_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       LADDER_PATH: /app/ladders/trolley.yaml
       SCRIPT_PATH: ${SCRIPT_PATH:-/app/scripts/trolley.script.yaml}
     volumes:
@@ -28,8 +32,13 @@ services:
 
   frontend:
     build: ./frontend
+    environment:
+      SOCRATES_DEV_API_ORIGIN: http://backend:8000
     volumes:
       - ./frontend/src:/app/src
     ports: ["5173:5173"]
     depends_on: [backend]
     command: npm run dev
+
+volumes:
+  pgdata:

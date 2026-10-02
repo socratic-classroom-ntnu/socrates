@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { advanceSession, endSession, retry, sendMessage } from '../../../api/client';
+import ActionBar from '../../../components/ActionBar';
 import { InputComposer } from '../composer/InputComposer';
 import { projectPresence } from '../model/presenceMachine';
 import { confirmTranscriptDraft, createTranscriptDraft, getRoom, listHistory } from '../api/roomClient';
@@ -197,10 +198,9 @@ export function ConversationRoom({ sessionId }) {
         <button onClick={() => { openPanel('left'); setMenuOpen(false); }}><Icon name="history"/>歷史對話</button>
         <button onClick={() => { openPanel('right'); setMenuOpen(false); }}><Icon name="chat"/>本次對話</button>
         <button onClick={() => navigate('/')}><Icon name="home"/>回到首頁</button>
-        <button disabled={busy} onClick={() => { if (ended)
-            navigate(`/sessions/${sessionId}/summary`);
-        else
-            void action('end'); }}><Icon name="arrow"/>{ended ? '閱讀討論總結' : '結束並查看總結'}</button>
+        {ended
+            ? <button disabled={busy} onClick={() => navigate(`/sessions/${sessionId}/summary`)}><Icon name="arrow"/>閱讀討論總結</button>
+            : actions.includes('end') && <button disabled={busy} onClick={() => { void action('end'); }}><Icon name="arrow"/>結束並查看總結</button>}
         <p>人像：TalkingHead / Ready Player Me<br />CC BY-NC 4.0 · 教學用途</p>
       </nav></>}
 
@@ -233,8 +233,8 @@ export function ConversationRoom({ sessionId }) {
         <div className="ce-stage-bottom">
           {error && <p className="ce-error" role="alert">{error} <button onClick={() => { setError(''); void load().catch(() => setError('對話入口已保留，請按重新載入。')); }}>重新載入</button></p>}
           <div className="ce-action-row">
-            {actions.includes('advance') && <button className="ce-primary" disabled={busy} onClick={() => { void action('advance'); }}>前往下一個情境 <Icon name="arrow"/></button>}
-            {actions.includes('retry') && <button className="ce-primary" disabled={busy} onClick={() => { void action('retry'); }}>續接導師回覆</button>}
+            {/* 結束放在選單，所以不進這一列；按鈕一律經過 ActionBar（AGENTS.md 範本索引）。 */}
+            <ActionBar actions={actions.filter((a) => a !== 'end')} onAction={(a) => { void action(a); }} busy={busy} buttonClassName="ce-primary"/>
             {ended && <button className="ce-primary" onClick={() => navigate(`/sessions/${sessionId}/summary`)}>閱讀討論總結 <Icon name="arrow"/></button>}
           </div>
           <div className="ce-composer-wrap">

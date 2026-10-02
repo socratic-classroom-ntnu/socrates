@@ -63,7 +63,7 @@ describe('CE portrait room', () => {
     it('路口投影後端available_actions與已進入情境', async () => {
         installFetch({ ...room, detail: { ...detail, session: { ...detail.session, flow_state: 'at_crossroad' }, available_actions: ['advance', 'end'] } });
         renderPage();
-        expect(await screen.findByRole('button', { name: '前往下一個情境' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: '進入下一個情境' })).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: '文字輸入' })).toBeDisabled();
         expect(screen.queryByText(/天橋/)).not.toBeInTheDocument();
     });
@@ -72,7 +72,7 @@ describe('CE portrait room', () => {
         const entered = { ...room, detail: { ...detail, session: { ...detail.session, current_stage_index: 1 }, stage: { ...detail.stage, index: 1, title: '天橋上的男子' }, messages: [...detail.messages, { seq: 1, role: 'tutor', content: '天橋開場白' }] } };
         installFetch(crossroad, entered);
         renderPage();
-        fireEvent.click(await screen.findByRole('button', { name: '前往下一個情境' }));
+        fireEvent.click(await screen.findByRole('button', { name: '進入下一個情境' }));
         expect(await screen.findByText('天橋上的男子')).toBeInTheDocument();
         expect(screen.getByTestId('tutor-dialogue')).toHaveTextContent('天橋開場白');
     });
@@ -100,5 +100,12 @@ describe('CE portrait room', () => {
         fireEvent.click(screen.getByRole('button', { name: '結束並查看總結' }));
         expect(await screen.findByText('總結畫面')).toBeInTheDocument();
         expect(fetchMock).toHaveBeenCalledWith('/api/sessions/s1/end', expect.objectContaining({ method: 'POST' }));
+    });
+    it('選單的結束項目跟著後端 available_actions，不自行推導', async () => {
+        installFetch({ ...room, detail: { ...detail, available_actions: ['send_message'] } });
+        renderPage();
+        await screen.findByText('失控的電車');
+        fireEvent.click(screen.getByRole('button', { name: '三槓選單' }));
+        expect(screen.queryByRole('button', { name: '結束並查看總結' })).not.toBeInTheDocument();
     });
 });

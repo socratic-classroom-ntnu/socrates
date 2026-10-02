@@ -4,7 +4,7 @@ const LABELS: Record<Action, string> = {
     send_message: '送出',
     advance: '進入下一個情境',
     end: '結束討論',
-    retry: '重試',
+    retry: '續接導師回覆',
 };
 /**
  * 可用動作完全由後端的 `available_actions` 決定（設計規格 §9.1）。
@@ -17,15 +17,17 @@ type Props = {
   actions: readonly Action[]
   onAction: (action: Action) => void
   busy?: boolean
+  buttonClassName?: string
 }
 
-export default function ActionBar({ actions, onAction, busy = false }: Props) {
-    if (actions.length === 0)
+export default function ActionBar({ actions, onAction, busy = false, buttonClassName }: Props) {
+    // send_message 由輸入框負責；濾掉之後沒有按鈕就不輸出外框，讓外層的 :empty 樣式照常生效。
+    const buttons = actions.filter((action) => action !== 'send_message');
+    if (buttons.length === 0)
         return null;
     return (<div className="actions">
-      {actions
-            .filter((action) => action !== 'send_message')
-            .map((action) => (<button key={action} onClick={() => onAction(action)} disabled={busy}>
+      {buttons
+            .map((action) => (<button key={action} className={buttonClassName} onClick={() => onAction(action)} disabled={busy}>
             {LABELS[action]}
           </button>))}
     </div>);

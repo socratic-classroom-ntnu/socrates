@@ -5,12 +5,12 @@ import { api } from './client'
 jest.mock('./client', () => ({ api: jest.fn() }))
 
 beforeEach(() => {
-  api.mockReset()
+  jest.mocked(api).mockReset()
   history.replaceState({}, '', '/')
 })
 
 test('restricted session shows delivery status and resend', async () => {
-  api.mockImplementation((path, method) => {
+  jest.mocked(api).mockImplementation((path, method) => {
     if (path === '/auth/verification-status') {
       return Promise.resolve({
         verified: false,
@@ -46,7 +46,7 @@ test('restricted session shows delivery status and resend', async () => {
 })
 
 test('local fixture exposes the current verification link', async () => {
-  api.mockResolvedValue({
+  jest.mocked(api).mockResolvedValue({
     verified: false,
     email_masked: 'ar•••@example.test',
     delivery: {

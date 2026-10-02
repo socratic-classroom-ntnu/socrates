@@ -1,65 +1,39 @@
 import type { components } from './types'
-import { getLearnerId } from '../identity'
 
 export type SessionView = components['schemas']['SessionView']
-export type SessionDetail = components['schemas']['SessionDetail']
-export type SummaryView = components['schemas']['SummaryView']
-export type SessionHistoryPage = components['schemas']['SessionHistoryPage']
-export type SessionHistoryItem = components['schemas']['SessionHistoryItem']
-export type ReleaseView = components['schemas']['ReleaseView']
 export type Action = SessionView['available_actions'][number]
+type ErrorPayload = { detail?: { code?: string; session_id?: unknown } } | null | undefined
 
-export class ApiError extends Error {
-  constructor(readonly status: number, readonly detail?: unknown) {
-    super(`API ${status}`)
-  }
-}
-
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`/api${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Learner-Id': getLearnerId(),
-      ...(init.headers as Record<string, string> | undefined),
-    },
-  })
-  const payload = await response.json().catch(() => null)
-  if (!response.ok) throw new ApiError(response.status, payload)
-  return payload as T
-}
-
-export const createSession = (ladderId: string, restartExisting = false) =>
-  request<SessionView>('/sessions', {
-    method: 'POST',
-    body: JSON.stringify({ ladder_id: ladderId, restart_existing: restartExisting }),
-  })
-
-export const listSessions = (cursor?: string) => {
-  const query = new URLSearchParams({ limit: '30' })
-  if (cursor) query.set('cursor', cursor)
-  return request<SessionHistoryPage>(`/sessions?${query.toString()}`)
-}
-
-export const getSession = (id: string) => request<SessionDetail>(`/sessions/${id}`)
-
-export const sendMessage = (id: string, text: string) =>
-  request<SessionView>(`/sessions/${id}/messages`, {
-    method: 'POST',
-    body: JSON.stringify({ text }),
-  })
-
-export const advanceSession = (id: string) =>
-  request<SessionView>(`/sessions/${id}/advance`, { method: 'POST' })
-
-export const retry = (id: string) =>
-  request<SessionView>(`/sessions/${id}/retry`, { method: 'POST' })
-
-export const endSession = (id: string) =>
-  request<SessionView>(`/sessions/${id}/end`, { method: 'POST' })
-
-export const createSummary = (id: string) =>
-  request<SummaryView>(`/sessions/${id}/summary`, { method: 'POST' })
-
-export const getSummary = (id: string) => request<SummaryView>(`/sessions/${id}/summary`)
-export const getRelease = () => request<ReleaseView>('/release')
+import axios from 'axios'
+import { getLearnerId } from '../identity'
+// Axios request/response API carried over window.fetch: the pre-R80 client and its resident tests observe fetch(url, init).
+function fetchAdapter(credentials: RequestCredentials){return async config=>{
+ const headers: Record<string, string>={};for(const [k,v] of Object.entries(axios.AxiosHeaders.from(config.headers).toJSON())){if(v!==undefined&&v!==null)headers[k]=String(v)}
+ const init: RequestInit={method:(config.method||'get').toUpperCase(),headers,credentials}
+ if(config.data!==undefined&&config.data!==null)init.body=config.data
+ if(config.signal)init.signal=config.signal
+ const res=await fetch(axios.getUri(config),init)
+ let data=null
+ if(config.responseType==='text'&&typeof res.text==='function')data=await res.text()
+ else{try{data=await res.json()}catch{data=null}}
+ const response={data,status:res.status,statusText:res.statusText||'',headers:{},config,request:null}
+ if(!res.ok)throw new axios.AxiosError('Request failed with status code '+res.status,res.status>=500?axios.AxiosError.ERR_BAD_RESPONSE:axios.AxiosError.ERR_BAD_REQUEST,config,null,response)
+ return response}}
+export class ApiError extends Error{status: number;detail: ErrorPayload;activeSessionId?: string
+ constructor(status: number,detail: ErrorPayload){super(`API ${status}`);this.name='ApiError';this.status=status;this.detail=detail
+ // Home resumes the learner's open session from a 409 active_session_exists conflict.
+ const d=detail&&detail.detail;this.activeSessionId=status===409&&d&&d.code==='active_session_exists'&&typeof d.session_id==='string'?d.session_id:undefined}}
+const client=axios.create({baseURL:'/api',adapter:fetchAdapter('same-origin'),headers:{'Content-Type':'application/json'}})
+client.interceptors.request.use(config=>{config.headers['X-Learner-Id']=getLearnerId();return config})
+client.interceptors.response.use(r=>r,err=>Promise.reject(new ApiError(err.response?.status||0,err.response?.data)))
+async function request(path,config={}){const response=await client.request({url:path,...config});return response.data}
+export const createSession=(ladderId,restartExisting=false)=>request('/sessions',{method:'POST',data:{ladder_id:ladderId,restart_existing:restartExisting}})
+export const listSessions=(cursor?: string)=>{const params={limit:30,...(cursor?{cursor}:{})};return request('/sessions',{params})}
+export const getSession=id=>request(`/sessions/${id}`)
+export const sendMessage=(id,text)=>request(`/sessions/${id}/messages`,{method:'POST',data:{text}})
+export const advanceSession=id=>request(`/sessions/${id}/advance`,{method:'POST'})
+export const retry=id=>request(`/sessions/${id}/retry`,{method:'POST'})
+export const endSession=id=>request(`/sessions/${id}/end`,{method:'POST'})
+export const createSummary=id=>request(`/sessions/${id}/summary`,{method:'POST'})
+export const getSummary=id=>request(`/sessions/${id}/summary`)
+export const getRelease=()=>request('/release')

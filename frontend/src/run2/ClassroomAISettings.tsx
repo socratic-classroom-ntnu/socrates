@@ -7,7 +7,13 @@ function errorText(error) {
   return error instanceof Error ? error.message : String(error)
 }
 
-export function ClassroomAISettings({ classroomId, activeRoomId = null, onSaved }) {
+type ClassroomAISettingsProps = {
+  classroomId: string
+  activeRoomId?: string | null
+  onSaved?: (saved: unknown) => void
+}
+
+export function ClassroomAISettings({ classroomId, activeRoomId = null, onSaved }: ClassroomAISettingsProps) {
   const [profiles, setProfiles] = useState([])
   const [settings, setSettings] = useState({
     default_profile_id: null,

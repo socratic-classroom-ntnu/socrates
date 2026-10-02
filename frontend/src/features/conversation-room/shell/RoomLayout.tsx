@@ -1,20 +1,5 @@
-import type { ReactNode } from 'react'
-
-interface Props {
-  history: ReactNode
-  header: ReactNode
-  avatar: ReactNode
-  timeline: ReactNode
-  composer: ReactNode
-  railOpen: boolean
-}
-
-export function RoomLayout({ history, header, avatar, timeline, composer, railOpen }: Props) {
-  return (
-    <div
-      className={`conversation-room ${railOpen ? 'room-rail-open' : ''}`}
-      data-room-revision="ce-room-v1"
-    >
+export function RoomLayout({ history, header, avatar, timeline, composer, railOpen }) {
+    return (<div className={`conversation-room ${railOpen ? 'room-rail-open' : ''}`} data-room-revision="ce-room-v1">
       {history}
       <section className="room-workspace">
         {header}
@@ -22,6 +7,5 @@ export function RoomLayout({ history, header, avatar, timeline, composer, railOp
         {timeline}
         {composer}
       </section>
-    </div>
-  )
+    </div>);
 }

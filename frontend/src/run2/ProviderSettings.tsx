@@ -31,7 +31,7 @@ function errorText(error) {
 function ModelMatrix({ value, onChange, profiles }) {
   const [allModel, setAllModel] = useState('')
   const suggestions = useMemo(
-    () => [...new Set(profiles.map(profile => profile.default_model).filter(Boolean))],
+    () => [...new Set<string>(profiles.map(profile => profile.default_model).filter(Boolean))],
     [profiles],
   )
   return (

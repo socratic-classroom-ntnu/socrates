@@ -68,7 +68,7 @@ docker compose up -d
 
 ```bash
 docker compose exec backend python -m pytest tests -q   # 後端測試
-cd frontend && npm test -- --run                        # 前端測試
+cd frontend && npm test -- --runInBand                  # 前端測試
 ```
 
 後端測試會自己用獨立的 `socrates_test` 資料庫，不會動到你的開發資料。
@@ -86,7 +86,7 @@ cd frontend && npm test -- --run                        # 前端測試
 
 ## 技術
 
-React + Rsbuild · FastAPI · PostgreSQL · Docker Compose
+React + TypeScript + Vite · FastAPI · PostgreSQL · Docker Compose
 
 對話的推進由後端的狀態機決定，不交給語言模型——「現在第幾階」是事實不是判斷，
 而且換一家模型不該改變闖關的節奏。模型只負責產生教授的話，以及回報對學生的觀察。

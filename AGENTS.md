@@ -49,6 +49,7 @@
 - `git commit --no-verify`
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
 - 手寫 `frontend/src/api/types.ts`（它是產生物，跑 `./scripts/gen_types.sh`）
+- 在 `frontend/src/` 新增 `.js`／`.jsx`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs` avatar runtime 例外
 
 ## 分支流程
 

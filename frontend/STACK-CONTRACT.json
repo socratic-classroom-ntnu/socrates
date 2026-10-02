@@ -2,7 +2,7 @@
   "schema": "portal/socratic-frontend-stack/v1",
   "framework": "React",
   "build": "Vite",
-  "language": "JavaScript/JSX",
+  "language": "TypeScript/TSX",
   "routing": "React Router",
   "http": "Axios",
   "realtime": "WebSocket",

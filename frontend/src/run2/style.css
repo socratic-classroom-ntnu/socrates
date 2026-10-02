@@ -62,3 +62,4 @@ main.r2-classroom{max-width:none}
 .r73-library article.r2-card>button+button,.r73-library article.r2-card>article>button+button{margin-left:10px}.r73-library .r88-lesson-card p,.r73-library .r88-lesson-card h3{margin:0}
 body:has(.g70-evidence.floating) .r2-classroom:not(:has(.r2-arena)){padding-bottom:88px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.r2-barrage-layer span{animation-duration:7s!important}}
+.r2-focus-notice{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:#3a2a1f;color:#f3d9b5;font-size:13px;line-height:1.6}

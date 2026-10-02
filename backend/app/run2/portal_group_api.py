@@ -19,7 +19,7 @@ from .storage import (
     append_event,
     persist_machine,
 )
-from .orchestrator import GameOrchestrator, DomainError, fresh_state
+from .orchestrator import GameOrchestrator, DomainError, focus_notice, fresh_state
 from .portal_group_domain import initialise, person_summary
 from .portal_group_analysis import analysis as project_analysis
 from . import service
@@ -410,6 +410,7 @@ def view(rid: str, request: Request):
                 "my_summary": person_summary(state, member.id) if member else None,
                 "avatar_pack_id": p.get("avatar_pack_id", "stickman"),
                 "source_mode": state["source_mode"],
+                "focus_notice": focus_notice(state),
             }
         rows = roster(db, room)
         cfg = state.get("portal_classroom", {})

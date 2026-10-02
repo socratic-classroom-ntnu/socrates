@@ -42,7 +42,7 @@ class ScriptDocument(Strict):
     questions: list[Question] = Field(min_length=1)
     max_questions: int = Field(default=3, ge=1)
     preview_seconds: int = Field(default=8, ge=5, le=10)
-    live_llm_call_budget: int = Field(default=30, ge=0)
+    live_llm_call_budget: int = Field(default=240, ge=0)
 
     @model_validator(mode="after")
     def ids(self):
@@ -140,11 +140,13 @@ class Reaction(Strict):
 
 
 class Observations(Strict):
-    has_position: bool = False
-    has_reason: bool = False
-    reason_tested: bool = False
-    position_shifted: bool = False
-    principle_label: Literal["後果主義", "義務論", "混合", "未明"] = "未明"
+    # Every field is required: a reply that omits one is a failed reply, not "not met"
+    # (design spec §13.2 layer 3).
+    has_position: bool
+    has_reason: bool
+    reason_tested: bool
+    position_shifted: bool
+    principle_label: Literal["後果主義", "義務論", "混合", "未明"]
 
 
 class TutorTurn(Strict):

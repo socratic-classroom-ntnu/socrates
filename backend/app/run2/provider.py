@@ -7,7 +7,6 @@ import time
 from typing import Any
 from uuid import uuid4
 import httpx
-from .contracts import TutorTurn, Observations
 
 
 class ProviderWait(RuntimeError):
@@ -47,21 +46,6 @@ def partial_reply(raw):
         i += 1
     # Partial UTF-16 pairs may arrive in different chunks.
     return "".join(out).encode("utf-16", "surrogatepass").decode("utf-16", "replace")
-
-
-def fallback(context):
-    hints = context["question"].get("probe_hints") or ["你如何描述這個選擇背後的原則？"]
-    turn = context.get("turn_index", 0)
-    text = hints[min(turn, len(hints) - 1)]
-    argument = context.get("argument", "")
-    return TutorTurn(
-        reply_text=text,
-        observations=Observations(
-            has_position=True, has_reason=bool(argument), reason_tested=False
-        ),
-        move="probe",
-        micro_summary="本次討論從此理由展開：" + argument[:300],
-    ).model_dump()
 
 
 class OpenRouterProvider:

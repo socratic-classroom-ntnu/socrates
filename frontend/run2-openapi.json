@@ -1050,7 +1050,7 @@
         "additionalProperties": false,
         "properties": {
           "live_llm_call_budget": {
-            "default": 30,
+            "default": 240,
             "minimum": 0.0,
             "title": "Live Llm Call Budget",
             "type": "integer"

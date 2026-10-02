@@ -132,6 +132,7 @@ def test_policy_truth_table():
                             has_reason=reason,
                             reason_tested=tested,
                             position_shifted=shifted,
+                            principle_label="未明",
                         )
                         assert stage_goal(o, turns) == bool(
                             turns >= 1 and position and reason and tested and not shifted
@@ -151,7 +152,13 @@ def focus_room():
 def result():
     return {
         "reply_text": "你的理由適用哪些情況？",
-        "observations": {},
+        "observations": {
+            "has_position": False,
+            "has_reason": False,
+            "reason_tested": False,
+            "position_shifted": False,
+            "principle_label": "未明",
+        },
         "move": "probe",
         "micro_summary": "用原則衡量選擇",
     }
@@ -221,3 +228,45 @@ def test_majority_context_preserves_tie():
         DOC["questions"][0], {"x": {"option_id": "a"}, "y": {"option_id": "b"}}, []
     )
     assert ctx["majority_options"] == ["a", "b"]
+
+
+GOAL = {
+    "has_position": True,
+    "has_reason": True,
+    "reason_tested": True,
+    "position_shifted": False,
+    "principle_label": "義務論",
+}
+OPEN = {
+    "has_position": True,
+    "has_reason": True,
+    "reason_tested": False,
+    "position_shifted": False,
+    "principle_label": "未明",
+}
+
+
+def reply(observations):
+    return {**result(), "observations": observations}
+
+
+def drive_focus(g, observations_per_turn):
+    for obs in observations_per_turn:
+        f = g.focus()
+        g.complete_job("focused_tutor", f["job_key"], reply(obs), {})
+        if f["status"] == "COMPLETED":
+            return f
+        g.command("focus_message", {"text": "我的理由是……"}, f["member_id"], False)
+    return g.focus()
+
+
+def test_focus_ending_by_goal_is_recorded_as_goal_met():
+    g = focus_room()
+    f = drive_focus(g, [OPEN, GOAL])
+    assert f["end_reason"] == "goal_met"
+
+
+def test_focus_ending_by_turn_cap_is_recorded_as_capped():
+    g = focus_room()
+    f = drive_focus(g, [OPEN, OPEN, OPEN, OPEN])
+    assert f["end_reason"] == "capped"

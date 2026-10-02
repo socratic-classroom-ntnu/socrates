@@ -3,6 +3,7 @@ import { ApiError, api } from './client';
 import { GroupAnalytics } from './GroupAnalytics';
 import { GroupAvatar } from './GroupAvatar';
 import { ClassroomAISettings } from './ClassroomAISettings';
+import { FocusNotice } from './FocusNotice';
 import './group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
@@ -164,6 +165,7 @@ function GroupStage({ view }) {
     return <main className="r2-home g70 g70-stage"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {view.phase}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
     <section className="r2-home-hero"><small>{view.source_mode} · GROUP DIALOGUE</small><h1>{view.question?.title || view.title}</h1><p>{view.question?.scenario}</p></section>
     <GroupAvatar packId={view.avatar_pack_id || 'stickman'}/>
+    <FocusNotice status={view.focus_notice ? 'TUTOR_UNAVAILABLE' : null} message={view.focus_notice}/>
     <section className="g70-transcript">{(view.transcript || []).flatMap((f, fi) => f.messages.map((m, i) => <article className={'r2-card ' + m.role} key={`${fi}-${i}`}><small>{m.role === 'tutor' ? '導師' : view.members?.find(x => x.id === f.member_id)?.alias || '同學'}</small><p>{m.text}</p></article>))}</section>
   </main>;
 }

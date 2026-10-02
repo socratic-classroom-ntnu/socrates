@@ -7,7 +7,7 @@ const question = () => ({ id: crypto.randomUUID(), title: '新的問題', scenar
     max_focus_turns: 3, focus_response_seconds: 90, sender_point_cap: 5, receiver_point_cap: 25 });
 export function newDocument() {
     return { title: '我的蘇格拉底教室', mode: 'static', questions: [question()],
-        max_questions: 3, preview_seconds: 8, live_llm_call_budget: 30 };
+        max_questions: 3, preview_seconds: 8, live_llm_call_budget: 240 };
 }
 export function ScriptBuilder({ initial, onSaved }) {
     const [doc, setDoc] = useState(initial?.document || newDocument());

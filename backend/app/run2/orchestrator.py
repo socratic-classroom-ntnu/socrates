@@ -17,6 +17,32 @@ class DomainError(ValueError):
         super().__init__(code)
 
 
+_BUDGET_REASONS = {
+    "CLASSROOM_BUDGET_AVAILABILITY",
+    "CLASSROOM_TOKEN_BUDGET_AVAILABILITY",
+    "CLASSROOM_COST_BUDGET_AVAILABILITY",
+    "GLOBAL_BUDGET_AVAILABILITY",
+}
+
+
+def tutor_unavailable_notice(reason: str) -> str:
+    """Classroom-visible reason for a paused tutor; the teacher's 下一步 resumes the class."""
+    if reason in _BUDGET_REASONS:
+        return "導師暫停回應：本教室的 LLM 額度已達上限。老師可調整額度後按「下一步」繼續。"
+    if reason == "OWNER_PROVIDER_PROFILE_REQUIRED":
+        return "導師暫停回應：教室擁有者尚未設定 LLM。老師可設定後按「下一步」繼續。"
+    return "導師暫停回應：LLM 暫時無法連線。老師可按「下一步」繼續。"
+
+
+def focus_notice(state: dict) -> str | None:
+    """The paused-tutor notice for views that do not expose focus status (group runs)."""
+    for run in state.get("runs", []):
+        for f in run.get("focuses", []):
+            if f["id"] == state.get("focus") and f.get("status") == "TUTOR_UNAVAILABLE":
+                return state.get("last_error")
+    return None
+
+
 def fresh_state(title: str) -> dict:
     return {
         "phase": "lobby",
@@ -169,6 +195,8 @@ class GameOrchestrator:
         f = self.focus()
         if f is None:
             return
+        if f.get("status") == "TUTOR_UNAVAILABLE":
+            self.s["last_error"] = None
         f["status"] = "COMPLETED"
         f["end_reason"] = reason
         f["micro_summary"] = f.get("micro_summary") or (
@@ -400,6 +428,12 @@ class GameOrchestrator:
             f = self.focus()
             if f is None or f.get("job_key") != key:
                 return
+            if "tutor_unavailable" in result:
+                f["status"] = "TUTOR_UNAVAILABLE"
+                s["last_error"] = tutor_unavailable_notice(result["tutor_unavailable"])
+                s["due_at"] = None
+                s["deadline_at"] = None
+                return
             f["messages"].append(
                 {
                     "role": "tutor",
@@ -421,12 +455,14 @@ class GameOrchestrator:
                 r["excluded"].append(f["member_id"])
                 r["covered_options"].remove(f["option_id"])
                 self.close_focus("reselect_after_argument_comment")
-            elif (
-                f["advance_requested"]
-                or f["completed_turns"] >= self.question()["max_focus_turns"]
-                or stage_goal(result["observations"], f["completed_turns"])
-            ):
-                self.close_focus("teacher_next" if f["advance_requested"] else "policy_complete")
+            elif f["advance_requested"]:
+                self.close_focus("teacher_next")
+            # Goal before cap, as in Round 1 (app/orchestrator/orchestrator.py): a goal met on the
+            # cap turn is goal_met; a cap without the goal is capped, never goal_met.
+            elif stage_goal(result["observations"], f["completed_turns"]):
+                self.close_focus("goal_met")
+            elif f["completed_turns"] >= self.question()["max_focus_turns"]:
+                self.close_focus("capped")
             else:
                 f["status"] = "AWAITING_STUDENT"
                 s["deadline_at"] = self.now + self.question()["focus_response_seconds"]

@@ -9,6 +9,7 @@ import './design-r73.css';
 import { GroupClassroomGate } from './GroupClassroom';
 import { ProviderSettings } from './ProviderSettings';
 import { VerificationGate } from './VerificationGate';
+import { FocusNotice } from './FocusNotice';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -284,7 +285,7 @@ function LegacyClassroom({ id }) {
     {room.phase === 'distribution' && <section className="r2-distribution"><small>OUR PERSPECTIVES</small><h1>同一個問題，不同的看法。</h1>{room.distribution.map((raw, i) => { const d = raw; return <article className="r2-card" key={i}><h2>{d.text}</h2><b>{d.percent.toFixed(1)}% · {d.count} 人</b><div className="r2-bar"><i style={{ width: d.percent + '%' }}/></div><div className="r2-row">{d.members?.map((m, j) => <span className="r2-mini-person" key={j}><i>{m.alias.slice(0, 1)}</i>{m.alias}</span>)}</div></article>; })}</section>}
     {['arena', 'focus', 'focus_summary'].includes(room.phase) && <><Arena room={room}/><div className="r2-barrage-layer">{barrage.map((b, i) => <span key={b.id} style={{ top: (12 + (i % 6) * 10) + '%' }}>{b.text}</span>)}</div>
       {selected && <aside className="r2-focus-chat"><small>你的深入討論</small>{f?.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}</aside>}
-      <section className="r2-live-dialog"><small>{room.source_mode === 'openrouter' ? 'LIVE TUTOR' : 'SCRIPTED PROBE'} · {selected ? '導師正與你對話' : '一起聽聽這個觀點'}</small><p>{buffer || f?.messages.filter(m => m.role === 'tutor').at(-1)?.text || '導師正在整理問題…'}</p>{room.phase === 'focus_summary' && <p>{f?.micro_summary}</p>}
+      <section className="r2-live-dialog"><small>{room.source_mode === 'openrouter' ? 'LIVE TUTOR' : 'SCRIPTED PROBE'} · {selected ? '導師正與你對話' : '一起聽聽這個觀點'}</small><FocusNotice status={f?.status} message={room.last_error}/><p>{buffer || f?.messages.filter(m => m.role === 'tutor').at(-1)?.text || (f?.status === 'TUTOR_UNAVAILABLE' ? '' : '導師正在整理問題…')}</p>{room.phase === 'focus_summary' && <p>{f?.micro_summary}</p>}
         {room.role === 'student' && <><DraftComposer value={text} onChange={setText} label={selected ? '回覆導師' : '匿名彈幕'} enabled={!selected || room.available_actions.includes('focus_message')} placeholder={selected ? '說說你現在的想法…' : '分享一則匿名彈幕…'} onSend={async () => { if (text.trim()) {
             const ok = await run(selected ? 'focus_message' : 'barrage', { text });
             if (ok)

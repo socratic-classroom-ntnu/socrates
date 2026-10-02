@@ -1,7 +1,7 @@
 import pytest
-from app.run2.provider import partial_reply, fallback
+from app.run2.provider import partial_reply
 from app.run2.realtime import RealtimeBus
-from app.run2.contracts import TutorTurn, SummaryResult
+from app.run2.contracts import SummaryResult
 
 
 @pytest.mark.parametrize(
@@ -16,14 +16,6 @@ from app.run2.contracts import TutorTurn, SummaryResult
 )
 def test_partial_json(raw, expected):
     assert partial_reply(raw) == expected
-
-
-def test_scripted_provider_records_actual_capability():
-    x = fallback(
-        {"question": {"probe_hints": ["請說明理由"]}, "argument": "我重視生命", "turn_index": 2}
-    )
-    assert TutorTurn.model_validate(x).reply_text == "請說明理由"
-    assert not x["observations"]["reason_tested"]
 
 
 @pytest.mark.asyncio

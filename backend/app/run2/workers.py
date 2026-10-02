@@ -15,7 +15,7 @@ from .email_delivery import send_mail_once as _send_transactional_mail_once
 from .orchestrator import GameOrchestrator
 from .portal_ai_students import fallback_turn
 from .prompts import compile_program
-from .provider import ProviderWait, fallback
+from .provider import ProviderWait
 from .provider_gateway import generate
 from .provider_profiles import (
     public_binding,
@@ -89,6 +89,21 @@ def _used_cost(db, room_id: str) -> tuple[int, float]:
     return tokens, cost
 
 
+def effective_call_limit(script_budget: int, budgets: dict, kind: str) -> int:
+    """Classroom call cap: the teacher's budget and the account's max_calls, whichever is lower.
+
+    The teacher's value always counts (0 means no live calls); the account's max_calls counts only
+    when positive, keeping "0 = unset". AI students keep their PORTAL_AI_CALL_BUDGET floor.
+    """
+    limit = int(script_budget)
+    account_limit = int(budgets.get("max_calls") or 0)
+    if account_limit > 0:
+        limit = min(limit, account_limit)
+    if kind == "llm_student_turn":
+        limit = max(limit, int(os.environ.get("PORTAL_AI_CALL_BUDGET", "240")))
+    return limit
+
+
 def reserve_call(item):
     current = dt.datetime.now(dt.timezone.utc)
     day = current.date().isoformat()
@@ -107,14 +122,9 @@ def reserve_call(item):
         room = db.scalar(select(Room).where(Room.id == item["room"]).with_for_update())
         bindings, routing = resolve_provider_chain(db, room, item["kind"], item["context"])
         budgets = routing["budgets"]
-        logical_limit = int(
-            budgets.get("max_calls") or room.state["script"]["live_llm_call_budget"]
+        logical_limit = effective_call_limit(
+            room.state["script"]["live_llm_call_budget"], budgets, item["kind"]
         )
-        if item["kind"] == "llm_student_turn":
-            logical_limit = max(
-                logical_limit,
-                int(os.environ.get("PORTAL_AI_CALL_BUDGET", "240")),
-            )
         if room.llm_used >= logical_limit:
             raise ProviderWait(
                 "CLASSROOM_BUDGET_AVAILABILITY",
@@ -228,8 +238,10 @@ def deterministic_result(item, reason):
     context = item["context"]
     kind = item["kind"]
     if kind == "focused_tutor":
-        result = fallback(context)
-        provider = "scripted-probe-hints"
+        # The tutor pauses instead of reading the teacher's probe_hints aloud; the orchestrator
+        # shows the reason and waits for the teacher to move on.
+        result = {"tutor_unavailable": reason}
+        provider = "tutor-unavailable"
     elif kind == "llm_student_turn":
         result = fallback_turn(context)
         provider = "deterministic-ai-student"
@@ -254,8 +266,11 @@ def deterministic_result(item, reason):
         ).model_dump()
         provider = "deterministic-summary"
     elif kind == "dynamic_question":
-        question = context.get("question") or {
-            "id": "deterministic-next",
+        # context["question"] is the question that just finished (majority_context always sets
+        # it), so it cannot be the next one. Each generation has its own job key; deriving the
+        # id from it keeps repeated fallbacks in one run from colliding.
+        question = {
+            "id": f"fallback-{item['key']}"[:64],
             "title": "換一個條件，你的選擇會改變嗎？",
             "scenario": ("請比較原本理由與新增條件，並說明目前最重視的原則。"),
             "options": [

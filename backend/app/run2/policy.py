@@ -1,18 +1,21 @@
 """Pure classroom policies. Persistence and LLM calls belong to adapters."""
 
 import random
+
+from app.domain.tutor import Observations as DomainObservations
+from app.orchestrator import policy as round1
+
 from .contracts import Observations
 
 
 def stage_goal(observations: dict, completed_turns: int) -> bool:
+    """Advance criteria live once, in Round 1's policy (AGENTS.md non-negotiable).
+
+    Round 1's turn_count (exchanges completed before this one) and Run 2's completed_turns
+    (index of the exchange just answered) have the same value at the same moment.
+    """
     o = Observations.model_validate(observations)
-    return (
-        completed_turns >= 1
-        and not o.position_shifted
-        and o.has_position
-        and o.has_reason
-        and o.reason_tested
-    )
+    return round1.should_advance(DomainObservations.model_validate(o.model_dump()), completed_turns)
 
 
 def choose_representative(

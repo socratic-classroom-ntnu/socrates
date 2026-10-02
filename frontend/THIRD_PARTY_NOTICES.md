@@ -13,7 +13,7 @@
 - Intended use here: university teaching and noncommercial classroom demonstration.
 - License: https://creativecommons.org/licenses/by-nc/4.0/
 - Modifications: camera framing and scene illumination in the browser; original GLB bytes retained.
-- Source commit is pinned. The executable records downloaded size, Git blob ID, SHA-256 and license in AVATAR-SOURCE.json.
+- Source commit is pinned. `public/avatars/ce-brunette/SOURCE.json` records the source URL, commit, Git blob ID, size and license; the build-time fetchers (`tools/fetch-avatar.mjs`, `scripts/fetch_avatar.py`) verify the Git blob ID and the glTF header.
 
 ## CE reference status
 The current UI implements Arthur's supplied concept drawing and explicit layout direction. The private CE source attempts and their HTTP status are preserved in the Loom evidence. The public model is an attributed upstream presentation asset, with CE exact asset adoption delegated to Portal-Goose.

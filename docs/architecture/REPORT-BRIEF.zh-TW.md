@@ -1,5 +1,7 @@
 # Socrates 報告速記｜CE Stage 交付候選
 
+> 狀態（2026-10-03）：本文件只描述 2026-09-24 的 Round 1 展示。現行 Run 2 說明見 [Run 2 Architecture](../RUN2-ARCHITECTURE.md)。
+
 ## 30 秒
 
 Socrates 使用 React 與 TypeScript 製作前端，FastAPI 提供 API，PostgreSQL 保存對話。Orchestrator 掌握情境與推進，TutorGateway 取得導師文字與觀察。學生訊息先進資料庫，再呼叫 provider。對外使用 Nginx 統一頁面與 `/api` 入口，再透過 Cloudflare Tunnel 公開。Stage 交付兩個 application containers，資料庫與 Tunnel 由伺服器環境提供。
@@ -17,7 +19,7 @@ Browser: React / TypeScript / CE portrait
                                             └→ Repository → SQLAlchemy → PostgreSQL
 ```
 
-React 是畫面函式庫；Rsbuild 是 build/dev tool；Jest/SWC 是測試工具。建置後由 Nginx 供應 HTML/JS/CSS/GLB。工具鏈遷移的實際採用以新 source SHA 與 build receipt 為準。
+React 是畫面函式庫；Vite 是 build/dev tool；Jest/SWC 是測試工具。建置後由 Nginx 供應 HTML/JS/CSS/GLB。工具鏈遷移的實際採用以新 source SHA 與 build receipt 為準。
 
 ## 資料庫
 

@@ -1,5 +1,7 @@
 # Backend branch topology
 
+> 狀態（2026-10-03）：分支拓撲待決，暫無現行替代文件；請勿把以下紀錄當成目前規則。
+
 ```text
 master
 develop

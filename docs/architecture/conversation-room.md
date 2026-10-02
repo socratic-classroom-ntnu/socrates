@@ -1,5 +1,7 @@
 # CE-style Conversation Room
 
+> 狀態（2026-10-03）：本文件已由新版 CE portrait 架構取代；RoomTopBar 等六個 v1 元件目前未掛載。現行說明見 [CE Portrait React](ce-portrait-react.md)。
+
 ## Goal
 
 將現有 `Conversation` 單欄頁面提升為模組化聊天室，同時保留後端狀態機、`Orchestrator`、`TutorGateway` 與 `SessionView` 的 authoritative boundary。

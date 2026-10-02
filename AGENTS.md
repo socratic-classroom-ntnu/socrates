@@ -15,7 +15,7 @@
 | 未進入的階段不回傳 `title` | 學生若知道下一題是什麼，答第一題時就會自我保護，鏡子照不到真實直覺 |
 | 情境開場白逐字輸出、不經 LLM | 經典難題的效力在於敘述的精確，換句話說會稀釋掉它 |
 | 學生訊息先落地才呼叫 provider | 學生想很久寫的一段話因模型超時而消失，是最不能發生的事 |
-| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `StageAdvancePolicy` | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
+| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `backend/app/orchestrator/policy.py`（`should_advance`／`stage_goal_met`，測試 `backend/tests/invariants/test_stage_advance_policy.py`） | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
 | 上限到了未達成標 `capped` 不標 `goal_met` | 照見包含照見自己的模糊 |
 | `available_actions` 由後端決定 | 前端一旦自己推導，狀態機就被實作兩次，然後兩邊走鐘 |
 | `ended` 之後任何動作一律拒絕 | — |
@@ -48,8 +48,8 @@
 - 讓 LLM 改寫情境開場白
 - `git commit --no-verify`
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
-- 手寫 `frontend/src/api/types.ts`（它是產生物，跑 `./scripts/gen_types.sh`）
-- 在 `frontend/src/` 新增 `.js`／`.jsx`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs` avatar runtime 例外
+- 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/run2/generated.ts`、`frontend/run2-openapi.json`（產生物，跑 `python scripts/gen_run2_types.py`）
+- 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `run2/graphLayout.mjs`）目前不擋
 
 ## 分支流程
 
@@ -82,21 +82,33 @@ docker compose exec backend python -m mypy \
 cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
 
-./scripts/gen_types.sh                                # 後端 schema 改了就跑這個
+./scripts/gen_types.sh                                # Round 1 schema 改了就跑這個
+python scripts/gen_run2_types.py                      # Run 2（/api/v2）schema 改了就跑這個
 ```
 
 後端指令走容器是因為主機通常沒裝 Python 依賴。要在主機跑就先
 `pip install -r backend/requirements-dev.txt`。
 
-**後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** 不要為了跑測試而手動
-設 `DATABASE_URL` 指向 `socrates`——`conftest.py` 有守衛會直接拒絕啟動。
+**兩支型別產生器都要在主機跑**：容器沒有掛 `frontend/`，產物寫不出來。主機需要後端依賴——
+建 `backend/.venv` 並 `backend/.venv/bin/pip install -r backend/requirements.txt`（`gen_types.sh`
+會自動用 `backend/.venv`，也可以用 `PYTHON_BIN` 指定；`gen_run2_types.py` 請用
+`backend/.venv/bin/python scripts/gen_run2_types.py` 執行），前端也要先 `npm ci`。
+CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新產生就會紅燈。
+
+**後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** `conftest.py` 會把任何
+`DATABASE_URL` 自動改寫成 `<原名>_test`，不需要、也不要為了跑測試手動改 `DATABASE_URL`。
 
 **上面這組檢查已經用 husky 掛成 git hook，commit／push 前會自動跑**（`.husky/pre-commit`、`.husky/pre-push`）：
 - `pre-commit` 只檢查有變更的部分（改了 `frontend/` 就跑 lint+typecheck，改了 `backend/` 就跑 ruff），不含測試，速度快。
-- `pre-push` 固定跑滿整組，跟 CI 對齊——**包含 `npm run build`**，因為那是唯一會抓到
-  「production build 壞掉、image 建不起來」的檢查。
+- `pre-push` 固定跑滿上面這組，對齊 CI 的 `backend`／`frontend` 兩個 job——**包含 `npm run build`**，
+  因為那是唯一會抓到「production build 壞掉、image 建不起來」的檢查。
 
-**hook 的指令必須與 `.github/workflows/ci.yml` 逐條對應。** 型別檢查是兩條而不是一條：
+**hook 沒有涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
+`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`run2-load`，以及 `backend`
+job 在 pytest 前的 `alembic upgrade head`、`frontend` job 前的 `scripts/fetch_avatar.py`。
+改了 schema 就自己跑型別產生器，其餘看 CI 結果。
+
+**hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
 Round 1 走 `strict`，Run 2 走較寬的 `backend/mypy-run2.ini`。lint 的範圍是 `backend`，
 不含 `scripts/`；`backend/pyproject.toml` 已用 `extend-exclude` 排除，因為 root compose 把 `./scripts`
 掛進了 `/app/scripts`。**CI 改了就要同時改 hook**，反之亦然——2026-09 曾經因為 CI 隨
@@ -104,9 +116,9 @@ Run 2／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `-
 而無條件失敗，並且用 strict mypy 掃 Run 2 而多報數百個 CI 不在意的錯。
 
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
-**push 前 backend 容器要是開著的**（先跑 `docker compose up -d`），`pre-push` 會用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
+**push 前、以及 commit 有改到 `backend/` 時，backend 容器都要是開著的**（先跑 `docker compose up -d`）：hook 用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
-PR 送出前請把上面那一整組跑過一次，CI 跑的是同一組。
+PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`round1-e2e`、`run2-load`。
 
 Commit 訊息用 conventional commits：`type(scope): description`。
 因為 repo 只開放 squash merge，**這條規範實際落在 PR 標題上**。

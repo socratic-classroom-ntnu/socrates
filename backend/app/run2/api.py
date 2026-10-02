@@ -430,7 +430,7 @@ router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)
 
 # PORTAL-R88-AI-STUDENTS
-from .portal_ai_students import router as _portal_ai_students_router  # noqa: E402
+from .portal_ai_students_api import router as _portal_ai_students_router  # noqa: E402
 
 router.include_router(_portal_ai_students_router)
 

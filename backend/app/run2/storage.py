@@ -240,6 +240,14 @@ def configure(url: str | None = None, *, create: bool = False):
     _ENGINE = create_engine(resolved, **kw)
     _FACTORY = sessionmaker(_ENGINE, expire_on_commit=False)
     if create:
+        # Register every model module before creating tables, so a schema built from storage
+        # alone has all tables and foreign keys. Imported here to avoid import cycles and to keep
+        # provider modules out of the orchestrator's import path.
+        from . import email_delivery  # noqa: F401
+        from . import portal_ai_students  # noqa: F401
+        from . import portal_classroom_library  # noqa: F401
+        from . import provider_profiles  # noqa: F401
+
         Base.metadata.create_all(_ENGINE)
     return _ENGINE
 

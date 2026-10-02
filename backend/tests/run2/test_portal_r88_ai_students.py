@@ -1,8 +1,8 @@
 from app.run2.orchestrator import GameOrchestrator, fresh_state
+from app.run2.portal_ai_students_api import fallback_other_suggestion
 from app.run2.portal_ai_students import (
     OTHER_ID,
     ensure_other_options,
-    fallback_other_suggestion,
     fallback_turn,
 )
 from app.run2.portal_group_domain import initialise

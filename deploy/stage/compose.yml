@@ -27,6 +27,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SOCRATES_GOOGLE_CSE_ID: ${SOCRATES_GOOGLE_CSE_ID:-}
+      SOCRATES_GOOGLE_CSE_SCOPE: ${SOCRATES_GOOGLE_CSE_SCOPE:-sites}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
     healthcheck:
       test: ['CMD','python','-c',"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v2/readiness',timeout=3)"]

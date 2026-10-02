@@ -35,6 +35,8 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ vars.RESEND_FROM || 'Socratic Classroom <verify@mail.socrates.driseam.com>' }}
           RESEND_WEBHOOK_SECRET: ${{ secrets.RESEND_WEBHOOK_SECRET }}
+          SOCRATES_GOOGLE_CSE_ID: ${{ vars.SOCRATES_GOOGLE_CSE_ID }}
+          SOCRATES_GOOGLE_CSE_SCOPE: ${{ vars.SOCRATES_GOOGLE_CSE_SCOPE || 'sites' }}
           PUBLIC_ORIGIN: ${{ vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
           ALLOWED_ORIGINS: ${{ vars.SOCRATES_ALLOWED_ORIGINS || vars.SOCRATES_PUBLIC_ORIGIN || 'https://socrates.driseam.com' }}
         run: |

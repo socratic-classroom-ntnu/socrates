@@ -10,28 +10,24 @@ import { GroupClassroomGate } from './GroupClassroom';
 import { ProviderSettings } from './ProviderSettings';
 import { VerificationGate } from './VerificationGate';
 import { Auth } from './Auth';
+import { JoinDoor } from './JoinDoor';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Home({ user }) {
     const [mode, setMode] = useState('student'), [scripts, setScripts] = useState([]);
     const [rooms, setRooms] = useState([]);
-    const [editing, setEditing] = useState(), [code, setCode] = useState(''), [alias, setAlias] = useState('');
+    const [editing, setEditing] = useState();
     const [note, setNote] = useState('');
     const refresh = useCallback(() => { void api('/scripts').then(setScripts).catch(e => setNote(errorText(e))); void api('/classrooms').then(setRooms).catch(e => setNote(errorText(e))); }, []);
     useEffect(refresh, [refresh]);
     if (!user.verified)
         return <VerificationGate user={user} onVerified={() => location.reload()}/>;
+    if (mode === 'student')
+        return <JoinDoor user={user} rooms={rooms} note={note} onMode={setMode}/>;
     const enter = (id, role) => { location.href = `/classrooms/${id}?mode=${role}`; };
-    async function join() { try {
-        const r = await api('/classrooms/join', 'POST', { code, alias: alias.trim() || ('~pending-' + crypto.randomUUID().slice(0, 8)), avatar: 'scholar' });
-        enter(r.id, 'student');
-    }
-    catch (e) {
-        setNote(errorText(e));
-    } }
     return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={() => void api('/auth/logout', 'POST').then(() => location.reload())}>登出</button></header>
     <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => setMode('teacher')}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
     {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
-    {mode === 'student' ? <section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e => setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e => setAlias(e.target.value)}/></label><button onClick={() => void join()}>進入教室 →</button></section> : mode === 'teacher' ?
+    {mode === 'teacher' ?
             <ClassroomLibrary /> : <ProviderSettings />}
     <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? mode : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>Run2 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
 }

@@ -9,64 +9,8 @@ import './design-r73.css';
 import { GroupClassroomGate } from './GroupClassroom';
 import { ProviderSettings } from './ProviderSettings';
 import { VerificationGate } from './VerificationGate';
+import { Auth } from './Auth';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
-function Auth({ onLogin }) {
-    const [mode, setMode] = useState('login');
-    const [name, setName] = useState(''), [email, setEmail] = useState(''), [password, setPassword] = useState('');
-    const [note, setNote] = useState(''), [busy, setBusy] = useState(false);
-    const query = new URLSearchParams(location.search);
-    useEffect(() => {
-        const token = new URLSearchParams(location.search).get('verify_token');
-        if (token)
-            void api('/auth/verify', 'POST', { token }).then(() => { setNote('Email 已驗證，請登入。'); history.replaceState({}, '', '/'); }).catch(e => setNote(errorText(e)));
-        if (new URLSearchParams(location.search).has('reset_token'))
-            setMode('reset');
-    }, []);
-    async function submit() {
-        setBusy(true);
-        try {
-            if (mode === 'login') {
-                const a = await api('/auth/login', 'POST', { login: name, password });
-                setCSRF(a.csrf_token);
-                onLogin(a);
-            }
-            if (mode === 'register') {
-                const account = await api('/auth/register', 'POST', {
-                    username: name,
-                    email,
-                    password
-                });
-                setCSRF(account.csrf_token);
-                onLogin(account);
-            }
-            if (mode === 'forgot') {
-                await api('/auth/forgot-password', 'POST', { email });
-                setNote('重設郵件已排入寄送；請查看信箱。');
-            }
-            if (mode === 'reset') {
-                await api('/auth/reset-password', 'POST', { token: query.get('reset_token'), password });
-                history.replaceState({}, '', '/');
-                setMode('login');
-                setNote('密碼已更新，請重新登入。');
-            }
-        }
-        catch (e) {
-            setNote(errorText(e));
-        }
-        finally {
-            setBusy(false);
-        }
-    }
-    return <main className="r2-auth"><div className="r2-brand">S</div><small>SOCRATES · 共思教室</small><h1>從一個問題，<br />看見自己的原則。</h1><p className="muted">表達、追問、相遇。每個觀點都有自己的位置。</p>
-    <form onSubmit={e => { e.preventDefault(); void submit(); }} className="r2-glass">
-      <h2>{{ login: '歡迎回來', register: '建立帳號', forgot: '重設登入密碼', reset: '設定新密碼' }[mode]}</h2>
-      {(mode === 'login' || mode === 'register') && <label>{mode === 'login' ? '使用者名稱或 Email' : '使用者名稱'}<input autoComplete="username" required value={name} onChange={e => setName(e.target.value)}/></label>}
-      {(mode === 'register' || mode === 'forgot') && <label>Email<input type="email" required value={email} onChange={e => setEmail(e.target.value)}/></label>}
-      {mode !== 'forgot' && <label>密碼<input type="password" minLength={mode === 'login' ? 1 : 12} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} onChange={e => setPassword(e.target.value)}/></label>}
-      <button disabled={busy}>{busy ? '處理中…' : '繼續'}</button><p role="status">{note}</p>
-      <div className="r2-row"><button type="button" className="quiet" onClick={() => setMode(mode === 'register' ? 'login' : 'register')}>{mode === 'register' ? '回到登入' : '註冊'}</button><button type="button" className="quiet" onClick={() => setMode('forgot')}>重設密碼</button></div>
-    </form></main>;
-}
 function Home({ user }) {
     const [mode, setMode] = useState('student'), [scripts, setScripts] = useState([]);
     const [rooms, setRooms] = useState([]);

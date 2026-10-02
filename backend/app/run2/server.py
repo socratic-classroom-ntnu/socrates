@@ -5,6 +5,7 @@ import os
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from . import prompts
 from .api import router
 from .orchestrator import DomainError
 from .realtime import BUS
@@ -29,6 +30,7 @@ async def lifespan(app):
 
 
 def create_app(legacy=False, background=True):
+    prompts.validate_programs()
     app = FastAPI(title="Socrates API", version="0.3.0", lifespan=lifespan if background else None)
     if legacy:
         from app.main import app as first_run

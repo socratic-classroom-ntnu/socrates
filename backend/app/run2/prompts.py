@@ -14,6 +14,51 @@ SCHEMAS = {
 }
 
 
+JOB_KINDS = (
+    "focused_tutor",
+    "dynamic_question",
+    "question_summary",
+    "class_summary",
+    "personal_summary",
+    "llm_student_turn",
+)
+
+
+def validate_programs() -> None:
+    """Fail at startup on broken prompt definitions, like a broken ladder (AGENTS.md).
+
+    Without this, a broken programs.json makes every job fall back silently while the
+    classroom still looks alive.
+    """
+    path = ROOT / "prompts/run2/programs.json"
+    try:
+        spec = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"{path} is unreadable: {exc}") from exc
+    if not isinstance(spec, dict):
+        raise RuntimeError(f"{path} must be a JSON object")
+    for key in ("version", "skill_set_version", "skills", "programs"):
+        if key not in spec:
+            raise RuntimeError(f"{path} is missing {key!r}")
+    programs = spec["programs"]
+    if not isinstance(programs, dict):
+        raise RuntimeError(f"{path}: 'programs' must be an object")
+    for kind in JOB_KINDS:
+        entry = programs.get(kind)
+        if not isinstance(entry, dict):
+            raise RuntimeError(f"{path} has no program for {kind!r}")
+        if entry.get("schema") not in SCHEMAS:
+            raise RuntimeError(f"{path}: {kind!r} uses unknown schema {entry.get('schema')!r}")
+        template = entry.get("template")
+        if not isinstance(template, str) or not template.strip():
+            raise RuntimeError(f"{path}: {kind!r} needs a non-empty template")
+    if not isinstance(spec["skills"], list):
+        raise RuntimeError(f"{path}: 'skills' must be a list")
+    for name in spec["skills"]:
+        if not (ROOT / "skills/run2" / str(name)).is_file():
+            raise RuntimeError(f"skill file skills/run2/{name} does not exist")
+
+
 def compile_program(db, kind, context):
     program_path = ROOT / "prompts/run2/programs.json"
     spec = json.loads(program_path.read_text())

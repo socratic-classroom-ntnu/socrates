@@ -3,8 +3,12 @@
 - 日期：2026-09-19
 - 範圍：第一輪（Round 1）產品功能設計
 - 相關文件：
-  - `docs/superpowers/specs/2026-09-19-ai-collaboration-architecture-design.md`（團隊協作與 AI 輔助開發基礎設施，以下簡稱「協作設計」）
   - `docs/product/product-overview.md`（產品說明，PM 取向）
+  - `AGENTS.md`（專案規則：不可妥協條款、範本索引、API 慣例）
+
+> 狀態（2026-10-03）：Round 1 目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
+> 規格原意與程式不一致、尚待決定的兩處保留原文並標註：§5.2／§7 的路口提示由誰產生（計畫盤點 B8）、
+> §11.1／§13 的結束確認框與「還有 N 個情境」（計畫盤點 B5）。Run 2 的設計見 `docs/RUN2-ARCHITECTURE.md`。
 
 ---
 
@@ -32,7 +36,7 @@
 ### 做
 
 - 一條寫死的案例階梯：電車難題（三階）
-- 純文字對話介面
+- 純文字對話介面（之後已加入語音轉文字草稿，見 `docs/adr/ADR-ROOM-003-voice-message-convergence.md`）
 - 對話推進狀態機（後端主導）
 - LLM Provider 抽象層，第一輪以腳本實作驗收
 - 結束後的結構化立場總結（畫面上只顯示一句話）
@@ -49,7 +53,7 @@
 | 同儕匿名立場分佈 | 有冷啟動問題（第一個使用者看不到任何同儕）。需先累積資料 |
 | 班級論點分佈儀表板 | 依賴同儕資料 |
 | 真實帳號系統 | MVP 風險不在此。Local 身分已足夠驗證流程 |
-| 語音（STT） | 未來提供錄音轉文字，非即時 speech-to-speech |
+| 語音（STT） | 未來提供錄音轉文字，非即時 speech-to-speech。**已實作**：瀏覽器語音轉成文字草稿，確認後走同一個送出訊息端點（ADR-ROOM-003） |
 | 串流輸出（SSE） | 體驗優化。API 契約已預留接縫，之後是替換傳輸層，不動流程邏輯 |
 | 疲乏偵測 | 優化項目。判定為第二輪之後 |
 | 續跑「已結束」的 session | 改以「續篇 session」形式實作（見 §11） |
@@ -118,7 +122,9 @@
 turn_count >= 1  AND  (not position_shifted)  AND  has_position  AND  has_reason  AND  reason_tested
 ```
 
-**這四條規則必須全部住在 `StageAdvancePolicy`，不得有任何一條留在 Orchestrator**（§5.3 稱它為「判準的唯一修改點」，那句話要字面成立）。否則讀 `policy.py` 的人會以為自己看到了全部規則。
+**這些規則（輪數地板、立場未改變、三條件）必須全部住在 `StageAdvancePolicy`，不得有任何一條留在 Orchestrator**（§5.3 稱它為「判準的唯一修改點」，那句話要字面成立）。否則讀 `policy.py` 的人會以為自己看到了全部規則。
+
+程式中的位置：`backend/app/orchestrator/policy.py` 的 `should_advance`（三條件在 `stage_goal_met`），真值表測試在 `backend/tests/invariants/test_stage_advance_policy.py`。`StageAdvancePolicy` 是概念名稱，不是類別名。
 
 ### 4.4 兩種否決推進的情況
 
@@ -126,6 +132,8 @@ turn_count >= 1  AND  (not position_shifted)  AND  has_position  AND  has_reason
 
 - **學生剛改變立場**（`position_shifted`）— 這是整堂課最有價值的一刻，應追問「你剛剛說 X，現在說 Y，中間哪裡不一樣？」。此時放人走等於把最好的鏡子收起來。
 - **理據還停在感覺**（`has_reason` 為假）— 換個角度再問，不是放行。
+
+**立場改變與硬上限在同一輪發生時，以上限優先**：該階標 `capped`、照常進路口，`position_shifted` 仍記錄為真（Fizzy 已確認，見 `backend/tests/invariants/test_state_machine_table.py`）。同一輪三條件齊備又剛好到上限時，先判斷達成，標 `goal_met`。
 
 ### 4.5 硬上限到了但未達成，不得假裝達成
 
@@ -157,7 +165,7 @@ React SPA ──HTTP──▶ FastAPI
                       │    不知道推進規則
                       │      └─ LLMProvider 介面
                       │           ├─ ScriptedProvider（本輪驗收）
-                      │           └─ ClaudeProvider / GeminiProvider…
+                      │           └─ 真實 provider（Round 1 尚未實作）
                       │
                       └─ Repository ──▶ PostgreSQL
 ```
@@ -188,10 +196,10 @@ React SPA ──HTTP──▶ FastAPI
 |---|---|---|
 | **Ladder 定義檔** | 純資料。大主題 → 階段序列，每階含情境敘述、教學目標、追問提示、硬上限 | 無 |
 | **LadderRepository** | 載入 + schema 驗證。定義檔不合法則服務啟動失敗（不等到跑到第三階才爆） | 定義檔 |
-| **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway、Repository |
-| **StageAdvancePolicy** | 具名純函式，實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
-| **TutorGateway** | 對外兩個方法：`respond(stage, history)`、`summarize(session)`。內部 pre-processor → provider → post-processor | LLMProvider |
-| **LLMProvider** | `generate(messages, schema) -> structured` | — |
+| **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway（持久化由 `services/conversation.py` 的 application service 負責，Orchestrator 不碰 Repository） |
+| **StageAdvancePolicy** | 具名純函式（`orchestrator/policy.py` 的 `should_advance`），實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
+| **TutorGateway** | 對外兩個方法：`respond(stage, history, turn_index)`、`summarize(history)`。內部 pre-processor → provider → post-processor，格式不合自動重試一次 | LLMProvider |
+| **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；Round 1 目前只有 `ScriptedProvider`） | — |
 | **Repository** | 持久化 CRUD | SQLAlchemy |
 | **Identity** | 前端 uuid 存 localStorage，header 帶入。後端只認此 id，不存姓名 | — |
 
@@ -246,10 +254,12 @@ wrap_up:
 極簡，不存姓名。第二輪接真帳號時補上 `account_id`，其他表不動。
 
 ### `sessions`
-`id` · `learner_id`(FK) · `ladder_id` · `ladder_version` · `status`(active/ended) · `flow_state` · `current_stage_index` · `parent_session_id`(nullable) · `started_at` · `ended_at` · `end_reason`(student_ended/completed)
+`id` · `learner_id`(FK) · `ladder_id` · `ladder_version` · `status`(active/ended) · `flow_state` · `current_stage_index` · `extra_turns_used` · `parent_session_id`(nullable) · `started_at` · `ended_at` · `end_reason`(student_ended/completed/restarted)
 
 - `ladder_version`：階梯定義之後會改。沒有這欄，半年後看舊 session 不知道學生當時被問了什麼
 - `parent_session_id`：為未來的「續篇 session」預留，第一輪永遠為 null
+- `extra_turns_used`：最後一階達成後，學生在 `awaiting_wrap_up` 繼續講的輪數（§8）
+- `end_reason=restarted`：學生選擇放棄進行中的 session、重新開始時（§11.4）
 
 ### `stage_progress`
 `session_id` · `stage_index` · `stage_key` · `status`(not_started/in_progress/goal_met/capped/stopped_early/skipped) · `turn_count` · `principle_label` · `position_shifted` · `started_at` · `ended_at`
@@ -257,10 +267,11 @@ wrap_up:
 **這張表是第二輪教師端的資料來源** —「這位學生答了哪幾題」直接查，不用另外做。
 
 ### `messages`
-`session_id` · `seq` · `stage_index` · `role`(student/tutor/system) · `content` · `observations`(jsonb，僅 tutor) · `created_at`
+`session_id` · `seq` · `stage_index` · `role`(student/tutor/system) · `content` · `observations`(jsonb，僅 tutor) · `retry_count` · `created_at`
 
 - `observations` 掛在該則 tutor 訊息上，不另開表。之後要檢討「模型當時為什麼判斷理據已被測試」，證據都在
-- `system` 用於路口提示，存下來歷史回顧才忠實
+- `system` 用於路口提示，存下來歷史回顧才忠實（**待決定**，計畫盤點 B8：目前路口提示與收尾提議只出現在固定腳本的 tutor 回覆裡，Orchestrator 並未產生 system 訊息）
+- `retry_count`：這則學生訊息等待導師回覆時已重試的次數，上限 3（§10）
 
 ### `summaries`
 `session_id` · `core_principle` · `tension` · `stance_by_stage`(jsonb) · `shifted` · `raw`(jsonb) · `created_at`
@@ -277,6 +288,12 @@ unique: `session_id`
 ```
 
 `principle_label` 值域：`後果主義` / `義務論` / `混合` / `未明`
+
+### 之後新增的表
+
+- `transcript_drafts`：語音轉文字草稿（`text`、`adapter`、`locale`、`confidence`、`status` draft/confirmed/discarded），確認後才以一般訊息送出
+- `interaction_events`：互動紀錄（`event_type`、`payload`）
+- Run 2 的 `r2_*`／`r73_*`／`r88_*`／`r97_*`／`r104_*` 表見 `docs/RUN2-ARCHITECTURE.md`
 
 所有時間存 UTC，前端轉本地顯示。
 
@@ -301,8 +318,9 @@ unique: `session_id`
   │「還有 N 個情境，│  │ 教授提議收尾      │
   │ 或在此結束」   │  │ 學生可繼續講      │
   └───┬───────┬───┘  └────┬──────────┬──┘
-   繼續│    結束│       接受│     繼續講│（extra_turns_cap）
-      │       │           │          └─▶ 回 active_in_stage
+   繼續│    結束│  結束(end)│     繼續講│ 停留在 awaiting_wrap_up，
+      │       │           │          │ 累計 extra_turns_used；
+      │       │           │          │ 到 extra_turns_cap → ended（completed）
       │       ▼           ▼
       │    ┌─────────────────┐
       │    │      ended      │
@@ -314,7 +332,7 @@ unique: `session_id`
   下一階 in_progress，逐字輸出開場白
 ```
 
-**「結束討論」從任何未結束狀態皆可觸發 → `ended`，不經過模型。** 當前階若仍為 `in_progress`，標記 `stopped_early`；尚未進入的階標記 `skipped`；已是 `goal_met`／`capped` 的階保留原狀態。圖中未畫出所有入口，以免雜亂。
+**「結束討論」從任何未結束狀態皆可觸發 → `ended`，不經過模型。** 收尾階段「接受收尾」就是 `end`（`end_reason=student_ended`），沒有另外的 accept 動作；只有追加輪用完才是 `completed`。 當前階若仍為 `in_progress`，標記 `stopped_early`；尚未進入的階標記 `skipped`；已是 `goal_met`／`capped` 的階保留原狀態。圖中未畫出所有入口，以免雜亂。
 
 `ended` 之後任何動作一律拒絕。
 
@@ -322,22 +340,21 @@ unique: `session_id`
 
 1. 驗證（狀態、字數、非空）
 2. **存入學生訊息並 commit**（見 §10）
-3. `TutorGateway.respond(stage, history)` → 教授台詞 + observations
-4. 存入 tutor 訊息（含 observations），更新 `stage_progress`
-5. `StageAdvancePolicy` 裁決；套用 §4.4 的否決規則；檢查硬上限
-6. 決定新的 `flow_state`，回傳 SessionView
+3. `TutorGateway.respond(stage, history, turn_index)` → 教授台詞 + observations
+4. Orchestrator 以 `StageAdvancePolicy` 裁決（含 §4.4 的否決規則），再檢查硬上限，決定新的 `flow_state`
+5. 在同一個 transaction 存入 tutor 訊息（含 observations）、更新 `stage_progress` 與 session，回傳 SessionView
 
 ---
 
 ## 9. API
 
-**端點形式遵循兩條並列規則**（見協作設計 §7.4）：資源的 CRUD 用 REST；狀態機轉換用 `POST /{resource}/{id}/{action}`，且 action 名稱必須出現在 `available_actions` 的 Literal union 裡。下表中 `/advance`、`/end`、`/retry` 屬後者，其餘皆屬前者。
+**端點形式遵循兩條並列規則**（見 `AGENTS.md`「API 慣例」）：資源的 CRUD 用 REST；狀態機轉換用 `POST /{resource}/{id}/{action}`，且 action 名稱必須出現在 `available_actions` 的 Literal union 裡。下表中 `/advance`、`/end`、`/retry` 屬後者，其餘皆屬前者。
 
 身分：header `X-Learner-Id: <uuid>`。後端驗證 session 屬於該 learner，否則 403。這不是真的安全機制，但它是第二輪換成真認證時唯一要改的地方。
 
 | 端點 | 說明 |
 |---|---|
-| `POST /api/sessions` | body `{ladder_id}`（第一輪固定 `trolley`）。建立 session，回傳第一階開場白 |
+| `POST /api/sessions` | body `{ladder_id, restart_existing}`（第一輪固定 `trolley`，目前未讀取 `ladder_id`）。建立 session，回傳第一階開場白；已有進行中的 session 且 `restart_existing` 為假時回 409 `active_session_exists`（§11.4） |
 | `GET /api/sessions/{id}` | 完整狀態 + 全部訊息。續跑與歷史回顧共用 |
 | `POST /api/sessions/{id}/messages` | body `{text}`。送出學生發言 |
 | `POST /api/sessions/{id}/advance` | 路口：進入下一個情境 |
@@ -345,8 +362,12 @@ unique: `session_id`
 | `POST /api/sessions/{id}/summary` | 產生總結。可重複呼叫，成功才寫入（同時作為失敗重試） |
 | `GET /api/sessions/{id}/summary` | 取得總結，供前端輪詢 |
 | `POST /api/sessions/{id}/retry` | 上一輪 provider 失敗時重跑，不需學生重打 |
-| `GET /api/sessions` | 該 learner 的歷史列表（含未完成的） |
-| `GET /api/ladders/{id}` | 階梯公開資訊：標題、總階數。**不含各階細節** |
+| `GET /api/sessions` | 該 learner 的歷史列表（含未完成的），參數 `limit`、`cursor` 分頁 |
+| `GET /api/sessions/{id}/room` | 對話室畫面用的組合視圖：SessionDetail＋人像與能力設定（ADR-ROOM-002） |
+| `POST /api/sessions/{id}/transcript-drafts` | 建立語音轉文字草稿 |
+| `POST /api/sessions/{id}/transcript-drafts/{draft_id}/confirm` | 確認草稿 |
+| `DELETE /api/sessions/{id}/transcript-drafts/{draft_id}` | 捨棄草稿 |
+| `GET /api/health`、`GET /api/release` | 健康檢查、部署版本 |
 
 ### 9.1 統一回應形狀
 
@@ -354,11 +375,11 @@ unique: `session_id`
 
 ```jsonc
 {
-  "session": { "id", "status", "flow_state", "current_stage_index", "total_stages" },
+  "session": { "id", "status", "flow_state", "current_stage_index", "total_stages", "end_reason", "started_at", "ended_at", "updated_at" },
   "stage":   { "index", "key", "title", "opening_statement" } | null,
   "appended_messages": [ { "seq", "role", "content" } ],
   "available_actions": [...],   // 見下表
-  "summary": { "core_principle", "stage_outcomes" } | null
+  "summary": { "discussion_topic", "core_principle", "key_points", "tension", "reflection_excerpt", "stage_outcomes" } | null
 }
 ```
 
@@ -368,10 +389,11 @@ unique: `session_id`
 | `at_crossroad` | `["advance", "end"]` |
 | `awaiting_wrap_up` | `["send_message", "end"]` |
 | `ended` | `[]` |
+| `active_in_stage`／`awaiting_wrap_up`，且最後一則學生訊息還在等導師回覆 | `["retry", "end"]`；同一則重試滿 3 次後為 `["end"]` |
 
-「結束討論」在所有未結束的狀態皆可用 — 與 §8 一致。
+「結束討論」在所有未結束的狀態皆可用 — 與 §8 一致。`GET /api/sessions/{id}` 回傳的 `SessionDetail` 形狀相同，只是以 `messages`（全部訊息）取代 `appended_messages`。
 
-**`available_actions` 的元素型別定義為 Literal union，不是裸字串**：`Literal["send_message", "advance", "end"]`。這樣由 OpenAPI 產生的前端型別是 union type，前端若比對一個不存在的動作名稱會在編譯期被擋下。`flow_state`、`status`、`principle_label` 同樣以 Literal／Enum 定義。
+**`available_actions` 的元素型別定義為 Literal union，不是裸字串**：`Literal["send_message", "advance", "end", "retry"]`。這樣由 OpenAPI 產生的前端型別是 union type，前端若比對一個不存在的動作名稱會在編譯期被擋下。`flow_state`、`status`、`principle_label` 同樣以 Literal／Enum 定義。
 
 **`available_actions` 由後端決定，前端不自行推導。**
 
@@ -416,11 +438,11 @@ unique: `session_id`
 
 **視覺簡單 ✅** — 砍掉元件庫（Mantine／MUI／Tailwind）、設計系統、動畫與過場、資料層抽象（React Query 之類；總共就那幾支 API，手寫 client ＋ `useState` 足夠，多一個抽象會讓 15 個人的 AI 寫出 15 種用法）。蘇格拉底頭像先用佔位圖。對話畫面天生單欄，不做手機專用優化也不會壞，但版面別寫死寬度。
 
-**結構簡單 ❌** — 第一輪的前端**不是拋棄式的，它是後續十幾個畫面會照抄的範本**（協作設計 §3、§5）。若寫成「全部塞在一個元件、fetch 寫在 JSX 裡、自己判斷 `flow_state`」，接下來每個畫面都會長成那樣，而且每個都違反 §9.1。
+**結構簡單 ❌** — 第一輪的前端**不是拋棄式的，它是後續十幾個畫面會照抄的範本**。若寫成「全部塞在一個元件、fetch 寫在 JSX 裡、自己判斷 `flow_state`」，接下來每個畫面都會長成那樣，而且每個都違反 §9.1。
 
 做對結構幾乎不花額外時間——前端本來就很薄（§11.2），差別只是多分幾個檔案。四件不能砍：
 
-1. **API client 集中在一個模組**，型別由 OpenAPI 產生、不手寫（協作設計 §8.3 的契約漂移檢查靠這個）
+1. **API client 集中在一個模組**，型別由 OpenAPI 產生、不手寫（CI 的 `contract` 檢查靠這個比對契約漂移）
 2. **`SessionView` 是唯一的狀態來源**，元件不得自行由 `flow_state` 推導任何東西
 3. **`frontend/src/invariants/` 的測試**（受 CODEOWNERS 保護）
 4. **路由**（四個畫面）
@@ -431,7 +453,8 @@ unique: `session_id`
 |---|---|---|
 | 建置 | **Vite** | CRA 已停更；不用 Next.js——後端是 FastAPI，要的是純 SPA |
 | 路由 | **React Router** | 四個畫面 |
-| 測試 | **Vitest + React Testing Library** | Vite 原生，設定最少，跑得快 |
+| 語言 | **TypeScript** | 2026-10-02 起前端一律 TS；`strict` 開啟，`noImplicitAny`、`strictNullChecks` 暫關 |
+| 測試 | **Jest（`@swc/jest`）+ React Testing Library** | 原本選 Vitest，2026-09 改為 Jest |
 | 樣式 | **純 CSS** | 見 §11.6：不導入設計系統正是讓未來重做便宜的條件 |
 
 #### 目錄結構與 `ActionBar`
@@ -455,9 +478,12 @@ frontend/src/
 └── App.tsx
 ```
 
+實際目錄（2026-10-03）另有 `features/conversation-room/`（對話室，`pages/Conversation.tsx` 只包一層 `ConversationRoom`）、
+`Round1App.tsx`（`/round1` 的路由）與 `run2/`（Run 2）；`App.tsx` 依路徑分流到 Round 1 或 Run 2。
+
 **`ActionBar` 只接收 `available_actions`，渲染對應按鈕，不知道 `flow_state` 是什麼。**
 
-這讓「前端不推導狀態」這條規則有一個實體的檔案可以指——`AGENTS.md` 不必寫抽象原則，直接寫「按鈕一律經過 `ActionBar`，不要在頁面裡自己判斷」（協作設計 §7.2 要的正是指向實例而非描述原則）。invariants 測試也因此有明確的對象。
+這讓「前端不推導狀態」這條規則有一個實體的檔案可以指——`AGENTS.md` 不必寫抽象原則，直接寫「按鈕一律經過 `ActionBar`，不要在頁面裡自己判斷」（指向實例而非描述原則）。invariants 測試也因此有明確的對象。
 
 ### 11.1 四個畫面
 
@@ -568,7 +594,7 @@ TutorTurn {
 
 ### 13.2 分層
 
-> 本節六層之中，符合「違反會壞掉產品、AI 預設就會違反、而且擋得住」三條件的測試，實體檔案另外集中於 `tests/invariants/` 並受 CODEOWNERS 保護——見協作設計 §6.0 與 §6.2。分層不變，只是換目錄存放。
+> 本節六層之中，符合「違反會壞掉產品、AI 預設就會違反、而且擋得住」三條件的測試，實體檔案另外集中於 `tests/invariants/` 並受 CODEOWNERS 保護。分層不變，只是換目錄存放。
 
 **第一層 · Orchestrator 單元測試（重心）**
 假 gateway（直接餵 observations）+ 假 repository，毫秒級，無需 DB 或 LLM。
@@ -602,7 +628,7 @@ TutorTurn {
 
 ### 13.3 人工驗收腳本
 
-環境：`docker-compose up` 起 postgres，後端以 `PROVIDER=scripted` 啟動。
+環境：`docker compose up -d` 起全棧，開 `http://localhost:5173/round1`；後端固定使用 `ScriptedProvider`，以 `SCRIPT_PATH` 切換腳本（見 `docs/testing/trolley-round1-acceptance.md`）。
 
 1. 首次進入 → 開始討論 → 第一階開場白出現，進度顯示「情境 1 / 3」
 2. 對話三輪 → 路口出現，提示「還有 2 個情境」，**且畫面上任何地方都沒有「天橋」字樣**
@@ -616,7 +642,7 @@ TutorTurn {
 
 **九步全通 = 本輪通過。** 此腳本須寫入文件，團隊多人測試需要同一套步驟。
 
-> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。Round 1 驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。兩道關卡的區別見協作設計 §5.2。
+> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。Round 1 驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。（2026-10-03：學生端流程已補完，狀態轉換測試已全部啟用，不再有 `xfail`。）
 
 ---
 
@@ -629,8 +655,8 @@ TutorTurn {
 | 資料庫 | PostgreSQL |
 | LLM | Provider 抽象，可自由切換供應商。第一輪以 ScriptedProvider 驗收 |
 | 開發環境 | **docker-compose 涵蓋全棧**（前端 + 後端 + postgres），`docker-compose up` 即可跑完整對話 |
-| repo 形態 | 單一 repo（前後端同 repo），public。目錄結構見協作設計 §5.3 |
-| 前端 | Vite + React Router + Vitest／RTL + 純 CSS，不用元件庫。見 §11.0 |
+| repo 形態 | 單一 repo（前後端同 repo），public |
+| 前端 | Vite + TypeScript + React Router + Jest／RTL + 純 CSS，不用元件庫。見 §11.0 |
 
 **全棧 compose 的理由**：原本只規劃把 postgres 容器化、前後端本機跑。但團隊規模為 15 人環境各異，這個取捨反過來了——寫 compose 是一次性成本，而 15 個人各自 debug 本機 Python／Node 環境的成本會在整個學期反覆發生，且會消耗核心組最寶貴的時間。`docs/onboarding.md` 的第 2 步（剛進來看專案第一件事就是實際走一次對話）也依賴這一點。
 

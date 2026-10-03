@@ -103,10 +103,14 @@ CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新�
 - `pre-push` 固定跑滿上面這組，對齊 CI 的 `backend`／`frontend` 兩個 job——**包含 `npm run build`**，
   因為那是唯一會抓到「production build 壞掉、image 建不起來」的檢查。
 
-**hook 沒有涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`run2-load`，以及 `backend`
-job 在 pytest 前的 `alembic upgrade head`、`frontend` job 前的 `scripts/fetch_avatar.py`。
-改了 schema 就自己跑型別產生器，其餘看 CI 結果。
+**`pre-push` 的 `alembic upgrade head` 跑在一個拋棄式資料庫上**（建 `socrates_migration_check`、跑完整條鏈、刪掉），
+因為開發資料庫已經在 head，`upgrade` 是 no-op，擋不住「migration 鏈本身壞掉」。CI 的資料庫是全新的，
+這樣才對得上。整段約 1 秒。2026-10-03 就是從這個缺口漏出去的：Task 30 改了 model 的註冊時機，
+pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic upgrade head` 當場 `NoReferencedTableError`。
+
+**hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
+`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`run2-load`，
+以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
 Round 1 走 `strict`，Run 2 走較寬的 `backend/mypy-run2.ini`。lint 的範圍是 `backend`，

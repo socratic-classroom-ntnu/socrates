@@ -223,6 +223,25 @@ _ENGINE: Any = None
 _FACTORY: Any = None
 
 
+def register_models() -> None:
+    """Import every module that defines a model, so foreign keys resolve on any path.
+
+    r88_ai_students carries a foreign key to r97_provider_profiles, so a metadata that
+    holds one without the other cannot be resolved at all — not only by create_all.
+    This covers the application paths, which all reach configure(). alembic never calls
+    configure() and must not call this either: registering every model up front changes
+    what 0006's create_all() produces, which breaks 0104. Migration 0006 imports the one
+    module it needs instead.
+
+    Imported inside the function, not at module level, to keep provider modules out of
+    the orchestrator's import path (AGENTS.md: Orchestrator 不得 import 任何 provider).
+    """
+    from . import email_delivery  # noqa: F401
+    from . import portal_ai_students  # noqa: F401
+    from . import portal_classroom_library  # noqa: F401
+    from . import provider_profiles  # noqa: F401
+
+
 def configure(url: str | None = None, *, create: bool = False):
     global _ENGINE, _FACTORY
     from_environment = os.environ.get(
@@ -239,15 +258,8 @@ def configure(url: str | None = None, *, create: bool = False):
         kw.update(pool_size=5, max_overflow=5, pool_timeout=10)
     _ENGINE = create_engine(resolved, **kw)
     _FACTORY = sessionmaker(_ENGINE, expire_on_commit=False)
+    register_models()
     if create:
-        # Register every model module before creating tables, so a schema built from storage
-        # alone has all tables and foreign keys. Imported here to avoid import cycles and to keep
-        # provider modules out of the orchestrator's import path.
-        from . import email_delivery  # noqa: F401
-        from . import portal_ai_students  # noqa: F401
-        from . import portal_classroom_library  # noqa: F401
-        from . import provider_profiles  # noqa: F401
-
         Base.metadata.create_all(_ENGINE)
     return _ENGINE
 

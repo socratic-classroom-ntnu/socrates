@@ -30,5 +30,20 @@ echo "▶ backend mypy（Round1 strict，Run2 走 mypy-run2.ini）"
 docker compose exec -T backend python -m mypy app --exclude 'app/run2/|app/classroom_server.py' || exit 1
 docker compose exec -T backend python -m mypy --config-file mypy-run2.ini app/run2 app/classroom_server.py || exit 1
 
+echo "▶ backend alembic upgrade head（對全新資料庫，對應 CI 的 backend job）"
+# CI 的資料庫是全新的，會從頭跑完整條 migration 鏈；開發資料庫已經在 head，
+# upgrade 是 no-op，擋不住「migration 鏈本身壞掉」這類問題。所以這裡建一個拋棄式資料庫。
+# 名稱帶上 PID：同一個 compose PostgreSQL 上可能有並行的 push，不可以共用固定名稱；
+# 也絕不先 DROP —— 只清理確定由本次 hook 建立的資料庫。
+MIGRATION_DB="socrates_migration_check_$$"
+docker compose exec -T db psql -U socrates -d postgres -c "CREATE DATABASE $MIGRATION_DB;" >/dev/null || exit 1
+# hook 由 `sh -e` 執行（.husky/_/h），任何失敗都會立刻退出，所以清理必須掛在 EXIT trap 上，
+# 否則 migration 一失敗就永遠留下一個孤兒資料庫。
+trap 'docker compose exec -T db psql -U socrates -d postgres -c "DROP DATABASE IF EXISTS $MIGRATION_DB;" >/dev/null 2>&1' EXIT
+if ! docker compose exec -T -e DATABASE_URL="postgresql+psycopg://socrates:socrates@db:5432/$MIGRATION_DB" \
+    backend python -m alembic upgrade head; then
+  exit 1
+fi
+
 echo "▶ backend pytest"
 docker compose exec -T backend python -m pytest tests -q || exit 1

@@ -18,8 +18,8 @@ import httpx
 from sqlalchemy import JSON, Float, ForeignKey, String, Text, and_, or_, select
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .orchestrator import DomainError
-from .storage import Base, Mail, digest, transaction
+from app.orchestrator.classroom import DomainError
+from app.repositories.classroom_storage import Base, Mail, digest, transaction
 
 
 class MailDelivery(Base):

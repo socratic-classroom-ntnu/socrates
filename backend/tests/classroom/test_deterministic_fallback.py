@@ -1,5 +1,5 @@
-from app.run2.policy import majority_context
-from app.run2.workers import deterministic_result
+from app.orchestrator.classroom_policy import majority_context
+from app.services.llm_workers import deterministic_result
 
 CURRENT = {
     "id": "q1",

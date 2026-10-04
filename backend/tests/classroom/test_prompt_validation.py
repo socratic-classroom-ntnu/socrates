@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from app.run2 import prompts
+from app.tutor import prompts
 
 JOB_KINDS = [
     "focused_tutor",
@@ -16,13 +16,13 @@ ROOT_KEYS = ["version", "skill_set_version", "skills", "programs"]
 
 
 def broken_root(tmp_path, mutate):
-    (tmp_path / "prompts/run2").mkdir(parents=True)
-    (tmp_path / "skills/run2").mkdir(parents=True)
-    spec = json.loads((prompts.ROOT / "prompts/run2/programs.json").read_text())
+    (tmp_path / "prompts/classroom").mkdir(parents=True)
+    (tmp_path / "skills/classroom").mkdir(parents=True)
+    spec = json.loads((prompts.ROOT / "prompts/classroom/programs.json").read_text())
     for name in spec["skills"]:
-        (tmp_path / "skills/run2" / name).write_text("x")
+        (tmp_path / "skills/classroom" / name).write_text("x")
     mutate(spec)
-    (tmp_path / "prompts/run2/programs.json").write_text(json.dumps(spec))
+    (tmp_path / "prompts/classroom/programs.json").write_text(json.dumps(spec))
     return tmp_path
 
 
@@ -65,14 +65,14 @@ def test_broken_programs_are_rejected(tmp_path, monkeypatch, mutate):
 
 def test_invalid_json_is_rejected(tmp_path, monkeypatch):
     root = broken_root(tmp_path, lambda spec: None)
-    (root / "prompts/run2/programs.json").write_text("{ not json")
+    (root / "prompts/classroom/programs.json").write_text("{ not json")
     monkeypatch.setattr(prompts, "ROOT", root)
     with pytest.raises(RuntimeError):
         prompts.validate_programs()
 
 
 def test_create_app_refuses_to_start_with_broken_programs(monkeypatch):
-    from app.run2 import server
+    from app import classroom_app as server
 
     def boom():
         raise RuntimeError("broken")

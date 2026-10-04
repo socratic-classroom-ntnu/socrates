@@ -1,8 +1,8 @@
 import random
 import pytest
-from app.run2.contracts import ScriptDocument
-from app.run2.orchestrator import GameOrchestrator, DomainError, fresh_state
-from app.run2.policy import choose_representative, stage_goal, majority_context
+from app.api.classroom_schemas import ScriptDocument
+from app.orchestrator.classroom import GameOrchestrator, DomainError, fresh_state
+from app.orchestrator.classroom_policy import choose_representative, stage_goal, majority_context
 
 DOC = {
     "title": "倫理教室",

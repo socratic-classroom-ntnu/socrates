@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.run2.contracts import Observations, TutorTurn
+from app.api.classroom_schemas import Observations, TutorTurn
 
 FULL = {
     "has_position": True,

@@ -1,10 +1,10 @@
 import pytest
 
-from app.run2 import workers
-from app.run2.contracts import ScriptDocument
-from app.run2.provider import ProviderWait
-from app.run2.storage import Account, Job, Room, Script, configure, transaction
-from app.run2.workers import effective_call_limit
+from app.services import llm_workers as workers
+from app.api.classroom_schemas import ScriptDocument
+from app.tutor.classroom_provider import ProviderWait
+from app.repositories.classroom_storage import Account, Job, Room, Script, configure, transaction
+from app.services.llm_workers import effective_call_limit
 
 
 def test_teacher_budget_caps_the_account_limit():

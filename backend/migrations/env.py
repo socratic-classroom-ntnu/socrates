@@ -8,7 +8,7 @@ from alembic import context
 from app.db import Base
 from app import interaction_models, models  # noqa: F401  確保所有 model 被註冊
 from app.config import settings
-from app.run2 import storage
+from app.repositories import classroom_storage as storage
 
 storage.register_models()
 

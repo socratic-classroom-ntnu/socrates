@@ -67,7 +67,7 @@ def person_summary(state, member_id):
 def record_statement(
     state, member_id, text, now, *, relation="qualifies", parents=(), node_id=None
 ):
-    from .orchestrator import DomainError
+    from app.orchestrator.classroom import DomainError
 
     p = state["portal_group"]
     if member_id not in p["member_snapshot"]:
@@ -122,7 +122,7 @@ def record_statement(
 
 
 def confirm(state, member_id, digest, now):
-    from .orchestrator import DomainError
+    from app.orchestrator.classroom import DomainError
 
     p = state["portal_group"]
     if member_id not in p["member_snapshot"]:
@@ -233,7 +233,7 @@ def extend(Native):
         def settle(self):
             p = self.group()
             if p["settlement"]["state"] != "FINAL_STAGE":
-                from .orchestrator import DomainError
+                from app.orchestrator.classroom import DomainError
 
                 raise DomainError("COMPLETE_FINAL_STAGE_REQUIRED", 409)
             p["settlement"].update(state="SETTLED", settled_at=self.now)
@@ -267,7 +267,7 @@ def extend(Native):
             p = self.group()
             if not p:
                 return Native.command(self, kind, data, member_id, teacher)
-            from .orchestrator import DomainError
+            from app.orchestrator.classroom import DomainError
 
             try:
                 if kind == "group_statement":

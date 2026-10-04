@@ -26,9 +26,9 @@ echo "▶ backend ruff check + format check"
 docker compose exec -T backend ruff check . || exit 1
 docker compose exec -T backend ruff format --check . || exit 1
 
-echo "▶ backend mypy（Round1 strict，Run2 走 mypy-run2.ini）"
-docker compose exec -T backend python -m mypy app --exclude 'app/run2/|app/classroom_server.py' || exit 1
-docker compose exec -T backend python -m mypy --config-file mypy-run2.ini app/run2 app/classroom_server.py || exit 1
+echo "▶ backend mypy（Round1 strict，classroom 走 mypy-classroom.ini）"
+docker compose exec -T backend python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py' || exit 1
+docker compose exec -T backend python -m mypy --config-file mypy-classroom.ini app/api/routes/classroom.py app/api/routes/groups.py app/api/routes/ai_students.py app/api/routes/public_config.py app/api/routes/provider_profiles.py app/api/routes/classroom_library.py app/api/classroom_schemas.py app/orchestrator/classroom.py app/orchestrator/classroom_policy.py app/domain/group_run.py app/domain/group_analysis.py app/domain/library_decisions.py app/repositories/classroom_storage.py app/services/classroom.py app/services/llm_workers.py app/services/email_delivery.py app/services/ai_students.py app/services/classroom_auth.py app/tutor/classroom_provider.py app/tutor/classroom_gateway.py app/tutor/prompts.py app/classroom_app.py app/realtime.py app/classroom_server.py || exit 1
 
 echo "▶ backend alembic upgrade head（對全新資料庫，對應 CI 的 backend job）"
 # CI 的資料庫是全新的，會從頭跑完整條 migration 鏈；開發資料庫已經在 head，

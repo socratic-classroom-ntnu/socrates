@@ -5,12 +5,12 @@ import os
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from . import prompts
-from .api import router
-from .orchestrator import DomainError
-from .realtime import BUS
-from .storage import engine
-from .workers import clock_loop, llm_loop, mail_loop
+from app.tutor import prompts
+from app.api.routes.classroom import router
+from app.orchestrator.classroom import DomainError
+from app.realtime import BUS
+from app.repositories.classroom_storage import engine
+from app.services.llm_workers import clock_loop, llm_loop, mail_loop
 
 
 @asynccontextmanager

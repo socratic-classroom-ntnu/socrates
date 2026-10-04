@@ -4,7 +4,7 @@ import re
 
 from app import interaction_models, models  # noqa: F401
 from app.db import Base as RoundOneBase
-from app.run2 import storage
+from app.repositories import classroom_storage as storage
 
 # Matches r2_accounts, ix_r104_mail_delivery_purpose and fk_r88_ai_student_provider_profile alike.
 ROUND_PREFIX = re.compile(r"(^|_)r[0-9]+_")

@@ -10,7 +10,7 @@ import json
 import os
 from collections import defaultdict
 from sqlalchemy import select
-from .storage import Event, notify, transaction
+from app.repositories.classroom_storage import Event, notify, transaction
 
 
 class RealtimeBus:

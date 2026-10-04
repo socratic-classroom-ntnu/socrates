@@ -2,8 +2,8 @@
 
 import json
 from pathlib import Path
-from .contracts import TutorTurn, SummaryResult, DynamicResult, LLMStudentTurn
-from .storage import Program, digest
+from app.api.classroom_schemas import TutorTurn, SummaryResult, DynamicResult, LLMStudentTurn
+from app.repositories.classroom_storage import Program, digest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMAS = {
@@ -30,7 +30,7 @@ def validate_programs() -> None:
     Without this, a broken programs.json makes every job fall back silently while the
     classroom still looks alive.
     """
-    path = ROOT / "prompts/run2/programs.json"
+    path = ROOT / "prompts/classroom/programs.json"
     try:
         spec = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
@@ -55,15 +55,15 @@ def validate_programs() -> None:
     if not isinstance(spec["skills"], list):
         raise RuntimeError(f"{path}: 'skills' must be a list")
     for name in spec["skills"]:
-        if not (ROOT / "skills/run2" / str(name)).is_file():
-            raise RuntimeError(f"skill file skills/run2/{name} does not exist")
+        if not (ROOT / "skills/classroom" / str(name)).is_file():
+            raise RuntimeError(f"skill file skills/classroom/{name} does not exist")
 
 
 def compile_program(db, kind, context):
-    program_path = ROOT / "prompts/run2/programs.json"
+    program_path = ROOT / "prompts/classroom/programs.json"
     spec = json.loads(program_path.read_text())
     entry = spec["programs"][kind]
-    skill_text = "\n\n".join((ROOT / "skills/run2" / p).read_text() for p in spec["skills"])
+    skill_text = "\n\n".join((ROOT / "skills/classroom" / p).read_text() for p in spec["skills"])
     metadata = {
         "prompt_program_version": spec["version"],
         "skill_set_version": spec["skill_set_version"],

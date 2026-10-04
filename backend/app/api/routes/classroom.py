@@ -9,8 +9,9 @@ import yaml
 from fastapi import APIRouter, Request, Response, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
-from . import auth, service
-from .contracts import (
+from app.services import classroom_auth as auth
+from app.services import classroom as service
+from app.api.classroom_schemas import (
     AccountView,
     Command,
     CreateRoom,
@@ -25,9 +26,9 @@ from .contracts import (
     ScriptSave,
     TokenRequest,
 )
-from .orchestrator import DomainError
-from .storage import Event, Membership, Room, Script, transaction
-from .realtime import BUS
+from app.orchestrator.classroom import DomainError
+from app.repositories.classroom_storage import Event, Membership, Room, Script, transaction
+from app.realtime import BUS
 
 router = APIRouter(prefix="/api/v2")
 
@@ -157,7 +158,7 @@ def reset(body: ResetRequest, request: Request):
 
 @router.post("/webhooks/resend")
 async def resend_webhook(request: Request):
-    from .email_delivery import apply_resend_webhook
+    from app.services.email_delivery import apply_resend_webhook
 
     body = await request.body()
     return apply_resend_webhook(body, request.headers)
@@ -323,7 +324,7 @@ def adjust_budget(room_id: str, request: Request, live_llm_call_budget: int):
             raise DomainError("STARTED_CLASSROOM_REQUIRED")
         state["script"]["live_llm_call_budget"] = live_llm_call_budget
         room.state = state
-        from .storage import Job, append_event
+        from app.repositories.classroom_storage import Job, append_event
 
         for j in db.scalars(select(Job).where(Job.room_id == room.id, Job.state == "PENDING")):
             j.next_at = time.time()
@@ -418,23 +419,23 @@ async def websocket(ws: WebSocket, room_id: str):
 
 
 # PORTAL-R70-GROUP-ROUTER
-from .portal_group_api import router as _portal_group_router  # noqa: E402
+from app.api.routes.groups import router as _portal_group_router  # noqa: E402
 
 router.include_router(_portal_group_router)
 
 # PORTAL-R73-CLASSROOM-LIBRARY
-from .portal_classroom_library import router as _classroom_library_router  # noqa: E402
-from .portal_public_config import router as _public_config_router  # noqa: E402
+from app.api.routes.classroom_library import router as _classroom_library_router  # noqa: E402
+from app.api.routes.public_config import router as _public_config_router  # noqa: E402
 
 router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)
 
 # PORTAL-R88-AI-STUDENTS
-from .portal_ai_students_api import router as _portal_ai_students_router  # noqa: E402
+from app.api.routes.ai_students import router as _portal_ai_students_router  # noqa: E402
 
 router.include_router(_portal_ai_students_router)
 
 # PORTAL-R97-PROVIDER-PROFILES
-from .provider_profiles import router as _provider_profiles_router  # noqa: E402
+from app.api.routes.provider_profiles import router as _provider_profiles_router  # noqa: E402
 
 router.include_router(_provider_profiles_router)

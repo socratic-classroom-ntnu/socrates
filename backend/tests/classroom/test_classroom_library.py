@@ -8,18 +8,16 @@ from uuid import uuid4
 import time
 import pytest
 from starlette.requests import Request
-from app.run2 import (
-    storage,
-    service,
-    portal_group_api as group,
-    portal_classroom_library as library,
-)
-from app.run2.orchestrator import DomainError, GameOrchestrator
-from app.run2.portal_r73_contract import visible_evidence
+from app.repositories import classroom_storage as storage
+from app.services import classroom as service
+from app.api.routes import groups as group
+from app.api.routes import classroom_library as library
+from app.orchestrator.classroom import DomainError, GameOrchestrator
+from app.domain.library_decisions import visible_evidence
 
 
 def doc():
-    from app.run2.contracts import ScriptDocument
+    from app.api.classroom_schemas import ScriptDocument
 
     return ScriptDocument.model_validate(
         {

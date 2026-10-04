@@ -9,8 +9,8 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
-from app.run2 import storage
-from app.run2.email_delivery import MailDelivery, _claim_mail, send_mail_once
+from app.repositories import classroom_storage as storage
+from app.services.email_delivery import MailDelivery, _claim_mail, send_mail_once
 
 
 @pytest.fixture

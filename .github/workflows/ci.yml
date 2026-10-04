@@ -43,8 +43,8 @@ jobs:
       - name: Strict Round1 types and Run2 contracts
         run: |
           cd backend
-          python -m mypy app --exclude 'app/run2/|app/classroom_server.py'
-          python -m mypy --config-file mypy-run2.ini app/run2 app/classroom_server.py
+          python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py'
+          python -m mypy --config-file mypy-classroom.ini app/api/routes/classroom.py app/api/routes/groups.py app/api/routes/ai_students.py app/api/routes/public_config.py app/api/routes/provider_profiles.py app/api/routes/classroom_library.py app/api/classroom_schemas.py app/orchestrator/classroom.py app/orchestrator/classroom_policy.py app/domain/group_run.py app/domain/group_analysis.py app/domain/library_decisions.py app/repositories/classroom_storage.py app/services/classroom.py app/services/llm_workers.py app/services/email_delivery.py app/services/ai_students.py app/services/classroom_auth.py app/tutor/classroom_provider.py app/tutor/classroom_gateway.py app/tutor/prompts.py app/classroom_app.py app/realtime.py app/classroom_server.py
       - name: Database migration and domain/API regression
         run: |
           cd backend

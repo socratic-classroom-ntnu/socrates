@@ -1,11 +1,11 @@
-from app.run2.orchestrator import GameOrchestrator, fresh_state
-from app.run2.portal_ai_students_api import fallback_other_suggestion
-from app.run2.portal_ai_students import (
+from app.orchestrator.classroom import GameOrchestrator, fresh_state
+from app.api.routes.ai_students import fallback_other_suggestion
+from app.services.ai_students import (
     OTHER_ID,
     ensure_other_options,
     fallback_turn,
 )
-from app.run2.portal_group_domain import initialise
+from app.domain.group_run import initialise
 
 
 def document():

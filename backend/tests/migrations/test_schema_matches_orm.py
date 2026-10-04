@@ -23,7 +23,7 @@ from sqlalchemy import create_engine, text
 
 from app import interaction_models, models  # noqa: F401
 from app.db import Base as RoundOneBase
-from app.run2 import storage
+from app.repositories import classroom_storage as storage
 
 BACKEND = Path(__file__).resolve().parents[2]
 

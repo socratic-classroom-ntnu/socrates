@@ -4,8 +4,8 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
-from app.run2 import storage
-from app.run2.server import create_app
+from app.repositories import classroom_storage as storage
+from app.classroom_app import create_app
 
 os.environ["RUN2_COOKIE_SECURE"] = "false"
 os.environ["SOCRATES_ALLOWED_ORIGINS"] = "http://testserver"

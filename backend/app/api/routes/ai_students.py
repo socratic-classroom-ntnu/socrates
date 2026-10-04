@@ -13,7 +13,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from .storage import (
+from app.repositories.classroom_storage import (
     Account,
     ActionReceipt,
     Membership,
@@ -22,7 +22,7 @@ from .storage import (
     transaction,
 )
 
-from .portal_ai_students import PERSONAS, AIStudentProfile
+from app.services.ai_students import PERSONAS, AIStudentProfile
 
 
 class AddAIStudents(BaseModel):
@@ -58,7 +58,7 @@ def _receipt(db, room: Room, actor: Account, body: BaseModel, operation: str):
     )
     if prior:
         if prior.payload_hash != key_hash:
-            from .orchestrator import DomainError
+            from app.orchestrator.classroom import DomainError
 
             raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
         return key_hash, prior.receipt
@@ -86,9 +86,9 @@ def _persona(index: int, room_id: str) -> dict:
 
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
-    from .orchestrator import DomainError
-    from .portal_group_api import actor, roster, roster_hash, teacher_room
-    from .storage import append_event
+    from app.orchestrator.classroom import DomainError
+    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.repositories.classroom_storage import append_event
 
     with transaction() as db:
         teacher = actor(db, request, True)
@@ -198,9 +198,9 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
-    from .orchestrator import DomainError
-    from .portal_group_api import actor, roster, roster_hash, teacher_room
-    from .storage import append_event
+    from app.orchestrator.classroom import DomainError
+    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.repositories.classroom_storage import append_event
 
     with transaction() as db:
         teacher = actor(db, request, True)
@@ -275,12 +275,12 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 
 @router.post("/suggestions/other")
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
-    from . import service
-    from .api import account
-    from .contracts import OtherSuggestionResult
-    from .provider import ProviderWait
-    from .provider_gateway import generate
-    from .provider_profiles import resolve_request_chain
+    from app.services import classroom as service
+    from app.api.routes.classroom import account
+    from app.api.classroom_schemas import OtherSuggestionResult
+    from app.tutor.classroom_provider import ProviderWait
+    from app.tutor.classroom_gateway import generate
+    from app.api.routes.provider_profiles import resolve_request_chain
 
     with transaction() as db:
         actor, session = account(db, request, True)

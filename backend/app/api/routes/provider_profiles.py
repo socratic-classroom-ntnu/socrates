@@ -27,8 +27,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .orchestrator import DomainError
-from .storage import (
+from app.orchestrator.classroom import DomainError
+from app.repositories.classroom_storage import (
     Account,
     Base,
     LoginSession,
@@ -242,7 +242,7 @@ def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
 
 
 def _account(db, request: Request, mutation=False):
-    from .api import account
+    from app.api.routes.classroom import account
 
     return account(db, request, mutation)
 
@@ -261,7 +261,7 @@ def _owned_profile(db, owner_id: str, profile_id: str, lock=False) -> ProviderPr
 
 
 def _session_hash(request: Request) -> str:
-    from . import auth
+    from app.services import classroom_auth as auth
 
     token = request.cookies.get(auth.COOKIE)
     if not token:
@@ -428,7 +428,7 @@ def list_profiles(request: Request):
 def create_profile(body: CreateProfile, request: Request):
     with transaction() as db:
         account, session = _account(db, request, True)
-        from .provider_gateway import validate_base_url
+        from app.tutor.classroom_gateway import validate_base_url
 
         validated_base = (
             validate_base_url(body.adapter, body.base_url)
@@ -465,7 +465,7 @@ def update_profile(profile_id: str, body: UpdateProfile, request: Request):
         row = _owned_profile(db, account.id, profile_id, True)
         values = body.model_dump(exclude_unset=True)
         if "base_url" in values and row.adapter == "openai-compatible":
-            from .provider_gateway import validate_base_url
+            from app.tutor.classroom_gateway import validate_base_url
 
             values["base_url"] = validate_base_url(row.adapter, values["base_url"])
         for key, value in values.items():
@@ -497,7 +497,7 @@ def update_credential(profile_id: str, body: CredentialUpdate, request: Request)
 
 @router.delete("/provider-profiles/{profile_id}")
 def delete_profile(profile_id: str, request: Request):
-    from .portal_classroom_library import ClassroomAssets
+    from app.api.routes.classroom_library import ClassroomAssets
 
     with transaction() as db:
         account, _ = _account(db, request, True)
@@ -518,7 +518,7 @@ def delete_profile(profile_id: str, request: Request):
                 ai.get("fallback_profile_id"),
             }:
                 raise DomainError("PROVIDER_PROFILE_IN_CLASSROOM_SETTINGS", 409)
-        from .portal_ai_students import AIStudentProfile
+        from app.services.ai_students import AIStudentProfile
 
         if (
             db.scalar(
@@ -538,7 +538,7 @@ def delete_profile(profile_id: str, request: Request):
 
 @router.post("/provider-profiles/{profile_id}/test")
 async def test_profile(profile_id: str, request: Request):
-    from .provider_gateway import test_connection
+    from app.tutor.classroom_gateway import test_connection
 
     with transaction() as db:
         account, session = _account(db, request, True)
@@ -558,7 +558,7 @@ async def test_profile(profile_id: str, request: Request):
 
 @router.get("/provider-profiles/{profile_id}/models")
 async def provider_models(profile_id: str, request: Request):
-    from .provider_gateway import discover_models
+    from app.tutor.classroom_gateway import discover_models
 
     with transaction() as db:
         account, session = _account(db, request)
@@ -629,7 +629,7 @@ def _classroom_settings_view(ai: dict | None) -> dict:
 
 @router.get("/library/classrooms/{cid}/ai-settings")
 def classroom_settings(cid: str, request: Request):
-    from .portal_classroom_library import owned
+    from app.api.routes.classroom_library import owned
 
     with transaction() as db:
         account, _ = _account(db, request)
@@ -639,7 +639,7 @@ def classroom_settings(cid: str, request: Request):
 
 @router.put("/library/classrooms/{cid}/ai-settings")
 def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
-    from .portal_classroom_library import owned
+    from app.api.routes.classroom_library import owned
 
     with transaction() as db:
         account, session = _account(db, request, True)
@@ -689,7 +689,7 @@ def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
                     member["provider_profile_id"] = body.default_profile_id
             room.state = state
 
-            from .portal_ai_students import AIStudentProfile
+            from app.services.ai_students import AIStudentProfile
 
             for profile in db.scalars(
                 select(AIStudentProfile).where(
@@ -739,7 +739,7 @@ def _room_ai_settings(db, room: Room) -> tuple[str, dict, str | None]:
     if snapshot:
         ai = deepcopy(snapshot.get("assets", {}).get("ai_settings", {}))
     if not ai and state.get("asset_classroom_id"):
-        from .portal_classroom_library import ClassroomAssets
+        from app.api.routes.classroom_library import ClassroomAssets
 
         classroom = db.get(ClassroomAssets, state["asset_classroom_id"])
         if classroom and classroom.owner_id == owner_id:

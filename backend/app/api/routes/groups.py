@@ -8,7 +8,7 @@ import time
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from .storage import (
+from app.repositories.classroom_storage import (
     Room,
     Membership,
     Script,
@@ -19,12 +19,12 @@ from .storage import (
     append_event,
     persist_machine,
 )
-from .orchestrator import GameOrchestrator, DomainError, focus_notice, fresh_state
-from .portal_group_domain import initialise, person_summary
-from .portal_group_analysis import analysis as project_analysis
-from . import service
-from .portal_r73_contract import visible_evidence
-from .portal_classroom_library import link_group_session, ClassroomAssets
+from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_notice, fresh_state
+from app.domain.group_run import initialise, person_summary
+from app.domain.group_analysis import analysis as project_analysis
+from app.services import classroom as service
+from app.domain.library_decisions import visible_evidence
+from app.api.routes.classroom_library import link_group_session, ClassroomAssets
 
 router = APIRouter(prefix="/groups")
 
@@ -52,7 +52,7 @@ class GroupCommand(BaseModel):
 
 def actor(db, request, mutation=False):
     # Resolve the already-initialised native adapter lazily to preserve imports.
-    from .api import account
+    from app.api.routes.classroom import account
 
     return account(db, request, mutation)[0]
 
@@ -214,7 +214,7 @@ def start(rid: str, body: Start, request: Request):
         script = db.scalar(select(Script).where(Script.id == room.script_id).with_for_update())
         if script is None or script.owner_id != a.id:
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
-        from .portal_ai_students import ensure_other_options
+        from app.services.ai_students import ensure_other_options
 
         document = ensure_other_options(script.document)
         snap = Snapshot(
@@ -439,7 +439,7 @@ def view(rid: str, request: Request):
                 )
         asset_id = state.get("asset_classroom_id")
         asset_classroom = db.get(ClassroomAssets, asset_id) if asset_id else None
-        from .provider_profiles import _classroom_settings_view
+        from app.api.routes.provider_profiles import _classroom_settings_view
 
         ai_settings = _classroom_settings_view(
             asset_classroom.assets.get("ai_settings") if asset_classroom else {}

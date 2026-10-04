@@ -9,10 +9,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
-from . import service
-from .orchestrator import DomainError
-from .portal_ai_students import ensure_other_options
-from .storage import (
+from app.services import classroom as service
+from app.orchestrator.classroom import DomainError
+from app.services.ai_students import ensure_other_options
+from app.repositories.classroom_storage import (
     Account,
     Base,
     Room,
@@ -77,7 +77,7 @@ router = APIRouter(prefix="/library")
 
 
 def user(db, request, mutation=False):
-    from .api import account
+    from app.api.routes.classroom import account
 
     return account(db, request, mutation)[0]
 
@@ -252,7 +252,7 @@ def classroom(cid: str, request: Request):
 
 @router.post("/classrooms/{cid}/scripts")
 def attach_script(cid: str, body: AttachScript, request: Request):
-    from .contracts import ScriptDocument
+    from app.api.classroom_schemas import ScriptDocument
 
     with transaction() as db:
         account = user(db, request, True)

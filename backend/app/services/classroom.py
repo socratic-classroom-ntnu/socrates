@@ -5,10 +5,10 @@ import secrets
 import time
 from uuid import uuid4
 from sqlalchemy import func, select
-from .contracts import MemberView, RoomView
-from .orchestrator import DomainError, GameOrchestrator, fresh_state
-from .policy import distribution
-from .storage import (
+from app.api.classroom_schemas import MemberView, RoomView
+from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
+from app.orchestrator.classroom_policy import distribution
+from app.repositories.classroom_storage import (
     ActionReceipt,
     Membership,
     PointEntry,
@@ -269,7 +269,7 @@ def execute(db, a, room_id, cmd):
     data = deepcopy(cmd.data)
     if cmd.kind == "start":
         script = db.get(Script, room.script_id)
-        from .portal_ai_students import ensure_other_options
+        from app.services.ai_students import ensure_other_options
 
         document = ensure_other_options(script.document)
         snapshot = Snapshot(

@@ -1,8 +1,8 @@
 import pytest
 
-from app.run2.policy import majority_context
-from app.run2.workers import deterministic_result
-from tests.run2.test_domain import focus_room
+from app.orchestrator.classroom_policy import majority_context
+from app.services.llm_workers import deterministic_result
+from tests.classroom.test_domain import focus_room
 
 CURRENT = {
     "id": "q1",
@@ -63,7 +63,7 @@ def test_stale_unavailable_job_does_not_touch_the_current_focus():
 
 
 def test_focus_notice_is_exposed_only_while_the_tutor_is_paused():
-    from app.run2.orchestrator import focus_notice
+    from app.orchestrator.classroom import focus_notice
 
     g = focus_room()
     assert focus_notice(g.s) is None

@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
-from app.run2.server import create_app
+from app.classroom_app import create_app
 
 def ts(schema):
     if '$ref' in schema:

@@ -10,9 +10,11 @@ import time
 import pytest
 from starlette.requests import Request
 from sqlalchemy import select
-from app.run2 import storage, service, portal_group_api as group
-from app.run2.orchestrator import GameOrchestrator, DomainError
-from app.run2.portal_group_domain import person_summary
+from app.repositories import classroom_storage as storage
+from app.services import classroom as service
+from app.api.routes import groups as group
+from app.orchestrator.classroom import GameOrchestrator, DomainError
+from app.domain.group_run import person_summary
 
 
 def document():

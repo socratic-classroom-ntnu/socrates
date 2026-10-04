@@ -11,8 +11,8 @@ from urllib.parse import quote, urljoin, urlparse
 
 import httpx
 
-from .orchestrator import DomainError
-from .provider import ProviderWait
+from app.orchestrator.classroom import DomainError
+from app.tutor.classroom_provider import ProviderWait
 
 KNOWN_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",

@@ -8,15 +8,15 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from sqlalchemy import func, select
 
-from app.run2 import auth
-from app.run2.contracts import Register
-from app.run2.email_delivery import (
+from app.services import classroom_auth as auth
+from app.api.classroom_schemas import Register
+from app.services.email_delivery import (
     MailDelivery,
     apply_resend_webhook,
     send_mail_once,
 )
-from app.run2.orchestrator import DomainError
-from app.run2.storage import (
+from app.orchestrator.classroom import DomainError
+from app.repositories.classroom_storage import (
     Account,
     EmailToken,
     LoginSession,

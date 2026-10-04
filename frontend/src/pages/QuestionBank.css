@@ -1,0 +1,325 @@
+.question-bank-page {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+
+  background: #f5f7f5;
+  color: #26322e;
+}
+
+.teacher-sidebar {
+  width: 72px;
+  min-height: 100vh;
+  box-sizing: border-box;
+
+  flex: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding-top: 8px;
+
+  background: #ffffff;
+  border-right: 1px solid #e3e8e5;
+}
+
+.sidebar-menu,
+.sidebar-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+
+  border: 0;
+  border-radius: 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  color: #355f55;
+
+  font-size: 18px;
+}
+
+.sidebar-menu {
+  margin-bottom: 18px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-button-active {
+  background: #edf4f1;
+}
+
+.question-bank-main {
+  flex: 1;
+  min-width: 0;
+
+  padding: 32px 40px;
+  box-sizing: border-box;
+}
+
+.question-bank-main h1 {
+  margin: 0;
+}
+.question-bank-header {
+  margin-bottom: 42px;
+}
+
+.course-label {
+  margin: 0 0 4px;
+
+  color: #6f7c76;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.course-title {
+  margin: 0;
+
+  color: #26322e;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.course-code-row {
+  margin-top: 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-code-label {
+  color: #7b8681;
+
+  font-size: 13px;
+}
+
+.course-code {
+  padding: 3px 9px;
+
+  border-radius: 6px;
+
+  background: #e9efec;
+  color: #456157;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  letter-spacing: 0.04em;
+}
+
+.question-bank-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.question-bank-section-heading h2 {
+  margin: 0;
+
+  color: #314139;
+
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.add-activity-button {
+  height: 38px;
+  padding: 0 16px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: #3f6f61;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+.question-list-panel {
+  padding: 22px;
+
+  border: 1px solid #e0e5e2;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.question-card {
+  padding: 20px 22px 16px;
+
+  border: 1px solid #d9dfdc;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+.question-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.question-card-header h3 {
+  margin: 0;
+
+  color: #26322e;
+
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.question-status {
+  padding: 3px 9px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: none;
+  white-space: nowrap;
+}
+
+.question-status-active {
+  background: #e8f4ed;
+  color: #609276;
+}
+
+.question-card-divider {
+  height: 1px;
+
+  margin: 16px 0 14px;
+
+  background: #e1e5e3;
+}
+
+.question-description {
+  min-height: 54px;
+  box-sizing: border-box;
+
+  padding: 16px;
+
+  border-radius: 4px;
+
+  background: #f4f6f4;
+  color: #8b9490;
+
+  font-size: 13px;
+}
+.question-list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  padding: 22px;
+
+  border: 1px solid #e0e5e2;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.question-status-ended {
+  background: #fff0ed;
+  color: #d27a68;
+}
+
+.question-end-date {
+  color: #d27a68;
+
+  font-size: 11px;
+  font-weight: 500;
+}
+.sidebar-menu svg,
+.sidebar-button svg {
+  width: 20px;
+  height: 20px;
+
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (max-width: 900px) {
+  .question-bank-main {
+    padding: 24px;
+  }
+
+  .course-title {
+    font-size: 24px;
+  }
+
+  .question-bank-section-heading {
+    gap: 16px;
+  }
+
+  .question-card-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .teacher-sidebar {
+    width: 56px;
+  }
+
+  .sidebar-menu,
+  .sidebar-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .question-bank-main {
+    padding: 20px 14px;
+  }
+
+  .question-bank-section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .add-activity-button {
+    align-self: flex-start;
+  }
+
+  .question-list-panel {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .question-card {
+    padding: 16px;
+  }
+
+  .course-title {
+    font-size: 21px;
+  }
+
+  .question-card-header {
+  align-items: center;
+  row-gap: 8px;
+}
+
+  .question-end-date {
+    width: 100%;
+  }
+}

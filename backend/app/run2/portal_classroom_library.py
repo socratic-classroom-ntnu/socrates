@@ -24,10 +24,10 @@ from .storage import (
 
 
 class ClassroomAssets(Base):
-    __tablename__ = "r73_classroom_assets"
+    __tablename__ = "classroom_assets"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     title: Mapped[str] = mapped_column(String(160))
     revision: Mapped[int] = mapped_column(Integer, default=1)
     assets: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -35,13 +35,13 @@ class ClassroomAssets(Base):
 
 
 class SessionLink(Base):
-    __tablename__ = "r73_classroom_sessions"
+    __tablename__ = "classroom_sessions"
 
     room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r2_classroom_runs.id"), primary_key=True
+        String(36), ForeignKey("classroom_runs.id"), primary_key=True
     )
     classroom_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r73_classroom_assets.id"), index=True
+        String(36), ForeignKey("classroom_assets.id"), index=True
     )
     batch_id: Mapped[str] = mapped_column(String(36), index=True)
     kind: Mapped[str] = mapped_column(String(20))
@@ -49,7 +49,7 @@ class SessionLink(Base):
 
 
 class LibraryReceipt(Base):
-    __tablename__ = "r73_library_receipts"
+    __tablename__ = "library_receipts"
 
     key: Mapped[str] = mapped_column(String(200), primary_key=True)
     payload_hash: Mapped[str] = mapped_column(String(64))

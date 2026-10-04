@@ -33,7 +33,7 @@ class Base(DeclarativeBase):
 
 
 class Account(Base):
-    __tablename__ = "r2_accounts"
+    __tablename__ = "accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     username: Mapped[str] = mapped_column(String(64), unique=True)
     email: Mapped[str] = mapped_column(String(254), unique=True)
@@ -43,24 +43,24 @@ class Account(Base):
 
 
 class LoginSession(Base):
-    __tablename__ = "r2_login_sessions"
+    __tablename__ = "login_sessions"
     token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     csrf_token: Mapped[str] = mapped_column(String(64))
     expires_at: Mapped[float] = mapped_column(Float, index=True)
 
 
 class EmailToken(Base):
-    __tablename__ = "r2_email_tokens"
+    __tablename__ = "email_tokens"
     token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     purpose: Mapped[str] = mapped_column(String(16))
     expires_at: Mapped[float] = mapped_column(Float)
     consumed: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Mail(Base):
-    __tablename__ = "r2_mail_outbox"
+    __tablename__ = "mail_outbox"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     recipient: Mapped[str] = mapped_column(String(254))
     subject: Mapped[str] = mapped_column(Text)
@@ -71,29 +71,29 @@ class Mail(Base):
 
 
 class Script(Base):
-    __tablename__ = "r2_scripts"
+    __tablename__ = "scripts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     document: Mapped[dict] = mapped_column(JSON)
     revision: Mapped[int] = mapped_column(Integer, default=1)
 
 
 class Snapshot(Base):
-    __tablename__ = "r2_script_snapshots"
+    __tablename__ = "script_snapshots"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    script_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_scripts.id"), index=True)
+    script_id: Mapped[str] = mapped_column(String(36), ForeignKey("scripts.id"), index=True)
     revision: Mapped[int] = mapped_column(Integer)
     document: Mapped[dict] = mapped_column(JSON)
     content_hash: Mapped[str] = mapped_column(String(64))
 
 
 class Room(Base):
-    __tablename__ = "r2_classroom_runs"
+    __tablename__ = "classroom_runs"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    creator_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
-    script_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_scripts.id"))
+    creator_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
+    script_id: Mapped[str] = mapped_column(String(36), ForeignKey("scripts.id"))
     snapshot_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("r2_script_snapshots.id"), nullable=True
+        String(36), ForeignKey("script_snapshots.id"), nullable=True
     )
     code: Mapped[str] = mapped_column(String(12), unique=True)
     state: Mapped[dict] = mapped_column(JSON)
@@ -103,14 +103,14 @@ class Room(Base):
 
 
 class Membership(Base):
-    __tablename__ = "r2_memberships"
+    __tablename__ = "memberships"
     __table_args__ = (
         UniqueConstraint("room_id", "account_id", "role"),
         UniqueConstraint("room_id", "seat"),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     role: Mapped[str] = mapped_column(String(12))
     # 教師的 alias 取自 username，註冊契約允許到 64 字（見 0007 migration）。
     alias: Mapped[str] = mapped_column(String(64))
@@ -120,10 +120,10 @@ class Membership(Base):
 
 
 class Event(Base):
-    __tablename__ = "r2_classroom_events"
+    __tablename__ = "classroom_events"
     __table_args__ = (UniqueConstraint("room_id", "seq"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
     type: Mapped[str] = mapped_column(String(50))
     payload: Mapped[dict] = mapped_column(JSON)
@@ -131,10 +131,10 @@ class Event(Base):
 
 
 class ActionReceipt(Base):
-    __tablename__ = "r2_action_receipts"
+    __tablename__ = "action_receipts"
     __table_args__ = (UniqueConstraint("room_id", "actor_id", "action_id"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
     actor_id: Mapped[str] = mapped_column(String(36))
     action_id: Mapped[str] = mapped_column(String(100))
     payload_hash: Mapped[str] = mapped_column(String(64))
@@ -142,29 +142,29 @@ class ActionReceipt(Base):
 
 
 class Answer(Base):
-    __tablename__ = "r2_question_answers"
+    __tablename__ = "question_answers"
     __table_args__ = (UniqueConstraint("question_run_id", "membership_id"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
-    question_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_question_runs.id"))
-    membership_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_memberships.id"))
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
+    question_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("question_runs.id"))
+    membership_id: Mapped[str] = mapped_column(String(36), ForeignKey("memberships.id"))
     body: Mapped[dict] = mapped_column(JSON)
 
 
 class QuestionRecord(Base):
-    __tablename__ = "r2_question_runs"
+    __tablename__ = "question_runs"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
     question_index: Mapped[int] = mapped_column(Integer)
     definition: Mapped[dict] = mapped_column(JSON)
     state: Mapped[dict] = mapped_column(JSON)
 
 
 class Job(Base):
-    __tablename__ = "r2_llm_jobs"
+    __tablename__ = "llm_jobs"
     __table_args__ = (UniqueConstraint("room_id", "logical_key"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
     logical_key: Mapped[str] = mapped_column(String(150))
     kind: Mapped[str] = mapped_column(String(40))
     context: Mapped[dict] = mapped_column(JSON)
@@ -179,33 +179,33 @@ class Job(Base):
 
 
 class Budget(Base):
-    __tablename__ = "r2_llm_budget"
+    __tablename__ = "llm_budget"
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
     calls: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Program(Base):
-    __tablename__ = "r2_prompt_programs"
+    __tablename__ = "prompt_programs"
     id: Mapped[str] = mapped_column(String(100), primary_key=True)
     metadata_json: Mapped[dict] = mapped_column(JSON)
 
 
 class CallAudit(Base):
-    __tablename__ = "r2_llm_call_audit"
+    __tablename__ = "llm_call_audit"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    job_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_llm_jobs.id"), index=True)
+    job_id: Mapped[str] = mapped_column(String(36), ForeignKey("llm_jobs.id"), index=True)
     metadata_json: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
 class PointEntry(Base):
-    __tablename__ = "r2_point_ledger"
+    __tablename__ = "point_ledger"
     __table_args__ = (UniqueConstraint("room_id", "action_id", "account_id", "side"),)
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_classroom_runs.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(36), ForeignKey("classroom_runs.id"), index=True)
     action_id: Mapped[str] = mapped_column(String(100))
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
-    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_memberships.id"))
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("memberships.id"))
     focus_id: Mapped[str] = mapped_column(String(36))
     turn_index: Mapped[int] = mapped_column(Integer)
     side: Mapped[str] = mapped_column(String(12))
@@ -213,7 +213,7 @@ class PointEntry(Base):
 
 
 class RateBucket(Base):
-    __tablename__ = "r2_rate_buckets"
+    __tablename__ = "rate_buckets"
     id: Mapped[str] = mapped_column(String(150), primary_key=True)
     count: Mapped[int] = mapped_column(Integer, default=0)
     expires_at: Mapped[float] = mapped_column(Float, index=True)
@@ -226,12 +226,9 @@ _FACTORY: Any = None
 def register_models() -> None:
     """Import every module that defines a model, so foreign keys resolve on any path.
 
-    r88_ai_students carries a foreign key to r97_provider_profiles, so a metadata that
-    holds one without the other cannot be resolved at all — not only by create_all.
-    This covers the application paths, which all reach configure(). alembic never calls
-    configure() and must not call this either: registering every model up front changes
-    what 0006's create_all() produces, which breaks 0104. Migration 0006 imports the one
-    module it needs instead.
+    ai_students carries a foreign key to provider_profiles, so a metadata that holds one
+    without the other cannot be resolved at all. Every path that reads the metadata calls
+    this: configure() for the application, migrations/env.py for alembic autogenerate.
 
     Imported inside the function, not at module level, to keep provider modules out of
     the orchestrator's import path (AGENTS.md: Orchestrator 不得 import 任何 provider).

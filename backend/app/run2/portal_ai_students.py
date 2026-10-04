@@ -61,18 +61,16 @@ PERSONAS = [
 
 
 class AIStudentProfile(Base):
-    __tablename__ = "r88_ai_students"
+    __tablename__ = "ai_students"
 
-    account_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r2_accounts.id"), primary_key=True
-    )
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
     parent_room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r2_classroom_runs.id"), index=True
+        String(36), ForeignKey("classroom_runs.id"), index=True
     )
     persona: Mapped[dict] = mapped_column(JSON)
     model: Mapped[str] = mapped_column(String(160), default="openrouter/free")
     provider_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("r97_provider_profiles.id"), nullable=True
+        String(36), ForeignKey("provider_profiles.id"), nullable=True
     )
     seed: Mapped[int] = mapped_column(Integer)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)

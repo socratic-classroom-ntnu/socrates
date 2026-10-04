@@ -26,13 +26,13 @@ def test_fresh_sqlite_schema_from_storage_alone_has_every_table():
     )
     tables = set(ast.literal_eval(run(code)))
     expected = {
-        "r97_provider_profiles",
-        "r97_session_provider_secrets",
-        "r97_account_ai_settings",
-        "r88_ai_students",
-        "r73_classroom_assets",
-        "r73_classroom_sessions",
-        "r73_library_receipts",
-        "r104_mail_delivery",
+        "provider_profiles",
+        "session_provider_secrets",
+        "account_ai_settings",
+        "ai_students",
+        "classroom_assets",
+        "classroom_sessions",
+        "library_receipts",
+        "mail_delivery",
     }
     assert expected <= tables

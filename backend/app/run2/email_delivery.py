@@ -23,13 +23,11 @@ from .storage import Base, Mail, digest, transaction
 
 
 class MailDelivery(Base):
-    __tablename__ = "r104_mail_delivery"
+    __tablename__ = "mail_delivery"
 
-    mail_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r2_mail_outbox.id"), primary_key=True
-    )
+    mail_id: Mapped[str] = mapped_column(String(36), ForeignKey("mail_outbox.id"), primary_key=True)
     account_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("r2_accounts.id"), nullable=True, index=True
+        String(36), ForeignKey("accounts.id"), nullable=True, index=True
     )
     purpose: Mapped[str] = mapped_column(String(24), default="transactional", index=True)
     html_body: Mapped[str | None] = mapped_column(Text, nullable=True)

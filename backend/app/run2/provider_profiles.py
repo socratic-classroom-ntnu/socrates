@@ -75,11 +75,11 @@ DEFAULT_BUDGET = {
 
 
 class ProviderProfile(Base):
-    __tablename__ = "r97_provider_profiles"
+    __tablename__ = "provider_profiles"
     __table_args__ = (UniqueConstraint("owner_id", "name"),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("r2_accounts.id"), index=True)
+    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     name: Mapped[str] = mapped_column(String(100))
     adapter: Mapped[str] = mapped_column(String(32))
     base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -97,13 +97,13 @@ class ProviderProfile(Base):
 
 
 class SessionProviderSecret(Base):
-    __tablename__ = "r97_session_provider_secrets"
+    __tablename__ = "session_provider_secrets"
 
     profile_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r97_provider_profiles.id"), primary_key=True
+        String(36), ForeignKey("provider_profiles.id"), primary_key=True
     )
     session_token_hash: Mapped[str] = mapped_column(
-        String(64), ForeignKey("r2_login_sessions.token_hash"), primary_key=True
+        String(64), ForeignKey("login_sessions.token_hash"), primary_key=True
     )
     encrypted_secret: Mapped[str] = mapped_column(Text)
     secret_last4: Mapped[str] = mapped_column(String(4))
@@ -113,16 +113,14 @@ class SessionProviderSecret(Base):
 
 
 class AccountAISettings(Base):
-    __tablename__ = "r97_account_ai_settings"
+    __tablename__ = "account_ai_settings"
 
-    owner_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("r2_accounts.id"), primary_key=True
-    )
+    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
     default_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("r97_provider_profiles.id"), nullable=True
+        String(36), ForeignKey("provider_profiles.id"), nullable=True
     )
     fallback_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("r97_provider_profiles.id"), nullable=True
+        String(36), ForeignKey("provider_profiles.id"), nullable=True
     )
     model_matrix: Mapped[dict] = mapped_column(JSON, default=dict)
     budgets: Mapped[dict] = mapped_column(JSON, default=lambda: deepcopy(DEFAULT_BUDGET))

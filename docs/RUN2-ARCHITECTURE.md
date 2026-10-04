@@ -43,18 +43,18 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 
 ## 資料與並發
 
-Accounts、opaque login sessions、one-use email/reset tokens、mail outbox 與 delivery（`r104_mail_delivery`）、
-rate buckets（`r2_rate_buckets`）。
+Accounts、opaque login sessions、one-use email/reset tokens、mail outbox 與 delivery（`mail_delivery`）、
+rate buckets（`rate_buckets`）。
 Scripts、Script snapshots、ClassroomRun、Membership、QuestionRuns、Answers、Events、ActionReceipts。
 LLM jobs／lease、budget、program metadata、call audit、point ledger。
-Portal 擴充：provider profiles 與 session 憑證、帳號 AI 設定（`r97_*`）、AI 學生（`r88_ai_students`）、
-教室庫資產／session／receipts（`r73_*`）。
+Portal 擴充：provider profiles 與 session 憑證、帳號 AI 設定（`provider_profiles`、`session_provider_secrets`、`account_ai_settings`）、AI 學生（`ai_students`）、
+教室庫資產／session／receipts（`classroom_assets`、`classroom_sessions`、`library_receipts`）。
 
 Answers唯一鍵 `(question_run_id,membership_id)`；命令冪等 `(room_id,actor_id,action_id)`。
 Role是room membership，client只選呈現mode。教師授權來自creator account。
 100ms grace收完後Server以latest autosaved draft finalize，明確submission保持完成狀態。
 
-Event唯一鍵 `(room_id,seq)`（`room_id` 指向 `r2_classroom_runs`）；資料與NOTIFY同transaction，
+Event唯一鍵 `(room_id,seq)`（`room_id` 指向 `classroom_runs`）；資料與NOTIFY同transaction，
 durable event 的 NOTIFY 只帶 `{room, event_id, seq}`。
 每worker專用LISTEN＋read durable rows＋broadcast自己的WS；重連snapshot／last_seq replay。
 `tutor.delta` 是不落地的 ephemeral event，經 `pg_notify` 帶文字片段（每段最多 1000 字）同步到各 worker；

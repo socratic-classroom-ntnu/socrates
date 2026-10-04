@@ -108,7 +108,7 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml exec bac
 `smoke.sh` 依序檢查：前端首頁回應、`/api/v2/readiness` 為 `status=ready`、
 空白的 `POST /api/v2/auth/login` 回 422 且內容為帶 `detail` 的 JSON（確認 API 路由與來源檢查）、
 `/__bh__/current.json` 含 `source_sha`。成功時印出 `STAGE_JSON_AUTH_ROUTE_PASS`。
-`alembic current` 預期只有一行 `(head)`；目前的 head 是 `0104`。
+`alembic current` 預期只有一行 `(head)`；目前的 head 是 `0010`。
 
 ## 3. 接入既有 Tunnel
 

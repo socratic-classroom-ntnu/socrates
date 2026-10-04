@@ -32,6 +32,7 @@
 | 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
 | 新增前端畫面 | `frontend/src/pages/Conversation.tsx` |
 | 呼叫 API | `frontend/src/api/client.ts`，型別一律從 `types.ts` 取，不要手寫 |
+| 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |
 
 ## API 慣例：兩條並列的規則
 
@@ -50,6 +51,9 @@
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
 - 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/run2/generated.ts`、`frontend/run2-openapi.json`（產生物，跑 `python scripts/gen_run2_types.py`）
 - 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `run2/graphLayout.mjs`）目前不擋
+- 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
+- 為 migration 寫共用的 helper 函式
+- 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
 
 ## 分支流程
 
@@ -107,6 +111,15 @@ CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新�
 因為開發資料庫已經在 head，`upgrade` 是 no-op，擋不住「migration 鏈本身壞掉」。CI 的資料庫是全新的，
 這樣才對得上。整段約 1 秒。2026-10-03 就是從這個缺口漏出去的：Task 30 改了 model 的註冊時機，
 pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic upgrade head` 當場 `NoReferencedTableError`。
+
+**migration 必須是自給自足的 DDL，而且與 ORM 一致。** import 應用程式的 model 會讓 migration 的產出
+變成「當前 ORM 定義」的函式——同一支 migration 今天跑和重構之後跑會建出不同的東西，而既有資料庫
+不會重跑，於是新舊資料庫悄悄分歧。2026-10-03 的 CI 紅燈就是這樣來的：有人把一行 import 從模組層級
+移進函式內（那個搬動本身是對的），`0006` 的產出就變了。反過來，手寫的 migration 也會跟 ORM 分歧：
+`0104` 與 ORM 差了 15 處，直到 2026-10-05 才被量到。所以 migration 一律用 autogenerate 從 ORM 產生、
+產生後不再 import `app`，並由 `test_schema_matches_orm.py` 對全新資料庫比對。
+2026-10-05 起 stage 專屬的 `0006`–`0104` 已合併成 `0010`；本機資料庫若還停在舊 revision，
+`alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
 **hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
 `round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`run2-load`，

@@ -155,6 +155,7 @@ class GameOrchestrator:
             key,
             {
                 "question": self.question(),
+                "scenario_ai": deepcopy(self.question().get("scenario_ai", {})),
                 "option_id": f["option_id"],
                 "argument": f["argument"],
                 "history": f["messages"],
@@ -183,6 +184,7 @@ class GameOrchestrator:
         qi = str(self.s["question_index"])
         context = {
             "question": self.question(),
+            "scenario_ai": deepcopy(self.question().get("scenario_ai", {})),
             "answers": list(r["answers"].values()),
             "focused_chats": r["focuses"],
             "distribution": r.get("distribution", []),

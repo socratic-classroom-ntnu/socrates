@@ -216,6 +216,42 @@ def test_schema_unique_option_ids():
         ScriptDocument.model_validate(doc)
 
 
+def test_question_scenario_ai_contract_and_routing_context():
+    document = ScriptDocument.model_validate(
+        {
+            **DOC,
+            "questions": [
+                {
+                    **DOC["questions"][0],
+                    "scenario_ai": {
+                        "provider_profile_id": "scenario-profile",
+                        "model": "scenario-model",
+                    },
+                }
+            ],
+        }
+    )
+    question = document.questions[0].model_dump()
+    assert question["scenario_ai"] == {
+        "provider_profile_id": "scenario-profile",
+        "model": "scenario-model",
+    }
+    context = majority_context(question, {}, [])
+    assert context["scenario_ai"] == question["scenario_ai"]
+    with pytest.raises(ValueError):
+        ScriptDocument.model_validate(
+            {
+                **DOC,
+                "questions": [
+                    {
+                        **DOC["questions"][0],
+                        "scenario_ai": {"unexpected": "value"},
+                    }
+                ],
+            }
+        )
+
+
 def test_majority_context_preserves_tie():
     ctx = majority_context(
         DOC["questions"][0], {"x": {"option_id": "a"}, "y": {"option_id": "b"}}, []

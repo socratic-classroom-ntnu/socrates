@@ -17,6 +17,7 @@ class Question(Strict):
     id: str = Field(min_length=1, max_length=64)
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
+    scenario_ai: dict[str, str] = Field(default_factory=dict)
     options: list[Option] = Field(min_length=2)
     duration_seconds: int = Field(default=90, ge=1)
     argument_required: bool = True
@@ -33,6 +34,10 @@ class Question(Strict):
     def distinct(self):
         if len({o.id for o in self.options}) != len(self.options):
             raise ValueError("選項 id 請各自唯一")
+        if set(self.scenario_ai) - {"provider_profile_id", "model"}:
+            raise ValueError("scenario_ai 只接受 provider_profile_id 與 model")
+        if any(not value.strip() or len(value) > 200 for value in self.scenario_ai.values()):
+            raise ValueError("scenario_ai 值請介於 1 到 200 字元")
         return self
 
 

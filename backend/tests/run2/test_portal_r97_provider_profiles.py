@@ -173,12 +173,19 @@ def test_classroom_owner_profile_and_model_precedence():
             db,
             room,
             "focused_tutor",
-            {"model": "individual-model"},
+            {
+                "scenario_ai": {
+                    "provider_profile_id": profile.id,
+                    "model": "scenario-model",
+                }
+            },
         )
         assert bindings[0]["owner_id"] == owner_id
-        assert bindings[0]["model"] == "individual-model"
+        assert bindings[0]["model"] == "scenario-model"
         assert bindings[0]["secret"] == "owner-key"
         assert routing["role"] == "socratic_tutor"
+        assert routing["selected_profile_id"] == profile.id
+        assert routing["requested_model"] == "scenario-model"
 
 
 def test_stage_custom_endpoint_requires_public_https(monkeypatch):

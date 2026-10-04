@@ -64,6 +64,7 @@ def majority_context(question: dict, answers: dict, focuses: list[dict]) -> dict
     majority = sorted(k for k, v in counts.items() if high and v == high)
     return {
         "question": question,
+        "scenario_ai": dict(question.get("scenario_ai", {})),
         "majority_options": majority,
         "counts": counts,
         "representatives": [

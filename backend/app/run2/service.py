@@ -78,7 +78,9 @@ def view(db, room, account_id, mode="student") -> dict:
     now = time.time()
     qi = s["question_index"]
     active = s["runs"][qi] if 0 <= qi < len(s["runs"]) else None
-    q = s["questions"][qi] if active else None
+    q = deepcopy(s["questions"][qi]) if active else None
+    if q and not as_teacher:
+        q.pop("scenario_ai", None)
     focus = next((f for f in active["focuses"] if f["id"] == s["focus"]), None) if active else None
     members = [
         MemberView(

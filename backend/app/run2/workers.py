@@ -258,6 +258,7 @@ def deterministic_result(item, reason):
             "id": "deterministic-next",
             "title": "換一個條件，你的選擇會改變嗎？",
             "scenario": ("請比較原本理由與新增條件，並說明目前最重視的原則。"),
+            "scenario_ai": context.get("scenario_ai", {}),
             "options": [
                 {"id": "stay", "text": "維持原選擇"},
                 {"id": "change", "text": "改變選擇"},

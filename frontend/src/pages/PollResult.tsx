@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './PollResult.css';
+//@ts-ignore
 import bgImage from './bg-classroom.png'; 
 
 export const PollResult: React.FC = () => {

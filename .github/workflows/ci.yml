@@ -172,13 +172,3 @@ jobs:
     permissions: {contents: read, packages: write}
     uses: ./.github/workflows/stage-release.yml
     with: {source_sha: '${{ github.sha }}'}
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/stage' && vars.SOCRATES_STAGE_RUNNER_ADMITTED == 'true'
-    needs: [release]
-    permissions: {contents: read, packages: read}
-    uses: ./.github/workflows/stage-deploy.yml
-    with:
-      source_sha: ${{ github.sha }}
-      backend_image: ${{ needs.release.outputs.backend_image }}
-      frontend_image: ${{ needs.release.outputs.frontend_image }}
-    secrets: inherit

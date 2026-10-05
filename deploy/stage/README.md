@@ -5,7 +5,23 @@
 `stage` 是伺服器組員採用的來源。應用服務固定為 **frontend＋backend 兩個容器**。
 PostgreSQL、郵件服務（預設 Resend API）及既有 Cloudflare Tunnel 由伺服器環境提供。
 
-公開入口：`https://socrates.driseam.com`。
+公開入口：`https://socrates.driseam.com`（目前 302 轉到 `https://socrates-qa.driseam.com`）。
+
+## 目前的部署方式（先讀這段）
+
+stage 跑在 **Kubernetes 上，由 Flux 的 image automation 部署**：
+
+1. push 到 `stage` → CI 全綠 → `release / build` job 把 image 推到 ghcr，tag 是
+   `sha-<sha>` 與 `stage-<UTC 時間>-<sha>`（`.github/workflows/stage-release.yml`）。
+2. Flux 每小時掃一次 ghcr，看到較新的 `stage-*` tag 就自動換上。所以 push 之後**最多約一小時**才會上線，
+   但時間點不固定，不能拿這段時間差來安排資料庫操作。
+
+所以 **push 到 `stage` 就是部署**。GitHub 上沒有「deploy」這一步可以看；`release / build`
+成功就代表這個 SHA 會被部署。確認線上版本用 `curl -fsSL https://socrates.driseam.com/api/release`
+的 `source_sha`。
+
+下方第 2、3、6、7 節是用 `docker compose`（`compose.yml`、`up.sh`、`update.sh`）在自架主機上部署的方式，
+**不是目前 stage 的部署方式**，保留給自架或本機重現時使用。第 1 節的環境變數與第 4 節的 smoke 兩種方式都適用。
 
 ## 1. 準備一次性的環境資料
 
@@ -27,8 +43,8 @@ PostgreSQL、郵件服務（預設 Resend API）及既有 Cloudflare Tunnel 由�
 > **`DATABASE_URL` 一旦使用就不要改寫。** 教室擁有者存的 provider 憑證以 `DATABASE_URL`
 > 字串衍生的金鑰加密（`backend/app/api/routes/provider_profiles.py`）。改密碼、換主機別名、
 > 改編碼或參數，即使指向同一個資料庫，既有憑證都會解不開（`PROVIDER_CREDENTIAL_DECRYPTION`，503），
-> 擁有者必須重新輸入。人工部署的 `deploy/stage/.env` 與 CD 的 secret `SOCRATES_DATABASE_URL`
-> 也必須逐字相同。
+> 擁有者必須重新輸入。k8s Secret 裡的 `DATABASE_URL`（以及自架時 `deploy/stage/.env` 的值）
+> 換環境時也必須逐字相同。
 
 ### LLM 與 fallback
 
@@ -54,9 +70,9 @@ Stage 預設 `SOCRATES_MAIL_TRANSPORT=resend`，只需 Resend 的三個值。
 `provider_status=ACCEPTED`，再確認收件；登入和健康檢查成功並不等於信已寄出。
 啟用前先檢查既有 outbox 的測試收件人與過期驗證信；恢復 worker 會處理到期佇列。
 
-### Kubernetes（stage 正式部署路徑待確認）
+### Kubernetes
 
-Flux/Kubernetes 請將 transport 放進 backend Deployment 的環境變數，
+stage 目前的部署路徑（見最上方〈目前的部署方式〉）。transport 放進 backend Deployment 的環境變數，
 憑證放進 SOPS Secret。Secret 的 `envFrom` 更新後須重啟 backend，才會載入新值。
 
 ### Avatar
@@ -139,23 +155,16 @@ curl -fsS https://socrates.driseam.com/api/release
 `dynamic` 模式使用初始題，後續題由LLM生成並提供預設8秒教師preview，時間到自動採用。
 沒有 LLM 或額度用完時，動態題與總結以固定內容完成（見第 1 節「LLM 與 fallback」）。
 
-## 5. CI／Release／CD 採用順序
+## 5. CI／Release
 
 stage push 走 CI。CI的backend、frontend、contract、Round1、教室負載（`classroom-load`）皆成功後，
 呼叫同一revision的Stage Release。Release.json以image digest固定來源與相依lock，
-image 以 `sha-<source sha>` 與 `stage-<時間戳>-<source sha>` 標記。Stage Deploy消費這兩個digest。
+image 以 `sha-<source sha>` 與 `stage-<時間戳>-<source sha>` 標記。Flux 追 `stage-*` tag 自動部署
+（見最上方〈目前的部署方式〉）。
 
-自動CD入口由repo owner設定 `SOCRATES_STAGE_RUNNER_ADMITTED=true`，
-並先註冊專用 `[self-hosted, linux, socrates-stage]` runner以及stage environment：
-
-- secrets：`SOCRATES_DATABASE_URL`、`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET`；改用 SMTP 時另需
-  `SMTP_HOST`、`SMTP_FROM`、`SMTP_USER`、`SMTP_PASSWORD`
-- variables（皆選填）：`SOCRATES_MAIL_TRANSPORT`、`RESEND_FROM`、`SMTP_PORT`、
-  `SOCRATES_PUBLIC_ORIGIN`、`SOCRATES_ALLOWED_ORIGINS`、`SOCRATES_GOOGLE_CSE_ID`、`SOCRATES_GOOGLE_CSE_SCOPE`
-
-workflow 仍會傳入 `OPENROUTER_API_KEY`，但 compose 不轉交給容器、程式也不讀取，不需要設定。
-2026-10-02 時 repo 尚未設定任何 variables、environment 或 self-hosted runner，因此 deploy job 一律
-skipped；在那之前直接使用本README人工部署，`RESEND_*` 寫進伺服器的 `deploy/stage/.env`。
+CI 原本還有一個 `deploy` job（`stage-deploy.yml`，要在 stage 主機上跑 self-hosted runner，
+並由 `SOCRATES_STAGE_RUNNER_ADMITTED` 開啟）。它從未執行過——repo 一直沒有 runner 也沒設該變數——
+永遠顯示 Skipped，讓人誤以為 push 不會部署。2026-10-05 已刪除。
 
 兩個應用容器保持2個；郵件與DB為外部服務。CI 上傳建置時使用的 `frontend/package-lock.json`，
 Release 沿用同一份 lock。
@@ -167,9 +176,9 @@ bash deploy/stage/update.sh
 ```
 
 資料庫升版前由DB owner依既有備份程序保存資料庫快照。
-应用回版使用已記錄、與當前schema相容的前一組image digests；所有r2資料保留於PostgreSQL。
+应用回版使用已記錄、與當前schema相容的前一組image digests；所有資料保留於PostgreSQL。
 將 `BACKEND_IMAGE`／`FRONTEND_IMAGE` 填為已驗證digest，並把 `SOCRATES_SOURCE_SHA` 設為那組 image
-的來源 SHA（取自 `RELEASE.json` 的 `source_sha` 或 image 的 `sha-<source sha>` tag），再執行：
+的來源 SHA（取自 `RELEASE.json` 的 `source_sha` 或 image 的 `sha-<source sha>` tag），再執行（自架主機；k8s 的退版見最上方）：
 
 ```bash
 export SOCRATES_SOURCE_SHA=<回版 image 的來源 SHA>
@@ -178,7 +187,7 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml up -d --
 ```
 
 沒有 export 時，compose 會用 `.env` 的值，`/api/release` 會顯示錯誤的版本。
-Schema演進使用明確資料遷移，R2 migration downgrade會交由資料owner處理。
+Schema演進使用明確資料遷移，migration downgrade會交由資料owner處理。
 
 ## 7. 運維與狀態回覆
 

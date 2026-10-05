@@ -1,0 +1,101 @@
+/* ================= 基礎佈局與背景 ================= */
+.poll-wrapper {
+  width: 100vw; height: 100vh; background-color: #1a1a1a;
+  display: flex; justify-content: center; align-items: center;
+  overflow: hidden; font-family: 'sans-serif';
+}
+
+.classroom-bg {
+  width: 100%; max-width: 1280px; aspect-ratio: 16 / 9;
+  background-size: cover; background-position: center;
+  position: relative; container-type: inline-size;
+}
+
+.top-status {
+  position: absolute;
+  top: 3%; left: 3%;
+  color: #ccc; display: flex; align-items: center;
+  font-size: 1.2cqw; gap: 0.6cqw;
+}
+.top-status .badge {
+  background-color: white; color: #333; font-weight: bold;
+  padding: 0.2cqw 0.6cqw; border-radius: 0.4cqw;
+}
+
+/* ================= 黑板覆蓋區 ================= */
+.blackboard-overlay {
+  position: absolute;
+  top: 5%; left: 21%; width: 66%; 
+  display: flex; flex-direction: column; justify-content: flex-start; 
+}
+
+.question-title {
+  color: white; font-size: 1.6cqw; font-weight: normal;
+  margin: 0 0 0.8cqw 0; 
+}
+
+/* ================= 選項與斜線進度條 ================= */
+.options-container {
+  display: flex; flex-direction: column; gap: 0.7cqw; 
+}
+
+.poll-row {
+  display: flex; align-items: center; gap: 1cqw; font-size: 1.3cqw; 
+}
+
+.poll-label {
+  width: 12cqw; flex-shrink: 0; white-space: nowrap;
+}
+.opt-id {
+  font-weight: bold; margin-right: 0.8cqw;
+}
+
+.poll-progress-area {
+  flex: 1; display: flex; align-items: center; gap: 0.8cqw; 
+}
+
+.poll-bar-fill {
+  height: 1.2cqw; border-radius: 0.2cqw; border: 1px solid var(--theme-color); 
+  background-image: repeating-linear-gradient(
+    -45deg, var(--theme-color), var(--theme-color) 0.4cqw,
+    transparent 0.4cqw, transparent 0.6cqw
+  );
+  transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.poll-stats {
+  color: #ddd; font-weight: bold; font-size: 1.3cqw; white-space: nowrap; 
+}
+
+/* ================= 底部浮動面板區 ================= */
+.bottom-panels {
+  position: absolute; bottom: 2%; left: 3%; width: 94%;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 1.6cqw;
+}
+
+.panel {
+  border-radius: 1.2cqw; padding: 1.6cqw 2cqw; box-shadow: 0 1cqw 2cqw rgba(0,0,0,0.3);
+}
+.panel .label {
+  font-size: 1.2cqw; opacity: 0.8; margin-bottom: 0.8cqw; display: block;
+}
+.panel h3 { margin: 0; font-size: 2cqw; line-height: 1.4; }
+
+.blue-panel { background-color: #2b5b84; color: white; flex: 1; border: 2px solid #3a75a6; }
+
+/* 🌟 更換成與原圖相符的飽和暖黃色 */
+.yellow-note {
+  background-color: #f5d460; color: #333;
+  border-radius: 0.2cqw; padding: 1.5cqw 2cqw;
+  transform: rotate(2deg); box-shadow: 0.3cqw 0.5cqw 1cqw rgba(0,0,0,0.2);
+  width: 25cqw;
+}
+.yellow-note p { margin: 0; font-weight: bold; line-height: 1.5; font-size: 1.2cqw; }
+
+.black-panel {
+  background-color: #1a1a1a; color: white; flex: 1; border: 1px solid #333;
+  cursor: pointer; transition: background-color 0.2s;
+}
+.black-panel:hover { background-color: #222; }
+.black-panel p { margin: 0.8cqw 0 0 0; color: #888; font-size: 1.2cqw; }
+.black-panel .arrow { float: right; font-size: 2.4cqw; }

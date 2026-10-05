@@ -1,4 +1,4 @@
-"""GroupRun HTTP adapters on the native Run2 authentication and persistence layer."""
+"""GroupRun HTTP adapters on the native classroom authentication and persistence layer."""
 
 from copy import deepcopy
 from types import SimpleNamespace
@@ -104,7 +104,7 @@ def teacher_room(db, rid, a):
     room, _, teacher = service.load(db, rid, a.id, True)
     if not teacher:
         raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
-    if room.state.get("portal_group"):
+    if room.state.get("group"):
         raise DomainError("CLASSROOM_PARENT_REQUIRED", 422)
     return room
 
@@ -146,8 +146,8 @@ def configure(rid: str, body: Configure, request: Request):
             raise DomainError("CURRENT_ROSTER_DIGEST_REQUIRED", 409)
         assignments = allocate(rows, body.group_count, body.members_per_group, body.assignments)
         state = deepcopy(room.state)
-        old = state.get("portal_classroom", {})
-        state["portal_classroom"] = {
+        old = state.get("classroom", {})
+        state["classroom"] = {
             "revision": old.get("revision", 0) + 1,
             "state": "CONFIGURED",
             "group_count": body.group_count,
@@ -177,7 +177,7 @@ def configure(rid: str, body: Configure, request: Request):
             room,
             {
                 "type": "groups.configured",
-                "payload": {"revision": state["portal_classroom"]["revision"]},
+                "payload": {"revision": state["classroom"]["revision"]},
             },
         )
         return save_receipt(
@@ -204,7 +204,7 @@ def start(rid: str, body: Start, request: Request):
         if not rows or body.expected_roster_digest != roster_hash(rows):
             raise DomainError("CURRENT_POPULATED_ROSTER_REQUIRED", 409)
         state = deepcopy(room.state)
-        cfg = state.get("portal_classroom")
+        cfg = state.get("classroom")
         if not cfg or cfg["roster_digest"] != roster_hash(rows):
             raise DomainError("CURRENT_GROUP_CONFIGURATION_REQUIRED", 409)
         assignments = allocate(
@@ -309,11 +309,11 @@ def start(rid: str, body: Start, request: Request):
                     "seat": seat,
                 }
                 mapping[original.id] = {"group_id": gid, "membership_id": mid}
-            gs["portal_group"] = initialise(
+            gs["group"] = initialise(
                 gid, room.id, snap.id, list(gs["members"]), f"Group {number+1}"
             )
-            gs["portal_group"]["avatar_pack_id"] = cfg["avatar_pack_id"]
-            gs["portal_group"]["asset_snapshot"] = deepcopy(asset_snapshot)
+            gs["group"]["avatar_pack_id"] = cfg["avatar_pack_id"]
+            gs["group"]["asset_snapshot"] = deepcopy(asset_snapshot)
             machine = GameOrchestrator(gs, now)
             machine.command("start", {"script_document": snap.document}, None, True)
             persist_machine(db, g, machine)
@@ -364,8 +364,8 @@ def view(rid: str, request: Request):
             db.flush()
         state = service.hydrate(db, room)
         mode = "teacher" if teacher and request.query_params.get("mode") == "teacher" else "student"
-        if state.get("portal_group"):
-            p = state["portal_group"]
+        if state.get("group"):
+            p = state["group"]
             visible_nodes, visible_edges = visible_evidence(
                 p["arguments"], p["edges"], member.id if member else None, mode == "teacher"
             )
@@ -413,7 +413,7 @@ def view(rid: str, request: Request):
                 "focus_notice": focus_notice(state),
             }
         rows = roster(db, room)
-        cfg = state.get("portal_classroom", {})
+        cfg = state.get("classroom", {})
         if mode != "teacher" and cfg.get("state") == "STARTED":
             return {
                 "kind": "GroupCollection",
@@ -427,7 +427,7 @@ def view(rid: str, request: Request):
         for meta in cfg.get("groups", []):
             g = db.get(Room, meta["id"])
             if g:
-                p = g.state["portal_group"]
+                p = g.state["group"]
                 groups.append(
                     {
                         **meta,
@@ -480,7 +480,7 @@ def command(rid: str, body: GroupCommand, request: Request):
     with transaction() as db:
         a = actor(db, request, True)
         room, _, _ = service.load(db, rid, a.id)
-        if not room.state.get("portal_group"):
+        if not room.state.get("group"):
             raise DomainError("GROUP_RUN_REQUIRED", 422)
         return service.execute(db, a, rid, SimpleNamespace(**body.model_dump()))
 
@@ -490,7 +490,7 @@ def analysis(rid: str, request: Request):
     with transaction() as db:
         a = actor(db, request)
         room = teacher_room(db, rid, a)
-        cfg = room.state.get("portal_classroom", {})
+        cfg = room.state.get("classroom", {})
         groups = [db.get(Room, x["id"]) for x in cfg.get("groups", [])]
         return project_analysis(rid, room.state["title"], [g for g in groups if g])
 

@@ -14,7 +14,7 @@ def main():
     for url in [SPEC['url'],'https://api.github.com/repos/met4citizen/TalkingHead/git/blobs/'+SPEC['git_blob_sha']]:
         try:
             print('AVATAR_SOURCE '+url,flush=True)
-            request=urllib.request.Request(url,headers={'User-Agent':'Socrates-Run2'})
+            request=urllib.request.Request(url,headers={'User-Agent':'Socrates-Classroom'})
             with urllib.request.urlopen(request,timeout=45) as r:data=r.read(12000000)
             if 'api.github.com' in url:data=base64.b64decode(json.loads(data)['content'])
             if identity(data)!=SPEC['git_blob_sha'] or data[:4]!=b'glTF':raise ValueError('ASSET_IDENTITY')

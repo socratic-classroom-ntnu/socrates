@@ -45,7 +45,7 @@ def create_app(legacy=False, background=True):
         with engine().connect() as c:
             c.execute(text("SELECT 1"))
             c.execute(text("SELECT 1 FROM accounts LIMIT 1"))
-        return {"status": "ready", "database": "connected", "runtime": "classroom-run2"}
+        return {"status": "ready", "database": "connected", "runtime": "classroom"}
 
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):

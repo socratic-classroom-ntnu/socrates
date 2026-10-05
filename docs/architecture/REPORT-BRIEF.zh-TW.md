@@ -1,6 +1,6 @@
 # Socrates 報告速記｜CE Stage 交付候選
 
-> 狀態（2026-10-03）：本文件只描述 2026-09-24 的 Round 1 展示。現行 Run 2 說明見 [Run 2 Architecture](../RUN2-ARCHITECTURE.md)。
+> 狀態（2026-10-03）：本文件只描述 2026-09-24 的 Round 1 展示。現行教室（多人課堂）說明見 [Classroom Architecture](../CLASSROOM-ARCHITECTURE.md)。
 
 ## 30 秒
 

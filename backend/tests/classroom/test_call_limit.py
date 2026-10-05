@@ -25,7 +25,7 @@ def test_teacher_zero_disables_live_calls_for_tutor():
 
 
 def test_ai_students_keep_their_floor(monkeypatch):
-    monkeypatch.setenv("PORTAL_AI_CALL_BUDGET", "240")
+    monkeypatch.setenv("CLASSROOM_AI_CALL_BUDGET", "240")
     assert effective_call_limit(30, {"max_calls": 240}, "llm_student_turn") == 240
 
 

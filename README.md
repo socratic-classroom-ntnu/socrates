@@ -2,7 +2,7 @@
 ## 伺服器組員：從這裡架設 Stage
 
 部署分支為 `stage`。完整步驟請讀 [Stage 部署指南](deploy/stage/README.md)。
-Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architecture/REPORT-BRIEF.zh-TW.md)；Run 2 架構見 [RUN2-ARCHITECTURE](docs/RUN2-ARCHITECTURE.md)。
+Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architecture/REPORT-BRIEF.zh-TW.md)；教室（多人課堂）架構見 [CLASSROOM-ARCHITECTURE](docs/CLASSROOM-ARCHITECTURE.md)。
 
 # 蘇格拉底式對話機器人
 
@@ -50,9 +50,9 @@ Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architect
 
 ## 目前的狀態
 
-網站有兩個入口，目前主力開發的是 Run 2。
+網站有兩個入口，目前主力開發的是教室（多人課堂）。
 
-**Run 2：多人課堂（網站根目錄 `/`）**
+**教室：多人課堂（網站根目錄 `/`）**
 
 - 帳號註冊、Email 驗證、忘記密碼；教師建立劇本與教室，學生以課程碼加入
 - 課堂流程：倒數、作答、選項分布、代表學生與導師的聚焦討論、題目／班級／個人總結；
@@ -72,7 +72,7 @@ Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architect
 docker compose up -d
 ```
 
-開 <http://localhost:5173> 是 Run 2 的登入頁；本機不會真的寄信，註冊後驗證頁會直接顯示驗證連結。
+開 <http://localhost:5173> 是教室的登入頁；本機不會真的寄信，註冊後驗證頁會直接顯示驗證連結。
 Round 1 的單人流程在 <http://localhost:5173/round1>。三個服務：前端 5173、後端 8000、PostgreSQL 5432。
 
 ```bash
@@ -90,7 +90,7 @@ cd frontend && npm test -- --runInBand                  # 前端測試
 | 新加入團隊 | [`docs/onboarding.md`](docs/onboarding.md)——六站閱讀路徑，順序是刻意排的 |
 | 想理解產品 | [`docs/product/product-overview.md`](docs/product/product-overview.md) |
 | 要驗收 Round 1 三階腳本 | [`docs/testing/trolley-round1-acceptance.md`](docs/testing/trolley-round1-acceptance.md) |
-| 想理解 Run 2 | [`docs/RUN2-ARCHITECTURE.md`](docs/RUN2-ARCHITECTURE.md) |
+| 想理解教室（多人課堂） | [`docs/CLASSROOM-ARCHITECTURE.md`](docs/CLASSROOM-ARCHITECTURE.md) |
 | 想理解實作 | [`docs/superpowers/specs/2026-09-19-socratic-tutor-design.md`](docs/superpowers/specs/2026-09-19-socratic-tutor-design.md) |
 
 

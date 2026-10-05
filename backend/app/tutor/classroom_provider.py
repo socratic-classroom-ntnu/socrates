@@ -74,7 +74,7 @@ class OpenRouterProvider:
         headers = {
             "Authorization": "Bearer " + key,
             "Content-Type": "application/json",
-            "X-Title": "Socrates Run2",
+            "X-Title": "Socrates Classroom",
             "HTTP-Referer": os.environ.get("SOCRATES_PUBLIC_ORIGIN", "http://localhost"),
             "X-Request-ID": request_id,
         }

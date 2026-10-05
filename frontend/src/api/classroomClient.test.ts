@@ -1,6 +1,6 @@
 import { api, command, setCSRF } from './classroomClient';
 afterEach(() => jest.restoreAllMocks());
-test('Run2 command carries one stable action identity and same-origin credentials', async () => {
+test('Classroom command carries one stable action identity and same-origin credentials', async () => {
     const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ status: 'RECORDED' }) });
     globalThis.fetch = fn;
     setCSRF('csrf-fixture');
@@ -10,7 +10,7 @@ test('Run2 command carries one stable action identity and same-origin credential
     expect(JSON.parse(init.body).action_id).toBe('11111111-1111-4111-8111-111111111111');
     expect(init.headers['X-CSRF-Token']).toBe('csrf-fixture');
 });
-test('Run2 API presents domain error without converting it to a successful receipt', async () => {
+test('Classroom API presents domain error without converting it to a successful receipt', async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, headers: { get: () => 'application/json' }, json: async () => ({ detail: 'ACTION_ID_PAYLOAD_CONFLICT' }) });
     await expect(api('/classrooms/r', 'POST', {})).rejects.toThrow('ACTION_ID_PAYLOAD_CONFLICT');
 });

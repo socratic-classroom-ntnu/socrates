@@ -14,7 +14,7 @@ def run(code: str) -> str:
     return out.stdout.strip()
 
 
-def test_run2_orchestrator_imports_no_provider_module():
+def test_classroom_orchestrator_imports_no_provider_module():
     code = (
         "import sys, app.orchestrator.classroom; "
         f"print([m for m in {PROVIDER_MODULES!r} if m in sys.modules])"

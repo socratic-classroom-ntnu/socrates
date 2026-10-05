@@ -118,7 +118,7 @@ class RealtimeBus:
         while True:
             try:
                 async with await psycopg.AsyncConnection.connect(url, autocommit=True) as c:
-                    await c.execute("LISTEN socrates_run2")
+                    await c.execute("LISTEN socrates_classroom")
                     self.listener_ready = True
                     for room in list(self.clients):
                         await self.catch_up(room)

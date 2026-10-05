@@ -6,7 +6,7 @@
    不先懂這句，後面所有取捨都會看起來像多餘的龜毛。
 2. `docker compose up`，實際走一次對話，有問題先問AI讓它帶你跑一次
    手感優先於閱讀。http://localhost:5173/round1 是 Round 1 的單人三階情境（目前擱置不開發，
-   但最能體會「照見」的流程）；http://localhost:5173 是 Run 2 的多人課堂，註冊後驗證頁會顯示本機驗證連結。
+   但最能體會「照見」的流程）；http://localhost:5173 是教室（多人課堂），註冊後驗證頁會顯示本機驗證連結。
 3. 讀 `backend/tests/invariants/`
    測試是規格的可執行版，比實作短，而且不會過期。
 4. 讀 `backend/app/orchestrator/orchestrator.py` 與 `policy.py`
@@ -31,7 +31,7 @@
 - **腳本 provider 不看你打了什麼。** 你輸入任何內容，教授的回應都一樣。
   這是為了讓驗收可重現，不是壞掉
 
-Run 2 用伺服器帳號，不受第一點影響；導師回覆是否來自真的 LLM，取決於教室擁有者有沒有設定 provider profile。
+教室用伺服器帳號，不受第一點影響；導師回覆是否來自真的 LLM，取決於教室擁有者有沒有設定 provider profile。
 
 ## 卡住的地方請補回這份文件
 

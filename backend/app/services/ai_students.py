@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-import os
 import time
 
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.classroom_env import env_str
 from app.repositories.classroom_storage import (
     Base,
 )
@@ -155,9 +155,9 @@ def extend(Native):
                 "preview": 2.0,
                 "final_reflection": 45.0,
             }
-            configured = os.environ.get(
-                "PORTAL_AI_" + name.upper() + "_SECONDS",
-                os.environ.get("PORTAL_AI_PHASE_SECONDS", str(defaults.get(name, 5.0))),
+            configured = env_str(
+                "CLASSROOM_AI_" + name.upper() + "_SECONDS",
+                env_str("CLASSROOM_AI_PHASE_SECONDS", str(defaults.get(name, 5.0))),
             )
             return float(configured)
 
@@ -176,7 +176,7 @@ def extend(Native):
             return result
 
         def schedule_ai(self):
-            p = self.s.get("portal_group")
+            p = self.s.get("group")
             if not p:
                 return
             phase = self.s.get("phase")

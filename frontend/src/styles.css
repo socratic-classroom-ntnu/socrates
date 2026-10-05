@@ -1,4 +1,4 @@
-@import './styles/r80-responsive.css';
+@import './styles/responsive.css';
 /* Socrates · quiet editorial palette */
 :root { color-scheme:dark; font-family:Inter,"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif; color:#f5eee7; background:#111017; font-synthesis:none; text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; }
 * { box-sizing:border-box; } body {margin:0;} button,input,textarea {font:inherit;} button {cursor:pointer;} a {color:#d3bca0;} button:disabled {cursor:default;opacity:.46;} :focus-visible {outline:2px solid #d7be9d;outline-offset:4px;} ::selection {background:#a895c5;color:#14101e;}

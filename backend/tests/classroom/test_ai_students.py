@@ -55,7 +55,7 @@ def state():
         "persona": {"id": "fairness", "values": ["公平"], "seed": 7},
         "model": "fixture",
     }
-    s["portal_group"] = initialise("g1", "c1", "s1", ["m1"], "Group 1")
+    s["group"] = initialise("g1", "c1", "s1", ["m1"], "Group 1")
     return s
 
 
@@ -67,7 +67,7 @@ def test_other_option_is_server_enforced_once():
 
 
 def test_llm_student_uses_native_job_and_answer_contract(monkeypatch):
-    monkeypatch.setenv("PORTAL_AI_PHASE_SECONDS", "1")
+    monkeypatch.setenv("CLASSROOM_AI_PHASE_SECONDS", "1")
     machine = GameOrchestrator(state(), 0)
     machine.command("start", {"script_document": ensure_other_options(document())}, None, True)
     assert machine.s["phase"] == "countdown"

@@ -1,4 +1,4 @@
-# Socrates Run2 — Stage 伺服器部署
+# Socrates 教室 — Stage 伺服器部署
 
 ## 交付目的
 
@@ -25,7 +25,7 @@ PostgreSQL、郵件服務（預設 Resend API）及既有 Cloudflare Tunnel 由�
 郵件 key 留在伺服器 `.env`／credential store，GitHub source 只收 `.env.example`。
 
 > **`DATABASE_URL` 一旦使用就不要改寫。** 教室擁有者存的 provider 憑證以 `DATABASE_URL`
-> 字串衍生的金鑰加密（`backend/app/run2/provider_profiles.py`）。改密碼、換主機別名、
+> 字串衍生的金鑰加密（`backend/app/api/routes/provider_profiles.py`）。改密碼、換主機別名、
 > 改編碼或參數，即使指向同一個資料庫，既有憑證都會解不開（`PROVIDER_CREDENTIAL_DECRYPTION`，503），
 > 擁有者必須重新輸入。人工部署的 `deploy/stage/.env` 與 CD 的 secret `SOCRATES_DATABASE_URL`
 > 也必須逐字相同。
@@ -81,7 +81,7 @@ bash deploy/stage/up.sh
 Backend 啟動時執行 Alembic 升版，再啟動2個 Uvicorn workers；frontend 使用 Nginx，
 `/api/*` 及 WebSocket upgrade 轉交 `backend:8000`。
 
-每個 worker 有兩個資料庫連線池：Run 2 引擎（`pool_size=5`＋`max_overflow=5`）與 Round 1 路由
+每個 worker 有兩個資料庫連線池：教室模組的引擎（`pool_size=5`＋`max_overflow=5`）與 Round 1 路由
 使用的引擎（SQLAlchemy 預設 5＋10，有流量才連線），另有一條專用 LISTEN 連線。
 最壞情況約每 worker 26 條、預設 2 個 worker 共約 52 條；請依同機其他服務預留資料庫 connection budget。
 
@@ -141,7 +141,7 @@ curl -fsS https://socrates.driseam.com/api/release
 
 ## 5. CI／Release／CD 採用順序
 
-stage push 走 CI。CI的backend、frontend、contract、Round1、Run2負載皆成功後，
+stage push 走 CI。CI的backend、frontend、contract、Round1、教室負載（`classroom-load`）皆成功後，
 呼叫同一revision的Stage Release。Release.json以image digest固定來源與相依lock，
 image 以 `sha-<source sha>` 與 `stage-<時間戳>-<source sha>` 標記。Stage Deploy消費這兩個digest。
 
@@ -199,7 +199,7 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml logs --t
 回給Arthur：stage commit、CI run URL、兩容器image IDs、public readiness與release回應、
 一位教師＋一位學生完整題目smoke結果。Credentials保留於credential store。
 
-2×60容量驗收在專用CI資料庫與兩worker上進行（`scripts/run2_load.py`）。20ms controlled、
+2×60容量驗收在專用CI資料庫與兩worker上進行（`scripts/classroom_load.py`）。20ms controlled、
 100–150ms public是測量目標；請讀實際receipt中的延遲資料與適用網路範圍。此README本身提供部署程序。
 
 ## 歷史紀錄：2026-09-24 首次發佈

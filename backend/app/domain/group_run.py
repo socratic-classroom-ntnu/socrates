@@ -50,7 +50,7 @@ def initialise(group_id, parent_id, snapshot_id, members, label):
 
 
 def person_summary(state, member_id):
-    p = state["portal_group"]
+    p = state["group"]
     rows = [
         n
         for n in p["arguments"]
@@ -69,7 +69,7 @@ def record_statement(
 ):
     from app.orchestrator.classroom import DomainError
 
-    p = state["portal_group"]
+    p = state["group"]
     if member_id not in p["member_snapshot"]:
         raise DomainError("GROUP_MEMBERSHIP_REQUIRED", 403)
     if state["phase"] not in TALK_PHASES:
@@ -124,7 +124,7 @@ def record_statement(
 def confirm(state, member_id, digest, now):
     from app.orchestrator.classroom import DomainError
 
-    p = state["portal_group"]
+    p = state["group"]
     if member_id not in p["member_snapshot"]:
         raise DomainError("GROUP_MEMBERSHIP_REQUIRED", 403)
     if state["phase"] not in TALK_PHASES:
@@ -188,7 +188,7 @@ def extend(Native):
 
     class GroupOrchestrator(Native):  # type: ignore[valid-type,misc]
         def group(self):
-            return self.s.get("portal_group")
+            return self.s.get("group")
 
         def individual(self):
             return bool(self.group()) and self.group().get("runtime_mode") == "individual-free-text"

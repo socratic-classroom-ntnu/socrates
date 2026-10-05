@@ -10,6 +10,7 @@ from app import classroom_env
     [
         ("CLASSROOM_LLM_DAILY_BUDGET", "RUN2_LLM_DAILY_BUDGET"),
         ("CLASSROOM_LLM_WORKERS", "RUN2_LLM_WORKERS"),
+        ("CLASSROOM_AI_CALL_BUDGET", "PORTAL_AI_CALL_BUDGET"),
     ],
 )
 def test_old_env_name_is_still_honoured(monkeypatch, new_name, old_name):

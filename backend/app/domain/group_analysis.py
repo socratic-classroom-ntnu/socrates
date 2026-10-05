@@ -12,7 +12,7 @@ def analysis(classroom_id, title, rooms):
     groups = []
     for room in rooms:
         s = room.state if hasattr(room, "state") else room
-        p = s["portal_group"]
+        p = s["group"]
         persons = []
         midmap = {m: pseudonym(classroom_id, m) for m in p["member_snapshot"]}
         nodes = [

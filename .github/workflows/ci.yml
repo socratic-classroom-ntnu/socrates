@@ -40,7 +40,7 @@ jobs:
         run: python -m ruff check backend
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
-      - name: Strict Round1 types and Run2 contracts
+      - name: Strict Round1 types and classroom contracts
         run: |
           cd backend
           python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py'
@@ -121,7 +121,7 @@ jobs:
         with: {name: round1-evidence, path: round1-compose.log, retention-days: 7}
       - if: always()
         run: docker compose down
-  run2-load:
+  classroom-load:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -144,18 +144,18 @@ jobs:
       - name: Two-worker, real PostgreSQL 2×60 workload
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE/backend"
-          python scripts/run2_load.py --output run2-load.json
+          python scripts/classroom_load.py --output classroom-load.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: run2-load-evidence
+          name: classroom-load-evidence
           path: |
-            run2-load.json
-            run2-server.log
+            classroom-load.json
+            classroom-server.log
   ci-required:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, frontend, contract, round1-e2e, run2-load]
+    needs: [backend, frontend, contract, round1-e2e, classroom-load]
     steps:
       - env:
           RESULTS: ${{ toJSON(needs) }}

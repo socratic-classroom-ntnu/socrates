@@ -1,4 +1,4 @@
-# Socrates Run2 — Classroom 架構與已定決策
+# Socrates 教室（Classroom）— 架構與已定決策
 
 ## 可見產品
 
@@ -12,11 +12,11 @@
 ## 責任分層
 
 React元件→集中HTTP commands／WS events→FastAPI DTO layer→application service
-→GameOrchestrator／policy純逻辑→transaction＋`storage.py` 的持久化函式→PostgreSQL。
+→GameOrchestrator／policy純逻辑→transaction＋`repositories/classroom_storage.py` 的持久化函式→PostgreSQL。
 
 LLM jobs為typed intent；worker在transaction後消費，`prompts.compile_program` 從repo templates
-（`prompts/run2/programs.json`）／skills（`skills/run2/`）與DB metadata組裝要求，再交給
-`provider_gateway.generate`。Provider沒有branch、classroom mutation或shell權限。
+（`prompts/classroom/programs.json`）／skills（`skills/classroom/`）與DB metadata組裝要求，再交給
+`tutor/classroom_gateway.generate`。Provider沒有branch、classroom mutation或shell權限。
 Tutor observations由policy判定；phase、selection與deadline由server決定。
 
 **Provider 鏈：** 每次呼叫依教室擁有者帳號解析 provider profile——先用預設 profile，失敗再試
@@ -28,18 +28,18 @@ fallback profile，都不可用時以固定內容完成（見「Teacher自動化
 GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另有durable rows與read projections。
 這保留global/question-local的分層，並以每班一個row-lock配置唯一phase mutation owner。
 
-## Portal 擴充模組
+## 教室功能模組
 
-以下由 Portal 回合加入，掛在 `/api/v2` 之下；`portal_group_domain` 與 `portal_ai_students` 以
-`extend()` 包裝 `GameOrchestrator`。
+以下掛在 `/api/v2` 之下；`domain/group_run.py` 與 `services/ai_students.py` 以 `extend()` 包裝
+`GameOrchestrator`（`orchestrator/classroom.py`）。路徑皆相對於 `backend/app/`。
 
 | 模組 | 路由 | 內容 |
 |---|---|---|
-| `portal_classroom_library.py` | `/library/*` | 教室庫、教室資產與 session |
-| `portal_group_api.py`／`portal_group_domain.py` | `/groups/*` | 分組課堂（group runs） |
-| `portal_ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
-| `provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
-| `portal_public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
+| `api/routes/classroom_library.py` | `/library/*` | 教室庫、教室資產與 session |
+| `api/routes/groups.py`／`domain/group_run.py` | `/groups/*` | 分組課堂（group runs） |
+| `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
+| `api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
+| `api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
 
 ## 資料與並發
 
@@ -81,14 +81,14 @@ Dynamic：representatives結束→多數立場與代表argument→生成題目�
 Job priority：`llm_student_turn`(0) > focused tutor(1) > dynamic(2) > question summary(3)
 > class summary(4) > personal summary(5)。
 
-額度依序檢查（`workers.py` 的 `reserve_call`）：班級呼叫次數上限 → 班級 token 上限（預設 1M）
-→ 選填的成本上限 → 平台每日 `RUN2_LLM_DAILY_BUDGET`。班級呼叫次數上限取劇本的
+額度依序檢查（`services/llm_workers.py` 的 `reserve_call`）：班級呼叫次數上限 → 班級 token 上限（預設 1M）
+→ 選填的成本上限 → 平台每日 `CLASSROOM_LLM_DAILY_BUDGET`。班級呼叫次數上限取劇本的
 `live_llm_call_budget`（教師額度，預設 240；0 表示不使用 live LLM）與帳號路由 `max_calls`（預設 240，0 視為未設定）
-的較小者（`effective_call_limit`）；AI 學生另有 `PORTAL_AI_CALL_BUDGET`（預設 240）的保底。
+的較小者（`effective_call_limit`）；AI 學生另有 `CLASSROOM_AI_CALL_BUDGET`（預設 240）的保底。（舊名 `RUN2_*`／`PORTAL_AI_*` 仍可讀，下一版移除。）
 
 Templates＋SkillSet＋Prompt metadata 保存 version 與 hash；每次呼叫的 audit 記錄 provider、
 provider profile、classroom owner、requested／actual model、use case、latency、token usage、
-estimated cost、fallback 與原因。`skills/run2/socratic.md` 會加到全部 6 個 program 的 system prompt
+estimated cost、fallback 與原因。`skills/classroom/socratic.md` 會加到全部 6 個 program 的 system prompt
 （包含 AI 學生），改它會改變 `skill_hash` 與模型行為。
 Question summary完成後cache；class從逐題summary合成；personal依全課／單題scope按首次開啟cache。
 Full account與互動record存backend；學生summary只投影統計與自己的分析，Email保留account層。
@@ -96,13 +96,13 @@ Full account與互動record存backend；學生summary只投影統計與自己的
 ## 互動經濟與未來scope
 
 愛心／點讚／禮物保存event，sender1 receiver5，script per-turn cap限制可得分。
-參與型與social achievements在Run2；shop／cosmetics與late join是Run3；TTS／viseme由Portal接續。
+參與型與social achievements在本期；shop／cosmetics與late join留到下一期；TTS／viseme由Portal接續。
 
 ## 部署
 
 Stage為frontend Nginx與backend兩個應用容器，外部Postgres、郵件（預設 Resend API，SMTP 選用）、host Tunnel。
-backend 由 `WEB_CONCURRENCY`（預設 2）個 uvicorn process 組成，每個 process 跑 `RUN2_LLM_WORKERS`
+backend 由 `WEB_CONCURRENCY`（預設 2）個 uvicorn process 組成，每個 process 跑 `CLASSROOM_LLM_WORKERS`
 （預設 4）個 LLM loop，以及 clock、mail、LISTEN、sweep 各一個 loop。
-2×60負載在獨立CI資料庫（`scripts/run2_load.py`）；部署後的 `deploy/stage/smoke.sh` 檢查首頁、readiness、
+2×60負載在獨立CI資料庫（`scripts/classroom_load.py`）；部署後的 `deploy/stage/smoke.sh` 檢查首頁、readiness、
 auth 路由與版本資訊，完整的教師／學生流程依 `deploy/stage/README.md` 第 4 節人工驗收。
 Latency數值為實測目標，依receipt回讀。

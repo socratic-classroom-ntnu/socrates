@@ -284,7 +284,7 @@ def digest(value) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def notify(db, payload: dict, channel="socrates_run2"):
+def notify(db, payload: dict, channel="socrates_classroom"):
     if db.bind.dialect.name == "postgresql":
         body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         if len(body.encode()) > 7400:

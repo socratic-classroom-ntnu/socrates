@@ -1,4 +1,4 @@
-name: socrates-run2-local
+name: socrates-classroom-local
 services:
   db:
     image: postgres:16
@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: socrates
       POSTGRES_PASSWORD: socrates-local-only
       POSTGRES_DB: socrates
-    volumes: ['run2-pg:/var/lib/postgresql/data']
+    volumes: ['classroom-pg:/var/lib/postgresql/data']
     healthcheck:
       test: ['CMD-SHELL','pg_isready -U socrates']
       interval: 3s
@@ -42,4 +42,4 @@ services:
     ports: ['127.0.0.1:5180:80']
     depends_on: [backend]
 volumes:
-  run2-pg:
+  classroom-pg:

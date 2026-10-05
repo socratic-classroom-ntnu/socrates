@@ -69,7 +69,7 @@ def compile_program(db, kind, context):
         "skill_set_version": spec["skill_set_version"],
         "template_hash": digest(entry),
         "skill_hash": digest(skill_text),
-        "output_schema_version": "run2.v1",
+        "output_schema_version": "classroom.v1",
         "context_hash": digest(context),
         "use_case": kind,
     }

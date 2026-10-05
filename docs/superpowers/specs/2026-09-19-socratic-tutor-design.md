@@ -8,7 +8,7 @@
 
 > 狀態（2026-10-03）：Round 1 目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
 > 規格原意與程式不一致、尚待決定的兩處保留原文並標註：§5.2／§7 的路口提示由誰產生（計畫盤點 B8）、
-> §11.1／§13 的結束確認框與「還有 N 個情境」（計畫盤點 B5）。Run 2 的設計見 `docs/RUN2-ARCHITECTURE.md`。
+> §11.1／§13 的結束確認框與「還有 N 個情境」（計畫盤點 B5）。教室（多人課堂）的設計見 `docs/CLASSROOM-ARCHITECTURE.md`。
 
 ---
 
@@ -293,7 +293,7 @@ unique: `session_id`
 
 - `transcript_drafts`：語音轉文字草稿（`text`、`adapter`、`locale`、`confidence`、`status` draft/confirmed/discarded），確認後才以一般訊息送出
 - `interaction_events`：互動紀錄（`event_type`、`payload`）
-- Run 2 的 `r2_*`／`r73_*`／`r88_*`／`r97_*`／`r104_*` 表見 `docs/RUN2-ARCHITECTURE.md`
+- 教室模組的資料表見 `docs/CLASSROOM-ARCHITECTURE.md`（2026-10-05 起表名已無回合前綴）
 
 所有時間存 UTC，前端轉本地顯示。
 
@@ -479,7 +479,7 @@ frontend/src/
 ```
 
 實際目錄（2026-10-03）另有 `features/conversation-room/`（對話室，`pages/Conversation.tsx` 只包一層 `ConversationRoom`）、
-`Round1App.tsx`（`/round1` 的路由）與 `run2/`（Run 2）；`App.tsx` 依路徑分流到 Round 1 或 Run 2。
+`Round1App.tsx`（`/round1` 的路由）與 `ClassroomApp.tsx`（教室）；`App.tsx` 依路徑分流到 Round 1 或教室。
 
 **`ActionBar` 只接收 `available_actions`，渲染對應按鈕，不知道 `flow_state` 是什麼。**
 

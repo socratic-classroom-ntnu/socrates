@@ -1,4 +1,4 @@
-"""Native Run2 integration tests using its SQLite unit-test adapter.
+"""Native classroom integration tests using its SQLite unit-test adapter.
 Authentication transport is covered by the native existing suite; actor selection
 is injected here to exercise real models, ownership checks and transactions.
 """
@@ -105,7 +105,7 @@ def test_shared_snapshot_independent_runs_and_exact_start(classroom):
     with storage.transaction() as db:
         rooms = [db.get(storage.Room, g["id"]) for g in result["groups"]]
         assert len(rooms) == 3 and len({r.snapshot_id for r in rooms}) == 1
-        assert all(len(r.state["portal_group"]["member_snapshot"]) == 1 for r in rooms)
+        assert all(len(r.state["group"]["member_snapshot"]) == 1 for r in rooms)
         assert db.get(storage.Room, rid).state["phase"] == "group_overview"
         first = GameOrchestrator(rooms[0].state, time.time() + 4)
         first.tick()
@@ -126,17 +126,17 @@ def test_grace_phase_and_post_ack_evidence(classroom):
         machine.command(
             "group_ack", {"summary_digest": person_summary(machine.s, mid)["digest"]}, mid, False
         )
-        assert machine.s["portal_group"]["settlement"]["state"] == "CURRENT_PHASE_FINISHING"
+        assert machine.s["group"]["settlement"]["state"] == "CURRENT_PHASE_FINISHING"
         nextstage = GameOrchestrator(machine.s, machine.s["due_at"] + 0.1)
         nextstage.tick()
         assert nextstage.s["phase"] == "final_reflection"
         nextstage.command("group_statement", {"text": "緊急需求可以優先。"}, mid, False)
-        assert nextstage.s["portal_group"]["arguments"][-1]["kind"] == "post_ack_observation"
+        assert nextstage.s["group"]["arguments"][-1]["kind"] == "post_ack_observation"
         final = GameOrchestrator(nextstage.s, nextstage.now + 61)
         final.tick()
         assert final.s["phase"] == "summary"
-        assert final.s["portal_group"]["settlement"]["final_stage_count"] == 1
-        assert final.s["portal_group"]["settlement"]["state"] == "SETTLED"
+        assert final.s["group"]["settlement"]["final_stage_count"] == 1
+        assert final.s["group"]["settlement"]["state"] == "SETTLED"
         with pytest.raises(DomainError):
             final.command("group_statement", {"text": "late"}, mid, False)
 
@@ -156,7 +156,7 @@ def test_multiplayer_preserves_native_answer_logic(classroom):
             False,
         )
         assert machine.current()["answers"][mid]["option_id"] == "a"
-        assert machine.s["portal_group"]["arguments"][-1]["text"] == "我的理由"
+        assert machine.s["group"]["arguments"][-1]["text"] == "我的理由"
         assert machine.s["phase"] == "answering"
 
 

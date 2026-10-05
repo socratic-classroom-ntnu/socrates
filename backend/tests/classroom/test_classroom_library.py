@@ -139,11 +139,11 @@ def test_twelve_members_four_independent_sessions(environment):
         assert sum(len(r.state["members"]) for r in rooms) == 12
         assert all(len(r.state["members"]) == 3 for r in rooms)
         assert len({r.snapshot_id for r in rooms}) == 1
-        assert len({r.state["portal_group"]["asset_snapshot"]["digest"] for r in rooms}) == 1
+        assert len({r.state["group"]["asset_snapshot"]["digest"] for r in rooms}) == 1
         first = GameOrchestrator(rooms[0].state, time.time() + 4)
         first.tick()
         assert first.s["phase"] == "answering" and rooms[1].state["phase"] == "countdown"
-        assert all(r.state["portal_group"]["runtime_mode"] == "native-group-stage" for r in rooms)
+        assert all(r.state["group"]["runtime_mode"] == "native-group-stage" for r in rooms)
     history = library.classroom(c["id"], req)["sessions"]
     assert len([x for x in history if x["kind"] == "SESSION"]) == 4
     assert len({x["batch_id"] for x in history}) == 1
@@ -184,7 +184,7 @@ def test_private_evidence_and_stage_projection(environment):
         a, b = members[:2]
         machine.command("group_statement", {"text": "本人草稿"}, a, False)
         machine.command("group_statement", {"text": "另一位的理由"}, b, False)
-        evidence = machine.s["portal_group"]
+        evidence = machine.s["group"]
         nodes, _ = visible_evidence(evidence["arguments"], evidence["edges"], a, False)
         assert [x["text"] for x in nodes] == ["本人草稿"]
         evidence["arguments"][1]["visibility"] = "stage"

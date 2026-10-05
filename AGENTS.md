@@ -50,7 +50,7 @@
 - `git commit --no-verify`
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
 - 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/api/classroomTypes.ts`、`frontend/classroom-openapi.json`（產生物，跑 `python scripts/gen_classroom_types.py`）
-- 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `run2/graphLayout.mjs`）目前不擋
+- 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `features/group-analytics/graphLayout.mjs`）目前不擋
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
 - 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
@@ -78,10 +78,7 @@ docker compose up -d                                  # 起全棧（db / backend
 docker compose exec backend python -m pytest tests -q # 後端測試
 docker compose exec backend ruff check .          # 後端 lint
 docker compose exec backend ruff format --check . # 後端格式
-docker compose exec backend python -m mypy app \
-  --exclude 'app/run2/|app/classroom_server.py'       # Round1 型別（strict）
-docker compose exec backend python -m mypy \
-  --config-file mypy-run2.ini app/run2 app/classroom_server.py # Run2 型別
+# 型別：兩條 mypy（Round 1 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
 
 cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
@@ -122,23 +119,29 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 `alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
 **hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`run2-load`，
+`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`classroom-load`，
 以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
-Round 1 走 `strict`，Run 2 走較寬的 `backend/mypy-run2.ini`。lint 的範圍是 `backend`，
+Round 1 走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（兩者都逐檔列出教室模組，新增教室模組時兩邊都要加）。lint 的範圍是 `backend`，
 不含 `scripts/`；`backend/pyproject.toml` 已用 `extend-exclude` 排除，因為 root compose 把 `./scripts`
 掛進了 `/app/scripts`。**CI 改了就要同時改 hook**，反之亦然——2026-09 曾經因為 CI 隨
-Run 2／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `--run` 餵給 Jest
-而無條件失敗，並且用 strict mypy 掃 Run 2 而多報數百個 CI 不在意的錯。
+教室模組／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `--run` 餵給 Jest
+而無條件失敗，並且用 strict mypy 掃教室模組而多報數百個 CI 不在意的錯。
 
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
 **push 前、以及 commit 有改到 `backend/` 時，backend 容器都要是開著的**（先跑 `docker compose up -d`）：hook 用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
-PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`round1-e2e`、`run2-load`。
+PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`round1-e2e`、`classroom-load`。
 
 Commit 訊息用 conventional commits：`type(scope): description`。
 因為 repo 只開放 squash merge，**這條規範實際落在 PR 標題上**。
 描述寫「為什麼」，不要複述 diff。
 
 PR 描述固定三行：**改了什麼／碰到哪些共用點（資料模型？`SessionView`？狀態機？）／怎麼驗證的**。
+
+### 查搬移前的歷史
+
+`backend/app/run2/` 與 `frontend/src/run2/` 已於 2026-10-05 解散、併入各分層（新位置見 `docs/CLASSROOM-ARCHITECTURE.md`）。
+`git log <path>` 預設**不會**顯示搬移前的歷史，請用 `git log --follow <path>`。
+`git blame` 不受影響，會正確顯示原作者。

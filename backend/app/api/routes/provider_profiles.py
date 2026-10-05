@@ -733,8 +733,8 @@ def _room_ai_settings(db, room: Room) -> tuple[str, dict, str | None]:
     owner_id = room.creator_id
     state = room.state
     snapshot = state.get("asset_snapshot")
-    if state.get("portal_group"):
-        snapshot = state["portal_group"].get("asset_snapshot") or snapshot
+    if state.get("group"):
+        snapshot = state["group"].get("asset_snapshot") or snapshot
     ai = {}
     if snapshot:
         ai = deepcopy(snapshot.get("assets", {}).get("ai_settings", {}))

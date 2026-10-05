@@ -24,7 +24,7 @@ from app.api.classroom_schemas import Command, JoinRoom, ScriptDocument
 from app.services import classroom as service
 from app.repositories import classroom_storage as storage
 
-DOC=ScriptDocument.model_validate({'title':'Run2 2×60 同步驗收','questions':[{'id':'q1','title':'共同抉擇','scenario':'你會優先保護哪一種價值？','duration_seconds':60,'max_focus_turns':1,'focus_response_seconds':5,'options':[{'id':'a','text':'結果'},{'id':'b','text':'責任'},{'id':'c','text':'關係'}]}],'live_llm_call_budget':0}).model_dump()
+DOC=ScriptDocument.model_validate({'title':'教室 2×60 同步驗收','questions':[{'id':'q1','title':'共同抉擇','scenario':'你會優先保護哪一種價值？','duration_seconds':60,'max_focus_turns':1,'focus_response_seconds':5,'options':[{'id':'a','text':'結果'},{'id':'b','text':'責任'},{'id':'c','text':'關係'}]}],'live_llm_call_budget':0}).model_dump()
 
 def fixtures():
     url=os.environ['DATABASE_URL']
@@ -114,12 +114,12 @@ async def workload(items,room_ids):
         await asyncio.gather(*(c.aclose() for _,c in clients),return_exceptions=True)
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--output',default='run2-load.json');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--output',default='classroom-load.json');args=p.parse_args()
     items,rooms=fixtures();env={**os.environ,'PYTHONPATH':str(ROOT/'backend')}
     # This dedicated entry only exists in the test process.
-    entry=ROOT/'backend/run2_load_entry.py';entry.write_text('from app.classroom_app import create_app\napp=create_app()\n')
-    with open('run2-server.log','w') as log:
-        process=subprocess.Popen([sys.executable,'-m','uvicorn','run2_load_entry:app','--host','127.0.0.1','--port','8099','--workers','2'],cwd=ROOT/'backend',env=env,stdout=log,stderr=log)
+    entry=ROOT/'backend/classroom_load_entry.py';entry.write_text('from app.classroom_app import create_app\napp=create_app()\n')
+    with open('classroom-server.log','w') as log:
+        process=subprocess.Popen([sys.executable,'-m','uvicorn','classroom_load_entry:app','--host','127.0.0.1','--port','8099','--workers','2'],cwd=ROOT/'backend',env=env,stdout=log,stderr=log)
         try:
             for _ in range(100):
                 try:

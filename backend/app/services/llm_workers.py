@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import os
 import time
 from uuid import uuid4
 
@@ -94,14 +93,14 @@ def effective_call_limit(script_budget: int, budgets: dict, kind: str) -> int:
     """Classroom call cap: the teacher's budget and the account's max_calls, whichever is lower.
 
     The teacher's value always counts (0 means no live calls); the account's max_calls counts only
-    when positive, keeping "0 = unset". AI students keep their PORTAL_AI_CALL_BUDGET floor.
+    when positive, keeping "0 = unset". AI students keep their CLASSROOM_AI_CALL_BUDGET floor.
     """
     limit = int(script_budget)
     account_limit = int(budgets.get("max_calls") or 0)
     if account_limit > 0:
         limit = min(limit, account_limit)
     if kind == "llm_student_turn":
-        limit = max(limit, int(os.environ.get("PORTAL_AI_CALL_BUDGET", "240")))
+        limit = max(limit, env_int("CLASSROOM_AI_CALL_BUDGET", 240))
     return limit
 
 
@@ -443,7 +442,7 @@ async def llm_loop():
             raise
         except Exception as exc:
             print(
-                "RUN2_JOB_RECONCILE " + type(exc).__name__,
+                "CLASSROOM_JOB_RECONCILE " + type(exc).__name__,
                 flush=True,
             )
             await asyncio.sleep(2)
@@ -455,7 +454,7 @@ async def clock_loop():
             await asyncio.to_thread(tick_due)
         except Exception as exc:
             print(
-                "RUN2_CLOCK_RECONCILE " + type(exc).__name__,
+                "CLASSROOM_CLOCK_RECONCILE " + type(exc).__name__,
                 flush=True,
             )
         await asyncio.sleep(0.05)
@@ -471,7 +470,7 @@ async def mail_loop():
             await asyncio.to_thread(send_mail_once)
         except Exception as exc:
             print(
-                "RUN2_MAIL_RECONCILE " + type(exc).__name__,
+                "CLASSROOM_MAIL_RECONCILE " + type(exc).__name__,
                 flush=True,
             )
         await asyncio.sleep(2)

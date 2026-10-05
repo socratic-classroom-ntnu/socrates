@@ -166,16 +166,11 @@ jobs:
           print(json.dumps({k:v['result'] for k,v in jobs.items()},indent=2))
           assert all(v['result']=='success' for v in jobs.values())
           PY
+  # Every push to stage/develop/master publishes <channel>-<UTC ts>-<sha> images.
+  # Only the stage channel is deployed: Flux filters on `^stage-...` (flux-k8s,
+  # apps/base/socrates/image-automation.yaml).
   release:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/stage'
-    needs: [ci-required]
-    permissions: {contents: read, packages: write}
-    uses: ./.github/workflows/stage-release.yml
-    with: {source_sha: '${{ github.sha }}'}
-  # develop / master get an image too, but under their own tag prefix. Flux
-  # only follows `stage-*`, so these are never deployed.
-  release-snapshot:
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && contains(fromJSON('["stage","develop","master"]'), github.ref_name)
     needs: [ci-required]
     permissions: {contents: read, packages: write}
     uses: ./.github/workflows/stage-release.yml

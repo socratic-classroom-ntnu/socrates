@@ -167,8 +167,8 @@ jobs:
           assert all(v['result']=='success' for v in jobs.values())
           PY
   # Every push to stage/develop/master publishes <channel>-<UTC ts>-<sha> images.
-  # Only the stage channel is deployed: Flux filters on `^stage-...` (flux-k8s,
-  # apps/base/socrates/image-automation.yaml).
+  # Flux deploys each channel to its own host (flux-k8s, apps/base/socrates):
+  # master -> socrates.driseam.com, stage -> -qa, develop -> -dev.
   release:
     if: github.event_name == 'push' && contains(fromJSON('["stage","develop","master"]'), github.ref_name)
     needs: [ci-required]

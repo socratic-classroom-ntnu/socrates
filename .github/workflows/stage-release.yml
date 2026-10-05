@@ -3,8 +3,8 @@ on:
   workflow_call:
     inputs:
       source_sha: {required: true, type: string}
-      # Tag prefix: images are tagged <channel>-<UTC ts>-<sha>. Flux only
-      # follows the `stage` channel, so other channels are never deployed.
+      # Tag prefix: images are tagged <channel>-<UTC ts>-<sha>. Flux has one
+      # ImagePolicy per channel, so the prefix decides which environment deploys.
       channel: {required: true, type: string}
     outputs:
       backend_image: {value: '${{ jobs.build.outputs.backend_image }}'}

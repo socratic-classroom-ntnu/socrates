@@ -16,10 +16,18 @@ stage 跑在 **Kubernetes 上，由 Flux 的 image automation 部署**：
 2. Flux 每小時掃一次 ghcr，看到較新的 `stage-*` tag 就自動換上。所以 push 之後**最多約一小時**才會上線，
    但時間點不固定，不能拿這段時間差來安排資料庫操作。
 
-`develop` 與 `master` push 後 CI 綠燈也會推 image，tag 是 `develop-<UTC 時間>-<sha>`／`master-<UTC 時間>-<sha>`（同一個 `release / build` job，以分支名當 channel）。
-Flux 只追 `stage-*`，所以這兩個**不會被部署**；Flux 的 tag 篩選不可放寬到包含它們。
+三個環境各自一組 Deployment 與資料庫，由 CI 的 channel（= 分支名）決定部署到哪：
 
-所以 **push 到 `stage` 就是部署**。GitHub 上沒有「deploy」這一步可以看；`release / build`
+| 分支 | image tag | 網域 |
+|---|---|---|
+| `master` | `master-<UTC 時間>-<sha>` | `socrates.driseam.com` |
+| `stage` | `stage-<UTC 時間>-<sha>` | `socrates-qa.driseam.com` |
+| `develop` | `develop-<UTC 時間>-<sha>` | `socrates-dev.driseam.com` |
+
+Flux 每個環境有獨立的 ImagePolicy，只追自己前綴的 tag（flux-k8s 的 `apps/base/socrates`）。
+同一個 namespace 裡 frontend 靠環境變數 `BACKEND_HOST` 決定 proxy 到哪個 backend Service。
+
+所以 **push 到這三個分支任一個都是部署到對應環境**，其中 `stage` 是 QA、`master` 是正式。GitHub 上沒有「deploy」這一步可以看；`release / build`
 成功就代表這個 SHA 會被部署。確認線上版本用 `curl -fsSL https://socrates.driseam.com/api/release`
 的 `source_sha`。
 

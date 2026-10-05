@@ -5,7 +5,9 @@ RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 RUN node tools/fetch-avatar.mjs && npm run build
 FROM nginx:1.28-alpine
-COPY deploy/stage/nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/stage/nginx.conf.template /etc/nginx/templates/default.conf.template
+# Service name of the backend this frontend proxies to; one namespace may host several.
+ENV BACKEND_HOST=backend
 COPY --from=build /src/frontend/dist /usr/share/nginx/html
 ARG SOURCE_SHA=local
 LABEL org.opencontainers.image.revision=${SOURCE_SHA}

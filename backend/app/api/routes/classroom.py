@@ -11,6 +11,7 @@ from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.services import classroom_auth as auth
 from app.services import classroom as service
+from app.classroom_env import env_str
 from app.api.classroom_schemas import (
     AccountView,
     Command,
@@ -52,7 +53,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
         auth.COOKIE,
         token,
         httponly=True,
-        secure=os.environ.get("RUN2_COOKIE_SECURE", "true") == "true",
+        secure=env_str("CLASSROOM_COOKIE_SECURE", "true") == "true",
         samesite="lax",
         max_age=43200,
         path="/",

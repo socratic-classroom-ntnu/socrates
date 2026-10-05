@@ -27,10 +27,10 @@ services:
       SOCRATES_PUBLIC_ORIGIN: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-18980}
       SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:${SOCRATES_LOCAL_PORT:-18980},http://localhost:${SOCRATES_LOCAL_PORT:-18980}
       SOCRATES_PROVIDER_LOCAL_ALLOWLIST: ${SOCRATES_PROVIDER_LOCAL_ALLOWLIST:-127.0.0.1,localhost,host.docker.internal}
-      RUN2_COOKIE_SECURE: 'false'
+      CLASSROOM_COOKIE_SECURE: 'false'
       SOCRATES_MAIL_TRANSPORT: fixture
       RESEND_FROM: Socratic Classroom <verify@mail.socrates.driseam.com>
-      RUN2_LLM_DAILY_BUDGET: ${RUN2_LLM_DAILY_BUDGET:-1000000}
+      CLASSROOM_LLM_DAILY_BUDGET: ${CLASSROOM_LLM_DAILY_BUDGET:-${RUN2_LLM_DAILY_BUDGET:-1000000}}
       LADDER_PATH: /data/ladders/trolley.yaml
       SCRIPT_PATH: /data/scripts/trolley.script.yaml
     volumes:

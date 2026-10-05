@@ -12,6 +12,7 @@ import os
 import time
 from contextlib import contextmanager
 from uuid import uuid4
+from app.classroom_env import env_str
 from sqlalchemy import (
     ForeignKey,
     JSON,
@@ -241,8 +242,8 @@ def register_models() -> None:
 
 def configure(url: str | None = None, *, create: bool = False):
     global _ENGINE, _FACTORY
-    from_environment = os.environ.get(
-        "RUN2_DATABASE_URL",
+    from_environment = env_str(
+        "CLASSROOM_DATABASE_URL",
         os.environ.get("DATABASE_URL", "postgresql+psycopg://socrates@localhost/socrates"),
     )
     resolved = url if url else from_environment

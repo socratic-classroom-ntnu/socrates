@@ -6,14 +6,15 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from app.repositories import classroom_storage as storage
 from app.classroom_app import create_app
+from app.classroom_env import env_str
 
-os.environ["RUN2_COOKIE_SECURE"] = "false"
+os.environ["CLASSROOM_COOKIE_SECURE"] = "false"
 os.environ["SOCRATES_ALLOWED_ORIGINS"] = "http://testserver"
 
 
 @pytest.fixture
 def client():
-    storage.configure(os.environ.get("RUN2_TEST_DATABASE_URL", "sqlite://"), create=True)
+    storage.configure(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://"), create=True)
     storage.Base.metadata.drop_all(storage.engine())
     storage.Base.metadata.create_all(storage.engine())
     with TestClient(create_app(background=False)) as c:

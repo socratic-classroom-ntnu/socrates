@@ -11,6 +11,7 @@ import os
 from collections import defaultdict
 from sqlalchemy import select
 from app.repositories.classroom_storage import Event, notify, transaction
+from app.classroom_env import env_str
 
 
 class RealtimeBus:
@@ -107,7 +108,7 @@ class RealtimeBus:
             await self.send_room(room, event)
 
     async def listen(self):
-        url = os.environ.get("RUN2_DATABASE_URL", os.environ.get("DATABASE_URL", "")).replace(
+        url = env_str("CLASSROOM_DATABASE_URL", os.environ.get("DATABASE_URL", "")).replace(
             "postgresql+psycopg://", "postgresql://", 1
         )
         if url.startswith("sqlite"):

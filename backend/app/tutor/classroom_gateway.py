@@ -13,6 +13,7 @@ import httpx
 
 from app.orchestrator.classroom import DomainError
 from app.tutor.classroom_provider import ProviderWait
+from app.classroom_env import env_int
 
 KNOWN_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
@@ -184,7 +185,7 @@ async def _openai_generate(binding, messages, schema):
             "model": binding["model"],
             "messages": messages,
             "stream": False,
-            "max_tokens": int(os.environ.get("RUN2_MAX_OUTPUT_TOKENS", "2048")),
+            "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
@@ -221,7 +222,7 @@ async def _anthropic_generate(binding, messages, schema):
         path="/v1/messages",
         payload={
             "model": binding["model"],
-            "max_tokens": int(os.environ.get("RUN2_MAX_OUTPUT_TOKENS", "2048")),
+            "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             "system": system + _schema_instruction(schema),
             "messages": ordinary,
         },
@@ -253,7 +254,7 @@ async def _gemini_generate(binding, messages, schema):
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "responseSchema": schema.model_json_schema(),
-                "maxOutputTokens": int(os.environ.get("RUN2_MAX_OUTPUT_TOKENS", "2048")),
+                "maxOutputTokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             },
         },
         timeout=120,

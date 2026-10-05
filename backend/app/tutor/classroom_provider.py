@@ -7,6 +7,7 @@ import time
 from typing import Any
 from uuid import uuid4
 import httpx
+from app.classroom_env import env_int, env_str
 
 
 class ProviderWait(RuntimeError):
@@ -56,10 +57,10 @@ class OpenRouterProvider:
         started = time.monotonic()
         request_id = str(uuid4())
         body = {
-            "model": model or os.environ.get("RUN2_MODEL", "openrouter/free"),
+            "model": model or env_str("CLASSROOM_MODEL", "openrouter/free"),
             "messages": messages,
             "stream": True,
-            "max_tokens": int(os.environ.get("RUN2_MAX_OUTPUT_TOKENS", "2048")),
+            "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {

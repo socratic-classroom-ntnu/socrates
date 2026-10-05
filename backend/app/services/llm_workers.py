@@ -17,6 +17,7 @@ from app.services.ai_students import fallback_turn
 from app.tutor.prompts import compile_program
 from app.tutor.classroom_provider import ProviderWait
 from app.tutor.classroom_gateway import generate
+from app.classroom_env import env_int
 from app.api.routes.provider_profiles import (
     public_binding,
     resolve_provider_chain,
@@ -158,7 +159,7 @@ def reserve_call(item):
             .on_conflict_do_nothing(index_elements=[Budget.id])
         )
         budget = db.scalar(select(Budget).where(Budget.id == day).with_for_update())
-        global_limit = int(os.environ.get("RUN2_LLM_DAILY_BUDGET", "1000000"))
+        global_limit = env_int("CLASSROOM_LLM_DAILY_BUDGET", 1000000)
         if budget.calls >= global_limit:
             raise ProviderWait(
                 "GLOBAL_BUDGET_AVAILABILITY",

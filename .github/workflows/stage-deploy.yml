@@ -44,7 +44,7 @@ jobs:
           export SOCRATES_SOURCE_SHA="$SOURCE_SHA"
           export SOCRATES_PUBLIC_ORIGIN="$PUBLIC_ORIGIN"
           export SOCRATES_ALLOWED_ORIGINS="$ALLOWED_ORIGINS"
-          export RUN2_COOKIE_SECURE=true
+          export CLASSROOM_COOKIE_SECURE=true
           docker compose -f deploy/stage/compose.yml pull
           docker compose -f deploy/stage/compose.yml up -d --no-build
           for i in $(seq 1 60); do

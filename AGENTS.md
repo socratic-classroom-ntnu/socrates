@@ -49,7 +49,7 @@
 - 讓 LLM 改寫情境開場白
 - `git commit --no-verify`
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
-- 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/run2/generated.ts`、`frontend/run2-openapi.json`（產生物，跑 `python scripts/gen_run2_types.py`）
+- 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/api/classroomTypes.ts`、`frontend/classroom-openapi.json`（產生物，跑 `python scripts/gen_classroom_types.py`）
 - 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `run2/graphLayout.mjs`）目前不擋
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
@@ -87,7 +87,7 @@ cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
 
 ./scripts/gen_types.sh                                # Round 1 schema 改了就跑這個
-python scripts/gen_run2_types.py                      # Run 2（/api/v2）schema 改了就跑這個
+python scripts/gen_classroom_types.py                 # 教室（/api/v2）schema 改了就跑這個
 ```
 
 後端指令走容器是因為主機通常沒裝 Python 依賴。要在主機跑就先
@@ -95,8 +95,8 @@ python scripts/gen_run2_types.py                      # Run 2（/api/v2）schema
 
 **兩支型別產生器都要在主機跑**：容器沒有掛 `frontend/`，產物寫不出來。主機需要後端依賴——
 建 `backend/.venv` 並 `backend/.venv/bin/pip install -r backend/requirements.txt`（`gen_types.sh`
-會自動用 `backend/.venv`，也可以用 `PYTHON_BIN` 指定；`gen_run2_types.py` 請用
-`backend/.venv/bin/python scripts/gen_run2_types.py` 執行），前端也要先 `npm ci`。
+會自動用 `backend/.venv`，也可以用 `PYTHON_BIN` 指定；`gen_classroom_types.py` 請用
+`backend/.venv/bin/python scripts/gen_classroom_types.py` 執行），前端也要先 `npm ci`。
 CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新產生就會紅燈。
 
 **後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** `conftest.py` 會把任何

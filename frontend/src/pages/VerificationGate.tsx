@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { api } from './client'
-import './email-verification.css'
+import { api } from '../api/classroomClient'
+import '../styles/email-verification.css'
 
 function textOf(error) {
   return error instanceof Error ? error.message : String(error)

@@ -1,4 +1,4 @@
-// Generated from FastAPI /api/v2. Regenerate with scripts/gen_run2_types.py.
+// Generated from FastAPI /api/v2. Regenerate with scripts/gen_classroom_types.py.
 export interface components { schemas: {
   "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };

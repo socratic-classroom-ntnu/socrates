@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import './research.css';
+import '../../styles/research.css';
 let loader;
 let loadedCx = '';
 /** One official Search Element script and one results container per browser document. */

@@ -1,4 +1,4 @@
-import { api, command, setCSRF } from './client';
+import { api, command, setCSRF } from './classroomClient';
 afterEach(() => jest.restoreAllMocks());
 test('Run2 command carries one stable action identity and same-origin credentials', async () => {
     const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ status: 'RECORDED' }) });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ApiError, api } from './client'
-import { ScriptBuilder, newDocument } from './ScriptBuilder'
-import { ClassroomAISettings } from './ClassroomAISettings'
+import { ApiError, api } from '../api/classroomClient'
+import { ScriptBuilder, newDocument } from '../features/script-builder/ScriptBuilder'
+import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings'
 
 export function ClassroomLibrary() {
   const [rows, setRows] = useState([])

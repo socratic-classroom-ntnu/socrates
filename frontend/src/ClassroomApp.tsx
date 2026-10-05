@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, command, setCSRF } from './client';
-import { Arena } from './Arena';
-import { DraftComposer } from '../shared/input/DraftComposer';
-import './style.css';
-import { ClassroomLibrary } from './ClassroomLibrary';
-import { AnswerWithResearch } from './ResearchSidebar';
-import './design-r73.css';
-import { GroupClassroomGate } from './GroupClassroom';
-import { ProviderSettings } from './ProviderSettings';
-import { VerificationGate } from './VerificationGate';
-import { FocusNotice } from './FocusNotice';
+import { api, command, setCSRF } from './api/classroomClient';
+import { Arena } from './features/classroom-stage/Arena';
+import { DraftComposer } from './shared/input/DraftComposer';
+import './styles/style.css';
+import { ClassroomLibrary } from './pages/ClassroomLibrary';
+import { AnswerWithResearch } from './features/research/ResearchSidebar';
+import './styles/design-library.css';
+import { GroupClassroomGate } from './pages/GroupClassroom';
+import { ProviderSettings } from './pages/ProviderSettings';
+import { VerificationGate } from './pages/VerificationGate';
+import { FocusNotice } from './components/FocusNotice';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -299,7 +299,7 @@ function LegacyClassroom({ id }) {
     {note && <div role="status" className="r2-toast" onClick={() => setNote('')}>{note}</div>}
   </main>;
 }
-export default function Run2App() {
+export default function ClassroomApp() {
     const [user, setUser] = useState(null), [ready, setReady] = useState(false);
     useEffect(() => { void api('/auth/me').then(a => { setCSRF(a.csrf_token); setUser(a); }).catch(() => undefined).finally(() => setReady(true)); }, []);
     if (!ready)

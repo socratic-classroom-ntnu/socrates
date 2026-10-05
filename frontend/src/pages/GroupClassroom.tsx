@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiError, api } from './client';
-import { GroupAnalytics } from './GroupAnalytics';
-import { GroupAvatar } from './GroupAvatar';
-import { ClassroomAISettings } from './ClassroomAISettings';
-import { FocusNotice } from './FocusNotice';
-import './group.css';
+import { ApiError, api } from '../api/classroomClient';
+import { GroupAnalytics } from '../features/group-analytics/GroupAnalytics';
+import { GroupAvatar } from '../features/classroom-stage/GroupAvatar';
+import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings';
+import { FocusNotice } from '../components/FocusNotice';
+import '../styles/group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
     const [view, setView] = useState(null), [error, setError] = useState('');

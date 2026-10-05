@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ScriptAssist } from './ScriptAssist';
-import { api, exportYAML, importYAML } from './client';
+import { api, exportYAML, importYAML } from '../../api/classroomClient';
 const question = () => ({ id: crypto.randomUUID(), title: '新的問題', scenario: '在這裡寫下情境。',
     options: [{ id: 'a', text: '選項 A' }, { id: 'b', text: '選項 B' }, { id: 'c', text: '選項 C' }], duration_seconds: 90,
     argument_required: true, tutor_goal: '協助學生照見自己採用的原則', probe_hints: ['你最重視哪一個理由？'],

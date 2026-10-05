@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { api } from './client';
+import { api } from '../../api/classroomClient';
 import { forceLayout } from './graphLayout.mjs';
 const palette = ['#c7acff', '#80d8d2', '#f3cc95', '#ecaaca', '#93b8ef', '#bad797'];
 type GraphNode = { id: string; nickname: string; stage: string; text: string };

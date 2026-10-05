@@ -98,8 +98,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
         working-directory: frontend
       - run: ./scripts/gen_types.sh
-      - run: python scripts/gen_run2_types.py
-      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/run2-openapi.json frontend/src/run2/generated.ts
+      - run: python scripts/gen_classroom_types.py
+      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
   round1-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

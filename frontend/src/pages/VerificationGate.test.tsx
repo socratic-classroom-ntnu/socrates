@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { VerificationGate } from './VerificationGate'
-import { api } from './client'
+import { api } from '../api/classroomClient'
 
-jest.mock('./client', () => ({ api: jest.fn() }))
+jest.mock('../api/classroomClient', () => ({ api: jest.fn() }))
 
 beforeEach(() => {
   jest.mocked(api).mockReset()

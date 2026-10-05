@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api } from './client'
-import { ModelMatrix } from './ProviderSettings'
-import './provider-settings.css'
+import { api } from '../../api/classroomClient'
+import { ModelMatrix } from '../../pages/ProviderSettings'
+import '../../styles/provider-settings.css'
 
 function errorText(error) {
   return error instanceof Error ? error.message : String(error)

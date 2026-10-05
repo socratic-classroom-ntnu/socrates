@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { api } from './client'
-import './provider-settings.css'
+import { api } from '../api/classroomClient'
+import '../styles/provider-settings.css'
 
 const roles = [
   ['socratic_tutor', '蘇格拉底導師'],

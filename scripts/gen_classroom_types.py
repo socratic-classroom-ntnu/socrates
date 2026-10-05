@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Run2 contracts from the actual FastAPI schema, deterministically."""
+"""Generate the classroom contracts from the actual FastAPI schema, deterministically."""
 import json
 import sys
 from pathlib import Path
@@ -33,11 +33,11 @@ def ts(schema):
 def main():
     spec=create_app(background=False).openapi()
     dest=ROOT/'frontend';dest.mkdir(exist_ok=True)
-    (dest/'run2-openapi.json').write_text(json.dumps(spec,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
+    (dest/'classroom-openapi.json').write_text(json.dumps(spec,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
     schemas=spec['components']['schemas']
-    out='// Generated from FastAPI /api/v2. Regenerate with scripts/gen_run2_types.py.\nexport interface components { schemas: {\n'
+    out='// Generated from FastAPI /api/v2. Regenerate with scripts/gen_classroom_types.py.\nexport interface components { schemas: {\n'
     out+='\n'.join('  '+json.dumps(k)+': '+ts(v)+';' for k,v in sorted(schemas.items()))
     out+='\n} }\n'
-    target=dest/'src/run2/generated.ts';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(out)
-    print('RUN2_CONTRACT_GENERATED',len(schemas),len(spec['paths']))
+    target=dest/'src/api/classroomTypes.ts';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(out)
+    print('CLASSROOM_CONTRACT_GENERATED',len(schemas),len(spec['paths']))
 if __name__=='__main__':main()

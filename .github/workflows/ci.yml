@@ -172,3 +172,13 @@ jobs:
     permissions: {contents: read, packages: write}
     uses: ./.github/workflows/stage-release.yml
     with: {source_sha: '${{ github.sha }}'}
+  # develop / master get an image too, but under their own tag prefix. Flux
+  # only follows `stage-*`, so these are never deployed.
+  release-snapshot:
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master')
+    needs: [ci-required]
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/stage-release.yml
+    with:
+      source_sha: '${{ github.sha }}'
+      channel: '${{ github.ref_name }}'

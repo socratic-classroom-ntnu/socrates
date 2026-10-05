@@ -62,6 +62,7 @@
 | **`main`** | 穩定分支。**只能透過 PR 進入**，CI 三個檢查必須綠燈 |
 | **`develop`** | 整合分支。**可以直接推**，但 CI 一樣會跑 |
 | `feature/*` | 較大的改動從 `develop` 開，PR 回 `develop` |
+| **`develop`／`master`** 的 image | push 後 CI 綠燈會推 `develop-*`／`master-*` tag 的 image 到 ghcr，**不會部署**（Flux 只追 `stage-*`）。不要把這兩個前綴改成 `stage-` |
 | **`stage`** | **push 就是部署**：CI 的 `release / build` 推出 `stage-*` image 後，k8s 上的 Flux 會自動換上。需要配合資料庫一起動的版本，push 前先跟主機擁有者協調（`deploy/stage/README.md`〈目前的部署方式〉） |
 
 **推 `develop` 之前請在本機把檢查跑過**（見下方指令）。直接推代表沒有 PR 擋著，

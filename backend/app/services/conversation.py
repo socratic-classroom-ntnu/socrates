@@ -129,6 +129,11 @@ class ConversationService:
         return session
 
     def _info(self, session: Session, state: SessionState) -> SessionInfo:
+        updated_at = (
+            session.messages[-1].created_at
+            if session.messages
+            else (session.ended_at or session.started_at)
+        )
         return SessionInfo(
             id=session.id,
             status=session.status,
@@ -136,6 +141,9 @@ class ConversationService:
             current_stage_index=state.current_stage_index,
             total_stages=self._ladder.total_stages,
             end_reason=session.end_reason,
+            started_at=session.started_at,
+            ended_at=session.ended_at,
+            updated_at=updated_at,
         )
 
     def _stage(self, state: SessionState) -> StageView | None:
@@ -298,8 +306,26 @@ class ConversationService:
 
     def _summary_view(self, session: Session, row: Summary) -> SummaryView:
         state = SessionRepository.to_state(session)
+        points: list[str] = []
+        for item in row.stance_by_stage:
+            if not isinstance(item, dict):
+                continue
+            value = item.get("principle_label") or item.get("principle") or item.get("stance")
+            if value and str(value) not in points:
+                points.append(str(value))
+        if not points:
+            points = [row.core_principle]
+        student_lines = [
+            message.content.strip()
+            for message in session.messages
+            if message.role == "student" and message.content.strip()
+        ]
         return SummaryView(
+            discussion_topic="電車難題：選擇、責任與原則",
             core_principle=row.core_principle,
+            key_points=points[:4],
+            tension=row.tension,
+            reflection_excerpt=("；".join(student_lines[-3:]) if student_lines else None),
             stage_outcomes=[
                 StageOutcomeView(
                     index=stage.index,

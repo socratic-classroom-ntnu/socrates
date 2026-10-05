@@ -13,9 +13,9 @@ def env_str(name: str, default: str = "") -> str:
         return value
     for new, old in _LEGACY_PREFIXES:
         if name.startswith(new):
+            # Only the first matching prefix: each name had exactly one old spelling.
             legacy = os.environ.get(old + name[len(new) :])
-            if legacy is not None:
-                return legacy
+            return default if legacy is None else legacy
     return default
 
 

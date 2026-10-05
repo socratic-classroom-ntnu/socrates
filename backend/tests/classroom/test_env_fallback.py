@@ -19,6 +19,14 @@ def test_old_env_name_is_still_honoured(monkeypatch, new_name, old_name):
     assert classroom_env.env_int(new_name, 0) == 4321
 
 
+def test_each_name_has_exactly_one_old_spelling(monkeypatch):
+    """CLASSROOM_AI_* was PORTAL_AI_*; a RUN2_AI_* name never existed and must not count."""
+    monkeypatch.delenv("CLASSROOM_AI_CALL_BUDGET", raising=False)
+    monkeypatch.delenv("PORTAL_AI_CALL_BUDGET", raising=False)
+    monkeypatch.setenv("RUN2_AI_CALL_BUDGET", "999")
+    assert classroom_env.env_int("CLASSROOM_AI_CALL_BUDGET", 240) == 240
+
+
 def test_new_env_name_wins_over_the_old_one(monkeypatch):
     monkeypatch.setenv("CLASSROOM_LLM_DAILY_BUDGET", "111")
     monkeypatch.setenv("RUN2_LLM_DAILY_BUDGET", "222")

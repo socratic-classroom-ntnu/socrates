@@ -1,0 +1,64 @@
+/* 教師端外框（TeacherShell）與首頁課程總覽（TeacherDashboard）。對應 Figma「教師端・首頁」。 */
+.teacher-desk{
+  --desk-bg:#f4f4f2;--desk-panel:#fff;--desk-line:#e6e6e2;--desk-ink:#22231f;--desk-ink-soft:#6c6d67;
+  --desk-green:#2f5546;--desk-green-ink:#fff;--desk-green-soft:#e5eee9;--desk-radius:10px;
+  display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;min-height:100dvh;
+  background:var(--desk-bg);color:var(--desk-ink);color-scheme:light;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6
+}
+.teacher-desk :focus-visible{outline:2px solid var(--desk-green);outline-offset:2px}
+.teacher-desk svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+.teacher-nav{background:var(--desk-panel);border-right:1px solid var(--desk-line);padding:20px 14px}
+.teacher-brand{display:flex;align-items:center;gap:8px;margin:0 4px 26px;color:var(--desk-ink);font-weight:700;font-size:13px;white-space:nowrap;text-decoration:none}
+.teacher-brand i{display:grid;place-items:center;width:26px;height:26px;border-radius:6px;background:var(--desk-green);color:var(--desk-green-ink);font-style:normal;font-size:13px}
+.teacher-nav ul{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.teacher-nav li>*{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--desk-ink);font-size:14px;text-decoration:none}
+.teacher-nav a:hover{background:var(--desk-bg)}
+.teacher-nav a[aria-current=page]{background:var(--desk-green-soft);font-weight:600}
+.teacher-nav [aria-disabled=true]{color:var(--desk-ink-soft);cursor:not-allowed}
+
+.teacher-main{min-width:0;max-width:960px;padding:28px clamp(16px,3vw,40px) 48px}
+.teacher-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:8px}
+.teacher-head small{color:var(--desk-ink-soft);font-size:12px}
+.teacher-head h1{margin:2px 0 0;font-size:clamp(22px,2.4vw,28px);font-weight:700;letter-spacing:.02em}
+.teacher-note{min-height:1.6em;margin:0 0 8px;color:var(--desk-ink-soft);font-size:13px}
+.teacher-empty{color:var(--desk-ink-soft)}
+
+.teacher-desk button{font:inherit;cursor:pointer}
+.teacher-primary{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:0;border-radius:6px;background:var(--desk-green);color:var(--desk-green-ink);font-size:14px;font-weight:600;white-space:nowrap}
+.teacher-primary:disabled{opacity:.5;cursor:not-allowed}
+.teacher-quiet{padding:8px 14px;border:1px solid var(--desk-line);border-radius:6px;background:var(--desk-panel);color:var(--desk-ink);font-size:14px}
+
+.course-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.course-tile{position:relative;display:grid;gap:12px;padding:18px 18px 14px;border:1px solid var(--desk-line);border-radius:var(--desk-radius);background:var(--desk-panel);transition:box-shadow .15s,border-color .15s}
+.course-tile:hover{border-color:#cfd6d2;box-shadow:0 6px 18px rgba(30,40,35,.08)}
+.course-tile h2{display:flex;align-items:center;gap:10px;margin:0;padding-bottom:12px;border-bottom:1px solid var(--desk-line);font-size:15px;font-weight:700}
+.course-tile h2 a{color:inherit;text-decoration:none;overflow-wrap:anywhere}
+.course-tile h2 a::after{content:"";position:absolute;inset:0;border-radius:var(--desk-radius)}
+.course-tile dl{display:grid;gap:2px;margin:0;font-size:13px}
+.course-tile dl div{display:flex}
+.course-tile dt::after{content:"："}
+.course-tile dd{margin:0}
+.course-tile footer{display:flex;align-items:center;justify-content:flex-end;gap:6px;min-height:28px;color:var(--desk-ink-soft);font-size:12px}
+.course-tile code{font-family:"JetBrains Mono",ui-monospace,monospace;letter-spacing:.04em}
+.course-copy{position:relative;z-index:1;display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--desk-ink)}
+.course-copy:hover{background:var(--desk-bg)}
+
+.course-create{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:rgba(20,24,22,.35)}
+.course-create form{display:grid;gap:12px;width:min(100%,400px);padding:22px;border-radius:var(--desk-radius);background:var(--desk-panel);box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.course-create h2{margin:0;font-size:18px}
+.course-create label{display:grid;gap:6px;font-size:13px;color:var(--desk-ink-soft)}
+.course-create input{padding:9px 10px;border:1px solid var(--desk-line);border-radius:6px;background:#fff;color:var(--desk-ink);font:inherit;font-size:15px}
+.course-create [role=status]{min-height:1.4em;margin:0;color:#a3361f;font-size:13px}
+.course-create-actions{display:flex;justify-content:flex-end;gap:8px}
+
+@media (max-width:720px){
+  .teacher-desk{grid-template-columns:1fr}
+  .course-grid{grid-template-columns:1fr}
+  .teacher-nav{display:flex;align-items:center;gap:12px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--desk-line);overflow-x:auto}
+  .teacher-brand{margin:0}
+  .teacher-nav ul{display:flex;gap:2px}
+  .teacher-nav li>*{white-space:nowrap}
+  .teacher-head{align-items:flex-start;flex-direction:column}
+}

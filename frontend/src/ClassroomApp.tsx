@@ -10,6 +10,7 @@ import { GroupClassroomGate } from './pages/GroupClassroom';
 import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
+import { TeacherDashboard, TeacherShell } from './pages/TeacherDashboard';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -86,7 +87,7 @@ function Home({ user }) {
         setNote(errorText(e));
     } }
     return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={() => void api('/auth/logout', 'POST').then(() => location.reload())}>登出</button></header>
-    <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => setMode('teacher')}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
+    <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => { location.href = '/teacher/home'; }}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
     {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
     {mode === 'student' ? <section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e => setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e => setAlias(e.target.value)}/></label><button onClick={() => void join()}>進入教室 →</button></section> : mode === 'teacher' ?
             <ClassroomLibrary /> : <ProviderSettings />}
@@ -307,5 +308,12 @@ export default function ClassroomApp() {
     if (!user || new URLSearchParams(location.search).has('reset_token') || new URLSearchParams(location.search).has('verify_token'))
         return <Auth onLogin={a => { setUser(a); history.replaceState({}, '', '/'); }}/>;
     const room = location.pathname.match(/^\/classrooms\/([\w-]+)/);
-    return room ? <Classroom user={user} id={room[1]}/> : <Home user={user}/>;
+    if (room)
+        return <Classroom user={user} id={room[1]}/>;
+    if (/^\/teacher\/home\/?$/.test(location.pathname))
+        return user.verified ? <TeacherDashboard user={user}/> : <VerificationGate user={user} onVerified={() => location.reload()}/>;
+    const course = location.pathname.match(/^\/teacher\/courses\/([\w-]+)/);
+    if (course)
+        return <TeacherShell active="home"><ClassroomLibrary initialSelected={course[1]}/></TeacherShell>;
+    return <Home user={user}/>;
 }

@@ -53,7 +53,7 @@
 .course-create [role=status]{min-height:1.4em;margin:0;color:#a3361f;font-size:13px}
 .course-create-actions{display:flex;justify-content:flex-end;gap:8px}
 
-@media (max-width:720px){
+@media (max-width:760px){
   .teacher-desk{grid-template-columns:1fr}
   .course-grid{grid-template-columns:1fr}
   .teacher-nav{display:flex;align-items:center;gap:12px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--desk-line);overflow-x:auto}

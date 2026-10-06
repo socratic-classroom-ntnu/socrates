@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, api } from '../api/classroomClient'
+import type { components } from '../api/classroomTypes'
 import '../styles/teacher-dashboard.css'
 
 // 一張課程卡需要的資料。/library/classrooms 目前只給 id 與 title；
@@ -12,7 +13,9 @@ export type CourseCard = {
   code: string | null
 }
 
+// /library/* 沒有 response_model，classroomTypes.ts 裡沒有這個型別，只能照 classroom_library.py 的回傳手寫
 type LibraryRow = { id: string; title: string; revision: number }
+type Account = components['schemas']['AccountView']
 
 const toCourse = (row: LibraryRow): CourseCard => ({
   id: row.id,
@@ -180,7 +183,7 @@ function CreateCourse({ onCreated, onClose }: { onCreated: () => void; onClose: 
   )
 }
 
-export function TeacherDashboard({ user, now = new Date() }: { user: { username: string }; now?: Date }) {
+export function TeacherDashboard({ user, now = new Date() }: { user: Pick<Account, 'username'>; now?: Date }) {
   const [courses, setCourses] = useState<CourseCard[] | null>(null)
   const [note, setNote] = useState('')
   const [creating, setCreating] = useState(false)

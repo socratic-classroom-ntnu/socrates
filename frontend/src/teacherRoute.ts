@@ -15,3 +15,9 @@ export function teacherRoute(pathname: string, verified: boolean): TeacherRoute 
   if (route && !verified) return { page: 'verify' }
   return route
 }
+
+// 登入後要回到哪裡。教師端網址要保留，從書籤或連結進來的老師登入後才會回到原本那頁；
+// 其他網址照舊回 /（順便清掉 verify_token、reset_token）。
+export function pathAfterLogin(pathname: string) {
+  return teacherRoute(pathname, true) ? pathname : '/'
+}

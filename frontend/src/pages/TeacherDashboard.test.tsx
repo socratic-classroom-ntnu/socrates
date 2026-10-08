@@ -68,3 +68,13 @@ test('creating a course retries with the same action id and refreshes the list',
   expect(posts[0][2]).toMatchObject({ title: '科技倫理' })
   expect(posts[1][2].action_id).toBe(posts[0][2].action_id)
 })
+
+// 外框取代了舊首頁的頂端列，登出一定要在這裡找得到
+test('the teacher sidebar can sign out', async () => {
+  jest.mocked(api).mockResolvedValue([])
+  render(<TeacherDashboard user={{ username: 'Fizzy' }} now={evening} />)
+
+  await screen.findByText(/還沒有課程/)
+  fireEvent.click(screen.getByRole('button', { name: '登出' }))
+  expect(api).toHaveBeenCalledWith('/auth/logout', 'POST')
+})

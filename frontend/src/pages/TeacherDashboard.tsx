@@ -49,11 +49,15 @@ const Icon = {
   copy: (
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a1 1 0 0 1 1-1h9" /></svg>
   ),
+  exit: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9" /></svg>
+  ),
 }
 
 type NavKey = 'home' | 'bank' | 'settings'
 
 // 教師端共用外框：左側導覽列＋右側內容。個人題庫、設定頁由其他任務實作，先保留入口但不可點。
+// 外框取代了舊首頁的頂端列，所以登出要放在這裡，否則從連結直接進來的老師沒辦法離開（共用電腦尤其要緊）。
 export function TeacherShell({ active, children }: { active: NavKey; children: ReactNode }) {
   const items: { key: NavKey; label: string; icon: ReactNode; href?: string }[] = [
     { key: 'home', label: '首頁', icon: Icon.home, href: '/teacher/home' },
@@ -83,6 +87,10 @@ export function TeacherShell({ active, children }: { active: NavKey; children: R
             </li>
           ))}
         </ul>
+        <button type="button" className="teacher-logout" onClick={() => void api('/auth/logout', 'POST').then(() => { location.href = '/' })}>
+          {Icon.exit}
+          登出
+        </button>
       </nav>
       <main className="teacher-main">{children}</main>
     </div>

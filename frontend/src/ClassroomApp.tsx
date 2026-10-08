@@ -11,7 +11,7 @@ import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
 import { TeacherDashboard, TeacherShell } from './pages/TeacherDashboard';
-import { teacherRoute } from './teacherRoute';
+import { pathAfterLogin, teacherRoute } from './teacherRoute';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -307,7 +307,7 @@ export default function ClassroomApp() {
     if (!ready)
         return <main className="r2-loading"><div className="r2-pulse"/></main>;
     if (!user || new URLSearchParams(location.search).has('reset_token') || new URLSearchParams(location.search).has('verify_token'))
-        return <Auth onLogin={a => { setUser(a); history.replaceState({}, '', '/'); }}/>;
+        return <Auth onLogin={a => { setUser(a); history.replaceState({}, '', pathAfterLogin(location.pathname)); }}/>;
     const room = location.pathname.match(/^\/classrooms\/([\w-]+)/);
     if (room)
         return <Classroom user={user} id={room[1]}/>;

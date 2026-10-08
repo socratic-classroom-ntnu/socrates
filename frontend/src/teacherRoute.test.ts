@@ -1,4 +1,4 @@
-import { teacherRoute } from './teacherRoute'
+import { pathAfterLogin, teacherRoute } from './teacherRoute'
 
 test('maps the teacher pages for a verified account', () => {
   expect(teacherRoute('/teacher/home', true)).toEqual({ page: 'home' })
@@ -16,4 +16,12 @@ test('leaves other paths to the rest of the app', () => {
   expect(teacherRoute('/', false)).toBeNull()
   expect(teacherRoute('/teacher', true)).toBeNull()
   expect(teacherRoute('/classrooms/r-1', true)).toBeNull()
+})
+
+// 書籤裡的教師端網址，登入後要回到原本那頁，不能被換成學生首頁
+test('keeps teacher pages across login and sends everything else home', () => {
+  expect(pathAfterLogin('/teacher/home')).toBe('/teacher/home')
+  expect(pathAfterLogin('/teacher/courses/c-1')).toBe('/teacher/courses/c-1')
+  expect(pathAfterLogin('/')).toBe('/')
+  expect(pathAfterLogin('/classrooms/r-1')).toBe('/')
 })

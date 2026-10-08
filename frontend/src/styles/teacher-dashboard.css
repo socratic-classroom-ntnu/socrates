@@ -9,7 +9,7 @@
 .teacher-desk :focus-visible{outline:2px solid var(--desk-green);outline-offset:2px}
 .teacher-desk svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
-.teacher-nav{background:var(--desk-panel);border-right:1px solid var(--desk-line);padding:20px 14px}
+.teacher-nav{display:flex;flex-direction:column;background:var(--desk-panel);border-right:1px solid var(--desk-line);padding:20px 14px}
 .teacher-brand{display:flex;align-items:center;gap:8px;margin:0 4px 26px;color:var(--desk-ink);font-weight:700;font-size:13px;white-space:nowrap;text-decoration:none}
 .teacher-brand i{display:grid;place-items:center;width:26px;height:26px;border-radius:6px;background:var(--desk-green);color:var(--desk-green-ink);font-style:normal;font-size:13px}
 .teacher-nav ul{display:grid;gap:4px;margin:0;padding:0;list-style:none}
@@ -17,6 +17,8 @@
 .teacher-nav a:hover{background:var(--desk-bg)}
 .teacher-nav a[aria-current=page]{background:var(--desk-green-soft);font-weight:600}
 .teacher-nav [aria-disabled=true]{color:var(--desk-ink-soft);cursor:not-allowed}
+.teacher-nav .teacher-logout{display:flex;align-items:center;gap:10px;margin-top:auto;padding:8px 10px;border:0;border-radius:6px;background:transparent;color:var(--desk-ink-soft);font-size:14px;text-align:left}
+.teacher-nav .teacher-logout:hover{background:var(--desk-bg);color:var(--desk-ink)}
 
 .teacher-main{min-width:0;max-width:960px;padding:28px clamp(16px,3vw,40px) 48px}
 .teacher-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:8px}
@@ -56,9 +58,11 @@
 @media (max-width:760px){
   .teacher-desk{grid-template-columns:1fr}
   .course-grid{grid-template-columns:1fr}
-  .teacher-nav{display:flex;align-items:center;gap:12px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--desk-line);overflow-x:auto}
+  /* 兩列：品牌＋登出在上，導覽在下；登出不能被擠到要橫向捲動才看得到 */
+  .teacher-nav{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;border-right:0;border-bottom:1px solid var(--desk-line)}
   .teacher-brand{margin:0}
-  .teacher-nav ul{display:flex;gap:2px}
+  .teacher-nav .teacher-logout{order:1;margin:0 0 0 auto;white-space:nowrap}
+  .teacher-nav ul{order:2;display:flex;gap:2px;width:100%;overflow-x:auto}
   .teacher-nav li>*{white-space:nowrap}
   .teacher-head{align-items:flex-start;flex-direction:column}
 }

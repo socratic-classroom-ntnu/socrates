@@ -6,7 +6,7 @@ import '../styles/entrance.css';
 
 type Account = components['schemas']['AccountView'];
 type Room = components['schemas']['RoomView'];
-type RecentRoom = { id: string; title: string; phase: string; teacher: boolean };
+type RecentRoom = components['schemas']['RoomSummary'];
 type JoinDoorProps = { user: Account; rooms: RecentRoom[]; note: string; onMode: (mode: 'teacher' | 'providers') => void };
 
 export function joinErrorText(e: unknown): string {

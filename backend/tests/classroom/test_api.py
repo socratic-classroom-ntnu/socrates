@@ -61,6 +61,21 @@ def cmd(c, r, kind, data=None, aid=None):
     )
 
 
+def test_room_list_matches_its_published_schema(client):
+    # 前端的「近期教室」型別由這份 schema 產生；欄位要和 RoomSummary 完全一致，改名才會被契約檢查抓到。
+    user(client)
+    room = create(client)
+    assert client.get("/api/v2/classrooms").json() == [
+        {"id": room["id"], "title": "倫理", "phase": "lobby", "teacher": True}
+    ]
+    user(client, "student")
+    joined = client.post(
+        "/api/v2/classrooms/join", json={"code": room["code"], "alias": "學生", "avatar": "scholar"}
+    )
+    assert joined.status_code == 200
+    assert [r["teacher"] for r in client.get("/api/v2/classrooms").json()] == [False]
+
+
 def test_registration_verification_reset_and_revocation(client):
     user(client)
     r = client.get("/api/v2/auth/me")

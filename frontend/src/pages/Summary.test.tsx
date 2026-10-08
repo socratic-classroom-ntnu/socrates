@@ -45,10 +45,20 @@ describe('Summary page', () => {
     expect(
       await screen.findByText('今日課堂總結')
     ).toBeInTheDocument()
-
     expect(
       screen.getByText('降低可避免的傷害')
     ).toBeInTheDocument()
+    expect(screen.getByText('討論重點')).toBeInTheDocument()
+    expect(screen.getByText('討論中的分歧')).toBeInTheDocument()
+    expect(screen.getByText('我的反思摘錄')).toBeInTheDocument()
+    expect(screen.getByText('選擇時應考慮可能造成的傷害')).toBeInTheDocument()
+    expect(
+    screen.getByText('是否應該為了多數人的利益犧牲少數人')
+    ).toBeInTheDocument()
+    expect(
+    screen.getByText('我認為做決定前應該考慮每個人的處境')
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('summary-exit')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /失控的電車/ }))
 

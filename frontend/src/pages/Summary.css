@@ -750,24 +750,7 @@
     width: 100%;
   }
 }
-<section className="summary-reflection">
-  <h3>討論重點</h3>
-  <ul>
-    {summary.key_points.map((point, index) => (
-      <li key={index}>{point}</li>
-    ))}
-  </ul>
 
-  <h3>討論中的分歧</h3>
-  <p>{summary.tension}</p>
-
-  {summary.reflection_excerpt && (
-    <>
-      <h3>我的反思摘錄</h3>
-      <p>{summary.reflection_excerpt}</p>
-    </>
-  )}
-</section>
 .summary-reflection {
   margin: 24px 0;
   padding: 24px;

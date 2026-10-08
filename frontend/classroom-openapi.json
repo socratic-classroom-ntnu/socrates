@@ -833,6 +833,36 @@
         "title": "ResetRequest",
         "type": "object"
       },
+      "RoomSummary": {
+        "additionalProperties": false,
+        "description": "`GET /classrooms` 的一筆：帳號建立或加入過的教室，供首頁「近期教室」列出。",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "teacher": {
+            "title": "Teacher",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "phase",
+          "teacher"
+        ],
+        "title": "RoomSummary",
+        "type": "object"
+      },
       "RoomView": {
         "additionalProperties": false,
         "properties": {
@@ -1683,7 +1713,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoomSummary"
+                  },
+                  "title": "Response Rooms Api V2 Classrooms Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"

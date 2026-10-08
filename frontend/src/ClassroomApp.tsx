@@ -10,85 +10,26 @@ import { GroupClassroomGate } from './pages/GroupClassroom';
 import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
+import { Auth } from './pages/Auth';
+import { JoinDoor } from './pages/JoinDoor';
+import { RoleSelect } from './pages/RoleSelect';
+import { rememberRole, roleFromPath, storedRole } from './entryRole';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
-function Auth({ onLogin }) {
-    const [mode, setMode] = useState('login');
-    const [name, setName] = useState(''), [email, setEmail] = useState(''), [password, setPassword] = useState('');
-    const [note, setNote] = useState(''), [busy, setBusy] = useState(false);
-    const query = new URLSearchParams(location.search);
-    useEffect(() => {
-        const token = new URLSearchParams(location.search).get('verify_token');
-        if (token)
-            void api('/auth/verify', 'POST', { token }).then(() => { setNote('Email 已驗證，請登入。'); history.replaceState({}, '', '/'); }).catch(e => setNote(errorText(e)));
-        if (new URLSearchParams(location.search).has('reset_token'))
-            setMode('reset');
-    }, []);
-    async function submit() {
-        setBusy(true);
-        try {
-            if (mode === 'login') {
-                const a = await api('/auth/login', 'POST', { login: name, password });
-                setCSRF(a.csrf_token);
-                onLogin(a);
-            }
-            if (mode === 'register') {
-                const account = await api('/auth/register', 'POST', {
-                    username: name,
-                    email,
-                    password
-                });
-                setCSRF(account.csrf_token);
-                onLogin(account);
-            }
-            if (mode === 'forgot') {
-                await api('/auth/forgot-password', 'POST', { email });
-                setNote('重設郵件已排入寄送；請查看信箱。');
-            }
-            if (mode === 'reset') {
-                await api('/auth/reset-password', 'POST', { token: query.get('reset_token'), password });
-                history.replaceState({}, '', '/');
-                setMode('login');
-                setNote('密碼已更新，請重新登入。');
-            }
-        }
-        catch (e) {
-            setNote(errorText(e));
-        }
-        finally {
-            setBusy(false);
-        }
-    }
-    return <main className="r2-auth"><div className="r2-brand">S</div><small>SOCRATES · 共思教室</small><h1>從一個問題，<br />看見自己的原則。</h1><p className="muted">表達、追問、相遇。每個觀點都有自己的位置。</p>
-    <form onSubmit={e => { e.preventDefault(); void submit(); }} className="r2-glass">
-      <h2>{{ login: '歡迎回來', register: '建立帳號', forgot: '重設登入密碼', reset: '設定新密碼' }[mode]}</h2>
-      {(mode === 'login' || mode === 'register') && <label>{mode === 'login' ? '使用者名稱或 Email' : '使用者名稱'}<input autoComplete="username" required value={name} onChange={e => setName(e.target.value)}/></label>}
-      {(mode === 'register' || mode === 'forgot') && <label>Email<input type="email" required value={email} onChange={e => setEmail(e.target.value)}/></label>}
-      {mode !== 'forgot' && <label>密碼<input type="password" minLength={mode === 'login' ? 1 : 12} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} onChange={e => setPassword(e.target.value)}/></label>}
-      <button disabled={busy}>{busy ? '處理中…' : '繼續'}</button><p role="status">{note}</p>
-      <div className="r2-row"><button type="button" className="quiet" onClick={() => setMode(mode === 'register' ? 'login' : 'register')}>{mode === 'register' ? '回到登入' : '註冊'}</button><button type="button" className="quiet" onClick={() => setMode('forgot')}>重設密碼</button></div>
-    </form></main>;
-}
-function Home({ user }) {
-    const [mode, setMode] = useState('student'), [, setScripts] = useState([]);
+function Home({ user, initialMode = 'student' }) {
+    const [mode, setMode] = useState(initialMode), [, setScripts] = useState([]);
     const [rooms, setRooms] = useState([]);
-    const [code, setCode] = useState(''), [alias, setAlias] = useState('');
     const [note, setNote] = useState('');
     const refresh = useCallback(() => { void api('/scripts').then(setScripts).catch(e => setNote(errorText(e))); void api('/classrooms').then(setRooms).catch(e => setNote(errorText(e))); }, []);
     useEffect(refresh, [refresh]);
     if (!user.verified)
         return <VerificationGate user={user} onVerified={() => location.reload()}/>;
+    if (mode === 'student')
+        return <JoinDoor user={user} rooms={rooms} note={note} onMode={setMode}/>;
     const enter = (id, role) => { location.href = `/classrooms/${id}?mode=${role}`; };
-    async function join() { try {
-        const r = await api('/classrooms/join', 'POST', { code, alias: alias.trim() || ('~pending-' + crypto.randomUUID().slice(0, 8)), avatar: 'scholar' });
-        enter(r.id, 'student');
-    }
-    catch (e) {
-        setNote(errorText(e));
-    } }
     return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={() => void api('/auth/logout', 'POST').then(() => location.reload())}>登出</button></header>
     <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => setMode('teacher')}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
     {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
-    {mode === 'student' ? <section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e => setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e => setAlias(e.target.value)}/></label><button onClick={() => void join()}>進入教室 →</button></section> : mode === 'teacher' ?
+    {mode === 'teacher' ?
             <ClassroomLibrary /> : <ProviderSettings />}
     <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? mode : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
 }
@@ -302,10 +243,17 @@ function LegacyClassroom({ id }) {
 export default function ClassroomApp() {
     const [user, setUser] = useState(null), [ready, setReady] = useState(false);
     useEffect(() => { void api('/auth/me').then(a => { setCSRF(a.csrf_token); setUser(a); }).catch(() => undefined).finally(() => setReady(true)); }, []);
+    // /student、/teacher 是入口；已登入的人走進來也算換了身份
+    useEffect(() => { const r = roleFromPath(location.pathname); if (r) rememberRole(r); }, []);
     if (!ready)
         return <main className="r2-loading"><div className="r2-pulse"/></main>;
-    if (!user || new URLSearchParams(location.search).has('reset_token') || new URLSearchParams(location.search).has('verify_token'))
-        return <Auth onLogin={a => { setUser(a); history.replaceState({}, '', '/'); }}/>;
+    const search = new URLSearchParams(location.search), tokenLink = search.has('reset_token') || search.has('verify_token');
+    const pathRole = roleFromPath(location.pathname), role = pathRole || storedRole() || 'student';
+    if (!user || tokenLink) {
+        if (!tokenLink && !pathRole)
+            return <RoleSelect/>;
+        return <Auth variant={role} onLogin={a => { rememberRole(role); setUser(a); history.replaceState({}, '', '/'); }}/>;
+    }
     const room = location.pathname.match(/^\/classrooms\/([\w-]+)/);
-    return room ? <Classroom user={user} id={room[1]}/> : <Home user={user}/>;
+    return room ? <Classroom user={user} id={room[1]}/> : <Home user={user} initialMode={role}/>;
 }

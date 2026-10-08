@@ -1,0 +1,11 @@
+.r97-provider-settings{display:grid;gap:1.2rem}
+.r97-provider-form,.r97-provider-card,.r97-classroom-ai{display:grid;gap:.8rem}
+.r97-provider-card details{max-height:18rem;overflow:auto}
+.r97-model-matrix{display:grid;gap:1rem;margin-block:1rem}
+.r97-model-matrix .r2-card{display:grid;gap:.45rem}
+.r97-provider-settings input[type=password]{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.r97-provider-settings summary,.r97-classroom-ai summary{cursor:pointer;font-weight:700}
+@media(max-width:820px){
+  .r97-provider-settings .r2-row>*{flex:1 1 100%}
+  .r97-model-matrix .r2-script-grid{grid-template-columns:1fr}
+}

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { createSummary, getSummary, type SummaryView } from '../api/client'
+import { createSummary, getSummary } from '../api/client'
+import type { components } from '../api/types'
+import './Summary.css'
+type SummaryView = components['schemas']['SummaryView']
 
 const STATUS_LABELS: Record<string, string> = {
   goal_met: '想清楚了',

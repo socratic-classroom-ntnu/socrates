@@ -718,4 +718,35 @@
     left: 145px;
   }
 }
+.summary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
 
+.summary-actions button {
+  padding: 10px 24px;
+  border: 2px solid rgba(241, 238, 228, 0.7);
+  border-radius: 10px;
+  background: transparent;
+  color: #f1eee4;
+  font-family: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.summary-actions button:hover {
+  background: rgba(241, 238, 228, 0.12);
+}
+
+@media (max-width: 600px) {
+  .summary-actions {
+    flex-direction: column;
+  }
+
+  .summary-actions button {
+    width: 100%;
+  }
+}

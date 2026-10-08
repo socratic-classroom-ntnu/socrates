@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { createSummary, getSummary } from '../api/client'
 import type { components } from '../api/types'
 import './Summary.css'
@@ -97,6 +97,7 @@ const PREVIEW_DETAILS: QuestionDetail[] = [
 
 export default function Summary() {
   const { sessionId = '' } = useParams()
+  const navigate = useNavigate()
   const [summary, setSummary] = useState<SummaryView | null>(null)
   const [failed, setFailed] = useState(false)
   const [openQuestion, setOpenQuestion] = useState<number | null>(null)
@@ -201,6 +202,15 @@ export default function Summary() {
             ))}
           </div>
         </section>
+          <div className="summary-actions" data-testid="summary-exit">
+        <button type="button" onClick={() => navigate('/history')}>
+          返回歷史紀錄
+        </button>
+
+        <button type="button" onClick={() => navigate('/')}>
+          退出總結
+        </button>
+      </div>
       </main>
 
       <div className="summary-chalk-tray">

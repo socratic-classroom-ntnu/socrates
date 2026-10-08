@@ -11,6 +11,7 @@ import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
 import { TeacherDashboard, TeacherShell } from './pages/TeacherDashboard';
+import { teacherRoute } from './teacherRoute';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -310,10 +311,12 @@ export default function ClassroomApp() {
     const room = location.pathname.match(/^\/classrooms\/([\w-]+)/);
     if (room)
         return <Classroom user={user} id={room[1]}/>;
-    if (/^\/teacher\/home\/?$/.test(location.pathname))
-        return user.verified ? <TeacherDashboard user={user}/> : <VerificationGate user={user} onVerified={() => location.reload()}/>;
-    const course = location.pathname.match(/^\/teacher\/courses\/([\w-]+)/);
-    if (course)
-        return <TeacherShell active="home"><ClassroomLibrary initialSelected={course[1]}/></TeacherShell>;
+    const teacher = teacherRoute(location.pathname, user.verified);
+    if (teacher?.page === 'verify')
+        return <VerificationGate user={user} onVerified={() => location.reload()}/>;
+    if (teacher?.page === 'home')
+        return <TeacherDashboard user={user}/>;
+    if (teacher?.page === 'course')
+        return <TeacherShell active="home"><ClassroomLibrary initialSelected={teacher.courseId}/></TeacherShell>;
     return <Home user={user}/>;
 }

@@ -92,7 +92,7 @@ function Home({ user }) {
     {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
     {mode === 'student' ? <section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e => setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e => setAlias(e.target.value)}/></label><button onClick={() => void join()}>進入教室 →</button></section> : mode === 'teacher' ?
             <ClassroomLibrary /> : <ProviderSettings />}
-    <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? mode : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
+    <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? 'teacher' : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
 }
 function useRoom(id, mode) {
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');

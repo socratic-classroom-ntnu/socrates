@@ -750,3 +750,59 @@
     width: 100%;
   }
 }
+<section className="summary-reflection">
+  <h3>討論重點</h3>
+  <ul>
+    {summary.key_points.map((point, index) => (
+      <li key={index}>{point}</li>
+    ))}
+  </ul>
+
+  <h3>討論中的分歧</h3>
+  <p>{summary.tension}</p>
+
+  {summary.reflection_excerpt && (
+    <>
+      <h3>我的反思摘錄</h3>
+      <p>{summary.reflection_excerpt}</p>
+    </>
+  )}
+</section>
+.summary-reflection {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  color: #fff;
+}
+
+.summary-reflection h3 {
+  margin: 20px 0 10px;
+  color: #f4df9b;
+  font-size: 20px;
+}
+
+.summary-reflection h3:first-child {
+  margin-top: 0;
+}
+
+.summary-reflection p,
+.summary-reflection li {
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.summary-reflection ul {
+  padding-left: 24px;
+}
+
+@media (max-width: 768px) {
+  .summary-reflection {
+    padding: 16px;
+    margin: 16px 0;
+  }
+
+  .summary-reflection h3 {
+    font-size: 18px;
+  }
+}

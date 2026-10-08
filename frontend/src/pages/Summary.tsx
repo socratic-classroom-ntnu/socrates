@@ -173,6 +173,24 @@ export default function Summary() {
           <h2>LLM 總結 ——</h2>
           <p>{summary.core_principle}</p>
         </section>
+        <section className="summary-reflection">
+  <h3>討論重點</h3>
+  <ul>
+    {summary.key_points.map((point, index) => (
+      <li key={index}>{point}</li>
+    ))}
+  </ul>
+
+  <h3>討論中的分歧</h3>
+  <p>{summary.tension}</p>
+
+  {summary.reflection_excerpt && (
+    <>
+      <h3>我的反思摘錄</h3>
+      <p>{summary.reflection_excerpt}</p>
+    </>
+  )}
+</section>
 
         <section className="summary-stages">
           <h2>你走過的情境（點開看分析）</h2>

@@ -4,7 +4,14 @@ import { vi } from '../testkit'
 import Summary from './Summary'
 
 const payload = {
+  discussion_topic: '電車難題：選擇、責任與原則',
   core_principle: '降低可避免的傷害',
+  key_points: [
+    '選擇時應考慮可能造成的傷害',
+    '不同立場對責任有不同看法',
+  ],
+  tension: '是否應該為了多數人的利益犧牲少數人',
+  reflection_excerpt: '我認為做決定前應該考慮每個人的處境',
   stage_outcomes: [
     {
       index: 0,

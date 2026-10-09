@@ -127,6 +127,18 @@ def test_classroom_owner_scope(environment):
         library.attach_script(
             c["id"], library.AttachScript(action_id=uuid4().hex, script_id=s["id"]), req
         )
+    with pytest.raises(DomainError):
+        library.create_batch(
+            c["id"], library.CreateBatch(action_id=uuid4().hex, script_id=s["id"]), req
+        )
+    with pytest.raises(DomainError):
+        library.attach_script(
+            library.create_classroom(
+                library.CreateClassroom(action_id=uuid4().hex, title="第二個教室"), req
+            )["id"],
+            library.AttachScript(action_id=uuid4().hex, script_id=s["id"]),
+            req,
+        )
 
 
 def test_twelve_members_four_independent_sessions(environment):

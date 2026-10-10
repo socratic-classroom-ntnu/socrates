@@ -1,0 +1,130 @@
+/* The live classroom uses its own API; share the classroom artwork, not session state. */
+.r2-classroom:has(.classroom-discussion) {
+  height: 100dvh;
+  min-height: 620px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(#0005, #0005), url('/images/classroom-stage.png') center / cover no-repeat;
+  color: #f2eee5;
+}
+.r2-classroom:has(.classroom-discussion) > .r2-top {
+  position: relative;
+  z-index: 20;
+  height: 64px;
+  background: transparent;
+  border: 0;
+  padding: 8px 16px;
+}
+.r2-classroom:has(.classroom-discussion) > .r2-top > .r2-wordmark,
+.r2-classroom:has(.classroom-discussion) > .r2-top > span { display: none; }
+.r2-classroom:has(.classroom-discussion) .r2-hamburger { margin-left: auto; }
+.r2-classroom:has(.classroom-discussion) .r2-clock {
+  margin-left: auto;
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 12px;
+  background: #c3441c;
+  color: white;
+  font-size: 18px;
+  box-shadow: none;
+}
+.classroom-discussion { --discussion-bottom: 155px; }
+.classroom-discussion-progress, .classroom-discussion-identity, .classroom-discussion-presence {
+  position: absolute;
+  top: 12px;
+  padding: 6px 12px;
+  border: 1px solid #e2d4bb33;
+  border-radius: 10px;
+  background: #1c1915dd;
+  font-weight: 600;
+  pointer-events: none;
+}
+.classroom-discussion-progress { left: 76px; }
+.classroom-discussion-identity { left: 50%; transform: translateX(-50%); display: flex; gap: 9px; align-items: center; }
+.classroom-discussion-identity > span { background: #d94d20; padding: 0 7px; border-radius: 7px; }
+.classroom-discussion-presence { right: 160px; background: #c3441c; }
+.classroom-discussion-title { position: absolute; top: 78px; left: 25%; right: 25%; text-align: center; margin: 0; font-size: 27px; text-shadow: 0 2px 5px #000; }
+.classroom-answer-history, .classroom-discussion-transcript {
+  position: absolute;
+  top: 78px;
+  bottom: 21px;
+  width: 22%;
+  padding: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border: 1px solid #e2d4bb33;
+  border-radius: 14px;
+  background: #1c1915bb;
+  box-sizing: border-box;
+  z-index: 5;
+}
+.classroom-answer-history { left: 1.2%; }
+.classroom-answer-history h2 { margin: 0 0 16px; font-size: 22px; color: #d3cec5; }
+.classroom-answer-history h3 { font-size: 19px; font-weight: 400; color: #b3aa9b; }
+.classroom-initial-answer { border: 1px solid #b54d25; border-radius: 12px; padding: 12px; background: #29231be6; }
+.classroom-initial-answer > span { color: #b3aa9b; }
+.classroom-initial-answer p, .classroom-answer-history li { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.classroom-answer-history ol { padding-left: 22px; }
+.classroom-answer-history li::marker { color: #ef652e; }
+.classroom-discussion-transcript { right: 1.2%; display: flex; flex-direction: column; gap: 13px; }
+.classroom-discussion-transcript .r2-message { flex-shrink: 0; margin: 0; padding: 13px 15px; max-width: 100%; background: #302b23e6; border: 1px solid #e2d4bb33; border-radius: 12px; overflow-wrap: anywhere; }
+.classroom-discussion-transcript .r2-message small { color: #f16a36; }
+.classroom-discussion-transcript .r2-message p { margin: 6px 0 0; font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
+.classroom-discussion-transcript .r2-message.student { align-self: flex-end; background: #e7e2d7; color: #28231b; }
+.r2-classroom .classroom-discussion .r2-live-dialog { bottom:12px; width:82%; min-height:0; padding:9px 12px; background:#171512ed; color:#eee7dc; border:1px solid #b54d25; border-radius:15px; box-shadow:0 10px 30px #0005; backdrop-filter:blur(8px); } 
+.classroom-discussion .r2-live-dialog > small { display:block; margin-bottom:6px; color:#f16a36; font-size:12px; font-weight:700; }
+.classroom-answer-controls { display:flex; align-items:stretch; gap:12px; width:100%; }
+.classroom-answer-controls .socratic-composer { flex:1; min-width:0; }
+.classroom-answer-controls .socratic-composer-row { display:grid; grid-template-columns:minmax(0,1fr) 120px; grid-template-rows:42px 42px; gap:6px 12px; padding:0; background:transparent; border:0; border-radius:0; box-shadow:none; }
+.classroom-answer-controls .socratic-composer-row textarea { grid-column:1; grid-row:1 / 3; width:100%; height:90px; min-height:90px; padding:12px 14px; resize:none; border:1px solid #85745066!important; border-radius:10px; background:#29251bd9!important; }
+.classroom-answer-controls .socratic-composer-row .socratic-mic { grid-column:2; grid-row:1; width:120px; height:42px; border:1px solid #85745066; border-radius:9px!important; background:#3a352b!important; color:#eee7dc!important; white-space:nowrap; }
+.classroom-answer-controls .socratic-composer-row .socratic-enter { grid-column:2; grid-row:2; width:120px; height:42px; border-radius:9px; background:#873b23!important; color:#eee7dc!important; }
+.classroom-answer-controls .socratic-mic,.classroom-answer-controls .socratic-enter { display:flex!important; flex-direction:row!important; align-items:center!important; justify-content:center!important; gap:6px; padding:0 10px!important; line-height:1!important; white-space:nowrap; overflow:hidden; }
+.classroom-answer-controls .socratic-mic:disabled { opacity:.7; }
+.classroom-answer-controls .socratic-mic::after { content:"用說的"; display:inline; flex:none; margin:0; line-height:1; }
+.classroom-answer-controls .socratic-enter::after { content:"送出"; display:inline; flex:none; margin:0; line-height:1; }
+.classroom-answer-controls .socratic-mic svg,.classroom-answer-controls .socratic-enter svg { display:block; flex:0 0 16px; width:16px; height:16px; }
+.classroom-answer-controls .socratic-composer-caption { display:none; }
+.classroom-end-discussion { flex:0 0 112px; width:112px; height:90px; margin:0; padding:8px; border:1px solid #85745066; border-radius:10px; background:#29251bd9; color:#eee7dc; font-size:14px; font-weight:600; }
+
+.classroom-answer-area > .r2-row:empty { display: none; }
+.classroom-discussion .r2-barrage-layer { inset: 130px 25% 240px; }
+.r2-classroom:has(.classroom-discussion) .r2-drawer { z-index: 30; }
+
+/* Personal sessions use a textarea and ActionBar, without DraftComposer. */
+.session-classroom .classroom-answer-history, .session-classroom .classroom-discussion-transcript { bottom: var(--discussion-bottom); }
+.session-classroom .classroom-discussion-progress { left: 16px; }
+.session-classroom .classroom-discussion-presence { right: 16px; }
+.session-classroom .r2-live-dialog { position: absolute; left: 50%; transform: translateX(-50%); z-index: 6; box-sizing: border-box; }
+.session-classroom .classroom-transcript-content { display: flex; flex-direction: column; gap: 12px; }
+.session-classroom .classroom-discussion-transcript h2 { margin: 0; font-size: 18px; }
+.session-classroom .session-answer-controls { display: grid; grid-template-columns: minmax(0,1fr) 112px auto; gap: 9px; align-items: stretch; }
+.session-classroom .session-answer-controls textarea { height: 90px; min-height: 90px; resize: none; background: #29251bd9; color: #eee7dc; border: 1px solid #85745066; }
+.session-classroom .classroom-answer-buttons { display: grid; grid-template-rows: 1fr 1fr; gap: 6px; }
+.session-classroom .session-answer-controls button { padding: 6px 12px; color: #eee7dc; border: 1px solid #85745066; background: #29251bd9; white-space: nowrap; }
+.session-classroom .session-answer-controls .classroom-send { background: #873b23; }
+.session-classroom .session-answer-controls .actions { margin: 0; align-items: stretch; }
+.session-classroom .session-answer-controls:not(:has(textarea)) { display: flex; justify-content: flex-end; }
+.session-classroom .r2-live-dialog > p { margin: 4px 0 8px; font-size: 13px; }
+@media (max-width: 600px) {
+  .session-classroom .session-answer-controls { grid-template-columns: minmax(0,1fr) 100px; }
+  .session-classroom .session-answer-controls .actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+
+@media (max-width: 900px) {
+  .classroom-answer-history, .classroom-discussion-transcript { width: 30%; padding: 12px; }
+  .classroom-discussion-title { left: 33%; right: 33%; font-size: 21px; }
+  .classroom-discussion-presence { display: none; }
+  .r2-classroom .classroom-discussion .r2-live-dialog { width: 94%; }
+}
+@media (max-width: 600px) {
+  .r2-classroom:has(.classroom-discussion) { height: auto; min-height: 100dvh; overflow: visible; }
+  .classroom-discussion { display: grid; gap: 14px; padding: 12px; }
+  .classroom-discussion-identity { display: none; }
+  .classroom-discussion-title, .classroom-answer-history, .classroom-discussion-transcript,
+  .r2-classroom .classroom-discussion .r2-live-dialog { position: static; transform: none; width: 100%; }
+  .classroom-answer-history { max-height: 190px; }
+  .classroom-discussion-transcript { height: 340px; }
+  .r2-classroom .classroom-discussion .r2-live-dialog { margin-bottom: 70px; }
+}

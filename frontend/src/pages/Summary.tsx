@@ -115,8 +115,7 @@ export default function Summary() {
   const { sessionId = '' } = useParams()
   const navigate = useNavigate()
 
-  const isPreview =
-  import.meta.env.DEV &&
+const isPreview =
   new URLSearchParams(window.location.search).get('preview') === '1'
 
   const [summary, setSummary] = useState<SummaryView | null>(

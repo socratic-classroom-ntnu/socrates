@@ -136,6 +136,34 @@ def test_send_refuses_when_the_conversation_has_moved_on(client, learner_id, mon
     assert response.status_code == 409
 
 
+def test_retry_is_rejected_after_hitting_the_cap(client, learner_id, exploding_service):
+    """設計規格 §10：retry 有次數上限，避免無限重打失敗的 API。
+
+    provider 持續失敗時，前三次 retry 各自遞增 retry_count 並回 503
+    （學生訊息與計數都保留）；第四次在還沒呼叫 provider 前就被擋下，回 409。
+    """
+    session_id = _create(client, learner_id)
+    first = client.post(
+        f"/api/sessions/{session_id}/messages",
+        json={"text": "我會轉向"},
+        headers={"X-Learner-Id": learner_id},
+    )
+    assert first.status_code == 503
+
+    for _ in range(3):
+        retried = client.post(
+            f"/api/sessions/{session_id}/retry", headers={"X-Learner-Id": learner_id}
+        )
+        assert retried.status_code == 503
+
+    capped = client.post(f"/api/sessions/{session_id}/retry", headers={"X-Learner-Id": learner_id})
+    assert capped.status_code == 409
+
+    detail = client.get(f"/api/sessions/{session_id}", headers={"X-Learner-Id": learner_id})
+    contents = [m["content"] for m in detail.json()["messages"]]
+    assert "我會轉向" in contents  # 學生的發言全程沒有因為重試次數用完而消失
+
+
 def test_session_message_cap_is_the_last_safety_net(client, learner_id, monkeypatch):
     """設計規格 §10：每個 session 設訊息總數上限當最後的安全網。
 

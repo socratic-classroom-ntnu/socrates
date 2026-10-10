@@ -1,0 +1,11 @@
+{
+  "name": "socrates-hooks",
+  "private": true,
+  "description": "Root package.json exists only to manage git hooks (husky) for this polyglot repo.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

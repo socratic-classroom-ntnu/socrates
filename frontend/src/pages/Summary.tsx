@@ -94,11 +94,34 @@ const PREVIEW_DETAILS: QuestionDetail[] = [
       '最後的討論焦點從說謊本身，轉向誰有權替他人判斷與做決定。',
   },
 ]
+const PREVIEW_SUMMARY: SummaryView = {
+  discussion_topic: '電車難題：選擇、責任與原則',
+  core_principle: '做決定時，不只要考慮結果，也要思考自己的原則，以及對他人的影響。',
+  key_points: [
+    '不同的選擇可能反映不同的價值觀。',
+    '好的決定不一定只有一種答案。',
+    '我們需要思考選擇背後的理由。',
+  ],
+  tension: '當個人原則與多數人的利益衝突時，應該如何取捨？',
+  reflection_excerpt: '我開始發現，判斷對錯不能只看結果。',
+  stage_outcomes: PREVIEW_DETAILS.map((detail) => ({
+    index: detail.index,
+    status: 'goal_met',
+title: `討論情境 ${detail.index + 1}`,
+  })),
+}
 
 export default function Summary() {
   const { sessionId = '' } = useParams()
   const navigate = useNavigate()
-  const [summary, setSummary] = useState<SummaryView | null>(null)
+
+  const isPreview =
+  import.meta.env.DEV &&
+  new URLSearchParams(window.location.search).get('preview') === '1'
+
+  const [summary, setSummary] = useState<SummaryView | null>(
+    isPreview ? PREVIEW_SUMMARY : null
+  )
   const [failed, setFailed] = useState(false)
   const [openQuestion, setOpenQuestion] = useState<number | null>(null)
 
@@ -112,13 +135,15 @@ export default function Summary() {
     }
   }
 
-  useEffect(() => {
+useEffect(() => {
+  if (isPreview) return
+
   getSummary(sessionId)
     .then(setSummary)
     .catch(() => {
       void generate()
     })
-}, [sessionId])
+}, [sessionId, isPreview])
 
   const selectedOutcome = summary?.stage_outcomes.find(
     (outcome) => outcome.index === openQuestion
@@ -176,7 +201,7 @@ export default function Summary() {
         <section className="summary-reflection">
   <h3>討論重點</h3>
   <ul>
-    {summary.key_points.map((point, index) => (
+    {(summary.key_points ?? []).map((point, index) => (
       <li key={index}>{point}</li>
     ))}
   </ul>
@@ -232,10 +257,11 @@ export default function Summary() {
       </main>
 
       <div className="summary-chalk-tray">
-        <span className="summary-chalk summary-chalk-white"></span>
-        <span className="summary-chalk summary-chalk-yellow"></span>
-        <span className="summary-chalk summary-chalk-pink"></span>
-      </div>
+      <span className="summary-chalk summary-chalk-white"></span>
+      <span className="summary-chalk summary-chalk-yellow"></span>
+      <span className="summary-chalk summary-chalk-pink"></span>
+      <span className="summary-eraser"></span>
+     </div>
 
       {selectedOutcome && selectedDetail && (
         <div className="summary-modal-overlay">

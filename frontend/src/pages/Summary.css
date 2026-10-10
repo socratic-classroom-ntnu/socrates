@@ -18,37 +18,22 @@
   min-height: calc(100vh - 77px);
   margin: 0 auto;
   box-sizing: border-box;
-  padding: 40px 60px;
+  padding: 65px 85px 85px;
 
-  background:
-    radial-gradient(
-      ellipse at 22% 30%,
-      rgba(255, 255, 255, 0.06),
-      rgba(255, 255, 255, 0) 50%
-    ),
-    radial-gradient(
-      ellipse at 70% 72%,
-      rgba(255, 255, 255, 0.05),
-      rgba(255, 255, 255, 0) 45%
-    ),
-    radial-gradient(
-      ellipse at 85% 18%,
-      rgba(255, 255, 255, 0.035),
-      rgba(255, 255, 255, 0) 35%
-    ),
-    #1f2b25;
-
-  border-radius: 4px;
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45);
+  background-image: url('/images/summary/Chalkboard.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 
   display: flex;
   flex-direction: column;
   gap: 26px;
 
+  color: #f1eee4;
   text-shadow: 0 0 2px rgba(241, 238, 228, 0.4);
 }
 
-/* ---------- 璅? ---------- */
+/* -------------------- */
 
 .summary-header {
   display: flex;
@@ -201,7 +186,7 @@
   line-height: 1.45;
 }
 
-/* ---------- 蝎?瑽?---------- */
+/* -------------------- */
 
 .summary-chalk-tray {
   position: absolute;
@@ -209,43 +194,54 @@
   bottom: 12px;
 
   width: min(1120px, calc(100% - 160px));
-  height: 16px;
+  height: 30px;
 
   transform: translateX(-50%);
 
-  border-radius: 3px;
-  background: #4a331f;
-  box-shadow: 0 -2px 0 #6b4c30;
+  background-image: url('/images/summary/Chalk tray.png');
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .summary-chalk {
   position: absolute;
   bottom: 8px;
-  height: 9px;
-  border-radius: 4px;
+  height: 12px;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .summary-chalk-white {
   left: 120px;
   width: 46px;
-  background: #f1eee4;
+  background-image: url('/images/summary/Chalk.png');
 }
 
 .summary-chalk-yellow {
   left: 182px;
   width: 30px;
-  background: #f4d774;
+  background-image: url('/images/summary/Chalk-1.png');
 }
 
 .summary-chalk-pink {
   left: 226px;
   width: 38px;
-  background: #f2a7a0;
+  background-image: url('/images/summary/Chalk-2.png');
 }
 
-/* ========================================
-   ?桅?蝮賜?瘚桃?
-======================================== */
+.summary-eraser {
+  position: absolute;
+  right: 80px;
+  bottom: 6px;
+  width: 58px;
+  height: 18px;
+  background-image: url('/images/summary/Eraser.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
 .summary-modal-overlay {
   position: fixed;
@@ -290,7 +286,7 @@
   text-shadow: 0 0 2px rgba(241, 238, 228, 0.4);
 }
 
-/* ---------- 瘚桃?璅? ---------- */
+/* -------------------- */
 
 .summary-modal-header {
   display: flex;
@@ -342,7 +338,7 @@
   background: rgba(241, 238, 228, 0.12);
 }
 
-/* ---------- 蝯梯? ---------- */
+/* -------------------- */
 
 .summary-statistics-box {
   display: flex;
@@ -446,7 +442,7 @@
   white-space: nowrap;
 }
 
-/* ---------- LLM ?? ---------- */
+/* ---------- LLM ---------- */
 
 .summary-analysis-grid {
   display: grid;

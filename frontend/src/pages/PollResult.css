@@ -4,13 +4,11 @@
   display: flex; justify-content: center; align-items: center;
   overflow: hidden; font-family: 'sans-serif';
 }
-
 .classroom-bg {
   width: 100%; max-width: 1280px; aspect-ratio: 16 / 9;
   background-size: cover; background-position: center;
   position: relative; container-type: inline-size;
 }
-
 .top-status {
   position: absolute;
   top: 3%; left: 3%;
@@ -28,7 +26,6 @@
   top: 5%; left: 21%; width: 66%; 
   display: flex; flex-direction: column; justify-content: flex-start; 
 }
-
 .question-title {
   color: white; font-size: 1.6cqw; font-weight: normal;
   margin: 0 0 0.8cqw 0; 
@@ -38,22 +35,18 @@
 .options-container {
   display: flex; flex-direction: column; gap: 0.7cqw; 
 }
-
 .poll-row {
   display: flex; align-items: center; gap: 1cqw; font-size: 1.3cqw; 
 }
-
 .poll-label {
   width: 12cqw; flex-shrink: 0; white-space: nowrap;
 }
 .opt-id {
   font-weight: bold; margin-right: 0.8cqw;
 }
-
 .poll-progress-area {
   flex: 1; display: flex; align-items: center; gap: 0.8cqw; 
 }
-
 .poll-bar-fill {
   height: 1.2cqw; border-radius: 0.2cqw; border: 1px solid var(--theme-color); 
   background-image: repeating-linear-gradient(
@@ -62,7 +55,6 @@
   );
   transition: width 1s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-
 .poll-stats {
   color: #ddd; font-weight: bold; font-size: 1.3cqw; white-space: nowrap; 
 }
@@ -73,13 +65,14 @@
   display: flex; justify-content: space-between; align-items: flex-end; gap: 1.6cqw;
 }
 
-.panel {
+/* ⭐ 加上防護罩：.poll-wrapper */
+.poll-wrapper .panel {
   border-radius: 1.2cqw; padding: 1.6cqw 2cqw; box-shadow: 0 1cqw 2cqw rgba(0,0,0,0.3);
 }
-.panel .label {
+.poll-wrapper .panel .label {
   font-size: 1.2cqw; opacity: 0.8; margin-bottom: 0.8cqw; display: block;
 }
-.panel h3 { margin: 0; font-size: 2cqw; line-height: 1.4; }
+.poll-wrapper .panel h3 { margin: 0; font-size: 2cqw; line-height: 1.4; }
 
 .blue-panel { background-color: #2b5b84; color: white; flex: 1; border: 2px solid #3a75a6; }
 
@@ -99,3 +92,61 @@
 .black-panel:hover { background-color: #222; }
 .black-panel p { margin: 0.8cqw 0 0 0; color: #888; font-size: 1.2cqw; }
 .black-panel .arrow { float: right; font-size: 2.4cqw; }
+
+/* ================= RWD 手機版適配 ================= */
+@media (max-width: 600px) {
+  .classroom-bg {
+    aspect-ratio: auto;
+    height: 100%;
+    background-position: center; /* 讓背景圖置中 */
+  }
+
+  /* ⭐ 修復 1：幫文字加上專屬的半透明黑板，並強制畫面置中 */
+  .blackboard-overlay {
+    top: 12%; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    background-color: rgba(0, 0, 0, 0.65); /* 半透明黑底，確保文字閱讀性 */
+    padding: 16px;
+    border-radius: 8px;
+    box-sizing: border-box;
+  }
+
+  .top-status { font-size: 12px; gap: 6px; }
+  .top-status .badge { padding: 2px 6px; border-radius: 4px; }
+  
+  .question-title { font-size: 18px; margin-bottom: 12px; line-height: 1.3; }
+  
+  /* ⭐ 修復 2：放寬文字標籤的寬度，解決重疊問題 */
+  .options-container { gap: 12px; }
+  .poll-row { font-size: 14px; gap: 8px; }
+  .poll-label { 
+    width: 120px; /* 從錯誤的 45px 放寬到 120px */
+    white-space: normal; /* 允許文字太長時自然換行 */
+  }
+  
+  .poll-bar-fill { height: 12px; border-radius: 4px; }
+  .poll-stats { font-size: 12px; }
+  
+  /* 底部面板直排 */
+  .bottom-panels { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 12px; 
+    bottom: 3%; 
+    height: auto; 
+    max-height: 45%; 
+    overflow-y: auto;
+  }
+  
+  .poll-wrapper .panel { padding: 12px 16px; border-radius: 8px; }
+  .poll-wrapper .panel .label { font-size: 12px; margin-bottom: 6px; }
+  .poll-wrapper .panel h3 { font-size: 16px; }
+  
+  .yellow-note { width: 100%; transform: rotate(0); padding: 12px 16px; border-radius: 8px; }
+  .yellow-note p { font-size: 14px; }
+  
+  .black-panel p { font-size: 12px; margin-top: 6px; }
+  .black-panel .arrow { font-size: 18px; }
+}

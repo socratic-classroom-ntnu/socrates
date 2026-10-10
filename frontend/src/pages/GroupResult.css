@@ -1,12 +1,9 @@
 /* ================= 全局佈局與木紋背景 ================= */
 .group-wrapper {
-  /* 預設允許高度生長，這就是 RWD 不會卡死滾輪的秘訣 */
   min-height: 100vh; 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  
-  /* 延續等待室的背景 */
   background: linear-gradient(
     to bottom, 
     #eadecf 0%, #eadecf 75%, 
@@ -17,8 +14,6 @@
   position: relative;
   overflow-y: auto; 
 }
-
-/* 背景格線裝飾 */
 .group-wrapper::before {
   content: ''; position: absolute;
   top: 75%; left: 0; right: 0; height: 20%;
@@ -26,7 +21,6 @@
   background-size: 80px 100%;
   pointer-events: none;
 }
-
 .group-content {
   flex: 1;
   display: flex;
@@ -44,12 +38,10 @@
   padding: 40px 30px; 
   width: 100%; 
   max-width: 450px;
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.15), 0 15px 30px rgba(0,0,0,0.3);
   text-align: center;
   position: relative;
   box-shadow: inset 0 0 15px rgba(0,0,0,0.15), 0 25px 50px rgba(0,0,0,0.5);
 }
-
 .board-title {
   color: #553a22;
   font-size: 28px;
@@ -58,8 +50,6 @@
   border-bottom: 2px dashed #8a6543;
   padding-bottom: 12px;
 }
-
-/* 暗色金屬銘牌顯示組別 */
 .group-badge {
   background-color: #222;
   color: white;
@@ -78,16 +68,17 @@
 }
 
 /* ================= 螺絲釘 (延續 WaitingRoom 設計) ================= */
-.screw {
+/* ⭐ 加上防護罩：.group-wrapper */
+.group-wrapper .screw {
   position: absolute; width: 12px; height: 12px;
   background: linear-gradient(135deg, #eee 0%, #999 100%);
   border-radius: 50%;
   box-shadow: inset 1px 1px 2px rgba(255,255,255,0.8), 1px 2px 3px rgba(0,0,0,0.3);
 }
-.screw.top-left { top: 12px; left: 12px; }
-.screw.top-right { top: 12px; right: 12px; }
-.screw.bottom-left { bottom: 12px; left: 12px; }
-.screw.bottom-right { bottom: 12px; right: 12px; }
+.group-wrapper .screw.top-left { top: 12px; left: 12px; }
+.group-wrapper .screw.top-right { top: 12px; right: 12px; }
+.group-wrapper .screw.bottom-left { bottom: 12px; left: 12px; }
+.group-wrapper .screw.bottom-right { bottom: 12px; right: 12px; }
 
 /* ================= 組員名單 (紙片與圖釘) ================= */
 .members-grid {
@@ -95,7 +86,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 20px 16px;
 }
-
 .member-tag {
   background-color: #fdfbf7;
   padding: 10px 12px;
@@ -108,24 +98,21 @@
   color: #444;
   border-radius: 2px;
 }
-
-/* 隨機微傾斜營造手作感 */
 .member-tag:nth-child(4n + 1) { transform: rotate(-1deg); }  
 .member-tag:nth-child(4n + 2) { transform: rotate(1deg); } 
 .member-tag:nth-child(4n + 3) { transform: rotate(1.5deg); } 
 .member-tag:nth-child(4n)     { transform: rotate(-0.5deg); }
-
 .member-tag.is-me {
   background-color: #ffe066; 
 }
 
-/* 立體圖釘 */
-.thumbtack {
+/* ⭐ 加上防護罩：.group-wrapper */
+.group-wrapper .thumbtack {
   width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%;
   box-shadow: inset -2px -2px 4px rgba(0,0,0,0.3), inset 2px 2px 4px rgba(255,255,255,0.7), 2px 3px 4px rgba(0,0,0,0.4);
 }
-.thumbtack-red { background-color: #e74c3c; }
-.thumbtack-blue { background-color: #3498db; }
+.group-wrapper .thumbtack-red { background-color: #e74c3c; }
+.group-wrapper .thumbtack-blue { background-color: #3498db; }
 
 /* ================= 底部狀態列與呼吸燈 ================= */
 @keyframes breath {
@@ -133,14 +120,17 @@
   50% { opacity: 0.4; box-shadow: 0 0 12px currentColor; }
   100% { opacity: 1; box-shadow: 0 0 2px currentColor; }
 }
-.yellow-dot {
+
+/* ⭐ 加上防護罩：.group-wrapper */
+.group-wrapper .yellow-dot {
   width: 10px; height: 10px; border-radius: 50%; 
   background-color: #f1c40f; color: #f1c40f;
   display: inline-block; margin-right: 8px;
   animation: breath 2s infinite ease-in-out;
 }
 
-.bottom-status-bar {
+/* ⭐ 加上防護罩：.group-wrapper */
+.group-wrapper .bottom-status-bar {
   background-color: #1a1a1a; color: white; text-align: center; 
   padding: 15px; font-weight: bold;
   border-radius: 12px 12px 0 0; width: 80%; max-width: 600px;
@@ -150,12 +140,14 @@
 /* ================= RWD 手機版適配 ================= */
 @media (max-width: 500px) {
   .members-grid {
-    grid-template-columns: 1fr; /* 手機空間不夠時，從雙排變成單排 */
+    grid-template-columns: 1fr;
   }
   .group-board {
     padding: 30px 20px;
   }
-  .bottom-status-bar {
+  
+  /* ⭐ 這裡也要加上防護罩，否則手機版樣式吃不到 */
+  .group-wrapper .bottom-status-bar {
     width: 100%;
     border-radius: 0;
   }

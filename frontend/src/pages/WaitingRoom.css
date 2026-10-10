@@ -14,7 +14,6 @@
   overflow: hidden;
   position: relative;
 }
-
 .classroom-wrapper::before {
   content: '';
   position: absolute;
@@ -23,14 +22,13 @@
   background-size: 80px 100%;
   pointer-events: none;
 }
-
 .classroom-content {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 60px; 
   padding: 40px;
-  padding-right: 320px; /* 抵銷門的寬度，維持視覺平衡 */
+  padding-right: 320px;
   flex: 1;
   z-index: 2; 
 }
@@ -41,13 +39,14 @@
   50% { opacity: 0.4; box-shadow: 0 0 12px currentColor; }
   100% { opacity: 1; box-shadow: 0 0 2px currentColor; }
 }
-
 .red-dot {
   width: 10px; height: 10px; border-radius: 50%; 
   background-color: #ff4757; color: #ff4757; display: inline-block;
   animation: breath 2s infinite ease-in-out;
 }
-.yellow-dot {
+
+/* ⭐ 加上防護罩：.classroom-wrapper */
+.classroom-wrapper .yellow-dot {
   width: 10px; height: 10px; border-radius: 50%; 
   background-color: #f1c40f; color: #f1c40f;
   display: inline-block; margin-right: 8px;
@@ -60,30 +59,30 @@
   border-radius: 12px;
   padding: 24px;
   width: 280px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25); /* 加深陰影，讓面板看起來比較厚 */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
   position: relative;
 }
 
-/* ⭐ 新增：四個角落的金屬螺絲釘 */
-.screw {
+/* ⭐ 加上防護罩：.classroom-wrapper */
+.classroom-wrapper .screw {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: linear-gradient(135deg, #eee 0%, #999 100%); /* 金屬漸層反光 */
+  background: linear-gradient(135deg, #eee 0%, #999 100%);
   border-radius: 50%;
   box-shadow: 
-    inset 1px 1px 2px rgba(255,255,255,0.8), /* 螺絲本身的亮點 */
-    1px 2px 3px rgba(0,0,0,0.3); /* 螺絲投射在面板上的陰影 */
+    inset 1px 1px 2px rgba(255,255,255,0.8),
+    1px 2px 3px rgba(0,0,0,0.3);
 }
-.screw.top-left { top: 12px; left: 12px; }
-.screw.top-right { top: 12px; right: 12px; }
-.screw.bottom-left { bottom: 12px; left: 12px; }
-.screw.bottom-right { bottom: 12px; right: 12px; }
+.classroom-wrapper .screw.top-left { top: 12px; left: 12px; }
+.classroom-wrapper .screw.top-right { top: 12px; right: 12px; }
+.classroom-wrapper .screw.bottom-left { bottom: 12px; left: 12px; }
+.classroom-wrapper .screw.bottom-right { bottom: 12px; right: 12px; }
 
 .info-inner-black-box {
   background-color: #222; color: white; text-align: center;
   padding: 30px 10px; border-radius: 8px; margin-bottom: 20px;
-  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5); /* 內陰影創造凹陷感 */
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
 }
 .info-details p { margin: 12px 0; color: #333; font-weight: bold; }
 .info-details span { color: #666; margin-right: 12px; }
@@ -97,10 +96,12 @@
 .sign-in-board {
   background-color: #d1bfae; 
   border: 14px solid #a37c58; 
-  border-radius: 8px; padding: 24px; width: 400px;
+  border-radius: 8px; padding: 24px; 
+  /* ⭐ 修復 RWD：改成 100% 加上最大寬度，手機就不會破版了 */
+  width: 100%; 
+  max-width: 400px;
   box-shadow: inset 0 0 15px rgba(0,0,0,0.15), 0 15px 30px rgba(0,0,0,0.3);
 }
-
 .board-header {
   display: flex; justify-content: space-between; align-items: flex-end;
   margin-bottom: 24px; border-bottom: 2px dashed #8a6543; padding-bottom: 10px;
@@ -108,20 +109,15 @@
 .board-header h3 { margin: 0; font-size: 20px; color: #333; }
 .board-header span { font-size: 14px; color: #666; font-weight: bold; }
 
-/* 1. 加大網格的間距 */
 .participant-grid { 
   display: grid; 
   grid-template-columns: 1fr 1fr; 
-  /* 語法：gap: 上下間距 左右間距; 
-     把上下的間距從原本的 16px 拉大到 24px */
   gap: 24px 16px; 
 }
-
-/* ⭐ 名牌：改造成貼在牆上的碎木片/紙條感 */
 .name-tag {
-  background-color: #fdfbf7; /* 微微泛黃的紙張色/木片色 */
+  background-color: #fdfbf7;
   padding: 8px 12px;
-  box-shadow: 2px 3px 6px rgba(0,0,0,0.15); /* 加強浮空感 */
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
   gap: 12px; 
@@ -130,37 +126,31 @@
   color: #444;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
-/* 2. 把傾斜角度縮小到 1度 左右的微調，看起來會自然很多 */
 .name-tag:nth-child(4n + 1) { transform: rotate(-1deg); }  
 .name-tag:nth-child(4n + 2) { transform: rotate(0.8deg); } 
 .name-tag:nth-child(4n + 3) { transform: rotate(1.2deg); } 
 .name-tag:nth-child(4n)     { transform: rotate(-0.5deg); }
 
-
-/* 滑鼠互動效果也稍微調小旋轉角度的變化幅度 */
 .name-tag:hover {
   transform: scale(1.05) rotate(0deg); 
   box-shadow: 4px 6px 12px rgba(0,0,0,0.2);
   z-index: 10;
 }
+.name-tag.is-me { background-color: #ffe066; }
 
-.name-tag.is-me { background-color: #ffe066; /* 稍微飽和一點的黃色，更有螢光筆畫過的感覺 */ }
-
-/* ⭐ 立體圖釘：取代原本平面的 dot */
-.thumbtack {
+/* ⭐ 加上防護罩：.classroom-wrapper */
+.classroom-wrapper .thumbtack {
   width: 14px; 
   height: 14px;
-  flex-shrink: 0; /* ⭐ 加上這行：防止圖釘被文字擠壓重疊 */ 
+  flex-shrink: 0;
   border-radius: 50%;
   box-shadow: 
-    inset -2px -2px 4px rgba(0,0,0,0.3), /* 內部暗部 (創造立體球狀) */
-    inset 2px 2px 4px rgba(255,255,255,0.7), /* 內部反光 (塑膠反光感) */
-    2px 3px 4px rgba(0,0,0,0.4); /* 圖釘投射在木片上的陰影 */
+    inset -2px -2px 4px rgba(0,0,0,0.3),
+    inset 2px 2px 4px rgba(255,255,255,0.7),
+    2px 3px 4px rgba(0,0,0,0.4);
 }
-.thumbtack-red { background-color: #e74c3c; }
-.thumbtack-blue { background-color: #3498db; }
-
+.classroom-wrapper .thumbtack-red { background-color: #e74c3c; }
+.classroom-wrapper .thumbtack-blue { background-color: #3498db; }
 
 /* ================= 右側：3D 教室門 ================= */
 .door-panel {
@@ -181,12 +171,15 @@
 }
 
 /* ================= 底部輸入與狀態列 ================= */
-.bottom-status-bar, .bottom-input-bar {
+/* ⭐ 加上防護罩：.classroom-wrapper */
+.classroom-wrapper .bottom-status-bar, 
+.classroom-wrapper .bottom-input-bar {
   background-color: #1a1a1a; padding: 12px 20px;
   border-radius: 12px 12px 0 0; width: 80%; max-width: 600px;
   margin: 0 auto; z-index: 10; position: relative;
 }
-.bottom-status-bar { color: white; text-align: center; padding: 15px; font-weight: bold; }
+.classroom-wrapper .bottom-status-bar { color: white; text-align: center; padding: 15px; font-weight: bold; }
+
 .bottom-input-bar { display: flex; gap: 12px; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); }
 .bottom-input-bar input {
   flex: 1; padding: 10px 16px; border: none; border-radius: 6px;
@@ -199,21 +192,17 @@
 .bottom-input-bar button:disabled { background-color: #555; color: #777; cursor: not-allowed; }
 
 @media (max-width: 900px) {
-  /* ⭐ 新增這段：解除手機版的滾動與高度限制 */
   .classroom-wrapper {
     height: auto;
     min-height: 100vh;
-    overflow-y: auto; /* 允許上下滾動 */
+    overflow-y: auto;
   }
-
-  /* 下面是你原本就有的 */
   .classroom-content { 
     flex-direction: column; 
     padding: 20px; 
     margin-bottom: 80px; 
-    padding-right: 20px; /* 拿掉桌機版預留給門的右邊距 */
+    padding-right: 20px;
   }
-  
   .door-panel { 
     display: none; 
   }

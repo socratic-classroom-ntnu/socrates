@@ -4,7 +4,42 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+# CI 跑的是 `ruff check backend`，範圍不含 repo 根目錄的 scripts/。
+# 但 root compose 把 ./scripts 掛進容器的 /app/scripts，容器內的 `ruff check .`
+# 因此會多掃到 CI 不檢查的檔案。在設定裡排除，讓兩邊範圍一致，
+# 也讓 check 與 format 行為相同（`ruff format` 只有會覆寫預設的 --exclude）。
+extend-exclude = ["scripts"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "app.api.routes.classroom",
+    "app.api.routes.groups",
+    "app.api.routes.ai_students",
+    "app.api.routes.public_config",
+    "app.api.routes.provider_profiles",
+    "app.api.routes.classroom_library",
+    "app.api.classroom_schemas",
+    "app.orchestrator.classroom",
+    "app.orchestrator.classroom_policy",
+    "app.domain.group_run",
+    "app.domain.group_analysis",
+    "app.domain.library_decisions",
+    "app.repositories.classroom_storage",
+    "app.services.classroom",
+    "app.services.llm_workers",
+    "app.services.email_delivery",
+    "app.services.ai_students",
+    "app.services.classroom_auth",
+    "app.tutor.classroom_provider",
+    "app.tutor.classroom_gateway",
+    "app.tutor.prompts",
+    "app.classroom_app",
+    "app.realtime",
+    "app.classroom_server",
+]
+follow_imports = "skip"
+ignore_errors = false

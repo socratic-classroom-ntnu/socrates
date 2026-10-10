@@ -1,0 +1,1 @@
+export class PackPresenter {constructor(container:HTMLElement);ready:boolean;pack:any;load(pack:any):Promise<void>;play(buffer:AudioBuffer,events:any[]):Promise<{state:string}>;playClip(name:string):void;stop():void;dispose():Promise<void>}

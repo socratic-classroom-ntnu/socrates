@@ -1,16 +1,5 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Conversation from './pages/Conversation'
-import Home from './pages/Home'
-import Summary from './pages/Summary'
+import ClassroomApp from './ClassroomApp'
+import Round1App from './Round1App'
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/sessions/:sessionId" element={<Conversation />} />
-        <Route path="/sessions/:sessionId/summary" element={<Summary />} />
-      </Routes>
-    </BrowserRouter>
-  )
-}
+// Round1App owns its BrowserRouter; nesting a second one crashed /round1, /history and /sessions/* to a blank page.
+export default function App(){ return /^\/(round1|history|sessions)(\/|$)/.test(location.pathname)?<Round1App/>:<ClassroomApp/> }

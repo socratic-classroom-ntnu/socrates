@@ -1,21 +1,72 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { vi } from '../testkit';
-import Summary from './Summary';
+import { fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { vi } from '../testkit'
+import Summary from './Summary'
+
 const payload = {
-    discussion_topic: '電車難題：選擇、責任與原則',
-    core_principle: '降低可避免的傷害',
-    key_points: ['人數會影響判斷', '介入方式也重要'],
-    tension: '結果與責任之間的張力',
-    reflection_excerpt: '我會轉向。',
-    stage_outcomes: [{ index: 0, status: 'goal_met', title: '失控的電車' }],
-};
-describe('Summary issue #3', () => {
-    it('renders topic, summary, key points and exits', async () => {
-        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
-        render(<MemoryRouter initialEntries={['/sessions/s1/summary']}><Routes><Route path="/sessions/:sessionId/summary" element={<Summary />}/></Routes></MemoryRouter>);
-        expect(await screen.findByTestId('discussion-topic')).toHaveTextContent('電車難題');
-        expect(screen.getByTestId('discussion-key-points')).toHaveTextContent('人數會影響判斷');
-        expect(screen.getByTestId('summary-exit')).toBeInTheDocument();
-    });
-});
+  discussion_topic: '電車難題：選擇、責任與原則',
+  core_principle: '降低可避免的傷害',
+  key_points: [
+    '選擇時應考慮可能造成的傷害',
+    '不同立場對責任有不同看法',
+  ],
+  tension: '是否應該為了多數人的利益犧牲少數人',
+  reflection_excerpt: '我認為做決定前應該考慮每個人的處境',
+  stage_outcomes: [
+    {
+      index: 0,
+      status: 'goal_met',
+      title: '失控的電車',
+    },
+  ],
+}
+
+describe('Summary page', () => {
+  it('renders summary and opens question details', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => payload,
+      })
+    )
+
+    render(
+      <MemoryRouter initialEntries={['/sessions/s1/summary']}>
+        <Routes>
+          <Route
+            path="/sessions/:sessionId/summary"
+            element={<Summary />}
+          />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    expect(
+      await screen.findByText('今日課堂總結')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('降低可避免的傷害')
+    ).toBeInTheDocument()
+    expect(screen.getByText('討論重點')).toBeInTheDocument()
+    expect(screen.getByText('討論中的分歧')).toBeInTheDocument()
+    expect(screen.getByText('我的反思摘錄')).toBeInTheDocument()
+    expect(screen.getByText('選擇時應考慮可能造成的傷害')).toBeInTheDocument()
+    expect(
+    screen.getByText('是否應該為了多數人的利益犧牲少數人')
+    ).toBeInTheDocument()
+    expect(
+    screen.getByText('我認為做決定前應該考慮每個人的處境')
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('summary-exit')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /失控的電車/ }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('統計圖表')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '關閉' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})

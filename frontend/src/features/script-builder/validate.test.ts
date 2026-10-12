@@ -63,3 +63,12 @@ test('a 422 detail list becomes readable field messages', () => {
     ]);
     expect(fieldErrorsFrom422('API 422')).toEqual([]);
 });
+
+// 範例題目加入時是兩列空白選項：只報「選項至少要 2 個」這一條，不再逐列報「請填寫」
+test('blank option rows do not count toward the two-option minimum', () => {
+    const doc = newDocument();
+    doc.questions[0].options = [{ id: 'a', text: '' }, { id: 'b', text: '  ' }];
+    expect(validateDocument(doc)).toEqual([{ path: 'questions.0.options', message: '情境 1 的選項至少要 2 個' }]);
+    doc.questions[0].options = [{ id: 'a', text: '轉向' }, { id: 'b', text: '不轉向' }, { id: 'c', text: '' }];
+    expect(validateDocument(doc)).toEqual([{ path: 'questions.0.options.2.text', message: '情境 1 的選項 3請填寫' }]);
+});

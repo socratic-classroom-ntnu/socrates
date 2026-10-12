@@ -269,7 +269,7 @@ class ScriptAssistResult(Strict):
 
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
-    options: list[str] = Field(min_length=2, max_length=8)
+    options: list[str] = Field(min_length=2, max_length=4)
     tutor_goal: str = Field(min_length=1, max_length=2000)
     probe_hints: list[str] = Field(min_length=1, max_length=6)
     rationale: str = Field(max_length=2000)

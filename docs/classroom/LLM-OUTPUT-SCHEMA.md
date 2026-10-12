@@ -290,7 +290,7 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
 |---|---|---|---|---|---|
 | `title` | `string` | 是 | — | `min_length=1`、`max_length=300` | 題目標題。 |
 | `scenario` | `string` | 是 | — | `min_length=1`、`max_length=12000` | 情境敘述。 |
-| `options` | `array<string>` | 是 | — | `min_length=2`、`max_length=8` | 選項文字，只描述行為本身。 |
+| `options` | `array<string>` | 是 | — | `min_length=2`、`max_length=4` | 選項文字，只描述行為本身。 |
 | `tutor_goal` | `string` | 是 | — | `min_length=1`、`max_length=2000` | 導師追問的目標。 |
 | `probe_hints` | `array<string>` | 是 | — | `min_length=1`、`max_length=6` | 追問方向。 |
 | `rationale` | `string` | 是 | — | `max_length=2000` | 給教師看的設計理由。 |

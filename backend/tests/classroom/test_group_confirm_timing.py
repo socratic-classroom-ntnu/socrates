@@ -125,6 +125,36 @@ def drive(g, max_steps=60):
     return g
 
 
+@pytest.mark.parametrize(
+    ("phase", "settlement_state"),
+    [("viewpoint_review", "EXPLORING"), ("final_reflection", "FINAL_STAGE")],
+)
+def test_teacher_can_end_with_unconfirmed_members_marked_incomplete(phase, settlement_state):
+    g = group_room("static")
+    g.s["phase"] = phase
+    g.s["group"]["settlement"] = {"state": settlement_state}
+    for member in ["m1", "m2"]:
+        g.command("group_statement", {"text": member + " 的最後觀點"}, member, False)
+    g.command(
+        "group_ack",
+        {"summary_digest": person_summary(g.s, "m1")["digest"]},
+        "m1",
+        False,
+    )
+
+    g.command("next", {}, None, True)
+
+    settlement = g.s["group"]["settlement"]
+    assert g.s["phase"] == "summary"
+    assert settlement["state"] == "SETTLED"
+    assert settlement["ended_by"] == "teacher"
+    assert settlement["end_reason"] == "teacher_force_end"
+    assert settlement["incomplete_members"] == ["m2"]
+    assert settlement["member_status"] == {"m1": "confirmed", "m2": "incomplete"}
+    assert set(g.s["group"]["confirmations"]) == {"m1"}
+    assert g.s["summaries"]["class"]["key_points"] == ["m1：m1 的最後觀點"]
+
+
 @pytest.mark.parametrize("mode", ["static", "dynamic"])
 def test_group_without_ack_reaches_q2(mode):
     g = drive(answer_all(group_room(mode)))

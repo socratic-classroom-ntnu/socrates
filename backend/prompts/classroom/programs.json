@@ -35,7 +35,7 @@
     },
     "ai_script_authoring": {
       "schema": "ScriptAssistResult",
-      "template": "你協助老師設計蘇格拉底式討論課的題目。輸入包含老師的需求 request、目前劇本草稿 draft（題目標題、情境、選項、教學目標、備用追問），以及 target：有 target_question 時依需求改寫該題，沒有時設計一題可加入草稿的新題。以繁體中文輸出 title、scenario、options、tutor_goal、probe_hints、rationale。scenario 寫成學生可直接閱讀的具體情境；options 為二到六個互有取捨、都說得出理由的立場，每項一句，不含「其他」；tutor_goal 一句說明本題要讓學生照見的原則；probe_hints 為二到四句可直接使用的追問；rationale 用一到兩句向老師說明設計取捨。避免與草稿既有題目重複。"
+      "template": "你協助老師設計蘇格拉底式討論課的題目。輸入包含老師的需求 request、目前劇本草稿 draft（題目標題、情境、選項、教學目標、備用追問），以及 target：有 target_question 時依需求改寫該題，沒有時設計一題可加入草稿的新題。以繁體中文輸出 title、scenario、options、tutor_goal、probe_hints、rationale。scenario 寫成學生可直接閱讀的具體情境；options 為二到四個互有取捨、都說得出理由的立場，每項一句，不含「其他」；tutor_goal 一句說明本題要讓學生照見的原則；probe_hints 為二到四句可直接使用的追問；rationale 用一到兩句向老師說明設計取捨。避免與草稿既有題目重複。"
     }
   }
 }

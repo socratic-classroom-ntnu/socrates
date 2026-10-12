@@ -179,6 +179,21 @@ def test_unusable_output_is_rejected(client, monkeypatch):
     assert r.json()["detail"] == "SCRIPT_ASSIST_INVALID_OUTPUT"
 
 
+def test_output_with_more_than_four_options_is_rejected(client, monkeypatch):
+    async def five_options(binding, *_):
+        return {
+            **SUGGESTION,
+            "options": ["甲", "乙", "丙", "丁", "戊"],
+        }, {}
+
+    monkeypatch.setattr(classroom_gateway, "generate", five_options)
+    login(client, "teacher")
+    configure_ai(client)
+    r = assist(client)
+    assert r.status_code == 502
+    assert r.json()["detail"] == "SCRIPT_ASSIST_INVALID_OUTPUT"
+
+
 def test_only_the_script_owner_can_ask(client, fake_generate):
     login(client, "owner")
     script = client.post("/api/v2/scripts", json={"document": DOC}).json()

@@ -368,6 +368,9 @@ async def discover_models(binding: dict) -> dict:
 
 
 async def test_connection(binding: dict) -> dict:
+    # OpenRouter 的 /models 不需要金鑰，只列模型無法證明金鑰有效；先打 /key 驗證金鑰。
+    if binding["adapter"] == "openrouter":
+        await _bounded_request(binding, method="GET", path="/key")
     result = await discover_models(binding)
     return {
         "status": "READY",

@@ -25,6 +25,11 @@ TALK_PHASES = frozenset(
 )
 
 
+# 觀點確認只在全部題目與代表討論結束之後（viewpoint_review）與最終反思階段開放：
+# 作答或討論途中確認會觸發結算，跳過代表討論並在第一題後結束課堂（QA B01／B17、A01／A08／A11）。
+CONFIRM_PHASES = frozenset({"viewpoint_review", "final_reflection"})
+
+
 def fingerprint(value):
     return sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
@@ -127,7 +132,7 @@ def confirm(state, member_id, digest, now):
     p = state["group"]
     if member_id not in p["member_snapshot"]:
         raise DomainError("GROUP_MEMBERSHIP_REQUIRED", 403)
-    if state["phase"] not in TALK_PHASES:
+    if state["phase"] not in CONFIRM_PHASES:
         raise DomainError("CONFIRMABLE_PHASE_REQUIRED", 409)
     summary = person_summary(state, member_id)
     if not summary["quotes"]:

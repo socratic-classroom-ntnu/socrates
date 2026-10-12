@@ -27,3 +27,27 @@ test('creating a connection sends the Free Router as the model', async () => {
   const call = jest.mocked(api).mock.calls.find(([path, method]) => path === '/provider-profiles' && method === 'POST')
   expect(call[2]).toMatchObject({ adapter: 'openrouter', default_model: 'openrouter/free', credential: 'sk-or-test' })
 })
+
+test('測試連線 shows its result inside the connection card', async () => {
+  jest.mocked(api).mockImplementation(async (path: string, method?: string) => {
+    if (path === '/provider-profiles') return [{ id: 'p1', name: 'OpenRouter-Free', adapter: 'openrouter', default_model: 'openrouter/free', has_credential: true, secret_last4: 'e6b0' }]
+    if (path === '/provider-profiles/p1/test' && method === 'POST') return { status: 'READY', model_count: 458 }
+    return { default_profile_id: null, fallback_profile_id: null, model_matrix: {}, budgets: {} }
+  })
+  await act(async () => { render(<ProviderSettings />) })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '測試連線' })) })
+  const card = screen.getByRole('heading', { name: 'OpenRouter-Free' }).closest('article')
+  expect(card).toHaveTextContent('連線成功：金鑰有效，可使用 458 個模型。')
+})
+
+test('a rejected key reads as a sentence in the card', async () => {
+  const { ApiError } = jest.requireActual('../api/classroomClient')
+  jest.mocked(api).mockImplementation(async (path: string, method?: string) => {
+    if (path === '/provider-profiles') return [{ id: 'p1', name: 'OpenRouter-Free', adapter: 'openrouter', default_model: 'openrouter/free', has_credential: true }]
+    if (path === '/provider-profiles/p1/test' && method === 'POST') throw new ApiError(502, 'PROVIDER_HTTP_401')
+    return { default_profile_id: null, fallback_profile_id: null, model_matrix: {}, budgets: {} }
+  })
+  await act(async () => { render(<ProviderSettings />) })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '測試連線' })) })
+  expect(screen.getByRole('heading', { name: 'OpenRouter-Free' }).closest('article')).toHaveTextContent('連線失敗：AI 服務拒絕了這組 API 金鑰，請確認金鑰是否正確。')
+})

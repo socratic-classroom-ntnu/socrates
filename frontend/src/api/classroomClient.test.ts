@@ -12,7 +12,11 @@ test('Classroom command carries one stable action identity and same-origin crede
 });
 test('Classroom API presents domain error without converting it to a successful receipt', async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, headers: { get: () => 'application/json' }, json: async () => ({ detail: 'ACTION_ID_PAYLOAD_CONFLICT' }) });
-    await expect(api('/classrooms/r', 'POST', {})).rejects.toThrow('ACTION_ID_PAYLOAD_CONFLICT');
+    await expect(api('/classrooms/r', 'POST', {})).rejects.toMatchObject({
+        message: '這個操作已經用不同內容送出過，請重新整理後再試。',
+        detail: 'ACTION_ID_PAYLOAD_CONFLICT',
+        status: 409,
+    });
 });
 
 test('YAML import sends the source text with the YAML content type', async () => {

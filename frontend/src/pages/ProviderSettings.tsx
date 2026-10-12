@@ -202,13 +202,19 @@ export function ProviderSettings() {
     }
   }
 
+  // 測試連線／讀取模型的結果顯示在該連線卡片裡（手機上頁尾的狀態列看不到）。
+  const [checks, setChecks] = useState<Record<string, { state: string; text: string }>>({})
+  const check = (id: string, state: string, text: string) =>
+    setChecks(current => ({ ...current, [id]: { state, text } }))
+
   async function test(profile) {
     setBusy(true)
+    check(profile.id, 'busy', '測試中…')
     try {
       const result = await api(`/provider-profiles/${profile.id}/test`, 'POST', {})
-      setNote(`${profile.name} 已連線，可讀取 ${result.model_count} 個模型。`)
+      check(profile.id, 'ok', `連線成功：金鑰有效，可使用 ${result.model_count} 個模型。`)
     } catch (error) {
-      setNote(errorText(error))
+      check(profile.id, 'error', `連線失敗：${errorText(error)}`)
     } finally {
       setBusy(false)
     }
@@ -216,12 +222,13 @@ export function ProviderSettings() {
 
   async function discover(profile) {
     setBusy(true)
+    check(profile.id, 'busy', '讀取模型中…')
     try {
       const result = await api(`/provider-profiles/${profile.id}/models`)
       setModels(current => ({ ...current, [profile.id]: result.models || [] }))
-      setNote(`${profile.name} 模型清單已更新。`)
+      check(profile.id, 'ok', `已讀取 ${(result.models || []).length} 個模型，可在下方 AI 預設值選用。`)
     } catch (error) {
-      setNote(errorText(error))
+      check(profile.id, 'error', `讀取失敗：${errorText(error)}`)
     } finally {
       setBusy(false)
     }
@@ -370,6 +377,11 @@ export function ProviderSettings() {
                 讀取模型
               </button>
             </div>
+            {checks[profile.id] && (
+              <p className={`r97-check is-${checks[profile.id].state}`} role="status" aria-live="polite">
+                {checks[profile.id].text}
+              </p>
+            )}
             {(models[profile.id] || []).length > 0 && (
               <details>
                 <summary>{models[profile.id].length} 個模型</summary>

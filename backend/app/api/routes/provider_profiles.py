@@ -28,6 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.orchestrator.classroom import DomainError
+from app.tutor.classroom_provider import ProviderWait
 from app.repositories.classroom_storage import (
     Account,
     Base,
@@ -553,7 +554,11 @@ async def test_profile(profile_id: str, request: Request):
             role="connection_test",
             owner_id=account.id,
         )
-    return await test_connection(binding)
+    try:
+        return await test_connection(binding)
+    except ProviderWait as exc:
+        # 連線失敗回結構化代碼（例 PROVIDER_HTTP_401），前端換成中文；原本未處理會變成 500 純文字。
+        raise DomainError(exc.reason, 502) from exc
 
 
 @router.get("/provider-profiles/{profile_id}/models")
@@ -573,7 +578,10 @@ async def provider_models(profile_id: str, request: Request):
             role="model_discovery",
             owner_id=account.id,
         )
-    result = await discover_models(binding)
+    try:
+        result = await discover_models(binding)
+    except ProviderWait as exc:
+        raise DomainError(exc.reason, 502) from exc
     with transaction() as db:
         current = _owned_profile(db, account.id, profile_id, True)
         current.metadata_json = {

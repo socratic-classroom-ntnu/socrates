@@ -176,6 +176,8 @@ function EvidencePanel({ view, refresh, standalone }) {
     const settled = view.settlement?.state === 'SETTLED';
     const allowed = ['answering', 'distribution', 'arena', 'focus', 'focus_summary', 'question_summary', 'preview', 'viewpoint_review', 'final_reflection'].includes(view.phase);
     const confirmed = !!view.member_id && view.confirmed_members?.includes(view.member_id);
+    // 觀點確認在所有題目與代表討論結束後開放（與後端 CONFIRM_PHASES 一致）。
+    const confirmable = ['viewpoint_review', 'final_reflection'].includes(view.phase);
     useEffect(() => setAckCheck(false), [view.my_summary?.digest]);
     async function send() { if (await mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'group_statement', data: { text, parents: parent ? [parent] : [], relation } })) {
         setText('');
@@ -195,7 +197,8 @@ function EvidencePanel({ view, refresh, standalone }) {
             } }}/></label>
         <div className="r2-grid"><label>回應哪一則<select value={parent} onChange={e => setParent(e.target.value)}><option value="">新的起點</option>{view.arguments?.map(n => <option key={n.id} value={n.id}>{n.text.slice(0, 55)}</option>)}</select></label><label>論點關係<select value={relation} onChange={e => setRelation(e.target.value)}><option value="supports">支持</option><option value="challenges">質疑</option><option value="qualifies">補充條件</option><option value="revises">修正</option></select></label></div>
         <button disabled={mutation.busy || !text.trim()} onClick={() => void send()}>保存原話</button>
-        {!confirmed && !!view.my_summary?.quotes.length && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="g70-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
+        {!confirmed && !!view.my_summary?.quotes.length && !confirmable && <p className="muted">所有題目與代表討論結束後，才能確認自己的觀點。</p>}
+        {!confirmed && !!view.my_summary?.quotes.length && confirmable && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="g70-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
       </>}
       {view.role === 'teacher' && !settled && <button disabled={mutation.busy} onClick={() => void mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'next', data: {} }).then(ok => ok && refresh())}>本組：下一步</button>}
       <p role="status">{mutation.note}</p></>}

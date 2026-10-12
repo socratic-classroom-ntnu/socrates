@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { errorText } from './errorText'
 
 // The adapter retains the established fetch(url, init) boundary used by resident tests.
 function fetchAdapter(credentials: RequestCredentials) {
@@ -84,7 +85,7 @@ export class ApiError extends Error {
   detail: unknown
 
   constructor(status: number, detail: unknown) {
-    super(typeof detail === 'string' ? detail : `API ${status}`)
+    super(errorText(detail, status))
     this.name = 'ApiError'
     this.status = status
     this.detail = detail

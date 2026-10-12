@@ -25,7 +25,9 @@ def test_openrouter_test_checks_the_key_before_listing_models(monkeypatch):
 
     async def fake(binding, *, method, path, **_):
         calls.append(path)
-        return _Response({"data": [{"id": "openrouter/free"}]} if path == "/models" else {"data": {"label": "k"}})
+        return _Response(
+            {"data": [{"id": "openrouter/free"}]} if path == "/models" else {"data": {"label": "k"}}
+        )
 
     monkeypatch.setattr(gateway, "_bounded_request", fake)
     result = asyncio.run(gateway.test_connection(_binding("openrouter")))

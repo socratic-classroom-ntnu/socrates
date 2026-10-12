@@ -168,3 +168,20 @@ describe('AI student model follows the default connection’s service', () => {
     expect(screen.getByText(/這個 AI 連線還沒有預設模型/)).toBeInTheDocument()
   })
 })
+
+// 教師分組總覽：每組卡片的 phase 文字用共用對照表；不認得的 phase 不猜，只顯示「進行中」
+test('the teacher group overview labels every group phase from the shared table', async () => {
+  const group = (id: string, phase: string) => ({ id, label: `第${id}組`, phase, members: 2, acked: 0, settlement: 'OPEN', stance: null, personal_progress: null })
+  serve(() => lobby({ phase: 'group_overview', groups: [
+    group('1', 'viewpoint_review'), group('2', 'final_reflection'), group('3', 'preview'), group('4', 'question_summary'), group('5', 'mystery'),
+  ] }))
+  render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+  const card = async (label: string) => (await screen.findByRole('heading', { name: label })).closest('a') as HTMLElement
+  expect(await card('第1組')).toHaveTextContent('確認觀點')
+  expect(await card('第2組')).toHaveTextContent('最後反思')
+  expect(await card('第3組')).toHaveTextContent('下一題預覽')
+  expect(await card('第4組')).toHaveTextContent('本題小結')
+  const unknown = await card('第5組')
+  expect(unknown.querySelector('small')).toHaveTextContent(/^進行中$/)
+  expect(screen.queryByText('討論進行中')).toBeNull()
+})

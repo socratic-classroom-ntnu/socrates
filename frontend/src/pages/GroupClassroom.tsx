@@ -7,6 +7,7 @@ import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings
 import { FocusNotice } from '../components/FocusNotice';
 import { PersonalCounts, PersonalPanel, PersonalProgress } from '../features/personal-dialogue/PersonalDialogue';
 import { aiStudentModel } from './ProviderSettings';
+import { phaseLabel } from '../shared/phaseLabels';
 import '../styles/group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
@@ -215,11 +216,11 @@ function GroupCollection({ view, refresh }) {
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
       <div className="r2-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
     </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
-      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{{lobby:'準備中',countdown:'即將開始',answering:'作答中',personal:'個人對話',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',summary:'課堂回顧',ended:'已結束'}[g.phase] || '討論進行中'}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
+      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
 }
 function GroupStage({ view }) {
-    return <main className="r2-home g70 g70-stage"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {view.phase}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
+    return <main className="r2-home g70 g70-stage"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {phaseLabel(view.phase)}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
     <section className="r2-home-hero"><small>{view.source_mode} · GROUP DIALOGUE</small><h1>{view.question?.title || view.title}</h1><p>{view.question?.scenario}</p></section>
     <GroupAvatar packId={view.avatar_pack_id || 'stickman'}/>
     <FocusNotice status={view.focus_notice ? 'TUTOR_UNAVAILABLE' : null} message={view.focus_notice}/>

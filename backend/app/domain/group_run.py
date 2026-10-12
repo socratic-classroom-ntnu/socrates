@@ -484,10 +484,22 @@ def extend(Native):
                         summary_digest=ack["summary_digest"],
                     )
                     return
-                if self.s["phase"] in {"viewpoint_review", "final_reflection"} and kind == "next":
+                if kind == "end":
                     if not teacher:
                         raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
+                    if p["settlement"]["state"] == "SETTLED":
+                        raise DomainError("GROUP_ALREADY_SETTLED", 409)
                     return self.settle(ended_by="teacher", force=True)
+                if self.s["phase"] == "final_reflection" and kind == "next":
+                    if not teacher:
+                        raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
+                    return self.settle()
+                if self.s["phase"] == "viewpoint_review" and kind == "next":
+                    if not teacher:
+                        raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
+                    if p["settlement"]["state"] == "CURRENT_PHASE_FINISHING":
+                        self.phase("final_reflection", 60)
+                    return
                 if kind in {"answer", "focus_message"} and data.get("text", "").strip():
                     node = record_statement(self.s, member_id, data["text"], self.now)
                     if kind == "focus_message":

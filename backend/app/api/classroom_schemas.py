@@ -187,6 +187,7 @@ class Command(Strict):
         "barrage",
         "focus_message",
         "next",
+        "end",
         "approve_question",
         "regenerate_question",
         "personal_summary",

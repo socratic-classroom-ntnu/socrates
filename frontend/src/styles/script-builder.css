@@ -1,0 +1,22 @@
+/* 劇本編輯器裡的「AI 協助出題」（ScriptAssist）與單題 AI 模型（ScenarioModelSelect）。
+   顏色沿用教師端外框的 --desk-* 變數；不在教師端外框時退回深色主題的 --r2-* 變數。
+   按鈕、輸入框的基本外觀交給既有的教師端樣式，這裡只補版面、層次與狀態。 */
+.r2-card.script-assist{display:grid;gap:2px;margin:12px 0}
+.r2-card.script-assist>p:first-child{margin:0 0 4px;color:var(--desk-ink-soft,var(--r2-muted));font-size:14px;line-height:1.7}
+.r2-card.script-assist>label{margin:10px 0}
+.r2-card.script-assist>button{justify-self:start;margin-top:6px}
+.r2-card.script-assist>button[aria-busy=true]{cursor:progress}
+.r2-card.script-assist>[aria-live]{margin:10px 0 0;font-size:14px;color:var(--desk-green,var(--r2-accent))}
+.script-assist-suggestion{margin-top:16px;padding:18px 20px;border:1px solid var(--desk-line,var(--r2-line));border-left:3px solid var(--desk-green,var(--r2-accent));border-radius:var(--desk-radius,14px);background:var(--desk-green-soft,#ffffff08)}
+.script-assist-suggestion h3{margin:0 0 6px;font-size:17px;line-height:1.5}
+.script-assist-suggestion p{margin:6px 0;white-space:pre-wrap}
+.script-assist-suggestion ol,.script-assist-suggestion ul{margin:8px 0;padding-left:22px}
+.script-assist-suggestion li{margin:3px 0}
+.script-assist-suggestion small{color:var(--desk-ink-soft,var(--r2-muted));font-size:13px}
+.script-assist-suggestion .r2-row{margin-top:14px}
+.scenario-model{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 18px;margin:14px 0;padding:14px 16px;border:1px dashed var(--desk-line,var(--r2-line));border-radius:var(--desk-radius,14px)}
+.scenario-model>label{margin:0}
+.scenario-model>small{grid-column:1/-1;color:var(--desk-ink-soft,var(--r2-muted));font-size:13px}
+.scenario-model select:disabled,.scenario-model input:disabled{opacity:.6;cursor:not-allowed}
+.r2-card.script-assist :focus-visible,.scenario-model :focus-visible{outline:2px solid var(--desk-green,var(--r2-accent));outline-offset:2px}
+.r2-card.script-assist button:disabled{cursor:not-allowed}

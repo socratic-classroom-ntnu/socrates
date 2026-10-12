@@ -32,12 +32,44 @@ function errorText(error) {
 const FREE_ROUTER = 'openrouter/free'
 const OTHER = '__other__'
 
-function modelChoices(profiles, discovered: string[] = []) {
-  const ids = [FREE_ROUTER, ...profiles.map(profile => profile.default_model), ...discovered]
+function toChoices(ids: string[]) {
   return [...new Set<string>(ids.filter(Boolean))].map(id => ({
     value: id,
     label: id === FREE_ROUTER ? 'Free Router（免費）' : id,
   }))
+}
+
+function modelChoices(profiles, discovered: string[] = []) {
+  return toChoices([FREE_ROUTER, ...profiles.map(profile => profile.default_model), ...discovered])
+}
+
+// openrouter/* 是 OpenRouter 自己的路由（例如 Free Router），只有 OpenRouter 連線認得。
+const isOpenRouterModel = (id: string) => id === FREE_ROUTER || id.startsWith('openrouter/')
+
+type MatrixProfile = { id?: string; adapter?: string; default_model?: string } | null | undefined
+
+const isOpenRouter = (profile: MatrixProfile) => profile?.adapter === 'openrouter'
+
+/** 選定連線可用的模型：OpenRouter 才列 Free Router；其他服務只列它自己的預設與讀到的模型。
+ * 還沒選連線時不知道是哪個服務，沿用全部連線的清單。 */
+function profileChoices(profile: MatrixProfile, profiles, discovered: string[]) {
+  if (!profile) return modelChoices(profiles, discovered)
+  if (isOpenRouter(profile)) return modelChoices([profile], discovered)
+  return toChoices([profile.default_model || '', ...discovered]).filter(choice => !isOpenRouterModel(choice.value))
+}
+
+/** 「套用至全部 AI」一開始選哪個：OpenRouter 用 Free Router；其他服務用讀到的第一個模型，
+ * 沒讀過模型就留空，讓老師自己選或輸入。 */
+function bulkDefault(profile: MatrixProfile, discovered: string[]) {
+  if (!profile) return ''
+  if (isOpenRouter(profile)) return FREE_ROUTER
+  return discovered.find(id => !isOpenRouterModel(id)) ?? ''
+}
+
+/** 選定的連線不是 OpenRouter 時，矩陣裡仍填著 OpenRouter 模型的角色（送出去只會在上課時失敗）。 */
+function mismatchedRoles(matrix: Record<string, string>, profile: MatrixProfile) {
+  if (!profile || isOpenRouter(profile)) return []
+  return roles.filter(([key]) => isOpenRouterModel(matrix[key] || '')).map(([, label]) => label)
 }
 
 /** 模型下拉選單：清單內的模型直接選；最後一項「其他」才展開文字框自行輸入。 */
@@ -84,26 +116,52 @@ function ModelSelect({ label, value, onChange, choices, emptyLabel = '' }) {
   )
 }
 
-function ModelMatrix({ value, onChange, profiles, models = [] }) {
-  const [allModel, setAllModel] = useState(FREE_ROUTER)
-  const choices = useMemo(() => modelChoices(profiles, models), [profiles, models])
+function ModelMatrix({
+  value,
+  onChange,
+  profiles,
+  models = [],
+  profile = null,
+}: {
+  value: Record<string, string>
+  onChange: (matrix: Record<string, string>) => void
+  profiles
+  models?: string[]
+  profile?: MatrixProfile
+}) {
+  const choices = useMemo(() => profileChoices(profile, profiles, models), [profile, profiles, models])
+  // 老師自己挑的模型只對當時那個連線有效；換了連線（或服務種類）就回到該連線的預設。
+  const profileKey = profile ? `${profile.id ?? ''}:${profile.adapter}` : ''
+  const [picked, setPicked] = useState<{ key: string; model: string } | null>(null)
+  const allModel = picked && picked.key === profileKey ? picked.model : bulkDefault(profile, models)
+  const model = allModel.trim()
+  const wrongService = Boolean(profile) && !isOpenRouter(profile) && isOpenRouterModel(model)
+  const mismatched = mismatchedRoles(value, profile)
   return (
     <section className="r97-model-matrix">
       <div className="r2-row">
         <label>
           套用至全部 AI
-          <ModelSelect label="套用至全部 AI" value={allModel} onChange={setAllModel} choices={choices} />
+          <ModelSelect
+            key={profileKey}
+            label="套用至全部 AI"
+            value={allModel}
+            onChange={next => setPicked({ key: profileKey, model: next })}
+            choices={choices}
+          />
         </label>
         <button
           type="button"
-          disabled={!allModel.trim()}
-          onClick={() =>
-            onChange(Object.fromEntries(roles.map(([key]) => [key, allModel.trim()])))
-          }
+          disabled={!model || wrongService}
+          onClick={() => onChange(Object.fromEntries(roles.map(([key]) => [key, model])))}
         >
           套用此模型到全部 AI
         </button>
       </div>
+      {wrongService && <p role="alert">這組連線不是 OpenRouter，不能使用 {model}。請改選這個服務的模型。</p>}
+      {mismatched.length > 0 && (
+        <p role="alert">這組連線不是 OpenRouter，下列角色仍設定為 OpenRouter 模型，請改選：{mismatched.join('、')}</p>
+      )}
       <div className="r2-script-grid">
         {roles.map(([key, label]) => (
           <label className="r2-card" key={key}>
@@ -234,7 +292,18 @@ export function ProviderSettings() {
     }
   }
 
+  const defaultProfile = profiles.find(profile => profile.id === settings.default_profile_id) || null
+  const matrixModels = useMemo(() => {
+    const listed = defaultProfile ? models[defaultProfile.id] || [] : Object.values(models).flat()
+    return (listed as { id: string }[]).slice(0, 50).map(model => model.id)
+  }, [defaultProfile, models])
+
   async function saveSettings() {
+    const mismatched = mismatchedRoles(settings.model_matrix || {}, defaultProfile)
+    if (mismatched.length) {
+      setNote(`預設連線不是 OpenRouter，請先替這些角色改選模型：${mismatched.join('、')}`)
+      return
+    }
     setBusy(true)
     try {
       await api('/ai-settings/account', 'PUT', {
@@ -378,7 +447,7 @@ export function ProviderSettings() {
               </button>
             </div>
             {checks[profile.id] && (
-              <p className={`r97-check is-${checks[profile.id].state}`} role="status" aria-live="polite">
+              <p className={`connection-check is-${checks[profile.id].state}`} role="status" aria-live="polite">
                 {checks[profile.id].text}
               </p>
             )}
@@ -476,7 +545,8 @@ export function ProviderSettings() {
           value={settings.model_matrix || {}}
           onChange={model_matrix => setSettings({ ...settings, model_matrix })}
           profiles={profiles}
-          models={(Object.values(models).flat() as { id: string }[]).slice(0, 50).map(model => model.id)}
+          profile={defaultProfile}
+          models={matrixModels}
         />
         <button disabled={busy} onClick={() => void saveSettings()}>
           保存帳號 AI 設定
@@ -487,4 +557,4 @@ export function ProviderSettings() {
   )
 }
 
-export { ModelMatrix, ModelSelect, FREE_ROUTER, roles }
+export { ModelMatrix, ModelSelect, FREE_ROUTER, roles, mismatchedRoles }

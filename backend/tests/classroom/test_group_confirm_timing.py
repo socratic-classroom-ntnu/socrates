@@ -7,6 +7,7 @@ import pytest
 
 from app.domain.group_run import initialise, person_summary
 from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
+from tests.classroom.test_group_personal import confirm_personal
 
 Q = {
     "id": "q1",
@@ -110,7 +111,8 @@ def drive(g, max_steps=60):
             else:
                 g = GameOrchestrator(g.s, now + 100)
                 g.tick()
-        elif phase in {"distribution", "focus_summary", "preview", "answering"}:
+        elif phase in {"distribution", "focus_summary", "preview", "answering", "personal"}:
+            # personal：老師收個人階段，未完成者標為 incomplete（不進入分布與代表）。
             g.command("next", {}, None, True)
         elif phase in {"final_reflection", "viewpoint_review"}:
             g.command("next", {}, None, True)
@@ -156,6 +158,8 @@ def test_q1_reaches_representative_discussion_with_different_options(mode):
             m,
             False,
         )
+        # 代表只從已確認的個人基準中選出：每位學生先完成自己的 AI 追問並確認。
+        confirm_personal(g, m)
     now = 111
     while g.s["phase"] not in {"focus", "summary", "final_reflection"} and now < 140:
         g = GameOrchestrator(g.s, now)

@@ -6,6 +6,7 @@ import time
 from uuid import uuid4
 from sqlalchemy import func, select
 from app.api.classroom_schemas import MemberView, RoomView
+from app.domain.group_run import baseline_answers, personal_records
 from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
 from app.orchestrator.classroom_policy import distribution
 from app.repositories.classroom_storage import (
@@ -109,13 +110,22 @@ def view(db, room, account_id, mode="student") -> dict:
         {
             "index": i,
             "title": s["questions"][i]["title"],
-            "distribution": distribution(s["questions"][i], r["answers"], s["members"], False),
+            # Group runs count confirmed personal baselines only, like their live distribution.
+            "distribution": distribution(
+                s["questions"][i],
+                baseline_answers(r)
+                if r.get("distribution_basis") == "personal_baseline"
+                else r["answers"],
+                s["members"],
+                False,
+            ),
         }
         for i, r in enumerate(s["runs"])
         if r["phase"] == "complete"
     ]
     if as_teacher:
-        summaries["records"] = s["runs"]
+        # Teachers read personal summaries and baselines, not the private dialogue itself.
+        summaries["records"] = personal_records(s["runs"])
     elif s["phase"] == "summary":
         # Class summaries are prompted with pseudonymous content only.
         summaries["records"] = []
@@ -125,7 +135,7 @@ def view(db, room, account_id, mode="student") -> dict:
             actions = ["start"]
         elif s["phase"] == "preview":
             actions = ["approve_question", "regenerate_question", "next"]
-        elif s["phase"] in {"answering", "distribution", "focus", "focus_summary"}:
+        elif s["phase"] in {"answering", "personal", "distribution", "focus", "focus_summary"}:
             actions = ["next"]
     if member and not as_teacher:
         if s["phase"] == "answering" and active and member.id not in active["answers"]:

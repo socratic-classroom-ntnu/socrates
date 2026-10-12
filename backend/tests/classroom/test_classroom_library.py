@@ -14,6 +14,7 @@ from app.api.routes import groups as group
 from app.api.routes import classroom_library as library
 from app.orchestrator.classroom import DomainError, GameOrchestrator
 from app.domain.library_decisions import visible_evidence
+from tests.classroom.test_group_personal import confirm_personal
 
 
 def doc():
@@ -114,6 +115,38 @@ def test_library_action_idempotency_and_payload_integrity(environment):
     with pytest.raises(DomainError):
         library.create_classroom(body.model_copy(update={"title": "新內容"}), req)
     assert len(library.list_classrooms(req)) == 1
+
+
+def test_list_classrooms_contract_keeps_its_json_shape(environment):
+    """The list now has a response_model; the wire JSON must stay exactly id/title/revision."""
+    from fastapi.testclient import TestClient
+    from app.classroom_app import create_app
+
+    _, _, req = environment
+    first = library.create_classroom(
+        library.CreateClassroom(action_id=uuid4().hex, title="  科技倫理  "), req
+    )
+    second = library.create_classroom(
+        library.CreateClassroom(action_id=uuid4().hex, title="科技系統與社會發展"), req
+    )
+    app = create_app(background=False)
+    with TestClient(app) as client:
+        response = client.get("/api/v2/library/classrooms")
+    assert response.status_code == 200
+    rows = response.json()
+    assert rows == library.list_classrooms(req)
+    assert {row["id"] for row in rows} == {first["id"], second["id"]}
+    for row in rows:
+        assert list(row) == ["id", "title", "revision"]
+        assert isinstance(row["id"], str)
+        assert isinstance(row["title"], str)
+        assert isinstance(row["revision"], int)
+    assert {row["title"] for row in rows} == {"科技倫理", "科技系統與社會發展"}
+
+    operation = app.openapi()["paths"]["/api/v2/library/classrooms"]["get"]
+    schema = operation["responses"]["200"]["content"]["application/json"]["schema"]
+    assert schema["type"] == "array"
+    assert schema["items"]["$ref"].endswith("/LibraryClassroomView")
 
 
 def test_classroom_owner_scope(environment):
@@ -226,6 +259,8 @@ def test_per_option_representative_and_countdown(environment):
                 mid,
                 False,
             )
+            # 分組課堂的分布與代表只採已確認的個人基準（個人對話先完成）。
+            confirm_personal(machine, mid)
         assert machine.s["phase"] == "answering"
         at_end = GameOrchestrator(machine.s, machine.s["due_at"] + 0.01)
         at_end.tick()

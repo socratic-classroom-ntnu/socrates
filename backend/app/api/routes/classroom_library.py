@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.api.classroom_schemas import LibraryClassroomView
 from app.services import classroom as service
 from app.orchestrator.classroom import DomainError
 from app.services.ai_students import ensure_other_options
@@ -164,7 +165,7 @@ def _lesson_projection(db, classroom_id: str) -> list[dict]:
     return lessons
 
 
-@router.get("/classrooms")
+@router.get("/classrooms", response_model=list[LibraryClassroomView])
 def list_classrooms(request: Request):
     with transaction() as db:
         account = user(db, request)

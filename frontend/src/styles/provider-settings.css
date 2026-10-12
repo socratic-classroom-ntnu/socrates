@@ -12,7 +12,7 @@
 
 .r97-model-select{display:flex;flex-direction:column;gap:6px}
 .r97-model-select select,.r97-model-select input{width:100%}
-.r97-check{margin:8px 0 0;font-size:14px;line-height:1.5}
-.r97-check.is-ok{color:#8fd19e}
-.r97-check.is-error{color:#e5694f}
-.r97-check.is-busy{color:inherit;opacity:.75}
+.connection-check{margin:8px 0 0;font-size:14px;line-height:1.5}
+.connection-check.is-ok{color:#8fd19e}
+.connection-check.is-error{color:#e5694f}
+.connection-check.is-busy{color:inherit;opacity:.75}

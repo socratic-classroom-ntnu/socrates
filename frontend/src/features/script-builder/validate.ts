@@ -39,6 +39,9 @@ export function validateDocument(doc): FieldError[] {
     int(errors, `${at}.focus_response_seconds`, `${name}追問回應秒數`, q.focus_response_seconds, 5)
     int(errors, `${at}.sender_point_cap`, `${name}送出者每回合積分上限`, q.sender_point_cap, 0)
     int(errors, `${at}.receiver_point_cap`, `${name}接收者每回合積分上限`, q.receiver_point_cap, 0)
+    // 分組課堂的個人對話；舊劇本沒有這兩欄時由後端補預設值。
+    if (q.max_personal_turns !== undefined) int(errors, `${at}.max_personal_turns`, `${name}個人對話回覆上限`, q.max_personal_turns, 1, 20)
+    if (q.personal_seconds !== undefined) int(errors, `${at}.personal_seconds`, `${name}個人對話秒數`, q.personal_seconds, 30)
   })
   return errors
 }
@@ -46,6 +49,7 @@ export function validateDocument(doc): FieldError[] {
 const FIELD_LABELS = {
   title: '標題', scenario: '情境敘述', options: '選項', text: '文字', duration_seconds: '作答秒數',
   max_focus_turns: '每位代表最多來回', focus_response_seconds: '追問回應秒數',
+  max_personal_turns: '個人對話回覆上限', personal_seconds: '個人對話秒數',
   sender_point_cap: '送出者每回合積分上限', receiver_point_cap: '接收者每回合積分上限',
   max_questions: '動態題目總數', live_llm_call_budget: 'Live LLM 額度', preview_seconds: '預覽秒數', questions: '題目', mode: '題目模式',
 }

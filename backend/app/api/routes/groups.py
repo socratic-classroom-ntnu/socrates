@@ -20,7 +20,15 @@ from app.repositories.classroom_storage import (
     persist_machine,
 )
 from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_notice, fresh_state
-from app.domain.group_run import initialise, person_summary
+from app.domain.group_run import (
+    PERSONAL_COMMANDS,
+    initialise,
+    person_summary,
+    personal_progress,
+    personal_student_view,
+    personal_teacher_view,
+    student_actions,
+)
 from app.domain.group_analysis import analysis as project_analysis
 from app.services import classroom as service
 from app.domain.library_decisions import visible_evidence
@@ -411,6 +419,15 @@ def view(rid: str, request: Request):
                 "avatar_pack_id": p.get("avatar_pack_id", "stickman"),
                 "source_mode": state["source_mode"],
                 "focus_notice": focus_notice(state),
+                # Own dialogue only; other students' personal dialogues never reach a student.
+                "personal": personal_student_view(state, member.id)
+                if member and mode == "student"
+                else None,
+                "available_actions": student_actions(state, member.id)
+                if member and mode == "student"
+                else [],
+                "personal_progress": personal_progress(state) if mode == "teacher" else None,
+                "personal_overview": personal_teacher_view(state) if mode == "teacher" else None,
             }
         rows = roster(db, room)
         cfg = state.get("classroom", {})
@@ -435,6 +452,7 @@ def view(rid: str, request: Request):
                         "members": len(p["member_snapshot"]),
                         "acked": len(p["confirmations"]),
                         "settlement": p["settlement"]["state"],
+                        "personal_progress": personal_progress(g.state),
                     }
                 )
         asset_id = state.get("asset_classroom_id")
@@ -475,7 +493,7 @@ def view(rid: str, request: Request):
 
 @router.post("/runs/{rid}/commands")
 def command(rid: str, body: GroupCommand, request: Request):
-    if body.kind not in {"group_statement", "group_ack", "next"}:
+    if body.kind not in {"group_statement", "group_ack", "next", *PERSONAL_COMMANDS}:
         raise DomainError("GROUP_COMMAND_REQUIRED", 422)
     with transaction() as db:
         a = actor(db, request, True)

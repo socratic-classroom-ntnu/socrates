@@ -78,7 +78,7 @@ Dynamic：representatives結束→多數立場與代表argument→生成題目�
 只給模型參考，不會被當成導師台詞）；dynamic 產生一題固定的
 「換一個條件，你的選擇會改變嗎？」；題目／班級／個人總結為固定說明文字；AI 學生為固定發言。
 
-Job priority：`llm_student_turn`(0) > focused tutor(1) > dynamic(2) > question summary(3)
+Job priority：`llm_student_turn`(0) > focused tutor／personal tutor(1) > dynamic(2) > question summary(3)
 > class summary(4) > personal summary(5)。
 
 額度依序檢查（`services/llm_workers.py` 的 `reserve_call`）：班級呼叫次數上限 → 班級 token 上限（預設 1M）
@@ -88,10 +88,39 @@ Job priority：`llm_student_turn`(0) > focused tutor(1) > dynamic(2) > question 
 
 Templates＋SkillSet＋Prompt metadata 保存 version 與 hash；每次呼叫的 audit 記錄 provider、
 provider profile、classroom owner、requested／actual model、use case、latency、token usage、
-estimated cost、fallback 與原因。`skills/classroom/socratic.md` 會加到全部 6 個 program 的 system prompt
+estimated cost、fallback 與原因。`skills/classroom/socratic.md` 會加到全部 7 個 program 的 system prompt
 （包含 AI 學生），改它會改變 `skill_hash` 與模型行為。
 Question summary完成後cache；class從逐題summary合成；personal依全課／單題scope按首次開啟cache。
 Full account與互動record存backend；學生summary只投影統計與自己的分析，Email保留account層。
+
+## 分組課堂的個人對話
+
+只用於分組課堂（group run，非 individual 模式）；全班課堂沒有這一段。目的：每位學生在進入多人階段前，
+都先與 AI 個別對話、釐清並確認自己的立場（QA：原本學生可以不經任何 AI 追問就確認觀點）。
+
+- **階段**：`answering` 中學生的作答一被接受（`answer`，或截止時 `finalize` 收下草稿），就開始他自己的
+  `personal_tutor` 對話，作答時間內即可進行。作答結束時若仍有真人學生的對話未有結果，進入 `personal`
+  階段（計時為題目的 `personal_seconds`）；全員有結果、教師 `next` 或計時到期即關閉，進入 `distribution`。
+  關閉時尚未有結果者標為 `incomplete`（`end_reason`：`all_settled`／`teacher_next`／`deadline`）。
+- **狀態**（`run["personal"][member_id].status`）：`probing`（AI 生成中或等學生回覆）→ `awaiting_confirm`
+  （有候選摘要與 `summary_digest`）→ `confirmed`（存成 `baseline`）；另有 `unclear`（學生選暫時無法釐清）、
+  `capped`（達 `max_personal_turns` 仍未符合判準）、`unavailable`（LLM 無法使用，學生訊息已保存，可重試）、
+  `incomplete`。`unclear`／`capped`／`incomplete` 不產生基準。AI 學生不經對話，作答即為基準（`source: "ai_student"`）。
+- **指令**（`POST /groups/runs/{id}/commands`）：`personal_message`、`personal_confirm`（需帶目前的
+  `summary_digest`）、`personal_revise`、`personal_unclear`、`personal_retry`；教師可帶 `data.member_id`
+  送 `personal_retry`。對話關閉後一律回 `PERSONAL_WINDOW_CLOSED`。
+- **結束判準只有一個**：`orchestrator/policy.py` 的 `should_advance`（經 `classroom_policy.stage_goal`），
+  判準先於上限；`completed_turns >= 1` 的地板保證學生至少回應過一次追問才可能進入 `awaiting_confirm`。
+- **欄位**：`Question.max_personal_turns`（預設 6，1–20）與 `Question.personal_seconds`（預設 600，≥30）。
+  規格候選值待 P03 決定，目前預設 6 回合／600 秒，老師可依題目調整。
+- **可見性**：學生的分組檢視只有自己的 `personal`；教師看到 `personal_progress`（各狀態人數與
+  `not_answered`）與 `personal_overview`（狀態、候選摘要、基準，不含對話原文），母課堂的組別卡片也有
+  `personal_progress`。`personal_tutor` 的串流片段不送到教室頻道（`llm_workers.PRIVATE_JOB_KINDS`）；
+  沒有可用 LLM 時結果為 `tutor_unavailable`，不會自動完成。
+- **分布與代表**：只採已確認的基準（`baseline_answers`，`distribution_basis: "personal_baseline"`），
+  沒有基準的作答者人數記在 `distribution_excluded`。
+- **可用動作**：分組學生檢視的 `available_actions` 由後端 `group_run.student_actions` 計算（含
+  `group_statement`、`group_ack` 與上述個人指令），前端只依它顯示按鈕。
 
 ## 互動經濟與未來scope
 

@@ -288,10 +288,10 @@ def extend(Native):
                 run = self.current()
                 if member_id in run["answers"]:
                     return
-                option_ids = {option["id"] for option in self.question()["options"]}
+                option_ids = [option["id"] for option in self.question()["options"]]
                 option_id = result.get("option_id")
                 if option_id not in option_ids:
-                    option_id = next(iter(option_ids))
+                    option_id = option_ids[0]
                 self.command(
                     "answer",
                     {

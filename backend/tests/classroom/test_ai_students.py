@@ -96,6 +96,28 @@ def test_llm_student_uses_native_job_and_answer_contract(monkeypatch):
     assert completed.current()["answers"]["m1"]["suggestion"]["actor_type"] == "llm_student"
 
 
+def test_invalid_option_id_falls_back_to_first_question_option():
+    machine = GameOrchestrator(state(), 0)
+    machine.command("start", {"script_document": ensure_other_options(document())}, None, True)
+    tick = GameOrchestrator(machine.s, 4)
+    tick.tick()
+    job = next(row for row in tick.jobs if row["kind"] == "llm_student_turn")
+    completed = GameOrchestrator(tick.s, 5)
+    completed.complete_job(
+        "llm_student_turn",
+        job["key"],
+        {
+            "action_mode": "answer",
+            "option_id": "outside-contract",
+            "text": "我先採第一個正式選項。",
+            "relation": "qualifies",
+            "should_confirm": False,
+        },
+        {"provider": "fixture", "actual_model": "fixture"},
+    )
+    assert completed.current()["answers"]["m1"]["option_id"] == "a"
+
+
 def test_should_confirm_defaults_to_true_when_model_omits_it():
     turn = LLMStudentTurn.model_validate(
         {

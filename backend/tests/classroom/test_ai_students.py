@@ -1,4 +1,5 @@
 from app.orchestrator.classroom import GameOrchestrator, fresh_state
+from app.api.classroom_schemas import LLMStudentTurn
 from app.api.routes.ai_students import fallback_other_suggestion
 from app.services.ai_students import (
     OTHER_ID,
@@ -93,6 +94,37 @@ def test_llm_student_uses_native_job_and_answer_contract(monkeypatch):
     )
     assert completed.current()["answers"]["m1"]["option_id"] == "a"
     assert completed.current()["answers"]["m1"]["suggestion"]["actor_type"] == "llm_student"
+
+
+def test_should_confirm_defaults_to_true_when_model_omits_it():
+    turn = LLMStudentTurn.model_validate(
+        {
+            "action_mode": "viewpoint",
+            "text": "我確認這是目前的觀點。",
+        }
+    )
+    assert turn.should_confirm is True
+
+
+def test_viewpoint_turn_without_should_confirm_records_confirmation():
+    value = state()
+    value["phase"] = "viewpoint_review"
+    machine = GameOrchestrator(value, 10)
+    machine.complete_job(
+        "llm_student_turn",
+        "ai:m1:viewpoint:review",
+        {
+            "action_mode": "viewpoint",
+            "option_id": "",
+            "text": "我目前優先考量公平。",
+            "relation": "qualifies",
+        },
+        {"provider": "fixture", "actual_model": "fixture"},
+    )
+    assert "m1" in machine.s["group"]["confirmations"]
+    assert machine.s["group"]["confirmations"]["m1"]["authority"] == (
+        "student_explicit_confirmation"
+    )
 
 
 def test_fallbacks_are_typed_and_repeatable():

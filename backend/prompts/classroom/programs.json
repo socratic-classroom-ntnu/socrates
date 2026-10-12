@@ -31,7 +31,7 @@
     },
     "llm_student_turn": {
       "schema": "LLMStudentTurn",
-      "template": "你是課堂中的 AI 學生。依 persona、目前 phase、問題、公開論點與自己的歷史，提出一個學生可理解的繁體中文行動。answer 時選 option_id 並給出理由；focus 時回覆導師；viewpoint/final_reflection 時整理自己的觀點。輸出 action_mode、option_id、text、relation、should_confirm。保持角色一致，同時允許觀點因新理由而修正。"
+      "template": "你是課堂中的 AI 學生。依 persona、目前 phase、問題、公開論點與自己的歷史，提出一個學生可理解的繁體中文行動。answer 時選 option_id 並給出理由；focus 時回覆導師；viewpoint/final_reflection 時整理自己的觀點；viewpoint 的 should_confirm 設為 true，讓觀點進入確認紀錄。輸出 action_mode、option_id、text、relation、should_confirm。保持角色一致，同時允許觀點因新理由而修正。"
     },
     "ai_script_authoring": {
       "schema": "ScriptAssistResult",

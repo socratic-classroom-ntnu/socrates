@@ -268,6 +268,9 @@ def attach_script(cid: str, body: AttachScript, request: Request):
                 document = ScriptDocument.model_validate(
                     ensure_other_options(body.document or {})
                 ).model_dump()
+                from app.services.scenario_ai import validate_scenario_ai
+
+                validate_scenario_ai(db, account.id, document)
                 script = Script(
                     id=str(uuid5(UUID(classroom.id), body.action_id)),
                     owner_id=account.id,

@@ -1,33 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '../api/classroomClient'
-import type { components } from '../api/classroomTypes'
 import '../styles/question-bank.css'
+import { BANK_PAGE_SIZE as PAGE_SIZE, BankTags as Tags, bankByline as byline, bankSearchPath } from '../features/question-bank/bank'
+import type { BankItem, BankPage } from '../features/question-bank/bank'
 
-// /bank/* 沒有 response_model，型別照 backend/app/api/routes/question_bank.py 的回傳手寫
-type Question = components['schemas']['Question']
-export type BankItem = {
-  id: string
-  title: string
-  tags: string[]
-  scenario_excerpt: string
-  option_count: number
-  author: string | null
-  mine: boolean
-  published_at: number
-  revision: number
-  question?: Question
-}
-type BankPage = { items: BankItem[]; total: number; offset: number; limit: number }
 type ScriptRow = { id: string; revision: number; document: { title: string; questions: unknown[] } }
 
-const PAGE_SIZE = 12
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
-const byline = (item: BankItem) => (item.mine ? '我發布的題目' : `${item.author || '其他老師'} 分享`)
-
-function Tags({ tags }: { tags: string[] }) {
-  if (!tags.length) return null
-  return <ul className="bank-tags" aria-label="標籤">{tags.map(tag => <li key={tag}>#{tag}</li>)}</ul>
-}
 
 export function QuestionBank() {
   const [query, setQuery] = useState('')
@@ -46,8 +25,7 @@ export function QuestionBank() {
   const load = useCallback(async () => {
     const revision = ++request.current
     try {
-      const params = new URLSearchParams({ q: term, offset: String(offset), limit: String(PAGE_SIZE) })
-      const result: BankPage = await api(`/bank/questions?${params}`)
+      const result: BankPage = await api(bankSearchPath(term, offset))
       if (revision === request.current) setPage(result)
     } catch (error) {
       if (revision === request.current) setNote(message(error))

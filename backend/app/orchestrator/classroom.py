@@ -7,7 +7,7 @@ Provider work runs after that transaction. An accepted answer is immutable.
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
-from app.api.classroom_schemas import ScriptDocument, Question
+from app.api.classroom_schemas import ScriptDocument, Question, public_question
 from app.orchestrator.classroom_policy import (
     choose_representative,
     distribution,
@@ -48,6 +48,25 @@ def focus_notice(state: dict) -> str | None:
     return None
 
 
+# Jobs that belong to one question and so follow that question's scenario_ai override.
+SCENARIO_AI_JOB_KINDS = frozenset({"focused_tutor", "personal_tutor", "question_summary"})
+
+
+def scoped_job_context(kind: str, context: dict) -> dict:
+    """Keep teacher-only routing out of the prompt payload and lift it to the job context.
+
+    resolve_provider_chain reads context["scenario_ai"]; the question the LLM sees never
+    carries provider ids. Jobs outside SCENARIO_AI_JOB_KINDS keep the classroom/role default.
+    """
+    question = context.get("question")
+    if not isinstance(question, dict) or "scenario_ai" not in question:
+        return context
+    context = {**context, "question": public_question(question)}
+    if kind in SCENARIO_AI_JOB_KINDS and question.get("scenario_ai"):
+        context["scenario_ai"] = deepcopy(question["scenario_ai"])
+    return context
+
+
 def fresh_state(title: str) -> dict:
     return {
         "phase": "lobby",
@@ -82,7 +101,7 @@ class GameOrchestrator:
         self.emit("phase.changed", phase=name, deadline_at=self.s["deadline_at"])
 
     def job(self, kind: str, key: str, context: dict):
-        self.jobs.append({"key": key, "kind": kind, "context": context})
+        self.jobs.append({"key": key, "kind": kind, "context": scoped_job_context(kind, context)})
 
     def current(self):
         return self.s["runs"][self.s["question_index"]]

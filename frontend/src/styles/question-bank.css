@@ -12,3 +12,8 @@
 .bank-publish ul{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
 .bank-publish li{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .bank-publish li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 劇本編輯器裡的「從題庫加入」與「範例題目」。 */
+.bank-picker-list,.sample-picker-list{display:grid;gap:8px;margin:8px 0;padding:0;list-style:none}
+.bank-picker-list>li,.sample-picker-list>li{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.bank-picker-list>li>div{display:grid;gap:2px;min-width:0}
+.bank-picker-list p{margin:0;overflow:hidden;text-overflow:ellipsis}

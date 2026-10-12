@@ -32,6 +32,10 @@
     "llm_student_turn": {
       "schema": "LLMStudentTurn",
       "template": "你是課堂中的 AI 學生。依 persona、目前 phase、問題、公開論點與自己的歷史，提出一個學生可理解的繁體中文行動。answer 時選 option_id 並給出理由；focus 時回覆導師；viewpoint/final_reflection 時整理自己的觀點。輸出 action_mode、option_id、text、relation、should_confirm。保持角色一致，同時允許觀點因新理由而修正。"
+    },
+    "ai_script_authoring": {
+      "schema": "ScriptAssistResult",
+      "template": "你協助老師設計蘇格拉底式討論課的題目。輸入包含老師的需求 request、目前劇本草稿 draft（題目標題、情境、選項、教學目標、備用追問），以及 target：有 target_question 時依需求改寫該題，沒有時設計一題可加入草稿的新題。以繁體中文輸出 title、scenario、options、tutor_goal、probe_hints、rationale。scenario 寫成學生可直接閱讀的具體情境；options 為二到六個互有取捨、都說得出理由的立場，每項一句，不含「其他」；tutor_goal 一句說明本題要讓學生照見的原則；probe_hints 為二到四句可直接使用的追問；rationale 用一到兩句向老師說明設計取捨。避免與草稿既有題目重複。"
     }
   }
 }

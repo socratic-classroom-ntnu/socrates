@@ -24,6 +24,7 @@
 
 ## 共通規則
 
+- `nullable<X>` 表示可以是 `X` 物件或 `null`。
 - 三個模型都繼承 `Strict`（`model_config = ConfigDict(extra="forbid")`）：**不在表內的欄位一律拒絕**
   （錯誤類型 `extra_forbidden`）。
 - 「必填」為「是」的欄位沒有預設值；其餘欄位省略時套用「預設」欄的值。
@@ -62,6 +63,7 @@
 | `receiver_point_cap` | `integer` | 否 | `25` | `ge=0` | 代表討論中，被回饋的代表在同一回合最多可得的積分。 |
 | `max_personal_turns` | `integer` | 否 | `6` | `ge=1`、`le=20` | 僅分組課堂：每位學生個人對話最多完成幾個來回；達到仍未符合判準即為 `capped`。預設值待團隊確認（見 [STATE-MACHINE.md](STATE-MACHINE.md)〈待決〉）。 |
 | `personal_seconds` | `integer` | 否 | `600` | `ge=30` | 僅分組課堂：作答截止後仍有人未有結果時，`personal` 階段的時限（秒）。預設值待團隊確認。 |
+| `scenario_ai` | `nullable<ScenarioAI>` | 否 | `null` | — | 只有教師看得到的模型設定：這一題的個人追問、代表追問與題目總結改用指定的連線與模型；不設定時沿用課堂設定。存檔時不設定就不寫出這個欄位；學生畫面、題庫發布、AI 產生的題目與送給 LLM 的內容都不含它。 |
 
 ### `Option`
 
@@ -69,6 +71,14 @@
 |---|---|---|---|---|---|
 | `id` | `string` | 是 | — | `min_length=1`、`max_length=64` | 選項識別字；學生作答時以 `option_id` 指向它。 |
 | `text` | `string` | 是 | — | `min_length=1`、`max_length=2000` | 選項文字，學生與教師畫面都直接顯示。 |
+
+### `ScenarioAI`
+
+| 欄位 | 型別 | 必填 | 預設 | 限制 | 說明 |
+|---|---|---|---|---|---|
+| `provider_profile_id` | `string` | 是 | — | `min_length=1`、`max_length=36` | 劇本擁有者自己的 provider 連線；存檔、建立與掛上劇本時檢查它屬於擁有者。 |
+| `model` | `string` | 是 | — | `min_length=1`、`max_length=200` | 模型名稱，前後空白會去掉。 |
+
 
 ## 跨欄位規則
 

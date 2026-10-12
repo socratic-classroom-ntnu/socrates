@@ -531,6 +531,14 @@ def delete_profile(profile_id: str, request: Request):
             is not None
         ):
             raise DomainError("PROVIDER_PROFILE_IN_AI_STUDENT", 409)
+        from app.repositories.classroom_storage import Script
+
+        for script in db.scalars(select(Script).where(Script.owner_id == account.id)):
+            if any(
+                (question.get("scenario_ai") or {}).get("provider_profile_id") == profile_id
+                for question in (script.document or {}).get("questions", [])
+            ):
+                raise DomainError("PROVIDER_PROFILE_IN_SCRIPT", 409)
         db.execute(
             delete(SessionProviderSecret).where(SessionProviderSecret.profile_id == profile_id)
         )
@@ -782,16 +790,23 @@ def resolve_provider_chain(
     owner_id, settings, session_hash = _room_ai_settings(db, room)
     role = JOB_ROLE.get(job_kind, job_kind)
     model_matrix = settings.get("model_matrix", {})
-    scenario = context.get("scenario_ai", {})
+    # A question's scenario_ai (lifted into the job context by the orchestrator) names one
+    # profile+model pair; the fallback profile keeps the classroom/role model.
+    scenario = context.get("scenario_ai") or {}
     profile_id = (
         context.get("provider_profile_id")
         or scenario.get("provider_profile_id")
         or settings.get("default_profile_id")
     )
     model = context.get("model") or scenario.get("model") or model_matrix.get(role)
+    fallback_model = context.get("model") or model_matrix.get(role)
     fallback_id = settings.get("fallback_profile_id")
     profile_ids = []
-    for candidate in [profile_id, fallback_id]:
+    # When a question routes to its own profile, the classroom default still backs it up
+    # (with the role model) before the fallback profile, so a removed or disabled override
+    # profile degrades to 沿用課堂設定 instead of leaving the question without a tutor.
+    backups = [settings.get("default_profile_id")] if scenario else []
+    for candidate in [profile_id, *backups, fallback_id]:
         if candidate and candidate not in profile_ids:
             profile_ids.append(candidate)
 
@@ -813,7 +828,8 @@ def resolve_provider_chain(
             binding_from_profile(
                 profile,
                 secret=secret,
-                model=model or profile.default_model,
+                model=(model if candidate == profile_id else fallback_model)
+                or profile.default_model,
                 role=role,
                 owner_id=owner_id,
             )
@@ -826,6 +842,7 @@ def resolve_provider_chain(
         "selected_profile_id": profile_id,
         "fallback_profile_id": fallback_id,
         "requested_model": model,
+        "scenario_ai": bool(scenario),
     }
 
 

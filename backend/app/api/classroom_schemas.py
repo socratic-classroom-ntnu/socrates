@@ -7,6 +7,7 @@ from pydantic import (
     Field,
     StringConstraints,
     field_validator,
+    model_serializer,
     model_validator,
 )
 
@@ -20,7 +21,24 @@ class Option(Strict):
     text: str = Field(min_length=1, max_length=2000)
 
 
-class Question(Strict):
+class ScenarioAI(Strict):
+    """Teacher-only routing for one question's LLM jobs; owner scope is checked against the DB."""
+
+    provider_profile_id: str = Field(min_length=1, max_length=36)
+    model: str = Field(min_length=1, max_length=200)
+
+    @field_validator("provider_profile_id", "model")
+    @classmethod
+    def trimmed(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("請選擇這一題要使用的 AI 連線與模型")
+        return value
+
+
+class PublicQuestion(Strict):
+    """A question as students and the LLM see it: no teacher-only routing fields."""
+
     id: str = Field(min_length=1, max_length=64)
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
@@ -44,6 +62,27 @@ class Question(Strict):
         if len({o.id for o in self.options}) != len(self.options):
             raise ValueError("選項 id 請各自唯一")
         return self
+
+
+class Question(PublicQuestion):
+    # Optional per-question model override; absent means 沿用課堂設定.
+    scenario_ai: ScenarioAI | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_unset_scenario_ai(self, handler):
+        value = handler(self)
+        if value.get("scenario_ai") is None:
+            value.pop("scenario_ai", None)
+        return value
+
+
+def public_question(question: dict | None) -> dict | None:
+    """Copy of a stored question without teacher-only fields, for student/LLM projections."""
+    if question is None:
+        return None
+    value = dict(question)
+    value.pop("scenario_ai", None)
+    return value
 
 
 class ScriptDocument(Strict):
@@ -191,7 +230,8 @@ class SummaryResult(Strict):
 
 
 class DynamicResult(Strict):
-    question: Question
+    # Generated questions never carry routing; the teacher sets scenario_ai in the script.
+    question: PublicQuestion
 
 
 # PORTAL-R88-LLM-STUDENT-CONTRACTS
@@ -213,6 +253,26 @@ class LibraryClassroomView(Strict):
     id: str
     title: str
     revision: int
+
+
+class ScriptAssistRequest(Strict):
+    """Teacher's AI-assisted design request against the draft currently in the editor."""
+
+    request: str = Field(min_length=1, max_length=4000)
+    document: dict[str, Any] = Field(default_factory=dict)
+    question_index: int | None = Field(default=None, ge=0)
+    script_id: str | None = Field(default=None, max_length=36)
+
+
+class ScriptAssistResult(Strict):
+    """LLM output for ai_script_authoring; the server turns it into a full Question."""
+
+    title: str = Field(min_length=1, max_length=300)
+    scenario: str = Field(min_length=1, max_length=12000)
+    options: list[str] = Field(min_length=2, max_length=8)
+    tutor_goal: str = Field(min_length=1, max_length=2000)
+    probe_hints: list[str] = Field(min_length=1, max_length=6)
+    rationale: str = Field(max_length=2000)
 
 
 class MemberView(Strict):
@@ -238,7 +298,7 @@ class RoomView(Strict):
     seq: int
     server_now: float
     deadline_at: float | None
-    question: Question | None
+    question: PublicQuestion | None
     question_index: int
     question_run_id: str | None
     question_count: int
@@ -248,7 +308,7 @@ class RoomView(Strict):
     distribution: list[dict[str, Any]]
     focus: dict[str, Any] | None
     transcript: list[dict[str, Any]]
-    preview: Question | None
+    preview: PublicQuestion | None
     summaries: dict[str, Any]
     available_actions: list[str]
     source_mode: str

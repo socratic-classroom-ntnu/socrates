@@ -23,6 +23,8 @@ from app.api.classroom_schemas import (
     PersonalSummary,
     PersonalTutorTurn,
     Question,
+    ScenarioAI,
+    ScriptAssistResult,
     ScriptDocument,
     SummaryResult,
     TutorTurn,
@@ -38,7 +40,7 @@ DOCS = Path(__file__).resolve().parents[3] / "docs" / "classroom"
 pytestmark = pytest.mark.skipif(not DOCS.is_dir(), reason="docs/classroom 不在這個 checkout 裡")
 SCRIPT_DOC = DOCS / "SCRIPT-SCHEMA.md"
 LLM_DOC = DOCS / "LLM-OUTPUT-SCHEMA.md"
-SCRIPT_MODELS = (ScriptDocument, Question, Option)
+SCRIPT_MODELS = (ScriptDocument, Question, Option, ScenarioAI)
 LLM_MODELS = (
     TutorTurn,
     Observations,
@@ -48,6 +50,7 @@ LLM_MODELS = (
     DynamicResult,
     LLMStudentTurn,
     OtherSuggestionResult,
+    ScriptAssistResult,
 )
 CONSTRAINT = re.compile(r"`(min_length|max_length|ge|le|gt|lt)=(-?\d+)`")
 HEADING = re.compile(r"###\s+`(\w+)`\s*")
@@ -104,6 +107,9 @@ def type_name(annotation) -> str:
         return "integer"
     if annotation is bool:
         return "boolean"
+    args = get_args(annotation)
+    if type(None) in args and len(args) == 2:
+        return "nullable<" + type_name(next(a for a in args if a is not type(None))) + ">"
     if get_origin(annotation) is list:
         return f"array<{type_name(get_args(annotation)[0])}>"
     if get_origin(annotation) is Literal:

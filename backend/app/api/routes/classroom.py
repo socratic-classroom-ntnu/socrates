@@ -30,6 +30,7 @@ from app.api.classroom_schemas import (
 )
 from app.orchestrator.classroom import DomainError
 from app.repositories.classroom_storage import Event, Membership, Room, Script, transaction
+from app.services.scenario_ai import prune_scenario_ai, validate_scenario_ai
 from app.realtime import BUS
 
 router = APIRouter(prefix="/api/v2")
@@ -180,7 +181,9 @@ def scripts(request: Request):
 def create_script(body: ScriptSave, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
-        s = Script(owner_id=a.id, document=body.document.model_dump())
+        document = body.document.model_dump()
+        validate_scenario_ai(db, a.id, document)
+        s = Script(owner_id=a.id, document=document)
         db.add(s)
         db.flush()
         return {"id": s.id, "revision": s.revision, "document": s.document}
@@ -195,7 +198,9 @@ def update_script(script_id: str, body: ScriptSave, request: Request):
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         if body.expected_revision != s.revision:
             raise DomainError("請讀取新版劇本後合併編輯。")
-        s.document = body.document.model_dump()
+        document = body.document.model_dump()
+        validate_scenario_ai(db, a.id, document)
+        s.document = document
         s.revision += 1
         return {"id": s.id, "revision": s.revision, "document": s.document}
 
@@ -258,7 +263,8 @@ def adopt_question(script_id: str, room_id: str, index: int, request: Request):
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         if index < 0 or index >= len(room.state["questions"]):
             raise DomainError("QUESTION_REQUIRED", 404)
-        q = deepcopy(room.state["questions"][index])
+        # A run question keeps its scenario_ai only while that profile is still the owner's.
+        q = prune_scenario_ai(db, a.id, room.state["questions"][index])
         q["id"] = "adopted-" + uuid4().hex[:10]
         doc = deepcopy(s.document)
         doc["questions"].append(q)
@@ -472,3 +478,8 @@ router.include_router(_provider_profiles_router)
 from app.api.routes.question_bank import router as _question_bank_router  # noqa: E402
 
 router.include_router(_question_bank_router)
+
+# AI-assisted question authoring (issue #16)
+from app.api.routes.script_assist import router as _script_assist_router  # noqa: E402
+
+router.include_router(_script_assist_router)

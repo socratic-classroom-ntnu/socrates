@@ -721,6 +721,106 @@
         "title": "OtherSuggestionRequest",
         "type": "object"
       },
+      "PublicQuestion": {
+        "additionalProperties": false,
+        "description": "A question as students and the LLM see it: no teacher-only routing fields.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario",
+          "options"
+        ],
+        "title": "PublicQuestion",
+        "type": "object"
+      },
       "Publish": {
         "properties": {
           "action_id": {
@@ -841,6 +941,16 @@
             "minLength": 1,
             "title": "Scenario",
             "type": "string"
+          },
+          "scenario_ai": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioAI"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "sender_point_cap": {
             "default": 5,
@@ -1070,7 +1180,7 @@
           "preview": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -1080,7 +1190,7 @@
           "question": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -1169,6 +1279,75 @@
           "last_error"
         ],
         "title": "RoomView",
+        "type": "object"
+      },
+      "ScenarioAI": {
+        "additionalProperties": false,
+        "description": "Teacher-only routing for one question's LLM jobs; owner scope is checked against the DB.",
+        "properties": {
+          "model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider_profile_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Provider Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_profile_id",
+          "model"
+        ],
+        "title": "ScenarioAI",
+        "type": "object"
+      },
+      "ScriptAssistRequest": {
+        "additionalProperties": false,
+        "description": "Teacher's AI-assisted design request against the draft currently in the editor.",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "question_index": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Index"
+          },
+          "request": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Request",
+            "type": "string"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "ScriptAssistRequest",
         "type": "object"
       },
       "ScriptDocument": {
@@ -3335,6 +3514,42 @@
         "summary": "Create Script"
       }
     },
+    "/api/v2/scripts/assist": {
+      "post": {
+        "operationId": "script_assist_api_v2_scripts_assist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Script Assist"
+      }
+    },
     "/api/v2/scripts/import": {
       "post": {
         "operationId": "import_script_api_v2_scripts_import_post",
@@ -3349,6 +3564,22 @@
           }
         },
         "summary": "Import Script"
+      }
+    },
+    "/api/v2/scripts/samples": {
+      "get": {
+        "operationId": "script_samples_api_v2_scripts_samples_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Script Samples"
       }
     },
     "/api/v2/scripts/{script_id}": {

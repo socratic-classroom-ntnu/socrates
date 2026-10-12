@@ -72,6 +72,21 @@ def hydrate(db, room):
     return s
 
 
+def focus_projection(value: dict | None, as_teacher: bool) -> dict | None:
+    """Keep tutor policy evidence server-side for student projections."""
+    if value is None:
+        return None
+    projected = deepcopy(value)
+    if as_teacher:
+        return projected
+    projected.pop("last_observations", None)
+    projected["messages"] = [
+        {"role": message["role"], "text": message["text"]}
+        for message in projected.get("messages", [])
+    ]
+    return projected
+
+
 def view(db, room, account_id, mode="student") -> dict:
     _, member, teacher = load(db, room.id, account_id)
     as_teacher = teacher and mode == "teacher"
@@ -148,9 +163,10 @@ def view(db, room, account_id, mode="student") -> dict:
         if s["phase"] == "summary":
             actions += ["personal_summary"]
     # No next-question details in a student response; preview belongs to creator control.
-    exposed_focus = deepcopy(focus)
-    if exposed_focus:
-        exposed_focus.pop("last_observations", None)
+    exposed_focus = focus_projection(focus, as_teacher)
+    transcript = (
+        [focus_projection(item, as_teacher) for item in active["focuses"]] if active else []
+    )
     return RoomView(
         id=room.id,
         code=room.code if s["phase"] == "lobby" else None,
@@ -176,7 +192,7 @@ def view(db, room, account_id, mode="student") -> dict:
         if active and s["phase"] not in {"answering", "countdown"}
         else [],
         focus=exposed_focus,
-        transcript=active["focuses"] if active else [],
+        transcript=transcript,
         preview=s.get("preview") if as_teacher else None,
         summaries=summaries,
         available_actions=actions,

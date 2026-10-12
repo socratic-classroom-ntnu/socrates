@@ -194,14 +194,16 @@
 .ce-room .ce-options {
   position: absolute;
   left: 53px;
-  top: 614px;
+  bottom: 36px; /* 設計稿 top 614 + 高 150 = 764；以底邊對齊，選項很長時卡片往上長 */
   width: 1174px;
   display: grid;
+  align-items: end;
   grid-template-columns: repeat(var(--count, 4), minmax(0, 1fr));
   gap: 18px;
 }
 .ce-room .ce-option {
-  height: 150px;
+  min-height: 150px;
+  max-height: 340px; /* 選項最長可到 2000 字：超過這個高度就在卡片裡捲動，不蓋到題目 */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -226,7 +228,7 @@
 .ce-room .ce-option.ce-option--dark, .ce-room .ce-chip.ce-option--dark, .ce-room .ce-selected.ce-option--dark { color: #1C1A16; }
 .ce-room .ce-options--many .ce-option { padding: 16px; }
 /* 撐滿卡片寬度，縮字時才量得到有沒有超出一行 */
-.ce-room .ce-option-text { display: block; align-self: stretch; }
+.ce-room .ce-option-text { display: block; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .ce-room .ce-option-letter {
   width: 42px;
   height: 42px;
@@ -288,9 +290,10 @@
 .ce-room .ce-selected {
   position: absolute;
   left: 220px;
-  top: 588px;
+  bottom: 32px; /* 設計稿 top 588 + 高 180 = 768；選項很長時往上長 */
   width: 360px;
-  height: 180px;
+  min-height: 180px;
+  max-height: 360px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -317,7 +320,7 @@
 }
 .ce-room .ce-selected-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .ce-room .ce-selected-label { font-size: 14px; letter-spacing: .1em; opacity: .85; }
-.ce-room .ce-selected-text { display: block; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 32px; line-height: 1.25; }
+.ce-room .ce-selected-text { display: block; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 32px; line-height: 1.25; }
 
 /* 換一個：在選定卡「你的選擇」下方，平常是淡淡的小字，滑過才浮出底色 */
 .ce-room .ce-reselect {
@@ -517,7 +520,7 @@
 .ce-room.ce-room--mobile .ce-options,
 .ce-room.ce-room--mobile .ce-other-options,
 .ce-room.ce-room--mobile .ce-selected,
-.ce-room.ce-room--mobile .ce-notebook { position: relative; left: auto; top: auto; }
+.ce-room.ce-room--mobile .ce-notebook { position: relative; left: auto; top: auto; bottom: auto; }
 .ce-room.ce-room--mobile .ce-progress { height: 64px; }
 
 .ce-room.ce-room--mobile .ce-timer { position: absolute; left: auto; right: 16px; top: 14px; width: 64px; }

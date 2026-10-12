@@ -70,8 +70,8 @@ export function useFitText(box: RefObject<HTMLElement>, label: RefObject<HTMLEle
   }, [box, label, text, content, mobile]);
 }
 
-// 選定卡的選項文字：先縮小字體留在一行，縮到下限還放不下才換行（不截字）
-export function useFitOneLine(text: RefObject<HTMLElement>, content: string, max: number, min: number) {
+// 卡片上的選項文字：先縮小字體留在一行，縮到下限還放不下才換行（wrap=false 時改用省略號，給 46px 高的小卡用）
+export function useFitOneLine(text: RefObject<HTMLElement>, content: string, max: number, min: number, wrap = true) {
   useLayoutEffect(() => {
     function fit() {
       const el = text.current;
@@ -83,19 +83,24 @@ export function useFitOneLine(text: RefObject<HTMLElement>, content: string, max
         size -= 1;
         el.style.fontSize = `${size}px`;
       }
-      if (el.scrollWidth > el.clientWidth) el.style.whiteSpace = '';
+      if (wrap && el.scrollWidth > el.clientWidth) el.style.whiteSpace = '';
     }
     return refitOnFontLoad(fit);
-  }, [text, content, max, min]);
+  }, [text, content, max, min, wrap]);
 }
 
-// 量一次，網路字型載完再量一次
+// 量一次，網路字型載完、視窗大小改變（手機版卡片寬度會變）時再量一次
 function refitOnFontLoad(fit: () => void) {
   fit();
   let cancelled = false;
   document.fonts?.ready.then(() => { if (!cancelled) fit(); });
   document.fonts?.addEventListener?.('loadingdone', fit);
-  return () => { cancelled = true; document.fonts?.removeEventListener?.('loadingdone', fit); };
+  window.addEventListener('resize', fit);
+  return () => {
+    cancelled = true;
+    document.fonts?.removeEventListener?.('loadingdone', fit);
+    window.removeEventListener('resize', fit);
+  };
 }
 
 // 伺服器同步的倒數：deadline 是伺服器時間（秒），offset 是本機與伺服器的時差（毫秒）

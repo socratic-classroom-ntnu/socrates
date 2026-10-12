@@ -17,8 +17,8 @@ const slotCenter = (index: number, count: number) => {
   return { x: 640 - width / 2 + index * 298 + 140, y: 614 + 75 };
 };
 const CARD_CENTER = { x: 220 + 180, y: 588 + 90 };
-// Other options 的小卡（44,606 150×46，間距 8）第 k 張的中心點
-const chipCenter = (k: number) => ({ x: 44 + 75, y: 606 + 23 + k * 54 });
+// Other options 的小卡（150×46，間距 8，最後一張底部在 760）共 n 張時第 k 張的中心點
+const chipCenter = (k: number, n: number) => ({ x: 44 + 75, y: 760 - (n - 1 - k) * 54 - 23 });
 
 // 按「換一個」時，第四頁倒著播回第三頁的時間，要和 answerStage.css 的 ce-writing--leave 一致
 const LEAVE_MS = 420;
@@ -48,6 +48,19 @@ const letter = (index: number) => String.fromCharCode(65 + index);
 const cardStyle = (index: number) => ({ '--option-color': COLORS[index % COLORS.length], '--rotation': `${ROTATIONS[index % ROTATIONS.length]}deg` }) as CSSProperties;
 const darkText = (index: number) => COLORS[index % COLORS.length] === DARK_TEXT;
 
+// 字級上下限（px）：卡片文字以「縮小字體留在一行」優先，縮到下限才換行
+const FIT = {
+  option: { desktop: [23, 15], many: [19, 14], mobile: [18, 13] },
+  selected: { desktop: [32, 20], mobile: [26, 18] },
+  chip: { desktop: [16, 12], mobile: [15, 12] },
+} as const;
+
+function FitLine({ text, className, max, min, wrap = true }: { text: string; className: string; max: number; min: number; wrap?: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useFitOneLine(ref, text, max, min, wrap);
+  return <span className={className} ref={ref}>{text}</span>;
+}
+
 export function AnswerStage(props: AnswerStageProps) {
   const { questionNumber, questionCount, title, scenario, options, choice, writing, onChoose, onReselect, deadline, duration, offset, composer } = props;
   const mobile = useIsMobile();
@@ -64,12 +77,14 @@ export function AnswerStage(props: AnswerStageProps) {
 
   // 只有在這個畫面裡切換時才播轉場；重新整理後直接停在對應的畫面
   const [transition, setTransition] = useState<'none' | 'toWriting' | 'toOptions'>('none');
-  const [scenarioOpen, setScenarioOpen] = useState(false);
+  // 情境在第三頁預設展開：學生要先讀完整的情境才選立場；進到寫想法時收起，需要時再打開
+  const [scenarioOpen, setScenarioOpen] = useState(() => !writing);
   const [leaving, setLeaving] = useState(false);
   const leaveTimer = useRef<number>();
   useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
   // 點下去立刻切到第四頁，由選定卡從原本的位置飛過去銜接，不等離場動畫
   function choose(optionId: string) {
+    setScenarioOpen(false);
     setTransition('toWriting');
     onChoose(optionId);
   }
@@ -89,8 +104,9 @@ export function AnswerStage(props: AnswerStageProps) {
   const selectedIndex = options.findIndex(o => o.id === choice);
   const selected = options[selectedIndex];
   const showWriting = writing && selected;
-  const selectedText = useRef<HTMLSpanElement>(null);
-  useFitOneLine(selectedText, showWriting ? `${selected.text}|${mobile}` : '', mobile ? 26 : 32, mobile ? 18 : 20);
+  const [optionMax, optionMin] = mobile ? FIT.option.mobile : options.length > 4 ? FIT.option.many : FIT.option.desktop;
+  const [selectedMax, selectedMin] = mobile ? FIT.selected.mobile : FIT.selected.desktop;
+  const [chipMax, chipMin] = mobile ? FIT.chip.mobile : FIT.chip.desktop;
   const from = slotCenter(Math.max(0, selectedIndex), options.length);
 
   return (
@@ -129,7 +145,7 @@ export function AnswerStage(props: AnswerStageProps) {
 
         {!showWriting ? (
           <div
-            className={`ce-options${transition === 'toOptions' ? ' ce-options--return' : ''}`}
+            className={`ce-options${options.length > 4 ? ' ce-options--many' : ''}${transition === 'toOptions' ? ' ce-options--return' : ''}`}
             role="group"
             aria-label="選擇你的立場"
             style={{ '--count': options.length } as CSSProperties}
@@ -143,7 +159,7 @@ export function AnswerStage(props: AnswerStageProps) {
                 onClick={() => choose(option.id)}
               >
                 <span className="ce-option-letter">{letter(i)}</span>
-                <span className="ce-option-text">{option.text}</span>
+                <FitLine className="ce-option-text" text={option.text} max={optionMax} min={optionMin}/>
               </button>
             ))}
           </div>
@@ -153,7 +169,7 @@ export function AnswerStage(props: AnswerStageProps) {
               {options.filter(o => o.id !== choice).map(option => {
                 const i = options.indexOf(option);
                 const k = options.filter(o => o.id !== choice).indexOf(option);
-                const chip = chipCenter(k), slot = slotCenter(i, options.length);
+                const chip = chipCenter(k, options.length - 1), slot = slotCenter(i, options.length);
                 return (
                 <button
                   key={option.id}
@@ -169,7 +185,7 @@ export function AnswerStage(props: AnswerStageProps) {
                   onClick={() => { setTransition('toWriting'); onChoose(option.id); }}
                 >
                   <span className="ce-chip-letter">{letter(i)}</span>
-                  <span className="ce-chip-text">{option.text}</span>
+                  <FitLine className="ce-chip-text" text={option.text} max={chipMax} min={chipMin} wrap={false}/>
                 </button>
                 );
               })}
@@ -196,7 +212,7 @@ export function AnswerStage(props: AnswerStageProps) {
                   </button>
                 </div>
               </div>
-              <span className="ce-selected-text" ref={selectedText}>{selected.text}</span>
+              <FitLine className="ce-selected-text" text={selected.text} max={selectedMax} min={selectedMin}/>
             </div>
 
             <div className="ce-notebook">

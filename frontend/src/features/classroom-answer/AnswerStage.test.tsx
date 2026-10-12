@@ -53,10 +53,16 @@ describe('AnswerStage', () => {
         expect(screen.getByRole('status')).toHaveTextContent('時間到');
     });
 
-    it('情境預設收起，按了才展開', () => {
+    it('第三頁情境預設展開，選完進到寫想法時收起', () => {
         renderStage({ scenario: '你的朋友罹患重病……' });
-        expect(screen.queryByText('你的朋友罹患重病……')).not.toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: '閱讀情境' }));
         expect(screen.getByText('你的朋友罹患重病……')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /不一定，要看對象是誰/ }));
+        expect(screen.queryByText('你的朋友罹患重病……')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '閱讀情境' })).toBeInTheDocument();
+    });
+
+    it('五個以上選項（含後端補上的「其他」）時縮小選項字級', () => {
+        renderStage({ options: [...options, { id: '__other__', text: '其他' }] });
+        expect(screen.getByRole('group', { name: '選擇你的立場' })).toHaveClass('ce-options--many');
     });
 });

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './QuestionBank.css'
 
 type Question = {
@@ -25,6 +26,9 @@ const questions: Question[] = [
 ]
 
 export default function QuestionBank() {
+  const [questionItems, setQuestionItems] = useState(questions)
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Question | null>(null)
   return (
     <main className="question-bank-page">
       <aside className="teacher-sidebar">
@@ -103,8 +107,52 @@ export default function QuestionBank() {
           </button>
       </div>
       <div className="question-list-panel">
-          {questions.map((question) => (
+          {questionItems.map((question) => (
             <article className="question-card" key={question.id}>
+              <div className="question-card-menu">
+                <button
+                  type="button"
+                  className="question-menu-button"
+                  aria-label={`${question.title} 操作選單`}
+                  aria-expanded={openMenuId === question.id}
+                  onClick={() =>
+                    setOpenMenuId((current) =>
+                      current === question.id ? null : question.id,
+                    )
+                  }
+                >
+                  ⋮
+                </button>
+
+                {openMenuId === question.id && (
+                  <div className="question-menu-dropdown">
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenuId(null)}
+                    >
+                      加入個人題庫
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOpenMenuId(null)}
+                    >
+                      編輯
+                    </button>
+
+                    <button
+                      type="button"
+                      className="question-menu-delete"
+                      onClick={() => {
+                        setDeleteTarget(question)
+                        setOpenMenuId(null)
+                      }}
+                    >
+                      刪除
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="question-card-header">
                 <h3>{question.title}</h3>
 
@@ -134,6 +182,47 @@ export default function QuestionBank() {
           ))}        
       </div>      
       </section>
+      {deleteTarget && (
+        <div className="delete-modal-backdrop">
+          <div
+            className="delete-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
+          >
+            <h2 id="delete-modal-title">刪除題目</h2>
+
+            <p>
+              確定要刪除「{deleteTarget.title}」嗎？
+            </p>
+
+            <div className="delete-modal-actions">
+              <button
+                type="button"
+                className="delete-modal-cancel"
+                onClick={() => setDeleteTarget(null)}
+              >
+                取消
+              </button>
+
+              <button
+                type="button"
+                className="delete-modal-confirm"
+                onClick={() => {
+                  setQuestionItems((current) =>
+                    current.filter(
+                      (question) => question.id !== deleteTarget.id,
+                    ),
+                  )
+                  setDeleteTarget(null)
+                }}
+              >
+                確認刪除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

@@ -73,6 +73,7 @@
         "type": "object"
       },
       "AddAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -113,6 +114,7 @@
         "type": "object"
       },
       "AttachScript": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -149,7 +151,35 @@
         "title": "AttachScript",
         "type": "object"
       },
+      "BankImportResult": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/ScriptDocument-Output"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "question_id",
+          "document"
+        ],
+        "title": "BankImportResult",
+        "type": "object"
+      },
       "BankMutation": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -164,7 +194,231 @@
         "title": "BankMutation",
         "type": "object"
       },
+      "BankQuestionDetail": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision",
+          "question"
+        ],
+        "title": "BankQuestionDetail",
+        "type": "object"
+      },
+      "BankQuestionSummary": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision"
+        ],
+        "title": "BankQuestionSummary",
+        "type": "object"
+      },
+      "BankSearchResult": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BankQuestionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "BankSearchResult",
+        "type": "object"
+      },
+      "BankUnpublishResult": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "BankUnpublishResult",
+        "type": "object"
+      },
       "ClearAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -216,6 +470,7 @@
         "type": "object"
       },
       "Configure": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -264,6 +519,7 @@
         "type": "object"
       },
       "CreateBatch": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -284,6 +540,7 @@
         "type": "object"
       },
       "CreateClassroom": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -306,6 +563,7 @@
         "type": "object"
       },
       "CreateProfile": {
+        "additionalProperties": false,
         "properties": {
           "adapter": {
             "title": "Adapter",
@@ -405,6 +663,7 @@
         "type": "object"
       },
       "CredentialUpdate": {
+        "additionalProperties": false,
         "properties": {
           "credential": {
             "maxLength": 20000,
@@ -429,6 +688,7 @@
         "type": "object"
       },
       "GroupCommand": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -466,6 +726,7 @@
         "type": "object"
       },
       "ImportQuestion": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -674,6 +935,7 @@
         "type": "object"
       },
       "OtherSuggestionRequest": {
+        "additionalProperties": false,
         "properties": {
           "existing_options": {
             "items": {
@@ -719,6 +981,34 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "PublicConfigView": {
+        "properties": {
+          "debug_mode": {
+            "title": "Debug Mode",
+            "type": "boolean"
+          },
+          "google_cse_id": {
+            "title": "Google Cse Id",
+            "type": "string"
+          },
+          "search_scope": {
+            "title": "Search Scope",
+            "type": "string"
+          },
+          "search_state": {
+            "title": "Search State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "google_cse_id",
+          "search_scope",
+          "search_state",
+          "debug_mode"
+        ],
+        "title": "PublicConfigView",
         "type": "object"
       },
       "PublicQuestion": {
@@ -822,6 +1112,7 @@
         "type": "object"
       },
       "Publish": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -1281,6 +1572,126 @@
         "title": "RoomView",
         "type": "object"
       },
+      "SampleQuestionDraft": {
+        "additionalProperties": false,
+        "description": "A repository sample before teacher-authored options make it a valid saved Question.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario"
+        ],
+        "title": "SampleQuestionDraft",
+        "type": "object"
+      },
+      "SampleQuestionSet": {
+        "additionalProperties": false,
+        "properties": {
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SampleQuestionDraft"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "SampleQuestionSet",
+        "type": "object"
+      },
       "ScenarioAI": {
         "additionalProperties": false,
         "description": "Teacher-only routing for one question's LLM jobs; owner scope is checked against the DB.",
@@ -1350,7 +1761,60 @@
         "title": "ScriptAssistRequest",
         "type": "object"
       },
-      "ScriptDocument": {
+      "ScriptDocument-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "live_llm_call_budget": {
+            "default": 240,
+            "minimum": 0.0,
+            "title": "Live Llm Call Budget",
+            "type": "integer"
+          },
+          "max_questions": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Questions",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "static",
+            "enum": [
+              "static",
+              "dynamic"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "preview_seconds": {
+            "default": 8,
+            "maximum": 10.0,
+            "minimum": 5.0,
+            "title": "Preview Seconds",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "ScriptDocument",
+        "type": "object"
+      },
+      "ScriptDocument-Output": {
         "additionalProperties": false,
         "properties": {
           "live_llm_call_budget": {
@@ -1407,7 +1871,7 @@
         "additionalProperties": false,
         "properties": {
           "document": {
-            "$ref": "#/components/schemas/ScriptDocument"
+            "$ref": "#/components/schemas/ScriptDocument-Input"
           },
           "expected_revision": {
             "anyOf": [
@@ -1428,6 +1892,7 @@
         "type": "object"
       },
       "SettingsUpdate": {
+        "additionalProperties": false,
         "properties": {
           "active_room_id": {
             "anyOf": [
@@ -1478,6 +1943,7 @@
         "type": "object"
       },
       "Start": {
+        "additionalProperties": false,
         "properties": {
           "accept_temporary_aliases": {
             "default": false,
@@ -1517,6 +1983,7 @@
         "type": "object"
       },
       "UpdateProfile": {
+        "additionalProperties": false,
         "properties": {
           "base_url": {
             "anyOf": [
@@ -2029,7 +2496,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/BankSearchResult"
+                }
               }
             },
             "description": "Successful Response"
@@ -2063,7 +2532,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
               }
             },
             "description": "Successful Response"
@@ -2100,7 +2571,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
               }
             },
             "description": "Successful Response"
@@ -2147,7 +2620,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/BankImportResult"
+                }
               }
             },
             "description": "Successful Response"
@@ -2194,7 +2669,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/BankUnpublishResult"
+                }
               }
             },
             "description": "Successful Response"
@@ -3439,7 +3916,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3573,7 +4052,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SampleQuestionSet"
+                }
               }
             },
             "description": "Successful Response"

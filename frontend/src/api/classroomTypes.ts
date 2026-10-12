@@ -3,7 +3,12 @@ export interface components { schemas: {
   "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
+  "BankImportResult": { "id": string; "revision": number; "question_id": string; "document": components["schemas"]["ScriptDocument-Output"] };
   "BankMutation": { "action_id": string };
+  "BankQuestionDetail": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null); "question": components["schemas"]["Question"] };
+  "BankQuestionSummary": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null) };
+  "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
+  "BankUnpublishResult": { "id": string; "status": string };
   "ClearAIStudents": { "action_id": string };
   "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
@@ -22,6 +27,7 @@ export interface components { schemas: {
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
+  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
   "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number; "scenario_ai"?: (components["schemas"]["ScenarioAI"] | null) };
@@ -29,10 +35,13 @@ export interface components { schemas: {
   "Register": { "username": string; "email": string; "password": string };
   "ResetRequest": { "token": string; "password": string };
   "RoomView": { "id": string; "code": (string | null); "title": string; "role": "teacher" | "student"; "member_id": (string | null); "phase": string; "seq": number; "server_now": number; "deadline_at": (number | null); "question": (components["schemas"]["PublicQuestion"] | null); "question_index": number; "question_run_id": (string | null); "question_count": number; "members": Array<components["schemas"]["MemberView"]>; "my_draft": (Record<string, unknown> | null); "my_answer": (Record<string, unknown> | null); "distribution": Array<Record<string, unknown>>; "focus": (Record<string, unknown> | null); "transcript": Array<Record<string, unknown>>; "preview": (components["schemas"]["PublicQuestion"] | null); "summaries": Record<string, unknown>; "available_actions": Array<string>; "source_mode": string; "last_error": (string | null) };
+  "SampleQuestionDraft": { "id": string; "title": string; "scenario": string; "options"?: Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
+  "SampleQuestionSet": { "title": string; "questions": Array<components["schemas"]["SampleQuestionDraft"]> };
   "ScenarioAI": { "provider_profile_id": string; "model": string };
   "ScriptAssistRequest": { "request": string; "document"?: Record<string, unknown>; "question_index"?: (number | null); "script_id"?: (string | null) };
-  "ScriptDocument": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
-  "ScriptSave": { "document": components["schemas"]["ScriptDocument"]; "expected_revision"?: (number | null) };
+  "ScriptDocument-Input": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
+  "ScriptDocument-Output": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
+  "ScriptSave": { "document": components["schemas"]["ScriptDocument-Input"]; "expected_revision"?: (number | null) };
   "SettingsUpdate": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "budgets"?: Record<string, unknown>; "active_room_id"?: (string | null) };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
   "TokenRequest": { "token": string };

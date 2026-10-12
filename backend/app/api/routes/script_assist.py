@@ -17,6 +17,7 @@ from pydantic import ValidationError
 from app.api.classroom_schemas import (
     PublicQuestion,
     SampleQuestionDraft,
+    SampleQuestionSet,
     ScriptAssistRequest,
     ScriptAssistResult,
 )
@@ -203,7 +204,7 @@ def sample_questions(path: str | None = None) -> dict:
     return {"title": ladder.title, "questions": questions}
 
 
-@router.get("/scripts/samples")
+@router.get("/scripts/samples", response_model=SampleQuestionSet)
 def script_samples(request: Request):
     from app.api.routes.classroom import account
 

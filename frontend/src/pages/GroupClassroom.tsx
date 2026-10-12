@@ -30,32 +30,32 @@ function useView(id, mode) {
 }
 /** Keep the exact action identity until its receipt is observed. */
 function useMutation() {
-    const pending = useRef(null);
+    const pending = useRef(null), lock = useRef(false);
     const [busy, setBusy] = useState(false), [note, setNote] = useState('');
     async function send(path, body) {
         const key = JSON.stringify([path, body]);
-        if (busy)
+        if (lock.current)
             return false;
         if (pending.current && pending.current.key !== key) {
-            setNote('先以原內容取得上一筆回執，再送出新內容。');
+            setNote('請重試上一個操作，确认保存結果後再繼續。');
             return false;
         }
         pending.current ??= { key, id: crypto.randomUUID() };
-        setBusy(true);
+        lock.current = true; setBusy(true);
         try {
             await api(path, 'POST', { ...body, action_id: pending.current.id });
             pending.current = null;
-            setNote('已取得伺服器回執。');
+            setNote('操作已保存。');
             return true;
         }
         catch (e) {
             if (e instanceof ApiError && e.status && e.status < 500)
                 pending.current = null;
-            setNote(message(e) + '；再次按同一操作即可配對原 action。');
+            setNote(message(e) + '；請使用同一按鈕重試。');
             return false;
         }
         finally {
-            setBusy(false);
+            lock.current = false; setBusy(false);
         }
     }
     return { send, busy, note };
@@ -117,7 +117,7 @@ function GroupCollection({ view, refresh }) {
         await refresh(); }
     async function batchNext() {
         const rows = view.groups || [];
-        setBatchNote('逐組配對 action 與回執…');
+        setBatchNote('正在更新各組進度…');
         if ([...batch.current.values()].every(x => x.done))
             batch.current.clear();
         const outcomes = [];
@@ -142,23 +142,23 @@ function GroupCollection({ view, refresh }) {
         setBatchNote(outcomes.join('；'));
         await refresh();
     }
-    return <main className="r2-home g70" data-r70-groups><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{view.title}</span><a href="/">教師工作室</a></header>
-    <section className="r2-home-hero"><small>CLASSROOM · GROUPS</small><h1>同一個起點，各自的思考。</h1><p>每組保存自己的對話、進度與觀點。教師可查看單組，再回到全班比較。</p></section>
-    {view.phase === 'lobby' ? <section className="r2-glass"><div className="r2-code-display">{view.code}</div><p>{view.roster?.length || 0} 位學生已入座</p>
+    return <main className="r2-home g70" data-r70-groups><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{view.title}</span><a href="/teacher/home">返回我的課程</a></header>
+    <section className="r2-home-hero"><small>教師端 · 課堂準備</small><h1>{view.title}</h1><p>分享加入代碼，確認名單與分組，接著開始課堂。</p></section>
+    {view.phase === 'lobby' ? <section className="r2-glass"><div className="r2-row"><div className="r2-code-display">{view.code}</div><button className="quiet" onClick={() => void navigator.clipboard.writeText(view.code).then(() => setBatchNote('加入代碼已複製')).catch(() => setBatchNote('請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
       <div className="r2-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>每組人數<input type="number" min={1} max={40} value={size} onChange={e => setSize(Math.max(1, Math.min(40, +e.target.value)))}/></label>
-      <label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
+      </div><details><summary>AI 學生與教室角色（選用）</summary><div className="r2-grid"><label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>教室角色<select value={pack} onChange={e => setPack(e.target.value)}>{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
-      <p>每組各自擁有倒數、作答與舞台；每組一人沿同一個人舞台流程。先保存分組，確認名單後開課。</p>
+      <p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
       <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || !(view.roster || []).some(m => m.actor_type === 'llm_student')} onClick={() => void clearAI()}>清除 AI 學生</button></div>
-      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前名單為全 AI；開始課堂後會沿同一狀態機自動完成一局。' : '真人與 AI 學生可共同分組，全部為 AI 時自然成為自動局。'}</p>
-      <ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/>
+      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p></details>
+      <details className="r2-card"><summary>進階 AI 設定（選用）</summary><ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/></details>
       <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
-        <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>Group {g + 1}</option>)}</select></label></article>)}</div>
+        <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
-      <div className="r2-row"><button disabled={mutation.busy} onClick={() => void configure()}>保存／重新平均分組</button><button disabled={mutation.busy || !configured} onClick={() => void start()}>開始課堂 →</button></div><p role="status">{mutation.note}</p>
-    </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>全部組：下一個安全節點</button></div><p role="status">{batchNote}</p>
-      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{g.phase}</small><h2>{g.label}</h2><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement}</p><span>進入本組 →</span></a>)}</div>}</>}
+      <div className="r2-row"><button disabled={mutation.busy || !(view.roster || []).length} onClick={() => void configure()}>1. 儲存分組</button><button disabled={mutation.busy || !configured} onClick={() => void start()}>2. 開始課堂 →</button></div><p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
+    </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
+      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{{lobby:'準備中',countdown:'即將開始',answering:'作答中',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',summary:'課堂回顧',ended:'已結束'}[g.phase] || '討論進行中'}</small><h2>{g.label}</h2><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
 }
 function GroupStage({ view }) {

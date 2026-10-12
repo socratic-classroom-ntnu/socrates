@@ -70,29 +70,40 @@ function Auth({ onLogin }) {
       <div className="r2-row"><button type="button" className="quiet" onClick={() => setMode(mode === 'register' ? 'login' : 'register')}>{mode === 'register' ? '回到登入' : '註冊'}</button><button type="button" className="quiet" onClick={() => setMode('forgot')}>重設密碼</button></div>
     </form></main>;
 }
-function Home({ user }) {
-    const [mode, setMode] = useState('student'), [, setScripts] = useState([]);
-    const [rooms, setRooms] = useState([]);
+export function Home({ user }) {
+    const [mode, setMode] = useState(new URLSearchParams(location.search).get('view') === 'providers' ? 'providers' : 'student');
+    const [rooms, setRooms] = useState([]), [loading, setLoading] = useState(true);
     const [code, setCode] = useState(''), [alias, setAlias] = useState('');
-    const [note, setNote] = useState('');
-    const refresh = useCallback(() => { void api('/scripts').then(setScripts).catch(e => setNote(errorText(e))); void api('/classrooms').then(setRooms).catch(e => setNote(errorText(e))); }, []);
-    useEffect(refresh, [refresh]);
-    if (!user.verified)
-        return <VerificationGate user={user} onVerified={() => location.reload()}/>;
+    const [note, setNote] = useState(''), [busy, setBusy] = useState(false);
+    const joining = useRef(false);
+    const refresh = useCallback(async () => {
+        setLoading(true);
+        try { setRooms(await api('/classrooms')); setNote(''); }
+        catch (e) { setNote(errorText(e)); }
+        finally { setLoading(false); }
+    }, []);
+    useEffect(() => { if (user.verified) void refresh(); }, [refresh,user.verified]);
+    if (!user.verified) return <VerificationGate user={user} onVerified={() => location.reload()}/>;
     const enter = (id, role) => { location.href = `/classrooms/${id}?mode=${role}`; };
-    async function join() { try {
-        const r = await api('/classrooms/join', 'POST', { code, alias: alias.trim() || ('~pending-' + crypto.randomUUID().slice(0, 8)), avatar: 'scholar' });
-        enter(r.id, 'student');
+    async function join() {
+        if (joining.current) return;
+        const clean = code.replace(/\s/g,'').toUpperCase();
+        if (!/^[A-Z0-9]{8}$/.test(clean)) { setNote('請輸入老師提供的 8 碼課程代碼。'); return; }
+        joining.current = true; setBusy(true); setNote('');
+        try { const r = await api('/classrooms/join','POST',{code:clean,alias:alias.trim() || ('~pending-' + crypto.randomUUID().slice(0,8)),avatar:'scholar'}); enter(r.id,'student'); }
+        catch(e) { setNote(errorText(e)); }
+        finally { joining.current=false; setBusy(false); }
     }
-    catch (e) {
-        setNote(errorText(e));
-    } }
-    return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={() => void api('/auth/logout', 'POST').then(() => location.reload())}>登出</button></header>
-    <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => { location.href = '/teacher/home'; }}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
-    {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
-    {mode === 'student' ? <section className="r2-join r2-glass"><small>JOIN A CLASSROOM</small><h2>找到你的座位</h2><label>課程代碼<input value={code} placeholder="輸入 8 碼課程代碼" onChange={e => setCode(e.target.value.toUpperCase())}/></label><label>本次匿名名稱<input value={alias} placeholder="你希望同學怎麼稱呼你？" onChange={e => setAlias(e.target.value)}/></label><button onClick={() => void join()}>進入教室 →</button></section> : mode === 'teacher' ?
-            <ClassroomLibrary /> : <ProviderSettings />}
-    <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? 'teacher' : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
+    const phase = value => ({lobby:'等待開課',countdown:'即將開始',answering:'作答中',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',preview:'準備下一題',summary:'課堂回顧',ended:'已結束'}[value] || '課堂進行中');
+    return <main className="r2-home r73-student-home">
+      <header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username}</span><a className="teacher-quiet" href="/teacher/home">切換到教師端</a><button className="quiet" onClick={() => void api('/auth/logout','POST').then(() => location.reload()).catch(e => setNote(errorText(e)))}>登出</button></header>
+      <section className="r2-home-hero"><small>學生端</small><h1>{mode === 'student' ? '準備好，說說你的想法。' : 'AI 連線設定'}</h1><p>{mode === 'student' ? '輸入課程代碼加入討論，或繼續上次的課堂。' : '連接你的模型，並選擇適合課堂的設定。'}</p><nav className="r2-tabs" aria-label="學生導覽"><button aria-pressed={mode==='student'} onClick={() => setMode('student')}>加入與近期課堂</button><button aria-pressed={mode==='providers'} onClick={() => setMode('providers')}>AI 連線設定</button></nav></section>
+      {mode === 'providers' ? <ProviderSettings/> : <>
+        <div className="r73-student-grid"><form className="r2-join r2-glass" onSubmit={e=>{e.preventDefault();void join()}} aria-label="加入課堂"><small>加入課堂</small><h2>找到你的座位</h2><label>課程代碼<input value={code} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12} aria-describedby="join-help" placeholder="例如 AB12CD34" onChange={e=>setCode(e.target.value.toUpperCase().replace(/\s/g,''))}/></label><small id="join-help">請向老師取得 8 碼代碼。</small><label>本次匿名名稱（選填）<input value={alias} maxLength={80} placeholder="課堂中想使用的稱呼" onChange={e=>setAlias(e.target.value)}/></label><small>留空時，入座後由老師確認課堂稱呼。</small><button disabled={busy || !code.trim()} aria-busy={busy}>{busy ? '正在加入…' : '加入課堂 →'}</button>{note && <p role="alert">{note}</p>}</form>
+        <aside className="r2-card r73-student-guide"><small>一堂課，三個步驟</small><h2>讓每個觀點都有位置</h2><ol><li><strong>加入課堂</strong><p>使用老師提供的課程代碼入座。</p></li><li><strong>選擇與說明</strong><p>讀完情境，選擇立場並寫下理由。</p></li><li><strong>討論與回顧</strong><p>聽聽其他想法，留下自己的思考。</p></li></ol><a href="/round1">先體驗一段單人對話 →</a></aside></div>
+        <section aria-label="近期課堂"><div className="r2-section-title"><h2>近期課堂</h2><button className="quiet" disabled={loading} onClick={() => void refresh()}>{loading?'讀取中…':'重新整理'}</button></div>{!loading && !rooms.length && <div className="r2-card"><h3>加入第一堂課後，這裡會留下紀錄</h3><p>上方輸入課程代碼即可開始。</p></div>}<div className="r2-script-grid">{rooms.map(r=><a className="r2-card" key={r.id} href={`/classrooms/${r.id}?mode=${r.teacher?'teacher':'student'}`}><small>{r.teacher?'授課中':'我的課堂'} · {phase(r.phase)}</small><h3>{r.title}</h3><span>{['summary','ended'].includes(r.phase)?'查看課堂回顧':'繼續課堂'} →</span></a>)}</div></section>
+      </>}
+    </main>;
 }
 function useRoom(id, mode) {
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');
@@ -191,6 +202,7 @@ function Clock({ deadline, offset }) {
     return deadline ? <div className="r2-clock" aria-label="全教室倒數">{Math.ceil(seconds)}<small>秒</small></div> : null;
 }
 function AnswerPanel({ room, refresh, setNote, offset }) {
+    const [sending, setSending] = useState(false);
     const initial = room.my_draft;
     const [choice, setChoice] = useState(initial?.option_id || ''), [text, setText] = useState(initial?.text || ''), [writing, setWriting] = useState(!!initial?.option_id);
     const [ghost, setGhost] = useState(''), [suggestion, setSuggestion] = useState(initial?.suggestion || null);
@@ -213,8 +225,8 @@ function AnswerPanel({ room, refresh, setNote, offset }) {
         }).catch(() => undefined);
     }, [choice, room.question_run_id, room.question, text, ghost]);
     const allowed = room.available_actions.includes('answer');
-    const submit = useCallback(async () => { const v = latest.current; if (sent.current || !v.choice)
-        return; sent.current = true; try {
+    const submit = useCallback(async () => { const v = latest.current; if (sent.current || !v.choice || !room.available_actions.includes('answer'))
+        return; if (room.question?.argument_required && !v.text.trim()) { setNote('請補上你選擇的理由，再送出。'); return; } sent.current = true; setSending(true); try {
         await command(room.id, 'answer', { question_run_id: room.question_run_id, option_id: v.choice, text: v.text, revision: ++revision.current, suggestion: v.suggestion }, finalAction.current);
         await refresh();
     }
@@ -222,15 +234,15 @@ function AnswerPanel({ room, refresh, setNote, offset }) {
         sent.current = false;
         setNote(errorText(e));
         await refresh();
-    } }, [room.id, room.question_run_id, refresh, setNote]);
+    } finally { setSending(false); } }, [room.id, room.question_run_id, room.available_actions, room.question?.argument_required, refresh, setNote]);
     useEffect(() => { if (!choice || !allowed)
         return; const v = ++revision.current; const timer = setTimeout(() => void command(room.id, 'draft', { question_run_id: room.question_run_id, option_id: choice, text, revision: v, suggestion }).catch(e => setNote(errorText(e))), 350); return () => clearTimeout(timer); }, [choice, text, allowed, room.id, room.question_run_id, setNote]);
-    useEffect(() => { const flush = () => void submit(); window.addEventListener('r2-final-sync', flush); const timer = setTimeout(flush, Math.max(0, (room.deadline_at || 0) * 1000 - (Date.now() + offset.current))); return () => { window.removeEventListener('r2-final-sync', flush); clearTimeout(timer); }; }, [room.deadline_at, submit, offset]);
+    useEffect(() => { if (!allowed || !room.deadline_at) return; const flush = () => void submit(); window.addEventListener('r2-final-sync', flush); const timer = setTimeout(flush, Math.max(0, room.deadline_at * 1000 - (Date.now() + offset.current))); return () => { window.removeEventListener('r2-final-sync', flush); clearTimeout(timer); }; }, [allowed, room.deadline_at, submit, offset]);
     if (!allowed)
-        return <section className="r2-dialog"><small>ANSWER RECORDED</small><h2>你的觀點，已經有了位置。</h2><p>等待大家完成作答，接著一起看看各種立場。</p></section>;
+        return <section className="r2-dialog"><small>作答已保存</small><h2>你的觀點，已經有了位置。</h2><p>等待大家完成作答，接著一起看看各種立場。</p></section>;
     return <section className="r2-answer"><article className="r2-prompt"><small>情境 {room.question_index + 1} / {room.question_count}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p></article>
     {!writing ? <div className="r2-options">{room.question?.options.map((o, i) => <button key={o.id} className={'r2-option ' + (choice === o.id ? 'chosen' : '')} onClick={() => { setChoice(o.id); setWriting(true); }}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div> :
-            <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o, i) => <button type="button" className={o.id === choice ? "selected" : "dimmed"} key={o.id} onClick={() => setChoice(o.id)}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={() => setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o => o.id === choice)?.text}</small><DraftComposer value={text} onChange={value => { setText(value); if (suggestion?.suggestion_accepted) setSuggestion(current => ({ ...current, suggestion_edited: value !== ghost })); }} onSend={submit} enabled={allowed} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus ghostText={choice === '__other__' ? ghost : ''} onGhostAccepted={() => setSuggestion(current => ({ ...current, suggestion_accepted: true, suggestion_accepted_at: Date.now() / 1000, suggestion_edited: false }))}/></div>}
+            <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o, i) => <button type="button" className={o.id === choice ? "selected" : "dimmed"} key={o.id} onClick={() => setChoice(o.id)}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={() => setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o => o.id === choice)?.text}</small><DraftComposer value={text} onChange={value => { setText(value); if (suggestion?.suggestion_accepted) setSuggestion(current => ({ ...current, suggestion_edited: value !== ghost })); }} onSend={submit} enabled={allowed && !sending} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus ghostText={choice === '__other__' ? ghost : ''} onGhostAccepted={() => setSuggestion(current => ({ ...current, suggestion_accepted: true, suggestion_accepted_at: Date.now() / 1000, suggestion_edited: false }))}/></div>}
   </section>;
 }
 function SummaryText({ value }) {
@@ -281,7 +293,7 @@ function LegacyClassroom({ id }) {
     return <main className="r2-classroom"><header className="r2-top"><button className="quiet" aria-label="展開教室側欄" onClick={() => setLeft(!left)}>☷</button><a className="r2-wordmark" href="/">Socrates</a><span>{room.title}</span><Clock deadline={room.deadline_at} offset={offset}/><button className="r2-hamburger" aria-label="三槓選單" onClick={() => setMenu(!menu)}>☰</button>{menu && <nav className="r2-menu"><button onClick={() => { setLeft(!left); setMenu(false); }}>教室成員</button><button onClick={() => { setRight(!right); setMenu(false); }}>完整對話</button><a href="/">回首頁</a>{room.role === 'teacher' && room.code && <button onClick={() => { location.href = `/classrooms/${id}?mode=student`; }}>以學生視角加入</button>}</nav>}</header>
     {left && <aside className="r2-drawer left"><button className="quiet" onClick={() => setLeft(false)}>收合 ←</button><h2>同一個教室</h2><p>{room.members.length} 位學生</p>{room.members.map(m => <div className="r2-member" key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0, 1)}</span><span>{m.alias}{m.username && <span title={m.username} tabIndex={0} aria-label="教師身分對照"> ⓘ</span>}<small>{m.points} 點 · {m.online ? '在線' : '離席'}</small></span></div>)}</aside>}
     {right && <aside className="r2-drawer right"><button className="quiet" onClick={() => setRight(false)}>收合 →</button><h2>本題對話</h2>{room.transcript.map(x => <div key={x.id}>{x.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '同學'}</small><p>{m.text}</p></article>)}</div>)}</aside>}
-    {room.phase === 'lobby' && <section className="r2-lobby"><small>WELCOME TO THE CLASSROOM</small><h1>觀點在此相遇。</h1><div className="r2-code-display">{room.code}</div><p>分享課程代碼，邀請同學入座。</p><div className="r2-seat-grid">{room.members.map(m => <div key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0, 1)}</span>{m.alias}</div>)}</div>{room.role === 'teacher' ? <button onClick={() => void run('start')}>開始課堂 →</button> : room.member_id ? <p>已入座，等待老師開始。</p> : <div className="r2-row"><input value={alias} onChange={e => setAlias(e.target.value)} aria-label="匿名名稱"/><button onClick={() => void api('/classrooms/join', 'POST', { code: room.code, alias, avatar: 'scholar' }).then(refresh).catch(e => setNote(errorText(e)))}>以學生身份入座</button></div>}</section>}
+    {room.phase === 'lobby' && <section className="r2-lobby"><small>{room.role === 'teacher' ? '課堂準備' : '已加入課堂'}</small><h1>{room.title}</h1><div className="r2-code-display">{room.code}</div><p>分享課程代碼，邀請同學入座。</p><div className="r2-seat-grid">{room.members.map(m => <div key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0, 1)}</span>{m.alias}</div>)}</div>{room.role === 'teacher' ? <button disabled={!room.available_actions.includes('start')} onClick={() => void run('start')}>開始課堂 →</button> : room.member_id ? <p>已入座，等待老師開始。</p> : <div className="r2-row"><input value={alias} onChange={e => setAlias(e.target.value)} aria-label="匿名名稱"/><button onClick={() => void api('/classrooms/join', 'POST', { code: room.code, alias, avatar: 'scholar' }).then(refresh).catch(e => setNote(errorText(e)))}>以學生身份入座</button></div>}</section>}
     {room.phase === 'countdown' && <section className="r2-countdown"><small>讓我們開始思考</small><Clock deadline={room.deadline_at} offset={offset}/></section>}
     {room.phase === 'answering' && (room.role === 'teacher' ? <section className="r2-lobby"><small>QUESTION {room.question_index + 1}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p><p>學員正在作答，倒數由伺服器同步。</p></section> : <AnswerWithResearch sessionId={room.id}><AnswerPanel key={room.question_run_id} room={room} refresh={refresh} setNote={setNote} offset={offset}/></AnswerWithResearch>)}
     {room.phase === 'distribution' && <section className="r2-distribution"><small>OUR PERSPECTIVES</small><h1>同一個問題，不同的看法。</h1>{room.distribution.map((raw, i) => { const d = raw; return <article className="r2-card" key={i}><h2>{d.text}</h2><b>{d.percent.toFixed(1)}% · {d.count} 人</b><div className="r2-bar"><i style={{ width: d.percent + '%' }}/></div><div className="r2-row">{d.members?.map((m, j) => <span className="r2-mini-person" key={j}><i>{m.alias.slice(0, 1)}</i>{m.alias}</span>)}</div></article>; })}</section>}

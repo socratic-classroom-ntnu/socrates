@@ -29,7 +29,10 @@ function fetchAdapter(credentials: RequestCredentials) {
     } else {
       const preview = typeof response.text === 'function' ? await response.text() : ''
       data = {
-        detail: 'API_ROUTE_JSON_REQUIRED',
+        detail:
+          response.status >= 500
+            ? `服務正在恢復（HTTP ${response.status}），請稍後重試。`
+            : `服務回應格式需要更新（HTTP ${response.status}）。`,
         content_type: contentType,
         preview: preview.slice(0, 120),
       }

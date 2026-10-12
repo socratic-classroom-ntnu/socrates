@@ -1,4 +1,4 @@
-import { api, command, setCSRF } from './classroomClient';
+import { api, command, importYAML, setCSRF } from './classroomClient';
 afterEach(() => jest.restoreAllMocks());
 test('Classroom command carries one stable action identity and same-origin credentials', async () => {
     const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ status: 'RECORDED' }) });
@@ -13,4 +13,18 @@ test('Classroom command carries one stable action identity and same-origin crede
 test('Classroom API presents domain error without converting it to a successful receipt', async () => {
     globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 409, headers: { get: () => 'application/json' }, json: async () => ({ detail: 'ACTION_ID_PAYLOAD_CONFLICT' }) });
     await expect(api('/classrooms/r', 'POST', {})).rejects.toThrow('ACTION_ID_PAYLOAD_CONFLICT');
+});
+
+test('YAML import sends the source text with the YAML content type', async () => {
+    const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ id: 'script-1', revision: 1 }) });
+    globalThis.fetch = fn;
+    await importYAML('title: 測試\nmode: static\nquestions: []\n');
+    const init = fn.mock.calls[0][1];
+    expect(init.method).toBe('POST');
+    expect(init.headers['Content-Type']).toBe('application/yaml');
+    expect(init.body).toContain('title: 測試');
+});
+test('non-JSON upstream response shows a readable recovery message', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 530, headers: { get: () => 'text/plain; charset=UTF-8' }, text: async () => 'error code: 1033' });
+    await expect(api('/scripts')).rejects.toThrow('服務正在恢復（HTTP 530），請稍後重試。');
 });

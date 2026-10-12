@@ -155,6 +155,57 @@ def test_yaml_roundtrip_and_revision_conflict(client):
     )
 
 
+def test_yaml_import_empty_body_returns_specific_json_error(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import", content=b"", headers={"Content-Type": "application/yaml"}
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"detail": "請貼上 YAML 內容。"}
+
+
+def test_yaml_import_rejects_content_over_256kb_before_parsing(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content=b"x" * (256 * 1024 + 1),
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 413
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"detail": "YAML 內容最多 256 KB。"}
+
+
+def test_yaml_import_syntax_error_returns_line_and_column_json(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content="title: [\n",
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["detail"].startswith("YAML 格式錯誤：第 ")
+    assert "行、第 " in response.json()["detail"]
+    assert "欄" in response.json()["detail"]
+
+
+def test_yaml_import_schema_error_returns_field_detail_json(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content="title: ''\nquestions: []\n",
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    detail = response.json()["detail"]
+    assert isinstance(detail, list)
+    assert any(item["loc"] == ["title"] and item["type"] == "string_too_short" for item in detail)
+    assert any(item["loc"] == ["questions"] and item["type"] == "too_short" for item in detail)
+
+
 def test_teacher_with_a_long_username_can_open_a_classroom(client):
     # 註冊契約允許 username 到 64 字，所以 membership 的 alias 必須裝得下它；
     # alias 是由 username 推導的，不經過 join body 的 40 字限制。

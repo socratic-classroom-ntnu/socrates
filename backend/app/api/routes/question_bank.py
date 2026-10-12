@@ -9,7 +9,8 @@ import time
 from uuid import UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator
+from app.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, Text, and_, func, select
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -39,7 +40,7 @@ class BankQuestion(Base):
     revision: Mapped[int] = mapped_column(Integer, default=1)
 
 
-class BankMutation(BaseModel):
+class BankMutation(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 
 

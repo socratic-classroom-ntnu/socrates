@@ -5,7 +5,8 @@ import time
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import Field
+from app.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -57,7 +58,7 @@ class LibraryReceipt(Base):
     response: Mapped[dict] = mapped_column(JSON)
 
 
-class Mutation(BaseModel):
+class Mutation(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 
 

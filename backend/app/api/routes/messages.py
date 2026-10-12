@@ -2,7 +2,8 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
+from app.api.model_base import TrimmedModel
 
 from app.api.deps import get_learner_id, get_service
 from app.api.schemas import SessionView
@@ -13,7 +14,7 @@ from app.tutor.gateway import TutorUnavailable
 router = APIRouter(prefix="/api/sessions", tags=["messages"])
 
 
-class SendMessageRequest(BaseModel):
+class SendMessageRequest(TrimmedModel):
     text: str = Field(min_length=1, max_length=2000)
 
     @field_validator("text")

@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+from app.api.model_base import TrimmedModel
 
 from app.domain.types import Action, EndReason, FlowState, MessageRole, SessionStatus, StageStatus
 
@@ -64,7 +65,7 @@ class SessionDetail(BaseModel):
     summary: SummaryView | None
 
 
-class CreateSessionRequest(BaseModel):
+class CreateSessionRequest(TrimmedModel):
     ladder_id: str
     restart_existing: bool = Field(default_factory=bool)
 

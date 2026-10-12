@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { listSessions } from '../api/client';
+import { ROUND1_HOME } from '../round1Routes';
 export default function History() {
     const navigate = useNavigate();
     const [items, setItems] = useState([]);
@@ -19,7 +20,7 @@ export default function History() {
       <section className="round1-card">
         <header className="round1-section-head">
           <div><p className="round1-kicker">Round 1</p><h1>歷史紀錄</h1></div>
-          <button onClick={() => navigate('/')}>回到首頁</button>
+          <button onClick={() => navigate(ROUND1_HOME)}>回到首頁</button>
         </header>
         {loading && <p className="round1-muted">正在整理對話紀錄…</p>}
         {failed && <div className="round1-notice"><p>紀錄入口已保留。</p><button onClick={load}>重新讀取</button></div>}

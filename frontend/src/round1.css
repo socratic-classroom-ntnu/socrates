@@ -11,3 +11,6 @@
 .home-return-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .home-return-link{color:#f1e3ef;border:1px solid #dbbbd835;background:#c1a0c609;border-radius:13px;padding:8px 15px;text-decoration:none;font-size:14px}
 .home-return-link:hover{background:#c1a0c624}
+.round1-actions .round1-exit-link{color:#f1e3ef;border:1px solid #dbbbd835;background:#c1a0c609;border-radius:13px;padding:12px 19px;text-decoration:none;text-align:center;transition:background .18s}
+.round1-actions .round1-exit-link:hover{background:#c1a0c624}
+@media(max-width:640px){.round1-actions .round1-exit-link{flex:1}}

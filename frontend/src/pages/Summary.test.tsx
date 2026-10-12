@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { vi } from '../testkit';
 import Summary from './Summary';
@@ -17,5 +17,19 @@ describe('Summary issue #3', () => {
         expect(await screen.findByTestId('discussion-topic')).toHaveTextContent('電車難題');
         expect(screen.getByTestId('discussion-key-points')).toHaveTextContent('人數會影響判斷');
         expect(screen.getByTestId('summary-exit')).toBeInTheDocument();
+    });
+    // 「退出至首頁」離開單人對話回共思教室首頁：整頁載入（一般連結），不被本頁路由器的 "/"（Round 1 首頁）攔下
+    it('退出至首頁 is a full-page link to the classroom home', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
+        jest.spyOn(console, 'error').mockImplementation(() => undefined); // jsdom 不實作整頁導覽
+        render(<MemoryRouter initialEntries={['/sessions/s1/summary']}><Routes>
+          <Route path="/sessions/:sessionId/summary" element={<Summary />}/>
+          <Route path="/" element={<p>本頁路由器的首頁</p>}/>
+        </Routes></MemoryRouter>);
+        const exit = await screen.findByRole('link', { name: '退出至首頁' });
+        expect(exit).toHaveAttribute('href', '/');
+        expect(screen.getByRole('button', { name: '回到歷史紀錄' })).toBeInTheDocument();
+        expect(fireEvent.click(exit)).toBe(true);
+        expect(screen.queryByText('本頁路由器的首頁')).toBeNull();
     });
 });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { advanceSession, endSession, retry, sendMessage } from '../../../api/client';
 import ActionBar from '../../../components/ActionBar';
+import { ROUND1_HOME } from '../../../round1Routes';
 import { InputComposer } from '../composer/InputComposer';
 import { projectPresence } from '../model/presenceMachine';
 import { confirmTranscriptDraft, createTranscriptDraft, getRoom, listHistory } from '../api/roomClient';
@@ -184,7 +185,7 @@ export function ConversationRoom({ sessionId }) {
       <header className="ce-header">
         <div className="ce-header-left">
           <button className="ce-icon-button" type="button" aria-label={leftOpen ? '收合歷史側欄' : '展開歷史側欄'} aria-expanded={leftOpen} aria-controls="ce-history" onClick={() => openPanel('left')}><Icon name="history"/></button>
-          <button className="ce-wordmark" type="button" onClick={() => navigate('/')}><span className="ce-brand-icon" aria-hidden="true">S</span>Socrates<span>對話，讓想法更清晰。</span></button>
+          <button className="ce-wordmark" type="button" onClick={() => navigate(ROUND1_HOME)}><span className="ce-brand-icon" aria-hidden="true">S</span>Socrates<span>對話，讓想法更清晰。</span></button>
         </div>
         <div className="ce-topic"><span>情境 {position} / {count}</span><strong>{title}</strong><div className="ce-progress" aria-hidden="true">{Array.from({ length: count }, (_, i) => <i key={i} className={i < position ? 'filled' : ''}/>)}</div></div>
         <div className="ce-header-right">
@@ -197,7 +198,7 @@ export function ConversationRoom({ sessionId }) {
         <strong>聊天室選單</strong>
         <button onClick={() => { openPanel('left'); setMenuOpen(false); }}><Icon name="history"/>歷史對話</button>
         <button onClick={() => { openPanel('right'); setMenuOpen(false); }}><Icon name="chat"/>本次對話</button>
-        <button onClick={() => navigate('/')}><Icon name="home"/>回到首頁</button>
+        <button onClick={() => navigate(ROUND1_HOME)}><Icon name="home"/>回到首頁</button>
         {ended
             ? <button disabled={busy} onClick={() => navigate(`/sessions/${sessionId}/summary`)}><Icon name="arrow"/>閱讀討論總結</button>
             : actions.includes('end') && <button disabled={busy} onClick={() => { void action('end'); }}><Icon name="arrow"/>結束並查看總結</button>}
@@ -207,7 +208,7 @@ export function ConversationRoom({ sessionId }) {
       {(leftOpen || rightOpen) && <button className="ce-mobile-scrim" aria-label="收合側欄" onClick={() => { setLeftOpen(false); setRightOpen(false); }}/>}
       <aside id="ce-history" className="ce-drawer ce-history" aria-label="歷史對話" hidden={!leftOpen}>
         <div className="ce-panel-heading"><div><span>YOUR CONVERSATIONS</span><h2>歷史對話</h2></div><button className="ce-icon-button" aria-label="收合歷史側欄" onClick={() => setLeftOpen(false)}><Icon name="close"/></button></div>
-        <button className="ce-new-chat" onClick={() => navigate('/')}><Icon name="plus"/>開啟新的討論</button>
+        <button className="ce-new-chat" onClick={() => navigate(ROUND1_HOME)}><Icon name="plus"/>開啟新的討論</button>
         <div className="ce-history-list">
           {history.items.length === 0 && <p className="ce-muted">你的對話將保留在這裡。</p>}
           {history.items.map((item) => <button key={item.id} className={`ce-history-item ${item.id === sessionId ? 'active' : ''}`} onClick={() => { if (window.innerWidth <= 900)

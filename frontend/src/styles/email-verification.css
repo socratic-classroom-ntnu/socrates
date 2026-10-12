@@ -1,0 +1,7 @@
+.r104-verify-shell{min-height:100vh;display:grid;place-items:center;padding:2rem}
+.r104-verify-card{width:min(42rem,100%);display:grid;gap:1rem}
+.r104-delivery-state{display:flex;align-items:center;gap:.8rem;padding:1rem;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:1rem}
+.r104-delivery-state>div{display:grid;gap:.2rem}
+.r104-pulse{width:.75rem;height:.75rem;border-radius:50%;background:currentColor;box-shadow:0 0 0 .35rem color-mix(in srgb,currentColor 15%,transparent)}
+.r104-local-preview{display:block;padding:.85rem 1rem;border:1px dashed currentColor;border-radius:.75rem;text-align:center}
+@media(max-width:620px){.r104-verify-shell{padding:1rem}.r104-verify-card .r2-row>*{flex:1 1 100%}}

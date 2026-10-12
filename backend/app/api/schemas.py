@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -12,10 +13,13 @@ class SessionInfo(BaseModel):
     current_stage_index: int
     total_stages: int
     end_reason: EndReason | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class StageView(BaseModel):
-    """只描述學生**已經進入**的那一階。未進入的階不會出現在任何回應裡。"""
+    """只描述學生已經進入的情境。"""
 
     index: int
     key: str
@@ -33,18 +37,18 @@ class StageOutcomeView(BaseModel):
     index: int
     status: StageStatus
     title: str | None
-    """`skipped` 的階不回傳 title——否則學生結束後就知道了下一次會遇到什麼，
-    §4.1 的不劇透規則會跨 session 失效。"""
 
 
 class SummaryView(BaseModel):
+    discussion_topic: str = "電車難題：選擇、責任與原則"
     core_principle: str
+    key_points: list[str] = Field(default_factory=list)
+    tension: str = ""
+    reflection_excerpt: str | None = None
     stage_outcomes: list[StageOutcomeView]
 
 
 class SessionView(BaseModel):
-    """所有會改變狀態的端點共用的回應形狀（設計規格 §9.1）。"""
-
     session: SessionInfo
     stage: StageView | None
     appended_messages: list[MessageView]
@@ -53,8 +57,6 @@ class SessionView(BaseModel):
 
 
 class SessionDetail(BaseModel):
-    """GET 專用：回傳完整訊息而非增量。"""
-
     session: SessionInfo
     stage: StageView | None
     messages: list[MessageView]
@@ -65,3 +67,11 @@ class SessionDetail(BaseModel):
 class CreateSessionRequest(BaseModel):
     ladder_id: str
     restart_existing: bool = Field(default_factory=bool)
+
+
+class ReleaseView(BaseModel):
+    release_id: str
+    source_sha: str
+    environment: str
+    alembic_revision: str
+    built_at: str

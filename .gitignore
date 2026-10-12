@@ -12,3 +12,9 @@ dist/
 *.pyc
 .DS_Store
 *.tsbuildinfo
+
+.socrates-previous-release
+
+deploy/stage/.env
+
+deploy/local/.env

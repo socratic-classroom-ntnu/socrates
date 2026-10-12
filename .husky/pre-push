@@ -1,13 +1,49 @@
-echo "▶ frontend lint + typecheck + test"
-(cd frontend && npm run lint && npm run typecheck && npm test -- --run) || exit 1
+# 這組必須與 .github/workflows/ci.yml 的 backend / frontend job 同一組指令。
+# 後端走容器是因為主機通常沒裝 Python 依賴（見 AGENTS.md）。
+# 容器內 /app 就是 backend/，但 root compose 另外把 ./scripts 掛進 /app/scripts，
+# 而 CI 只檢查 backend，所以這裡要把 scripts 排除掉才等價。
 
+if ! command -v npm >/dev/null 2>&1; then
+  echo "✗ 找不到 npm。Homebrew 的 node@22 是 keg-only，不會自動進 PATH。"
+  echo "  請在 ~/.zshrc 加上: export PATH=\"/opt/homebrew/opt/node@22/bin:\$PATH\""
+  exit 1
+fi
+echo "▶ frontend lint + typecheck + test + build"
+(cd frontend && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build) || exit 1
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "✗ 找不到 docker 指令。Docker Desktop 的 CLI 裝在 ~/.docker/bin，"
+  echo "  而該路徑只由 ~/.zprofile 加入，login shell 以外的終端讀不到。"
+  echo "  請在 ~/.zshrc 加上: export PATH=\"\$HOME/.docker/bin:\$PATH\""
+  exit 1
+fi
 if ! docker compose exec -T backend true 2>/dev/null; then
   echo "✗ backend 容器未啟動，請先執行: docker compose up -d"
   exit 1
 fi
 
-echo "▶ backend ruff check + format check + mypy + pytest"
+echo "▶ backend ruff check + format check"
 docker compose exec -T backend ruff check . || exit 1
 docker compose exec -T backend ruff format --check . || exit 1
-docker compose exec -T backend mypy app || exit 1
+
+echo "▶ backend mypy（Round1 strict，classroom 走 mypy-classroom.ini）"
+docker compose exec -T backend python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py' || exit 1
+docker compose exec -T backend python -m mypy --config-file mypy-classroom.ini app/api/routes/classroom.py app/api/routes/groups.py app/api/routes/ai_students.py app/api/routes/public_config.py app/api/routes/provider_profiles.py app/api/routes/classroom_library.py app/api/classroom_schemas.py app/orchestrator/classroom.py app/orchestrator/classroom_policy.py app/domain/group_run.py app/domain/group_analysis.py app/domain/library_decisions.py app/repositories/classroom_storage.py app/services/classroom.py app/services/llm_workers.py app/services/email_delivery.py app/services/ai_students.py app/services/classroom_auth.py app/tutor/classroom_provider.py app/tutor/classroom_gateway.py app/tutor/prompts.py app/classroom_app.py app/realtime.py app/classroom_server.py || exit 1
+
+echo "▶ backend alembic upgrade head（對全新資料庫，對應 CI 的 backend job）"
+# CI 的資料庫是全新的，會從頭跑完整條 migration 鏈；開發資料庫已經在 head，
+# upgrade 是 no-op，擋不住「migration 鏈本身壞掉」這類問題。所以這裡建一個拋棄式資料庫。
+# 名稱帶上 PID：同一個 compose PostgreSQL 上可能有並行的 push，不可以共用固定名稱；
+# 也絕不先 DROP —— 只清理確定由本次 hook 建立的資料庫。
+MIGRATION_DB="socrates_migration_check_$$"
+docker compose exec -T db psql -U socrates -d postgres -c "CREATE DATABASE $MIGRATION_DB;" >/dev/null || exit 1
+# hook 由 `sh -e` 執行（.husky/_/h），任何失敗都會立刻退出，所以清理必須掛在 EXIT trap 上，
+# 否則 migration 一失敗就永遠留下一個孤兒資料庫。
+trap 'docker compose exec -T db psql -U socrates -d postgres -c "DROP DATABASE IF EXISTS $MIGRATION_DB;" >/dev/null 2>&1' EXIT
+if ! docker compose exec -T -e DATABASE_URL="postgresql+psycopg://socrates:socrates@db:5432/$MIGRATION_DB" \
+    backend python -m alembic upgrade head; then
+  exit 1
+fi
+
+echo "▶ backend pytest"
 docker compose exec -T backend python -m pytest tests -q || exit 1

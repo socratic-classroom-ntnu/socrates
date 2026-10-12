@@ -1,0 +1,13 @@
+{
+  "effect": "socratic.preserve-develop.local-stage.v76",
+  "develop_sha": "e38fcc7df0ecc6a8914933e07c9b76ae12d3b4af",
+  "stage_sha": "55c9c942e935abd60dd2f93a293b0904580a26c9",
+  "branch_topology": [
+    "master",
+    "develop",
+    "backend/arthur",
+    "backend/integration",
+    "stage"
+  ],
+  "local_stage_split": true
+}

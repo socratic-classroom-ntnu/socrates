@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { vi } from '../testkit'
 import ActionBar from '../components/ActionBar'
 
 describe('ActionBar（不可妥協：前端不推導狀態）', () => {

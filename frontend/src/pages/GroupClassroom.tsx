@@ -5,6 +5,7 @@ import { GroupAvatar } from '../features/classroom-stage/GroupAvatar';
 import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings';
 import { FocusNotice } from '../components/FocusNotice';
 import { PersonalCounts, PersonalPanel, PersonalProgress } from '../features/personal-dialogue/PersonalDialogue';
+import { aiStudentModel } from './ProviderSettings';
 import '../styles/group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
@@ -29,7 +30,10 @@ function useView(id, mode) {
     useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 2000); return () => { clearInterval(timer); revision.current++; }; }, [refresh]);
     return { view, error, refresh };
 }
-/** Keep the exact action identity until its receipt is observed. */
+const settled = (e) => e instanceof ApiError && e.status > 0 && e.status < 500;
+/** Keep the exact action identity until its receipt is observed.
+ * 上一個操作逾時或 5xx 時結果未知，保留原內容與 action_id。之後送出不同內容時，先用原內容
+ * （同一個 action_id）重送一次取得它的回執，再送新內容，不會卡在提示裡。 */
 function useMutation() {
     const pending = useRef(null), lock = useRef(false);
     const [busy, setBusy] = useState(false), [note, setNote] = useState('');
@@ -37,29 +41,53 @@ function useMutation() {
         const key = JSON.stringify([path, body]);
         if (lock.current)
             return false;
-        if (pending.current && pending.current.key !== key) {
-            setNote('請重試上一個操作，確認保存結果後再繼續。');
-            return false;
-        }
-        pending.current ??= { key, id: crypto.randomUUID() };
         lock.current = true; setBusy(true);
         try {
+            const prior = pending.current;
+            if (prior && prior.key !== key) {
+                setNote('正在確認上一個操作的結果…');
+                try {
+                    await api(prior.path, 'POST', { ...prior.body, action_id: prior.id });
+                }
+                catch (e) {
+                    // 4xx：原操作已被拒絕、沒有生效，可以直接送新內容；其他錯誤仍無法確認，保留原操作。
+                    if (!settled(e)) {
+                        setNote(message(e) + '；上一個操作的結果還無法確認，請稍後再試。');
+                        return false;
+                    }
+                }
+                pending.current = null;
+            }
+            pending.current ??= { key, path, body, id: crypto.randomUUID() };
             await api(path, 'POST', { ...body, action_id: pending.current.id });
             pending.current = null;
             setNote('操作已保存。');
             return true;
         }
         catch (e) {
-            if (e instanceof ApiError && e.status && e.status < 500)
+            if (settled(e)) {
                 pending.current = null;
-            setNote(message(e) + '；請使用同一按鈕重試。');
+                setNote(message(e));
+            }
+            else
+                setNote(message(e) + '；可以直接再試一次，系統會先確認這個操作有沒有保存。');
             return false;
         }
         finally {
             lock.current = false; setBusy(false);
         }
     }
-    return { send, busy, note };
+    return { send, busy, note, setNote };
+}
+/** 分組容量：入座人數（含 AI 學生）與「組數 × 每組人數」，以及手動指定到同一組超過每組人數的組別。 */
+export function groupCapacity(roster, count, size, assignment) {
+    const people = roster.length, capacity = count * size;
+    const sizes = new Map();
+    for (const group of Object.values(assignment))
+        sizes.set(group, (sizes.get(group) || 0) + 1);
+    const overfull = [...sizes].filter(([group, n]) => group >= 0 && n > size).map(([group]) => group + 1).sort((a, b) => a - b);
+    const neededGroups = Math.ceil(people / size);
+    return { people, capacity, overfull, enough: people <= capacity && !overfull.length, neededGroups, adjustable: neededGroups <= 40 };
 }
 export function GroupClassroomGate({ user, id, Legacy }) {
     const mode = new URLSearchParams(location.search).get('mode') || 'student';
@@ -91,16 +119,35 @@ function GroupCollection({ view, refresh }) {
     const [batchNote, setBatchNote] = useState('');
     const batch = useRef(new Map());
     const mutation = useMutation();
+    const [profiles, setProfiles] = useState(null);
+    const profileId = view.ai_settings?.default_profile_id || null;
+    useEffect(() => { if (!profileId)
+        return; let live = true; void api('/provider-profiles').then(rows => { if (live)
+        setProfiles(rows); }).catch(() => { if (live)
+        setProfiles([]); }); return () => { live = false; }; }, [profileId]);
+    const rosterRows = view.roster || [];
+    const fit = groupCapacity(rosterRows, count, size, assignment);
     useEffect(() => { const abort = new AbortController(); fetch('/avatar-packs/catalog.json', { signal: abort.signal }).then(r => { if (!r.ok)
         throw Error('catalog'); return r.json(); }).then(x => setCatalog([{ id: 'stickman', name: 'Stickman · 教室基本角色' }, ...(x.packs || []).map((p) => ({ id: p.id, name: p.name }))])).catch(() => undefined); return () => abort.abort(); }, []);
     useEffect(() => { setConfigured(false); }, [view.roster_digest, count, size, pack, assignment]);
     async function addAI(countToAdd) {
         if (countToAdd < 1)
             return;
+        // 模型依預設連線的服務決定（與 AI 連線設定的模型選單同一套規則），非 OpenRouter 連線不送 OpenRouter 模型。
+        const profile = profileId ? profiles?.find(p => p.id === profileId) : null;
+        if (profileId && !profile) {
+            mutation.setNote(profiles ? '找不到課堂預設的 AI 連線，請到進階 AI 設定重新選擇。' : '正在讀取 AI 連線，請稍後再試。');
+            return;
+        }
+        const model = aiStudentModel(view.ai_settings?.model_matrix?.ai_student, profile);
+        if (!model) {
+            mutation.setNote('這個 AI 連線還沒有預設模型，請先到進階 AI 設定選擇 AI 學生的模型。');
+            return;
+        }
         if (await mutation.send(`/groups/classrooms/${view.id}/ai-students`, {
             count: countToAdd,
-            model: view.ai_settings?.model_matrix?.ai_student || 'openrouter/free',
-            provider_profile_id: view.ai_settings?.default_profile_id || null
+            model,
+            provider_profile_id: profileId
         }))
             await refresh();
     }
@@ -116,6 +163,11 @@ function GroupCollection({ view, refresh }) {
             setConfigured(true);
         }
     }
+    // 「開始課堂」不能按時，直接說明原因。
+    const startBlocked = mutation.busy ? '正在處理上一個操作，請稍候。'
+        : !rosterRows.length ? '還沒有學生入座，學生或 AI 學生加入並儲存分組後才能開始。'
+            : !fit.enough ? '分組容量不足，請先調整組數或每組人數，再按「1. 儲存分組」。'
+                : !configured ? '請先按「1. 儲存分組」保存目前的名單與分組（名單或分組設定變更後要重新儲存）。' : '';
     async function start() { if (await mutation.send(`/groups/classrooms/${view.id}/start`, { expected_roster_digest: view.roster_digest, accept_temporary_aliases: acceptAlias }))
         await refresh(); }
     async function batchNext() {
@@ -150,7 +202,8 @@ function GroupCollection({ view, refresh }) {
     {view.phase === 'lobby' ? <section className="r2-glass"><div className="r2-row"><div className="r2-code-display">{view.code}</div><button className="quiet" onClick={() => void navigator.clipboard.writeText(view.code).then(() => setBatchNote('加入代碼已複製')).catch(() => setBatchNote('請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
       <div className="r2-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>每組人數<input type="number" min={1} max={40} value={size} onChange={e => setSize(Math.max(1, Math.min(40, +e.target.value)))}/></label>
-      </div><details><summary>AI 學生與教室角色（選用）</summary><div className="r2-grid"><label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
+      </div><p role="status" aria-live="polite">目前 {fit.people} 人（含 AI）／容量 {count}×{size}＝{fit.capacity} 人</p>
+      {!fit.enough && <div className="r2-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>AI 學生與教室角色（選用）</summary><div className="r2-grid"><label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>教室角色<select value={pack} onChange={e => setPack(e.target.value)}>{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
       <p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
       <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || !(view.roster || []).some(m => m.actor_type === 'llm_student')} onClick={() => void clearAI()}>清除 AI 學生</button></div>
@@ -159,7 +212,7 @@ function GroupCollection({ view, refresh }) {
       <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
-      <div className="r2-row"><button disabled={mutation.busy || !(view.roster || []).length} onClick={() => void configure()}>1. 儲存分組</button><button disabled={mutation.busy || !configured} onClick={() => void start()}>2. 開始課堂 →</button></div><p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
+      <div className="r2-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
     </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
       {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{{lobby:'準備中',countdown:'即將開始',answering:'作答中',personal:'個人對話',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',summary:'課堂回顧',ended:'已結束'}[g.phase] || '討論進行中'}</small><h2>{g.label}</h2><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;

@@ -61,7 +61,7 @@ test('a sample question can be added twice without an id clash', async () => {
   routes()
   render(<ScriptBuilder initial={null} onSaved={jest.fn()} />)
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '範例題目' })) })
-  expect(screen.getByText('範例來源：電車難題。加入後可以再修改，記得儲存草稿。')).toBeInTheDocument()
+  expect(screen.getByText('範例來源：電車難題。範例只提供標題與情境，選項請在加入後自行填寫，記得儲存草稿。')).toBeInTheDocument()
   const add = screen.getByRole('button', { name: '加入範例「失控的電車」到草稿' })
   fireEvent.click(add)
   fireEvent.click(add)
@@ -75,4 +75,37 @@ test('an unavailable sample source reads as Chinese', async () => {
   render(<ScriptBuilder initial={null} onSaved={jest.fn()} />)
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '範例題目' })) })
   expect(screen.getAllByRole('status')[0]).toHaveTextContent('目前讀不到範例題目')
+})
+
+// 產品決定：範例題目只帶標題與情境，選項留白給老師填。後端現在仍回傳推導出的選項，之後會改回 options: []；
+// 兩種情況（以及沒有 options 欄位）都要得到兩列空白選項，不自動填任何文字。
+describe.each([
+  ['derived options (current backend)', sample],
+  ['options: []', { ...sample, options: [] }],
+  ['no options field', Object.fromEntries(Object.entries(sample).filter(([key]) => key !== 'options'))],
+])('a sample with %s', (_label, served) => {
+  test('lands with two empty option rows and the options rule until they are filled', async () => {
+    routes({ '/scripts/samples': { title: '電車難題', questions: [served] } })
+    render(<ScriptBuilder initial={null} onSaved={jest.fn()} />)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '範例題目' })) })
+    expect(screen.queryByText('把電車轉向岔道')).toBeNull() // 挑選器的預覽也不顯示後端給的選項
+    fireEvent.click(screen.getByRole('button', { name: '加入範例「失控的電車」到草稿' }))
+
+    const card = screen.getByText('⠿ 情境 2').closest('article') as HTMLElement
+    expect(within(card).getByLabelText('標題')).toHaveValue('失控的電車')
+    expect(within(card).getByLabelText('情境敘述')).toHaveValue('你是一輛電車的司機。')
+    const options = within(card).getAllByLabelText(/^選項 \d$/)
+    expect(options.map(input => (input as HTMLInputElement).value)).toEqual(['', ''])
+    expect(within(card).getByText('選項至少要 2 個；請填寫選項文字。')).toBeInTheDocument()
+
+    // 儲存前檢查擋下，不送出；本題的選項框都標成待修改
+    fireEvent.click(screen.getByRole('button', { name: '儲存草稿' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('情境 2 的選項至少要 2 個')
+    expect(jest.mocked(api).mock.calls.some(([, method]) => method === 'POST')).toBe(false)
+    options.forEach(input => expect(input).toHaveAttribute('aria-invalid', 'true'))
+
+    fireEvent.change(options[0], { target: { value: '轉向' } })
+    fireEvent.change(options[1], { target: { value: '不轉向' } })
+    expect(within(card).queryByText('選項至少要 2 個；請填寫選項文字。')).toBeNull()
+  })
 })

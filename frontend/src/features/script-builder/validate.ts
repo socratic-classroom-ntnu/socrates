@@ -17,6 +17,14 @@ function int(errors: FieldError[], path: string, label: string, value, min: numb
   else if (max !== undefined && value > max) errors.push({ path, message: `${label}最多 ${max}` })
 }
 
+export const MIN_OPTIONS = 2
+export const OPTIONS_MIN_MESSAGE = `選項至少要 ${MIN_OPTIONS} 個`
+
+/** 有填文字的選項數；留白的列不算。 */
+export function filledOptionCount(q): number {
+  return (Array.isArray(q?.options) ? q.options : []).filter(o => typeof o?.text === 'string' && o.text.trim()).length
+}
+
 /** 回傳所有不符合後端限制的欄位；空陣列表示可以儲存。 */
 export function validateDocument(doc): FieldError[] {
   const errors: FieldError[] = []
@@ -32,8 +40,10 @@ export function validateDocument(doc): FieldError[] {
     text(errors, `${at}.title`, `${name}標題`, q.title, 300)
     text(errors, `${at}.scenario`, `${name}情境敘述`, q.scenario, 12000)
     const options = Array.isArray(q.options) ? q.options : []
-    if (options.length < 2) errors.push({ path: `${at}.options`, message: `${name}選項至少要 2 個` })
-    options.forEach((o, j) => text(errors, `${at}.options.${j}.text`, `${name}選項 ${j + 1}`, o.text, 2000))
+    // 留白的選項列不算數（例如範例題目加入時的兩列空白選項）：不到 2 個有文字的選項時只報這一條，
+    // 編輯器會把本題所有選項框標成待修改；夠 2 個以後才逐列檢查空白或過長。
+    if (filledOptionCount(q) < MIN_OPTIONS) errors.push({ path: `${at}.options`, message: `${name}${OPTIONS_MIN_MESSAGE}` })
+    else options.forEach((o, j) => text(errors, `${at}.options.${j}.text`, `${name}選項 ${j + 1}`, o.text, 2000))
     int(errors, `${at}.duration_seconds`, `${name}作答秒數`, q.duration_seconds, 1)
     int(errors, `${at}.max_focus_turns`, `${name}每位代表最多來回`, q.max_focus_turns, 1)
     int(errors, `${at}.focus_response_seconds`, `${name}追問回應秒數`, q.focus_response_seconds, 5)

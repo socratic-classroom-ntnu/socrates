@@ -6,7 +6,8 @@ from uuid import UUID, uuid4, uuid5
 import secrets
 import time
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import Field
+from app.api.model_base import TrimmedModel
 from sqlalchemy import select
 from app.repositories.classroom_storage import (
     Room,
@@ -38,7 +39,7 @@ from app.api.classroom_schemas import public_question
 router = APIRouter(prefix="/groups")
 
 
-class Configure(BaseModel):
+class Configure(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
     expected_roster_digest: str
     group_count: int = Field(ge=1, le=40)
@@ -47,13 +48,13 @@ class Configure(BaseModel):
     avatar_pack_id: str = Field(default="stickman", min_length=1, max_length=120)
 
 
-class Start(BaseModel):
+class Start(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
     expected_roster_digest: str
     accept_temporary_aliases: bool = False
 
 
-class GroupCommand(BaseModel):
+class GroupCommand(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
     kind: str
     data: dict = Field(default_factory=dict)

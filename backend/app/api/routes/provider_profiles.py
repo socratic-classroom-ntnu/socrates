@@ -13,7 +13,8 @@ from uuid import uuid4
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
+from app.api.model_base import TrimmedModel
 from sqlalchemy import (
     Boolean,
     delete,
@@ -131,7 +132,7 @@ class AccountAISettings(Base):
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
-class CreateProfile(BaseModel):
+class CreateProfile(TrimmedModel):
     name: str = Field(min_length=1, max_length=100)
     adapter: str
     base_url: str | None = Field(default=None, max_length=500)
@@ -150,7 +151,7 @@ class CreateProfile(BaseModel):
         return value
 
 
-class UpdateProfile(BaseModel):
+class UpdateProfile(TrimmedModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     base_url: str | None = Field(default=None, max_length=500)
     organization: str | None = Field(default=None, max_length=200)
@@ -159,12 +160,12 @@ class UpdateProfile(BaseModel):
     enabled: bool | None = None
 
 
-class CredentialUpdate(BaseModel):
+class CredentialUpdate(TrimmedModel):
     credential: str = Field(min_length=1, max_length=20000)
     credential_mode: Literal["PERSISTENT", "SESSION"]
 
 
-class SettingsUpdate(BaseModel):
+class SettingsUpdate(TrimmedModel):
     default_profile_id: str | None = None
     fallback_profile_id: str | None = None
     model_matrix: dict[str, str] = Field(default_factory=dict)

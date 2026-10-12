@@ -11,6 +11,7 @@ from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
+from app.api.model_base import TrimmedModel
 from sqlalchemy import select
 
 from app.repositories.classroom_storage import (
@@ -26,18 +27,18 @@ from app.feature_flags import require_feature
 from app.services.ai_students import PERSONAS, AIStudentProfile
 
 
-class AddAIStudents(BaseModel):
+class AddAIStudents(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
     count: int = Field(ge=1, le=40)
     model: str = Field(default="openrouter/free", min_length=1, max_length=160)
     provider_profile_id: str | None = None
 
 
-class ClearAIStudents(BaseModel):
+class ClearAIStudents(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 
 
-class OtherSuggestionRequest(BaseModel):
+class OtherSuggestionRequest(TrimmedModel):
     question_id: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)

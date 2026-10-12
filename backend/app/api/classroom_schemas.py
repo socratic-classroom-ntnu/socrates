@@ -2,7 +2,6 @@
 
 from typing import Annotated, Any, Literal
 from pydantic import (
-    BaseModel,
     ConfigDict,
     Field,
     StringConstraints,
@@ -11,9 +10,11 @@ from pydantic import (
     model_validator,
 )
 
+from app.api.model_base import TrimmedModel
 
-class Strict(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+
+class Strict(TrimmedModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
 class Option(Strict):

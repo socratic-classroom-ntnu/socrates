@@ -8,6 +8,7 @@ from typing import Any
 from uuid import uuid4
 import httpx
 from app.classroom_env import env_int, env_str
+from app.tutor.provider_schema import openai_response_schema
 
 
 class ProviderWait(RuntimeError):
@@ -66,7 +67,7 @@ class OpenRouterProvider:
                 "json_schema": {
                     "name": schema.__name__,
                     "strict": True,
-                    "schema": schema.model_json_schema(),
+                    "schema": openai_response_schema(schema),
                 },
             },
             "provider": {"require_parameters": True},

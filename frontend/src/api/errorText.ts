@@ -100,8 +100,49 @@ const STATUS: Record<number, string> = {
 
 const CODE_RE = /^[A-Z][A-Z0-9_]{3,}$/
 
+// FastAPI 422 的 detail 是陣列（loc 最後一段＝欄位名）。認得的欄位轉成針對該欄位的中文說明。
+const FIELDS: Record<string, string> = { email: 'Email', username: '使用者名稱', password: '密碼' }
+
+export type FieldError = { field: string; text: string }
+
+const withLabel = (label: string, rest: string) => (/^[A-Za-z]/.test(label) ? `${label} ${rest}` : label + rest)
+
+/** 單一欄位驗證錯誤的中文（type／ctx 沿用 Pydantic 的錯誤型別與限制值）。 */
+export function fieldText(field: string, type?: string, ctx: Record<string, unknown> = {}): string {
+  const label = FIELDS[field] || field
+  if (type === 'missing') return /^[A-Za-z]/.test(label) ? `請填寫 ${label}。` : `請填寫${label}。`
+  if (type === 'string_too_long' && ctx.max_length !== undefined)
+    return withLabel(label, `最多 ${ctx.max_length} 個字元，請重新輸入。`)
+  if (type === 'string_too_short' && ctx.min_length !== undefined && field !== 'email')
+    return withLabel(label, `至少要 ${ctx.min_length} 個字元，請重新輸入。`)
+  if (type === 'string_pattern_mismatch' && field === 'username')
+    return '使用者名稱只能用文字、數字、底線（_）、點（.）或連字號（-），不能有空格。'
+  return withLabel(label, '格式不正確，請重新輸入。')
+}
+
+/** 把 422 detail 陣列轉成「欄位 → 中文」；每個欄位只留第一個錯誤，認不得的欄位略過。 */
+export function fieldErrors(detail: unknown): FieldError[] {
+  if (!Array.isArray(detail)) return []
+  const found: FieldError[] = []
+  for (const issue of detail) {
+    if (!issue || typeof issue !== 'object') continue
+    const { loc, type, ctx } = issue as { loc?: unknown; type?: unknown; ctx?: unknown }
+    const field = Array.isArray(loc) ? loc[loc.length - 1] : undefined
+    if (typeof field !== 'string' || !FIELDS[field] || found.some(f => f.field === field)) continue
+    found.push({
+      field,
+      text: fieldText(field, typeof type === 'string' ? type : undefined, ctx && typeof ctx === 'object' ? (ctx as Record<string, unknown>) : {}),
+    })
+  }
+  return found
+}
+
 /** 把後端錯誤 detail（或 HTTP 狀態）換成給使用者看的中文。 */
 export function errorText(detail: unknown, status?: number): string {
+  if (status === 422) {
+    const fields = fieldErrors(detail)
+    if (fields.length) return fields.map(f => f.text).join(' ')
+  }
   if (typeof detail === 'string' && detail.trim()) {
     const code = detail.trim()
     if (CODES[code]) return CODES[code]

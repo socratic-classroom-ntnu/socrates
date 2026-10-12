@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH } from './ClassroomApp'
+import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, REGISTER_LIMITS, registerProblems } from './ClassroomApp'
 import { ApiError, api } from './api/classroomClient'
 
 jest.mock('./api/classroomClient', () => {
@@ -105,4 +105,80 @@ test('an empty course code is blocked before any request', async () => {
   })
   expect(screen.getByRole('alert')).toHaveTextContent('請輸入課程代碼。')
   expect(api).not.toHaveBeenCalledWith('/classrooms/join', 'POST', expect.anything())
+})
+
+async function openRegister() {
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/me') throw new ApiError(401, 'LOGIN_REQUIRED')
+    return []
+  })
+  render(<ClassroomApp />)
+  fireEvent.click(await screen.findByRole('button', { name: '註冊' }))
+  return {
+    username: screen.getByLabelText('使用者名稱'),
+    email: screen.getByLabelText('Email'),
+    password: screen.getByLabelText('密碼'),
+  }
+}
+
+// 123@g 被瀏覽器的 type=email 放行；送出前就要在 Email 欄位下說明，並把焦點移到該欄位
+test('register pre-checks the email domain and explains it under the field', async () => {
+  const f = await openRegister()
+  fireEvent.change(f.username, { target: { value: 'goose' } })
+  fireEvent.change(f.email, { target: { value: '123@g' } })
+  fireEvent.change(f.password, { target: { value: 'Socratic-123456' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByText('Email 格式不正確，請重新輸入。')).toHaveAttribute('id', 'register-email-error')
+  expect(f.email).toHaveAttribute('aria-invalid', 'true')
+  expect(f.email).toHaveAccessibleDescription('Email 格式不正確，請重新輸入。')
+  expect(f.email).toHaveFocus()
+  expect(api).not.toHaveBeenCalledWith('/auth/register', 'POST', expect.anything())
+  fireEvent.change(f.email, { target: { value: '123@g.co' } })
+  expect(screen.queryByText('Email 格式不正確，請重新輸入。')).toBeNull()
+})
+
+test('register pre-checks username and password with the backend limits', async () => {
+  const f = await openRegister()
+  fireEvent.change(f.username, { target: { value: 'a b' } })
+  fireEvent.change(f.email, { target: { value: 'a@b.co' } })
+  fireEvent.change(f.password, { target: { value: 'short' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByText(/使用者名稱只能用文字、數字/)).toBeInTheDocument()
+  expect(screen.getByText('密碼至少要 12 個字元，請重新輸入。')).toBeInTheDocument()
+  expect(f.username).toHaveFocus()
+  expect(registerProblems({ username: '張三', email: 'a@b.co', password: 'x'.repeat(12) })).toEqual([
+    { field: 'username', text: '使用者名稱至少要 3 個字元，請重新輸入。' },
+  ])
+  expect(registerProblems({ username: '張三豐', email: 'a@b.co', password: 'x'.repeat(12) })).toEqual([])
+})
+
+test('a 422 from the server lands under the matching register field', async () => {
+  const f = await openRegister()
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/register')
+      throw new ApiError(422, [{ type: 'string_too_long', loc: ['body', 'username'], msg: 'x', ctx: { max_length: 64 } }])
+    return []
+  })
+  fireEvent.change(f.username, { target: { value: 'goose' } })
+  fireEvent.change(f.email, { target: { value: 'a@b.co' } })
+  fireEvent.change(f.password, { target: { value: 'Socratic-123456' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByText('使用者名稱最多 64 個字元，請重新輸入。')).toHaveAttribute('id', 'register-username-error')
+  expect(f.username).toHaveFocus()
+  expect(screen.queryByText('有欄位內容不符合格式，請檢查後再試。')).toBeNull()
+})
+
+withBackend('register limits match the backend Register contract', () => {
+  const source = fs.readFileSync(schemas, 'utf8')
+  const register = source.match(/class Register\(Strict\):([\s\S]*?)\n\n/)?.[1] || ''
+  for (const field of ['username', 'email', 'password'] as const) {
+    const line = register.match(new RegExp(`${field}: str = Field\\(([^)]*)\\)`))?.[1] || ''
+    expect([Number(line.match(/min_length=(\d+)/)?.[1]), Number(line.match(/max_length=(\d+)/)?.[1])]).toEqual([...REGISTER_LIMITS[field]])
+  }
 })

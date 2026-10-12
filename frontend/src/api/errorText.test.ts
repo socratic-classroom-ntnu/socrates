@@ -1,4 +1,4 @@
-import { errorText } from './errorText'
+import { errorText, fieldErrors } from './errorText'
 
 test('known backend codes read as Chinese sentences', () => {
   expect(errorText('GROUP_CAPACITY_REQUIRED', 409)).toContain('分組容量不夠')
@@ -16,4 +16,24 @@ test('provider HTTP codes and bare statuses get readable text', () => {
   expect(errorText('PROVIDER_HTTP_401', 502)).toBe('AI 服務拒絕了這組 API 金鑰，請確認金鑰是否正確。')
   expect(errorText(undefined, 422)).toBe('有欄位內容不符合格式，請檢查後再試。')
   expect(errorText([{ loc: ['body'], msg: 'x' }], 503)).toBe('伺服器暫時無法處理，請稍後再試。')
+})
+
+// FastAPI 422 的 detail 陣列要轉成針對欄位的中文，而不是籠統的「有欄位內容不符合格式」
+test('a 422 validation array becomes field-specific Chinese', () => {
+  const detail = [
+    { type: 'string_too_short', loc: ['body', 'username'], msg: 'x', ctx: { min_length: 3 } },
+    { type: 'value_error', loc: ['body', 'email'], msg: 'Value error, 請填入可收信的 email' },
+    { type: 'string_too_long', loc: ['body', 'password'], msg: 'x', ctx: { max_length: 256 } },
+  ]
+  expect(fieldErrors(detail)).toEqual([
+    { field: 'username', text: '使用者名稱至少要 3 個字元，請重新輸入。' },
+    { field: 'email', text: 'Email 格式不正確，請重新輸入。' },
+    { field: 'password', text: '密碼最多 256 個字元，請重新輸入。' },
+  ])
+  expect(errorText([{ type: 'value_error', loc: ['body', 'email'] }], 422)).toBe('Email 格式不正確，請重新輸入。')
+  expect(errorText([{ type: 'string_pattern_mismatch', loc: ['body', 'username'] }], 422)).toContain('不能有空格')
+  expect(errorText([{ type: 'missing', loc: ['body', 'password'] }], 422)).toBe('請填寫密碼。')
+  expect(errorText([{ type: 'string_too_short', loc: ['body', 'email'], ctx: { min_length: 3 } }], 422)).toBe('Email 格式不正確，請重新輸入。')
+  // 認不得的欄位維持通用說明
+  expect(errorText([{ type: 'missing', loc: ['body', 'other'] }], 422)).toBe('有欄位內容不符合格式，請檢查後再試。')
 })

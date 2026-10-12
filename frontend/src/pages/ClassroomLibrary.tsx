@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '../api/classroomClient'
+import { phaseLabel } from '../shared/phaseLabels'
 import { ScriptBuilder } from '../features/script-builder/ScriptBuilder'
 import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings'
 import { PublishQuestions } from '../features/question-bank/PublishQuestions'
@@ -63,7 +64,6 @@ export function ClassroomLibrary({ initialSelected = '', bankOnly = false }: { i
     setNote('題目已儲存。返回清單即可選擇題目開課。')
   }
   const date = value => value ? new Intl.DateTimeFormat('zh-TW', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value * 1000)) : '時間同步中'
-  const phase = value => ({ lobby: '準備上課', countdown: '即將開始', answering: '作答中', distribution: '觀點分布', arena: '討論中', focus: '深入討論', focus_summary: '討論小結', question_summary: '本題小結', preview: '準備下一題', summary: '課堂回顧', ended: '已結束' }[value] || '課堂進行中')
   const scripts = bankOnly ? bank : (workspace?.scripts || [])
   return <section className="r73-library">
     {!bankOnly && selected && <nav className="r2-row" aria-label="麵包屑"><a href="/teacher/home">我的課程</a><span aria-hidden="true">／</span><span aria-current="page">{workspace?.title || '課程內容'}</span></nav>}
@@ -84,7 +84,7 @@ export function ClassroomLibrary({ initialSelected = '', bankOnly = false }: { i
         <div className="r2-script-grid">{scripts.map(script => <article key={script.id} className="r2-card"><small>{script.document.mode === 'dynamic' ? 'AI 動態出題' : '預先準備的題目'}</small><h3>{script.document.title}</h3><p>{script.document.questions.length} 題 · 版本 {script.revision}</p><div className="r2-row"><button className="teacher-quiet" onClick={() => { setEditing(script); setNote('') }}>編輯題目</button>{!bankOnly && <button className="teacher-quiet" aria-pressed={choice === script.id} onClick={() => setChoice(script.id)}>{choice === script.id ? '已選為本次題目' : '選為本次題目'}</button>}</div><PublishQuestions script={script} onNote={setNote}/></article>)}</div>
         <p><a href="/teacher/home?view=store">到題庫商店找其他老師分享的題目 →</a></p>
       </>}
-      {!bankOnly && tab === 'history' && <><h2>過去的課</h2><p>查看當次題目、分組與討論進度。</p>{!(workspace.lessons || []).length && <section className="r2-card"><h3>第一堂課，從這裡開始</h3><p>開課後，這裡會留下題目版本與課堂紀錄。</p><button onClick={() => setTab('questions')}>回到題目並開課</button></section>}<div className="r2-script-grid">{(workspace.lessons || []).map(lesson => <a key={lesson.lesson_id} className="r2-card" href={`/classrooms/${lesson.room_id}?mode=teacher`}><small>{date(lesson.created_at)}</small><h3>{lesson.title}</h3><p>{lesson.question_count} 題 · {lesson.group_count} 組 · {phase(lesson.phase)}</p><span>查看這堂課 →</span></a>)}</div>{(workspace.sessions || []).length > 0 && <details><summary>查看各組進度</summary><div className="r2-script-grid">{workspace.sessions.map(session => <a key={session.id} className="r2-card" href={`/classrooms/${session.id}?mode=teacher`}><h3>{session.title}</h3><p>{session.kind === 'SESSION' ? '組別討論' : '整班課堂'} · {phase(session.phase)}</p></a>)}</div></details>}</>}
+      {!bankOnly && tab === 'history' && <><h2>過去的課</h2><p>查看當次題目、分組與討論進度。</p>{!(workspace.lessons || []).length && <section className="r2-card"><h3>第一堂課，從這裡開始</h3><p>開課後，這裡會留下題目版本與課堂紀錄。</p><button onClick={() => setTab('questions')}>回到題目並開課</button></section>}<div className="r2-script-grid">{(workspace.lessons || []).map(lesson => <a key={lesson.lesson_id} className="r2-card" href={`/classrooms/${lesson.room_id}?mode=teacher`}><small>{date(lesson.created_at)}</small><h3>{lesson.title}</h3><p>{lesson.question_count} 題 · {lesson.group_count} 組 · {phaseLabel(lesson.phase)}</p><span>查看這堂課 →</span></a>)}</div>{(workspace.sessions || []).length > 0 && <details><summary>查看各組進度</summary><div className="r2-script-grid">{workspace.sessions.map(session => <a key={session.id} className="r2-card" href={`/classrooms/${session.id}?mode=teacher`}><h3>{session.title}</h3><p>{session.kind === 'SESSION' ? '組別討論' : '整班課堂'} · {phaseLabel(session.phase)}</p></a>)}</div></details>}</>}
       {!bankOnly && tab === 'settings' && <section className="r2-card"><h2>本課程的 AI 設定</h2><p>一般課堂可沿用帳號預設模型。需要調整時，再展開進階設定。</p><a href="/teacher/home?view=settings">前往帳號 AI 連線設定 →</a><details><summary>進階設定：模型與使用額度</summary><ClassroomAISettings classroomId={selected}/></details></section>}
     </>}
   </section>

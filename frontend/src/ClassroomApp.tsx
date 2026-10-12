@@ -3,6 +3,7 @@ import { ApiError, api, command, setCSRF } from './api/classroomClient';
 import { fieldErrors, fieldText } from './api/errorText';
 import { Arena } from './features/classroom-stage/Arena';
 import { DraftComposer } from './shared/input/DraftComposer';
+import { phaseLabel } from './shared/phaseLabels';
 import './styles/style.css';
 import { ClassroomLibrary } from './pages/ClassroomLibrary';
 import { AnswerWithResearch } from './features/research/ResearchSidebar';
@@ -161,7 +162,6 @@ export function Home({ user }) {
         catch(e) { setJoinError(errorText(e)); }
         finally { joining.current=false; setBusy(false); }
     }
-    const phase = value => ({lobby:'等待開課',countdown:'即將開始',answering:'作答中',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',preview:'準備下一題',summary:'課堂回顧',ended:'已結束'}[value] || '課堂進行中');
     return <main className="r2-home r73-student-home">
       <header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username}</span><a className="teacher-quiet" href="/teacher/home">切換到教師端</a><button className="quiet" onClick={() => void api('/auth/logout','POST').then(() => location.reload()).catch(e => setNote(errorText(e)))}>登出</button></header>
       <section className="r2-home-hero"><small>學生端</small><h1>{mode === 'student' ? '準備好，說說你的想法。' : 'AI 連線設定'}</h1><p>{mode === 'student' ? '輸入課程代碼加入討論，或繼續上次的課堂。' : '連接你的模型，並選擇適合課堂的設定。'}</p><nav className="r2-tabs" aria-label="學生導覽"><button aria-pressed={mode==='student'} onClick={() => switchMode('student')}>加入與近期課堂</button><button aria-pressed={mode==='providers'} onClick={() => switchMode('providers')}>AI 連線設定</button></nav></section>
@@ -169,7 +169,7 @@ export function Home({ user }) {
       {mode === 'providers' ? <ProviderSettings/> : <>
         <div className="r73-student-grid"><form className="r2-join r2-glass" onSubmit={e=>{e.preventDefault();void join()}} aria-label="加入課堂"><small>加入課堂</small><h2>找到你的座位</h2><label>課程代碼<input value={code} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={12} aria-describedby={joinError ? 'join-help join-error' : 'join-help'} aria-invalid={joinError ? true : undefined} placeholder="例如 AB12CD34" onChange={e=>{ setCode(e.target.value.toUpperCase().replace(/\s/g,'')); setJoinError(''); }}/></label><small id="join-help">請向老師取得 8 碼代碼。</small><label>本次匿名名稱（選填）<input value={alias} maxLength={JOIN_ALIAS_MAX_LENGTH} placeholder="課堂中想使用的稱呼" onChange={e=>setAlias(e.target.value)}/></label><small>留空時，入座後由老師確認課堂稱呼。</small><button disabled={busy || !code.trim()} aria-busy={busy}>{busy ? '正在加入…' : '加入課堂 →'}</button>{joinError && <p role="alert" id="join-error">{joinError}</p>}</form>
         <aside className="r2-card r73-student-guide"><small>一堂課，三個步驟</small><h2>讓每個觀點都有位置</h2><ol><li><strong>加入課堂</strong><p>使用老師提供的課程代碼入座。</p></li><li><strong>選擇與說明</strong><p>讀完情境，選擇立場並寫下理由。</p></li><li><strong>討論與回顧</strong><p>聽聽其他想法，留下自己的思考。</p></li></ol><a href="/round1">先體驗一段單人對話 →</a></aside></div>
-        <section aria-label="近期課堂"><div className="r2-section-title"><h2>近期課堂</h2><button className="quiet" disabled={loading} onClick={() => void refresh()}>{loading?'讀取中…':'重新整理'}</button></div>{!loading && !rooms.length && <div className="r2-card"><h3>加入第一堂課後，這裡會留下紀錄</h3><p>上方輸入課程代碼即可開始。</p></div>}<div className="r2-script-grid">{rooms.map(r=><a className="r2-card" key={r.id} href={`/classrooms/${r.id}?mode=${r.teacher?'teacher':'student'}`}><small>{r.teacher?'授課中':'我的課堂'} · {phase(r.phase)}</small><h3>{r.title}</h3><span>{['summary','ended'].includes(r.phase)?'查看課堂回顧':'繼續課堂'} →</span></a>)}</div></section>
+        <section aria-label="近期課堂"><div className="r2-section-title"><h2>近期課堂</h2><button className="quiet" disabled={loading} onClick={() => void refresh()}>{loading?'讀取中…':'重新整理'}</button></div>{!loading && !rooms.length && <div className="r2-card"><h3>加入第一堂課後，這裡會留下紀錄</h3><p>上方輸入課程代碼即可開始。</p></div>}<div className="r2-script-grid">{rooms.map(r=><a className="r2-card" key={r.id} href={`/classrooms/${r.id}?mode=${r.teacher?'teacher':'student'}`}><small>{r.teacher?'授課中':'我的課堂'} · {phaseLabel(r.phase)}</small><h3>{r.title}</h3><span>{r.phase === 'summary'?'查看課堂回顧':'繼續課堂'} →</span></a>)}</div></section>
       </>}
     </main>;
 }

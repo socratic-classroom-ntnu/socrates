@@ -33,7 +33,12 @@ export default function Home() {
     }
     return (<main className="round1-page round1-home" data-testid="home-page">
       <section className="round1-card round1-hero">
-        <p className="round1-kicker">Socrates · Round 1</p>
+        {/* 回到共思教室首頁（學生入口／教師端／AI 連線設定）。用整頁導覽：這個頁面的路由器也有 "/"，
+            用 navigate('/') 只會留在本頁；登入 Session 存在 cookie，整頁載入不會登出。 */}
+        <header className="home-return-bar">
+          <p className="round1-kicker">Socrates · Round 1</p>
+          <a className="home-return-link" href="/">回首頁</a>
+        </header>
         <h1>照見你的立場</h1>
         <p>依序面對三個道德情境，說出選擇、理由與原則，再看見它們承受挑戰時如何變化。</p>
         {loading && <p className="round1-muted">正在讀取你的對話…</p>}

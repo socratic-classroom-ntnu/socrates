@@ -417,6 +417,20 @@ def test_group_ack_still_only_in_review_phases():
     assert student_actions(g.s, "m1") == ["group_statement", "group_ack"]
 
 
+def test_arena_is_not_a_group_statement_phase():
+    g = room()
+    g.s["phase"] = "arena"
+    assert "group_statement" not in student_actions(g.s, "m1")
+    with pytest.raises(DomainError, match="DIALOGUE_PHASE_REQUIRED"):
+        g.command("group_statement", {"text": "不可達 phase"}, "m1", False)
+
+
+def test_group_runtime_has_one_reachable_mode():
+    g = room()
+    assert g.s["group"]["runtime_mode"] == "native-group-stage"
+    assert not hasattr(g, "individual")
+
+
 def test_non_member_and_non_group_runs_are_refused():
     g = room()
     answer(g, "m1")

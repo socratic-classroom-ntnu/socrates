@@ -16,7 +16,6 @@ TALK_PHASES = frozenset(
     {
         "answering",
         "distribution",
-        "arena",
         "focus",
         "focus_summary",
         "question_summary",
@@ -387,27 +386,6 @@ def extend(Native):
         def group(self):
             return self.s.get("group")
 
-        def individual(self):
-            return bool(self.group()) and self.group().get("runtime_mode") == "individual-free-text"
-
-        def job(self, kind, key, context):
-            if self.individual() and kind == "dynamic_question":
-                context = {
-                    **context,
-                    "group_id": self.group()["id"],
-                    "quoted_viewpoints": [n["text"] for n in self.group()["arguments"][-30:]],
-                    "representatives": [
-                        {
-                            "option_id": f["option_id"],
-                            "argument": f["argument"],
-                            "discussion": f["messages"],
-                            "micro_summary": f.get("micro_summary", ""),
-                        }
-                        for f in self.current()["focuses"]
-                    ],
-                }
-            return Native.job(self, kind, key, context)
-
         def phase(self, name, seconds=None):
             p = self.group()
             if p and name != self.s["phase"]:
@@ -497,32 +475,6 @@ def extend(Native):
                         parents=data.get("parents", []),
                     )
                     self.emit("group.statement", argument_id=node["id"], member_id=member_id)
-                    if self.individual() and self.s.get("runs"):
-                        run = self.current()
-                        if member_id not in run["answers"] and self.s["phase"] == "answering":
-                            run["answers"][member_id] = {
-                                "option_id": "__expressed__",
-                                "argument": node["text"],
-                                "submitted_at": self.now,
-                                "via": "free-text",
-                                "revision": 1,
-                            }
-                        if self.s["phase"] == "answering":
-                            self.emit("group.answer.saved", member_id=member_id)
-                        elif self.s["phase"] == "focus":
-                            focus = self.focus()
-                            if (
-                                focus
-                                and focus["member_id"] == member_id
-                                and focus["status"] == "AWAITING_STUDENT"
-                            ):
-                                Native.command(
-                                    self,
-                                    "focus_message",
-                                    {"text": node["text"]},
-                                    member_id,
-                                    teacher,
-                                )
                     return
                 if kind == "group_ack":
                     ack = confirm(self.s, member_id, data.get("summary_digest"), self.now)
@@ -554,7 +506,7 @@ def extend(Native):
         # ---- personal dialogue -------------------------------------------------------------
 
         def uses_personal(self):
-            return bool(self.group()) and not self.individual()
+            return bool(self.group())
 
         def max_personal_turns(self):
             return int(self.question().get("max_personal_turns", DEFAULT_MAX_PERSONAL_TURNS))
@@ -808,72 +760,34 @@ def extend(Native):
             return baseline_answers(self.current())
 
         def finalize(self):
-            if self.uses_personal():
-                run = self.current()
-                answered = set(run["answers"])
-                self.accept_drafts()
-                for m in run["answers"]:
-                    if m not in answered:
-                        self.start_personal(m)
-                if self.personal_pending():
-                    run["phase"] = "personal"
-                    seconds = int(self.question().get("personal_seconds", DEFAULT_PERSONAL_SECONDS))
-                    return self.phase("personal", seconds)
-                return self.open_distribution()
-            if not self.individual():
+            if not self.uses_personal():
                 return Native.finalize(self)
             run = self.current()
-            run["phase"] = "distribution"
-            run["distribution"] = []
-            self.phase("distribution", 3)
+            answered = set(run["answers"])
+            self.accept_drafts()
+            for m in run["answers"]:
+                if m not in answered:
+                    self.start_personal(m)
+            if self.personal_pending():
+                run["phase"] = "personal"
+                seconds = int(self.question().get("personal_seconds", DEFAULT_PERSONAL_SECONDS))
+                return self.phase("personal", seconds)
+            return self.open_distribution()
 
         def next_focus(self):
-            if not self.individual():
-                result = Native.next_focus(self)
-                focus = self.focus() if self.s.get("focus") else None
-                if focus and self.group():
-                    answer = self.current()["answers"].get(focus["member_id"], {})
-                    texts = {focus["argument"], answer.get("argument")}
-                    for node in self.group()["arguments"]:
-                        if (
-                            node["member_id"] == focus["member_id"]
-                            and node["question_index"] == self.s["question_index"]
-                            and node["text"] in texts
-                        ):
-                            node["visibility"] = "stage"
-                return result
-            run = self.current()
-            covered = run.setdefault("covered_members", [])
-            member = next(
-                (
-                    m
-                    for m in self.group()["member_snapshot"]
-                    if m not in covered and m in run["answers"]
-                ),
-                None,
-            )
-            if member is None:
-                return self.finish_question()
-            covered.append(member)
-            run["covered_options"].append(member)
-            focus = {
-                "id": str(uuid4()),
-                "member_id": member,
-                "option_id": member,
-                "argument": run["answers"][member]["argument"],
-                "messages": [],
-                "turn_index": 0,
-                "completed_turns": 0,
-                "status": "GENERATING",
-                "advance_requested": False,
-                "micro_summary": "",
-                "last_observations": {},
-                "offline_comment": False,
-            }
-            run["focuses"].append(focus)
-            self.s["focus"] = focus["id"]
-            self.phase("focus")
-            self.queue_tutor(focus)
+            result = Native.next_focus(self)
+            focus = self.focus() if self.s.get("focus") else None
+            if focus and self.group():
+                answer = self.current()["answers"].get(focus["member_id"], {})
+                texts = {focus["argument"], answer.get("argument")}
+                for node in self.group()["arguments"]:
+                    if (
+                        node["member_id"] == focus["member_id"]
+                        and node["question_index"] == self.s["question_index"]
+                        and node["text"] in texts
+                    ):
+                        node["visibility"] = "stage"
+            return result
 
         def tick(self):
             p = self.group()
@@ -887,7 +801,7 @@ def extend(Native):
                         return self.close_personal("deadline")
                     if p["settlement"]["state"] == "CURRENT_PHASE_FINISHING" and self.s[
                         "phase"
-                    ] in {"viewpoint_review", "question_summary", "arena"}:
+                    ] in {"viewpoint_review", "question_summary"}:
                         self.phase("final_reflection", 60)
                 return Native.tick(self)
             except StageBoundary:

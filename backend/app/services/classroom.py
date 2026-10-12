@@ -87,6 +87,39 @@ def focus_projection(value: dict | None, as_teacher: bool) -> dict | None:
     return projected
 
 
+def room_available_actions(
+    state: dict,
+    active: dict | None,
+    member_id: str | None,
+    focus: dict | None,
+    as_teacher: bool,
+) -> list[str]:
+    """Backend authority for the native classroom controls shown to one viewer."""
+    phase = state["phase"]
+    actions: list[str] = []
+    if as_teacher:
+        if phase == "lobby":
+            return ["start"]
+        if phase == "preview":
+            return ["approve_question", "regenerate_question", "next"]
+        if phase in {"answering", "personal", "distribution", "focus", "focus_summary"}:
+            return ["next"]
+        return actions
+    if member_id is None:
+        return actions
+    if phase == "answering" and active and member_id not in active["answers"]:
+        actions = ["draft", "answer"]
+    if phase in {"focus", "focus_summary"}:
+        actions.append("barrage")
+    if phase == "focus":
+        actions.append("reaction")
+    if focus and focus["member_id"] == member_id and focus["status"] == "AWAITING_STUDENT":
+        actions.append("focus_message")
+    if phase == "summary":
+        actions.append("personal_summary")
+    return actions
+
+
 def view(db, room, account_id, mode="student") -> dict:
     _, member, teacher = load(db, room.id, account_id)
     as_teacher = teacher and mode == "teacher"
@@ -145,23 +178,13 @@ def view(db, room, account_id, mode="student") -> dict:
     elif s["phase"] == "summary":
         # Class summaries are prompted with pseudonymous content only.
         summaries["records"] = []
-    actions = []
-    if as_teacher:
-        if s["phase"] == "lobby":
-            actions = ["start"]
-        elif s["phase"] == "preview":
-            actions = ["approve_question", "regenerate_question", "next"]
-        elif s["phase"] in {"answering", "personal", "distribution", "focus", "focus_summary"}:
-            actions = ["next"]
-    if member and not as_teacher:
-        if s["phase"] == "answering" and active and member.id not in active["answers"]:
-            actions = ["draft", "answer"]
-        if s["phase"] in {"focus", "focus_summary", "arena"}:
-            actions += ["barrage", "reaction"]
-        if focus and focus["member_id"] == member.id and focus["status"] == "AWAITING_STUDENT":
-            actions += ["focus_message"]
-        if s["phase"] == "summary":
-            actions += ["personal_summary"]
+    actions = room_available_actions(
+        s,
+        active,
+        member.id if member else None,
+        focus,
+        as_teacher,
+    )
     # No next-question details in a student response; preview belongs to creator control.
     exposed_focus = focus_projection(focus, as_teacher)
     transcript = (

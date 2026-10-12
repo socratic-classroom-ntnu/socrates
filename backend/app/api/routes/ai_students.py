@@ -22,6 +22,7 @@ from app.repositories.classroom_storage import (
     transaction,
 )
 
+from app.feature_flags import require_feature
 from app.services.ai_students import PERSONAS, AIStudentProfile
 
 
@@ -84,12 +85,20 @@ def _persona(index: int, room_id: str) -> dict:
     return base
 
 
+def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
+    """Stable product namespaces for new rows; existing r88-derived rows remain untouched."""
+    account_id = str(uuid5(UUID(room_id), f"ai-student-account:{action_id}:{index}"))
+    membership_id = str(uuid5(UUID(room_id), f"ai-student-member:{account_id}"))
+    return account_id, membership_id
+
+
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     from app.orchestrator.classroom import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
+    require_feature("ai_students")
     with transaction() as db:
         teacher = actor(db, request, True)
         room = teacher_room(db, rid, teacher)
@@ -108,8 +117,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
         for offset in range(body.count):
             index = start_index + offset
             persona = _persona(index, rid)
-            account_id = str(uuid5(UUID(rid), f"r88-ai-account:{body.action_id}:{index}"))
-            membership_id = str(uuid5(UUID(rid), f"r88-ai-member:{account_id}"))
+            account_id, membership_id = ai_student_ids(rid, body.action_id, index)
             alias = f"{persona['name']} · AI"
             account = db.get(Account, account_id)
             if account is None:
@@ -202,6 +210,7 @@ def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
+    require_feature("ai_students")
     with transaction() as db:
         teacher = actor(db, request, True)
         room = teacher_room(db, rid, teacher)

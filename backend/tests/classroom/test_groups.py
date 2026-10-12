@@ -98,6 +98,16 @@ def start(classroom, count=3, capacity=1):
     return group.start(rid, body, request), body
 
 
+def test_teacher_view_marks_ai_student_feature_unavailable(classroom, monkeypatch):
+    rid, _, request = classroom
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "false")
+    view = group.view(rid, request)
+    assert view["features"]["ai_students"] == {
+        "enabled": False,
+        "reason": "AI_STUDENTS_DISABLED",
+    }
+
+
 def test_shared_snapshot_independent_runs_and_exact_start(classroom):
     result, body = start(classroom)
     rid, _, request = classroom

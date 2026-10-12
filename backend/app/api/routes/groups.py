@@ -136,8 +136,10 @@ def group_teacher_actions(state: dict) -> dict:
         "viewpoint_review",
         "final_reflection",
     }
-    reason = None if state.get("phase") in next_phases else "CURRENT_PHASE_ACTIONS"
-    return _action_contract({"next": reason})
+    next_reason = None if state.get("phase") in next_phases else "CURRENT_PHASE_ACTIONS"
+    settled = state.get("group", {}).get("settlement", {}).get("state") == "SETTLED"
+    end_reason = "GROUP_ALREADY_SETTLED" if settled else None
+    return _action_contract({"next": next_reason, "end": end_reason})
 
 
 def receipt(db, room, a, body, operation):

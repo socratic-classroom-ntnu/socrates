@@ -144,7 +144,8 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 | `personal_summary`（課後個人摘要） | `POST /classrooms/{id}/commands` | 全班檢視：`summary` |
 
 教師指令：`start`（`lobby`）、`next`（見各表；`countdown`、`question_summary`、`summary` 回
-`CURRENT_PHASE_ACTIONS`）、`approve_question`／`regenerate_question`（`preview`）、`personal_retry`
+`CURRENT_PHASE_ACTIONS`）、`end`（分組課堂尚未結算時，教師強制結束並把未確認成員標成
+`incomplete`）、`approve_question`／`regenerate_question`（`preview`）、`personal_retry`
 （帶 `data.member_id`）。
 
 ### 全 AI 課堂加速
@@ -160,8 +161,9 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 - **推進判準的詳細定義（issue #19）仍待小組確認**；目前實作即上方「推進判準」。個人對話預設值
   （6 回合、600 秒）同樣待確認。
 - **分組課堂的收尾條件也受 #19 影響。** 現況：學生可在 `viewpoint_review`／`final_reflection`
-  送 `group_ack` 保存本人確認；教師在這兩個階段按 `next` 時可直接結算。已確認者保留原話證據，
-  其餘成員在 settlement 中標為 `incomplete`，結算原因記為 `teacher_force_end`。
+  送 `group_ack` 保存本人確認；`next` 維持正常推進（`viewpoint_review` → `final_reflection` →
+  `summary`）。教師可另送 `end` 強制結束；已確認者保留原話證據，其餘成員在 settlement 中標為
+  `incomplete`，結算原因記為 `teacher_force_end`。
 
 ## 已知落差
 

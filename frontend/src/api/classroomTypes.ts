@@ -10,7 +10,7 @@ export interface components { schemas: {
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
   "ClearAIStudents": { "action_id": string };
-  "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
+  "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "end" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
   "CreateBatch": { "action_id": string; "script_id": string };
   "CreateClassroom": { "action_id": string; "title": string };

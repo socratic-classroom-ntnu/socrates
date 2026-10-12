@@ -127,7 +127,7 @@ def drive(g, max_steps=60):
 
 @pytest.mark.parametrize(
     ("phase", "settlement_state"),
-    [("viewpoint_review", "EXPLORING"), ("final_reflection", "FINAL_STAGE")],
+    [("focus", "EXPLORING"), ("viewpoint_review", "EXPLORING")],
 )
 def test_teacher_can_end_with_unconfirmed_members_marked_incomplete(phase, settlement_state):
     g = group_room("static")
@@ -135,24 +135,56 @@ def test_teacher_can_end_with_unconfirmed_members_marked_incomplete(phase, settl
     g.s["group"]["settlement"] = {"state": settlement_state}
     for member in ["m1", "m2"]:
         g.command("group_statement", {"text": member + " 的最後觀點"}, member, False)
-    g.command(
-        "group_ack",
-        {"summary_digest": person_summary(g.s, "m1")["digest"]},
-        "m1",
-        False,
-    )
+    if phase == "viewpoint_review":
+        g.command(
+            "group_ack",
+            {"summary_digest": person_summary(g.s, "m1")["digest"]},
+            "m1",
+            False,
+        )
 
-    g.command("next", {}, None, True)
+    g.command("end", {}, None, True)
 
     settlement = g.s["group"]["settlement"]
     assert g.s["phase"] == "summary"
     assert settlement["state"] == "SETTLED"
     assert settlement["ended_by"] == "teacher"
     assert settlement["end_reason"] == "teacher_force_end"
-    assert settlement["incomplete_members"] == ["m2"]
-    assert settlement["member_status"] == {"m1": "confirmed", "m2": "incomplete"}
-    assert set(g.s["group"]["confirmations"]) == {"m1"}
-    assert g.s["summaries"]["class"]["key_points"] == ["m1：m1 的最後觀點"]
+    assert settlement["incomplete_members"] == (["m1", "m2"] if phase == "focus" else ["m2"])
+    expected_status = (
+        {"m1": "incomplete", "m2": "incomplete"}
+        if phase == "focus"
+        else {"m1": "confirmed", "m2": "incomplete"}
+    )
+    assert settlement["member_status"] == expected_status
+    assert set(g.s["group"]["confirmations"]) == (set() if phase == "focus" else {"m1"})
+    expected_points = [] if phase == "focus" else ["m1：m1 的最後觀點"]
+    assert g.s["summaries"]["class"]["key_points"] == expected_points
+
+
+def test_next_from_viewpoint_review_enters_final_reflection():
+    g = group_room("static")
+    g.s["phase"] = "viewpoint_review"
+    g.s["group"]["settlement"] = {"state": "CURRENT_PHASE_FINISHING"}
+
+    g.command("next", {}, None, True)
+
+    assert g.s["phase"] == "final_reflection"
+    assert g.s["group"]["settlement"]["state"] == "FINAL_STAGE"
+    assert g.s["group"]["settlement"]["final_stage_count"] == 1
+
+
+def test_next_from_final_reflection_settles_normally():
+    g = group_room("static")
+    g.s["phase"] = "final_reflection"
+    g.s["group"]["settlement"] = {"state": "FINAL_STAGE"}
+
+    g.command("next", {}, None, True)
+
+    settlement = g.s["group"]["settlement"]
+    assert g.s["phase"] == "summary"
+    assert settlement["state"] == "SETTLED"
+    assert settlement["end_reason"] == "final_stage_complete"
 
 
 @pytest.mark.parametrize("mode", ["static", "dynamic"])

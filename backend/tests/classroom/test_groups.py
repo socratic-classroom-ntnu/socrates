@@ -123,13 +123,20 @@ def test_parent_teacher_actions_include_reason_codes(monkeypatch):
 
 
 def test_group_teacher_actions_follow_command_phases():
-    assert group_teacher_actions({"phase": "answering"}) == {
-        "available_actions": ["next"],
+    assert group_teacher_actions(
+        {"phase": "answering", "group": {"settlement": {"state": "EXPLORING"}}}
+    ) == {
+        "available_actions": ["next", "end"],
         "unavailable_actions": {},
     }
-    assert group_teacher_actions({"phase": "summary"}) == {
+    assert group_teacher_actions(
+        {"phase": "summary", "group": {"settlement": {"state": "SETTLED"}}}
+    ) == {
         "available_actions": [],
-        "unavailable_actions": {"next": "CURRENT_PHASE_ACTIONS"},
+        "unavailable_actions": {
+            "next": "CURRENT_PHASE_ACTIONS",
+            "end": "GROUP_ALREADY_SETTLED",
+        },
     }
 
 

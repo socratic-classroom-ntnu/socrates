@@ -43,6 +43,7 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 | `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
 | `api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
 | `api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
+| `api/routes/question_bank.py` | `/bank/questions*` | 題庫：發布自己劇本裡的一題、搜尋、預覽、下架、匯入到自己的劇本（資料表 `bank_questions`，migration `0011`） |
 
 ## 資料與並發
 

@@ -4,6 +4,7 @@ import type { components } from '../api/classroomTypes'
 import '../styles/teacher-dashboard.css'
 import { ClassroomLibrary } from './ClassroomLibrary'
 import { ProviderSettings } from './ProviderSettings'
+import { QuestionBank } from './QuestionBank'
 
 // 一張課程卡需要的資料。/library/classrooms 目前只給 id 與 title；
 // 學生人數、主題數量、課程碼的資料來源還沒定案，拿不到時以 null 表示，卡片顯示「—」。
@@ -41,6 +42,9 @@ const Icon = {
   shelf: (
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5v14M9 5v14M13 6l4 13" /></svg>
   ),
+  store: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.5 11h-13zM8 9V7a4 4 0 0 1 8 0v2" /></svg>
+  ),
   gear: (
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" /></svg>
   ),
@@ -55,7 +59,7 @@ const Icon = {
   ),
 }
 
-type NavKey = 'home' | 'bank' | 'settings'
+type NavKey = 'home' | 'bank' | 'store' | 'settings'
 
 // 教師端共用外框：左側導覽列＋右側內容。個人題庫、設定頁由其他任務實作，先保留入口但不可點。
 // 外框取代了舊首頁的頂端列，所以登出要放在這裡，否則從連結直接進來的老師沒辦法離開（共用電腦尤其要緊）。
@@ -63,6 +67,7 @@ export function TeacherShell({ active, children }: { active: NavKey; children: R
   const items: { key: NavKey; label: string; icon: ReactNode; href?: string }[] = [
     { key: 'home', label: '首頁', icon: Icon.home, href: '/teacher/home' },
     { key: 'bank', label: '個人題庫', icon: Icon.shelf, href: '/teacher/home?view=bank' },
+    { key: 'store', label: '題庫商店', icon: Icon.store, href: '/teacher/home?view=store' },
     { key: 'settings', label: 'AI 連線設定', icon: Icon.gear, href: '/teacher/home?view=settings' },
   ]
   return (
@@ -241,6 +246,7 @@ export function TeacherDashboard({ user, now = new Date() }: { user: Pick<Accoun
   }, [refresh])
 
   if (view === 'bank') return <TeacherShell active="bank"><ClassroomLibrary bankOnly/></TeacherShell>
+  if (view === 'store') return <TeacherShell active="store"><QuestionBank/></TeacherShell>
   if (view === 'settings') return <TeacherShell active="settings"><header className="teacher-head"><div><small>教師工作室</small><h1>AI 連線設定</h1><p>連接模型、測試連線，再選為課堂預設。</p></div></header><ProviderSettings/></TeacherShell>
   return (
     <TeacherShell active="home">

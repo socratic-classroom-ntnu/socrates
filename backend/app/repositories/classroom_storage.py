@@ -238,6 +238,7 @@ def register_models() -> None:
     from app.services import ai_students  # noqa: F401
     from app.api.routes import classroom_library  # noqa: F401
     from app.api.routes import provider_profiles  # noqa: F401
+    from app.api.routes import question_bank  # noqa: F401
 
 
 def configure(url: str | None = None, *, create: bool = False):

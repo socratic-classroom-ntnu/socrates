@@ -149,6 +149,21 @@
         "title": "AttachScript",
         "type": "object"
       },
+      "BankMutation": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "BankMutation",
+        "type": "object"
+      },
       "ClearAIStudents": {
         "properties": {
           "action_id": {
@@ -450,6 +465,28 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportQuestion": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id"
+        ],
+        "title": "ImportQuestion",
+        "type": "object"
+      },
       "JoinRoom": {
         "additionalProperties": false,
         "properties": {
@@ -682,6 +719,55 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "Publish": {
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id",
+          "question_id"
+        ],
+        "title": "Publish",
         "type": "object"
       },
       "Question": {
@@ -1713,6 +1799,239 @@
           }
         },
         "summary": "Verify"
+      }
+    },
+    "/api/v2/bank/questions": {
+      "get": {
+        "operationId": "search_api_v2_bank_questions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search"
+      },
+      "post": {
+        "operationId": "publish_api_v2_bank_questions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Publish"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}": {
+      "get": {
+        "operationId": "detail_api_v2_bank_questions__bank_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/import": {
+      "post": {
+        "operationId": "import_question_api_v2_bank_questions__bank_id__import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Question"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/unpublish": {
+      "post": {
+        "operationId": "unpublish_api_v2_bank_questions__bank_id__unpublish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankMutation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unpublish"
       }
     },
     "/api/v2/classrooms": {

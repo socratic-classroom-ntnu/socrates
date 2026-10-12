@@ -1,0 +1,14 @@
+/* 題庫商店（QuestionBank）與題目卡上的「發布到題庫」。沿用教師端外框的顏色變數。 */
+.bank-search{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:12px 0}
+.bank-search label{display:grid;gap:4px;flex:1 1 260px}
+.bank-search input{font:inherit;padding:8px 10px;border:1px solid var(--desk-line,#ccc);border-radius:6px;background:var(--desk-panel,#fff);color:inherit}
+.bank-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;padding:0;list-style:none}
+.bank-tags li{padding:1px 8px;border-radius:999px;background:var(--desk-green-soft,#e5eee9);font-size:12px}
+.bank-preview{margin:16px 0}
+.bank-preview .r2-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.bank-import{justify-content:flex-start!important}
+.bank-scenario{white-space:pre-wrap}
+.bank-publish{margin-top:8px}
+.bank-publish ul{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.bank-publish li{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.bank-publish li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

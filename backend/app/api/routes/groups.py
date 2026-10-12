@@ -80,6 +80,65 @@ def roster_hash(rows):
     return digest([{"id": r.id, "alias": r.alias, "seat": r.seat} for r in rows])
 
 
+def _action_contract(reasons: dict[str, str | None]) -> dict:
+    return {
+        "available_actions": [action for action, reason in reasons.items() if reason is None],
+        "unavailable_actions": {
+            action: reason for action, reason in reasons.items() if reason is not None
+        },
+    }
+
+
+def parent_teacher_actions(state: dict, rows) -> dict:
+    """Backend authority for teacher controls on the group overview."""
+    from app.feature_flags import feature_state
+
+    phase = state.get("phase")
+    cfg = state.get("classroom") or {}
+    roster_digest = roster_hash(rows)
+    ai_feature = feature_state("ai_students")
+    has_ai = any(
+        state.get("members", {}).get(row.id, {}).get("actor_type") == "llm_student" for row in rows
+    )
+    lobby_reason = None if phase == "lobby" else "LOBBY_REQUIRED"
+    configure_reason = lobby_reason or (None if rows else "CURRENT_POPULATED_ROSTER_REQUIRED")
+    start_reason = lobby_reason
+    if start_reason is None and not rows:
+        start_reason = "CURRENT_POPULATED_ROSTER_REQUIRED"
+    elif start_reason is None and (
+        cfg.get("state") != "CONFIGURED" or cfg.get("roster_digest") != roster_digest
+    ):
+        start_reason = "CURRENT_GROUP_CONFIGURATION_REQUIRED"
+    add_reason = lobby_reason or ai_feature["reason"]
+    clear_reason = (
+        lobby_reason or ai_feature["reason"] or (None if has_ai else "AI_STUDENTS_REQUIRED")
+    )
+    return _action_contract(
+        {
+            "configure": configure_reason,
+            "start": start_reason,
+            "add_ai_students": add_reason,
+            "clear_ai_students": clear_reason,
+        }
+    )
+
+
+def group_teacher_actions(state: dict) -> dict:
+    """Backend authority for teacher controls on one group run."""
+    next_phases = {
+        "answering",
+        "personal",
+        "distribution",
+        "focus",
+        "focus_summary",
+        "preview",
+        "viewpoint_review",
+        "final_reflection",
+    }
+    reason = None if state.get("phase") in next_phases else "CURRENT_PHASE_ACTIONS"
+    return _action_contract({"next": reason})
+
+
 def receipt(db, room, a, body, operation):
     hashed = digest({"operation": operation, **body.model_dump()})
     old = db.scalar(
@@ -387,6 +446,7 @@ def view(rid: str, request: Request):
                 }
                 for mid, m in state["members"].items()
             ]
+            teacher_actions = group_teacher_actions(state) if mode == "teacher" else None
             return {
                 "kind": "GroupRun",
                 "id": rid,
@@ -426,7 +486,12 @@ def view(rid: str, request: Request):
                 else None,
                 "available_actions": student_actions(state, member.id)
                 if member and mode == "student"
+                else teacher_actions["available_actions"]
+                if teacher_actions
                 else [],
+                "unavailable_actions": teacher_actions["unavailable_actions"]
+                if teacher_actions
+                else {},
                 "personal_progress": personal_progress(state) if mode == "teacher" else None,
                 "personal_overview": personal_teacher_view(state) if mode == "teacher" else None,
             }
@@ -466,6 +531,7 @@ def view(rid: str, request: Request):
         ai_settings = _classroom_settings_view(
             asset_classroom.assets.get("ai_settings") if asset_classroom else {}
         )
+        teacher_actions = parent_teacher_actions(state, rows)
         return {
             "kind": "GroupCollection",
             "id": rid,
@@ -493,6 +559,7 @@ def view(rid: str, request: Request):
                 for k in ["group_count", "members_per_group", "avatar_pack_id", "revision"]
             },
             "groups": groups,
+            **teacher_actions,
         }
 
 

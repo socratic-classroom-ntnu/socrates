@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ApiError, scriptAssist } from '../../api/classroomClient'
+import '../../styles/script-builder.css'
 
 const NEW = 'new'
 

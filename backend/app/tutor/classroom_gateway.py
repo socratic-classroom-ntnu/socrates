@@ -14,6 +14,7 @@ import httpx
 from app.orchestrator.classroom import DomainError
 from app.tutor.classroom_provider import ProviderWait
 from app.classroom_env import env_int
+from app.tutor.provider_schema import gemini_response_schema, openai_response_schema
 
 KNOWN_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
@@ -191,7 +192,7 @@ async def _openai_generate(binding, messages, schema):
                 "json_schema": {
                     "name": schema.__name__,
                     "strict": True,
-                    "schema": schema.model_json_schema(),
+                    "schema": openai_response_schema(schema),
                 },
             },
         },
@@ -253,7 +254,7 @@ async def _gemini_generate(binding, messages, schema):
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "responseSchema": schema.model_json_schema(),
+                "responseSchema": gemini_response_schema(schema),
                 "maxOutputTokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             },
         },

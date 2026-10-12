@@ -138,7 +138,7 @@ export function DraftComposer({ value, onChange, onSend, enabled = true, busy = 
         e.preventDefault();
         void send();
     } }}/>
-      <button className="socratic-enter" type="button" aria-label="傳送" title="Enter 傳送；Shift＋Enter 換行" disabled={!enabled || busy || sending || (canSend === undefined ? !value.trim() : !canSend)} onClick={() => void send()}><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 4v8a3 3 0 0 1-3 3H5m5-5-5 5 5 5"/></svg></button>
+      <button className="socratic-enter" type="button" aria-label="傳送" title="Enter 傳送；Shift＋Enter 換行" disabled={!enabled || busy || sending || (canSend === undefined ? !value.trim() : !canSend)} onClick={() => void send()}><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 4v8a3 3 0 0 1-3 3H5m5-5-5 5 5 5"/></svg><span>{sending || busy ? '送出中' : '送出'}</span></button>
     </div>
     {ghostText && !value && <button type="button" className="r88-ghost-accept" onClick={() => { latest.current = ghostText; onChange(ghostText); onGhostAccepted?.(ghostText); }}>採用 AI 奇思妙想</button>}
     <div className="socratic-composer-caption"><span role="status" aria-live="polite">{active ? '正在聆聽…' : note || '文字／語音輸入'}</span><span>Enter 傳送 · Shift＋Enter 換行</span></div>

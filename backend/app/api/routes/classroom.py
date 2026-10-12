@@ -6,7 +6,8 @@ import time
 from copy import deepcopy
 from uuid import uuid4
 import yaml
-from fastapi import APIRouter, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.services import classroom_auth as auth
@@ -202,9 +203,35 @@ def update_script(script_id: str, body: ScriptSave, request: Request):
 @router.post("/scripts/import")
 async def import_script(request: Request):
     raw = await request.body()
-    if len(raw) > 1000000:
-        raise DomainError("SCRIPT_SIZE", 413)
-    doc = ScriptDocument.model_validate(yaml.safe_load(raw))
+    if len(raw) > 256 * 1024:
+        raise DomainError("YAML 內容最多 256 KB。", 413)
+    if not raw.strip():
+        raise DomainError("請貼上 YAML 內容。", 422)
+
+    try:
+        value = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        location = f"第 {mark.line + 1} 行、第 {mark.column + 1} 欄：" if mark is not None else ""
+        problem = getattr(exc, "problem", None) or "語法格式不符"
+        raise DomainError(f"YAML 格式錯誤：{location}{problem}", 422) from exc
+
+    try:
+        doc = ScriptDocument.model_validate(value)
+    except ValidationError as exc:
+        detail = []
+        for item in exc.errors(include_url=False, include_input=False):
+            ctx = item.get("ctx")
+            if isinstance(ctx, dict):
+                item["ctx"] = {
+                    key: current
+                    if current is None or isinstance(current, (str, int, float, bool))
+                    else str(current)
+                    for key, current in ctx.items()
+                }
+            detail.append(item)
+        raise HTTPException(status_code=422, detail=detail) from exc
+
     return await run_in_threadpool(create_script, ScriptSave(document=doc), request)
 
 

@@ -9,3 +9,6 @@
   .r97-provider-settings .r2-row>*{flex:1 1 100%}
   .r97-model-matrix .r2-script-grid{grid-template-columns:1fr}
 }
+
+.r97-model-select{display:flex;flex-direction:column;gap:6px}
+.r97-model-select select,.r97-model-select input{width:100%}

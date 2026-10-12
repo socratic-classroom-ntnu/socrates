@@ -41,6 +41,8 @@ export function registerProblems({ username, email, password }: { username: stri
     if (secret) problems.push({ field: 'password', text: secret });
     return problems;
 }
+// 註冊時已被使用的欄位：錯誤顯示在該欄位下方。ACCOUNT_PENDING_VERIFICATION 可能是任一欄位，顯示在表單說明。
+const TAKEN_FIELD: Record<string, string> = { USERNAME_TAKEN: 'username', EMAIL_TAKEN: 'email' };
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
     const [name, setName] = useState(''), [email, setEmail] = useState(''), [password, setPassword] = useState('');
@@ -109,7 +111,9 @@ function Auth({ onLogin }) {
             }
         }
         catch (e) {
-            const fields = mode === 'register' && e instanceof ApiError && e.status === 422 ? fieldErrors(e.detail) : [];
+            const fields = mode !== 'register' || !(e instanceof ApiError) ? []
+                : e.status === 422 ? fieldErrors(e.detail)
+                    : TAKEN_FIELD[String(e.detail)] ? [{ field: TAKEN_FIELD[String(e.detail)], text: e.message }] : [];
             if (fields.length)
                 showFieldErrors(fields);
             else

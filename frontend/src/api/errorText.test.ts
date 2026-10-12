@@ -37,3 +37,11 @@ test('a 422 validation array becomes field-specific Chinese', () => {
   // 認不得的欄位維持通用說明
   expect(errorText([{ type: 'missing', loc: ['body', 'other'] }], 422)).toBe('有欄位內容不符合格式，請檢查後再試。')
 })
+
+test('register conflicts read as distinct Chinese sentences', () => {
+  expect(errorText('USERNAME_TAKEN', 409)).toBe('這個使用者名稱已經有人使用，請換一個。')
+  expect(errorText('EMAIL_TAKEN', 409)).toContain('這個 Email 已經註冊過了')
+  const pending = errorText('ACCOUNT_PENDING_VERIFICATION', 409)
+  expect(pending).toContain('重新寄送驗證信')
+  expect(pending).toContain('驗證連結過期')
+})

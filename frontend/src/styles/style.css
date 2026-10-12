@@ -87,12 +87,24 @@ main.r2-classroom .r2-answer-controls .socratic-mic.listening::after { content: 
 main.r2-classroom .r2-answer-controls .r2-end-speaking { width: 100%; height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0; background: #30281f; color: #eee5da; border: 1px solid #65503a; border-radius: 12px; font-weight: 600; }
 main.r2-classroom .r2-answer-controls .r2-end-speaking:disabled { opacity: 0.65; cursor: not-allowed; }
 @media(max-width:600px) { main.r2-classroom .r2-answer-controls { grid-template-columns: minmax(0, 1fr) 76px; gap: 6px; } main.r2-classroom .r2-answer-controls .socratic-composer-row { grid-template-columns: minmax(0, 1fr) 90px; column-gap: 6px; } main.r2-classroom .r2-answer-controls .r2-end-speaking { font-size: 13px; } }
+/* Student classroom - mobile RWD */
+@media (max-width: 600px) {
+main.r2-classroom .r2-live-dialog { bottom: 12px; padding: 12px; width: calc(100% - 20px); max-height: 58dvh; overflow-y: auto; }
+main.r2-classroom .r2-live-dialog > p { font-size: 14px; line-height: 1.5; max-height: 76px; margin: 8px 0; }
+main.r2-classroom .r2-answer-controls { display: block; margin-top: 8px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 68px 42px; gap: 8px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea { grid-column: 1 / 4; grid-row: 1; width: 100%; height: 68px; min-height: 68px; max-height: 68px; }
+main.r2-classroom .r2-answer-controls .socratic-mic { grid-column: 1; grid-row: 2; width: 100%; height: 42px; }
+main.r2-classroom .r2-answer-controls .socratic-enter { grid-column: 2; grid-row: 2; width: 100%; height: 42px; }
+main.r2-classroom .r2-answer-controls .r2-end-speaking { width: 100%; height: 42px; margin-top: 8px; flex-direction: row; gap: 4px; font-size: 12px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-caption { font-size: 10px; }
+main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { top: 82px; height: 145px; max-height: 145px; padding: 10px; }
+main.r2-classroom .r2-focus-chat > small, main.r2-classroom .r2-transcript-panel > small { font-size: 13px; }
+main.r2-classroom .r2-focus-chat .r2-message p, main.r2-classroom .r2-transcript-panel .r2-message p { font-size: 12px; line-height: 1.5; }
+body:has(main.r2-classroom .r2-arena) .g70-evidence.floating { display: none !important; }
+main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { height: 220px; max-height: 220px; overflow-y: auto; }
+}
 
-/* 面板標題 */
 main.r2-classroom .r2-focus-chat > small, main.r2-classroom .r2-transcript-panel > small { font-size: 16px; font-weight: 700; }
-
-/* 發言者名稱：導師、你、同學 */
 main.r2-classroom .r2-focus-chat .r2-message small, main.r2-classroom .r2-transcript-panel .r2-message small { font-size: 12px; }
-
-/* 對話正文 */
 main.r2-classroom .r2-focus-chat .r2-message p, main.r2-classroom .r2-transcript-panel .r2-message p { font-size: 15px; line-height: 1.8; }

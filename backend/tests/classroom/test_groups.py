@@ -126,7 +126,10 @@ def test_grace_phase_and_post_ack_evidence(classroom):
         # 作答中確認會跳過代表討論並提早結束課堂，所以只在題目都結束後的 viewpoint_review 開放。
         with pytest.raises(DomainError, match="CONFIRMABLE_PHASE_REQUIRED"):
             machine.command(
-                "group_ack", {"summary_digest": person_summary(machine.s, mid)["digest"]}, mid, False
+                "group_ack",
+                {"summary_digest": person_summary(machine.s, mid)["digest"]},
+                mid,
+                False,
             )
         assert machine.s["group"]["settlement"]["state"] == "EXPLORING"
         machine.s["phase"] = "viewpoint_review"

@@ -55,7 +55,12 @@ def answer_all(g, now=110):
         g = GameOrchestrator(g.s, now)
         g.command(
             "answer",
-            {"question_run_id": g.current()["id"], "option_id": "a", "text": m + " 的理由", "revision": 1},
+            {
+                "question_run_id": g.current()["id"],
+                "option_id": "a",
+                "text": m + " 的理由",
+                "revision": 1,
+            },
             m,
             False,
         )
@@ -70,8 +75,13 @@ def ack_all(g):
 
 TUTOR = {
     "reply_text": "為什麼？",
-    "observations": {"position_clarity": 3, "reasoning_depth": 3, "counterargument_engagement": 3,
-                     "evidence_use": 3, "value_articulation": 3},
+    "observations": {
+        "position_clarity": 3,
+        "reasoning_depth": 3,
+        "counterargument_engagement": 3,
+        "evidence_use": 3,
+        "value_articulation": 3,
+    },
     "micro_summary": "小結",
 }
 
@@ -80,7 +90,9 @@ def drive(g, max_steps=60):
     """Teacher presses 下一步 / server ticks / jobs complete until q2 starts or class ends."""
     now = g.now
     for _ in range(max_steps):
-        if g.s["phase"] == "summary" or (g.s["question_index"] >= 1 and g.s["phase"] == "answering"):
+        if g.s["phase"] == "summary" or (
+            g.s["question_index"] >= 1 and g.s["phase"] == "answering"
+        ):
             return g
         now += 1
         g = GameOrchestrator(g.s, now)
@@ -133,7 +145,17 @@ def test_q1_reaches_representative_discussion_with_different_options(mode):
     g = group_room(mode)
     for m, option in [("m1", "a"), ("m2", "b")]:
         g = GameOrchestrator(g.s, 110)
-        g.command("answer", {"question_run_id": g.current()["id"], "option_id": option, "text": m + " 的理由", "revision": 1}, m, False)
+        g.command(
+            "answer",
+            {
+                "question_run_id": g.current()["id"],
+                "option_id": option,
+                "text": m + " 的理由",
+                "revision": 1,
+            },
+            m,
+            False,
+        )
     now = 111
     while g.s["phase"] not in {"focus", "summary", "final_reflection"} and now < 140:
         g = GameOrchestrator(g.s, now)
@@ -147,13 +169,26 @@ def test_q1_reaches_representative_discussion_with_different_options(mode):
 
 def test_non_group_static_two_questions_reaches_q2():
     s = fresh_state("B2")
-    s["members"] = {"m1": {"alias": "m1", "avatar": "s", "last_seen": 10_000, "selected_count": 0,
-                           "achievements": [], "points": 0}}
+    s["members"] = {
+        "m1": {
+            "alias": "m1",
+            "avatar": "s",
+            "last_seen": 10_000,
+            "selected_count": 0,
+            "achievements": [],
+            "points": 0,
+        }
+    }
     g = GameOrchestrator(s, 100)
     g.command("start", {"script_document": doc("static")}, None, True)
     g = GameOrchestrator(g.s, 104)
     g.tick()
     g = GameOrchestrator(g.s, 110)
-    g.command("answer", {"question_run_id": g.current()["id"], "option_id": "a", "text": "x", "revision": 1}, "m1", False)
+    g.command(
+        "answer",
+        {"question_run_id": g.current()["id"], "option_id": "a", "text": "x", "revision": 1},
+        "m1",
+        False,
+    )
     g = drive(g)
     assert g.s["phase"] == "answering" and g.s["question_index"] == 1

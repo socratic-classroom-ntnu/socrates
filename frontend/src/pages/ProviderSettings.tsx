@@ -66,6 +66,16 @@ function bulkDefault(profile: MatrixProfile, discovered: string[]) {
   return discovered.find(id => !isOpenRouterModel(id)) ?? ''
 }
 
+/** 新增 AI 學生時送出的模型，與上面「套用至全部 AI」同一套依服務判斷的預設：
+ * 矩陣裡的 AI 學生模型適用於這個連線就沿用；否則 OpenRouter 用 Free Router，其他服務用連線自己的預設模型。
+ * 沒指定連線時走伺服器預設路由（Free Router）。回傳空字串表示這個連線還沒有可用的模型，要老師先選。 */
+function aiStudentModel(matrixModel: string | null | undefined, profile: MatrixProfile) {
+  const chosen = (matrixModel || '').trim()
+  if (!profile) return chosen || FREE_ROUTER
+  if (chosen && (isOpenRouter(profile) || !isOpenRouterModel(chosen))) return chosen
+  return bulkDefault(profile, [profile.default_model || ''])
+}
+
 /** 選定的連線不是 OpenRouter 時，矩陣裡仍填著 OpenRouter 模型的角色（送出去只會在上課時失敗）。 */
 function mismatchedRoles(matrix: Record<string, string>, profile: MatrixProfile) {
   if (!profile || isOpenRouter(profile)) return []
@@ -557,4 +567,4 @@ export function ProviderSettings() {
   )
 }
 
-export { ModelMatrix, ModelSelect, FREE_ROUTER, roles, mismatchedRoles }
+export { ModelMatrix, ModelSelect, FREE_ROUTER, roles, mismatchedRoles, aiStudentModel }

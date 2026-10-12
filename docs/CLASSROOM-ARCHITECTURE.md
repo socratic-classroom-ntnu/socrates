@@ -122,6 +122,11 @@ Full account與互動record存backend；學生summary只投影統計與自己的
   沒有可用 LLM 時結果為 `tutor_unavailable`，不會自動完成。
 - **分布與代表**：只採已確認的基準（`baseline_answers`，`distribution_basis: "personal_baseline"`），
   沒有基準的作答者人數記在 `distribution_excluded`。
+- **教師端立場分佈（issue #15）**：`group_analysis.stance_distribution` 以同一套基準計算每題每組的
+  選項人數與比例（`options[].count／percent`）、已確認與未確認人數、未確認者依個人對話狀態的分項
+  （`unconfirmed_by_status`，含 `not_answered`），以及是否有兩個以上選項被持有（`differing`）。母課堂教師
+  檢視的組別卡片帶目前題目的 `stance`，`/groups/classrooms/{id}/analysis` 的每組帶全部題目的 `stances`；
+  學生檢視不含這些欄位。LLM 摘要延後。
 - **可用動作**：分組學生檢視的 `available_actions` 由後端 `group_run.student_actions` 計算（含
   `group_statement`、`group_ack` 與上述個人指令），前端只依它顯示按鈕。
 

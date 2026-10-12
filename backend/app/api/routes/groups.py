@@ -29,7 +29,7 @@ from app.domain.group_run import (
     personal_teacher_view,
     student_actions,
 )
-from app.domain.group_analysis import analysis as project_analysis
+from app.domain.group_analysis import analysis as project_analysis, current_stance
 from app.services import classroom as service
 from app.domain.library_decisions import visible_evidence
 from app.api.routes.classroom_library import link_group_session, ClassroomAssets
@@ -453,6 +453,8 @@ def view(rid: str, request: Request):
                         "acked": len(p["confirmations"]),
                         "settlement": p["settlement"]["state"],
                         "personal_progress": personal_progress(g.state),
+                        # Teacher-only branch: students are routed above and never reach it.
+                        "stance": current_stance(g.state),
                     }
                 )
         asset_id = state.get("asset_classroom_id")

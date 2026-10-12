@@ -10,6 +10,7 @@ import { GroupClassroomGate } from './pages/GroupClassroom';
 import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
+import { AnswerStage } from './features/classroom-answer/AnswerStage';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
@@ -226,10 +227,8 @@ function AnswerPanel({ room, refresh, setNote, offset }) {
     useEffect(() => { const flush = () => void submit(); window.addEventListener('r2-final-sync', flush); const timer = setTimeout(flush, Math.max(0, (room.deadline_at || 0) * 1000 - (Date.now() + offset.current))); return () => { window.removeEventListener('r2-final-sync', flush); clearTimeout(timer); }; }, [room.deadline_at, submit, offset]);
     if (!allowed)
         return <section className="r2-dialog"><small>ANSWER RECORDED</small><h2>你的觀點，已經有了位置。</h2><p>等待大家完成作答，接著一起看看各種立場。</p></section>;
-    return <section className="r2-answer"><article className="r2-prompt"><small>情境 {room.question_index + 1} / {room.question_count}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p></article>
-    {!writing ? <div className="r2-options">{room.question?.options.map((o, i) => <button key={o.id} className={'r2-option ' + (choice === o.id ? 'chosen' : '')} onClick={() => { setChoice(o.id); setWriting(true); }}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div> :
-            <div className="r2-dialog r2-expand"><div className="r73-selected-rail">{room.question?.options.map((o, i) => <button type="button" className={o.id === choice ? "selected" : "dimmed"} key={o.id} onClick={() => setChoice(o.id)}><small>{String.fromCharCode(65 + i)}</small>{o.text}</button>)}</div><button className="quiet" onClick={() => setWriting(false)}>← 返回選項，保留草稿</button><small>你的選擇 · {room.question?.options.find(o => o.id === choice)?.text}</small><DraftComposer value={text} onChange={value => { setText(value); if (suggestion?.suggestion_accepted) setSuggestion(current => ({ ...current, suggestion_edited: value !== ghost })); }} onSend={submit} enabled={allowed} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="說說你選擇的理由" placeholder="我這樣想，是因為…" autoFocus ghostText={choice === '__other__' ? ghost : ''} onGhostAccepted={() => setSuggestion(current => ({ ...current, suggestion_accepted: true, suggestion_accepted_at: Date.now() / 1000, suggestion_edited: false }))}/></div>}
-  </section>;
+    const composer = <DraftComposer value={text} onChange={value => { setText(value); if (suggestion?.suggestion_accepted) setSuggestion(current => ({ ...current, suggestion_edited: value !== ghost })); }} onSend={submit} enabled={allowed} canSend={Boolean(choice) && (!room.question?.argument_required || Boolean(text.trim()))} label="為什麼？寫下你的想法" placeholder="我這樣想，是因為…" autoFocus ghostText={choice === '__other__' ? ghost : ''} onGhostAccepted={() => setSuggestion(current => ({ ...current, suggestion_accepted: true, suggestion_accepted_at: Date.now() / 1000, suggestion_edited: false }))}/>;
+    return <AnswerStage questionNumber={room.question_index + 1} questionCount={room.question_count} title={room.question?.title || ''} scenario={room.question?.scenario || ''} options={room.question?.options || []} choice={choice} writing={writing} onChoose={id => { setChoice(id); setWriting(true); }} onReselect={() => setWriting(false)} deadline={room.deadline_at} duration={room.question?.duration_seconds || 0} offset={offset} composer={composer}/>;
 }
 function SummaryText({ value }) {
     const [shown, setShown] = useState('');

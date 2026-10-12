@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createSummary, getSummary } from '../api/client';
+import { CLASSROOM_HOME } from '../round1Routes';
 const STATUS_LABELS = {
     goal_met: '想清楚了',
     capped: '還沒有定見',
@@ -57,7 +58,8 @@ export default function Summary() {
         </section>
         <div className="round1-actions" data-testid="summary-exit">
           <button className="round1-primary" onClick={() => navigate('/history')}>回到歷史紀錄</button>
-          <button onClick={() => navigate('/')}>退出至首頁</button>
+          {/* 「退出」＝離開單人對話，回共思教室首頁；整頁載入，不交給本頁路由器（那裡的 "/" 是 Round 1 首頁）。 */}
+          <a className="round1-exit-link" href={CLASSROOM_HOME}>退出至首頁</a>
         </div>
       </section>
     </main>);

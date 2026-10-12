@@ -212,9 +212,12 @@ def create_room(db, a, script_id):
 
 
 def join(db, a, body):
-    room = db.scalar(select(Room).where(Room.code == body.code.strip().upper()).with_for_update())
+    code = body.code.strip().upper()
+    if not code:
+        raise DomainError("COURSE_CODE_REQUIRED", 422)
+    room = db.scalar(select(Room).where(Room.code == code).with_for_update())
     if room is None:
-        raise DomainError("COURSE_CODE_REQUIRED", 404)
+        raise DomainError("COURSE_CODE_NOT_FOUND", 404)
     prior = db.scalar(
         select(Membership).where(
             Membership.room_id == room.id,

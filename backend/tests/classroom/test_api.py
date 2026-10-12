@@ -104,6 +104,22 @@ def test_teacher_student_dual_membership_and_start(client):
         assert len(db.scalars(select(storage.Snapshot)).all()) == 1
 
 
+def test_join_empty_code_is_a_validation_error_and_wrong_code_is_not_found(client):
+    user(client)
+    r = create(client)
+    user(client, "student")
+    for empty in ("", "   "):
+        res = client.post("/api/v2/classrooms/join", json={"code": empty, "alias": "匿名"})
+        assert res.status_code == 422
+        assert res.json()["detail"][0]["loc"][-1] == "code"
+    res = client.post("/api/v2/classrooms/join", json={"code": "ZZZZ9999", "alias": "匿名"})
+    assert res.status_code == 404
+    assert res.json()["detail"] == "COURSE_CODE_NOT_FOUND"
+    padded = "  " + r["code"].lower() + " "
+    res = client.post("/api/v2/classrooms/join", json={"code": padded, "alias": "匿名"})
+    assert res.status_code == 200
+
+
 def test_csrf_required_and_roles_server_owned(client):
     user(client)
     r = create(client)

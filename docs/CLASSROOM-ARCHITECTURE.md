@@ -1,5 +1,8 @@
 # Socrates 教室（Classroom）— 架構與已定決策
 
+相關文件：[劇本／題目 JSON 結構](classroom/SCRIPT-SCHEMA.md)、[LLM 結構化輸出](classroom/LLM-OUTPUT-SCHEMA.md)、
+[課堂與分組課堂的狀態轉移](classroom/STATE-MACHINE.md)。
+
 ## 可見產品
 
 註冊／Email驗證／登入→Teacher或Student模式→一次性Classroom→3-2-1→限時作答

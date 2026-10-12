@@ -246,7 +246,7 @@ class LLMStudentTurn(Strict):
     option_id: str = ""
     text: str = Field(min_length=1, max_length=12000)
     relation: Literal["supports", "challenges", "qualifies", "revises"] = "qualifies"
-    should_confirm: bool = False
+    should_confirm: bool = True
 
 
 class OtherSuggestionResult(Strict):

@@ -216,7 +216,7 @@
 | `option_id` | `string` | 否 | `""` | — | 僅 `answer`：選的選項；不是本題選項時改用本題某個選項。 |
 | `text` | `string` | 是 | — | `min_length=1`、`max_length=12000` | 作答理由、對導師的回覆或觀點陳述；去除前後空白後為空就不執行。 |
 | `relation` | `enum(supports, challenges, qualifies, revises)` | 否 | `"qualifies"` | — | 僅 `viewpoint`／`final_reflection`：存成 `group_statement` 的論點關係。 |
-| `should_confirm` | `boolean` | 否 | `false` | — | 僅 `viewpoint`：為真時接著送 `group_ack` 確認自己的觀點。 |
+| `should_confirm` | `boolean` | 否 | `true` | — | 僅 `viewpoint`：預設接著送 `group_ack` 確認自己的觀點。 |
 
 AI 學生不經個人對話：作答一被接受，就以作答本身作為基準（`baseline.source: "ai_student"`）。
 
@@ -226,7 +226,7 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
   "option_id": "a",
   "text": "我選先到先取，因為先到的人已經付出了等待的時間。",
   "relation": "qualifies",
-  "should_confirm": false
+  "should_confirm": true
 }
 ```
 
@@ -275,8 +275,6 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
   `TutorTurn.move`、`micro_summary`）排除在 `required` 之外，且以 `$defs`／`$ref` 表示巢狀模型。要求
   「所有欄位皆 required」的 strict 實作可能拒絕這份 schema；Gemini 的 `responseSchema` 也未必支援
   `$ref`。無論 provider 端如何處理，後端仍以模型驗證回覆。
-- `LLMStudentTurn.should_confirm` 預設 `false`，但消費端寫成 `result.get("should_confirm", True)`；
-  驗證後的結果一定帶有這個欄位，所以模型省略時**不會**確認，`True` 這個預設永遠不會生效。
 - `LLMStudentTurn.option_id` 不合法時改用 `next(iter(option_ids))`，`option_ids` 是 set，挑中哪個選項
   不固定。
 - 全班課堂的學生檢視（`RoomView.transcript`／`focus.messages`）中，導師訊息仍帶 `observations`；分組檢視

@@ -1,35 +1,48 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import classroomBackground from '../assets/ClassroomBG.png'
 import './Danmaku.css'
 
-const STAGE_WIDTH = 1280
-const STAGE_HEIGHT = 800
-
-function getStageScale() {
-  const horizontalScale = window.innerWidth / STAGE_WIDTH
-  const verticalScale = window.innerHeight / STAGE_HEIGHT
-
-  return Math.min(horizontalScale, verticalScale, 1)
+type DanmakuItem = {
+  id: string
+  text: string
+  time: string
+  lane: number
 }
+const DESKTOP_STAGE_WIDTH = 1280
+const DESKTOP_STAGE_HEIGHT = 800
+const DESKTOP_BREAKPOINT = 900
+
+const DANMAKU_LANE_COUNT = 6
 
 export default function Danmaku() {
-  const [scale, setScale] = useState(getStageScale)
   const [activeTab, setActiveTab] = useState<'stage' | 'mine'>('stage')
   const [draft, setDraft] = useState('')
 
-  const [sentDanmaku, setSentDanmaku] = useState<
-    { id: number; text: string; time: string }[]
-  >([])
+  const [activeDanmaku, setActiveDanmaku] = useState<DanmakuItem[]>([])
+  const [sentDanmaku, setSentDanmaku] = useState<DanmakuItem[]>([])
+  const [desktopScale, setDesktopScale] = useState<number | null>(null)
+  const nextLane = useRef(0)
 
   useEffect(() => {
-    function handleResize() {
-      setScale(getStageScale())
+  function updateDesktopScale() {
+    if (window.innerWidth <= DESKTOP_BREAKPOINT) {
+      setDesktopScale(null)
+      return
     }
 
-    window.addEventListener('resize', handleResize)
+    const horizontalScale = window.innerWidth / DESKTOP_STAGE_WIDTH
+    const verticalScale = window.innerHeight / DESKTOP_STAGE_HEIGHT
 
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
+    setDesktopScale(Math.min(horizontalScale, verticalScale, 1))
+  }
+
+  updateDesktopScale()
+
+  window.addEventListener('resize', updateDesktopScale)
+
+  return () => {
+    window.removeEventListener('resize', updateDesktopScale)
+  }
   }, [])
 
   function handleSendDanmaku() {
@@ -39,13 +52,24 @@ export default function Danmaku() {
       return
     }
 
+    const lane = nextLane.current
+    nextLane.current = (nextLane.current + 1) % DANMAKU_LANE_COUNT
+
+    const newDanmaku: DanmakuItem = {
+      id: crypto.randomUUID(),
+      text,
+      time: '01:12',
+      lane,
+    }
+
+    setActiveDanmaku((current) => [
+      ...current.slice(-(DANMAKU_LANE_COUNT - 1)),
+      newDanmaku,
+    ])
+
     setSentDanmaku((current) => [
       ...current,
-      {
-        id: Date.now(),
-        text,
-        time: '01:12',
-      },
+      newDanmaku,
     ])
 
     setDraft('')
@@ -54,23 +78,32 @@ export default function Danmaku() {
     <main className="danmaku-page">
       <div
         className="danmaku-stage-shell"
-        style={{
-          width: STAGE_WIDTH * scale,
-          height: STAGE_HEIGHT * scale,
-        }}
+        style={
+          desktopScale !== null
+            ? {
+                width: DESKTOP_STAGE_WIDTH * desktopScale,
+                height: DESKTOP_STAGE_HEIGHT * desktopScale,
+                minHeight: DESKTOP_STAGE_HEIGHT * desktopScale,
+              }
+            : undefined
+        }
       >
         <div
           className="danmaku-stage"
-          style={{
-            transform: `scale(${scale})`,
-          }}
+          style={
+            desktopScale !== null
+              ? {
+                  transform: `scale(${desktopScale})`,
+                  transformOrigin: 'top left',
+                }
+              : undefined
+          }
         >
-          <iframe
-            className="stage-art-frame"
-            src="/danmaku-stage.html"
-            title="舞台背景"
+          <img
+            className="stage-background"
+            src={classroomBackground}
+            alt=""
             aria-hidden="true"
-            tabIndex={-1}
           />
         
           <header className="live-header">
@@ -206,33 +239,40 @@ export default function Danmaku() {
             柏睿，你說結果比原則重要。那麼，由誰來衡量結果？
           </div>
 
-          <div className="danmaku danmaku-1">
-            可是結果誰說了算？
-          </div>
-
-          <div className="danmaku danmaku-2">
-            那醫生該不該對病人說謊
-          </div>
-
-          <div className="danmaku danmaku-3 danmaku-highlight">
-            短期不痛，長期呢？
-          </div>
-
-          <div className="danmaku danmaku-4">
-            如果被發現是謊言會更痛吧
-          </div>
-          {sentDanmaku.map((item, index) => (
-            <div
-              key={item.id}
-              className="danmaku sent-danmaku"
-              style={{
-                left: `${420 + (index % 3) * 120}px`,
-                top: `${510 - (index % 3) * 55}px`,
-              }}
-            >
-              {item.text}
+          <div className="danmaku-layer" aria-live="polite">
+            <div className="danmaku danmaku-1">
+              可是結果誰說了算？
             </div>
-          ))}          
+
+            <div className="danmaku danmaku-2">
+              那醫生該不該對病人說謊
+            </div>
+
+            <div className="danmaku danmaku-3 danmaku-highlight">
+              短期不痛，長期呢？
+            </div>
+
+            <div className="danmaku danmaku-4">
+              如果被發現是謊言會更痛吧
+            </div>
+
+            {activeDanmaku.map((item) => (
+              <div
+                key={item.id}
+                className="danmaku sent-danmaku"
+                style={{
+                  top: `${36 + item.lane * 7}%`,
+                }}
+                onAnimationEnd={() => {
+                  setActiveDanmaku((current) =>
+                    current.filter((danmaku) => danmaku.id !== item.id),
+                  )
+                }}
+              >
+                {item.text}
+              </div>
+            ))}
+          </div>
           <footer className="danmaku-footer">
             <label htmlFor="danmaku-input" className="sr-only">
               發送彈幕
@@ -245,7 +285,7 @@ export default function Danmaku() {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
+                if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
                   handleSendDanmaku()
                 }
               }}

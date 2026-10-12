@@ -1,33 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap');
 .danmaku-page {
-  width: 100vw;
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
+  width: 100%;
+  min-height: 100dvh;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  overflow-x: hidden;
+
   background: #0f0d0b;
+}
+
+.danmaku-layer {
+  position: absolute;
+  inset: 0;
+
+  overflow: hidden;
+  pointer-events: none;
+
+  z-index: 1;
 }
 
 .danmaku-stage-shell {
   position: relative;
+
+  width: 1280px;
+  min-height: 800px;
+
   flex: none;
 }
 
 .danmaku-stage {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
 
   width: 1280px;
   height: 800px;
 
   overflow: hidden;
+
   background: #1a1713;
   color: #f4efe4;
 
   font-family: 'Noto Sans TC', system-ui, sans-serif;
-
-  transform-origin: top left;
 }
 .live-header {
   position: absolute;
@@ -206,9 +221,15 @@
   background: rgba(21, 19, 15, 0.86);
   border: 1px solid #3a352c;
 
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
 }
-
+.record-timeline li > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
 .record-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -267,6 +288,8 @@
 .record-answer-text {
   font-size: 15px;
   line-height: 1.6;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .record-timeline {
@@ -381,6 +404,7 @@
 
 .danmaku {
   position: absolute;
+  left: 100%;
 
   padding: 6px 14px;
   border-radius: 999px;
@@ -389,26 +413,31 @@
 
   font-size: 16px;
   white-space: nowrap;
+
+  pointer-events: none;
+  will-change: transform;
+
+  animation: danmaku-scroll 8s linear forwards;
 }
 
 .danmaku-1 {
-  left: 640px;
-  top: 300px;
+  top: 38%;
+  animation-delay: 0.4s;
 }
 
 .danmaku-2 {
-  left: 720px;
-  top: 380px;
+  top: 46%;
+  animation-delay: 1.6s;
 }
 
 .danmaku-3 {
-  left: 300px;
-  top: 330px;
+  top: 54%;
+  animation-delay: 2.8s;
 }
 
 .danmaku-4 {
-  left: 840px;
-  top: 470px;
+  top: 62%;
+  animation-delay: 4s;
 }
 
 .danmaku-highlight {
@@ -507,16 +536,18 @@
   background: rgba(244, 239, 228, 0.18);
   color: #f4efe4;
 }
-.stage-art-frame {
+.stage-background {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
 
-  width: 1280px;
-  height: 800px;
+  width: 100%;
+  height: 100%;
 
-  border: 0;
+  object-fit: cover;
+  object-position: center;
+
   pointer-events: none;
+  user-select: none;
 
   z-index: 0;
 }
@@ -525,7 +556,258 @@
 .live-question,
 .record-panel,
 .socrates-bubble,
-.danmaku,
 .danmaku-footer {
-  z-index: 1;
+  z-index: 2;
+}
+@media (max-width: 900px) {
+  .danmaku-layer {
+    z-index: 10;
+    pointer-events: none;
+  }
+  .danmaku-page {
+    display: block;
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .danmaku-stage-shell {
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  .danmaku-stage {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    padding: 16px;
+
+    overflow: hidden;
+  }
+
+  .stage-background {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .live-header {
+    position: relative;
+    inset: auto;
+
+    width: 100%;
+
+    flex-wrap: wrap;
+    gap: 12px;
+    order: 1;
+  }
+
+  .live-participants {
+    order: 3;
+    width: 100%;
+
+    flex-wrap: wrap;
+  }
+
+  .live-status {
+    margin-left: auto;
+  }
+
+  .live-question {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+
+  width: 100%;
+  min-height: 150px;
+  height: auto;
+  box-sizing: border-box;
+
+  padding: 24px 28px;
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(24, 43, 37, 0.92);
+  border: 6px solid #765736;
+
+  color: #f1eee4;
+  text-align: center;
+
+  font-size: clamp(22px, 4vw, 30px);
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  z-index: 2;
+  order: 2;
+}
+
+  .record-panel {
+    position: relative;
+    inset: auto;
+
+    width: 100%;
+    height: 320px;
+
+    padding: 16px;
+
+    flex: none;
+    order: 3;
+  }
+
+  .socrates-bubble {
+    position: relative;
+    inset: auto;
+
+    width: min(100%, 420px);
+
+    align-self: flex-end;
+    order: 4;
+  }
+
+  .danmaku-footer {
+    position: relative;
+    inset: auto;
+
+    width: 100%;
+
+    flex-wrap: wrap;
+    order: 6;
+  }
+
+  .danmaku-input {
+    flex: 1 1 60%;
+    min-width: 0;
+  }
+
+  .send-button {
+    flex: none;
+  }
+
+  .gift-button {
+    flex: none;
+  }
+
+  .next-button {
+    flex: none;
+  }
+}
+@media (max-width: 600px) {
+  .danmaku-stage {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .live-header {
+    gap: 8px;
+  }
+
+  .live-participants {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .participant {
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px 0 4px;
+
+    font-size: 13px;
+  }
+
+  .participant-letter {
+    width: 28px;
+    height: 28px;
+  }
+
+  .live-question {
+    min-height: 130px;
+    padding: 18px 16px;
+
+    font-size: 22px;
+  }
+
+  .record-panel {
+    height: 300px;
+    padding: 14px;
+  }
+
+  .socrates-bubble {
+    width: 100%;
+
+    align-self: stretch;
+
+    font-size: 16px;
+  }
+
+  .danmaku-footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+
+    width: 100%;
+  }
+
+  .danmaku-input {
+    grid-column: 1;
+
+    width: 100%;
+    height: 52px;
+    min-width: 0;
+  }
+
+  .send-button {
+    grid-column: 2;
+
+    height: 52px;
+    padding: 0 18px;
+  }
+
+  .gift-button {
+    grid-column: 3;
+
+    width: 52px;
+    height: 52px;
+  }
+
+  .next-button {
+    grid-column: 1 / -1;
+
+    width: 100%;
+    height: 48px;
+  }
+}
+@keyframes danmaku-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-100vw - 100% - 80px));
+  }
+}
+@media (min-width: 901px) {
+  .danmaku-page {
+    height: 100dvh;
+    min-height: 0;
+
+    align-items: center;
+
+    overflow: hidden;
+  }
 }

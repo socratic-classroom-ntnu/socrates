@@ -15,8 +15,7 @@ export type CourseCard = {
   code: string | null
 }
 
-// /library/* 沒有 response_model，classroomTypes.ts 裡沒有這個型別，只能照 classroom_library.py 的回傳手寫
-type LibraryRow = { id: string; title: string; revision: number }
+type LibraryRow = components['schemas']['LibraryClassroomView']
 type Account = components['schemas']['AccountView']
 
 const toCourse = (row: LibraryRow): CourseCard => ({
@@ -143,12 +142,24 @@ function CourseTile({ course, onCopied }: { course: CourseCard; onCopied: (text:
   )
 }
 
-function CreateCourse({ onCreated, onClose }: { onCreated: () => void; onClose: () => void }) {
-  const [title, setTitle] = useState('')
+// 尚未確認結果的建立要求。放在對話框外面：逾時或 5xx 後老師按「取消」再重開，
+// 同一個課程名稱仍沿用同一個 action_id，後端才能去重，不會因重送建出兩門課。
+type PendingCreate = { title: string; action_id: string }
+
+function CreateCourse({
+  pending,
+  onCreated,
+  onClose,
+}: {
+  pending: { current: PendingCreate | null }
+  onCreated: () => void
+  onClose: () => void
+}) {
+  const [title, setTitle] = useState(() => pending.current?.title ?? '')
   const [busy, setBusy] = useState(false)
-  const [note, setNote] = useState('')
-  // 同一次建立在重試時沿用同一個 action_id，後端才能去重，不會因網路重送建出兩門課
-  const pending = useRef<{ title: string; action_id: string } | null>(null)
+  const [note, setNote] = useState(() =>
+    pending.current ? '上次建立還沒確認完成；再按一次「建立」會沿用同一筆要求，不會重複建立。' : '',
+  )
   const dialog = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement
@@ -213,6 +224,7 @@ export function TeacherDashboard({ user, now = new Date() }: { user: Pick<Accoun
   const [note, setNote] = useState('')
   const [creating, setCreating] = useState(false)
   const [filter, setFilter] = useState('')
+  const pendingCreate = useRef<PendingCreate | null>(null)
   const view = new URLSearchParams(location.search).get('view')
 
   const refresh = useCallback(async () => {
@@ -256,7 +268,12 @@ export function TeacherDashboard({ user, now = new Date() }: { user: Pick<Accoun
       </section>
       {creating && (
         <CreateCourse
-          onClose={() => setCreating(false)}
+          pending={pendingCreate}
+          onClose={() => {
+            setCreating(false)
+            // 逾時的那次可能其實已經建好，關掉時重新讀取，老師才看得到
+            if (pendingCreate.current) void refresh()
+          }}
           onCreated={() => {
             setCreating(false)
             void refresh()

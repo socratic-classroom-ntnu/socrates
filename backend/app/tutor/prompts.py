@@ -2,12 +2,19 @@
 
 import json
 from pathlib import Path
-from app.api.classroom_schemas import TutorTurn, SummaryResult, DynamicResult, LLMStudentTurn
+from app.api.classroom_schemas import (
+    DynamicResult,
+    LLMStudentTurn,
+    PersonalTutorTurn,
+    SummaryResult,
+    TutorTurn,
+)
 from app.repositories.classroom_storage import Program, digest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMAS = {
     "TutorTurn": TutorTurn,
+    "PersonalTutorTurn": PersonalTutorTurn,
     "SummaryResult": SummaryResult,
     "DynamicResult": DynamicResult,
     "LLMStudentTurn": LLMStudentTurn,
@@ -16,6 +23,7 @@ SCHEMAS = {
 
 JOB_KINDS = (
     "focused_tutor",
+    "personal_tutor",
     "dynamic_question",
     "question_summary",
     "class_summary",

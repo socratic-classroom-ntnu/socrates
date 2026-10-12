@@ -59,6 +59,7 @@ ROLE_KEYS = (
 )
 JOB_ROLE = {
     "focused_tutor": "socratic_tutor",
+    "personal_tutor": "socratic_tutor",
     "llm_student_turn": "ai_student",
     "dynamic_question": "dynamic_question",
     "question_summary": "question_summary",

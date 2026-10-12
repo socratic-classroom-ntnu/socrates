@@ -14,12 +14,13 @@ export interface components { schemas: {
   "GroupCommand": { "action_id": string; "kind": string; "data"?: Record<string, unknown> };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
+  "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "Login": { "login": string; "password": string };
   "MailRequest": { "email": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
-  "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number };
+  "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Reaction": { "action_id": string; "kind": "heart" | "like" | "gift"; "focus_id": string; "turn_index": number };
   "Register": { "username": string; "email": string; "password": string };
   "ResetRequest": { "token": string; "password": string };

@@ -4,6 +4,7 @@ import { GroupAnalytics } from '../features/group-analytics/GroupAnalytics';
 import { GroupAvatar } from '../features/classroom-stage/GroupAvatar';
 import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings';
 import { FocusNotice } from '../components/FocusNotice';
+import { PersonalCounts, PersonalPanel, PersonalProgress } from '../features/personal-dialogue/PersonalDialogue';
 import '../styles/group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
@@ -37,7 +38,7 @@ function useMutation() {
         if (lock.current)
             return false;
         if (pending.current && pending.current.key !== key) {
-            setNote('請重試上一個操作，确认保存結果後再繼續。');
+            setNote('請重試上一個操作，確認保存結果後再繼續。');
             return false;
         }
         pending.current ??= { key, id: crypto.randomUUID() };
@@ -73,7 +74,9 @@ export function GroupClassroomGate({ user, id, Legacy }) {
         return <GroupCollection view={view} refresh={refresh}/>;
     if (view.kind === 'GroupRun') {
         const standalone = view.runtime_mode === 'individual-free-text' || ['final_reflection', 'viewpoint_review'].includes(view.phase);
-        return <>{standalone ? <GroupStage view={view}/> : <Legacy user={user} id={id}/>}<EvidencePanel view={view} refresh={refresh} standalone={standalone}/></>;
+        // 個人對話開放中（後端 personal.open）或個人階段：學生只看自己的對話，不看全班畫面。
+        const personalStage = view.role === 'student' && (view.personal?.open || view.phase === 'personal');
+        return <>{standalone ? <GroupStage view={view}/> : personalStage ? <PersonalStage view={view} refresh={refresh}/> : <Legacy user={user} id={id}/>}<EvidencePanel view={view} refresh={refresh} standalone={standalone}/></>;
     }
     return <main className="r2-loading"><h2>正在前往你的組別</h2><p>{error}</p></main>;
 }
@@ -158,7 +161,7 @@ function GroupCollection({ view, refresh }) {
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
       <div className="r2-row"><button disabled={mutation.busy || !(view.roster || []).length} onClick={() => void configure()}>1. 儲存分組</button><button disabled={mutation.busy || !configured} onClick={() => void start()}>2. 開始課堂 →</button></div><p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
     </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
-      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{{lobby:'準備中',countdown:'即將開始',answering:'作答中',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',summary:'課堂回顧',ended:'已結束'}[g.phase] || '討論進行中'}</small><h2>{g.label}</h2><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
+      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{{lobby:'準備中',countdown:'即將開始',answering:'作答中',personal:'個人對話',distribution:'觀點分布',arena:'討論中',focus:'深入討論',focus_summary:'討論小結',question_summary:'本題小結',summary:'課堂回顧',ended:'已結束'}[g.phase] || '討論進行中'}</small><h2>{g.label}</h2><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
 }
 function GroupStage({ view }) {
@@ -169,20 +172,40 @@ function GroupStage({ view }) {
     <section className="g70-transcript">{(view.transcript || []).flatMap((f, fi) => f.messages.map((m, i) => <article className={'r2-card ' + m.role} key={`${fi}-${i}`}><small>{m.role === 'tutor' ? '導師' : view.members?.find(x => x.id === f.member_id)?.alias || '同學'}</small><p>{m.text}</p></article>))}</section>
   </main>;
 }
+function PersonalStage({ view, refresh }) {
+    const mutation = useMutation();
+    async function send(kind, data = {}) {
+        const ok = await mutation.send(`/groups/runs/${view.id}/commands`, { kind, data });
+        if (ok)
+            await refresh();
+        return ok;
+    }
+    return <main className="r2-classroom"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {view.title}</span></header>
+    {view.personal ? <PersonalPanel question={view.question} personal={view.personal} actions={view.available_actions || []} send={send} busy={mutation.busy} note={mutation.note}/> : <section className="r2-lobby"><small>個人對話</small><h1>{view.question?.title}</h1><p>本題作答時間已結束，其他同學正在與導師個別對話。請稍候，老師會帶大家進入討論。</p></section>}
+  </main>;
+}
 function EvidencePanel({ view, refresh, standalone }) {
-    const [text, setText] = useState(''), [parent, setParent] = useState(''), [relation, setRelation] = useState('qualifies'), [open, setOpen] = useState(standalone);
+    const [text, setText] = useState(''), [parent, setParent] = useState(''), [relation, setRelation] = useState('qualifies'), [open, setOpen] = useState(standalone || (view.role === 'teacher' && ['answering', 'personal'].includes(view.phase)));
     const [username, setUsername] = useState({}), [ackCheck, setAckCheck] = useState(false);
     const mutation = useMutation();
     const settled = view.settlement?.state === 'SETTLED';
-    const allowed = ['answering', 'distribution', 'arena', 'focus', 'focus_summary', 'question_summary', 'preview', 'viewpoint_review', 'final_reflection'].includes(view.phase);
+    // 可用動作由後端 available_actions 決定（group_run.student_actions），前端不由階段推導。
+    const actions = view.available_actions || [];
+    const allowed = actions.includes('group_statement');
     const confirmed = !!view.member_id && view.confirmed_members?.includes(view.member_id);
-    // 觀點確認在所有題目與代表討論結束後開放（與後端 CONFIRM_PHASES 一致）。
-    const confirmable = ['viewpoint_review', 'final_reflection'].includes(view.phase);
+    const confirmable = actions.includes('group_ack');
     useEffect(() => setAckCheck(false), [view.my_summary?.digest]);
     async function send() { if (await mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'group_statement', data: { text, parents: parent ? [parent] : [], relation } })) {
         setText('');
         await refresh();
     } }
+    // 老師端的個人對話重試：按鈕只依後端每列給的 actions 顯示。
+    async function teacherSend(kind, data = {}) {
+        const ok = await mutation.send(`/groups/runs/${view.id}/commands`, { kind, data });
+        if (ok)
+            await refresh();
+        return ok;
+    }
     async function ack() { if (await mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'group_ack', data: { summary_digest: view.my_summary?.digest } }))
         await refresh(); }
     return <section className={'g70-evidence ' + (standalone ? 'inline' : 'floating')}><button className="quiet" onClick={() => setOpen(!open)}>本組觀點與確認 {open ? '收合' : '展開'} · {view.confirmed_members?.length || 0}/{view.members?.length || 0}</button>
@@ -200,6 +223,7 @@ function EvidencePanel({ view, refresh, standalone }) {
         {!confirmed && !!view.my_summary?.quotes.length && !confirmable && <p className="muted">所有題目與代表討論結束後，才能確認自己的觀點。</p>}
         {!confirmed && !!view.my_summary?.quotes.length && confirmable && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="g70-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
       </>}
+      {view.role === 'teacher' && <PersonalProgress progress={view.personal_progress} overview={view.personal_overview} send={teacherSend} busy={mutation.busy}/>}
       {view.role === 'teacher' && !settled && <button disabled={mutation.busy} onClick={() => void mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'next', data: {} }).then(ok => ok && refresh())}>本組：下一步</button>}
       <p role="status">{mutation.note}</p></>}
   </section>;

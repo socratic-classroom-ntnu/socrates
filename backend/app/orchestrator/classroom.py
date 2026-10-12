@@ -116,6 +116,11 @@ class GameOrchestrator:
         self.s["due_at"] = self.s["deadline_at"] + 0.1
 
     def finalize(self):
+        self.accept_drafts()
+        self.open_distribution()
+
+    def accept_drafts(self):
+        """At the answering deadline, valid drafts become answers (via server-finalize)."""
         r, q = self.current(), self.question()
         for m, d in r["drafts"].items():
             if m in r["answers"]:
@@ -134,19 +139,27 @@ class GameOrchestrator:
                     "suggestion": deepcopy(d.get("suggestion")),
                 }
                 self.award(m, "first_answer")
+
+    def open_distribution(self):
+        r, q = self.current(), self.question()
         r["phase"] = "distribution"
-        r["distribution"] = distribution(q, r["answers"], self.s["members"])
+        r["distribution"] = distribution(q, self.representative_answers(), self.s["members"])
         self.phase("distribution", 5)
+
+    def representative_answers(self) -> dict:
+        """Answers that count for the distribution and representative choice of this question."""
+        return self.current()["answers"]
 
     def next_focus(self):
         r, q = self.current(), self.question()
         self.s["focus"] = None
         r["phase"] = "arena"
+        pool = self.representative_answers()
         for o in q["options"]:
             if o["id"] in r["covered_options"]:
                 continue
             chosen = choose_representative(
-                o["id"], r["answers"], self.s["members"], set(r["excluded"]), self.now
+                o["id"], pool, self.s["members"], set(r["excluded"]), self.now
             )
             r["covered_options"].append(o["id"])
             if chosen is None:
@@ -155,7 +168,7 @@ class GameOrchestrator:
                 "id": str(uuid4()),
                 "member_id": chosen,
                 "option_id": o["id"],
-                "argument": r["answers"][chosen]["argument"],
+                "argument": pool[chosen]["argument"],
                 "messages": [],
                 "turn_index": 0,
                 "completed_turns": 0,

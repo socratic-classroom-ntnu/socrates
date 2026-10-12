@@ -312,6 +312,7 @@ def persist_machine(db, room, machine):
     priority = {
         "llm_student_turn": 0,
         "focused_tutor": 1,
+        "personal_tutor": 1,
         "dynamic_question": 2,
         "question_summary": 3,
         "class_summary": 4,

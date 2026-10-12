@@ -25,6 +25,19 @@ test('reports each field that breaks a ScriptDocument limit, by path', () => {
     expect(errors[4].message).toBe('情境 1 的每位代表最多來回請填整數');
 });
 
+test('personal dialogue limits follow the Question model; older drafts without them still pass', () => {
+    const doc = newDocument();
+    doc.questions[0].max_personal_turns = 21;
+    doc.questions[0].personal_seconds = 10;
+    expect(validateDocument(doc)).toEqual([
+        { path: 'questions.0.max_personal_turns', message: '情境 1 的個人對話回覆上限最多 20' },
+        { path: 'questions.0.personal_seconds', message: '情境 1 的個人對話秒數至少 30' },
+    ]);
+    delete doc.questions[0].max_personal_turns;
+    delete doc.questions[0].personal_seconds;
+    expect(validateDocument(doc)).toEqual([]);
+});
+
 test('an empty question list and over-long text are both caught', () => {
     const doc = newDocument();
     doc.title = 'x'.repeat(301);

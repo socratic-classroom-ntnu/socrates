@@ -28,6 +28,9 @@ class Question(Strict):
     focus_response_seconds: int = Field(default=90, ge=5)
     sender_point_cap: int = Field(default=5, ge=0)
     receiver_point_cap: int = Field(default=25, ge=0)
+    # Group runs: each student's own follow-up dialogue before the multi-person stage.
+    max_personal_turns: int = Field(default=6, ge=1, le=20)
+    personal_seconds: int = Field(default=600, ge=30)
 
     @model_validator(mode="after")
     def distinct(self):
@@ -156,6 +159,24 @@ class TutorTurn(Strict):
     micro_summary: str = ""
 
 
+class PersonalSummary(Strict):
+    """The tutor's candidate reading of one student's stance; the student confirms or revises it."""
+
+    current_position: str = Field(min_length=1, max_length=2000)
+    reason_summary: str = Field(min_length=1, max_length=4000)
+    relevant_conditions: list[str] = Field(default_factory=list, max_length=12)
+    unresolved_issue: str = Field(default="", max_length=2000)
+
+
+class PersonalTutorTurn(Strict):
+    """personal_tutor output: one follow-up plus observations; the backend policy decides."""
+
+    reply_text: str = Field(min_length=1, max_length=16000)
+    observations: Observations
+    move: Literal["probe", "clarify", "challenge", "reflect", "summarize"] = "probe"
+    summary: PersonalSummary
+
+
 class SummaryResult(Strict):
     text: str = Field(min_length=1, max_length=20000)
     key_points: list[str] = Field(default_factory=list)
@@ -176,6 +197,14 @@ class LLMStudentTurn(Strict):
 
 class OtherSuggestionResult(Strict):
     suggestion_text: str = Field(min_length=1, max_length=1000)
+
+
+class LibraryClassroomView(Strict):
+    """One row of GET /library/classrooms: a teacher's long-lived Classroom asset."""
+
+    id: str
+    title: str
+    revision: int
 
 
 class MemberView(Strict):

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../api/classroomClient'
-import { ModelMatrix } from '../../pages/ProviderSettings'
+import { ModelMatrix, mismatchedRoles } from '../../pages/ProviderSettings'
 import '../../styles/provider-settings.css'
 
 function errorText(error) {
@@ -47,7 +47,14 @@ export function ClassroomAISettings({ classroomId, activeRoomId = null, onSaved 
     void refresh()
   }, [refresh])
 
+  const profile = profiles.find(item => item.id === settings.default_profile_id) || null
+
   async function save() {
+    const mismatched = mismatchedRoles(settings.model_matrix || {}, profile)
+    if (mismatched.length) {
+      setNote(`這個 Provider Profile 不是 OpenRouter，請先替這些角色改選模型：${mismatched.join('、')}`)
+      return
+    }
     setBusy(true)
     try {
       const saved = await api(`/library/classrooms/${classroomId}/ai-settings`, 'PUT', {
@@ -120,6 +127,7 @@ export function ClassroomAISettings({ classroomId, activeRoomId = null, onSaved 
         value={settings.model_matrix || {}}
         onChange={model_matrix => setSettings({ ...settings, model_matrix })}
         profiles={profiles}
+        profile={profile}
       />
       <button disabled={busy} onClick={() => void save()}>
         保存並套用至 Classroom AI

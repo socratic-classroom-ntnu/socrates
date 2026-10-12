@@ -4,6 +4,7 @@ import { fieldErrors, fieldText } from './api/errorText';
 import { Arena } from './features/classroom-stage/Arena';
 import { DraftComposer } from './shared/input/DraftComposer';
 import { phaseLabel } from './shared/phaseLabels';
+import { publishDevAccount, useDevView } from './features/dev-console/devConsoleStore';
 import './styles/style.css';
 import { ClassroomLibrary } from './pages/ClassroomLibrary';
 import { AnswerWithResearch } from './features/research/ResearchSidebar';
@@ -176,6 +177,7 @@ export function Home({ user }) {
 function useRoom(id, mode) {
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');
     const [barrage, setBarrage] = useState([]);
+    useDevView('教室畫面 /classrooms/:id', room);
     const offset = useRef(0), bestRTT = useRef(Infinity), seq = useRef(0), generation = useRef(''), textBuffer = useRef('');
     const refresh = useCallback(async () => { try {
         const r = await api(`/classrooms/${id}?mode=${mode}`);
@@ -384,6 +386,7 @@ function LegacyClassroom({ id }) {
 export default function ClassroomApp() {
     const [user, setUser] = useState(null), [ready, setReady] = useState(false);
     useEffect(() => { void api('/auth/me').then(a => { setCSRF(a.csrf_token); setUser(a); }).catch(() => undefined).finally(() => setReady(true)); }, []);
+    useEffect(() => { publishDevAccount(user); }, [user]); // 開發控制台沿用這次 /auth/me，不另外查詢
     if (!ready)
         return <main className="r2-loading"><div className="r2-pulse"/></main>;
     if (!user || new URLSearchParams(location.search).has('reset_token') || new URLSearchParams(location.search).has('verify_token'))

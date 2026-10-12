@@ -8,11 +8,13 @@ import { FocusNotice } from '../components/FocusNotice';
 import { PersonalCounts, PersonalPanel, PersonalProgress } from '../features/personal-dialogue/PersonalDialogue';
 import { aiStudentModel } from './ProviderSettings';
 import { phaseLabel } from '../shared/phaseLabels';
+import { useDevView } from '../features/dev-console/devConsoleStore';
 import '../styles/group.css';
 const message = (error) => error instanceof Error ? error.message : String(error);
 function useView(id, mode) {
     const [view, setView] = useState(null), [error, setError] = useState('');
     const revision = useRef(0);
+    useDevView('分組教室畫面 /groups/classrooms/:id', view);
     const refresh = useCallback(async () => {
         const generation = ++revision.current;
         try {

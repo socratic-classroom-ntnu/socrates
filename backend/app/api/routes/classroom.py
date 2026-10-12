@@ -467,3 +467,8 @@ router.include_router(_ai_students_router)
 from app.api.routes.provider_profiles import router as _provider_profiles_router  # noqa: E402
 
 router.include_router(_provider_profiles_router)
+
+# Question bank (issue #17)
+from app.api.routes.question_bank import router as _question_bank_router  # noqa: E402
+
+router.include_router(_question_bank_router)

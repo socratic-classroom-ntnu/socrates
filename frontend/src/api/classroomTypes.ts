@@ -3,6 +3,7 @@ export interface components { schemas: {
   "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
+  "BankMutation": { "action_id": string };
   "ClearAIStudents": { "action_id": string };
   "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
@@ -13,6 +14,7 @@ export interface components { schemas: {
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
   "GroupCommand": { "action_id": string; "kind": string; "data"?: Record<string, unknown> };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
+  "ImportQuestion": { "action_id": string; "script_id": string };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "Login": { "login": string; "password": string };
@@ -20,6 +22,7 @@ export interface components { schemas: {
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
+  "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
   "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Reaction": { "action_id": string; "kind": "heart" | "like" | "gift"; "focus_id": string; "turn_index": number };
   "Register": { "username": string; "email": string; "password": string };

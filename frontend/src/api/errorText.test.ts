@@ -4,6 +4,7 @@ test('known backend codes read as Chinese sentences', () => {
   expect(errorText('GROUP_CAPACITY_REQUIRED', 409)).toContain('分組容量不夠')
   expect(errorText('ORIGIN_BINDING_REQUIRED', 403)).toBe('請從正式網址開啟本網站後再試。')
   expect(errorText('API_ROUTE_JSON_REQUIRED', 500)).toBe('伺服器暫時無法處理這個請求，請稍後再試。')
+  expect(errorText('COURSE_CODE_NOT_FOUND', 404)).toBe('找不到這個課程代碼，請確認後再輸入。')
 })
 
 test('sentences from the server pass through; unknown codes keep the code for reporting', () => {

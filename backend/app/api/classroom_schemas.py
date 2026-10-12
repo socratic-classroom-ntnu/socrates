@@ -1,7 +1,14 @@
 """Versioned public contracts; source for /api/v2 OpenAPI and generated TypeScript."""
 
-from typing import Any, Literal
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from typing import Annotated, Any, Literal
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 
 class Strict(BaseModel):
@@ -114,7 +121,8 @@ class CreateRoom(Strict):
 
 
 class JoinRoom(Strict):
-    code: str
+    # 空白或全是空格的代碼在驗證層就擋下（422），不會被當成「找不到課程」。
+    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
     alias: str = Field(min_length=1, max_length=40)
     avatar: str = "scholar"
 

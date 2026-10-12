@@ -23,6 +23,7 @@ const CODES: Record<string, string> = {
   CLASSROOM_SCRIPT_REQUIRED: '這門課還沒有題目，請先建立或掛上劇本。',
   COMPLETE_FINAL_STAGE_REQUIRED: '最終反思階段還沒結束。',
   CONFIRMABLE_PHASE_REQUIRED: '所有題目與代表討論結束後，才能確認觀點。',
+  COURSE_CODE_NOT_FOUND: '找不到這個課程代碼，請確認後再輸入。',
   COURSE_CODE_REQUIRED: '請輸入課程代碼。',
   CURRENT_GROUP_CONFIGURATION_REQUIRED: '分組設定已變更，請重新整理後再操作。',
   CURRENT_PHASE_ACTIONS: '目前階段不能進行這個操作。',

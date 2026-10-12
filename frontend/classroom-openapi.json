@@ -465,6 +465,7 @@
             "type": "string"
           },
           "code": {
+            "minLength": 1,
             "title": "Code",
             "type": "string"
           }
@@ -474,6 +475,31 @@
           "alias"
         ],
         "title": "JoinRoom",
+        "type": "object"
+      },
+      "LibraryClassroomView": {
+        "additionalProperties": false,
+        "description": "One row of GET /library/classrooms: a teacher's long-lived Classroom asset.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "revision"
+        ],
+        "title": "LibraryClassroomView",
         "type": "object"
       },
       "Login": {
@@ -690,6 +716,13 @@
             "title": "Max Focus Turns",
             "type": "integer"
           },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
           "options": {
             "items": {
               "$ref": "#/components/schemas/Option"
@@ -697,6 +730,12 @@
             "minItems": 2,
             "title": "Options",
             "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
           },
           "probe_hints": {
             "items": {
@@ -2364,7 +2403,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryClassroomView"
+                  },
+                  "title": "Response List Classrooms Api V2 Library Classrooms Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"

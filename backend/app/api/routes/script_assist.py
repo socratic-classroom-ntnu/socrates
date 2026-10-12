@@ -14,7 +14,12 @@ from uuid import uuid4
 from fastapi import APIRouter, Request
 from pydantic import ValidationError
 
-from app.api.classroom_schemas import PublicQuestion, ScriptAssistRequest, ScriptAssistResult
+from app.api.classroom_schemas import (
+    PublicQuestion,
+    SampleQuestionDraft,
+    ScriptAssistRequest,
+    ScriptAssistResult,
+)
 from app.orchestrator.classroom import DomainError
 from app.repositories.classroom_storage import Script, transaction
 from app.tutor import classroom_gateway
@@ -167,15 +172,8 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
     raise failure
 
 
-# 範例題目的來源是 ladder 檔（預設 ladders/trolley.yaml，部署時由 LADDER_PATH 指定）：標題、情境、
-# 教學目標與備用追問都照原文。ladder 只寫「你會怎麼做？」而沒有選項，所以每一階的兩個立場在這裡列出，
-# 用字取自該階 opening_statement 給的行動與 probe_hints 對兩種回答的稱呼。沒有列在這裡的階段不提供，
-# 不替它編選項。
-SAMPLE_OPTIONS: dict[str, tuple[str, ...]] = {
-    "trolley_basic": ("把電車轉向岔道", "不轉向"),
-    "footbridge": ("把他推落軌道", "不推他"),
-    "transplant": ("取出他的器官", "不取出他的器官"),
-}
+# 範例題目的來源是 ladder 檔（預設 ladders/trolley.yaml，部署時由 LADDER_PATH 指定）。
+# 標題、情境、教學目標與備用追問照原文；選項保持空陣列，交給老師在草稿中填寫。
 
 
 def sample_questions(path: str | None = None) -> dict:
@@ -189,20 +187,17 @@ def sample_questions(path: str | None = None) -> dict:
         raise DomainError("SCRIPT_SAMPLES_UNAVAILABLE", 503) from exc
     questions = []
     for stage in ladder.stages:
-        texts = SAMPLE_OPTIONS.get(stage.key)
-        if not texts:
-            continue
         question = {
             "id": "sample-" + stage.key,
             "title": stage.title.strip(),
             "scenario": stage.opening_statement.strip(),
-            "options": [{"id": OPTION_IDS[i], "text": text} for i, text in enumerate(texts)],
+            "options": [],
             "tutor_goal": stage.teaching_goal.strip(),
             "probe_hints": [hint.strip() for hint in stage.probe_hints if hint.strip()],
             "max_personal_turns": min(stage.max_turns, 20),
         }
         try:
-            questions.append(PublicQuestion.model_validate(question).model_dump())
+            questions.append(SampleQuestionDraft.model_validate(question).model_dump())
         except ValidationError:
             continue
     return {"title": ladder.title, "questions": questions}

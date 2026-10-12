@@ -64,6 +64,12 @@ class PublicQuestion(Strict):
         return self
 
 
+class SampleQuestionDraft(PublicQuestion):
+    """A repository sample before teacher-authored options make it a valid saved Question."""
+
+    options: list[Option] = Field(default_factory=list)
+
+
 class Question(PublicQuestion):
     # Optional per-question model override; absent means 沿用課堂設定.
     scenario_ai: ScenarioAI | None = None

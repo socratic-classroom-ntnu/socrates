@@ -255,7 +255,7 @@ def test_samples_are_the_ladder_stages_as_questions(client):
         assert question["scenario"] == stage.opening_statement.strip()
         assert question["tutor_goal"] == stage.teaching_goal.strip()
         assert question["probe_hints"] == stage.probe_hints
-        assert len(question["options"]) == 2 and "scenario_ai" not in question
+        assert question["options"] == [] and "scenario_ai" not in question
         assert question["max_personal_turns"] == stage.max_turns
 
 
@@ -273,7 +273,7 @@ def test_a_missing_ladder_file_is_a_clear_error(client, monkeypatch, tmp_path):
     assert r.json()["detail"] == "SCRIPT_SAMPLES_UNAVAILABLE"
 
 
-def test_a_stage_without_listed_options_is_left_out(tmp_path):
+def test_a_stage_without_options_is_served_as_an_empty_draft(tmp_path):
     from app.api.routes.script_assist import sample_questions
 
     path = tmp_path / "ladder.yaml"
@@ -283,4 +283,7 @@ def test_a_stage_without_listed_options_is_left_out(tmp_path):
         " max_turns: 3}\n",
         encoding="utf-8",
     )
-    assert sample_questions(str(path)) == {"title": "範例", "questions": []}
+    body = sample_questions(str(path))
+    assert body["title"] == "範例"
+    assert len(body["questions"]) == 1
+    assert body["questions"][0]["options"] == []

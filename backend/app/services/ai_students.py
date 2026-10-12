@@ -150,7 +150,6 @@ def extend(Native):
                 "countdown": 2.0,
                 "answering": 45.0,
                 "distribution": 2.0,
-                "focus": 30.0,
                 "focus_summary": 2.0,
                 "preview": 2.0,
                 "final_reflection": 45.0,

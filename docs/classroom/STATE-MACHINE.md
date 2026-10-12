@@ -104,8 +104,6 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 
 - 最後一題結束時，原生 `finish_question` 中「進入 `summary` 後」的步驟（`closed_at`、
   `classroom_complete` 成就、全班摘要工作）不會執行；`closed_at` 與全班摘要改由 `settle` 寫入。
-- 個人自由作答模式（`runtime_mode == "individual-free-text"`）不走個人對話，`distribution` 為 3 秒、以成員
-  而非選項選代表；但目前沒有程式會設定這個模式（見「已知落差」）。
 
 ### 個人對話：每位學生的狀態
 
@@ -138,10 +136,11 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 | `personal_message` | `POST /groups/runs/{id}/commands` | 個人對話開放中，自己的狀態是 `probing` 且導師不在生成中 |
 | `personal_confirm`、`personal_revise`、`personal_unclear` | 同上 | 個人對話開放中，自己的狀態是 `awaiting_confirm` |
 | `personal_retry` | 同上 | 個人對話開放中，自己的狀態是 `unavailable`（教師可帶 `data.member_id` 代為重試，見教師檢視每列的 `actions`） |
-| `group_statement`（原話） | 同上 | 階段屬於 `TALK_PHASES`：`answering`、`distribution`、`arena`、`focus`、`focus_summary`、`question_summary`、`preview`、`viewpoint_review`、`final_reflection`（`countdown`、`personal`、`summary` 不行），且尚未 `SETTLED` |
+| `group_statement`（原話） | 同上 | 階段屬於 `TALK_PHASES`：`answering`、`distribution`、`focus`、`focus_summary`、`question_summary`、`preview`、`viewpoint_review`、`final_reflection`（`countdown`、`personal`、`summary` 不行），且尚未 `SETTLED` |
 | `group_ack`（確認觀點） | 同上 | 只在 `CONFIRM_PHASES`：`viewpoint_review`、`final_reflection`；尚未確認，且自己至少有一則原話。送上的 `summary_digest` 須等於目前的個人原話摘要；已確認者重送會回傳原紀錄 |
 | `focus_message` | `POST /classrooms/{id}/commands` | 全班檢視：`focus`，自己是目前代表且導師已回覆（`AWAITING_STUDENT`）；分組課堂中同時存成一則公開原話 |
-| `barrage`（彈幕）、`reaction`（回饋） | `POST /classrooms/{id}/commands`、`POST /classrooms/{id}/reactions` | 全班檢視：`focus`、`focus_summary`、`arena`（但 `react` 實際只接受 `focus`，見「已知落差」） |
+| `barrage`（彈幕） | `POST /classrooms/{id}/commands` | 全班檢視：`focus`、`focus_summary` |
+| `reaction`（回饋） | `POST /classrooms/{id}/reactions` | 全班檢視：僅 `focus` |
 | `personal_summary`（課後個人摘要） | `POST /classrooms/{id}/commands` | 全班檢視：`summary` |
 
 教師指令：`start`（`lobby`）、`next`（見各表；`countdown`、`question_summary`、`summary` 回
@@ -160,23 +159,12 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 
 - **推進判準的詳細定義（issue #19）仍待小組確認**；目前實作即上方「推進判準」。個人對話預設值
   （6 回合、600 秒）同樣待確認。
-- **分組課堂的收尾條件也受 #19 影響。** 現況：group run 要進入 `summary`，必須 `member_snapshot` 的每一位
-  都在 `viewpoint_review` 完成 `group_ack`；`viewpoint_review` 沒有計時器，未全員確認前教師的 `next` 不會推進。
-  因此只要有一位成員離開、從未留下原話（無法確認），或不確認，該組就停在 `viewpoint_review`。AI 學生在
-  `viewpoint_review` 只有在模型回覆 `should_confirm: true`（或使用固定內容）時才會送 `group_ack`。
-  本文件只記錄現況，不代表決定。
+- **分組課堂的收尾條件也受 #19 影響。** 現況：學生可在 `viewpoint_review`／`final_reflection`
+  送 `group_ack` 保存本人確認；教師在這兩個階段按 `next` 時可直接結算。已確認者保留原話證據，
+  其餘成員在 settlement 中標為 `incomplete`，結算原因記為 `teacher_force_end`。
 
 ## 已知落差
 
-以下是整理時發現、程式本身前後不一致的地方，記下供後續處理（本次未修改）：
+以下保留仍待後續處理的程式行為差額：
 
-- 課堂的 `phase` 從不會被設為 `arena`（只有題目的 `run["phase"]` 會），但 `TALK_PHASES`、`barrage`
-  的允許階段、全班檢視的可用動作與分組 `tick` 的判斷都列了 `arena`。
-- 全班檢視在 `focus_summary`／`arena` 會把 `reaction` 列為學生可用動作，但 `react` 只接受 `focus`。
-- 沒有程式會把 `runtime_mode` 設為 `individual-free-text`（`initialise` 固定為 `native-group-stage`），
-  個人自由作答的分支目前不會執行。
-- AI 加速的內建值有 `focus` 30 秒，但 `focus` 進入時沒有計時、導師回覆後的回應時限也不經 `phase()`，
-  這個值不會生效。
-- 教師的分組檢視 `available_actions` 一律是 `[]`，前端「本組：下一步」按鈕不看後端清單；全班檢視的教師
-  `available_actions` 在 `viewpoint_review`／`final_reflection` 不含 `next`，但後端在這兩個階段接受 `next`。
 - `answering` 中所有作答者的個人對話都已有結果時，仍要等作答時間到（或教師 `next`）才進入 `distribution`。

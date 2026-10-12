@@ -383,7 +383,7 @@ class GameOrchestrator:
                 self.emit("answer.recorded", member_id=member_id)
             return
         if kind == "barrage":
-            if s["phase"] not in {"focus", "focus_summary", "arena"}:
+            if s["phase"] not in {"focus", "focus_summary"}:
                 raise DomainError("ARENA_REQUIRED")
             text = str(data.get("text", "")).strip()
             if not 1 <= len(text) <= 500:

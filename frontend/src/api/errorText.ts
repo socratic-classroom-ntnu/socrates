@@ -3,6 +3,7 @@
 
 const CODES: Record<string, string> = {
   ACTION_ID_PAYLOAD_CONFLICT: '這個操作已經用不同內容送出過，請重新整理後再試。',
+  ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
   ACTION_SCOPE_REQUIRED: '這個操作不適用於目前的對象。',
   AI_BUDGET_REQUIRED: 'AI 呼叫次數已用完，請到 AI 設定提高上限。',
   AI_MODEL_ID_REQUIRED: '請選擇或輸入 AI 模型。',
@@ -32,6 +33,7 @@ const CODES: Record<string, string> = {
   CURRENT_ROSTER_REQUIRED: '學生名單已變動，請重新整理後再操作。',
   CURRENT_SUMMARY_DIGEST_REQUIRED: '你要確認的內容剛更新過，請重新讀一次再確認。',
   DIALOGUE_PHASE_REQUIRED: '目前不在對話階段。',
+  EMAIL_TAKEN: '這個 Email 已經註冊過了，請直接登入；忘記密碼可以重設。',
   EMAIL_VERIFICATION_REQUIRED: '請先完成 Email 驗證。',
   EXISTING_GROUP_ARGUMENT_REQUIRED: '要回應的那則原話已不存在，請重新選擇。',
   FOCUS_ID_REQUIRED: '找不到這段代表討論。',
@@ -84,6 +86,7 @@ const CODES: Record<string, string> = {
   TEACHER_MEMBERSHIP_REQUIRED: '只有這堂課的老師可以進行這個操作。',
   TEACHER_TEMPORARY_ALIAS_CONFIRMATION_REQUIRED: '請先確認老師的暫用名稱。',
   TYPED_STATEMENT_AND_PARENT_IDS_REQUIRED: '請寫下內容並選擇要回應的原話。',
+  USERNAME_TAKEN: '這個使用者名稱已經有人使用，請換一個。',
   API_ROUTE_JSON_REQUIRED: '伺服器暫時無法處理這個請求，請稍後再試。',
 }
 

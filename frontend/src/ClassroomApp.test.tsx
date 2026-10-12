@@ -182,3 +182,36 @@ withBackend('register limits match the backend Register contract', () => {
     expect([Number(line.match(/min_length=(\d+)/)?.[1]), Number(line.match(/max_length=(\d+)/)?.[1])]).toEqual([...REGISTER_LIMITS[field]])
   }
 })
+
+// 使用者名稱／Email 被占用時，錯誤放在該欄位；等待驗證中的帳號在表單說明何時釋出、如何重寄
+test('register conflicts land under the taken field or explain the pending verification', async () => {
+  const f = await openRegister()
+  let reply = 'USERNAME_TAKEN'
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/register') throw new ApiError(409, reply)
+    return []
+  })
+  fireEvent.change(f.username, { target: { value: 'goose' } })
+  fireEvent.change(f.email, { target: { value: 'a@b.co' } })
+  fireEvent.change(f.password, { target: { value: 'Socratic-123456' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByText('這個使用者名稱已經有人使用，請換一個。')).toHaveAttribute('id', 'register-username-error')
+  expect(f.username).toHaveFocus()
+
+  reply = 'EMAIL_TAKEN'
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByText(/這個 Email 已經註冊過了/)).toHaveAttribute('id', 'register-email-error')
+  expect(f.email).toHaveFocus()
+
+  reply = 'ACCOUNT_PENDING_VERIFICATION'
+  fireEvent.change(f.email, { target: { value: 'c@d.co' } })
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '繼續' }))
+  })
+  expect(screen.getByRole('status')).toHaveTextContent('等驗證連結過期')
+  expect(screen.getByRole('status')).toHaveTextContent('重新寄送驗證信')
+})

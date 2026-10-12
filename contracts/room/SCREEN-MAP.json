@@ -1,0 +1,6 @@
+{
+  "schema": "socrates/room-screen-map/v1",
+  "screens": ["home", "history", "conversation-room", "summary"],
+  "desktop": ["RoomTopBar", "HistoryRail", "AvatarStage", "MessageTimeline", "InputComposer"],
+  "mobile": ["RoomTopBar", "HistoryDrawer", "AvatarStage", "MessageTimeline", "InputComposer"]
+}

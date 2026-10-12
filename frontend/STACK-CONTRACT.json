@@ -1,0 +1,16 @@
+{
+  "schema": "portal/socratic-frontend-stack/v1",
+  "framework": "React",
+  "build": "Vite",
+  "language": "TypeScript/TSX",
+  "routing": "React Router",
+  "http": "Axios",
+  "realtime": "WebSocket",
+  "styling": "CSS",
+  "responsive": [
+    "1280x800",
+    "mobile"
+  ],
+  "package_manager": "npm",
+  "design_sha256": "0891c4a05f12ac8096c30c63cf680a3db6ac1df9b5c8a4d0152c8a56c9439521"
+}

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+cd "$(dirname "$0")/../.."
+git fetch origin stage
+git switch stage
+git pull --ff-only origin stage
+bash deploy/stage/up.sh

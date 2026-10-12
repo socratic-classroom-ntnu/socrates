@@ -11,7 +11,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Sessions */
+        get: operations["list_sessions_api_sessions_get"];
         put?: never;
         /** Create Session */
         post: operations["create_session_api_sessions_post"];
@@ -124,6 +125,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Room */
+        get: operations["get_room_api_sessions__session_id__room_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/transcript-drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Transcript Draft */
+        post: operations["create_transcript_draft_api_sessions__session_id__transcript_drafts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/transcript-drafts/{draft_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Transcript Draft */
+        post: operations["confirm_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/transcript-drafts/{draft_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Discard Transcript Draft */
+        delete: operations["discard_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -141,10 +210,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Release */
+        get: operations["release_api_release_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ConversationRoomView */
+        ConversationRoomView: {
+            detail: components["schemas"]["SessionDetail"];
+            room: components["schemas"]["RoomProjection"];
+        };
         /** CreateSessionRequest */
         CreateSessionRequest: {
             /** Ladder Id */
@@ -169,15 +260,69 @@ export interface components {
             /** Content */
             content: string;
         };
+        /** ReleaseView */
+        ReleaseView: {
+            /** Release Id */
+            release_id: string;
+            /** Source Sha */
+            source_sha: string;
+            /** Environment */
+            environment: string;
+            /** Alembic Revision */
+            alembic_revision: string;
+            /** Built At */
+            built_at: string;
+        };
+        /** RoomCapabilities */
+        RoomCapabilities: {
+            /**
+             * History
+             * @default true
+             */
+            history: boolean;
+            /**
+             * Text Input
+             * @default true
+             */
+            text_input: boolean;
+            /**
+             * Voice Input
+             * @default true
+             */
+            voice_input: boolean;
+            /**
+             * Transcript Draft
+             * @default true
+             */
+            transcript_draft: boolean;
+        };
+        /** RoomProjection */
+        RoomProjection: {
+            /**
+             * Room Revision
+             * @default ce-room-v1
+             */
+            room_revision: string;
+            /**
+             * Tutor State
+             * @default idle
+             * @enum {string}
+             */
+            tutor_state: "idle" | "listening" | "thinking" | "speaking";
+            /**
+             * Avatar Id
+             * @default brunette
+             * @constant
+             */
+            avatar_id: "brunette";
+            capabilities?: components["schemas"]["RoomCapabilities"];
+        };
         /** SendMessageRequest */
         SendMessageRequest: {
             /** Text */
             text: string;
         };
-        /**
-         * SessionDetail
-         * @description GET 專用：回傳完整訊息而非增量。
-         */
+        /** SessionDetail */
         SessionDetail: {
             session: components["schemas"]["SessionInfo"];
             stage: components["schemas"]["StageView"] | null;
@@ -186,6 +331,53 @@ export interface components {
             /** Available Actions */
             available_actions: ("send_message" | "advance" | "end" | "retry")[];
             summary: components["schemas"]["SummaryView"] | null;
+        };
+        /** SessionHistoryItem */
+        SessionHistoryItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "ended";
+            /**
+             * Flow State
+             * @enum {string}
+             */
+            flow_state: "active_in_stage" | "at_crossroad" | "awaiting_wrap_up" | "ended";
+            /** Current Stage Index */
+            current_stage_index: number;
+            /** Total Stages */
+            total_stages: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** End Reason */
+            end_reason: ("student_ended" | "completed" | "restarted") | null;
+            /** Summary Preview */
+            summary_preview: string | null;
+            /** Stage Title */
+            stage_title: string | null;
+        };
+        /** SessionHistoryPage */
+        SessionHistoryPage: {
+            /** Items */
+            items: components["schemas"]["SessionHistoryItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
         };
         /** SessionInfo */
         SessionInfo: {
@@ -210,11 +402,14 @@ export interface components {
             total_stages: number;
             /** End Reason */
             end_reason?: ("student_ended" | "completed" | "restarted") | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Ended At */
+            ended_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
         };
-        /**
-         * SessionView
-         * @description 所有會改變狀態的端點共用的回應形狀（設計規格 §9.1）。
-         */
+        /** SessionView */
         SessionView: {
             session: components["schemas"]["SessionInfo"];
             stage: components["schemas"]["StageView"] | null;
@@ -238,7 +433,7 @@ export interface components {
         };
         /**
          * StageView
-         * @description 只描述學生**已經進入**的那一階。未進入的階不會出現在任何回應裡。
+         * @description 只描述學生已經進入的情境。
          */
         StageView: {
             /** Index */
@@ -252,10 +447,73 @@ export interface components {
         };
         /** SummaryView */
         SummaryView: {
+            /**
+             * Discussion Topic
+             * @default 電車難題：選擇、責任與原則
+             */
+            discussion_topic: string;
             /** Core Principle */
             core_principle: string;
+            /** Key Points */
+            key_points?: string[];
+            /**
+             * Tension
+             * @default
+             */
+            tension: string;
+            /** Reflection Excerpt */
+            reflection_excerpt?: string | null;
             /** Stage Outcomes */
             stage_outcomes: components["schemas"]["StageOutcomeView"][];
+        };
+        /** TranscriptDraftCreate */
+        TranscriptDraftCreate: {
+            /** Text */
+            text: string;
+            /**
+             * Adapter
+             * @default browser-speech
+             */
+            adapter: string;
+            /**
+             * Locale
+             * @default zh-TW
+             */
+            locale: string;
+            /** Confidence */
+            confidence?: number | null;
+        };
+        /** TranscriptDraftView */
+        TranscriptDraftView: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Text */
+            text: string;
+            /** Adapter */
+            adapter: string;
+            /** Locale */
+            locale: string;
+            /** Confidence */
+            confidence: number | null;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Confirmed At */
+            confirmed_at: string | null;
+            /** Discarded At */
+            discarded_at: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -275,6 +533,40 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_sessions_api_sessions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header: {
+                "x-learner-id": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionHistoryPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_session_api_sessions_post: {
         parameters: {
             query?: never;
@@ -545,6 +837,144 @@ export interface operations {
             };
         };
     };
+    get_room_api_sessions__session_id__room_get: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-learner-id": string;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationRoomView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_transcript_draft_api_sessions__session_id__transcript_drafts_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-learner-id": string;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranscriptDraftCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptDraftView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-learner-id": string;
+            };
+            path: {
+                session_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptDraftView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_transcript_draft_api_sessions__session_id__transcript_drafts__draft_id__delete: {
+        parameters: {
+            query?: never;
+            header: {
+                "x-learner-id": string;
+            };
+            path: {
+                session_id: string;
+                draft_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptDraftView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_api_health_get: {
         parameters: {
             query?: never;
@@ -563,6 +993,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    release_api_release_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseView"];
                 };
             };
         };

@@ -1,3 +1,6 @@
+# 只檢查有變更的部分，不含測試與 build，求快。完整的一組在 pre-push。
+# 檢查範圍與 .github/workflows/ci.yml 對齊：CI 只 lint backend，不含 scripts。
+
 CHANGED=$(git diff --cached --name-only --diff-filter=ACMR)
 
 if echo "$CHANGED" | grep -q '^frontend/'; then
@@ -6,6 +9,12 @@ if echo "$CHANGED" | grep -q '^frontend/'; then
 fi
 
 if echo "$CHANGED" | grep -q '^backend/'; then
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "✗ 找不到 docker 指令。Docker Desktop 的 CLI 裝在 ~/.docker/bin，"
+    echo "  而該路徑只由 ~/.zprofile 加入，login shell 以外的終端讀不到。"
+    echo "  請在 ~/.zshrc 加上: export PATH=\"\$HOME/.docker/bin:\$PATH\""
+    exit 1
+  fi
   if ! docker compose exec -T backend true 2>/dev/null; then
     echo "✗ backend 容器未啟動，請先執行: docker compose up -d"
     exit 1

@@ -275,8 +275,6 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
   `TutorTurn.move`、`micro_summary`）排除在 `required` 之外，且以 `$defs`／`$ref` 表示巢狀模型。要求
   「所有欄位皆 required」的 strict 實作可能拒絕這份 schema；Gemini 的 `responseSchema` 也未必支援
   `$ref`。無論 provider 端如何處理，後端仍以模型驗證回覆。
-- `LLMStudentTurn.option_id` 不合法時改用 `next(iter(option_ids))`，`option_ids` 是 set，挑中哪個選項
-  不固定。
 - 全班課堂的學生檢視（`RoomView.transcript`／`focus.messages`）中，導師訊息仍帶 `observations`；分組檢視
   只送 `role` 與 `text`。
 

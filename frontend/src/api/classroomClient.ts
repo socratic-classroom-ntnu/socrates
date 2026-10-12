@@ -141,6 +141,16 @@ export function command(
   })
 }
 
+/** AI 協助設計：老師的需求＋目前草稿 → 一題建議（後端以 ai_script_authoring 角色的模型產生）。 */
+export function scriptAssist(body: {
+  request: string
+  document: unknown
+  question_index?: number | null
+  script_id?: string | null
+}) {
+  return api('/scripts/assist', 'POST', body)
+}
+
 export async function importYAML(text) {
   const response = await http.post('/scripts/import', text, {
     headers: { 'Content-Type': 'application/yaml' },

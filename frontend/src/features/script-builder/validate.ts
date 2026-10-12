@@ -42,6 +42,11 @@ export function validateDocument(doc): FieldError[] {
     // 分組課堂的個人對話；舊劇本沒有這兩欄時由後端補預設值。
     if (q.max_personal_turns !== undefined) int(errors, `${at}.max_personal_turns`, `${name}個人對話回覆上限`, q.max_personal_turns, 1, 20)
     if (q.personal_seconds !== undefined) int(errors, `${at}.personal_seconds`, `${name}個人對話秒數`, q.personal_seconds, 30)
+    // 單題 AI 模型：不設定＝沿用課堂設定；設定了就要有連線與模型（後端另查連線是否屬於本人）。
+    if (q.scenario_ai) {
+      text(errors, `${at}.scenario_ai.provider_profile_id`, `${name}AI 連線`, q.scenario_ai.provider_profile_id, 36)
+      text(errors, `${at}.scenario_ai.model`, `${name}AI 模型`, q.scenario_ai.model, 200)
+    }
   })
   return errors
 }
@@ -51,6 +56,7 @@ const FIELD_LABELS = {
   max_focus_turns: '每位代表最多來回', focus_response_seconds: '追問回應秒數',
   max_personal_turns: '個人對話回覆上限', personal_seconds: '個人對話秒數',
   sender_point_cap: '送出者每回合積分上限', receiver_point_cap: '接收者每回合積分上限',
+  scenario_ai: '本題 AI 模型', provider_profile_id: 'AI 連線', model: '模型',
   max_questions: '動態題目總數', live_llm_call_budget: 'Live LLM 額度', preview_seconds: '預覽秒數', questions: '題目', mode: '題目模式',
 }
 

@@ -42,8 +42,7 @@
 前七種是 `prompts.JOB_KINDS`，各有 `programs.json` 的 program；`other_suggestion` 的 prompt 寫在
 `api/routes/ai_students.py`。provider 角色（`provider_profiles.JOB_ROLE`）決定使用帳號 AI 設定裡哪個模型。
 
-`ai_script_authoring` 目前只是 provider 角色（`provider_profiles.ROLE_KEYS`），程式裡**沒有**對應的工作、
-program 或輸出模型；之後加入時須在本表與下方補上欄位表，測試才會通過。
+`ai_script_authoring`（AI 協助出題）不經工作佇列：`POST /scripts/assist` 在請求內直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型是下方的 `ScriptAssistResult`，後端再組成完整題目放進教師尚未存檔的草稿。
 
 ### 個人對話的 `PersonalSummary` 與 `personal_summary` 工作不同
 
@@ -189,7 +188,7 @@ program 或輸出模型；之後加入時須在本表與下方補上欄位表，
 
 | 欄位 | 型別 | 必填 | 預設 | 限制 | 說明 |
 |---|---|---|---|---|---|
-| `question` | `Question` | 是 | — | — | 下一題完整內容，結構見 [SCRIPT-SCHEMA.md](SCRIPT-SCHEMA.md) 的 `Question`。後端先補「其他」選項（`ensure_other_question`）再以 `Question` 驗證，放進 `preview` 等教師採用或逾時自動採用。 |
+| `question` | `PublicQuestion` | 是 | — | — | 下一題完整內容，結構同 [SCRIPT-SCHEMA.md](SCRIPT-SCHEMA.md) 的 `Question` 但不含 `scenario_ai`（AI 產生的題目不能指定連線）。後端先補「其他」選項（`ensure_other_question`）再以 `Question` 驗證，放進 `preview` 等教師採用或逾時自動採用。 |
 
 輸入（`majority_context`）：剛結束的題目、各選項人數、多數選項，以及多數選項代表的論點、討論與小結。
 
@@ -282,3 +281,27 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
   不固定。
 - 全班課堂的學生檢視（`RoomView.transcript`／`focus.messages`）中，導師訊息仍帶 `observations`；分組檢視
   只送 `role` 與 `text`。
+
+### `ScriptAssistResult`
+
+`ai_script_authoring` 的輸出：一題草稿，後端補上題目 id、時間設定與「其他」選項後交給編輯器。
+
+| 欄位 | 型別 | 必填 | 預設 | 限制 | 說明 |
+|---|---|---|---|---|---|
+| `title` | `string` | 是 | — | `min_length=1`、`max_length=300` | 題目標題。 |
+| `scenario` | `string` | 是 | — | `min_length=1`、`max_length=12000` | 情境敘述。 |
+| `options` | `array<string>` | 是 | — | `min_length=2`、`max_length=8` | 選項文字，只描述行為本身。 |
+| `tutor_goal` | `string` | 是 | — | `min_length=1`、`max_length=2000` | 導師追問的目標。 |
+| `probe_hints` | `array<string>` | 是 | — | `min_length=1`、`max_length=6` | 追問方向。 |
+| `rationale` | `string` | 是 | — | `max_length=2000` | 給教師看的設計理由。 |
+
+```json
+{
+  "title": "共用資源怎麼分",
+  "scenario": "宿舍只有一台洗衣機，每週可用時段有限。",
+  "options": ["先到先用", "排班輪流"],
+  "tutor_goal": "釐清學生判斷公平的原則與例外。",
+  "probe_hints": ["什麼情況下你會改變做法？"],
+  "rationale": "選項只描述做法，理由留給學生說明。"
+}
+```

@@ -43,6 +43,8 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 | `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
 | `api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
 | `api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
+| `api/routes/script_assist.py` | `/scripts/assist`、`/scripts/samples` | AI 協助出題：用帳號 `ai_script_authoring` 角色的模型產生一題草稿，教師套用到編輯中的劇本後仍要自己存檔；範例題目取自 ladder 檔（`LADDER_PATH`） |
+| `services/scenario_ai.py` | — | 題目的 `scenario_ai`（只給教師看的連線與模型）：檢查屬於擁有者，並讓該題的 `focused_tutor`、`personal_tutor` 與 `question_summary` 改用它；學生畫面與 LLM 內容只看到 `PublicQuestion` |
 | `api/routes/question_bank.py` | `/bank/questions*` | 題庫：發布自己劇本裡的一題、搜尋、預覽、下架、匯入到自己的劇本（資料表 `bank_questions`，migration `0011`） |
 
 ## 資料與並發

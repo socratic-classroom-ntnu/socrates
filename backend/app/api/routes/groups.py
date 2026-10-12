@@ -33,6 +33,7 @@ from app.domain.group_analysis import analysis as project_analysis, current_stan
 from app.services import classroom as service
 from app.domain.library_decisions import visible_evidence
 from app.api.routes.classroom_library import link_group_session, ClassroomAssets
+from app.api.classroom_schemas import public_question
 
 router = APIRouter(prefix="/groups")
 
@@ -400,7 +401,7 @@ def view(rid: str, request: Request):
                 "session_batch_id": p["classroom_id"],
                 "group_label": p["label"],
                 "classroom_id": p["classroom_id"],
-                "question": state["questions"][state["question_index"]]
+                "question": public_question(state["questions"][state["question_index"]])
                 if state["question_index"] >= 0
                 else None,
                 "transcript": [

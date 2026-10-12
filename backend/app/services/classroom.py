@@ -5,7 +5,7 @@ import secrets
 import time
 from uuid import uuid4
 from sqlalchemy import func, select
-from app.api.classroom_schemas import MemberView, RoomView
+from app.api.classroom_schemas import MemberView, PublicQuestion, RoomView, public_question
 from app.domain.group_run import baseline_answers, personal_records
 from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
 from app.orchestrator.classroom_policy import distribution
@@ -79,7 +79,8 @@ def view(db, room, account_id, mode="student") -> dict:
     now = time.time()
     qi = s["question_index"]
     active = s["runs"][qi] if 0 <= qi < len(s["runs"]) else None
-    q = s["questions"][qi] if active else None
+    # scenario_ai is teacher-only routing; no room projection carries it.
+    q = public_question(s["questions"][qi]) if active else None
     focus = next((f for f in active["focuses"] if f["id"] == s["focus"]), None) if active else None
     members = [
         MemberView(
@@ -160,7 +161,7 @@ def view(db, room, account_id, mode="student") -> dict:
         seq=room.seq,
         server_now=now,
         deadline_at=s["deadline_at"],
-        question=q,
+        question=PublicQuestion.model_validate(q) if q else None,
         question_index=qi,
         question_run_id=active["id"] if active else None,
         question_count=(

@@ -1,6 +1,7 @@
 """Backend-owned product feature flags with stable reason codes."""
 
 from dataclasses import dataclass
+from typing import TypedDict
 
 from app.classroom_env import env_bool
 
@@ -12,7 +13,12 @@ class FeatureFlag:
     disabled_reason: str
 
 
-FEATURES = {
+class FeatureState(TypedDict):
+    enabled: bool
+    reason: str | None
+
+
+FEATURES: dict[str, FeatureFlag] = {
     # Additional product features register here and inherit the same public shape.
     "ai_students": FeatureFlag(
         env="SOCRATES_FEATURE_AI_STUDENTS",
@@ -27,7 +33,7 @@ def feature_enabled(name: str) -> bool:
     return env_bool(flag.env, flag.default)
 
 
-def feature_state(name: str) -> dict:
+def feature_state(name: str) -> FeatureState:
     flag = FEATURES[name]
     enabled = feature_enabled(name)
     return {
@@ -36,7 +42,7 @@ def feature_state(name: str) -> dict:
     }
 
 
-def feature_states(*names: str) -> dict:
+def feature_states(*names: str) -> dict[str, FeatureState]:
     selected = names or tuple(FEATURES)
     return {name: feature_state(name) for name in selected}
 

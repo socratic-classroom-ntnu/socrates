@@ -818,6 +818,7 @@
             "title": "Restart Existing"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "ladder_id"
@@ -964,6 +965,7 @@
             "title": "Text"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "text"
@@ -1468,6 +1470,7 @@
             "title": "Confidence"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "text"

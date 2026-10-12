@@ -1,7 +1,7 @@
 """Provider-specific JSON Schema projections for structured model output."""
 
 from copy import deepcopy
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ def _inline_refs(value: Any, definitions: dict[str, Any], stack: tuple[str, ...]
 def _base_schema(model: type[BaseModel]) -> dict[str, Any]:
     source = model.model_json_schema()
     definitions = source.get("$defs") or source.get("definitions") or {}
-    return _inline_refs(source, definitions)
+    return cast(dict[str, Any], _inline_refs(source, definitions))
 
 
 def _without_metadata(value: Any) -> Any:
@@ -60,7 +60,7 @@ def _openai_strict(value: Any) -> Any:
 
 def openai_response_schema(model: type[BaseModel]) -> dict[str, Any]:
     """Schema accepted by OpenAI-compatible strict structured-output endpoints."""
-    return _openai_strict(_without_metadata(_base_schema(model)))
+    return cast(dict[str, Any], _openai_strict(_without_metadata(_base_schema(model))))
 
 
 def _gemini(value: Any) -> Any:
@@ -93,4 +93,4 @@ def _gemini(value: Any) -> Any:
 
 def gemini_response_schema(model: type[BaseModel]) -> dict[str, Any]:
     """Inline, nullable-aware schema accepted by Gemini responseSchema."""
-    return _gemini(_base_schema(model))
+    return cast(dict[str, Any], _gemini(_base_schema(model)))

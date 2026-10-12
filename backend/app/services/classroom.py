@@ -3,6 +3,7 @@
 from copy import deepcopy
 import secrets
 import time
+from typing import Any, cast
 from uuid import uuid4
 from sqlalchemy import func, select
 from app.api.classroom_schemas import MemberView, PublicQuestion, RoomView, public_question
@@ -187,8 +188,10 @@ def view(db, room, account_id, mode="student") -> dict:
     )
     # No next-question details in a student response; preview belongs to creator control.
     exposed_focus = focus_projection(focus, as_teacher)
-    transcript = (
-        [focus_projection(item, as_teacher) for item in active["focuses"]] if active else []
+    transcript: list[dict[str, Any]] = (
+        [cast(dict[str, Any], focus_projection(item, as_teacher)) for item in active["focuses"]]
+        if active
+        else []
     )
     return RoomView(
         id=room.id,

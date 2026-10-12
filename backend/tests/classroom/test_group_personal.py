@@ -511,7 +511,9 @@ def test_views_keep_personal_dialogues_private(classroom):  # noqa: F811
         )
     selected["id"] = teacher_id
     teacher = group.view(gid, teacher_request)
-    assert teacher["personal"] is None and teacher["available_actions"] == []
+    assert teacher["personal"] is None
+    assert teacher["available_actions"] == ["next"]
+    assert teacher["unavailable_actions"] == {}
     assert teacher["personal_progress"]["probing"] == 2
     assert teacher["personal_progress"]["not_answered"] == 1
     overview = {row["member_id"]: row for row in teacher["personal_overview"]}

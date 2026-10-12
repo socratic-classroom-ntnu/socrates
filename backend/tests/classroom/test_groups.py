@@ -13,6 +13,7 @@ from sqlalchemy import select
 from app.repositories import classroom_storage as storage
 from app.services import classroom as service
 from app.api.routes import groups as group
+from app.api.routes.groups import group_teacher_actions, parent_teacher_actions
 from app.orchestrator.classroom import GameOrchestrator, DomainError
 from app.domain.group_run import person_summary
 
@@ -96,6 +97,40 @@ def start(classroom, count=3, capacity=1):
     )
     body = group.Start(action_id=uuid4().hex, expected_roster_digest=v["roster_digest"])
     return group.start(rid, body, request), body
+
+
+def test_parent_teacher_actions_include_reason_codes(monkeypatch):
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "true")
+    rows = [SimpleNamespace(id="m1", alias="學生", seat=0)]
+    state = {
+        "phase": "lobby",
+        "members": {"m1": {"actor_type": "human"}},
+        "classroom": {},
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "add_ai_students"]
+    assert actions["unavailable_actions"] == {
+        "start": "CURRENT_GROUP_CONFIGURATION_REQUIRED",
+        "clear_ai_students": "AI_STUDENTS_REQUIRED",
+    }
+
+    state["classroom"] = {
+        "state": "CONFIGURED",
+        "roster_digest": group.roster_hash(rows),
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "start", "add_ai_students"]
+
+
+def test_group_teacher_actions_follow_command_phases():
+    assert group_teacher_actions({"phase": "answering"}) == {
+        "available_actions": ["next"],
+        "unavailable_actions": {},
+    }
+    assert group_teacher_actions({"phase": "summary"}) == {
+        "available_actions": [],
+        "unavailable_actions": {"next": "CURRENT_PHASE_ACTIONS"},
+    }
 
 
 def test_teacher_view_marks_ai_student_feature_unavailable(classroom, monkeypatch):

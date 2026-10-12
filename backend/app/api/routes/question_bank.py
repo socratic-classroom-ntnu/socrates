@@ -9,11 +9,12 @@ import time
 from uuid import UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import Field, ValidationError, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from app.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, Text, and_, func, select
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.api.classroom_schemas import Question, ScriptDocument
 from app.orchestrator.classroom import DomainError
 from app.repositories.classroom_storage import Account, Base, Script, transaction
 
@@ -69,6 +70,43 @@ class ImportQuestion(BankMutation):
     script_id: str = Field(min_length=1, max_length=36)
 
 
+class BankQuestionSummary(BaseModel):
+    id: str
+    title: str
+    tags: list[str]
+    scenario_excerpt: str
+    option_count: int
+    author: str | None
+    mine: bool
+    published_at: float
+    revision: int
+    source_script_id: str | None = None
+    source_question_id: str | None = None
+
+
+class BankQuestionDetail(BankQuestionSummary):
+    question: Question
+
+
+class BankSearchResult(BaseModel):
+    items: list[BankQuestionSummary]
+    total: int
+    offset: int
+    limit: int
+
+
+class BankUnpublishResult(BaseModel):
+    id: str
+    status: str
+
+
+class BankImportResult(BaseModel):
+    id: str
+    revision: int
+    question_id: str
+    document: ScriptDocument
+
+
 router = APIRouter(prefix="/bank")
 
 
@@ -86,8 +124,6 @@ def _mutate(db, account, operation, body, action):
 
 def clean_question(value: dict) -> dict:
     """Validated copy of one question without owner/provider-specific settings."""
-    from app.api.classroom_schemas import Question
-
     raw = deepcopy(value) if isinstance(value, dict) else {}
     for key in STRIPPED_KEYS:
         raw.pop(key, None)
@@ -138,7 +174,7 @@ def _view(db, row: BankQuestion, account, full=False) -> dict:
     return item
 
 
-@router.post("/questions")
+@router.post("/questions", response_model=BankQuestionDetail, response_model_exclude_none=True)
 def publish(body: Publish, request: Request):
     with transaction() as db:
         account = user(db, request, True)
@@ -189,7 +225,7 @@ def publish(body: Publish, request: Request):
         return _mutate(db, account, "bank-publish", body, action)
 
 
-@router.get("/questions")
+@router.get("/questions", response_model=BankSearchResult, response_model_exclude_none=True)
 def search(request: Request, q: str = "", offset: int = 0, limit: int = 20, mine: bool = False):
     offset = max(0, offset)
     limit = min(max(1, limit), PAGE_LIMIT)
@@ -217,7 +253,9 @@ def search(request: Request, q: str = "", offset: int = 0, limit: int = 20, mine
         }
 
 
-@router.get("/questions/{bank_id}")
+@router.get(
+    "/questions/{bank_id}", response_model=BankQuestionDetail, response_model_exclude_none=True
+)
 def detail(bank_id: str, request: Request):
     with transaction() as db:
         account = user(db, request)
@@ -227,7 +265,7 @@ def detail(bank_id: str, request: Request):
         return _view(db, row, account, full=True)
 
 
-@router.post("/questions/{bank_id}/unpublish")
+@router.post("/questions/{bank_id}/unpublish", response_model=BankUnpublishResult)
 def unpublish(bank_id: str, body: BankMutation, request: Request):
     with transaction() as db:
         account = user(db, request, True)
@@ -254,10 +292,8 @@ def _fresh_id(existing: set[str]) -> str:
             return candidate
 
 
-@router.post("/questions/{bank_id}/import")
+@router.post("/questions/{bank_id}/import", response_model=BankImportResult)
 def import_question(bank_id: str, body: ImportQuestion, request: Request):
-    from app.api.classroom_schemas import ScriptDocument
-
     with transaction() as db:
         account = user(db, request, True)
 

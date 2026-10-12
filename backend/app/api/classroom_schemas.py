@@ -71,6 +71,11 @@ class SampleQuestionDraft(PublicQuestion):
     options: list[Option] = Field(default_factory=list)
 
 
+class SampleQuestionSet(Strict):
+    title: str
+    questions: list[SampleQuestionDraft]
+
+
 class Question(PublicQuestion):
     # Optional per-question model override; absent means 沿用課堂設定.
     scenario_ai: ScenarioAI | None = None

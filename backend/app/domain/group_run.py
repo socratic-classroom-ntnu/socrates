@@ -427,13 +427,24 @@ def extend(Native):
                     raise StageBoundary()
             return Native.phase(self, name, seconds)
 
-        def settle(self):
+        def settle(self, *, ended_by="system", force=False):
             p = self.group()
-            if p["settlement"]["state"] != "FINAL_STAGE":
+            if not force and p["settlement"]["state"] != "FINAL_STAGE":
                 from app.orchestrator.classroom import DomainError
 
                 raise DomainError("COMPLETE_FINAL_STAGE_REQUIRED", 409)
-            p["settlement"].update(state="SETTLED", settled_at=self.now)
+            incomplete = [m for m in p["member_snapshot"] if m not in p["confirmations"]]
+            p["settlement"].update(
+                state="SETTLED",
+                settled_at=self.now,
+                ended_by=ended_by,
+                end_reason="teacher_force_end" if force else "final_stage_complete",
+                incomplete_members=incomplete,
+                member_status={
+                    m: "confirmed" if m in p["confirmations"] else "incomplete"
+                    for m in p["member_snapshot"]
+                },
+            )
             self.s["focus"] = None
             self.s["pending_generation"] = None
             self.s["closed_at"] = self.now
@@ -449,12 +460,15 @@ def extend(Native):
                     + "："
                     + p["confirmations"][m]["summary"]["quotes"][-1]["text"]
                     for m in p["member_snapshot"]
+                    if m in p["confirmations"]
                 ],
                 "provenance": {"provider": "student_confirmed_quote_projection"},
             }
             self.emit(
                 "group.settled",
                 group_id=p["id"],
+                ended_by=ended_by,
+                incomplete_members=incomplete,
                 confirmation_digests={
                     m: c["summary_digest"] for m, c in p["confirmations"].items()
                 },
@@ -518,16 +532,10 @@ def extend(Native):
                         summary_digest=ack["summary_digest"],
                     )
                     return
-                if self.s["phase"] == "final_reflection" and kind == "next":
+                if self.s["phase"] in {"viewpoint_review", "final_reflection"} and kind == "next":
                     if not teacher:
                         raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
-                    return self.settle()
-                if self.s["phase"] == "viewpoint_review" and kind == "next":
-                    if not teacher:
-                        raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
-                    if p["settlement"]["state"] == "CURRENT_PHASE_FINISHING":
-                        self.phase("final_reflection", 60)
-                    return
+                    return self.settle(ended_by="teacher", force=True)
                 if kind in {"answer", "focus_message"} and data.get("text", "").strip():
                     node = record_statement(self.s, member_id, data["text"], self.now)
                     if kind == "focus_message":

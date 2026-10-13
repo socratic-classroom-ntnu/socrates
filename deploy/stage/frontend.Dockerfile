@@ -11,4 +11,7 @@ ENV BACKEND_HOST=backend
 COPY --from=build /src/frontend/dist /usr/share/nginx/html
 ARG SOURCE_SHA=local
 LABEL org.opencontainers.image.revision=${SOURCE_SHA}
+# The backend reports its commit at /api/release; this is the frontend's, so a
+# rollout can be confirmed on both halves (PR previews wait for it).
+RUN printf '{"source_sha":"%s"}\n' "${SOURCE_SHA}" > /usr/share/nginx/html/revision.json
 EXPOSE 80

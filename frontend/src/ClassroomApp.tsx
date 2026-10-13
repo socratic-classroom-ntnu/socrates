@@ -29,6 +29,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // 登入不檢查格式：舊規則（12–256 字）設定的密碼要能照常輸入。
 const LOGIN_PASSWORD_MAX = 256;
 export const PASSWORD_SPECIALS = '!@#$%^&*_-+=.?~';
+/** 設定新密碼時只讓允許的字元進輸入框；回傳留下的字與被擋下的字（去重、以空白分隔）。 */
+export function keepPasswordChars(value: string) {
+    const ok = (c: string) => /[A-Za-z0-9]/.test(c) || PASSWORD_SPECIALS.includes(c);
+    const list = Array.from(value);
+    const kept = list.filter(ok).slice(0, REGISTER_LIMITS.password[1]).join('');
+    const blocked = [...new Set(list.filter(c => !ok(c)).map(c => (c === ' ' ? '空白' : c)))].join(' ');
+    return { kept, blocked };
+}
 export function passwordOk(value: string) {
     const special = (c: string) => PASSWORD_SPECIALS.includes(c);
     const list = Array.from(value);
@@ -59,6 +67,7 @@ const TAKEN_FIELD: Record<string, string> = { USERNAME_TAKEN: 'username', EMAIL_
 function Auth({ onLogin }) {
     const [mode, setMode] = useState('login');
     const [name, setName] = useState(''), [email, setEmail] = useState(''), [password, setPassword] = useState('');
+    const [blocked, setBlocked] = useState('');
     const [note, setNote] = useState(''), [busy, setBusy] = useState(false);
     const [fieldError, setFieldError] = useState<Record<string, string>>({});
     const usernameInput = useRef<HTMLInputElement>(null), emailInput = useRef<HTMLInputElement>(null), passwordInput = useRef<HTMLInputElement>(null);
@@ -74,7 +83,7 @@ function Auth({ onLogin }) {
         delete next[field];
         return next;
     });
-    const switchMode = next => { setMode(next); setFieldError({}); };
+    const switchMode = next => { setMode(next); setFieldError({}); setBlocked(''); };
     const fieldProps = (field: string, hint?: string) => mode === 'register' && fieldError[field]
         ? { 'aria-invalid': true, 'aria-describedby': [hint, `register-${field}-error`].filter(Boolean).join(' ') }
         : hint ? { 'aria-describedby': hint } : {};
@@ -145,7 +154,7 @@ function Auth({ onLogin }) {
       <h2>{{ login: '歡迎回來', register: '建立帳號', forgot: '重設登入密碼', reset: '設定新密碼' }[mode]}</h2>
       {(mode === 'login' || mode === 'register') && <><label>{mode === 'login' ? '使用者名稱或 Email' : '使用者名稱'}<input ref={usernameInput} autoComplete="username" required maxLength={mode === 'login' ? REGISTER_LIMITS.email[1] : REGISTER_LIMITS.username[1]} value={name} {...fieldProps('username')} onChange={e => { setName(e.target.value); clearField('username'); }}/></label>{fieldMessage('username')}</>}
       {(mode === 'register' || mode === 'forgot') && <><label>Email<input ref={emailInput} type="email" required maxLength={REGISTER_LIMITS.email[1]} value={email} {...fieldProps('email')} onChange={e => { setEmail(e.target.value); clearField('email'); }}/></label>{fieldMessage('email')}</>}
-      {mode !== 'forgot' && <><label>密碼<input ref={passwordInput} type="password" maxLength={mode === 'login' ? LOGIN_PASSWORD_MAX : REGISTER_LIMITS.password[1]} minLength={mode === 'login' ? 1 : REGISTER_LIMITS.password[0]} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} {...fieldProps('password', mode === 'login' ? undefined : 'password-rule')} onChange={e => { setPassword(e.target.value); clearField('password'); }}/></label>{mode !== 'login' && <small id="password-rule" className="muted">{PASSWORD_RULE}</small>}{fieldMessage('password')}</>}
+      {mode !== 'forgot' && <><label>密碼<input ref={passwordInput} type="password" maxLength={mode === 'login' ? LOGIN_PASSWORD_MAX : REGISTER_LIMITS.password[1]} minLength={mode === 'login' ? 1 : REGISTER_LIMITS.password[0]} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} {...fieldProps('password', mode === 'login' ? undefined : 'password-rule')} onChange={e => { const next = mode === 'login' ? { kept: e.target.value, blocked: '' } : keepPasswordChars(e.target.value); setPassword(next.kept); setBlocked(next.blocked); clearField('password'); }}/></label>{mode !== 'login' && <small id="password-rule" className="muted">{PASSWORD_RULE}</small>}{mode !== 'login' && blocked && <small className="password-blocked" role="status">已擋下不允許的字元：{blocked}</small>}{fieldMessage('password')}</>}
       <button disabled={busy}>{busy ? '處理中…' : '繼續'}</button><p role="status">{note}</p>
       <div className="sc-row"><button type="button" className="quiet" onClick={() => switchMode(mode === 'register' ? 'login' : 'register')}>{mode === 'register' ? '回到登入' : '註冊'}</button><button type="button" className="quiet" onClick={() => switchMode('forgot')}>重設密碼</button></div>
     </form></main>;

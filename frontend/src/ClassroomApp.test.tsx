@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, PASSWORD_SPECIALS, REGISTER_LIMITS, passwordOk, registerProblems } from './ClassroomApp'
+import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, PASSWORD_SPECIALS, REGISTER_LIMITS, keepPasswordChars, passwordOk, registerProblems } from './ClassroomApp'
 import { PASSWORD_RULE } from './api/errorText'
 import { ApiError, api } from './api/classroomClient'
 
@@ -245,4 +245,26 @@ test('register conflicts land under the taken field or explain the pending verif
   })
   expect(screen.getByRole('status')).toHaveTextContent('等驗證連結過期')
   expect(screen.getByRole('status')).toHaveTextContent('重新寄送驗證信')
+})
+
+test('characters outside the allowed set never enter the new-password box', async () => {
+  const f = await openRegister()
+  fireEvent.change(f.password, { target: { value: `Ab1!<x>"'y z` } })
+  expect(f.password).toHaveValue('Ab1!xyz')
+  expect(screen.getByText(/已擋下不允許的字元：< > " ' 空白/)).toBeInTheDocument()
+  expect(f.password).toHaveAttribute('maxLength', '32')
+  expect(keepPasswordChars('A'.repeat(40)).kept).toHaveLength(32)
+  expect(PASSWORD_SPECIALS).not.toMatch(/[<>"']/)
+})
+
+test('login keeps whatever the user types (old passwords)', async () => {
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/me') throw new ApiError(401, 'LOGIN_REQUIRED')
+    return []
+  })
+  render(<ClassroomApp />)
+  const password = await screen.findByLabelText('密碼')
+  fireEvent.change(password, { target: { value: 'old pass <with> quotes"' } })
+  expect(password).toHaveValue('old pass <with> quotes"')
+  expect(screen.queryByText(/已擋下/)).toBeNull()
 })

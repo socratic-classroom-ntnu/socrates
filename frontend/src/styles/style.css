@@ -1,6 +1,6 @@
 :root{--sc-ink:#f4eee7;--sc-muted:#bdb1c7;--sc-accent:#e8c79a;--sc-plum:#282333;--sc-line:#ffffff1f;--sc-paper:#f3ece3;--sc-dark:#37303b}
 body{margin:0;background:radial-gradient(ellipse at 72% 0%,#51445c 0%,#292333 42%,#191720 100%);color:var(--sc-ink);font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif}
-[class^=r2-],[class*=" r2-"]{box-sizing:border-box}
+[class^=sc-],[class*=" sc-"]{box-sizing:border-box}
 .sc-home,.sc-auth,.sc-classroom,.sc-loading{min-height:100dvh;color:var(--sc-ink);font-size:16px;line-height:1.65}
 .sc-home button,.sc-classroom button,.sc-auth button{font:inherit;font-weight:600;cursor:pointer;border:1px solid transparent;border-radius:13px;background:var(--sc-accent);color:#332834;padding:12px 20px;transition:transform .18s,background .18s}
 .sc-home button:hover,.sc-classroom button:hover,.sc-auth button:hover{transform:translateY(-2px);filter:brightness(1.05)}
@@ -66,3 +66,4 @@ body:has(.group-evidence.floating) .sc-classroom:not(:has(.sc-arena)){padding-bo
 /* 沒有空白的長字串（例如教室名稱 000…000）在所有頁面都換行，不撐破卡片與側欄 */
 .teacher-desk,.sc-home,.sc-classroom,.sc-loading,.sc-summary,.class-library{overflow-wrap:anywhere}
 :where(.teacher-desk,.sc-home,.sc-classroom,.sc-summary,.class-library) :where(h1,h2,h3,h4,p,strong,b,small,span,a,label,summary,li){min-width:0}
+.password-blocked{display:block;margin-top:4px;color:#ffb4a4;font-size:12px}

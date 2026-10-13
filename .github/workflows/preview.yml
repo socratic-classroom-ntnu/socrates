@@ -43,13 +43,41 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+  # preview-llm / preview-mail approve the commit a maintainer looked at, not
+  # whatever is pushed next. Drop them on every push, before the new image
+  # exists, so new code never inherits the secrets without a fresh review.
+  revoke:
+    if: >-
+      github.event.action == 'synchronize'
+      && (contains(github.event.pull_request.labels.*.name, 'preview-llm')
+          || contains(github.event.pull_request.labels.*.name, 'preview-mail'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {pull-requests: write}
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          revoked=""
+          for label in preview-llm preview-mail; do
+            case ",$LABELS," in *",$label,"*)
+              gh pr edit "$PR" --repo "$REPO" --remove-label "$label"
+              revoked="$revoked \`$label\`";;
+            esac
+          done
+          gh pr comment "$PR" --repo "$REPO" --body "🔒 推了新的 commit（\`${SHA:0:7}\`），已自動移除${revoked}：核准只對當時 review 過的 commit 有效。需要的話請核心組看過新的 commit 後再加回去。"
   # stage-release.yml builds against the lock CI accepted; here that is the PR's own lock.
   # It also tells the PR right away that a new commit is building, so nobody
   # mistakes the still-running old commit for this one.
   lock:
     # Fork PRs cannot push to GHCR. Adding some other label (e.g. preview-llm) must not rebuild.
+    # Waits for revoke (skipped unless approvals were on the PR) so no new image
+    # is published while they are still attached.
+    needs: [revoke]
     if: >-
-      github.event.pull_request.head.repo.full_name == github.repository
+      !cancelled() && needs.revoke.result != 'failure'
+      && github.event.pull_request.head.repo.full_name == github.repository
       && (github.event.action == 'opened'
           || (github.event.action == 'labeled' && github.event.label.name == 'preview')
           || (github.event.action != 'labeled'

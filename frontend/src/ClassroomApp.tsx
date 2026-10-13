@@ -13,6 +13,7 @@ import { GroupClassroomGate } from './pages/GroupClassroom';
 import { ProviderSettings } from './pages/ProviderSettings';
 import { VerificationGate } from './pages/VerificationGate';
 import { FocusNotice } from './components/FocusNotice';
+import { TeacherRecords } from './features/teacher-records/TeacherRecords';
 import { TeacherDashboard, TeacherShell } from './pages/TeacherDashboard';
 import { pathAfterLogin, teacherRoute } from './teacherRoute';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
@@ -345,7 +346,7 @@ function SummaryPanel({ room, refresh }) {
         void command(room.id, 'personal_summary', { question_index: open }).then(refresh); }, [open, room.id, room.member_id, summaries.personal, refresh]);
     const card = (s) => <><small>QUESTION {s.index + 1}</small><h2>{s.title}</h2><div className="r2-bars">{s.distribution.map((d, i) => <div key={i}><div className="r2-row"><span>{d.text}</span><b>{d.count} 人 · {d.percent.toFixed(1)}%</b></div><div className="r2-bar"><i style={{ width: d.percent + '%' }}/></div></div>)}</div><h3>全班的思考</h3><SummaryText value={summaries.questions[String(s.index)]}/><h3>我的思考</h3><SummaryText value={room.member_id ? summaries.personal[room.member_id + ':' + s.index] : undefined}/></>;
     return <section className="r2-summary"><small>THE MIRROR · 課堂回顧</small><h1>照見你帶來的原則。</h1><div className="r2-card"><h2>全課總結</h2><SummaryText value={summaries.class}/></div><div className="r2-script-grid">{stats.map(s => <article className="r2-card" key={s.index}><button className="r2-summary-card" onClick={() => setOpen(s.index)}><small>情境 {s.index + 1}</small><h2>{s.title}</h2><span>展開深度回顧 ↗</span></button></article>)}</div>
-    {room.role === 'teacher' && <details className="r2-card"><summary>教師完整分析與紀錄</summary><pre>{JSON.stringify(summaries.records, null, 2)}</pre></details>}
+    {room.role === 'teacher' && <details className="r2-card" open><summary>教師完整分析與紀錄</summary><TeacherRecords records={summaries.records || []} statistics={stats} members={room.members}/></details>}
     {open !== null && <div className="r2-zen-backdrop" onClick={() => setOpen(null)}><article role="dialog" aria-modal="true" aria-label="單題深度回顧" className="r2-zen" onClick={e => e.stopPropagation()}><button autoFocus className="r2-zen-close" onClick={() => setOpen(null)}>關閉 ×</button>{stats.find(s => s.index === open) && card(stats.find(s => s.index === open))}</article></div>}
   </section>;
 }

@@ -1,4 +1,4 @@
-"""Every path that touches the metadata must resolve r88 -> r97, not only create_all."""
+"""Every path that touches the metadata must resolve the AI-student -> provider-profile foreign keys, not only create_all."""
 
 import subprocess
 import sys
@@ -12,9 +12,9 @@ def _run(code: str) -> subprocess.CompletedProcess:
 
 
 def test_configure_registers_models_even_without_create():
-    """The application path: an import chain that registers r88, then configure(create=False).
+    """The application path: an import chain that registers the AI-student models, then configure(create=False).
 
-    Synthetic — it borrows migration 0073's import to get r88 into the metadata, but alembic
+    Synthetic — it borrows a migration-style import to get the AI-student models into the metadata, but alembic
     itself never calls configure(). The real alembic path is covered by running
     `alembic upgrade head` against a fresh database (.husky/pre-push, and CI's backend job).
     """

@@ -49,7 +49,7 @@ def same_origin(request):
         raise DomainError("ORIGIN_BINDING_REQUIRED", 403)
 
 
-# PORTAL-R104-SESSION-COOKIE
+# 登入 session cookie
 def _set_session_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         auth.COOKIE,
@@ -452,24 +452,24 @@ async def websocket(ws: WebSocket, room_id: str):
         BUS.send_locks.pop(ws, None)
 
 
-# PORTAL-R70-GROUP-ROUTER
+# 分組課堂路由
 from app.api.routes.groups import router as _groups_router  # noqa: E402
 
 router.include_router(_groups_router)
 
-# PORTAL-R73-CLASSROOM-LIBRARY
+# 教室資產庫路由
 from app.api.routes.classroom_library import router as _classroom_library_router  # noqa: E402
 from app.api.routes.public_config import router as _public_config_router  # noqa: E402
 
 router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)
 
-# PORTAL-R88-AI-STUDENTS
+# AI 學生路由
 from app.api.routes.ai_students import router as _ai_students_router  # noqa: E402
 
 router.include_router(_ai_students_router)
 
-# PORTAL-R97-PROVIDER-PROFILES
+# AI 連線設定路由
 from app.api.routes.provider_profiles import router as _provider_profiles_router  # noqa: E402
 
 router.include_router(_provider_profiles_router)

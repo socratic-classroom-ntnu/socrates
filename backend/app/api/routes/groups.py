@@ -339,6 +339,7 @@ def start(rid: str, body: Start, request: Request):
             assigned = [r for r in rows if assignments[r.id] == number]
             if not assigned:
                 continue
+            # namespace 字串是既有資料的相容契約（已建立的組別 id 由它推導），不可改名。
             gid = str(uuid5(UUID(room.id), f"r70:group:{body.action_id}:{number}"))
             g = Room(
                 id=gid,

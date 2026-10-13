@@ -92,7 +92,7 @@ def _persona(index: int, room_id: str) -> dict:
 
 
 def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
-    """Stable product namespaces for new rows; existing r88-derived rows remain untouched."""
+    """Stable product namespaces for new rows; rows created under the legacy "r88-ai-*" namespaces keep their ids (data compatibility)."""
     account_id = str(uuid5(UUID(room_id), f"ai-student-account:{action_id}:{index}"))
     membership_id = str(uuid5(UUID(room_id), f"ai-student-member:{account_id}"))
     return account_id, membership_id

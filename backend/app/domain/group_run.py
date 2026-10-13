@@ -1,4 +1,4 @@
-"""R70 GroupRun extension for the existing GameOrchestrator.
+"""GroupRun extension for the existing GameOrchestrator.
 
 The native service retains authentication, row locks, event storage and worker
 ownership. This module adds quoted evidence, per-member confirmation and one

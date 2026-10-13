@@ -128,7 +128,7 @@ def test_delivery_status_returns_local_preview_only_in_fixture():
 def test_resend_webhook_updates_durable_receipt(monkeypatch):
     register()
     send_mail_once()
-    secret_bytes = b"r104-webhook-secret"
+    secret_bytes = b"test-webhook-secret"
     secret = base64.b64encode(secret_bytes).decode()
     monkeypatch.setenv("RESEND_WEBHOOK_SECRET", "whsec_" + secret)
 

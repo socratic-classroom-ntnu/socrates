@@ -530,12 +530,12 @@ class GameOrchestrator:
             self.emit("summary.ready", kind=kind)
 
 
-# PORTAL-R70-GROUP-EXTENSION
+# 分組課堂擴充
 from app.domain.group_run import extend as _extend_group_run  # noqa: E402
 
 GameOrchestrator = _extend_group_run(GameOrchestrator)  # type: ignore[misc]
 
-# PORTAL-R88-AI-STUDENT-EXTENSION
+# AI 學生擴充
 from app.services.ai_students import extend as _extend_ai_students  # noqa: E402
 
 GameOrchestrator = _extend_ai_students(GameOrchestrator)  # type: ignore[misc]

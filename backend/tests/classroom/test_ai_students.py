@@ -11,7 +11,7 @@ from app.domain.group_run import initialise
 
 def document():
     return {
-        "title": "R88",
+        "title": "AI 學生課堂",
         "mode": "static",
         "max_questions": 1,
         "preview_seconds": 8,
@@ -39,7 +39,7 @@ def document():
 
 
 def state():
-    s = fresh_state("R88")
+    s = fresh_state("AI 學生課堂")
     s["members"]["m1"] = {
         "account_id": "a1",
         "username": "ai-1",

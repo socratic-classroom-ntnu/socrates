@@ -1,4 +1,4 @@
-"""R88 LLM Student actors, automatic all-AI games, and AI suggestion provenance."""
+"""LLM student actors, automatic all-AI games, and AI suggestion provenance."""
 
 from __future__ import annotations
 

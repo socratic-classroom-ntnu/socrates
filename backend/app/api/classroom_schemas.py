@@ -254,7 +254,7 @@ class DynamicResult(Strict):
     question: PublicQuestion
 
 
-# PORTAL-R88-LLM-STUDENT-CONTRACTS
+# AI 學生的輸出契約
 class LLMStudentTurn(Strict):
     action_mode: Literal["answer", "focus", "viewpoint", "final_reflection"]
     option_id: str = ""

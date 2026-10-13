@@ -42,7 +42,7 @@ def seed():
         script = Script(
             id="10000000-0000-4000-8000-000000000097",
             owner_id=account.id,
-            document={"title": "R97", "questions": []},
+            document={"title": "AI 連線測試", "questions": []},
             revision=1,
         )
         room = Room(
@@ -67,19 +67,19 @@ def seed():
 
 def test_encryption_round_trip_and_masked_view():
     encrypted, version = _seal(
-        "sk-r97-example",
+        "sk-test-example",
         profile_id="profile-1",
         owner_id="owner-1",
     )
     assert version == "derived-v1"
-    assert "sk-r97-example" not in encrypted
+    assert "sk-test-example" not in encrypted
     assert (
         _open(
             encrypted,
             profile_id="profile-1",
             owner_id="owner-1",
         )
-        == "sk-r97-example"
+        == "sk-test-example"
     )
     profile = ProviderProfile(
         id="profile-1",

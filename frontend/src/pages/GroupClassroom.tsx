@@ -279,10 +279,16 @@ function GroupCollection({ view, refresh }) {
       {analysis ? <GroupAnalytics id={view.id}/> : <div className="sc-script-grid">{(view.groups || []).map(g => <a className="sc-card group-card" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
 }
+/** 逐字稿裡最後一則導師訊息（人像念出它）；id 用位置，新訊息進來才會念。 */
+export function lastTutorLine(transcript?: { messages: { role: string; text: string }[] }[]) {
+    const flat = (transcript || []).flatMap((f, fi) => f.messages.map((m, i) => ({ ...m, id: `${fi}-${i}` })));
+    const last = [...flat].reverse().find(m => m.role === 'tutor');
+    return last ? { id: last.id, text: last.text } : null;
+}
 function GroupStage({ view }) {
     return <main className="sc-home group-room group-stage"><header className="sc-top"><a className="sc-wordmark" href="/">Socrates</a><span>{view.group_label} · {phaseLabel(view.phase)}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
     <section className="sc-home-hero"><small>{view.source_mode} · GROUP DIALOGUE</small><h1>{view.question?.title || view.title}</h1><p>{view.question?.scenario}</p></section>
-    <GroupAvatar packId={view.avatar_pack_id || 'stickman'}/>
+    <GroupAvatar packId={view.avatar_pack_id || 'stickman'} say={lastTutorLine(view.transcript)}/>
     <FocusNotice status={view.focus_notice ? 'TUTOR_UNAVAILABLE' : null} message={view.focus_notice}/>
     <section className="group-transcript">{(view.transcript || []).flatMap((f, fi) => f.messages.map((m, i) => <article className={'sc-card ' + m.role} key={`${fi}-${i}`}><small>{m.role === 'tutor' ? '導師' : view.members?.find(x => x.id === f.member_id)?.alias || '同學'}</small><p>{m.text}</p></article>))}</section>
   </main>;

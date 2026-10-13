@@ -202,7 +202,7 @@ export function ConversationRoom({ sessionId }) {
         {ended
             ? <button disabled={busy} onClick={() => navigate(`/sessions/${sessionId}/summary`)}><Icon name="arrow"/>閱讀討論總結</button>
             : actions.includes('end') && <button disabled={busy} onClick={() => { void action('end'); }}><Icon name="arrow"/>結束並查看總結</button>}
-        <p>人像：TalkingHead / Ready Player Me<br />CC BY-NC 4.0 · 教學用途</p>
+        <p>人像授權標示在人像下方</p>
       </nav></>}
 
       {(leftOpen || rightOpen) && <button className="ce-mobile-scrim" aria-label="收合側欄" onClick={() => { setLeftOpen(false); setRightOpen(false); }}/>}
@@ -223,7 +223,7 @@ export function ConversationRoom({ sessionId }) {
 
       <section className="ce-stage" aria-label="導師與對話舞台">
         <div className="ce-stage-grid" aria-hidden="true"/><div className="ce-room-kicker"><span>THE SOCRATIC ROOM</span><p>留一點空間，<br />給正在成形的想法。</p></div>
-        <PortraitStage state={presence}/>
+        <PortraitStage state={presence} say={lastTutor ? { id: String(lastTutor.id ?? `${messages.length}`), text: lastTutor.content } : null}/>
         <div className="ce-dialogue ce-tutor-dialogue" data-testid="tutor-dialogue" role="region" aria-label="導師目前的回覆" aria-live="polite">
           <div className="ce-bubble-label"><span className="ce-spark">✧</span> 蘇格拉底導師<span>{busy ? '思考中' : '給你的提問'}</span></div>
           <div className="ce-bubble-content">{lastTutor?.content ?? (error || '正在接回你的對話…')}</div>

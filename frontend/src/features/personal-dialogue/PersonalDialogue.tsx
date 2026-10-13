@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { TutorAvatar } from '../avatar/TutorAvatar';
 
 // 個人對話：學生作答後先與導師各自釐清立場，確認的基準才進入多人討論。
 // 每個按鈕只依後端給的 available_actions（老師端為每列的 actions）顯示，不由狀態或階段推導。
@@ -21,6 +22,13 @@ export type PersonalView = {
     notice: string | null;
     open: boolean;
 };
+/** 個人對話裡最後一則導師訊息；id 用位置，新訊息進來人像才念。 */
+export function lastTutorOf(messages: { role: string; text: string }[]) {
+    for (let i = messages.length - 1; i >= 0; i--)
+        if (messages[i].role === 'tutor')
+            return { id: String(i), text: messages[i].text };
+    return null;
+}
 export type SendCommand = (kind: string, data?: Record<string, unknown>) => Promise<boolean>;
 
 export const PERSONAL_STATUS_TEXT: Record<string, string> = {
@@ -71,6 +79,7 @@ export function PersonalPanel({ question, personal, actions, send, busy = false,
     }
     return <section className="sc-answer personal-dialogue" aria-label="個人對話">
     <div className="sc-prompt"><small>你的個人對話 · {PERSONAL_STATUS_TEXT[personal.status] || personal.status}</small><h1>{question?.title}</h1><p>{question?.scenario}</p></div>
+    <div className="personal-avatar"><TutorAvatar product="socratic" state={personal.generating ? 'thinking' : 'idle'} say={lastTutorOf(personal.messages)}/></div>
     <div className="personal-thread">{personal.messages.map((m, i) => <article className={'sc-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}
       {personal.generating && <p role="status" className="personal-generating"><span className="sc-pulse"/>導師正在思考下一個問題…</p>}
     </div>

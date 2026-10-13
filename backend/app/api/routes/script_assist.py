@@ -152,7 +152,16 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
             result, audit = await classroom_gateway.generate(binding, messages, schema, no_delta)
             result = ScriptAssistResult.model_validate(result).model_dump()
         except ProviderWait as exc:
-            failure = DomainError(exc.reason, 502)
+            status = (
+                503
+                if exc.reason
+                in {
+                    "PROVIDER_EMPTY_CONTENT",
+                    "PROVIDER_SCHEMA_MISMATCH",
+                }
+                else 502
+            )
+            failure = DomainError(exc.reason, status)
             continue
         except DomainError as exc:
             failure = exc

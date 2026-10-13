@@ -288,6 +288,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.services import classroom as service
     from app.api.routes.classroom import account
     from app.api.classroom_schemas import OtherSuggestionResult
+    from app.orchestrator.classroom import DomainError
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.classroom_gateway import generate
     from app.api.routes.provider_profiles import resolve_request_chain
@@ -323,6 +324,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     async def no_delta(_):
         return None
 
+    failure: ProviderWait | None = None
     for binding in bindings:
         try:
             result, audit = await generate(
@@ -340,8 +342,9 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
                 "provider_profile_id": audit.get("provider_profile_id"),
                 "classroom_owner_id": routing.get("owner_id"),
             }
-        except ProviderWait:
+        except ProviderWait as exc:
+            failure = exc
             continue
-        except Exception:
-            continue
+    if failure is not None:
+        raise DomainError(failure.reason, 503)
     return fallback_other_suggestion(body)

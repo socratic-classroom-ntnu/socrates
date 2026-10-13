@@ -34,6 +34,24 @@ export type DraftComposerProps = {
   onGhostAccepted?: (text: string) => void
 }
 
+/** Web Speech 錯誤碼 → 使用者看得懂、做得到的說明。 */
+export function speechErrorNote(code) {
+    switch (code) {
+        case 'not-allowed':
+        case 'service-not-allowed':
+            return '麥克風沒有被允許：請在網址列左側的網站設定允許麥克風，再按麥克風。';
+        case 'network':
+            return '這個瀏覽器連不到語音辨識服務（Helium、Brave 等去除 Google 服務的瀏覽器沒有內建語音辨識）；請改用 Chrome 或 Edge，或直接打字。';
+        case 'audio-capture':
+            return '找不到可用的麥克風，請確認麥克風已接上且沒有被其他程式占用。';
+        case 'no-speech':
+            return '沒有聽到聲音，請靠近麥克風再按一次。';
+        case 'language-not-supported':
+            return '這個瀏覽器的語音辨識不支援繁體中文，請改用 Chrome 或 Edge。';
+        default:
+            return `語音辨識中斷（${code || '未知原因'}）；目前文字已保留，可以再按一次或直接打字。`;
+    }
+}
 export function DraftComposer({ value, onChange, onSend, enabled = true, busy = false, canSend, label = '文字輸入', placeholder = '輸入文字或使用語音…', autoFocus = false, onListening, onTranscript, ghostText = '', onGhostAccepted }: DraftComposerProps) {
     const id = useId(), [active, setActive] = useState(false), [sending, setSending] = useState(false), [note, setNote] = useState('');
     const recognition = useRef(null), lock = useRef(false), latest = useRef(value);
@@ -91,20 +109,23 @@ export function DraftComposer({ value, onChange, onSend, enabled = true, busy = 
             return;
         }
         const r = new Ctor(), base = latest.current;
+        let heard = false, failed = false;
         recognition.current = r;
         r.lang = 'zh-TW';
         r.continuous = false;
         r.interimResults = true;
         r.onresult = e => { if (recognition.current !== r)
-            return; const result = transcriptText(base, e); latest.current = result.text; callbacks.current.onChange(result.text); callbacks.current.onTranscript?.(result.text, { adapter: 'browser-speech', locale: 'zh-TW', confidence: result.confidence, final: result.final }); };
+            return; heard = true; const result = transcriptText(base, e); latest.current = result.text; callbacks.current.onChange(result.text); callbacks.current.onTranscript?.(result.text, { adapter: 'browser-speech', locale: 'zh-TW', confidence: result.confidence, final: result.final }); };
         r.onend = () => { if (recognition.current === r) {
             recognition.current = null;
             end();
+            if (!heard && !failed)
+                setNote('沒有辨識到語音，請靠近麥克風再按一次；也可以直接打字。');
         } };
-        r.onerror = e => { if (recognition.current === r) {
+        r.onerror = e => { failed = true; if (recognition.current === r) {
             recognition.current = null;
             end();
-            setNote(e.error === 'not-allowed' ? '請在瀏覽器網站設定允許麥克風，再按左側麥克風。' : '請確認麥克風與語音服務連線；目前文字已保留。');
+            setNote(speechErrorNote(e.error));
         } };
         try {
             r.start();

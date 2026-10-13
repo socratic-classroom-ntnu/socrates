@@ -1,4 +1,4 @@
-import { PERSONAL_STATUS_TEXT } from '../../shared/personalStatus';
+import { PERSONAL_STATUS_TEXT } from '../personal-dialogue/PersonalDialogue';
 
 // 教師端：單一組別在目前題目的立場分布（後端 GET /groups/classrooms/{id}?mode=teacher 的 groups[].stance）。
 // 人數只計學生已確認的基準；沒有基準的人依個人對話狀態另外計數。

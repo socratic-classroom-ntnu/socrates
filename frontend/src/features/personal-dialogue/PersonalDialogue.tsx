@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { TutorAvatar } from '../avatar/TutorAvatar';
-import { PERSONAL_STATUS_TEXT } from '../../shared/personalStatus';
 
 // 個人對話：學生作答後先與導師各自釐清立場，確認的基準才進入多人討論。
 // 每個按鈕只依後端給的 available_actions（老師端為每列的 actions）顯示，不由狀態或階段推導。
@@ -31,6 +30,16 @@ export function lastTutorOf(messages: { role: string; text: string }[]) {
     return null;
 }
 export type SendCommand = (kind: string, data?: Record<string, unknown>) => Promise<boolean>;
+
+export const PERSONAL_STATUS_TEXT: Record<string, string> = {
+    probing: '對話中',
+    awaiting_confirm: '待確認',
+    confirmed: '已確認基準',
+    unclear: '暫時無法釐清',
+    capped: '尚未釐清',
+    incomplete: '未完成',
+    unavailable: '導師暫停',
+};
 
 const OUTCOME_TEXT: Record<string, string> = {
     confirmed: '你已確認這份摘要，它會作為你在本題的基準立場。請等待其他同學與老師進入多人討論。',

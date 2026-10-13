@@ -61,3 +61,28 @@
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
+
+<!-- module-map:begin -->
+## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+
+- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 可依賴的模組：platform
+
+檔案範圍：
+- `backend/app/services/classroom_auth.py`
+- `backend/app/services/email_delivery.py`
+
+契約：
+- 帳號（/auth/*）（產生型別 ✅；端點在 routes/classroom.py）
+
+## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
+
+- `identity-access→classroom-core  backend/app/services/classroom_auth.py → backend/app/orchestrator/classroom.py`
+- `identity-access→classroom-core  backend/app/services/email_delivery.py → backend/app/orchestrator/classroom.py`
+- `orm-outside-repositories  backend/app/services/email_delivery.py`
+
+## 待清項（源頭修正，做完從這裡刪掉）
+
+- /auth/* 端點目前寫在 routes/classroom.py：抽成 routes/auth.py。
+- services/email_delivery.py 定義 ORM（MailDelivery）：移到 repositories。
+<!-- module-map:end -->

@@ -2,10 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { advanceSession, endSession, retry, sendMessage } from '../../../api/client';
 import ActionBar from '../../../components/ActionBar';
-import { ROUND1_HOME } from '../../round1/routes';
+import { ROUND1_HOME } from '../../../round1Routes';
 import { InputComposer } from '../composer/InputComposer';
 import { projectPresence } from '../model/presenceMachine';
-import { confirmTranscriptDraft, createTranscriptDraft, getRoom, listHistory } from '../../../api/roomClient';
+import { confirmTranscriptDraft, createTranscriptDraft, getRoom, listHistory } from '../api/roomClient';
 import { PortraitStage } from '../avatar/PortraitStage';
 import './room.css';
 function Icon({ name }) {

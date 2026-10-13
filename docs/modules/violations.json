@@ -35,7 +35,7 @@
     "llm-runtime→content-authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py",
     "llm-runtime→group-dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py",
     "llm-runtime→identity-access  backend/app/services/llm_workers.py → backend/app/services/email_delivery.py",
-    "llm-runtime→round1  backend/app/domain/tutor.py → backend/app/domain/types.py",
+    "llm-runtime→solo-dialogue  backend/app/domain/tutor.py → backend/app/domain/types.py",
     "orm-outside-repositories  backend/app/api/routes/classroom_library.py",
     "orm-outside-repositories  backend/app/api/routes/provider_profiles.py",
     "orm-outside-repositories  backend/app/interaction_models.py",
@@ -51,8 +51,7 @@
     "platform→identity-access  backend/app/repositories/classroom_storage.py → backend/app/services/email_delivery.py",
     "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py",
     "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py",
-    "platform→round1  backend/app/api/deps.py → backend/app/services/conversation.py",
-    "round1→app-shell  backend/app/api/routes/history.py → backend/app/main.py",
+    "platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/classroom.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py",
@@ -72,7 +71,7 @@
     "route-imports-route  backend/app/api/routes/question_bank.py → backend/app/api/routes/classroom.py",
     "route-imports-route  backend/app/api/routes/question_bank.py → backend/app/api/routes/classroom_library.py",
     "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/classroom.py",
-    "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/provider_profiles.py"
-  ],
-  "frontend": []
+    "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/provider_profiles.py",
+    "solo-dialogue→app-shell  backend/app/api/routes/history.py → backend/app/main.py"
+  ]
 }

@@ -78,3 +78,44 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
+
+<!-- module-map:begin -->
+## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+
+- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 可依賴的模組：不依賴其他模組
+
+檔案範圍：
+- `backend/app/repositories/classroom_storage.py`
+- `backend/app/realtime.py`
+- `backend/app/db.py`
+- `backend/app/config.py`
+- `backend/app/classroom_env.py`
+- `backend/app/feature_flags.py`
+- `backend/app/api/deps.py`
+- `backend/app/api/model_base.py`
+- `backend/app/api/routes/public_config.py`
+
+契約：
+- 公開設定（/public-config）（✅）
+- 人像模型清單（/avatar-packs/catalog.json）（✅）
+
+## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
+
+- `platform→ai-providers  backend/app/repositories/classroom_storage.py → backend/app/api/routes/provider_profiles.py`
+- `platform→app-shell  backend/app/api/deps.py → backend/app/main.py`
+- `platform→classroom-core  backend/app/feature_flags.py → backend/app/orchestrator/classroom.py`
+- `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/classroom_library.py`
+- `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/question_bank.py`
+- `platform→group-dialogue  backend/app/repositories/classroom_storage.py → backend/app/services/ai_students.py`
+- `platform→identity-access  backend/app/repositories/classroom_storage.py → backend/app/services/email_delivery.py`
+- `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py`
+- `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py`
+- `platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py`
+
+## 待清項（源頭修正，做完從這裡刪掉）
+
+- 加 import-linter 或同等 CI gate，強制 violations.json 只能變短。
+- repositories/classroom_storage.py 為了建表 import routes（classroom_library、provider_profiles、question_bank）：ORM 歸位後刪掉這段。
+- 相容帳冊（COMPATIBILITY-LEDGER.md）的舊環境變數別名。
+<!-- module-map:end -->

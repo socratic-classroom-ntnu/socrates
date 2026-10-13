@@ -5,7 +5,7 @@
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ❌）
 
-- 端：後端；default owner：Portal-Goose
+- 架構與審查：Portal-Heron；執行：Portal-Goose
 - 可依賴的模組：platform、identity-access
 
 檔案範圍：

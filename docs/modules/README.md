@@ -1,25 +1,22 @@
 # Socratic 模組責任地圖
 
-- 狀態：前後端各自模組化（Arthur 2026-10-13 15:18、23:48）：後端 10 個模組、前端 10 個模組，每個模組一位 default owner；兩端只透過下方「契約」接。版本以 git log 為準，本檔不記 commit
-- 設計檔（Figma）：Figma:Project/Socratic.Socratic · Frontend（前端各模組的頁見各模組文件）；CE 端 Figma:Project/CoolEnglish.CoolEnglish · Frontend
-- 範圍權威：`docs/modules/modules.json`；`python3 scripts/check_modules.py` 檢查每個原始碼檔屬於且只屬於一個模組、跨模組依賴只走 uses、route 不互相 import、ORM 只在 repositories、前端網路呼叫只在 api/；尚未清掉的違規逐條列在 `violations.json`，清單只能變短。`--write` 依地圖重寫下表與各模組文件的 Scope、待清違規、待清項
-- 決策來源：Arthur 2026-10-13 15:18、15:31；PO-Goose C14 finale audit
-- 劃分 PO：`PO-Goose`
-- Backend domain owner：`Portal-Goose`
-- Frontend implementation owner：`Portal-Heron`
+- 狀態：後端 10 個模組，架構與方向由 Heron（Portal-Heron）決定並審查，Goose 席位執行（Arthur 2026-10-14 00:50）；前端由前端組員負責（Arthur 00:42），兩端只透過下方「契約」接。版本以 git log 為準，本檔不記 commit
+- 範圍權威：`docs/modules/modules.json`；`python3 scripts/check_modules.py` 檢查每個後端原始碼檔屬於且只屬於一個模組、跨模組依賴只走 uses、route 不互相 import、ORM 只在 repositories；尚未清掉的違規逐條列在 `violations.json`，清單只能變短。`--write` 依地圖重寫下表與各模組文件的 Scope、待清違規、待清項
+- 決策來源：Arthur 2026-10-13 15:18（前後端解耦）、15:31（模組責任）、23:48（優先拆）；2026-10-14 00:42（前端由前端組員負責）、00:50（架構與方向由 Heron 決定，Goose 除 Design 與 PO 外為執行）
+- 架構、模組劃分與審查：`Portal-Heron`
+- 後端執行：`Portal-Goose`
+- 前端：前端組員
 - Visual owner：`Design-Goose`
 - Product acceptance：`PO-Goose`
 
 ## 責任規則
 
-1. 新模組先由劃分 PO 指定一位 default owner。
-2. 各席位可修改其他模組；default owner review 後進入整合線。
-3. Default owner在一個 Circuit 內完成review；該Circuit結束時由劃分 PO代審並留下receipt。
-4. 跨模組改動由每個default owner審核自己的scope。
-5. 分歧透過Thread交Arthur裁定。
-6. Backend與Frontend各自模組化；兩端只透過generated contract、ViewModel、`available_actions`與reason codes連接。
-7. Backend完成定義：API＋generated types＋DevConsole toy page＋acceptance cases。
-8. Frontend只經集中client與generated types接線；正式畫面替換toy page時保持contract與fixtures。
+1. 新模組與模組劃分由 Portal-Heron 決定，寫進 `modules.json`。
+2. 後端改動由 Portal-Goose 執行、Portal-Heron 審查後進入 backend/arthur/main。
+3. 源頭改動與呼叫端、`modules.json`、`violations.json`、模組文件在同一個 commit 更新；內部程式不留相容層。
+4. 分歧透過 Thread 交 Arthur 裁定。
+5. 前後端只透過 generated contract、ViewModel、`available_actions` 與 reason codes 連接；前端缺的資料寄契約請求到後端。
+6. 後端模組完成定義：API＋generated types＋DevConsole toy page＋acceptance cases，`violations.json` 該模組條目清空。
 
 ## 模組地圖
 
@@ -27,12 +24,12 @@
 
 ✅＝可以直接交給一個人；⚠️＝能交，先清待清違規；❌＝先做源頭修正再交。
 
-**後端模組**（default owner：Portal-Goose）
+**後端模組**（架構與審查：Portal-Heron；執行：Portal-Goose；前端：前端組員）
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
 | [App Shell](./backend/app-shell.md) | ✅ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py` | 全部（組裝層） | 0 |
-| [Platform](./backend/platform.md) | ⚠️ | `backend/app/repositories/classroom_storage.py`<br>`backend/app/realtime.py`<br>`backend/app/db.py`<br>`backend/app/config.py`<br>`backend/app/classroom_env.py`<br>`backend/app/feature_flags.py`<br>`backend/app/api/deps.py`<br>`backend/app/api/model_base.py`<br>`backend/app/api/routes/public_config.py` | — | 10 |
+| [Platform](./backend/platform.md) | ⚠️ | `backend/app/repositories/classroom_storage.py`<br>`backend/app/realtime.py`<br>`backend/app/db.py`<br>`backend/app/config.py`<br>`backend/app/classroom_env.py`<br>`backend/app/feature_flags.py`<br>`backend/app/api/deps.py`<br>`backend/app/api/model_base.py`<br>`backend/app/api/routes/public_config.py` | 不依賴其他模組 | 10 |
 | [Identity & Access](./backend/identity-access.md) | ⚠️ | `backend/app/services/classroom_auth.py`<br>`backend/app/services/email_delivery.py` | platform | 3 |
 | [AI Providers](./backend/ai-providers.md) | ❌ | `backend/app/api/routes/provider_profiles.py` | platform、identity-access | 9 |
 | [LLM Runtime](./backend/llm-runtime.md) | ⚠️ | `backend/app/tutor/`<br>`backend/app/services/llm_workers.py`<br>`backend/app/services/scenario_ai.py`<br>`backend/app/domain/tutor.py` | platform、ai-providers | 10 |
@@ -40,38 +37,23 @@
 | [Classroom Core](./backend/classroom-core.md) | ⚠️ | `backend/app/orchestrator/classroom.py`<br>`backend/app/orchestrator/classroom_policy.py`<br>`backend/app/services/classroom.py`<br>`backend/app/api/routes/classroom.py`<br>`backend/app/api/classroom_schemas.py`<br>`backend/app/domain/presence.py` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 13 |
 | [Group Dialogue](./backend/group-dialogue.md) | ⚠️ | `backend/app/domain/group_run.py`<br>`backend/app/api/routes/groups.py`<br>`backend/app/services/ai_students.py`<br>`backend/app/api/routes/ai_students.py` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 8 |
 | [Analytics](./backend/analytics.md) | ✅ | `backend/app/domain/group_analysis.py` | platform、classroom-core、group-dialogue | 0 |
-| [Round 1](./backend/round1.md) | ✅ | `backend/app/orchestrator/orchestrator.py`<br>`backend/app/orchestrator/policy.py`<br>`backend/app/services/conversation.py`<br>`backend/app/services/transcripts.py`<br>`backend/app/services/history.py`<br>`backend/app/repositories/session_repository.py`<br>`backend/app/repositories/transcript_repository.py`<br>`backend/app/repositories/history_repository.py`<br>`backend/app/api/schemas.py`<br>`backend/app/api/transcript_schemas.py`<br>`backend/app/api/history_schemas.py`<br>`backend/app/api/routes/sessions.py`<br>`backend/app/api/routes/messages.py`<br>`backend/app/api/routes/transcripts.py`<br>`backend/app/api/routes/summaries.py`<br>`backend/app/api/routes/history.py`<br>`backend/app/models.py`<br>`backend/app/domain/types.py`<br>`backend/app/domain/session_state.py`<br>`backend/app/interaction_models.py`<br>`backend/app/api/routes/room.py`<br>`backend/app/services/room_view.py`<br>`backend/app/api/room_schemas.py` | platform、llm-runtime、content-authoring | 3 |
+| [Solo Dialogue（單人對話）](./backend/solo-dialogue.md) | ✅ | `backend/app/orchestrator/orchestrator.py`<br>`backend/app/orchestrator/policy.py`<br>`backend/app/services/conversation.py`<br>`backend/app/services/transcripts.py`<br>`backend/app/services/history.py`<br>`backend/app/repositories/session_repository.py`<br>`backend/app/repositories/transcript_repository.py`<br>`backend/app/repositories/history_repository.py`<br>`backend/app/api/schemas.py`<br>`backend/app/api/transcript_schemas.py`<br>`backend/app/api/history_schemas.py`<br>`backend/app/api/routes/sessions.py`<br>`backend/app/api/routes/messages.py`<br>`backend/app/api/routes/transcripts.py`<br>`backend/app/api/routes/summaries.py`<br>`backend/app/api/routes/history.py`<br>`backend/app/models.py`<br>`backend/app/domain/types.py`<br>`backend/app/domain/session_state.py`<br>`backend/app/interaction_models.py`<br>`backend/app/api/routes/room.py`<br>`backend/app/services/room_view.py`<br>`backend/app/api/room_schemas.py` | platform、llm-runtime、content-authoring | 3 |
 
-**前端模組**（default owner：Portal-Heron）
+**契約（前後端唯一的接縫）**
 
-| 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
+| 契約 | 後端模組 | 前端使用處 | 來源 | 狀態 |
 |---|---|---|---|---|
-| [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/ClassroomApp.tsx`<br>`frontend/src/teacherRoute.ts` | 全部（組裝層） | 0 |
-| [Platform](./frontend/platform.md) | ✅ | `frontend/src/api/`<br>`frontend/src/components/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/features/dev-console/`<br>`frontend/src/identity.ts`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts` | — | 0 |
-| [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform | 0 |
-| [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/` | platform | 0 |
-| [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform | 0 |
-| [Teacher Analytics](./frontend/teacher-analytics.md) | ⚠️ | `frontend/src/features/group-analytics/`<br>`frontend/src/features/teacher-records/` | platform | 0 |
-| [Authoring](./frontend/authoring.md) | ✅ | `frontend/src/features/authoring/`<br>`frontend/src/features/script-builder/`<br>`frontend/src/features/question-bank/` | platform、ai-settings、teacher-analytics | 0 |
-| [Group Dialogue](./frontend/group-dialogue.md) | ⚠️ | `frontend/src/features/group-dialogue/`<br>`frontend/src/features/personal-dialogue/`<br>`frontend/src/features/classroom-stage/` | platform、media、ai-settings、teacher-analytics | 0 |
-| [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics | 0 |
-| [Round 1](./frontend/round1.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media | 0 |
-
-**契約（兩端唯一的接縫）**
-
-| 契約 | 後端模組 | 前端模組 | 來源 | 狀態 |
-|---|---|---|---|---|
-| 帳號（/auth/*） | identity-access | auth | classroom_schemas.py（Register、Login、ResetRequest…）→ api/types.ts | 產生型別 ✅；端點在 routes/classroom.py |
-| 教室房間（/classrooms/*） | classroom-core | student-classroom | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
-| 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 缺 response_model，前端型別手寫（已寄契約請求） |
-| AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 部分手寫 |
-| 雷達圖 | analytics | teacher-analytics | 待定 | 等契約（Design-Goose 1fba59189afd） |
-| AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
-| 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
-| Round 1（/api/sessions/*） | round1 | round1 | api/schemas.py、transcript_schemas.py → api/types.ts | 產生型別 ✅ |
-| 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |
-| TTS（文字→音訊＋字時間點） | llm-runtime | media | 待定 | 等契約（已寄 Portal-Goose） |
-| 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
+| 帳號（/auth/*） | identity-access | 登入、註冊、驗證畫面 | classroom_schemas.py（Register、Login、ResetRequest…）→ api/types.ts | 產生型別 ✅；端點在 routes/classroom.py |
+| 教室房間（/classrooms/*） | classroom-core | 學生端課堂畫面 | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
+| 分組課（/groups/*） | group-dialogue | 分組課、教師分析畫面 | routes/groups.py | 缺 response_model，前端型別手寫（已寄契約請求） |
+| AI 學生（/ai-students/*） | group-dialogue | 分組課畫面 | routes/ai_students.py | 部分手寫 |
+| 雷達圖 | analytics | 教師分析畫面 | 待定 | 等契約（Design-Goose 1fba59189afd） |
+| AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | AI 設定、出題畫面 | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
+| 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | 教師端出題畫面 | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
+| 單人對話（/api/sessions/*） | solo-dialogue | 單人對話畫面 | api/schemas.py、transcript_schemas.py → api/types.ts | 產生型別 ✅ |
+| 公開設定（/public-config） | platform | 全站 | routes/public_config.py | ✅ |
+| TTS（文字→音訊＋字時間點） | llm-runtime | 導師人像 | 待定 | 等契約（已寄 Portal-Goose） |
+| 人像模型清單（/avatar-packs/catalog.json） | platform | 導師人像 | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
 
 <!-- module-map:end -->
 

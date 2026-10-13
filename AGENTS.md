@@ -21,7 +21,7 @@
 | `ended` 之後任何動作一律拒絕 | — |
 | 壞掉的 ladder yaml 要讓服務啟動失敗 | 不能等學生跑到第三階才爆 |
 | Orchestrator 不得 import 任何 provider | 這條線是腳本驗收與真 API 共用流程的原因 |
-| 前後端各自模組化，兩端只透過契約接：跨模組 import 只走 `docs/modules/modules.json` 的 uses；後端 route 不互相 import、ORM 只在 repositories | 一個模組交給一個人時，他只改得到自己的檔；`scripts/check_modules.py` 擋新違規，`docs/modules/violations.json` 只能變短 |
+| 後端模組化：跨模組 import 只走 `docs/modules/modules.json` 的 uses；route 不互相 import、ORM 只在 repositories；源頭改動與呼叫端、地圖、文件同一個 commit 更新，不留相容層 | 一個模組交給一個人時，他只改得到自己的檔；`scripts/check_modules.py` 擋新違規，`docs/modules/violations.json` 只能變短 |
 | 每個 LLM 呼叫都經過鐵則：`backend/app/tutor/iron_rules.py` 依 L0 路由（`backend/skills/classroom/iron-rules/ROUTER.json`）載入 L1 共通＋該角色的 L2；LLM 功能不得削弱 `docs/IRON-RULES.md` | 學生端的 AI 被帶離題或被改寫角色，課堂就不再是照見自己立場的地方；`backend/tests/classroom/test_iron_rules.py` 列舉所有呼叫點，新呼叫點沒接鐵則會擋 |
 
 ## 範本索引
@@ -32,8 +32,8 @@
 | 新增讀取查詢 | `backend/app/api/routes/sessions.py` 的 `get_session` |
 | 改狀態機 | `backend/app/orchestrator/orchestrator.py`，先改 `backend/tests/invariants/test_state_machine_table.py` |
 | 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
-| 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/round1/Conversation.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
-| 呼叫 API | 只在 `frontend/src/api/`（例：`client.ts`、`classroomClient.ts`），型別一律從 `types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 api/ 以外的 fetch |
+| 新增前端畫面 | `frontend/src/pages/Conversation.tsx` |
+| 呼叫 API | `frontend/src/api/client.ts`，型別一律從 `types.ts` 取，不要手寫 |
 | 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |
 
 ## API 慣例：兩條並列的規則

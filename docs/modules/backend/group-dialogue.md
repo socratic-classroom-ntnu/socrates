@@ -72,3 +72,39 @@
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
+
+<!-- module-map:begin -->
+## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+
+- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 可依賴的模組：platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core
+
+檔案範圍：
+- `backend/app/domain/group_run.py`
+- `backend/app/api/routes/groups.py`
+- `backend/app/services/ai_students.py`
+- `backend/app/api/routes/ai_students.py`
+
+契約：
+- 分組課（/groups/*）（缺 response_model，前端型別手寫（已寄契約請求））
+- AI 學生（/ai-students/*）（部分手寫）
+
+## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
+
+- `group-dialogue→analytics  backend/app/api/routes/groups.py → backend/app/domain/group_analysis.py`
+- `orm-outside-repositories  backend/app/services/ai_students.py`
+- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/classroom.py`
+- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py`
+- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py`
+- `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom.py`
+- `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom_library.py`
+- `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/provider_profiles.py`
+
+## 待清項（源頭修正，做完從這裡刪掉）
+
+- group_run.extend() 單一函式約 450 行，GameOrchestrator 被動態包兩次（_extend_group_run、_extend_ai_students）：改成 composition。
+- 分組 view 沒有 response_model：前端 GroupStance、PersonalDialogue、TeacherRecords 只能手寫型別（契約請求）。
+- services/ai_students.py 定義 ORM（AIStudentProfile）：移到 repositories。
+- routes/ai_students.py import routes/groups：共用部分下移到 service。
+- routes/groups.py 606 行，流程邏輯下移到 service。
+<!-- module-map:end -->

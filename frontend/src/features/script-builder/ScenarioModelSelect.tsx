@@ -1,4 +1,4 @@
-import { ModelSelect } from '../ai-settings/ProviderSettings'
+import { ModelSelect } from '../../pages/ProviderSettings'
 import '../../styles/script-builder.css'
 
 const FREE_ROUTER = 'openrouter/free'

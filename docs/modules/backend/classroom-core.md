@@ -76,3 +76,43 @@
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
+
+<!-- module-map:begin -->
+## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+
+- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 可依賴的模組：platform、identity-access、ai-providers、llm-runtime、content-authoring
+
+檔案範圍：
+- `backend/app/orchestrator/classroom.py`
+- `backend/app/orchestrator/classroom_policy.py`
+- `backend/app/services/classroom.py`
+- `backend/app/api/routes/classroom.py`
+- `backend/app/api/classroom_schemas.py`
+- `backend/app/domain/presence.py`
+
+契約：
+- 教室房間（/classrooms/*）（產生型別 ✅）
+
+## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
+
+- `classroom-core→group-dialogue  backend/app/api/routes/classroom.py → backend/app/api/routes/ai_students.py`
+- `classroom-core→group-dialogue  backend/app/api/routes/classroom.py → backend/app/api/routes/groups.py`
+- `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/domain/group_run.py`
+- `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/services/ai_students.py`
+- `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/domain/group_run.py`
+- `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/services/ai_students.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/ai_students.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/classroom_library.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/groups.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/provider_profiles.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/public_config.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/question_bank.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/script_assist.py`
+
+## 待清項（源頭修正，做完從這裡刪掉）
+
+- classroom_schemas.py 是所有模組共用的契約檔（約 400 行）：依模組拆成各自的 schemas，改欄位時才不會跨 owner。
+- routes/classroom.py 內的 /auth/* 端點移到 Identity & Access。
+- routes/classroom.py 底部掛其他模組 router 的部分移到 app-shell。
+<!-- module-map:end -->

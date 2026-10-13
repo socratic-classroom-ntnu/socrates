@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { getPublicConfig } from '../../api/classroomClient'
-import { loadAvatarCatalog, type AvatarPack } from '../../api/avatarCatalog'
 import { PackPresenter } from './runtime/packPresenter.mjs'
 import { LANGS, speak } from './speech'
 import './tutor-avatar.css'
@@ -10,7 +9,15 @@ import './tutor-avatar.css'
 
 export type AvatarProduct = 'socratic' | 'ce'
 export type AvatarState = 'idle' | 'listening' | 'thinking' | 'speaking'
-export type { AvatarPack }
+export type AvatarPack = {
+  id: string
+  name: string
+  products?: string[]
+  license?: string
+  model_sha256: string
+  camera_preset?: { zoom?: number; lift?: number; framing?: string }
+  [key: string]: unknown
+}
 
 const STATE_LABEL: Record<AvatarState, string> = {
   idle: '正在聆聽你的想法',
@@ -26,6 +33,14 @@ const write = (key: string, value: string) => { try { window.localStorage.setIte
 export function choosePack(packs: AvatarPack[], product: AvatarProduct, wanted?: string | null, remembered?: string | null) {
   const usable = packs.filter(p => !p.products || p.products.includes(product))
   return usable.find(p => p.id === wanted) ?? usable.find(p => p.id === remembered) ?? usable[0] ?? null
+}
+
+export async function loadCatalog(signal?: AbortSignal): Promise<AvatarPack[]> {
+  const response = await fetch('/avatar-packs/catalog.json', { signal, credentials: 'same-origin' })
+  if (!response.ok || !(response.headers.get('content-type') || '').includes('json')) throw Error('AVATAR_CATALOG_UNAVAILABLE')
+  const catalog = await response.json()
+  if (!Array.isArray(catalog?.packs)) throw Error('AVATAR_CATALOG_UNAVAILABLE')
+  return catalog.packs
 }
 
 export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇格拉底導師', lang = 'zh' }: {
@@ -55,7 +70,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 
   useEffect(() => {
     const abort = new AbortController()
-    loadAvatarCatalog(abort.signal).then(list => {
+    loadCatalog(abort.signal).then(list => {
       setPacks(list)
       const chosen = choosePack(list, product, packId, read(storeKey))
       if (chosen) setPack(chosen)

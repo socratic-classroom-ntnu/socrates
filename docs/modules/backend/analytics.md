@@ -57,3 +57,24 @@
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
+
+<!-- module-map:begin -->
+## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
+
+- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 可依賴的模組：platform、classroom-core、group-dialogue
+
+檔案範圍：
+- `backend/app/domain/group_analysis.py`
+
+契約：
+- 雷達圖（等契約（Design-Goose 1fba59189afd））
+
+## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
+
+- 無
+
+## 待清項（源頭修正，做完從這裡刪掉）
+
+- 雷達圖契約（Design-Goose 六畫面表 1fba59189afd）。
+<!-- module-map:end -->

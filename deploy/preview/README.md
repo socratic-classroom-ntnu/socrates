@@ -11,8 +11,11 @@
    tag 是 `sha-<PR head sha>`，約 5–10 分鐘。
 2. k8s 上的 Flux Operator 每 3 分鐘掃一次有 `preview` label 的 PR，
    幫它建好整套環境（flux-k8s 的 `apps/base/socrates-preview`）。
-3. 環境換上這個 commit 之後，workflow 會在 PR 留一則**可以直接點的網址**與測試帳號。
-   之後每次 push 都會更新同一則留言，不會洗版。
+3. PR 裡會有一則**可以直接點的網址**與測試帳號。每次 push 都會更新同一則留言，不會洗版，
+   並寫清楚是哪個 commit：
+   - ⏳ 一 push 就顯示「正在建置 `新 commit`」，以及網站目前仍是哪個 `舊 commit`
+   - ✅ 網站換上新 commit 之後改成「已部署最新 commit」
+   - ❌ 建置失敗會附上 workflow log，網站維持舊版
 
 **不需要預覽**就把 `preview` label 拿掉，環境會在幾分鐘內刪除；要恢復就再加回去。
 自動加 label 只套用在新開的 PR，舊的 PR 想要預覽就自己加。

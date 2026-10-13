@@ -169,12 +169,13 @@ export class PackPresenter {
     const bottom = headPos.y - headLen * 1.15;
     const height = top - bottom;
     const centerY = (top + bottom) / 2;
-    const distance = (height * 0.62) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const halfView = height * 0.62; // 上下各留約 12% 邊
+    const distance = halfView / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     // glTF 角色面向 +Z；鏡頭放在正前方，再套 pack 的 camera_preset。
     const preset = cameraPreset(this.pack);
     const { position, target } = placeCamera(
       { x: headPos.x, y: centerY + headLen * 0.1, z: headPos.z + distance },
-      { x: headPos.x, y: centerY, z: headPos.z }, preset, height);
+      { x: headPos.x, y: centerY, z: headPos.z }, preset, halfView);
     this.camera.position.set(position.x, position.y, position.z);
     this.camera.lookAt(target.x, target.y, target.z);
     this.container.dataset.framing = preset.framing;

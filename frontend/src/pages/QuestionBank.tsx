@@ -85,8 +85,8 @@ export function QuestionBank() {
 
   const pages = page ? Math.max(1, Math.ceil(page.total / PAGE_SIZE)) : 1
   const current = Math.floor(offset / PAGE_SIZE) + 1
-  return <section className="r73-library bank-store">
-    <header className="r2-section-title">
+  return <section className="class-library bank-store">
+    <header className="sc-section-title">
       <div><small>題目分享</small><h1>題庫商店</h1><p>搜尋其他老師分享的題目，預覽後加入自己的課程腳本。</p></div>
     </header>
     <form role="search" className="bank-search" onSubmit={event => { event.preventDefault(); setOffset(0); setTerm(query.trim()) }}>
@@ -94,8 +94,8 @@ export function QuestionBank() {
       <button className="teacher-primary">搜尋</button>
     </form>
     {note && <p role="status" className="teacher-note">{note}</p>}
-    {preview && <section className="r2-card bank-preview" aria-label="題目預覽">
-      <div className="r2-row"><small>{byline(preview)} · 版本 {preview.revision}</small><button className="teacher-quiet" onClick={() => setPreview(null)}>關閉預覽</button></div>
+    {preview && <section className="sc-card bank-preview" aria-label="題目預覽">
+      <div className="sc-row"><small>{byline(preview)} · 版本 {preview.revision}</small><button className="teacher-quiet" onClick={() => setPreview(null)}>關閉預覽</button></div>
       <h2>{preview.title}</h2>
       {preview.question && <>
         {preview.question.title !== preview.title && <h3>{preview.question.title}</h3>}
@@ -105,7 +105,7 @@ export function QuestionBank() {
         <p>作答 {preview.question.duration_seconds} 秒 · {preview.question.argument_required ? '需要寫下理由' : '理由可不填'}</p>
       </>}
       <Tags tags={preview.tags}/>
-      <div className="r2-row bank-import">
+      <div className="sc-row bank-import">
         <label>加入哪一份課程腳本<select aria-label="加入哪一份課程腳本" value={target} disabled={busy || !scripts.length} onChange={event => setTarget(event.target.value)}>
           <option value="" disabled>選擇課程腳本</option>
           {scripts.map(script => <option key={script.id} value={script.id}>{script.document.title}（{script.document.questions.length} 題）</option>)}
@@ -116,13 +116,13 @@ export function QuestionBank() {
       {!scripts.length && <small>你還沒有課程腳本。先到「個人題庫」新增一份，再回來加入。</small>}
     </section>}
     {!page && !note && <p role="status">正在讀取題庫…</p>}
-    {page && !page.items.length && <section className="r2-card">
+    {page && !page.items.length && <section className="sc-card">
       <h2>{term ? '找不到符合的題目' : '題庫還是空的'}</h2>
       <p>{term ? '換個關鍵字試試，或清空搜尋查看全部題目。' : '在個人題庫或課程的題目卡上按「發布到題庫」，就能分享給其他老師。'}</p>
     </section>}
     {page && page.items.length > 0 && <>
-      <div className="r2-section-title"><h2>{term ? `「${term}」的搜尋結果` : '最新分享'} <small>{page.total} 題</small></h2></div>
-      <div className="r2-script-grid">{page.items.map(item => <article key={item.id} className="r2-card">
+      <div className="sc-section-title"><h2>{term ? `「${term}」的搜尋結果` : '最新分享'} <small>{page.total} 題</small></h2></div>
+      <div className="sc-script-grid">{page.items.map(item => <article key={item.id} className="sc-card">
         <small>{byline(item)}</small>
         <h3>{item.title}</h3>
         <p>{item.scenario_excerpt}</p>
@@ -130,7 +130,7 @@ export function QuestionBank() {
         <Tags tags={item.tags}/>
         <button className="teacher-quiet" aria-label={`預覽「${item.title}」`} aria-pressed={preview?.id === item.id} onClick={() => void open(item)}>預覽題目</button>
       </article>)}</div>
-      {pages > 1 && <nav className="r2-row" aria-label="題庫分頁">
+      {pages > 1 && <nav className="sc-row" aria-label="題庫分頁">
         <button className="teacher-quiet" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>上一頁</button>
         <span>第 {current}／{pages} 頁</span>
         <button className="teacher-quiet" disabled={current >= pages} onClick={() => setOffset(offset + PAGE_SIZE)}>下一頁</button>

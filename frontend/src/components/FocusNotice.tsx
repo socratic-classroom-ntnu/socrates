@@ -2,5 +2,5 @@
 export function FocusNotice({ status, message }: { status?: string | null; message?: string | null }) {
     if (status !== 'TUTOR_UNAVAILABLE' || !message)
         return null;
-    return <p role="status" className="r2-focus-notice">{message}</p>;
+    return <p role="status" className="sc-focus-notice">{message}</p>;
 }

@@ -67,7 +67,7 @@ export function ScriptAssist({ document, onApply, scriptId = null }) {
 
   const q = suggestion?.question
   const replacing = suggestion && Number.isInteger(suggestion.question_index) && questions[suggestion.question_index]
-  return <div className="r2-card script-assist">
+  return <div className="sc-card script-assist">
     <p>寫下想要的情境或修改方向，AI 會依目前草稿提出一題建議；建議不會自動寫入，確認後再套用。使用的模型在帳號 AI 設定的「AI 劇本協作」。</p>
     <label>想請 AI 怎麼協助？<textarea rows={3} maxLength={4000} value={request} placeholder="例如：設計一題關於校園資源分配、適合高中生的兩難情境" onChange={e => setRequest(e.target.value)}/></label>
     <label>要處理的題目<select value={target} onChange={e => setTarget(e.target.value)}>
@@ -75,7 +75,7 @@ export function ScriptAssist({ document, onApply, scriptId = null }) {
       {questions.map((item, i) => <option key={item.id} value={String(i)}>改寫情境 {i + 1}：{item.title}</option>)}
     </select></label>
     <button type="button" disabled={busy || !request.trim()} aria-busy={busy} onClick={() => void ask()}>{busy ? 'AI 構思中…' : '請 AI 提出建議'}</button>
-    {error && <p className="r2-field-errors" role="alert">{error}</p>}
+    {error && <p className="sc-field-errors" role="alert">{error}</p>}
     {q && <section className="script-assist-suggestion" aria-label="AI 建議">
       <h3>{q.title}</h3>
       <p>{q.scenario}</p>
@@ -84,7 +84,7 @@ export function ScriptAssist({ document, onApply, scriptId = null }) {
       {q.probe_hints?.length > 0 && <ul aria-label="建議追問">{q.probe_hints.map(hint => <li key={hint}>{hint}</li>)}</ul>}
       {suggestion.rationale && <p><small>設計說明：{suggestion.rationale}</small></p>}
       {suggestion.model && <p><small>由 {suggestion.model} 產生</small></p>}
-      <div className="r2-row">
+      <div className="sc-row">
         <button type="button" onClick={apply}>{replacing ? `套用到情境 ${suggestion.question_index + 1}` : '加入為新題目'}</button>
         <button type="button" className="quiet" onClick={() => setSuggestion(null)}>捨棄建議</button>
       </div>

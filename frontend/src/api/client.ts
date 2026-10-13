@@ -6,7 +6,7 @@ type ErrorPayload = { detail?: { code?: string; session_id?: unknown } } | null 
 
 import axios from 'axios'
 import { getLearnerId } from '../identity'
-// Axios request/response API carried over window.fetch: the pre-R80 client and its resident tests observe fetch(url, init).
+// Axios request/response API carried over window.fetch: the earlier fetch client and its resident tests observe fetch(url, init).
 function fetchAdapter(credentials: RequestCredentials){return async config=>{
  const headers: Record<string, string>={};for(const [k,v] of Object.entries(axios.AxiosHeaders.from(config.headers).toJSON())){if(v!==undefined&&v!==null)headers[k]=String(v)}
  const init: RequestInit={method:(config.method||'get').toUpperCase(),headers,credentials}

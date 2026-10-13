@@ -69,10 +69,10 @@ export function PersonalPanel({ question, personal, actions, send, busy = false,
             setRevising(false);
         }
     }
-    return <section className="r2-answer personal-dialogue" aria-label="個人對話">
-    <div className="r2-prompt"><small>你的個人對話 · {PERSONAL_STATUS_TEXT[personal.status] || personal.status}</small><h1>{question?.title}</h1><p>{question?.scenario}</p></div>
-    <div className="personal-thread">{personal.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}
-      {personal.generating && <p role="status" className="personal-generating"><span className="r2-pulse"/>導師正在思考下一個問題…</p>}
+    return <section className="sc-answer personal-dialogue" aria-label="個人對話">
+    <div className="sc-prompt"><small>你的個人對話 · {PERSONAL_STATUS_TEXT[personal.status] || personal.status}</small><h1>{question?.title}</h1><p>{question?.scenario}</p></div>
+    <div className="personal-thread">{personal.messages.map((m, i) => <article className={'sc-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}
+      {personal.generating && <p role="status" className="personal-generating"><span className="sc-pulse"/>導師正在思考下一個問題…</p>}
     </div>
     {personal.status === 'unavailable' && personal.notice && <p role="status" className="personal-notice">{personal.notice}</p>}
     {can('personal_retry') && <button onClick={() => void send('personal_retry')} disabled={busy}>重試</button>}
@@ -80,13 +80,13 @@ export function PersonalPanel({ question, personal, actions, send, busy = false,
             e.preventDefault();
             void reply();
         } }}/></label><button disabled={busy || !text.trim()} onClick={() => void reply()}>送出</button><small>已回覆 {personal.completed_turns} / {personal.max_turns} 次</small></div>}
-    {can('personal_confirm') && personal.summary && <div className="r2-card personal-confirm" role="group" aria-label="確認你的立場摘要"><h2>這是導師整理的你目前的想法</h2><SummaryCard summary={personal.summary}/>
-      <div className="r2-row"><button disabled={busy} onClick={() => void send('personal_confirm', { summary_digest: personal.summary_digest })}>符合我的想法</button>
+    {can('personal_confirm') && personal.summary && <div className="sc-card personal-confirm" role="group" aria-label="確認你的立場摘要"><h2>這是導師整理的你目前的想法</h2><SummaryCard summary={personal.summary}/>
+      <div className="sc-row"><button disabled={busy} onClick={() => void send('personal_confirm', { summary_digest: personal.summary_digest })}>符合我的想法</button>
         {can('personal_revise') && <button className="quiet" disabled={busy} aria-expanded={revising} onClick={() => setRevising(!revising)}>我要修正</button>}
         {can('personal_unclear') && <button className="quiet" disabled={busy} onClick={() => void send('personal_unclear')}>暫時無法釐清</button>}</div>
       {revising && can('personal_revise') && <div className="personal-compose"><label>哪裡不符合？請寫下你的修正<textarea rows={3} maxLength={12000} value={revision} onChange={e => setRevision(e.target.value)}/></label><button disabled={busy || !revision.trim()} onClick={() => void revise()}>送出修正</button></div>}
     </div>}
-    {OUTCOME_TEXT[personal.status] && <div className="r2-card personal-outcome"><p role="status">{OUTCOME_TEXT[personal.status]}</p>{personal.status === 'confirmed' && personal.baseline && <SummaryCard summary={{ current_position: personal.baseline.position, reason_summary: personal.baseline.reason_summary, relevant_conditions: personal.baseline.conditions, unresolved_issue: '' }}/>}{personal.status === 'capped' && personal.summary && <SummaryCard summary={personal.summary}/>}</div>}
+    {OUTCOME_TEXT[personal.status] && <div className="sc-card personal-outcome"><p role="status">{OUTCOME_TEXT[personal.status]}</p>{personal.status === 'confirmed' && personal.baseline && <SummaryCard summary={{ current_position: personal.baseline.position, reason_summary: personal.baseline.reason_summary, relevant_conditions: personal.baseline.conditions, unresolved_issue: '' }}/>}{personal.status === 'capped' && personal.summary && <SummaryCard summary={personal.summary}/>}</div>}
     {note && <p role="status">{note}</p>}
   </section>;
 }

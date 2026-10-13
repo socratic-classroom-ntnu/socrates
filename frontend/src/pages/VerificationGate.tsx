@@ -98,8 +98,8 @@ export function VerificationGate({ user, onVerified }) {
   )
 
   return (
-    <main className="r104-verify-shell">
-      <section className="r2-glass r104-verify-card">
+    <main className="verify-shell">
+      <section className="sc-glass verify-card">
         <small>EMAIL VERIFICATION</small>
         <h1>完成 Email 驗證</h1>
         <p>
@@ -107,8 +107,8 @@ export function VerificationGate({ user, onVerified }) {
           完成後，教師工作室、加入教室與課堂操作會在同一個 Session 中啟用。
         </p>
 
-        <div className="r104-delivery-state" aria-live="polite">
-          <span className="r104-pulse" />
+        <div className="delivery-state" aria-live="polite">
+          <span className="verify-pulse" />
           <div>
             <strong>{label}</strong>
             {delivery.provider_message_id && (
@@ -119,7 +119,7 @@ export function VerificationGate({ user, onVerified }) {
           </div>
         </div>
 
-        <div className="r2-row">
+        <div className="sc-row">
           <button
             type="button"
             disabled={busy || cooldown > 0}
@@ -146,7 +146,7 @@ export function VerificationGate({ user, onVerified }) {
         </div>
 
         {delivery.preview_url && (
-          <a className="r104-local-preview" href={delivery.preview_url}>
+          <a className="local-preview" href={delivery.preview_url}>
             Local fixture：開啟本次驗證連結
           </a>
         )}

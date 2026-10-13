@@ -89,7 +89,7 @@ function ModelSelect({ label, value, onChange, choices, emptyLabel = '' }) {
   const custom = typing || (Boolean(value) && !known) || choices.length === 0
   const selected = custom ? OTHER : value || ''
   return (
-    <span className="r97-model-select">
+    <span className="model-select">
       <select
         aria-label={label}
         value={selected}
@@ -149,8 +149,8 @@ function ModelMatrix({
   const wrongService = Boolean(profile) && !isOpenRouter(profile) && isOpenRouterModel(model)
   const mismatched = mismatchedRoles(value, profile)
   return (
-    <section className="r97-model-matrix">
-      <div className="r2-row">
+    <section className="model-matrix">
+      <div className="sc-row">
         <label>
           套用至全部 AI
           <ModelSelect
@@ -173,9 +173,9 @@ function ModelMatrix({
       {mismatched.length > 0 && (
         <p role="alert">這組連線不是 OpenRouter，下列角色仍設定為 OpenRouter 模型，請改選：{mismatched.join('、')}</p>
       )}
-      <div className="r2-script-grid">
+      <div className="sc-script-grid">
         {roles.map(([key, label]) => (
-          <label className="r2-card" key={key}>
+          <label className="sc-card" key={key}>
             {label}
             <ModelSelect
               label={label}
@@ -333,8 +333,8 @@ export function ProviderSettings() {
   }
 
   return (
-    <section className="r97-provider-settings">
-      <header className="r2-section-title">
+    <section className="provider-settings">
+      <header className="sc-section-title">
         <div>
           <small>帳號設定 · AI 服務</small>
           <h2>連接 AI 服務</h2>
@@ -342,9 +342,9 @@ export function ProviderSettings() {
         </div>
       </header>
 
-      <form className="r2-card r97-provider-form" onSubmit={createProfile}>
+      <form className="sc-card provider-form" onSubmit={createProfile}>
         <h3>新增 AI 服務連線</h3>
-        <div className="r2-grid">
+        <div className="sc-grid">
           <label>
             連線名稱
             <input
@@ -420,9 +420,9 @@ export function ProviderSettings() {
         <button disabled={busy}>建立連線</button>
       </form>
 
-      <div className="r2-script-grid">
+      <div className="sc-script-grid">
         {profiles.map(profile => (
-          <article className="r2-card r97-provider-card" key={profile.id}>
+          <article className="sc-card provider-card" key={profile.id}>
             <small>{profile.adapter}</small>
             <h3>{profile.name}</h3>
             <p>
@@ -446,7 +446,7 @@ export function ProviderSettings() {
                 }
               />
             </label>
-            <div className="r2-row">
+            <div className="sc-row">
               <button type="button" disabled={busy} onClick={() => void rotate(profile)}>
                 更新
               </button>
@@ -480,9 +480,9 @@ export function ProviderSettings() {
         ))}
       </div>
 
-      <section className="r2-card">
+      <section className="sc-card">
         <h3>帳號 AI 預設值</h3>
-        <div className="r2-grid">
+        <div className="sc-grid">
           <label>
             預設 AI 連線
             <select

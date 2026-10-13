@@ -77,13 +77,13 @@ export function ClassroomAISettings({ classroomId, activeRoomId = null, onSaved 
   if (!classroomId) return null
 
   return (
-    <details className="r2-card r97-classroom-ai" open>
+    <details className="sc-card classroom-ai" open>
       <summary>Classroom AI 設定</summary>
       <p>
         團體課堂由教師 Profile 承接；個人練習的建立者同時是這個 Classroom 的
         Teacher／Owner。
       </p>
-      <div className="r2-grid">
+      <div className="sc-grid">
         <label>
           Provider Profile
           <select

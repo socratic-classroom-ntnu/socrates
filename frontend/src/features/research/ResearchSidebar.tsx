@@ -26,7 +26,7 @@ export function prepareSearch(cx) {
 export function ResearchSidebar({ sessionId }) {
     const [open, setOpen] = useState(false), [query, setQuery] = useState(''), [status, setStatus] = useState('搜尋設定讀取中'), [scope, setScope] = useState('');
     const host = useRef(null), handle = useRef(null), last = useRef('');
-    const id = useRef('r73-search-' + Math.random().toString(36).slice(2));
+    const id = useRef('research-search-' + Math.random().toString(36).slice(2));
     useEffect(() => {
         let active = true;
         const abort = new AbortController();
@@ -61,15 +61,15 @@ export function ResearchSidebar({ sessionId }) {
     }
     else
         setStatus('查詢已保存；下方入口可開啟 Google。'); }
-    return <aside className={'r73-research ' + (open ? 'is-open' : 'is-closed')} data-r73-search aria-label="查資料側欄">
- <button type="button" className="r73-research-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '收合查資料 →' : '← 查資料'}</button>
+    return <aside className={'research-panel ' + (open ? 'is-open' : 'is-closed')} data-research-panel aria-label="查資料側欄">
+ <button type="button" className="research-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '收合查資料 →' : '← 查資料'}</button>
  <div hidden={!open}><header><small>選用工具 · GOOGLE</small><h2>查資料</h2><p>自行輸入關鍵字；回到題目時保留查詢與作答。</p></header>
- <form onSubmit={e => { e.preventDefault(); e.stopPropagation(); search(); }}><label htmlFor={id.current + '-q'}>搜尋關鍵字</label><div className="r73-search-field"><input id={id.current + '-q'} maxLength={200} value={query} onChange={e => setQuery(e.target.value)} placeholder="輸入想查證的內容"/><button type="submit" disabled={!query.trim()}>搜尋</button></div></form>
- <p role="status" className="r73-search-status">{status}</p><small>{scope === 'entitled-full-web' ? '既有全網搜尋權益' : scope === 'sites' ? '已設定網站範圍' : ''}</small>
- <div id={id.current} ref={host} className="r73-search-results"/>
- {query.trim() && <a href={'https://www.google.com/search?q=' + encodeURIComponent(query.trim())} target="_blank" rel="noopener noreferrer" className="r73-search-external">在 Google 開啟此查詢 ↗</a>}
+ <form onSubmit={e => { e.preventDefault(); e.stopPropagation(); search(); }}><label htmlFor={id.current + '-q'}>搜尋關鍵字</label><div className="search-field"><input id={id.current + '-q'} maxLength={200} value={query} onChange={e => setQuery(e.target.value)} placeholder="輸入想查證的內容"/><button type="submit" disabled={!query.trim()}>搜尋</button></div></form>
+ <p role="status" className="search-status">{status}</p><small>{scope === 'entitled-full-web' ? '既有全網搜尋權益' : scope === 'sites' ? '已設定網站範圍' : ''}</small>
+ <div id={id.current} ref={host} className="search-results"/>
+ {query.trim() && <a href={'https://www.google.com/search?q=' + encodeURIComponent(query.trim())} target="_blank" rel="noopener noreferrer" className="search-external">在 Google 開啟此查詢 ↗</a>}
  <footer>Google 接收你送出的搜尋文字。引用資料時，請保留來源與上下文。</footer></div></aside>;
 }
 export function AnswerWithResearch({ sessionId, children }) {
-    return <div className="r73-answer-layout"><div className="r73-answer-content">{children}</div><ResearchSidebar key={sessionId} sessionId={sessionId}/></div>;
+    return <div className="answer-layout"><div className="answer-content">{children}</div><ResearchSidebar key={sessionId} sessionId={sessionId}/></div>;
 }

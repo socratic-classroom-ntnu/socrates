@@ -44,7 +44,7 @@ export function BankPicker({ onPick }: { onPick: (question: BankQuestion) => str
 
   const pages = page ? Math.max(1, Math.ceil(page.total / BANK_PAGE_SIZE)) : 1
   const current = Math.floor(offset / BANK_PAGE_SIZE) + 1
-  return <div className="r2-card bank-picker">
+  return <div className="sc-card bank-picker">
     <form role="search" className="bank-search" onSubmit={event => { event.preventDefault(); setOffset(0); setTerm(query.trim()) }}>
       <label>搜尋題庫<input type="search" maxLength={200} value={query} placeholder="輸入標題、情境或標籤" onChange={event => setQuery(event.target.value)}/></label>
       <button type="submit">搜尋</button>
@@ -56,7 +56,7 @@ export function BankPicker({ onPick }: { onPick: (question: BankQuestion) => str
       <p className="bank-scenario">{preview.question.scenario}</p>
       <ol>{preview.question.options.map(option => <li key={option.id}>{option.text}</li>)}</ol>
       <BankTags tags={preview.tags}/>
-      <div className="r2-row">
+      <div className="sc-row">
         <button type="button" onClick={add}>加入草稿</button>
         <button type="button" className="quiet" onClick={() => setPreview(null)}>關閉預覽</button>
       </div>
@@ -67,7 +67,7 @@ export function BankPicker({ onPick }: { onPick: (question: BankQuestion) => str
       <div><strong>{item.title}</strong><small>{bankByline(item)} · {item.option_count} 個選項</small><p>{item.scenario_excerpt}</p><BankTags tags={item.tags}/></div>
       <button type="button" className="quiet" aria-label={`預覽題庫題目「${item.title}」`} aria-pressed={preview?.id === item.id} onClick={() => void open(item)}>預覽</button>
     </li>)}</ul>}
-    {pages > 1 && <nav className="r2-row" aria-label="題庫分頁">
+    {pages > 1 && <nav className="sc-row" aria-label="題庫分頁">
       <button type="button" className="quiet" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - BANK_PAGE_SIZE))}>上一頁</button>
       <span>第 {current}／{pages} 頁</span>
       <button type="button" className="quiet" disabled={current >= pages} onClick={() => setOffset(offset + BANK_PAGE_SIZE)}>下一頁</button>

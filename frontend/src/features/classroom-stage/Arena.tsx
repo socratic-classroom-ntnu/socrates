@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GroupAvatar } from './GroupAvatar';
-// PORTAL-R73-SELECTED-STAGE
+// 選定發言者的舞台
 /** Shared seats/focus are projected from the server; camera is local to this tab. */
 export function Arena({ room }) {
     const host = useRef(null);
@@ -134,5 +134,5 @@ export function Arena({ room }) {
             renderer.domElement.remove();
         };
     }, []);
-    return <div className="r2-arena" ref={host} aria-label="共享教室舞台"><div className="r73-native-avatar"><GroupAvatar roomId={room.id}/></div><div className="r2-stage-caption">SOCRATES · 共思劇場</div></div>;
+    return <div className="sc-arena" ref={host} aria-label="共享教室舞台"><div className="native-avatar"><GroupAvatar roomId={room.id}/></div><div className="sc-stage-caption">SOCRATES · 共思劇場</div></div>;
 }

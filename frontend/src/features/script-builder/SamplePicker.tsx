@@ -29,7 +29,7 @@ export function SamplePicker({ onPick }: { onPick: (question: Question) => strin
     return () => { live = false }
   }, [])
 
-  return <div className="r2-card sample-picker">
+  return <div className="sc-card sample-picker">
     {note && <p role="status">{note}</p>}
     {!samples && !note && <p>正在讀取範例題目…</p>}
     {samples && <>

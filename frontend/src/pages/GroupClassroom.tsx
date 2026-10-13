@@ -102,7 +102,7 @@ export function GroupClassroomGate({ user, id, Legacy }) {
     useEffect(() => { if (view?.route?.group_id)
         location.replace(`/classrooms/${view.route.group_id}?mode=student`); }, [view?.route?.group_id]);
     if (!view)
-        return <main className="r2-loading"><h2>正在讀取教室</h2><p role="status">{error || '教室與組別資料正在同步。'}</p><button onClick={() => void refresh()}>重新讀取</button></main>;
+        return <main className="sc-loading"><h2>正在讀取教室</h2><p role="status">{error || '教室與組別資料正在同步。'}</p><button onClick={() => void refresh()}>重新讀取</button></main>;
     if (view.kind === 'Legacy')
         return <Legacy user={user} id={id}/>;
     if (view.kind === 'GroupCollection' && view.role === 'teacher')
@@ -114,7 +114,7 @@ export function GroupClassroomGate({ user, id, Legacy }) {
         const personalStage = view.role === 'student' && (view.personal?.open || view.phase === 'personal');
         return <>{standalone ? <GroupStage view={view}/> : personalStage ? <PersonalStage view={view} refresh={refresh}/> : <Legacy user={user} id={id}/>}<EvidencePanel view={view} refresh={refresh} standalone={standalone}/></>;
     }
-    return <main className="r2-loading"><h2>正在前往你的組別</h2><p>{error}</p></main>;
+    return <main className="sc-loading"><h2>正在前往你的組別</h2><p>{error}</p></main>;
 }
 /** 後端 unavailable_actions 的原因碼 → 老師看得懂的說明。 */
 const ACTION_REASON = {
@@ -258,33 +258,33 @@ function GroupCollection({ view, refresh }) {
         setBatchNote(outcomes.join('；'));
         await refresh();
     }
-    return <main className="r2-home g70" data-r70-groups><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{view.title}</span><a href="/teacher/home">返回我的課程</a></header>
-    <section className="r2-home-hero"><small>教師端 · 課堂準備</small><h1>{view.title}</h1><p>分享加入代碼，確認名單與分組，接著開始課堂。</p></section>
-    {view.phase === 'lobby' ? <section className="r2-glass"><div className="r2-row"><div className="r2-code-display">{view.code}</div><button className="quiet" onClick={() => void navigator.clipboard.writeText(view.code).then(() => setBatchNote('加入代碼已複製')).catch(() => setBatchNote('請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
-      <div className="r2-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
+    return <main className="sc-home group-room" data-group-collection><header className="sc-top"><a href="/" className="sc-wordmark">Socrates<span>共思教室</span></a><span>{view.title}</span><a href="/teacher/home">返回我的課程</a></header>
+    <section className="sc-home-hero"><small>教師端 · 課堂準備</small><h1>{view.title}</h1><p>分享加入代碼，確認名單與分組，接著開始課堂。</p></section>
+    {view.phase === 'lobby' ? <section className="sc-glass"><div className="sc-row"><div className="sc-code-display">{view.code}</div><button className="quiet" onClick={() => void navigator.clipboard.writeText(view.code).then(() => setBatchNote('加入代碼已複製')).catch(() => setBatchNote('請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
+      <div className="sc-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>每組人數<input type="number" min={1} max={40} value={size} onChange={e => setSize(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       </div><p role="status" aria-live="polite">目前 {fit.people} 人（含 AI）／容量 {count}×{size}＝{fit.capacity} 人</p>
-      {!fit.enough && <div className="r2-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>{aiEnabled ? 'AI 學生與教室角色（選用）' : '教室角色（選用）'}</summary><div className="r2-grid">{aiEnabled && <label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>}
+      {!fit.enough && <div className="sc-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>{aiEnabled ? 'AI 學生與教室角色（選用）' : '教室角色（選用）'}</summary><div className="sc-grid">{aiEnabled && <label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>}
       <label>教室角色<select value={pack} onChange={e => setPack(e.target.value)}>{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
       {aiEnabled && <><p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
-      <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy || aiAddBlocked} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || aiAddBlocked || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || (gate ? !gate.can('clear_ai_students') : !(view.roster || []).some(m => m.actor_type === 'llm_student'))} onClick={() => void clearAI()}>清除 AI 學生</button></div>
+      <div className="sc-row ai-roster-controls"><button disabled={mutation.busy || aiAddBlocked} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || aiAddBlocked || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || (gate ? !gate.can('clear_ai_students') : !(view.roster || []).some(m => m.actor_type === 'llm_student'))} onClick={() => void clearAI()}>清除 AI 學生</button></div>
       <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p>
       <p className="ai-roster-status" role="status" aria-live="polite">目前 AI 學生 {aiStudents} 位{aiNote ? ` · ${aiNote}` : ''}</p></>}</details>
-      <details className="r2-card"><summary>進階 AI 設定（選用）</summary><ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/></details>
-      <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
+      <details className="sc-card"><summary>進階 AI 設定（選用）</summary><ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/></details>
+      <div className="sc-script-grid">{(view.roster || []).map((m, i) => <article className="sc-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>
-      <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
-      <div className="r2-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough || (!!gate && !gate.can('configure'))} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
-    </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
-      {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
+      <label className="group-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
+      <div className="sc-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough || (!!gate && !gate.can('configure'))} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
+    </section> : <><div className="sc-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
+      {analysis ? <GroupAnalytics id={view.id}/> : <div className="sc-script-grid">{(view.groups || []).map(g => <a className="sc-card group-card" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
 }
 function GroupStage({ view }) {
-    return <main className="r2-home g70 g70-stage"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {phaseLabel(view.phase)}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
-    <section className="r2-home-hero"><small>{view.source_mode} · GROUP DIALOGUE</small><h1>{view.question?.title || view.title}</h1><p>{view.question?.scenario}</p></section>
+    return <main className="sc-home group-room group-stage"><header className="sc-top"><a className="sc-wordmark" href="/">Socrates</a><span>{view.group_label} · {phaseLabel(view.phase)}</span>{view.role === 'teacher' && <a href={`/classrooms/${view.classroom_id}?mode=teacher`}>全班</a>}</header>
+    <section className="sc-home-hero"><small>{view.source_mode} · GROUP DIALOGUE</small><h1>{view.question?.title || view.title}</h1><p>{view.question?.scenario}</p></section>
     <GroupAvatar packId={view.avatar_pack_id || 'stickman'}/>
     <FocusNotice status={view.focus_notice ? 'TUTOR_UNAVAILABLE' : null} message={view.focus_notice}/>
-    <section className="g70-transcript">{(view.transcript || []).flatMap((f, fi) => f.messages.map((m, i) => <article className={'r2-card ' + m.role} key={`${fi}-${i}`}><small>{m.role === 'tutor' ? '導師' : view.members?.find(x => x.id === f.member_id)?.alias || '同學'}</small><p>{m.text}</p></article>))}</section>
+    <section className="group-transcript">{(view.transcript || []).flatMap((f, fi) => f.messages.map((m, i) => <article className={'sc-card ' + m.role} key={`${fi}-${i}`}><small>{m.role === 'tutor' ? '導師' : view.members?.find(x => x.id === f.member_id)?.alias || '同學'}</small><p>{m.text}</p></article>))}</section>
   </main>;
 }
 function PersonalStage({ view, refresh }) {
@@ -295,8 +295,8 @@ function PersonalStage({ view, refresh }) {
             await refresh();
         return ok;
     }
-    return <main className="r2-classroom"><header className="r2-top"><a className="r2-wordmark" href="/">Socrates</a><span>{view.group_label} · {view.title}</span></header>
-    {view.personal ? <PersonalPanel question={view.question} personal={view.personal} actions={view.available_actions || []} send={send} busy={mutation.busy} note={mutation.note}/> : <section className="r2-lobby"><small>個人對話</small><h1>{view.question?.title}</h1><p>本題作答時間已結束，其他同學正在與導師個別對話。請稍候，老師會帶大家進入討論。</p></section>}
+    return <main className="sc-classroom"><header className="sc-top"><a className="sc-wordmark" href="/">Socrates</a><span>{view.group_label} · {view.title}</span></header>
+    {view.personal ? <PersonalPanel question={view.question} personal={view.personal} actions={view.available_actions || []} send={send} busy={mutation.busy} note={mutation.note}/> : <section className="sc-lobby"><small>個人對話</small><h1>{view.question?.title}</h1><p>本題作答時間已結束，其他同學正在與導師個別對話。請稍候，老師會帶大家進入討論。</p></section>}
   </main>;
 }
 function EvidencePanel({ view, refresh, standalone }) {
@@ -333,23 +333,23 @@ function EvidencePanel({ view, refresh, standalone }) {
     }
     async function ack() { if (await mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'group_ack', data: { summary_digest: view.my_summary?.digest } }))
         await refresh(); }
-    return <section className={'g70-evidence ' + (standalone ? 'inline' : 'floating')}><button className="quiet" onClick={() => setOpen(!open)}>本組觀點與確認 {open ? '收合' : '展開'} · {view.confirmed_members?.length || 0}/{view.members?.length || 0}</button>
+    return <section className={'group-evidence ' + (standalone ? 'inline' : 'floating')}><button className="quiet" onClick={() => setOpen(!open)}>本組觀點與確認 {open ? '收合' : '展開'} · {view.confirmed_members?.length || 0}/{view.members?.length || 0}</button>
     {open && <><h2>{view.group_label} · 原話與觀點</h2><p>{view.settlement?.state === 'FINAL_STAGE' ? '最終反思階段：持續保存補充，階段結束後結算。' : settled ? '本組對話與確認證據已保存。' : '確認後可繼續補充；全組確認後，再完整進行一個最終舞台階段。'}</p>
-      <div className="g70-memberline">{view.members?.map(m => <span key={m.id} tabIndex={view.role === 'teacher' ? 0 : undefined} title={username[m.id]} onMouseEnter={() => { if (view.role === 'teacher')
+      <div className="group-memberline">{view.members?.map(m => <span key={m.id} tabIndex={view.role === 'teacher' ? 0 : undefined} title={username[m.id]} onMouseEnter={() => { if (view.role === 'teacher')
             void api(`/groups/runs/${view.id}/members/${m.id}/identity`).then(x => setUsername(v => ({ ...v, [m.id]: x.username }))).catch(() => undefined); }} onFocus={() => { if (view.role === 'teacher')
             void api(`/groups/runs/${view.id}/members/${m.id}/identity`).then(x => setUsername(v => ({ ...v, [m.id]: x.username }))).catch(() => undefined); }}>{m.alias}{view.confirmed_members?.includes(m.id) ? ' · 已確認' : ''}</span>)}</div>
-      <div className="g70-quotes">{view.arguments?.map(n => <blockquote key={n.id}><small>{view.members?.find(m => m.id === n.member_id)?.alias} · {n.kind} · {n.stage}</small><p>{n.text}</p></blockquote>)}</div>
+      <div className="group-quotes">{view.arguments?.map(n => <blockquote key={n.id}><small>{view.members?.find(m => m.id === n.member_id)?.alias} · {n.kind} · {n.stage}</small><p>{n.text}</p></blockquote>)}</div>
       {view.role === 'student' && allowed && !settled && <><label>我的補充<textarea rows={3} maxLength={12000} value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 void send();
             } }}/></label>
-        <div className="r2-grid"><label>回應哪一則<select value={parent} onChange={e => setParent(e.target.value)}><option value="">新的起點</option>{view.arguments?.map(n => <option key={n.id} value={n.id}>{n.text.slice(0, 55)}</option>)}</select></label><label>論點關係<select value={relation} onChange={e => setRelation(e.target.value)}><option value="supports">支持</option><option value="challenges">質疑</option><option value="qualifies">補充條件</option><option value="revises">修正</option></select></label></div>
+        <div className="sc-grid"><label>回應哪一則<select value={parent} onChange={e => setParent(e.target.value)}><option value="">新的起點</option>{view.arguments?.map(n => <option key={n.id} value={n.id}>{n.text.slice(0, 55)}</option>)}</select></label><label>論點關係<select value={relation} onChange={e => setRelation(e.target.value)}><option value="supports">支持</option><option value="challenges">質疑</option><option value="qualifies">補充條件</option><option value="revises">修正</option></select></label></div>
         <button disabled={mutation.busy || !text.trim()} onClick={() => void send()}>保存原話</button>
         {!confirmed && !!view.my_summary?.quotes.length && !confirmable && <p className="muted">所有題目與代表討論結束後，才能確認自己的觀點。</p>}
-        {!confirmed && !!view.my_summary?.quotes.length && confirmable && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="g70-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
+        {!confirmed && !!view.my_summary?.quotes.length && confirmable && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="group-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
       </>}
       {view.role === 'teacher' && <PersonalProgress progress={view.personal_progress} overview={view.personal_overview} send={teacherSend} busy={mutation.busy}/>}
-      {view.role === 'teacher' && !settled && <div className="r2-row">
+      {view.role === 'teacher' && !settled && <div className="sc-row">
         {teacherCan('next') && <button disabled={mutation.busy} onClick={() => void teacherCommand('next')}>本組：下一步</button>}
         {teacherCan('end') && (confirmEnd
             ? <span className="group-end-confirm" role="group" aria-label="確認結束本組課堂"><span>{view.members?.length && (view.confirmed_members?.length || 0) < view.members.length ? `還有 ${view.members.length - (view.confirmed_members?.length || 0)} 位學生未確認觀點，結束後會記為未完成。` : '結束後本組不能再補充。'}</span><button className="danger" disabled={mutation.busy} onClick={() => void teacherCommand('end')}>確定結束</button><button className="quiet" disabled={mutation.busy} onClick={() => setConfirmEnd(false)}>取消</button></span>

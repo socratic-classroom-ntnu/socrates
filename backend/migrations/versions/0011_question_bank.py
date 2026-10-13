@@ -1,6 +1,6 @@
 """題庫商店（issue #17）：老師發布到共享題庫的單一題目。
 
-Self-contained DDL matching app.api.routes.question_bank.BankQuestion as of 2026-10-12.
+Self-contained DDL matching app.repositories.classroom_storage.BankQuestion as of 2026-10-12.
 """
 
 from typing import Sequence, Union

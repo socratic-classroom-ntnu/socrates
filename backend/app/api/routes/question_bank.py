@@ -13,12 +13,11 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from app.api.model_base import TrimmedModel
-from sqlalchemy import JSON, Float, ForeignKey, Integer, String, Text, and_, func, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import and_, func, select
 
 from app.api.classroom_schemas import Question, ScriptDocument
 from app.orchestrator.classroom import DomainError
-from app.repositories.classroom_storage import Account, Base, Script, transaction
+from app.repositories.classroom_storage import Account, BankQuestion, Script, transaction
 
 # 每份劇本最多可放的題目數；加入題庫題目時超過就拒絕。
 MAX_SCRIPT_QUESTIONS = 50
@@ -26,21 +25,6 @@ MAX_SCRIPT_QUESTIONS = 50
 STRIPPED_KEYS = ("scenario_ai", "provider_profile_id")
 MAX_TAGS = 8
 PAGE_LIMIT = 50
-
-
-class BankQuestion(Base):
-    __tablename__ = "bank_questions"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
-    title: Mapped[str] = mapped_column(String(300))
-    question: Mapped[dict] = mapped_column(JSON)
-    tags: Mapped[list] = mapped_column(JSON, default=list)
-    search_text: Mapped[str] = mapped_column(Text, default="")
-    source_script_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    source_question_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    published_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
-    revision: Mapped[int] = mapped_column(Integer, default=1)
 
 
 class BankMutation(TrimmedModel):

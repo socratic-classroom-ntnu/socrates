@@ -99,6 +99,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
   build:
     needs: [lock]
+    # Explicit: lock's own dependency (revoke) is usually skipped, and a skipped
+    # job anywhere upstream skips every job that relies on the implicit success().
+    if: ${{ !cancelled() && needs.lock.result == 'success' }}
     permissions: {contents: read, packages: write}
     uses: ./.github/workflows/stage-release.yml
     with:
@@ -109,7 +112,9 @@ jobs:
   # after a failed build too, so the comment never stays at "building".
   announce:
     needs: [lock, build]
-    if: always() && needs.lock.result == 'success' && needs.build.result != 'cancelled'
+    if: >-
+      always() && needs.lock.result == 'success'
+      && (needs.build.result == 'success' || needs.build.result == 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions: {contents: read, pull-requests: write}

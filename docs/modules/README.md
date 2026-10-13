@@ -1,6 +1,7 @@
 # Socratic 模組責任地圖
 
-- 狀態：C15 init current；模組地圖 Portal-Heron 寫（2026-10-13 16:20，~/arthur/main 188827e），PO-Goose 副署
+- 狀態：八模組與歸屬由 PO-Goose 副署（2026-10-13）；Arthur 核定見 WB CIR-PORTAL-01-G1。版本以 git log 為準，本檔不記 commit
+- 設計檔（Figma）：「Socratic · Frontend」一模組一頁（頁名同本表模組，前綴 01–08）；CE 端「CoolEnglish · Frontend」
 - 範圍權威：`docs/modules/modules.json`；`python3 scripts/check_modules.py` 檢查每個原始碼檔屬於且只屬於一個模組，`--write` 依它重寫下表與各模組文件的 Scope、待清項
 - 決策來源：Arthur 2026-10-13 15:18、15:31；PO-Goose C14 finale audit
 - 劃分 PO：`PO-Goose`

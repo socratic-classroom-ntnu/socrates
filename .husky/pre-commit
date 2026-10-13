@@ -1,6 +1,30 @@
 # 只檢查有變更的部分，不含測試與 build，求快。完整的一組在 pre-push。
 # 檢查範圍與 .github/workflows/ci.yml 對齊：CI 只 lint backend，不含 scripts。
 
+# 每次 commit 都依目前的程式碼重新產生前端的 OpenAPI 契約檔（對應 CI 的 contract job），
+# 有變就換成新版並加入這次 commit；沒變則 git add 不會有任何變動。
+# 必須在計算 CHANGED 之前做：契約檔有變時要算進 frontend/ 的改動，下面才會對新型別跑 typecheck。
+# 主機通常沒裝後端依賴：OpenAPI JSON 由容器印到 stdout，主機寫檔並產生 TS 型別。
+# 產生器讀的是工作目錄，沒暫存的 backend/app 改動也會被算進去；這種情況由 CI 的 contract-fix 自動修正。
+if docker compose exec -T backend true 2>/dev/null; then
+  echo "▶ regenerate OpenAPI contracts"
+  TMP_ROUND1=$(mktemp)
+  TMP_CLASSROOM=$(mktemp)
+  trap 'rm -f "$TMP_ROUND1" "$TMP_CLASSROOM"' EXIT
+  # 與 scripts/gen_types.sh 的 JSON 產生方式相同，兩邊要一起改。
+  docker compose exec -T backend python -c 'import json; from app.main import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' \
+    > "$TMP_ROUND1" || exit 1
+  docker compose exec -T -e PYTHONPATH=/app backend python scripts/gen_classroom_types.py --print-spec \
+    > "$TMP_CLASSROOM" || exit 1
+  cp "$TMP_ROUND1" frontend/openapi.json
+  (cd frontend && npx --no-install openapi-typescript openapi.json -o src/api/types.ts) || exit 1
+  python3 scripts/gen_classroom_types.py --spec "$TMP_CLASSROOM" >/dev/null || exit 1
+  git add -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
+else
+  # 有 backend/ 改動時，下面的 backend 檢查會因為容器沒啟動而擋下。
+  echo "⚠ backend 容器未啟動，略過 OpenAPI 契約的重新產生（docker compose up -d 後就會自動產生）"
+fi
+
 CHANGED=$(git diff --cached --name-only --diff-filter=ACMR)
 
 if echo "$CHANGED" | grep -q '^frontend/'; then
@@ -22,27 +46,4 @@ if echo "$CHANGED" | grep -q '^backend/'; then
   echo "▶ backend ruff check + format check"
   docker compose exec -T backend ruff check . || exit 1
   docker compose exec -T backend ruff format --check . || exit 1
-fi
-
-# 每次 commit 都依目前的程式碼重新產生前端的 OpenAPI 契約檔（對應 CI 的 contract job），
-# 有變就換成新版並加入這次 commit；沒變則 git add 不會有任何變動。
-# 主機通常沒裝後端依賴：OpenAPI JSON 由容器印到 stdout，主機寫檔並產生 TS 型別。
-# 產生器讀的是工作目錄，沒暫存的 backend/app 改動也會被算進去；這種情況由 CI 的 contract 自動修正。
-if docker compose exec -T backend true 2>/dev/null; then
-  echo "▶ regenerate OpenAPI contracts"
-  TMP_ROUND1=$(mktemp)
-  TMP_CLASSROOM=$(mktemp)
-  trap 'rm -f "$TMP_ROUND1" "$TMP_CLASSROOM"' EXIT
-  # 與 scripts/gen_types.sh 的 JSON 產生方式相同，兩邊要一起改。
-  docker compose exec -T backend python -c 'import json; from app.main import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' \
-    > "$TMP_ROUND1" || exit 1
-  docker compose exec -T -e PYTHONPATH=/app backend python scripts/gen_classroom_types.py --print-spec \
-    > "$TMP_CLASSROOM" || exit 1
-  cp "$TMP_ROUND1" frontend/openapi.json
-  (cd frontend && npx --no-install openapi-typescript openapi.json -o src/api/types.ts) || exit 1
-  python3 scripts/gen_classroom_types.py --spec "$TMP_CLASSROOM" >/dev/null || exit 1
-  git add -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
-else
-  # 有 backend/ 改動時，上面的 ruff 檢查已經因為容器沒啟動而擋下了。
-  echo "⚠ backend 容器未啟動，略過 OpenAPI 契約的重新產生（docker compose up -d 後就會自動產生）"
 fi

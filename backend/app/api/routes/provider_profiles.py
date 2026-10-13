@@ -33,6 +33,7 @@ from app.tutor.classroom_provider import ProviderWait
 from app.repositories.classroom_storage import (
     Account,
     Base,
+    CallAudit,
     LoginSession,
     Room,
     digest,
@@ -75,6 +76,64 @@ DEFAULT_BUDGET = {
     "estimated_cost_ceiling": None,
     "fallback_policy": "owner-profile-then-deterministic",
 }
+
+PROVIDER_OUTPUT_REASONS = frozenset(
+    {
+        "PROVIDER_EMPTY_CONTENT",
+        "PROVIDER_SCHEMA_MISMATCH",
+        "SCRIPT_ASSIST_INVALID_OUTPUT",
+    }
+)
+
+
+def provider_error_status(reason: str) -> int:
+    """Keep typed provider errors in the application response body through the proxy."""
+    if reason in PROVIDER_OUTPUT_REASONS:
+        return 422
+    if reason.startswith("PROVIDER_HTTP_"):
+        return 424
+    return 503
+
+
+def record_direct_call_audit(
+    *,
+    actor_id: str,
+    endpoint: str,
+    role: str,
+    binding: dict | None,
+    state: str,
+    audit: dict | None = None,
+    reason_code: str | None = None,
+    latency_ms: int | None = None,
+) -> dict:
+    """Persist one interactive LLM attempt without requiring a classroom Job row."""
+    audit = deepcopy(audit or {})
+    metadata = {
+        "state": state,
+        "endpoint": endpoint,
+        "account_id": actor_id,
+        "role": role,
+        "provider": audit.get("provider") or (binding or {}).get("adapter"),
+        "provider_profile_id": audit.get("provider_profile_id")
+        or (binding or {}).get("profile_id"),
+        "requested_model": audit.get("requested_model") or (binding or {}).get("model"),
+        "actual_model": audit.get("actual_model"),
+        "latency_ms": audit.get("latency_ms", latency_ms),
+        "token_usage": deepcopy(audit.get("token_usage", {})),
+        "reasoning_tokens": audit.get("reasoning_tokens"),
+        "visible_output_tokens": audit.get("visible_output_tokens"),
+        "output_budget_tokens": audit.get("output_budget_tokens"),
+        "reasoning_budget_tokens": audit.get("reasoning_budget_tokens"),
+        "estimated_cost": audit.get("estimated_cost"),
+        "reason_code": reason_code,
+        "recorded_at": time.time(),
+    }
+    with transaction() as db:
+        row = CallAudit(job_id=None, metadata_json=metadata)
+        db.add(row)
+        db.flush()
+        audit_id = row.id
+    return {"audit_id": audit_id, **metadata}
 
 
 class ProviderProfile(Base):
@@ -567,8 +626,7 @@ async def test_profile(profile_id: str, request: Request):
     try:
         return await test_connection(binding)
     except ProviderWait as exc:
-        # 連線失敗回結構化代碼（例 PROVIDER_HTTP_401），前端換成中文；原本未處理會變成 500 純文字。
-        raise DomainError(exc.reason, 502) from exc
+        raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
 
 
 @router.get("/provider-profiles/{profile_id}/models")
@@ -591,7 +649,7 @@ async def provider_models(profile_id: str, request: Request):
     try:
         result = await discover_models(binding)
     except ProviderWait as exc:
-        raise DomainError(exc.reason, 502) from exc
+        raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
     with transaction() as db:
         current = _owned_profile(db, account.id, profile_id, True)
         current.metadata_json = {

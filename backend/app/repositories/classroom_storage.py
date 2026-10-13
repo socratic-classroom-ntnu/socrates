@@ -194,7 +194,9 @@ class Program(Base):
 class CallAudit(Base):
     __tablename__ = "llm_call_audit"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    job_id: Mapped[str] = mapped_column(String(36), ForeignKey("llm_jobs.id"), index=True)
+    job_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("llm_jobs.id"), index=True, nullable=True
+    )
     metadata_json: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 

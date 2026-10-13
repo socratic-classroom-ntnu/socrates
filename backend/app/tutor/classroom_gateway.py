@@ -200,11 +200,13 @@ def _validated_structured_result(value, schema) -> dict:
 
 
 async def _openai_generate(binding, messages, schema):
+    output_budget = env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048)
+    reasoning_budget = env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
     payload = {
         "model": binding["model"],
         "messages": messages,
         "stream": False,
-        "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
+        "max_tokens": output_budget + reasoning_budget,
         "response_format": {
             "type": "json_schema",
             "json_schema": {
@@ -216,6 +218,10 @@ async def _openai_generate(binding, messages, schema):
     }
     if binding.get("adapter") == "openrouter":
         payload["provider"] = {"require_parameters": True}
+        payload["reasoning"] = {
+            "exclude": True,
+            "max_tokens": reasoning_budget,
+        }
     response = await _bounded_request(
         binding,
         method="POST",
@@ -306,6 +312,28 @@ async def _gemini_generate(binding, messages, schema):
     return _validated_structured_result(raw, schema), usage, binding["model"]
 
 
+def _token_breakdown(usage: dict) -> tuple[int, int]:
+    details = usage.get("completion_tokens_details") or usage.get("output_tokens_details") or {}
+    reasoning = (
+        details.get("reasoning_tokens")
+        or usage.get("reasoning_tokens")
+        or usage.get("thoughtsTokenCount")
+        or 0
+    )
+    output = (
+        usage.get("completion_tokens")
+        or usage.get("output_tokens")
+        or usage.get("candidatesTokenCount")
+        or 0
+    )
+    try:
+        reasoning_value = max(0, int(reasoning))
+        output_value = max(0, int(output))
+    except (TypeError, ValueError):
+        return 0, 0
+    return reasoning_value, max(0, output_value - reasoning_value)
+
+
 def _estimated_cost(binding: dict, usage: dict) -> float | None:
     metadata = binding.get("metadata", {})
     input_rate = metadata.get("input_cost_per_million")
@@ -350,6 +378,7 @@ async def generate(binding, messages, schema, on_delta):
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
+    reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
     audit = {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
@@ -359,6 +388,12 @@ async def generate(binding, messages, schema, on_delta):
         "use_case": binding["role"],
         "latency_ms": round((time.monotonic() - started) * 1000),
         "token_usage": usage,
+        "reasoning_tokens": reasoning_tokens,
+        "visible_output_tokens": visible_output_tokens,
+        "output_budget_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
+        "reasoning_budget_tokens": (
+            env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024) if adapter == "openrouter" else None
+        ),
         "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,
     }
@@ -367,6 +402,7 @@ async def generate(binding, messages, schema, on_delta):
 
 def _model_capabilities(item: dict, adapter: str) -> dict:
     raw_parameters = item.get("supported_parameters", item.get("supportedParameters"))
+    reasoning = item.get("reasoning") if isinstance(item.get("reasoning"), dict) else None
     parameters = (
         [str(value) for value in raw_parameters if value]
         if isinstance(raw_parameters, list)
@@ -386,6 +422,7 @@ def _model_capabilities(item: dict, adapter: str) -> dict:
     return {
         "supported_parameters": parameters,
         "structured_outputs": structured_outputs,
+        "reasoning": reasoning,
     }
 
 

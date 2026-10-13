@@ -294,7 +294,11 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.orchestrator.classroom import DomainError
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.classroom_gateway import generate
-    from app.api.routes.provider_profiles import resolve_request_chain
+    from app.api.routes.provider_profiles import (
+        provider_error_status,
+        record_direct_call_audit,
+        resolve_request_chain,
+    )
 
     with transaction() as db:
         actor, session = account(db, request, True)
@@ -327,8 +331,9 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     async def no_delta(_):
         return None
 
-    failure: ProviderWait | None = None
+    failure: DomainError | None = None
     for binding in bindings:
+        started = time.monotonic()
         try:
             result, audit = await generate(
                 binding,
@@ -336,7 +341,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
                 OtherSuggestionResult,
                 no_delta,
             )
-            return {
+            response = {
                 "suggestion_text": result["suggestion_text"],
                 "suggestion_id": audit.get("request_id")
                 or sha256(result["suggestion_text"].encode()).hexdigest()[:16],
@@ -345,9 +350,52 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
                 "provider_profile_id": audit.get("provider_profile_id"),
                 "classroom_owner_id": routing.get("owner_id"),
             }
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="READY",
+                audit=audit,
+            )
+            return response
         except ProviderWait as exc:
-            failure = exc
-            continue
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="FAILED",
+                reason_code=exc.reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(exc.reason, provider_error_status(exc.reason))
+        except (KeyError, TypeError, ValueError):
+            reason = "PROVIDER_SCHEMA_MISMATCH"
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="FAILED",
+                reason_code=reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(reason, provider_error_status(reason))
     if failure is not None:
-        raise DomainError(failure.reason, 503)
-    return fallback_other_suggestion(body)
+        raise failure
+    response = fallback_other_suggestion(body)
+    record_direct_call_audit(
+        actor_id=actor.id,
+        endpoint="suggestions.other",
+        role="other_suggestion",
+        binding=None,
+        state="READY",
+        audit={
+            "provider": response["suggestion_provider"],
+            "actual_model": response["suggestion_model"],
+            "latency_ms": 0,
+            "token_usage": {},
+        },
+    )
+    return response

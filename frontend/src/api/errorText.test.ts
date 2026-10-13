@@ -13,7 +13,10 @@ test('sentences from the server pass through; unknown codes keep the code for re
 })
 
 test('provider HTTP codes and bare statuses get readable text', () => {
-  expect(errorText('PROVIDER_HTTP_401', 502)).toBe('AI 服務拒絕了這組 API 金鑰，請確認金鑰是否正確。')
+  expect(errorText('PROVIDER_HTTP_401', 424)).toBe('AI 服務拒絕了這組 API 金鑰，請確認金鑰是否正確。')
+  expect(errorText('PROVIDER_EMPTY_CONTENT', 422)).toContain('沒有回傳內容')
+  expect(errorText('PROVIDER_SCHEMA_MISMATCH', 422)).toContain('支援結構化輸出的模型')
+  expect(errorText(undefined, 424)).toContain('AI 服務目前無法完成')
   expect(errorText(undefined, 422)).toBe('有欄位內容不符合格式，請檢查後再試。')
   expect(errorText([{ loc: ['body'], msg: 'x' }], 503)).toBe('伺服器暫時無法處理，請稍後再試。')
 })

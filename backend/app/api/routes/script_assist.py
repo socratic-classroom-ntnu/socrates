@@ -9,6 +9,7 @@ the editor can drop into a draft.
 from __future__ import annotations
 
 import json
+import time
 from uuid import uuid4
 
 from fastapi import APIRouter, Request
@@ -111,7 +112,7 @@ def build_question(result: dict, target: dict | None) -> dict:
             return PublicQuestion.model_validate(candidate).model_dump()
         except ValidationError:
             continue
-    raise DomainError("SCRIPT_ASSIST_INVALID_OUTPUT", 502)
+    raise DomainError("SCRIPT_ASSIST_INVALID_OUTPUT", 422)
 
 
 @router.post("/scripts/assist")
@@ -120,6 +121,8 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
     from app.api.routes.provider_profiles import (
         AccountAISettings,
         _settings_view,
+        provider_error_status,
+        record_direct_call_audit,
         resolve_request_chain,
     )
     from app.services import classroom as service
@@ -148,36 +151,62 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
 
     failure: DomainError | None = None
     for binding in bindings:
+        started = time.monotonic()
         try:
             result, audit = await classroom_gateway.generate(binding, messages, schema, no_delta)
             result = ScriptAssistResult.model_validate(result).model_dump()
-        except ProviderWait as exc:
-            status = (
-                503
-                if exc.reason
-                in {
-                    "PROVIDER_EMPTY_CONTENT",
-                    "PROVIDER_SCHEMA_MISMATCH",
-                }
-                else 502
+            questions = _draft_questions(body.document)
+            target = questions[body.question_index] if body.question_index is not None else None
+            response = {
+                "question": build_question(result, target if isinstance(target, dict) else None),
+                "question_index": body.question_index,
+                "rationale": result["rationale"].strip(),
+                "model": audit.get("actual_model"),
+                "provider": audit.get("provider"),
+            }
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="scripts.assist",
+                role=ROLE,
+                binding=binding,
+                state="READY",
+                audit=audit,
             )
-            failure = DomainError(exc.reason, status)
-            continue
+            return response
+        except ProviderWait as exc:
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="scripts.assist",
+                role=ROLE,
+                binding=binding,
+                state="FAILED",
+                reason_code=exc.reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(exc.reason, provider_error_status(exc.reason))
         except DomainError as exc:
-            failure = exc
-            continue
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="scripts.assist",
+                role=ROLE,
+                binding=binding,
+                state="FAILED",
+                reason_code=exc.code,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(exc.code, provider_error_status(exc.code))
         except (ValidationError, KeyError, IndexError, TypeError, ValueError):
-            failure = DomainError("SCRIPT_ASSIST_INVALID_OUTPUT", 502)
-            continue
-        questions = _draft_questions(body.document)
-        target = questions[body.question_index] if body.question_index is not None else None
-        return {
-            "question": build_question(result, target if isinstance(target, dict) else None),
-            "question_index": body.question_index,
-            "rationale": result["rationale"].strip(),
-            "model": audit.get("actual_model"),
-            "provider": audit.get("provider"),
-        }
+            reason = "SCRIPT_ASSIST_INVALID_OUTPUT"
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="scripts.assist",
+                role=ROLE,
+                binding=binding,
+                state="FAILED",
+                reason_code=reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(reason, provider_error_status(reason))
     assert failure is not None
     raise failure
 

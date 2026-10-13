@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.api.classroom_schemas import OtherSuggestionResult
+from app.api.routes.provider_profiles import provider_error_status
 from app.classroom_app import create_app
 from app.repositories import classroom_storage as storage
 from app.tutor import classroom_gateway as gateway
@@ -69,6 +70,8 @@ def test_invalid_or_mismatched_json_becomes_provider_wait(raw):
 
 
 def test_openrouter_requires_structured_output_capability(monkeypatch):
+    monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
     captured = {}
 
     async def request(*_, **kwargs):
@@ -90,6 +93,8 @@ def test_openrouter_requires_structured_output_capability(monkeypatch):
         )
     )
     assert captured["provider"] == {"require_parameters": True}
+    assert captured["reasoning"] == {"exclude": True, "max_tokens": 50}
+    assert captured["max_tokens"] == 250
 
 
 def test_openrouter_model_capabilities_are_exposed(monkeypatch):
@@ -101,6 +106,10 @@ def test_openrouter_model_capabilities_are_exposed(monkeypatch):
                         "id": "structured-model",
                         "name": "Structured",
                         "supported_parameters": ["response_format", "tools"],
+                        "reasoning": {
+                            "supports_max_tokens": True,
+                            "default_enabled": True,
+                        },
                     },
                     {
                         "id": "plain-model",
@@ -116,7 +125,52 @@ def test_openrouter_model_capabilities_are_exposed(monkeypatch):
     first, second = result["models"]
     assert first["structured_outputs"] is True
     assert first["supported_parameters"] == ["response_format", "tools"]
+    assert first["reasoning"] == {
+        "supports_max_tokens": True,
+        "default_enabled": True,
+    }
     assert second["structured_outputs"] is False
+    assert second["reasoning"] is None
+
+
+def test_generate_audit_separates_reasoning_and_visible_output(monkeypatch):
+    async def generate(_binding, _messages, _schema):
+        return (
+            {"suggestion_text": "新的角度"},
+            {
+                "completion_tokens": 120,
+                "completion_tokens_details": {"reasoning_tokens": 80},
+            },
+            "actual-model",
+        )
+
+    monkeypatch.setattr(gateway, "_openai_generate", generate)
+    monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+
+    async def no_delta(_):
+        return None
+
+    _, audit = asyncio.run(
+        gateway.generate(
+            binding("openrouter"),
+            [{"role": "user", "content": "test"}],
+            OtherSuggestionResult,
+            no_delta,
+        )
+    )
+    assert audit["reasoning_tokens"] == 80
+    assert audit["visible_output_tokens"] == 40
+    assert audit["output_budget_tokens"] == 200
+    assert audit["reasoning_budget_tokens"] == 50
+
+
+def test_provider_error_status_preserves_typed_application_bodies():
+    assert provider_error_status("PROVIDER_EMPTY_CONTENT") == 422
+    assert provider_error_status("PROVIDER_SCHEMA_MISMATCH") == 422
+    assert provider_error_status("SCRIPT_ASSIST_INVALID_OUTPUT") == 422
+    assert provider_error_status("PROVIDER_HTTP_401") == 424
+    assert provider_error_status("PROVIDER_TIMEOUT") == 503
 
 
 DOC = {
@@ -192,7 +246,7 @@ def configure_ai(test_client) -> None:
     assert response.status_code == 200, response.text
 
 
-def test_provider_contract_failures_surface_as_503_codes(client, monkeypatch):
+def test_provider_contract_failures_surface_as_typed_codes_and_audits(client, monkeypatch):
     async def fail(_binding, _messages, schema, _on_delta):
         reason = (
             "PROVIDER_EMPTY_CONTENT"
@@ -209,7 +263,7 @@ def test_provider_contract_failures_surface_as_503_codes(client, monkeypatch):
         "/api/v2/scripts/assist",
         json={"request": "提出新角度", "document": DOC},
     )
-    assert assist.status_code == 503
+    assert assist.status_code == 422
     assert assist.json()["detail"] == "PROVIDER_EMPTY_CONTENT"
 
     suggestion = client.post(
@@ -221,5 +275,75 @@ def test_provider_contract_failures_surface_as_503_codes(client, monkeypatch):
             "existing_options": ["甲", "乙"],
         },
     )
-    assert suggestion.status_code == 503
+    assert suggestion.status_code == 422
     assert suggestion.json()["detail"] == "PROVIDER_SCHEMA_MISMATCH"
+
+    with storage.transaction() as db:
+        rows = db.scalars(select(storage.CallAudit).order_by(storage.CallAudit.created_at)).all()
+    assert [(row.job_id, row.metadata_json["endpoint"]) for row in rows] == [
+        (None, "scripts.assist"),
+        (None, "suggestions.other"),
+    ]
+    assert [row.metadata_json["reason_code"] for row in rows] == [
+        "PROVIDER_EMPTY_CONTENT",
+        "PROVIDER_SCHEMA_MISMATCH",
+    ]
+    assert all(row.metadata_json["state"] == "FAILED" for row in rows)
+
+
+def test_successful_interactive_calls_write_audits(client, monkeypatch):
+    async def success(_binding, _messages, schema, _on_delta):
+        result = (
+            {
+                "title": "新題目",
+                "scenario": "新的抉擇",
+                "options": ["甲", "乙"],
+                "tutor_goal": "辨認原則",
+                "probe_hints": ["為什麼？"],
+                "rationale": "測試",
+            }
+            if schema.__name__ == "ScriptAssistResult"
+            else {"suggestion_text": "另一個角度"}
+        )
+        return result, {
+            "provider": "openrouter",
+            "provider_profile_id": "profile-1",
+            "requested_model": "openrouter/free",
+            "actual_model": "provider/model",
+            "latency_ms": 12,
+            "token_usage": {"completion_tokens": 20},
+            "reasoning_tokens": 5,
+            "visible_output_tokens": 15,
+            "output_budget_tokens": 2048,
+            "reasoning_budget_tokens": 1024,
+        }
+
+    monkeypatch.setattr(gateway, "generate", success)
+    login(client, "teacher-success")
+    configure_ai(client)
+
+    assist = client.post(
+        "/api/v2/scripts/assist",
+        json={"request": "提出新角度", "document": DOC},
+    )
+    assert assist.status_code == 200, assist.text
+    suggestion = client.post(
+        "/api/v2/suggestions/other",
+        json={
+            "question_id": "q",
+            "title": "題目",
+            "scenario": "抉擇",
+            "existing_options": ["甲", "乙"],
+        },
+    )
+    assert suggestion.status_code == 200, suggestion.text
+
+    with storage.transaction() as db:
+        rows = db.scalars(select(storage.CallAudit).order_by(storage.CallAudit.created_at)).all()
+    assert [row.metadata_json["state"] for row in rows] == ["READY", "READY"]
+    assert [row.metadata_json["endpoint"] for row in rows] == [
+        "scripts.assist",
+        "suggestions.other",
+    ]
+    assert all(row.metadata_json["actual_model"] == "provider/model" for row in rows)
+    assert all(row.metadata_json["reasoning_tokens"] == 5 for row in rows)

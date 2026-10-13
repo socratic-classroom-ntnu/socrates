@@ -58,7 +58,6 @@
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
 - `group-dialogue→analytics  backend/app/api/routes/groups.py → backend/app/domain/group_analysis.py`
-- `orm-outside-repositories  backend/app/services/ai_students.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py`
 - `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom_library.py`

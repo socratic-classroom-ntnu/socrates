@@ -58,8 +58,8 @@
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
+- `content-authoring→classroom-core  backend/app/api/routes/classroom_library.py → backend/app/services/classroom.py`
 - `content-authoring→group-dialogue  backend/app/api/routes/classroom_library.py → backend/app/services/ai_students.py`
-- `orm-outside-repositories  backend/app/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/api/routes/question_bank.py → backend/app/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/provider_profiles.py`
 

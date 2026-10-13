@@ -54,7 +54,7 @@
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `orm-outside-repositories  backend/app/services/email_delivery.py`
+- 無
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

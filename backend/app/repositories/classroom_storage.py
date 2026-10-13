@@ -243,20 +243,16 @@ _FACTORY: Any = None
 
 
 def register_models() -> None:
-    """Import every module that defines a model, so foreign keys resolve on any path.
+    """Load module-owned ORM plugins before metadata or migrations are inspected."""
+    from importlib import import_module
 
-    ai_students carries a foreign key to provider_profiles, so a metadata that holds one
-    without the other cannot be resolved at all. Every path that reads the metadata calls
-    this: configure() for the application, migrations/env.py for alembic autogenerate.
-
-    Imported inside the function, not at module level, to keep provider modules out of
-    the orchestrator's import path (AGENTS.md: Orchestrator 不得 import 任何 provider).
-    """
-    from app.services import email_delivery  # noqa: F401
-    from app.services import ai_students  # noqa: F401
-    from app.api.routes import classroom_library  # noqa: F401
-    from app.api.routes import provider_profiles  # noqa: F401
-    from app.api.routes import question_bank  # noqa: F401
+    for module_name in (
+        "app.modules.identity_access.repositories",
+        "app.modules.ai_providers.repositories",
+        "app.modules.content_authoring.repositories",
+        "app.modules.group_dialogue.repositories",
+    ):
+        import_module(module_name)
 
 
 def configure(url: str | None = None, *, create: bool = False):

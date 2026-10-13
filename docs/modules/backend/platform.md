@@ -63,12 +63,7 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `platform→ai-providers  backend/app/repositories/classroom_storage.py → backend/app/api/routes/provider_profiles.py`
 - `platform→app-shell  backend/app/api/deps.py → backend/app/main.py`
-- `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/classroom_library.py`
-- `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/question_bank.py`
-- `platform→group-dialogue  backend/app/repositories/classroom_storage.py → backend/app/services/ai_students.py`
-- `platform→identity-access  backend/app/repositories/classroom_storage.py → backend/app/services/email_delivery.py`
 - `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py`
 - `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py`
 - `platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py`

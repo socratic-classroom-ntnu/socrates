@@ -15,35 +15,11 @@ from typing import Any
 from uuid import uuid4
 
 import httpx
-from sqlalchemy import JSON, Float, ForeignKey, String, Text, and_, or_, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import and_, or_, select
 
 from app.modules.platform.errors import DomainError
-from app.repositories.classroom_storage import Base, Mail, digest, transaction
-
-
-class MailDelivery(Base):
-    __tablename__ = "mail_delivery"
-
-    mail_id: Mapped[str] = mapped_column(String(36), ForeignKey("mail_outbox.id"), primary_key=True)
-    account_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("accounts.id"), nullable=True, index=True
-    )
-    purpose: Mapped[str] = mapped_column(String(24), default="transactional", index=True)
-    html_body: Mapped[str | None] = mapped_column(Text, nullable=True)
-    preview_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    idempotency_key: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    provider_message_id: Mapped[str | None] = mapped_column(String(160), nullable=True, index=True)
-    provider_status: Mapped[str] = mapped_column(String(40), default="QUEUED")
-    lease: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    lease_until: Mapped[float] = mapped_column(Float, default=0)
-    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
-    events: Mapped[list] = mapped_column(JSON, default=list)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
-    updated_at: Mapped[float] = mapped_column(Float, default=time.time)
-    sent_at: Mapped[float | None] = mapped_column(Float, nullable=True)
-    delivered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+from app.modules.identity_access.repositories import MailDelivery
+from app.repositories.classroom_storage import Mail, digest, transaction
 
 
 class MailDeliveryError(RuntimeError):

@@ -105,7 +105,7 @@ def violations(spec: dict) -> tuple[list[str], dict[str, list[str]]]:
                     for target in set(targets):
                         if "/api/routes/" in target and target != path:
                             found[side].append(f"route-imports-route  {path} → {target}")
-                if "/repositories/" not in path and re.search(r"__tablename__\s*=", text):
+                if "/repositories/" not in path and not path.endswith("/repositories.py") and not path.endswith("/interaction_repositories.py") and re.search(r"__tablename__\s*=", text):
                     found[side].append(f"orm-outside-repositories  {path}")
             elif not path.startswith("frontend/src/api/") and re.search(r"(?<![\w.])fetch\(", text):
                 found[side].append(f"fetch-outside-api  {path}")

@@ -21,7 +21,6 @@
 - `ai-providers→group-dialogue  backend/app/api/routes/provider_profiles.py → backend/app/services/ai_students.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_gateway.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_provider.py`
-- `orm-outside-repositories  backend/app/api/routes/provider_profiles.py`
 - `route-imports-route  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）

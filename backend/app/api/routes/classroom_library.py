@@ -1,61 +1,30 @@
 """Long-lived teacher Classroom assets, immutable Lessons, and linked Group Sessions."""
 
 from copy import deepcopy
-import time
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
 from pydantic import Field
 from app.api.model_base import TrimmedModel
-from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import select
 
 from app.modules.content_authoring.contracts import LibraryClassroomView
+from app.modules.content_authoring.repositories import (
+    ClassroomAssets,
+    LibraryReceipt,
+    SessionLink,
+)
 from app.services import classroom as service
 from app.modules.platform.errors import DomainError
 from app.services.ai_students import ensure_other_options
 from app.repositories.classroom_storage import (
     Account,
-    Base,
     Room,
     Script,
     Snapshot,
     digest,
     transaction,
 )
-
-
-class ClassroomAssets(Base):
-    __tablename__ = "classroom_assets"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
-    title: Mapped[str] = mapped_column(String(160))
-    revision: Mapped[int] = mapped_column(Integer, default=1)
-    assets: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class SessionLink(Base):
-    __tablename__ = "classroom_sessions"
-
-    room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_runs.id"), primary_key=True
-    )
-    classroom_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_assets.id"), index=True
-    )
-    batch_id: Mapped[str] = mapped_column(String(36), index=True)
-    kind: Mapped[str] = mapped_column(String(20))
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class LibraryReceipt(Base):
-    __tablename__ = "library_receipts"
-
-    key: Mapped[str] = mapped_column(String(200), primary_key=True)
-    payload_hash: Mapped[str] = mapped_column(String(64))
-    response: Mapped[dict] = mapped_column(JSON)
 
 
 class Mutation(TrimmedModel):

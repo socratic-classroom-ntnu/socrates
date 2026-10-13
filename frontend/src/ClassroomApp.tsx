@@ -374,7 +374,7 @@ function LegacyClassroom({ id }) {
             const ok = await run(selected ? 'focus_message' : 'barrage', { text });
             if (ok)
                 setText('');
-        } }}/><div className="r2-row">{f && !selected && ['heart', 'like', 'gift'].map((kind, i) => <button className="r2-reaction" key={kind} aria-label={kind} onClick={() => void api(`/classrooms/${id}/reactions`, 'POST', { action_id: crypto.randomUUID(), kind, focus_id: f.id, turn_index: f.turn_index }).catch(e => setNote(errorText(e)))}>{['♡', '讚', '◇'][i]}</button>)}</div></>}
+        } }}/><div className="r2-row">{f && !selected && room.available_actions.includes('reaction') && ['heart', 'like', 'gift'].map((kind, i) => <button className="r2-reaction" key={kind} aria-label={kind} onClick={() => void api(`/classrooms/${id}/reactions`, 'POST', { action_id: crypto.randomUUID(), kind, focus_id: f.id, turn_index: f.turn_index }).catch(e => setNote(errorText(e)))}>{['♡', '讚', '◇'][i]}</button>)}</div></>}
       </section></>}
     {room.phase === 'question_summary' && <section className="r2-lobby"><div className="r2-pulse"/><h1>正在醞釀下一個問題。</h1><p>本題討論已保存。模型可用時，課堂會自動接續。</p></section>}
     {room.phase === 'preview' && <section className="r2-lobby"><small>NEXT QUESTION</small><h1>{room.preview?.title || '下一個思考，即將展開。'}</h1><p>{room.preview?.scenario}</p>{room.role === 'teacher' && <div className="r2-row"><button onClick={() => void run('approve_question')}>採用題目</button><button className="quiet" onClick={() => void run('regenerate_question')}>重新生成</button></div>}</section>}

@@ -105,7 +105,8 @@ export function GroupClassroomGate({ user, id, Legacy }) {
     if (view.kind === 'GroupCollection' && view.role === 'teacher')
         return <GroupCollection view={view} refresh={refresh}/>;
     if (view.kind === 'GroupRun') {
-        const standalone = view.runtime_mode === 'individual-free-text' || ['final_reflection', 'viewpoint_review'].includes(view.phase);
+        // 分組課堂只有 native-group-stage 一種 runtime；確認觀點與最後反思用獨立舞台。
+        const standalone = ['final_reflection', 'viewpoint_review'].includes(view.phase);
         // 個人對話開放中（後端 personal.open）或個人階段：學生只看自己的對話，不看全班畫面。
         const personalStage = view.role === 'student' && (view.personal?.open || view.phase === 'personal');
         return <>{standalone ? <GroupStage view={view}/> : personalStage ? <PersonalStage view={view} refresh={refresh}/> : <Legacy user={user} id={id}/>}<EvidencePanel view={view} refresh={refresh} standalone={standalone}/></>;
@@ -157,8 +158,9 @@ function GroupCollection({ view, refresh }) {
     const localKey = JSON.stringify([view.roster_digest, count, size, pack, assignment]);
     const [savedKey, setSavedKey] = useState(() => (gate?.can('start') ? localKey : null));
     const configured = savedKey === localKey;
-    // AI 學生功能由後端 feature flag 決定（unavailable_actions 的 AI_STUDENTS_DISABLED）；關閉時整組 AI 控制項不出現。
-    const aiEnabled = !gate || gate.reason('add_ai_students') !== 'AI_STUDENTS_DISABLED';
+    // AI 學生功能由後端 feature flag 決定（view.features.ai_students；舊版後端看 unavailable_actions 的 AI_STUDENTS_DISABLED）；關閉時整組 AI 控制項不出現。
+    const aiFeature = view.features?.ai_students;
+    const aiEnabled = aiFeature ? aiFeature.enabled !== false : (!gate || gate.reason('add_ai_students') !== 'AI_STUDENTS_DISABLED');
     const aiAddBlocked = !!gate && !gate.can('add_ai_students');
     async function addAI(countToAdd) {
         if (countToAdd < 1)

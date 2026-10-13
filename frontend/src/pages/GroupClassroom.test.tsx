@@ -196,6 +196,13 @@ describe('teacher controls follow the backend action contract', () => {
     expect(screen.getByLabelText('教室角色')).toBeInTheDocument()
   })
 
+  test('view.features 關閉 AI 學生時，AI 控制項不出現', async () => {
+    serve(() => lobby({ features: { ai_students: { enabled: false, reason: 'AI_STUDENTS_DISABLED' } }, available_actions: ['configure'], unavailable_actions: { start: 'CURRENT_GROUP_CONFIGURATION_REQUIRED', add_ai_students: 'AI_STUDENTS_DISABLED', clear_ai_students: 'AI_STUDENTS_DISABLED' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    expect(await screen.findByText('教室角色（選用）')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '補滿剩餘席位' })).toBeNull()
+  })
+
   test('後端已確認可開始時，重新整理後不必再按一次儲存分組', async () => {
     serve(() => lobby({ available_actions: ['configure', 'start', 'add_ai_students', 'clear_ai_students'], unavailable_actions: {} }))
     render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)

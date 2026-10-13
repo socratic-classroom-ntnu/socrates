@@ -25,6 +25,13 @@ else
   running="網站目前仍是舊版：$(link "$served") $(title "$served")"
 fi
 
+# A branch from before the preview feature builds an image without the seed:
+# the preview runs, but with an empty database.
+accounts_note=""
+if ! gh api "repos/$REPO/contents/scripts/seed_preview.py?ref=$SHA" >/dev/null 2>&1; then
+  accounts_note="> ⚠️ 這個分支還沒有 \`scripts/seed_preview.py\`，所以下面的測試帳號**不存在**（資料庫是空的）。先把 \`develop\` merge 進來就會有。"
+fi
+
 case $state in
   building) status="⏳ **正在建置** ${head_ref}，完成後幾分鐘內會自動換上。" ;;
   deployed) status="✅ **已部署最新 commit**" ;;
@@ -43,6 +50,8 @@ $status
 $running
 
 每次 push 都會重新建置並更新這則留言。
+
+${accounts_note}
 
 | 帳號 | 身分 |
 |---|---|

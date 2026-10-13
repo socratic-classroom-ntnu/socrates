@@ -56,7 +56,11 @@ jobs:
         with: {ref: '${{ github.event.pull_request.head.sha }}'}
       - uses: actions/upload-artifact@v4
         with: {name: frontend-build-lock, path: frontend/package-lock.json, retention-days: 1}
-      - run: .github/scripts/preview-comment.sh building
+      # The helper comes from the merge commit (github.sha), not the PR head:
+      # a branch opened before this workflow existed has no .github/scripts.
+      - uses: actions/checkout@v4
+        with: {path: helper, sparse-checkout: .github/scripts}
+      - run: helper/.github/scripts/preview-comment.sh building
         env:
           GH_TOKEN: ${{ github.token }}
   build:
@@ -77,21 +81,30 @@ jobs:
     permissions: {contents: read, pull-requests: write}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: '${{ github.event.pull_request.head.sha }}'
-          sparse-checkout: .github/scripts
+        with: {sparse-checkout: .github/scripts}
       # Both halves roll out separately: the backend answers /api/release, the
-      # frontend serves /revision.json. Only call it deployed when both match.
+      # frontend serves /revision.json. Only call it deployed when both match,
+      # except that a PR branch older than /revision.json cannot report it.
+      # Bounded by a deadline, not a count: each curl may take its full -m 10.
       - name: Wait for the preview to serve this commit
         id: wait
         if: needs.build.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           sha_of() {
             curl -fsS -m 10 "$URL$1" 2>/dev/null \
               | python3 -c 'import json,sys; print(json.load(sys.stdin).get("source_sha", ""))' 2>/dev/null || true
           }
-          for _ in $(seq 1 90); do
-            if [ "$(sha_of /api/release)" = "$SHA" ] && [ "$(sha_of /revision.json)" = "$SHA" ]; then
+          frontend=$SHA
+          if ! gh api -H 'Accept: application/vnd.github.raw' \
+              "repos/$REPO/contents/deploy/stage/frontend.Dockerfile?ref=$SHA" | grep -q revision.json; then
+            frontend=skip
+          fi
+          deadline=$((SECONDS + 900))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            if [ "$(sha_of /api/release)" = "$SHA" ] \
+                && { [ "$frontend" = skip ] || [ "$(sha_of /revision.json)" = "$SHA" ]; }; then
               echo "state=deployed" >> "$GITHUB_OUTPUT"; exit 0
             fi
             sleep 10

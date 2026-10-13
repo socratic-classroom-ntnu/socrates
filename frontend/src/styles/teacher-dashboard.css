@@ -169,7 +169,7 @@
 .r2-classroom .r2-live-dialog>p{max-height:none;color:#23352f;font-size:18px}
 .r2-classroom .r2-live-dialog small,.r2-classroom .r2-focus-chat small{color:#596f61}
 .r2-classroom .r2-arena{height:clamp(260px,36vh,420px);min-height:260px}
-.r2-classroom .r2-focus-chat{position:relative;left:auto;top:auto;bottom:auto;width:min(920px,calc(100% - 40px));margin:16px auto;max-height:320px;background:#fff;border-color:#d1ded2;color:#23352f}
+.r2-classroom .r2-focus-chat{position:relative;left:auto;top:auto;bottom:auto;width:min(920px,calc(100% - 40px));margin:16px auto;max-height:none;background:#fff;border-color:#d1ded2;color:#23352f}
 .r2-classroom .r2-dialog{box-shadow:none;border:1px solid #cfdbd0;background:#fff;color:#23352f}
 .r2-classroom .r2-answer{margin:28px auto;max-width:1040px}
 .r2-classroom .r2-prompt,.r73-answer-content .r2-prompt{background:#edf3ea;border:1px solid #c7d9c7;border-left:4px solid #406f50;border-radius:12px;box-shadow:none;padding:24px 28px}

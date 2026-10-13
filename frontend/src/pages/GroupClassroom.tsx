@@ -112,6 +112,25 @@ export function GroupClassroomGate({ user, id, Legacy }) {
     }
     return <main className="r2-loading"><h2>正在前往你的組別</h2><p>{error}</p></main>;
 }
+/** 後端 unavailable_actions 的原因碼 → 老師看得懂的說明。 */
+const ACTION_REASON = {
+    LOBBY_REQUIRED: '課堂已開始，分組與名單不能再調整。',
+    CURRENT_POPULATED_ROSTER_REQUIRED: '還沒有學生入座，學生或 AI 學生加入並儲存分組後才能開始。',
+    CURRENT_GROUP_CONFIGURATION_REQUIRED: '請先按「1. 儲存分組」保存目前的名單與分組（名單或分組設定變更後要重新儲存）。',
+    AI_STUDENTS_DISABLED: 'AI 學生功能目前未開放。',
+    AI_STUDENTS_REQUIRED: '目前沒有 AI 學生。',
+};
+/** 可用動作只看後端給的 available_actions／unavailable_actions；舊版後端沒給時回 null，畫面沿用原本的本機判斷。 */
+export function actionGate(view) {
+    if (!Array.isArray(view?.available_actions))
+        return null;
+    const unavailable = view.unavailable_actions || {};
+    return {
+        can: (action) => view.available_actions.includes(action),
+        reason: (action) => unavailable[action] || null,
+        text: (action) => { const code = unavailable[action]; return code ? (ACTION_REASON[code] || `目前不能執行（${code}）。`) : ''; },
+    };
+}
 function GroupCollection({ view, refresh }) {
     const [count, setCount] = useState(view.configuration?.group_count || 1);
     const [size, setSize] = useState(view.configuration?.members_per_group || 1);
@@ -119,7 +138,8 @@ function GroupCollection({ view, refresh }) {
     const [pack, setPack] = useState(view.configuration?.avatar_pack_id || 'stickman');
     const [aiCount, setAICount] = useState(1);
     const [catalog, setCatalog] = useState([{ id: 'stickman', name: 'Stickman · 教室基本角色' }]);
-    const [acceptAlias, setAcceptAlias] = useState(false), [configured, setConfigured] = useState(false), [analysis, setAnalysis] = useState(false);
+    const gate = actionGate(view);
+    const [acceptAlias, setAcceptAlias] = useState(false), [analysis, setAnalysis] = useState(false);
     const [batchNote, setBatchNote] = useState('');
     const batch = useRef(new Map());
     const mutation = useMutation();
@@ -133,7 +153,13 @@ function GroupCollection({ view, refresh }) {
     const fit = groupCapacity(rosterRows, count, size, assignment);
     useEffect(() => { const abort = new AbortController(); fetch('/avatar-packs/catalog.json', { signal: abort.signal }).then(r => { if (!r.ok)
         throw Error('catalog'); return r.json(); }).then(x => setCatalog([{ id: 'stickman', name: 'Stickman · 教室基本角色' }, ...(x.packs || []).map((p) => ({ id: p.id, name: p.name }))])).catch(() => undefined); return () => abort.abort(); }, []);
-    useEffect(() => { setConfigured(false); }, [view.roster_digest, count, size, pack, assignment]);
+    // 「已儲存分組」＝目前畫面上的名單與分組，等於最後一次成功儲存（或後端已確認可開始時載入）的那一份。
+    const localKey = JSON.stringify([view.roster_digest, count, size, pack, assignment]);
+    const [savedKey, setSavedKey] = useState(() => (gate?.can('start') ? localKey : null));
+    const configured = savedKey === localKey;
+    // AI 學生功能由後端 feature flag 決定（unavailable_actions 的 AI_STUDENTS_DISABLED）；關閉時整組 AI 控制項不出現。
+    const aiEnabled = !gate || gate.reason('add_ai_students') !== 'AI_STUDENTS_DISABLED';
+    const aiAddBlocked = !!gate && !gate.can('add_ai_students');
     async function addAI(countToAdd) {
         if (countToAdd < 1)
             return;
@@ -163,12 +189,13 @@ function GroupCollection({ view, refresh }) {
         if (await mutation.send(`/groups/classrooms/${view.id}/configure`, {
             expected_roster_digest: view.roster_digest, group_count: count, members_per_group: size, assignments: assignment, avatar_pack_id: pack
         })) {
+            setSavedKey(localKey);
             await refresh();
-            setConfigured(true);
         }
     }
     // 「開始課堂」不能按時，直接說明原因。
     const startBlocked = mutation.busy ? '正在處理上一個操作，請稍候。'
+        : gate && !gate.can('start') && gate.reason('start') !== 'CURRENT_GROUP_CONFIGURATION_REQUIRED' ? gate.text('start')
         : !rosterRows.length ? '還沒有學生入座，學生或 AI 學生加入並儲存分組後才能開始。'
             : !fit.enough ? '分組容量不足，請先調整組數或每組人數，再按「1. 儲存分組」。'
                 : !configured ? '請先按「1. 儲存分組」保存目前的名單與分組（名單或分組設定變更後要重新儲存）。' : '';
@@ -207,16 +234,16 @@ function GroupCollection({ view, refresh }) {
       <div className="r2-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>每組人數<input type="number" min={1} max={40} value={size} onChange={e => setSize(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       </div><p role="status" aria-live="polite">目前 {fit.people} 人（含 AI）／容量 {count}×{size}＝{fit.capacity} 人</p>
-      {!fit.enough && <div className="r2-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>AI 學生與教室角色（選用）</summary><div className="r2-grid"><label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
+      {!fit.enough && <div className="r2-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>{aiEnabled ? 'AI 學生與教室角色（選用）' : '教室角色（選用）'}</summary><div className="r2-grid">{aiEnabled && <label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>}
       <label>教室角色<select value={pack} onChange={e => setPack(e.target.value)}>{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
-      <p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
-      <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || !(view.roster || []).some(m => m.actor_type === 'llm_student')} onClick={() => void clearAI()}>清除 AI 學生</button></div>
-      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p></details>
+      {aiEnabled && <><p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
+      <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy || aiAddBlocked} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || aiAddBlocked || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || (gate ? !gate.can('clear_ai_students') : !(view.roster || []).some(m => m.actor_type === 'llm_student'))} onClick={() => void clearAI()}>清除 AI 學生</button></div>
+      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p></>}</details>
       <details className="r2-card"><summary>進階 AI 設定（選用）</summary><ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/></details>
       <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>
       <label className="g70-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
-      <div className="r2-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
+      <div className="r2-row"><button disabled={mutation.busy || !rosterRows.length || !fit.enough || (!!gate && !gate.can('configure'))} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
     </section> : <><div className="r2-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
       {analysis ? <GroupAnalytics id={view.id}/> : <div className="r2-script-grid">{(view.groups || []).map(g => <a className="r2-card g70-group" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;
@@ -246,6 +273,16 @@ function EvidencePanel({ view, refresh, standalone }) {
     const [username, setUsername] = useState({}), [ackCheck, setAckCheck] = useState(false);
     const mutation = useMutation();
     const settled = view.settlement?.state === 'SETTLED';
+    const [confirmEnd, setConfirmEnd] = useState(false);
+    // 老師端按鈕只依後端 available_actions（group_teacher_actions）；舊版後端沒給時「下一步」照舊顯示。
+    const teacherCan = (action) => Array.isArray(view.available_actions) ? view.available_actions.includes(action) : action === 'next';
+    async function teacherCommand(kind) {
+        const ok = await mutation.send(`/groups/runs/${view.id}/commands`, { kind, data: {} });
+        if (ok) {
+            setConfirmEnd(false);
+            await refresh();
+        }
+    }
     // 可用動作由後端 available_actions 決定（group_run.student_actions），前端不由階段推導。
     const actions = view.available_actions || [];
     const allowed = actions.includes('group_statement');
@@ -281,7 +318,12 @@ function EvidencePanel({ view, refresh, standalone }) {
         {!confirmed && !!view.my_summary?.quotes.length && confirmable && <details><summary>回讀我的原話並確認</summary>{view.my_summary.quotes.map(q => <blockquote key={q.id}>{q.text}</blockquote>)}<label className="g70-check"><input type="checkbox" checked={ackCheck} onChange={e => setAckCheck(e.target.checked)}/>這確實是我目前的真實觀點。</label><button disabled={mutation.busy || !ackCheck} onClick={() => void ack()}>確認這份觀點快照</button></details>}
       </>}
       {view.role === 'teacher' && <PersonalProgress progress={view.personal_progress} overview={view.personal_overview} send={teacherSend} busy={mutation.busy}/>}
-      {view.role === 'teacher' && !settled && <button disabled={mutation.busy} onClick={() => void mutation.send(`/groups/runs/${view.id}/commands`, { kind: 'next', data: {} }).then(ok => ok && refresh())}>本組：下一步</button>}
+      {view.role === 'teacher' && !settled && <div className="r2-row">
+        {teacherCan('next') && <button disabled={mutation.busy} onClick={() => void teacherCommand('next')}>本組：下一步</button>}
+        {teacherCan('end') && (confirmEnd
+            ? <span className="group-end-confirm" role="group" aria-label="確認結束本組課堂"><span>{view.members?.length && (view.confirmed_members?.length || 0) < view.members.length ? `還有 ${view.members.length - (view.confirmed_members?.length || 0)} 位學生未確認觀點，結束後會記為未完成。` : '結束後本組不能再補充。'}</span><button className="danger" disabled={mutation.busy} onClick={() => void teacherCommand('end')}>確定結束</button><button className="quiet" disabled={mutation.busy} onClick={() => setConfirmEnd(false)}>取消</button></span>
+            : <button className="quiet" disabled={mutation.busy} onClick={() => setConfirmEnd(true)}>結束本組課堂</button>)}
+      </div>}
       <p role="status">{mutation.note}</p></>}
   </section>;
 }

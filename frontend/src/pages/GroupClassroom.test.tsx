@@ -185,3 +185,54 @@ test('the teacher group overview labels every group phase from the shared table'
   expect(unknown.querySelector('small')).toHaveTextContent(/^進行中$/)
   expect(screen.queryByText('討論進行中')).toBeNull()
 })
+
+describe('teacher controls follow the backend action contract', () => {
+  test('AI 學生功能關閉時，整組 AI 控制項不出現，教室角色仍可選', async () => {
+    serve(() => lobby({ available_actions: ['configure'], unavailable_actions: { start: 'CURRENT_GROUP_CONFIGURATION_REQUIRED', add_ai_students: 'AI_STUDENTS_DISABLED', clear_ai_students: 'AI_STUDENTS_DISABLED' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    expect(await screen.findByText('教室角色（選用）')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '加入 AI 學生' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '清除 AI 學生' })).toBeNull()
+    expect(screen.getByLabelText('教室角色')).toBeInTheDocument()
+  })
+
+  test('後端已確認可開始時，重新整理後不必再按一次儲存分組', async () => {
+    serve(() => lobby({ available_actions: ['configure', 'start', 'add_ai_students', 'clear_ai_students'], unavailable_actions: {} }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    expect(await screen.findByRole('button', { name: '2. 開始課堂 →' })).toBeEnabled()
+    expect(screen.queryByText(/無法開始課堂/)).toBeNull()
+  })
+
+  test('沒有 AI 學生時，清除鈕依後端停用', async () => {
+    serve(() => lobby({ available_actions: ['configure', 'add_ai_students'], unavailable_actions: { start: 'CURRENT_GROUP_CONFIGURATION_REQUIRED', clear_ai_students: 'AI_STUDENTS_REQUIRED' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    expect(await screen.findByRole('button', { name: '清除 AI 學生' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '加入 AI 學生' })).toBeEnabled()
+  })
+
+  const run = (over: Record<string, unknown> = {}) => ({
+    kind: 'GroupRun', id: 'run-1', role: 'teacher', phase: 'viewpoint_review', group_label: '第1組', title: '倫理課',
+    members: [{ id: 'm1', alias: '甲' }, { id: 'm2', alias: '乙' }], confirmed_members: ['m1'], arguments: [], transcript: [],
+    settlement: { state: 'CURRENT_PHASE_OPEN' }, available_actions: ['next', 'end'], unavailable_actions: {},
+    ...over,
+  })
+
+  test('結束本組課堂要先確認，確認後送 end，並說明未確認人數', async () => {
+    serve(() => run())
+    render(<GroupClassroomGate user={{}} id="run-1" Legacy={Legacy} />)
+    const end = await screen.findByRole('button', { name: '結束本組課堂' })
+    await act(async () => { fireEvent.click(end) })
+    expect(posts()).toEqual([])
+    expect(screen.getByText('還有 1 位學生未確認觀點，結束後會記為未完成。')).toBeInTheDocument()
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '確定結束' })) })
+    expect(posts().map(([url, , body]) => [url, body?.kind])).toEqual([['/groups/runs/run-1/commands', 'end']])
+  })
+
+  test('後端沒給的老師動作不出現', async () => {
+    serve(() => run({ available_actions: [], unavailable_actions: { next: 'CURRENT_PHASE_ACTIONS' } }))
+    render(<GroupClassroomGate user={{}} id="run-1" Legacy={Legacy} />)
+    expect(await screen.findByText(/本組觀點與確認/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '本組：下一步' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '結束本組課堂' })).toBeNull()
+  })
+})

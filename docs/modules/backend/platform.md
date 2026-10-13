@@ -52,9 +52,7 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 - `backend/app/config.py`
 - `backend/app/classroom_env.py`
 - `backend/app/feature_flags.py`
-- `backend/app/api/deps.py`
 - `backend/app/api/model_base.py`
-- `backend/app/api/routes/public_config.py`
 - `backend/app/modules/platform/`
 
 契約：
@@ -63,10 +61,7 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `platform→app-shell  backend/app/api/deps.py → backend/app/main.py`
-- `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py`
-- `platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py`
-- `platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py`
+- 無
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

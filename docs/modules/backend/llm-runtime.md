@@ -46,9 +46,6 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 
 檔案範圍：
 - `backend/app/tutor/`
-- `backend/app/services/llm_workers.py`
-- `backend/app/services/scenario_ai.py`
-- `backend/app/domain/tutor.py`
 - `backend/app/modules/llm_runtime/`
 
 契約：
@@ -56,12 +53,7 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/orchestrator/classroom.py`
-- `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/services/classroom.py`
-- `llm-runtime→content-authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py`
-- `llm-runtime→group-dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py`
-- `llm-runtime→identity-access  backend/app/services/llm_workers.py → backend/app/services/email_delivery.py`
-- `llm-runtime→solo-dialogue  backend/app/domain/tutor.py → backend/app/domain/types.py`
+- 無
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

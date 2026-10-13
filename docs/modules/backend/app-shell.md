@@ -13,6 +13,11 @@
 - `backend/app/classroom_app.py`
 - `backend/app/classroom_server.py`
 - `backend/app/modules/app_shell/`
+- `backend/app/api/deps.py`
+- `backend/app/api/routes/`
+- `backend/app/orchestrator/classroom.py`
+- `backend/app/services/classroom.py`
+- `backend/app/services/llm_workers.py`
 
 契約：
 - —
@@ -23,5 +28,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 無
+- Transport adapters and cross-module coordinators are composed here; domain behavior remains behind module services/contracts.
 <!-- module-map:end -->

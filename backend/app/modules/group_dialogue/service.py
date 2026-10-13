@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.platform.errors import DomainError
 from app.repositories.classroom_storage import Membership, digest
-from app.services import classroom as classroom_service
+from app.modules.classroom_core.service import load as load_classroom
 
 
 def actor(db: Session, request: Request, mutation: bool = False) -> Any:
@@ -33,7 +33,7 @@ def roster_hash(rows: Iterable[Membership]) -> str:
 
 
 def teacher_room(db: Session, rid: str, a: Any) -> Any:
-    room, _, teacher = classroom_service.load(db, rid, a.id, True)
+    room, _, teacher = load_classroom(db, rid, a.id, True)
     if not teacher:
         raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
     if room.state.get("group"):

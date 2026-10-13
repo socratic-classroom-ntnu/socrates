@@ -17,12 +17,19 @@
         "backend/app/main.py",
         "backend/app/classroom_app.py",
         "backend/app/classroom_server.py",
-        "backend/app/modules/app_shell/"
+        "backend/app/modules/app_shell/",
+        "backend/app/api/deps.py",
+        "backend/app/api/routes/",
+        "backend/app/orchestrator/classroom.py",
+        "backend/app/services/classroom.py",
+        "backend/app/services/llm_workers.py"
       ],
       "uses": [
         "*"
       ],
-      "todo": []
+      "todo": [
+        "Transport adapters and cross-module coordinators are composed here; domain behavior remains behind module services/contracts."
+      ]
     },
     {
       "id": "platform",
@@ -36,9 +43,7 @@
         "backend/app/config.py",
         "backend/app/classroom_env.py",
         "backend/app/feature_flags.py",
-        "backend/app/api/deps.py",
         "backend/app/api/model_base.py",
-        "backend/app/api/routes/public_config.py",
         "backend/app/modules/platform/"
       ],
       "uses": [],
@@ -72,8 +77,10 @@
       "status": "block",
       "about": "使用者的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。",
       "paths": [
-        "backend/app/api/routes/provider_profiles.py",
-        "backend/app/modules/ai_providers/"
+        "backend/app/modules/ai_providers/",
+        "backend/app/tutor/classroom_gateway.py",
+        "backend/app/tutor/classroom_provider.py",
+        "backend/app/tutor/provider_schema.py"
       ],
       "uses": [
         "platform",
@@ -90,9 +97,6 @@
       "about": "呼叫模型：prompt 組裝、鐵則、各家 adapter、背景工作佇列。",
       "paths": [
         "backend/app/tutor/",
-        "backend/app/services/llm_workers.py",
-        "backend/app/services/scenario_ai.py",
-        "backend/app/domain/tutor.py",
         "backend/app/modules/llm_runtime/"
       ],
       "uses": [
@@ -111,13 +115,11 @@
       "status": "block",
       "about": "出題、題庫、課程庫與 ladder 範例。",
       "paths": [
-        "backend/app/api/routes/classroom_library.py",
-        "backend/app/api/routes/question_bank.py",
-        "backend/app/api/routes/script_assist.py",
         "backend/app/domain/library_decisions.py",
         "backend/app/domain/ladder.py",
         "backend/app/ladders/",
-        "backend/app/modules/content_authoring/"
+        "backend/app/modules/content_authoring/",
+        "backend/app/services/scenario_ai.py"
       ],
       "uses": [
         "platform",
@@ -136,10 +138,7 @@
       "status": "warn",
       "about": "課堂狀態機、作答、討論、available_actions（/classrooms/*）。",
       "paths": [
-        "backend/app/orchestrator/classroom.py",
         "backend/app/orchestrator/classroom_policy.py",
-        "backend/app/services/classroom.py",
-        "backend/app/api/routes/classroom.py",
         "backend/app/api/classroom_schemas.py",
         "backend/app/domain/presence.py",
         "backend/app/modules/classroom_core/"
@@ -164,9 +163,7 @@
       "about": "分組課：分組、個人追問、全組確認、AI 學生。",
       "paths": [
         "backend/app/domain/group_run.py",
-        "backend/app/api/routes/groups.py",
         "backend/app/services/ai_students.py",
-        "backend/app/api/routes/ai_students.py",
         "backend/app/modules/group_dialogue/"
       ],
       "uses": [
@@ -220,19 +217,17 @@
         "backend/app/api/schemas.py",
         "backend/app/api/transcript_schemas.py",
         "backend/app/api/history_schemas.py",
-        "backend/app/api/routes/sessions.py",
-        "backend/app/api/routes/messages.py",
-        "backend/app/api/routes/transcripts.py",
-        "backend/app/api/routes/summaries.py",
-        "backend/app/api/routes/history.py",
         "backend/app/models.py",
         "backend/app/domain/types.py",
         "backend/app/domain/session_state.py",
         "backend/app/interaction_models.py",
-        "backend/app/api/routes/room.py",
         "backend/app/services/room_view.py",
         "backend/app/api/room_schemas.py",
-        "backend/app/modules/solo_dialogue/"
+        "backend/app/modules/solo_dialogue/",
+        "backend/app/domain/tutor.py",
+        "backend/app/tutor/gateway.py",
+        "backend/app/tutor/provider.py",
+        "backend/app/tutor/scripted.py"
       ],
       "uses": [
         "platform",

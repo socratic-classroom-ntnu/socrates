@@ -2,10 +2,8 @@
 
 import random
 
-from app.domain.tutor import Observations as DomainObservations
-from app.orchestrator import policy as advance_policy
-
 from app.modules.llm_runtime.contracts import Observations
+from app.orchestrator import policy as advance_policy
 
 
 def stage_goal(observations: dict, completed_turns: int) -> bool:
@@ -15,9 +13,7 @@ def stage_goal(observations: dict, completed_turns: int) -> bool:
     completed_turns (index of the exchange just answered) have the same value at the same moment.
     """
     o = Observations.model_validate(observations)
-    return advance_policy.should_advance(
-        DomainObservations.model_validate(o.model_dump()), completed_turns
-    )
+    return advance_policy.should_advance(o, completed_turns)
 
 
 def choose_representative(

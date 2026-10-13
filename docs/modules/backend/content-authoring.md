@@ -45,20 +45,18 @@
 - 可依賴的模組：platform、identity-access、ai-providers、llm-runtime
 
 檔案範圍：
-- `backend/app/api/routes/classroom_library.py`
-- `backend/app/api/routes/question_bank.py`
-- `backend/app/api/routes/script_assist.py`
 - `backend/app/domain/library_decisions.py`
 - `backend/app/domain/ladder.py`
 - `backend/app/ladders/`
 - `backend/app/modules/content_authoring/`
+- `backend/app/services/scenario_ai.py`
 
 契約：
 - 出題與題庫（/library/*、/question-bank/*、/script-assist/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `content-authoring→classroom-core  backend/app/api/routes/classroom_library.py → backend/app/services/classroom.py`
+- 無
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

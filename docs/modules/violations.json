@@ -1,27 +1,4 @@
 {
-  "backend": [
-    "ai-providers→content-authoring  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py",
-    "ai-providers→content-authoring  backend/app/api/routes/provider_profiles.py → backend/app/modules/content_authoring/service.py",
-    "ai-providers→group-dialogue  backend/app/api/routes/provider_profiles.py → backend/app/services/ai_students.py",
-    "ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_gateway.py",
-    "ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_provider.py",
-    "classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/domain/group_run.py",
-    "classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/services/ai_students.py",
-    "classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/domain/group_run.py",
-    "content-authoring→classroom-core  backend/app/api/routes/classroom_library.py → backend/app/services/classroom.py",
-    "group-dialogue→analytics  backend/app/api/routes/groups.py → backend/app/domain/group_analysis.py",
-    "llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/orchestrator/classroom.py",
-    "llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/services/classroom.py",
-    "llm-runtime→content-authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py",
-    "llm-runtime→group-dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py",
-    "llm-runtime→identity-access  backend/app/services/llm_workers.py → backend/app/services/email_delivery.py",
-    "llm-runtime→solo-dialogue  backend/app/domain/tutor.py → backend/app/domain/types.py",
-    "platform→app-shell  backend/app/api/deps.py → backend/app/main.py",
-    "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py",
-    "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py",
-    "platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py",
-    "route-imports-route  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py",
-    "solo-dialogue→app-shell  backend/app/api/routes/history.py → backend/app/main.py"
-  ],
+  "backend": [],
   "frontend": []
 }

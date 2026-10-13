@@ -35,11 +35,12 @@ test('the join form caps the alias at the backend limit', async () => {
   await waitFor(() => expect(api).toHaveBeenCalledWith('/classrooms'))
 })
 
-const schemas = path.resolve(__dirname, '../../backend/app/api/classroom_schemas.py')
-const withBackend = fs.existsSync(schemas) ? test : test.skip
+const classroomContracts = path.resolve(__dirname, '../../backend/app/modules/classroom_core/contracts.py')
+const identityContracts = path.resolve(__dirname, '../../backend/app/modules/identity_access/contracts.py')
+const withBackend = fs.existsSync(classroomContracts) && fs.existsSync(identityContracts) ? test : test.skip
 
 withBackend('the alias limit matches JoinRoom.alias in the backend contract', () => {
-  const source = fs.readFileSync(schemas, 'utf8')
+  const source = fs.readFileSync(classroomContracts, 'utf8')
   const joinRoom = source.match(/class JoinRoom\(Strict\):([\s\S]*?)\n\n/)
   expect(joinRoom).not.toBeNull()
   const limit = joinRoom?.[1].match(/alias: str = Field\([^)]*max_length=(\d+)/)
@@ -206,7 +207,7 @@ test('a 422 from the server lands under the matching register field', async () =
 })
 
 withBackend('register limits match the backend Register contract', () => {
-  const source = fs.readFileSync(schemas, 'utf8')
+  const source = fs.readFileSync(identityContracts, 'utf8')
   const register = source.match(/class Register\(Strict\):([\s\S]*?)\n\n/)?.[1] || ''
   for (const field of ['username', 'email', 'password'] as const) {
     const line = register.match(new RegExp(`${field}: str = Field\\(([^)]*)\\)`))?.[1] || ''

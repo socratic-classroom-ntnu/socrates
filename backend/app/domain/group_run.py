@@ -675,7 +675,7 @@ def extend(Native):
             self.queue_personal(member_id, entry)
 
         def complete_personal(self, key, result, provider):
-            from app.orchestrator.classroom import tutor_unavailable_notice
+            from app.modules.classroom_core.notices import tutor_unavailable_notice
 
             parts = key.split(":")
             if len(parts) != 5:

@@ -20,26 +20,24 @@
 - `backend/app/api/schemas.py`
 - `backend/app/api/transcript_schemas.py`
 - `backend/app/api/history_schemas.py`
-- `backend/app/api/routes/sessions.py`
-- `backend/app/api/routes/messages.py`
-- `backend/app/api/routes/transcripts.py`
-- `backend/app/api/routes/summaries.py`
-- `backend/app/api/routes/history.py`
 - `backend/app/models.py`
 - `backend/app/domain/types.py`
 - `backend/app/domain/session_state.py`
 - `backend/app/interaction_models.py`
-- `backend/app/api/routes/room.py`
 - `backend/app/services/room_view.py`
 - `backend/app/api/room_schemas.py`
 - `backend/app/modules/solo_dialogue/`
+- `backend/app/domain/tutor.py`
+- `backend/app/tutor/gateway.py`
+- `backend/app/tutor/provider.py`
+- `backend/app/tutor/scripted.py`
 
 契約：
 - 單人對話（/api/sessions/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `solo-dialogue→app-shell  backend/app/api/routes/history.py → backend/app/main.py`
+- 無
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

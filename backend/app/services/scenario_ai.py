@@ -14,7 +14,7 @@ from app.modules.platform.errors import DomainError
 
 
 def _owned_profile_ids(db, owner_id: str, profile_ids: set[str]) -> set[str]:
-    from app.api.routes.provider_profiles import ProviderProfile
+    from app.modules.ai_providers.repositories import ProviderProfile
 
     if not profile_ids:
         return set()

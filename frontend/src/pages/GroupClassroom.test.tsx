@@ -243,3 +243,32 @@ describe('teacher controls follow the backend action contract', () => {
     expect(screen.queryByRole('button', { name: '結束本組課堂' })).toBeNull()
   })
 })
+
+describe('AI 學生按鈕要立即回報結果', () => {
+  const profiles = [{ id: 'p1', name: 'OR', adapter: 'openrouter', default_model: 'openrouter/free' }]
+  const account = { default_profile_id: 'p1', model_matrix: { ai_student: 'openai/gpt-6-luna' } }
+
+  test('課堂沒設 AI 連線時沿用帳號設定，加入後顯示結果與人數', async () => {
+    serve(() => lobby({ roster: people(1) }), { '/provider-profiles': () => profiles, '/ai-settings/account': () => account })
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    const add = await screen.findByRole('button', { name: '加入 AI 學生' })
+    await waitFor(() => expect(api).toHaveBeenCalledWith('/provider-profiles'))
+    await act(async () => { fireEvent.click(add) })
+    const sent = posts().find(([url]) => url.endsWith('/ai-students'))
+    expect(sent?.[2]).toMatchObject({ count: 1, model: 'openai/gpt-6-luna', provider_profile_id: 'p1' })
+    expect(await screen.findByText(/已加入 1 位 AI 學生/)).toBeInTheDocument()
+  })
+
+  test('加入失敗時在按鈕旁說明原因', async () => {
+    serve(() => lobby({ roster: people(1) }), {
+      '/provider-profiles': () => profiles,
+      '/ai-settings/account': () => account,
+      '/ai-students': () => { throw new ApiError(409, 'LOBBY_REQUIRED') },
+    })
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+    const add = await screen.findByRole('button', { name: '加入 AI 學生' })
+    await waitFor(() => expect(api).toHaveBeenCalledWith('/provider-profiles'))
+    await act(async () => { fireEvent.click(add) })
+    expect(await screen.findByText(/加入 AI 學生沒有成功/)).toBeInTheDocument()
+  })
+})

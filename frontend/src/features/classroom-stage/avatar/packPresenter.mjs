@@ -127,11 +127,17 @@ export class PackPresenter {
       if (/(left|right|_l\b|_r\b|\.l\b|\.r\b).*(arm|upperarm)|(arm|upperarm).*(left|right|_l\b|_r\b)/i.test(name)
         && !/fore|lower|hand|twist/i.test(name) && o.children.some((c) => c.isBone)) arms.push(o);
     });
+    let lowered = 0;
     for (const bone of arms) {
-      const child = bone.children.find((c) => c.isBone);
       bone.updateWorldMatrix(true, true);
       const from = new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld);
-      const to = new THREE.Vector3().setFromMatrixPosition(child.matrixWorld);
+      // 用最遠的子骨頭（手肘）定方向；扭轉骨常常和上臂起點重疊，拿它算方向會轉錯邊。
+      const elbow = (o) => new THREE.Vector3().setFromMatrixPosition(o.matrixWorld);
+      const child = bone.children.filter((c) => c.isBone)
+        .sort((a, b) => elbow(b).distanceTo(from) - elbow(a).distanceTo(from))[0];
+      const to = elbow(child);
+      if (to.distanceTo(from) < 1e-4) continue;
+      const before = bone.quaternion.clone();
       const dir = to.sub(from).normalize();
       if (dir.y < -0.6) continue; // 已經是下垂姿勢
       const side = Math.sign(dir.x) || 1;
@@ -143,8 +149,13 @@ export class PackPresenter {
       bone.parent?.getWorldQuaternion(parentWorld);
       bone.quaternion.copy(parentWorld.invert().multiply(delta.multiply(world)));
       bone.updateWorldMatrix(false, true);
+      // 轉完要真的往下；骨架軸向特殊導致沒往下時還原，寧可維持原姿勢。
+      const after = new THREE.Vector3().setFromMatrixPosition(child.matrixWorld)
+        .sub(new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld)).normalize();
+      if (after.y > -0.5) { bone.quaternion.copy(before); bone.updateWorldMatrix(false, true); continue; }
+      lowered += 1;
     }
-    this.container.dataset.armsLowered = String(arms.length);
+    this.container.dataset.armsLowered = String(lowered);
   }
 
   /** 鏡頭框住頭頂到胸口（頭長的約 2.6 倍）。 */

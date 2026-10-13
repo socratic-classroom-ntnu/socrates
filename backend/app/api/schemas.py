@@ -71,6 +71,7 @@ class CreateSessionRequest(BaseModel):
 
 class ReleaseView(BaseModel):
     release_id: str
+    hook_probe: str = ""
     source_sha: str
     environment: str
     alembic_revision: str

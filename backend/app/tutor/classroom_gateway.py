@@ -10,6 +10,7 @@ import time
 from urllib.parse import quote, urljoin, urlparse
 
 import httpx
+from pydantic import ValidationError
 
 from app.orchestrator.classroom import DomainError
 from app.tutor.classroom_provider import ProviderWait
@@ -177,31 +178,59 @@ def _extract_json_text(value: str) -> str:
     return text
 
 
+def _provider_json(response) -> dict:
+    try:
+        body = response.json()
+    except (TypeError, ValueError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+    if not isinstance(body, dict):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    return body
+
+
+def _validated_structured_result(value, schema) -> dict:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        raise ProviderWait("PROVIDER_EMPTY_CONTENT", 30)
+    if not isinstance(value, str):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    try:
+        return schema.model_validate_json(_extract_json_text(value)).model_dump()
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+
+
 async def _openai_generate(binding, messages, schema):
+    payload = {
+        "model": binding["model"],
+        "messages": messages,
+        "stream": False,
+        "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": schema.__name__,
+                "strict": True,
+                "schema": openai_response_schema(schema),
+            },
+        },
+    }
+    if binding.get("adapter") == "openrouter":
+        payload["provider"] = {"require_parameters": True}
     response = await _bounded_request(
         binding,
         method="POST",
         path="/chat/completions",
-        payload={
-            "model": binding["model"],
-            "messages": messages,
-            "stream": False,
-            "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema.__name__,
-                    "strict": True,
-                    "schema": openai_response_schema(schema),
-                },
-            },
-        },
+        payload=payload,
         timeout=120,
     )
-    body = response.json()
-    raw = body["choices"][0]["message"]["content"]
+    body = _provider_json(response)
+    try:
+        message = body["choices"][0]["message"]
+        raw = message.get("content")
+    except (AttributeError, IndexError, KeyError, TypeError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     return (
-        schema.model_validate_json(_extract_json_text(raw)).model_dump(),
+        _validated_structured_result(raw, schema),
         body.get("usage", {}),
         body.get("model"),
     )
@@ -229,13 +258,21 @@ async def _anthropic_generate(binding, messages, schema):
         },
         timeout=120,
     )
-    body = response.json()
-    raw = "".join(
-        item.get("text", "") for item in body.get("content", []) if item.get("type") == "text"
-    )
+    body = _provider_json(response)
+    content = body.get("content", [])
+    if not isinstance(content, list):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    text_parts = [
+        item.get("text")
+        for item in content
+        if isinstance(item, dict) and item.get("type") == "text"
+    ]
+    if any(value is not None and not isinstance(value, str) for value in text_parts):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    raw = "".join(value for value in text_parts if isinstance(value, str))
     usage = body.get("usage", {})
     return (
-        schema.model_validate_json(_extract_json_text(raw)).model_dump(),
+        _validated_structured_result(raw, schema),
         usage,
         body.get("model"),
     )
@@ -260,10 +297,13 @@ async def _gemini_generate(binding, messages, schema):
         },
         timeout=120,
     )
-    body = response.json()
-    raw = body["candidates"][0]["content"]["parts"][0]["text"]
+    body = _provider_json(response)
+    try:
+        raw = body["candidates"][0]["content"]["parts"][0].get("text")
+    except (AttributeError, IndexError, KeyError, TypeError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     usage = body.get("usageMetadata", {})
-    return schema.model_validate_json(_extract_json_text(raw)).model_dump(), usage, binding["model"]
+    return _validated_structured_result(raw, schema), usage, binding["model"]
 
 
 def _estimated_cost(binding: dict, usage: dict) -> float | None:
@@ -325,39 +365,69 @@ async def generate(binding, messages, schema, on_delta):
     return result, audit
 
 
+def _model_capabilities(item: dict, adapter: str) -> dict:
+    raw_parameters = item.get("supported_parameters", item.get("supportedParameters"))
+    parameters = (
+        [str(value) for value in raw_parameters if value]
+        if isinstance(raw_parameters, list)
+        else []
+    )
+    structured_outputs = None
+    if adapter == "openrouter" and isinstance(raw_parameters, list):
+        structured_outputs = any(
+            value in {"response_format", "structured_outputs", "json_schema"}
+            for value in parameters
+        )
+    elif parameters:
+        structured_outputs = any(
+            value in {"response_format", "responseSchema", "structured_outputs", "json_schema"}
+            for value in parameters
+        )
+    return {
+        "supported_parameters": parameters,
+        "structured_outputs": structured_outputs,
+    }
+
+
 async def discover_models(binding: dict) -> dict:
     adapter = binding["adapter"]
     if adapter == "gemini":
         response = await _bounded_request(binding, method="GET", path="/v1beta/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("name", "").removeprefix("models/"),
                 "name": item.get("displayName") or item.get("name"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("models", [])
-            if "generateContent" in item.get("supportedGenerationMethods", [])
+            if isinstance(item, dict)
+            and "generateContent" in item.get("supportedGenerationMethods", [])
         ]
     elif adapter == "anthropic":
         response = await _bounded_request(binding, method="GET", path="/v1/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("id"),
                 "name": item.get("display_name") or item.get("id"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("data", [])
+            if isinstance(item, dict)
         ]
     else:
         response = await _bounded_request(binding, method="GET", path="/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("id"),
                 "name": item.get("name") or item.get("id"),
                 "pricing": item.get("pricing"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("data", [])
+            if isinstance(item, dict)
         ]
     return {
         "provider_profile_id": binding["profile_id"],

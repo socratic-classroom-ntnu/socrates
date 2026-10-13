@@ -177,7 +177,7 @@ def test_fallbacks_are_typed_and_repeatable():
 
 
 def test_persona_seed_fits_postgres_integer():
-    # ai_students.seed 是有號 32 位元 INTEGER；10-13 測試站加入 AI 學生因 seed＝3520493477 溢位而 500。
+    # ai_students.seed 是有號 32 位元 INTEGER；8 個 hex 的種子（例如 3520493477）會溢位，加入 AI 學生回 500。
     from uuid import uuid4
 
     from app.api.routes.ai_students import _persona

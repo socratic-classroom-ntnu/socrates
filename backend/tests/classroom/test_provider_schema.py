@@ -156,7 +156,7 @@ def _object_nodes(value):
 
 @pytest.mark.parametrize("model", MODELS)
 def test_openai_schema_keeps_every_model_field_required(model):
-    # 欄位名稱叫 title／default 時也要留在 properties 與 required（10-13 AI 出題漏 title 而 502）。
+    # 欄位名稱叫 title／default 時也要留在 properties 與 required（否則 strict schema 讓模型省略 title，AI 出題驗證失敗）。
     schema = openai_response_schema(model)
     expected = set(model.model_json_schema()["properties"])
     assert set(schema["properties"]) == expected

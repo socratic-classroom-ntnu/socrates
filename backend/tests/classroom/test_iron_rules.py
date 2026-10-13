@@ -248,6 +248,56 @@ def test_asking_for_the_prompt_never_leaks_it():
     assert not iron_rules.leaks("".join(shown))
 
 
+def test_output_field_names_are_not_a_leak():
+    # 10-13 dev-socrates：欄位名稱（should_confirm、relevant_conditions…）也寫在輸出格式說明裡，
+    # 整份 JSON 一起比對時每一則都被判成洩漏、換成固定拉回句。只比對模型寫的字串值。
+    student = {
+        "action_mode": "viewpoint",
+        "option_id": "b",
+        "text": "抽籤讓每個人有一樣的機會，我覺得比較公平。",
+        "relation": "supports",
+        "should_confirm": True,
+        "guard": "on_topic",
+    }
+    personal = {
+        "reply_text": "你說抽籤最公平，如果抽到的人其實不太需要這本書，你還會這樣覺得嗎？",
+        "observations": {
+            "has_position": True,
+            "has_reason": True,
+            "reason_tested": False,
+            "position_shifted": False,
+            "principle_label": "未明",
+        },
+        "move": "probe",
+        "guard": "on_topic",
+        "summary": {
+            "current_position": "支持完全抽籤",
+            "reason_summary": "公平",
+            "relevant_conditions": [],
+            "unresolved_issue": "公平的意思還沒說清楚",
+        },
+    }
+    assert iron_rules.check("llm_student_turn", student) == ""
+    assert iron_rules.check("personal_tutor", personal) == ""
+
+
+def test_rules_copied_into_a_hidden_field_still_count_as_a_leak():
+    leaked = iron_rules.rules_for("personal_tutor")
+    personal = {
+        "reply_text": "你怎麼看？",
+        "observations": {},
+        "move": "probe",
+        "guard": "on_topic",
+        "summary": {
+            "current_position": "",
+            "reason_summary": leaked,
+            "relevant_conditions": [],
+            "unresolved_issue": "",
+        },
+    }
+    assert iron_rules.check("personal_tutor", personal) == "LEAKED_RULES"
+
+
 def test_a_movie_example_about_the_question_is_not_off_topic():
     said = "就像《復仇者聯盟》裡薩諾斯為了多數犧牲少數，我覺得拉桿也是一樣的計算。"
     assert iron_rules.screen_input({"argument": said}) == ""

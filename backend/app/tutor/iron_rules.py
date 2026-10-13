@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, cast
@@ -196,10 +196,22 @@ def visible_text(result: JSON) -> str:
     return ""
 
 
+def _texts(value: object) -> Iterator[str]:
+    """回應裡模型寫的每一段文字（逐個字串值；欄位名稱是輸出格式的一部分，不算模型寫的內容）。"""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _texts(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _texts(item)
+
+
 def check(kind: str, result: JSON, hint: str = "") -> str:
     """回應不合鐵則時回傳原因代碼；合格回傳空字串。做哪些檢查由路由決定。"""
     checks = set(role(kind).get("checks", []))
-    if "no_leak" in checks and leaks(json.dumps(result, ensure_ascii=False)):
+    if "no_leak" in checks and any(leaks(text) for text in _texts(result)):
         return "LEAKED_RULES"
     if "pull_back" in checks and (result.get("guard", "on_topic") != "on_topic" or hint):
         text = visible_text(result)

@@ -63,3 +63,6 @@ main.r2-classroom{max-width:none}
 body:has(.g70-evidence.floating) .r2-classroom:not(:has(.r2-arena)){padding-bottom:88px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.r2-barrage-layer span{animation-duration:7s!important}}
 .r2-focus-notice{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:#3a2a1f;color:#f3d9b5;font-size:13px;line-height:1.6}
+/* 沒有空白的長字串（例如教室名稱 000…000）在所有頁面都換行，不撐破卡片與側欄 */
+.teacher-desk,.r2-home,.r2-classroom,.r2-loading,.r2-summary,.r73-library{overflow-wrap:anywhere}
+:where(.teacher-desk,.r2-home,.r2-classroom,.r2-summary,.r73-library) :where(h1,h2,h3,h4,p,strong,b,small,span,a,label,summary,li){min-width:0}

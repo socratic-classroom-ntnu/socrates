@@ -101,7 +101,8 @@ jobs:
       - run: python scripts/gen_classroom_types.py
       - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
   # contract 對不上時，把重新產生的契約檔推回 PR 分支（只限本 repo 的分支；fork 沒有寫入權限）。
-  # 用 GITHUB_TOKEN 推的 commit 不會再觸發 CI，所以推之前先跑前端 typecheck，確認新型別不會讓前端壞掉。
+  # 用 GITHUB_TOKEN 推的 commit 不會自動跑 CI（run 會停在 action_required，要人手動核准），
+  # 所以推之前先跑前端 typecheck，確認新型別不會讓前端壞掉。
   # 只修個人開發分支：develop、stage、master、backend/* 這類共用或部署分支不能收到沒跑過 CI 的 commit。
   contract-fix:
     needs: [contract]
@@ -149,7 +150,7 @@ jobs:
           git add -- $CONTRACTS
           git commit -m "chore(contracts): regenerate OpenAPI contracts"
           git push origin "HEAD:refs/heads/$HEAD_REF"
-          gh pr comment "$PR_NUMBER" --body "🤖 OpenAPI 契約檔跟程式碼對不上，已自動重新產生並推上 \`$(git rev-parse --short HEAD)\`（前端 typecheck 已通過）。GitHub Actions 推的 commit 不會再觸發 CI，下次 push 時會一併檢查；要馬上檢查的話，先 \`git pull\` 再推一個 commit。"
+          gh pr comment "$PR_NUMBER" --body "🤖 OpenAPI 契約檔跟程式碼對不上，已自動重新產生並推上 \`$(git rev-parse --short HEAD)\`（前端 typecheck 已通過）。這個 commit 的 CI 不會自動跑（停在等待核准），下次 push 時會一併檢查；要馬上檢查的話，到 Actions 頁面核准，或先 \`git pull\` 再推一個 commit。"
   round1-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

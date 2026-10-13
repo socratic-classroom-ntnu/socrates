@@ -33,7 +33,7 @@
 | `user001`–`user030` | 學生 | `user011` 之後尚未加入任何教室，可以用課程碼自己加入 |
 
 用帳號名稱或 `<帳號>@preview.invalid` 都能登入。這份腳本只在
-`SOCRATES_ENVIRONMENT` 是 `preview` 或 `local-dev` 時才會執行，不會在 QA 或正式環境建出這些帳號。
+`SOCRATES_ENVIRONMENT` **明確設定**為 `preview` 或 `local-dev` 時才會執行（沒設也會拒絕），不會在 QA 或正式環境建出這些帳號。
 
 ## 不能寄信，也不能用 LLM（除非申請）
 

@@ -10,8 +10,9 @@ Every preview gets its own empty database, so the backend runs this once after
 All passwords are PREVIEW_PASSWORD and every account is already verified, so no
 mail is ever needed. Safe to re-run: it does nothing once teacher001 exists.
 
-Refuses to run unless SOCRATES_ENVIRONMENT is preview or local-dev, so a
-mistyped DATABASE_URL can never plant known passwords in stage or production.
+Refuses to run unless SOCRATES_ENVIRONMENT is explicitly preview or local-dev
+(unset fails too), so a mistyped DATABASE_URL can never plant known passwords
+in stage or production.
 """
 
 import os
@@ -67,8 +68,9 @@ DOCUMENT = ScriptDocument.model_validate(
                 ],
             },
         ],
-        # Preview environments carry no LLM key unless one is granted.
-        "live_llm_call_budget": 0,
+        # Keep the default room budget: 0 would block every call even after
+        # preview-llm is granted. Without a key no call is made anyway, and the
+        # preview-wide CLASSROOM_LLM_DAILY_BUDGET still caps usage.
     }
 ).model_dump()
 
@@ -86,7 +88,8 @@ def account(db, username):
 
 
 def seed():
-    environment = os.environ.get("SOCRATES_ENVIRONMENT", "local-dev")
+    # No default: an unset marker must not pass for local-dev against a real database.
+    environment = os.environ.get("SOCRATES_ENVIRONMENT", "")
     if environment not in ALLOWED_ENVIRONMENTS:
         raise SystemExit(f"seed_preview: refusing to seed SOCRATES_ENVIRONMENT={environment!r}")
     storage.configure()

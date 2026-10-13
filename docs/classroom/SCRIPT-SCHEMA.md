@@ -55,8 +55,8 @@
 | `options` | `array<Option>` | 是 | — | `min_length=2` | 立場選項，至少 2 個。 |
 | `duration_seconds` | `integer` | 否 | `90` | `ge=1` | 作答時間（秒），即 `answering` 階段的倒數。 |
 | `argument_required` | `boolean` | 否 | `true` | — | 是否必須附理由：`true` 時空白理由無法送出，截止時只有選項沒有理由的草稿也不會被收為作答。 |
-| `tutor_goal` | `string` | 否 | `"協助學生照見自己的立場與理由。"` | — | 導師的目標；隨題目物件送入 `focused_tutor`／`personal_tutor` 工作。 |
-| `probe_hints` | `array<string>` | 否 | `["你採用的原則是什麼？條件改變時，你會如何判斷？"]` | — | 給導師參考的追問方向；同樣隨題目物件送入 LLM，不會被當成導師台詞。 |
+| `tutor_goal` | `string` | 否 | `"協助學生照見自己的立場與理由。"` | `max_length=2000` | 導師的目標；隨題目物件送入 `focused_tutor`／`personal_tutor` 工作。 |
+| `probe_hints` | `array<string>` | 否 | `["你採用的原則是什麼？條件改變時，你會如何判斷？"]` | `max_length=20` | 給導師參考的追問方向（每則最多 2000 字）；同樣隨題目物件送入 LLM，不會被當成導師台詞。 |
 | `max_focus_turns` | `integer` | 否 | `3` | `ge=1` | 每位代表與導師最多來回幾輪，達到上限即結束該代表的討論（`capped`）。 |
 | `focus_response_seconds` | `integer` | 否 | `90` | `ge=5` | 導師回覆後，代表學生回應的時限（秒）。 |
 | `sender_point_cap` | `integer` | 否 | `5` | `ge=0` | 代表討論中，送出回饋的同學在同一回合最多可得的積分。 |

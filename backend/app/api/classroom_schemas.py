@@ -47,7 +47,7 @@ class PublicQuestion(Strict):
     duration_seconds: int = Field(default=90, ge=1)
     argument_required: bool = True
     tutor_goal: str = Field(default="協助學生照見自己的立場與理由。", max_length=2000)
-    probe_hints: list[Annotated[str, StringConstraints(max_length=2000)]] = Field(
+    probe_hints: list[str] = Field(
         default_factory=lambda: ["你採用的原則是什麼？條件改變時，你會如何判斷？"], max_length=20
     )
     max_focus_turns: int = Field(default=3, ge=1)
@@ -57,6 +57,13 @@ class PublicQuestion(Strict):
     # Group runs: each student's own follow-up dialogue before the multi-person stage.
     max_personal_turns: int = Field(default=6, ge=1, le=20)
     personal_seconds: int = Field(default=600, ge=30)
+
+    @field_validator("probe_hints")
+    @classmethod
+    def probe_hint_length(cls, hints: list[str]) -> list[str]:
+        if any(len(hint) > 2000 for hint in hints):
+            raise ValueError("每則追問方向最多 2000 字")
+        return hints
 
     @model_validator(mode="after")
     def distinct(self):

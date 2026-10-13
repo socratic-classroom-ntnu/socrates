@@ -1084,7 +1084,6 @@
           },
           "probe_hints": {
             "items": {
-              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,
@@ -1236,7 +1235,6 @@
           },
           "probe_hints": {
             "items": {
-              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,
@@ -1652,7 +1650,6 @@
           },
           "probe_hints": {
             "items": {
-              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,

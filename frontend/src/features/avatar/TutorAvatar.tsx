@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getPublicConfig } from '../../api/classroomClient'
-import { PackPresenter } from '../classroom-stage/avatar/packPresenter.mjs'
+import { PackPresenter } from './runtime/packPresenter.mjs'
 import { LANGS, speak } from './speech'
 import './tutor-avatar.css'
 

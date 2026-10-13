@@ -1,6 +1,6 @@
 import { choosePack, type AvatarPack } from './TutorAvatar'
 import { planSpeech, speak } from './speech'
-import { timeline, VISEMES } from '../classroom-stage/avatar/runtimePack.mjs'
+import { timeline, VISEMES } from './runtime/runtimePack.mjs'
 import { lastTutorLine } from '../../pages/GroupClassroom'
 
 const pack = (id: string, products?: string[]): AvatarPack => ({ id, name: id, products, model_sha256: 'a'.repeat(64) })

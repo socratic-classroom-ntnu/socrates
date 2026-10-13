@@ -265,10 +265,10 @@ AI 學生不經個人對話：作答一被接受，就以作答本身作為基�
 ## 結束判準
 
 模型輸出的 `observations` 只是證據。「這位學生目前的立場是否已能判定」（規格 R2，issue #13 的結束條件）
-由後端唯一的判準 `backend/app/orchestrator/policy.py` 的 `should_advance` 決定（經
+由後端唯一的判準 `backend/app/modules/llm_runtime/policy.py` 的 `should_advance` 決定（經
 `classroom_policy.stage_goal`）：已完成至少 1 個來回（地板），且 `has_position`、`has_reason`、
 `reason_tested` 皆為真，且 `position_shifted` 為假。代表討論與個人對話都套用同一個判準，且判準先於上限。
-詳細定義屬 issue #19，**仍待小組確認**；各階段如何使用見 [STATE-MACHINE.md](STATE-MACHINE.md)。
+issue #19 已沿目前整合契約收束：至少 1 個來回、三項證據成立、立場未移動；個人對話預設 6 回合／600 秒。各階段如何使用見 [STATE-MACHINE.md](STATE-MACHINE.md)。
 
 ## 已知落差
 

@@ -102,9 +102,13 @@ jobs:
       - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
   # contract 對不上時，把重新產生的契約檔推回 PR 分支（只限本 repo 的分支；fork 沒有寫入權限）。
   # 用 GITHUB_TOKEN 推的 commit 不會再觸發 CI，所以推之前先跑前端 typecheck，確認新型別不會讓前端壞掉。
+  # 只修個人開發分支：develop、stage、master、backend/* 這類共用或部署分支不能收到沒跑過 CI 的 commit。
   contract-fix:
     needs: [contract]
-    if: failure() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      failure() && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (startsWith(github.head_ref, 'feature/') || startsWith(github.head_ref, 'fix/') || startsWith(github.head_ref, 'frontend/'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions: {contents: write, pull-requests: write}

@@ -29,8 +29,8 @@ ROOT = Path(__file__).resolve().parents[2]
 RULES_DIR = Path("skills/classroom/iron-rules")
 ROUTER = RULES_DIR / "ROUTER.json"
 PROGRAMS_PATH = Path("prompts/classroom/programs.json")
-# 不經過 programs.json 的呼叫點（Round 1 對話、其他觀點建議）也要有路由。
-DIRECT_ROLES = ("other_suggestion", "round1_tutor", "round1_summary")
+# 不經過 programs.json 的呼叫點（單人對話、其他觀點建議）也要有路由。
+DIRECT_ROLES = ("other_suggestion", "solo_tutor", "solo_summary")
 KNOWN_CHECKS = frozenset({"screen_input", "no_leak", "pull_back"})
 VISIBLE_FIELDS = ("reply_text", "text", "suggestion_text")
 # 老師提供的內容（題目、情境、劇本、出題需求）不屬於學生輸入，不做指令覆寫偵測。

@@ -1,4 +1,4 @@
-"""Application composition. Legacy Round1 routers remain available alongside /api/v2."""
+"""Application composition. The solo-dialogue routers stay mounted alongside /api/v2."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress

@@ -144,7 +144,7 @@ def test_resend_webhook_updates_durable_receipt(monkeypatch):
         separators=(",", ":"),
     ).encode()
     timestamp = str(int(time.time()))
-    event_id = "msg_r104"
+    event_id = "msg_verification_bounce"
     signed = f"{event_id}.{timestamp}.".encode() + body
     signature = base64.b64encode(hmac.new(secret_bytes, signed, hashlib.sha256).digest()).decode()
 

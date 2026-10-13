@@ -40,7 +40,7 @@ jobs:
         run: python -m ruff check backend
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
-      - name: Strict Round1 types and classroom contracts
+      - name: Strict core types and classroom contracts
         run: |
           cd backend
           python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library|question_bank|script_assist)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth|scenario_ai)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py'
@@ -113,12 +113,12 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/api/health
-      - run: python scripts/round1_smoke.py http://127.0.0.1:8000/api
+      - run: python scripts/solo_dialogue_smoke.py http://127.0.0.1:8000/api
       - if: always()
-        run: docker compose logs --no-color > round1-compose.log
+        run: docker compose logs --no-color > solo-dialogue-compose.log
       - if: always()
         uses: actions/upload-artifact@v4
-        with: {name: round1-evidence, path: round1-compose.log, retention-days: 7}
+        with: {name: solo-dialogue-evidence, path: solo-dialogue-compose.log, retention-days: 7}
       - if: always()
         run: docker compose down
   classroom-load:

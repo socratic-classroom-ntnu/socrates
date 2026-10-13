@@ -28,9 +28,8 @@ rollback:
 done_definition: []
 ```
 
-## Review節奏
+## 審查節奏
 
-- Default owner在一個Circuit內完成review。
-- Circuit結束時由劃分PO代審並留下receipt。
-- 跨模組diff依module path分派給各owner。
-- 分歧透過Thread交Arthur裁定。
+- 每個交接在同一個工作週期內完成審查。
+- 跨模組 diff 依 module path 分開審查。
+- 前後端分歧由 Arthur 與前端組員討論決定。

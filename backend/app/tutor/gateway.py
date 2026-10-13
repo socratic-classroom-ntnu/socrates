@@ -36,11 +36,11 @@ class TutorGateway:
         request = self._build_respond_request(stage, history, turn_index)
         latest = [m.content for m in history if m.role == "student"][-1:]
         hint = iron_rules.screen_input({"history": latest})
-        return self._call(request, TutorTurn, kind="round1_tutor", hint=hint)
+        return self._call(request, TutorTurn, kind="solo_tutor", hint=hint)
 
     def summarize(self, history: list[PromptMessage]) -> SummaryDraft:
         request = ProviderRequest(kind="summarize", stage_key=None, turn_index=0, messages=history)
-        return self._call(request, SummaryDraft, kind="round1_summary")
+        return self._call(request, SummaryDraft, kind="solo_summary")
 
     def _build_respond_request(
         self, stage: Stage, history: list[PromptMessage], turn_index: int

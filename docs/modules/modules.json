@@ -2,10 +2,10 @@
   "schema": "socrates/module-map/v3",
   "note": "後端模組地圖：每個原始碼檔屬於一個模組，跨模組 import 只走 uses；前端由前端組員負責，兩端只透過 contracts 接。檢查：scripts/check_modules.py；待清違規：violations.json（只能變短）。",
   "owners": {
-    "architecture": "Portal-Heron",
-    "backend_worker": "Portal-Goose",
+    "architecture": "Arthur",
+    "backend_worker": "Arthur",
     "frontend": "前端組員",
-    "visual": "Design-Goose"
+    "visual": "Arthur（設計）"
   },
   "backend": [
     {
@@ -97,7 +97,7 @@
       "todo": [
         "services/llm_workers.py、services/scenario_ai.py import routes/provider_profiles：拆完改引用 service。",
         "prompts.compile_program 的 key 算兩次（第一次被覆蓋）。",
-        "鐵則：安全類訊息改固定關心句＋老師看得到的安全 flag（與偏題隱藏 flag 分欄）；第 5 條個資措辭（subPO-Heron 65869a6b0156、Arthur WB c30f-G1＝A）。"
+        "鐵則：安全類訊息改固定關心句＋老師看得到的安全 flag（與偏題隱藏 flag 分欄）；第 5 條個資措辭已定案。"
       ]
     },
     {
@@ -191,7 +191,7 @@
         "group-dialogue"
       ],
       "todo": [
-        "雷達圖契約（Design-Goose 六畫面表 1fba59189afd）。"
+        "雷達圖契約（依設計稿的教師分析六畫面）。"
       ]
     },
     {
@@ -265,7 +265,7 @@
       "name": "雷達圖",
       "backend": "analytics",
       "source": "待定",
-      "state": "等契約（Design-Goose 1fba59189afd）",
+      "state": "等契約（設計稿）",
       "consumer": "教師分析畫面"
     },
     {
@@ -300,7 +300,7 @@
       "name": "TTS（文字→音訊＋字時間點）",
       "backend": "llm-runtime",
       "source": "待定",
-      "state": "等契約（已寄 Portal-Goose）",
+      "state": "等契約",
       "consumer": "導師人像"
     },
     {

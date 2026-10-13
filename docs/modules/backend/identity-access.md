@@ -4,30 +4,6 @@
 
 帳號、登入 session、membership、Email 驗證、重設與授權。
 
-## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
-
-- 端：後端；default owner：Portal-Goose
-- 可依賴的模組：platform
-
-檔案範圍：
-- `backend/app/services/classroom_auth.py`
-- `backend/app/services/email_delivery.py`
-
-契約：
-- 帳號（/auth/*）（產生型別 ✅；端點在 routes/classroom.py）
-
-## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
-
-- `identity-access→classroom-core  backend/app/services/classroom_auth.py → backend/app/orchestrator/classroom.py`
-- `identity-access→classroom-core  backend/app/services/email_delivery.py → backend/app/orchestrator/classroom.py`
-- `orm-outside-repositories  backend/app/services/email_delivery.py`
-
-## 待清項（源頭修正，做完從這裡刪掉）
-
-- /auth/* 端點目前寫在 routes/classroom.py：抽成 routes/auth.py。
-- services/email_delivery.py 定義 ORM（MailDelivery）：移到 repositories。
-<!-- module-map:end -->
-
 ## Public contract
 
 - Account/session view
@@ -44,11 +20,11 @@
 - API contract與generated types同步。
 - Toy page完成happy path、typed error、permission、retry／idempotency與boundary fixtures。
 - Backend module tests與Frontend adapter tests各自通過。
-- Default owner review receipt成立。
+- 審查通過。
 - Compatibility ledger同步更新。
-- Source、caller、generated artifacts與handoff文件形成同一successor。
+- 源頭、呼叫端、generated artifacts與交接文件在同一個commit更新。
 
-## First metabolism
+## 第一批工作
 
 1. 將 auth endpoints 從 classroom route 抽成專屬 adapter。
 2. 建立 toy page：register、verify、login、role、logout。
@@ -56,7 +32,7 @@
 
 ## Scope rules
 
-- Current custody內的變更由default owner review。
+- 本模組範圍內的變更經審查後合併。
 - 跨模組修改依每個module path分開review。
 - Composition files只放注入與接線。
 - Shared contract改動同步重產Frontend types。
@@ -65,7 +41,7 @@
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
 
-- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 架構與審查：Arthur；執行：Arthur
 - 可依賴的模組：platform
 
 檔案範圍：

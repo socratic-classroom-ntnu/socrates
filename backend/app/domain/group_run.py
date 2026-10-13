@@ -716,7 +716,7 @@ def extend(Native):
             entry["last_observations"] = observations
             entry["summary"] = personal_summary_value(result.get("summary"))
             entry["completed_turns"] = entry["turn_index"]
-            # Goal before cap, as for a focus; the goal is the shared Round 1 policy.
+            # Goal before cap, as for a focus; the goal is the shared advance policy.
             if stage_goal(observations, entry["completed_turns"]):
                 entry["status"] = "awaiting_confirm"
                 entry["summary_digest"] = personal_digest(run_id, member_id, entry)

@@ -1,20 +1,17 @@
 # Socratic 模組責任地圖
 
-- 狀態：後端 10 個模組，架構與方向由 Heron（Portal-Heron）決定並審查，Goose 席位執行（Arthur 2026-10-14 00:50）；前端由前端組員負責（Arthur 00:42），兩端只透過下方「契約」接。版本以 git log 為準，本檔不記 commit
+- 狀態：後端 10 個模組，架構、模組劃分與實作由 Arthur 負責；前端由前端組員負責；兩端只透過下方「契約」接。版本以 git log 為準，本檔不記 commit
 - 範圍權威：`docs/modules/modules.json`；`python3 scripts/check_modules.py` 檢查每個後端原始碼檔屬於且只屬於一個模組、跨模組依賴只走 uses、route 不互相 import、ORM 只在 repositories；尚未清掉的違規逐條列在 `violations.json`，清單只能變短。`--write` 依地圖重寫下表與各模組文件的 Scope、待清違規、待清項
-- 決策來源：Arthur 2026-10-13 15:18（前後端解耦）、15:31（模組責任）、23:48（優先拆）；2026-10-14 00:42（前端由前端組員負責）、00:50（架構與方向由 Heron 決定，Goose 除 Design 與 PO 外為執行）
-- 架構、模組劃分與審查：`Portal-Heron`
-- 後端執行：`Portal-Goose`
+- 後端架構、模組劃分、實作與審查：Arthur
 - 前端：前端組員
-- Visual owner：`Design-Goose`
-- Product acceptance：`PO-Goose`
+- 視覺設計：Arthur
 
 ## 責任規則
 
-1. 新模組與模組劃分由 Portal-Heron 決定，寫進 `modules.json`。
-2. 後端改動由 Portal-Goose 執行、Portal-Heron 審查後進入 backend/arthur/main。
+1. 新模組與模組劃分寫進 `modules.json`，由 Arthur 決定。
+2. 後端改動經審查後進入 backend/arthur/main。
 3. 源頭改動與呼叫端、`modules.json`、`violations.json`、模組文件在同一個 commit 更新；內部程式不留相容層。
-4. 分歧透過 Thread 交 Arthur 裁定。
+4. 前後端分歧由 Arthur 與前端組員討論決定。
 5. 前後端只透過 generated contract、ViewModel、`available_actions` 與 reason codes 連接；前端缺的資料寄契約請求到後端。
 6. 後端模組完成定義：API＋generated types＋DevConsole toy page＋acceptance cases，`violations.json` 該模組條目清空。
 
@@ -24,7 +21,7 @@
 
 ✅＝可以直接交給一個人；⚠️＝能交，先清待清違規；❌＝先做源頭修正再交。
 
-**後端模組**（架構與審查：Portal-Heron；執行：Portal-Goose；前端：前端組員）
+**後端模組**（架構與審查：Arthur；執行：Arthur；前端：前端組員）
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
@@ -47,12 +44,12 @@
 | 教室房間（/classrooms/*） | classroom-core | 學生端課堂畫面 | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
 | 分組課（/groups/*） | group-dialogue | 分組課、教師分析畫面 | routes/groups.py | 缺 response_model，前端型別手寫（已寄契約請求） |
 | AI 學生（/ai-students/*） | group-dialogue | 分組課畫面 | routes/ai_students.py | 部分手寫 |
-| 雷達圖 | analytics | 教師分析畫面 | 待定 | 等契約（Design-Goose 1fba59189afd） |
+| 雷達圖 | analytics | 教師分析畫面 | 待定 | 等契約（設計稿） |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | AI 設定、出題畫面 | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | 教師端出題畫面 | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
 | 單人對話（/api/sessions/*） | solo-dialogue | 單人對話畫面 | api/schemas.py、transcript_schemas.py → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | 全站 | routes/public_config.py | ✅ |
-| TTS（文字→音訊＋字時間點） | llm-runtime | 導師人像 | 待定 | 等契約（已寄 Portal-Goose） |
+| TTS（文字→音訊＋字時間點） | llm-runtime | 導師人像 | 待定 | 等契約 |
 | 人像模型清單（/avatar-packs/catalog.json） | platform | 導師人像 | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
 
 <!-- module-map:end -->
@@ -81,18 +78,22 @@
 - Import cycle目標為0。
 - Domain／orchestrator依賴application contract；API adapter依賴application service。
 - 新增或修改的長函式以拆分為具名use case／policy／adapter為完成條件。
-- 現有大檔採單調收斂：每次修改同步縮小責任面或產生明確抽取receipt。
+- 現有大檔採單調收斂：每次修改同步縮小責任面或抽出明確的子模組。
 - Generated types保持fresh。
 - 每個Backend模組具toy page與acceptance cases。
-- Source replacement、caller migration、generated artifacts與compatibility checkpoint共同進入terminal predicate。
+- 源頭替換、呼叫端遷移、generated artifacts 與相容帳冊在同一個 commit 完成。
 
-## Rollout
+## 拆分順序
 
-1. Group Dialogue。
-2. LLM Runtime。
-3. Classroom Lifecycle。
-4. Content Authoring。
-5. Identity & Access。
-6. Analytics。
-7. Media Adapters。
-8. Platform Adapters。
+每批一個模組；該模組在 `violations.json` 的條目清空才進下一批。
+
+1. group-dialogue
+2. llm-runtime
+3. classroom-core
+4. content-authoring
+5. identity-access
+6. analytics
+7. ai-providers
+8. platform
+9. solo-dialogue
+10. app-shell（組裝層，最後收斂）

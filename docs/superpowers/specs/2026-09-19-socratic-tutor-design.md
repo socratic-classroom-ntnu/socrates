@@ -1,12 +1,12 @@
-# 蘇格拉底式對話機器人 — 第一輪設計規格
+# 蘇格拉底式對話機器人 — 單人對話設計規格
 
 - 日期：2026-09-19
-- 範圍：第一輪（Round 1）產品功能設計
+- 範圍：單人對話產品功能設計
 - 相關文件：
   - `docs/product/product-overview.md`（產品說明，PM 取向）
   - `AGENTS.md`（專案規則：不可妥協條款、範本索引、API 慣例）
 
-> 狀態（2026-10-03）：Round 1 目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
+> 狀態（2026-10-03）：單人對話目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
 > 規格原意與程式不一致、尚待決定的兩處保留原文並標註：§5.2／§7 的路口提示由誰產生（計畫盤點 B8）、
 > §11.1／§13 的結束確認框與「還有 N 個情境」（計畫盤點 B5）。教室（多人課堂）的設計見 `docs/CLASSROOM-ARCHITECTURE.md`。
 
@@ -165,7 +165,7 @@ React SPA ──HTTP──▶ FastAPI
                       │    不知道推進規則
                       │      └─ LLMProvider 介面
                       │           ├─ ScriptedProvider（本輪驗收）
-                      │           └─ 真實 provider（Round 1 尚未實作）
+                      │           └─ 真實 provider（單人對話尚未實作）
                       │
                       └─ Repository ──▶ PostgreSQL
 ```
@@ -199,7 +199,7 @@ React SPA ──HTTP──▶ FastAPI
 | **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway（持久化由 `services/conversation.py` 的 application service 負責，Orchestrator 不碰 Repository） |
 | **StageAdvancePolicy** | 具名純函式（`orchestrator/policy.py` 的 `should_advance`），實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
 | **TutorGateway** | 對外兩個方法：`respond(stage, history, turn_index)`、`summarize(history)`。內部 pre-processor → provider → post-processor，格式不合自動重試一次 | LLMProvider |
-| **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；Round 1 目前只有 `ScriptedProvider`） | — |
+| **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；單人對話目前只有 `ScriptedProvider`） | — |
 | **Repository** | 持久化 CRUD | SQLAlchemy |
 | **Identity** | 前端 uuid 存 localStorage，header 帶入。後端只認此 id，不存姓名 | — |
 
@@ -479,7 +479,7 @@ frontend/src/
 ```
 
 實際目錄（2026-10-03）另有 `features/conversation-room/`（對話室，`pages/Conversation.tsx` 只包一層 `ConversationRoom`）、
-`Round1App.tsx`（`/round1` 的路由）與 `ClassroomApp.tsx`（教室）；`App.tsx` 依路徑分流到 Round 1 或教室。
+`Round1App.tsx`（`/round1` 的路由）與 `ClassroomApp.tsx`（教室）；`App.tsx` 依路徑分流到單人對話或教室。
 
 **`ActionBar` 只接收 `available_actions`，渲染對應按鈕，不知道 `flow_state` 是什麼。**
 
@@ -628,7 +628,7 @@ TutorTurn {
 
 ### 13.3 人工驗收腳本
 
-環境：`docker compose up -d` 起全棧，開 `http://localhost:5173/round1`；後端固定使用 `ScriptedProvider`，以 `SCRIPT_PATH` 切換腳本（見 `docs/testing/trolley-round1-acceptance.md`）。
+環境：`docker compose up -d` 起全棧，開 `http://localhost:5173/round1`；後端固定使用 `ScriptedProvider`，以 `SCRIPT_PATH` 切換腳本（見 `docs/testing/trolley-solo-dialogue-acceptance.md`）。
 
 1. 首次進入 → 開始討論 → 第一階開場白出現，進度顯示「情境 1 / 3」
 2. 對話三輪 → 路口出現，提示「還有 2 個情境」，**且畫面上任何地方都沒有「天橋」字樣**
@@ -642,7 +642,7 @@ TutorTurn {
 
 **九步全通 = 本輪通過。** 此腳本須寫入文件，團隊多人測試需要同一套步驟。
 
-> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。Round 1 驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。（2026-10-03：學生端流程已補完，狀態轉換測試已全部啟用，不再有 `xfail`。）
+> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。單人對話驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。（2026-10-03：學生端流程已補完，狀態轉換測試已全部啟用，不再有 `xfail`。）
 
 ---
 

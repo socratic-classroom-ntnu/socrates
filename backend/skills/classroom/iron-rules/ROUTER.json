@@ -15,14 +15,14 @@
   "roles": {
     "focused_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
     "personal_tutor": {"L2": "L2/personal_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
-    "round1_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
+    "solo_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
     "llm_student_turn": {"L2": "L2/llm_student_turn.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
     "other_suggestion": {"L2": "L2/other_suggestion.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
     "dynamic_question": {"L2": "L2/dynamic_question.md", "checks": ["no_leak"], "fallback": null},
     "question_summary": {"L2": "L2/question_summary.md", "checks": ["no_leak"], "fallback": null},
     "class_summary": {"L2": "L2/class_summary.md", "checks": ["no_leak"], "fallback": null},
     "personal_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
-    "round1_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
+    "solo_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
     "ai_script_authoring": {"L2": "L2/ai_script_authoring.md", "checks": ["no_leak"], "fallback": null}
   }
 }

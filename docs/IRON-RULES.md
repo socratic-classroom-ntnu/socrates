@@ -19,7 +19,7 @@
 | `focused_tutor`、`personal_tutor`、`llm_student_turn`、`dynamic_question`、`question_summary`、`class_summary`、`personal_summary` | 課堂工作（`app/services/llm_workers.py`） |
 | `ai_script_authoring` | 教師出題助手（`app/api/routes/script_assist.py`） |
 | `other_suggestion` | 其他觀點建議（`app/api/routes/ai_students.py`） |
-| `round1_tutor`、`round1_summary` | Round 1 對話（`app/tutor/gateway.py` 的 TutorGateway） |
+| `solo_tutor`、`solo_summary` | 單人對話（`app/tutor/gateway.py` 的 TutorGateway） |
 
 ## 每次呼叫做什麼
 

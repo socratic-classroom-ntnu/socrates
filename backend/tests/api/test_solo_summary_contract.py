@@ -2,7 +2,7 @@ from app.api.history_schemas import SessionHistoryPage
 from app.api.schemas import SummaryView
 
 
-def test_round1_summary_contract() -> None:
+def test_solo_summary_contract() -> None:
     summary = SummaryView(
         core_principle="降低可避免的傷害",
         key_points=["人數會影響判斷", "介入方式也重要"],

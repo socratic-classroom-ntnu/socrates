@@ -5,7 +5,7 @@
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
-- 架構與審查：Portal-Heron；執行：Portal-Goose
+- 架構與審查：Arthur；執行：Arthur
 - 可依賴的模組：platform、llm-runtime、content-authoring
 
 檔案範圍：

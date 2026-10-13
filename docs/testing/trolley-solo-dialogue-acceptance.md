@@ -1,12 +1,12 @@
-# Round 1 電車難題驗收操作稿
+# 單人對話電車難題驗收操作稿
 
-> 狀態（2026-10-03）：Round 1 目前擱置不開發；本稿已同步到現在的程式與畫面。
+> 狀態（2026-10-03）：單人對話目前擱置不開發；本稿已同步到現在的程式與畫面。
 
 這份操作稿補上 [產品規格 §13.3](../superpowers/specs/2026-09-19-socratic-tutor-design.md) 九步人工驗收所需的固定輸入與腳本切換方式。三份 YAML 是可載入的固定 provider 回覆；**它們只依每階的輪數回覆，不解析學生文字**。以下輸入是為了讓試玩時的對話前後一致，不是判斷器的輸入條件。
 
 ## 啟動與切換
 
-從專案根目錄執行 `docker compose up -d`，開啟 <http://localhost:5173/round1>（網站根目錄 `/` 是 Run 2）。預設載入 `scripts/trolley.script.yaml`。要切換分支腳本，先結束正在試玩的對話，再執行下列其中一行，並**建立新 session**：
+從專案根目錄執行 `docker compose up -d`，開啟 <http://localhost:5173/round1>（網站根目錄 `/` 是教室）。預設載入 `scripts/trolley.script.yaml`。要切換分支腳本，先結束正在試玩的對話，再執行下列其中一行，並**建立新 session**：
 
 ```bash
 SCRIPT_PATH=/app/scripts/trolley.capped.script.yaml docker compose up -d --force-recreate backend
@@ -44,4 +44,4 @@ docker compose up -d --force-recreate backend  # 恢復預設腳本
 docker compose exec -T backend python -m pytest tests/ladders/test_repository.py tests/tutor/test_scripted.py tests/api/test_advance.py tests/orchestrator/test_in_stage.py -q
 ```
 
-後端已有 `POST /advance`，也會在 `max_turns` 到達且未達成時標記 `capped`；前端「進入下一個情境」按鈕已接到 API，成功後會重新讀取完整對話。三階一般路徑可從畫面試跑；歷史紀錄頁已完成（Round 1 首頁「查看歷史紀錄」）。固定腳本的摘要目前不依實際造訪階段調整；提早結束時，**不要把預設腳本提及後兩階的摘要文字當作合格結果**。故障後重試可先跑既有後端測試，人工注入故障的操作仍待補齊。
+後端已有 `POST /advance`，也會在 `max_turns` 到達且未達成時標記 `capped`；前端「進入下一個情境」按鈕已接到 API，成功後會重新讀取完整對話。三階一般路徑可從畫面試跑；歷史紀錄頁已完成（單人對話首頁「查看歷史紀錄」）。固定腳本的摘要目前不依實際造訪階段調整；提早結束時，**不要把預設腳本提及後兩階的摘要文字當作合格結果**。故障後重試可先跑既有後端測試，人工注入故障的操作仍待補齊。

@@ -56,6 +56,7 @@
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
 - 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
+- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人對話」，名稱說明它是什麼、做什麼。已持久化的舊 namespace 只能登記在 `docs/modules/COMPATIBILITY-LEDGER.md`（`scripts/check_naming.sh` 會擋）
 
 ## 分支流程
 
@@ -82,12 +83,12 @@ docker compose up -d                                  # 起全棧（db / backend
 docker compose exec backend python -m pytest tests -q # 後端測試
 docker compose exec backend ruff check .          # 後端 lint
 docker compose exec backend ruff format --check . # 後端格式
-# 型別：兩條 mypy（Round 1 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
+# 型別：兩條 mypy（核心模組 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
 
 cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
 
-./scripts/gen_types.sh                                # Round 1 schema 改了就跑這個
+./scripts/gen_types.sh                                # 單人對話（/api）schema 改了就跑這個
 python scripts/gen_classroom_types.py                 # 教室（/api/v2）schema 改了就跑這個
 ```
 
@@ -123,11 +124,11 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 `alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
 **hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`classroom-load`，
+`round1-e2e`（`docker compose up --build` 加 `scripts/solo_dialogue_smoke.py`）、`classroom-load`，
 以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
-Round 1 走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（兩者都逐檔列出教室模組，新增教室模組時兩邊都要加）。lint 的範圍是 `backend`，
+核心模組走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（兩者都逐檔列出教室模組，新增教室模組時兩邊都要加）。lint 的範圍是 `backend`，
 不含 `scripts/`；`backend/pyproject.toml` 已用 `extend-exclude` 排除，因為 root compose 把 `./scripts`
 掛進了 `/app/scripts`。**CI 改了就要同時改 hook**，反之亦然——2026-09 曾經因為 CI 隨
 教室模組／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `--run` 餵給 Jest

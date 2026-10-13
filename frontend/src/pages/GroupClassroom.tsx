@@ -40,7 +40,10 @@ const settled = (e) => e instanceof ApiError && e.status > 0 && e.status < 500;
  * （同一個 action_id）重送一次取得它的回執，再送新內容，不會卡在提示裡。 */
 function useMutation() {
     const pending = useRef(null), lock = useRef(false);
-    const [busy, setBusy] = useState(false), [note, setNote] = useState('');
+    const [busy, setBusy] = useState(false), [note, setNoteState] = useState('');
+    // 呼叫端在 send 回傳後要立刻拿到這次的訊息（state 要到下一次 render 才更新）。
+    const latest = useRef('');
+    const setNote = (text) => { latest.current = text; setNoteState(text); };
     async function send(path, body) {
         const key = JSON.stringify([path, body]);
         if (lock.current)
@@ -81,7 +84,7 @@ function useMutation() {
             lock.current = false; setBusy(false);
         }
     }
-    return { send, busy, note, setNote };
+    return { send, busy, note, setNote, lastNote: () => latest.current };
 }
 /** 分組容量：入座人數（含 AI 學生）與「組數 × 每組人數」，以及手動指定到同一組超過每組人數的組別。 */
 export function groupCapacity(roster, count, size, assignment) {
@@ -145,11 +148,12 @@ function GroupCollection({ view, refresh }) {
     const batch = useRef(new Map());
     const mutation = useMutation();
     const [profiles, setProfiles] = useState(null);
+    const [aiNote, setAINote] = useState('');
     const profileId = view.ai_settings?.default_profile_id || null;
-    useEffect(() => { if (!profileId)
-        return; let live = true; void api('/provider-profiles').then(rows => { if (live)
-        setProfiles(rows); }).catch(() => { if (live)
-        setProfiles([]); }); return () => { live = false; }; }, [profileId]);
+    useEffect(() => { let live = true; void api('/provider-profiles').then(rows => { if (live)
+        setProfiles(Array.isArray(rows) ? rows : []); }).catch(() => { if (live)
+        setProfiles([]); }); return () => { live = false; }; }, []);
+    const aiStudents = (view.roster || []).filter(m => m.actor_type === 'llm_student').length;
     const rosterRows = view.roster || [];
     const fit = groupCapacity(rosterRows, count, size, assignment);
     useEffect(() => { const abort = new AbortController(); fetch('/avatar-packs/catalog.json', { signal: abort.signal }).then(r => { if (!r.ok)
@@ -165,27 +169,51 @@ function GroupCollection({ view, refresh }) {
     async function addAI(countToAdd) {
         if (countToAdd < 1)
             return;
+        // 課堂沒有自訂 AI 連線時沿用帳號 AI 設定（預設連線＋「AI 學生」角色的模型），和上課時的解析順序一致。
+        let useProfileId = profileId, matrixModel = view.ai_settings?.model_matrix?.ai_student;
+        if (!useProfileId) {
+            const account = await api('/ai-settings/account').catch(() => null);
+            useProfileId = account?.default_profile_id || null;
+            matrixModel = matrixModel || account?.model_matrix?.ai_student;
+        }
         // 模型依預設連線的服務決定（與 AI 連線設定的模型選單同一套規則），非 OpenRouter 連線不送 OpenRouter 模型。
-        const profile = profileId ? profiles?.find(p => p.id === profileId) : null;
-        if (profileId && !profile) {
-            mutation.setNote(profiles ? '找不到課堂預設的 AI 連線，請到進階 AI 設定重新選擇。' : '正在讀取 AI 連線，請稍後再試。');
+        const profile = useProfileId ? profiles?.find(p => p.id === useProfileId) : null;
+        if (useProfileId && !profile) {
+            setAINote(profiles ? '找不到預設的 AI 連線，請到 AI 連線設定重新選擇。' : '正在讀取 AI 連線，請稍後再試。');
             return;
         }
-        const model = aiStudentModel(view.ai_settings?.model_matrix?.ai_student, profile);
+        const model = aiStudentModel(matrixModel, profile);
         if (!model) {
-            mutation.setNote('這個 AI 連線還沒有預設模型，請先到進階 AI 設定選擇 AI 學生的模型。');
+            setAINote('這個 AI 連線還沒有預設模型，請先到 AI 連線設定選擇 AI 學生的模型。');
             return;
         }
+        setAINote(`正在加入 ${countToAdd} 位 AI 學生…`);
         if (await mutation.send(`/groups/classrooms/${view.id}/ai-students`, {
             count: countToAdd,
             model,
-            provider_profile_id: profileId
-        }))
+            provider_profile_id: useProfileId
+        })) {
             await refresh();
+            setAINote(`已加入 ${countToAdd} 位 AI 學生（模型 ${model}）。`);
+        }
+        else
+        {
+            // 失敗原因只顯示在 AI 學生按鈕旁，不在頁尾重複一次。
+            setAINote(`加入 AI 學生沒有成功：${mutation.lastNote()}`);
+            mutation.setNote('');
+        }
     }
     async function clearAI() {
-        if (await mutation.send(`/groups/classrooms/${view.id}/ai-students/clear`, {}))
+        setAINote('正在清除 AI 學生…');
+        if (await mutation.send(`/groups/classrooms/${view.id}/ai-students/clear`, {})) {
             await refresh();
+            setAINote('已清除所有 AI 學生。');
+        }
+        else
+        {
+            setAINote(`清除 AI 學生沒有成功：${mutation.lastNote()}`);
+            mutation.setNote('');
+        }
     }
     async function configure() {
         if (await mutation.send(`/groups/classrooms/${view.id}/configure`, {
@@ -240,7 +268,8 @@ function GroupCollection({ view, refresh }) {
       <label>教室角色<select value={pack} onChange={e => setPack(e.target.value)}>{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
       {aiEnabled && <><p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
       <div className="r2-row r88-ai-roster-controls"><button disabled={mutation.busy || aiAddBlocked} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || aiAddBlocked || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || (gate ? !gate.can('clear_ai_students') : !(view.roster || []).some(m => m.actor_type === 'llm_student'))} onClick={() => void clearAI()}>清除 AI 學生</button></div>
-      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p></>}</details>
+      <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p>
+      <p className="ai-roster-status" role="status" aria-live="polite">目前 AI 學生 {aiStudents} 位{aiNote ? ` · ${aiNote}` : ''}</p></>}</details>
       <details className="r2-card"><summary>進階 AI 設定（選用）</summary><ClassroomAISettings classroomId={view.asset_classroom_id} activeRoomId={view.id} onSaved={() => void refresh()}/></details>
       <div className="r2-script-grid">{(view.roster || []).map((m, i) => <article className="r2-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="r88-ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>

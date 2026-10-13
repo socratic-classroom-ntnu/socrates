@@ -871,6 +871,11 @@
             "type": "string",
             "title": "Release Id"
           },
+          "hook_probe": {
+            "type": "string",
+            "title": "Hook Probe",
+            "default": ""
+          },
           "source_sha": {
             "type": "string",
             "title": "Source Sha"

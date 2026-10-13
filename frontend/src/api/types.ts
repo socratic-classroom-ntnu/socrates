@@ -264,6 +264,11 @@ export interface components {
         ReleaseView: {
             /** Release Id */
             release_id: string;
+            /**
+             * Hook Probe
+             * @default
+             */
+            hook_probe: string;
             /** Source Sha */
             source_sha: string;
             /** Environment */

@@ -23,3 +23,35 @@ if echo "$CHANGED" | grep -q '^backend/'; then
   docker compose exec -T backend ruff check . || exit 1
   docker compose exec -T backend ruff format --check . || exit 1
 fi
+
+# 後端 API 有改動時，重新產生前端的契約檔並自動加入這次 commit（對應 CI 的 contract job）。
+# 主機通常沒裝後端依賴：OpenAPI JSON 由容器印到 stdout，主機寫檔並產生 TS 型別。
+# 產生結果跟原本一樣時 git add 不會有任何變動。
+if echo "$CHANGED" | grep -q '^backend/app/'; then
+  echo "▶ regenerate OpenAPI contracts"
+  CONTRACTS="frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts"
+  TMP_ROUND1=$(mktemp)
+  TMP_CLASSROOM=$(mktemp)
+  trap 'rm -f "$TMP_ROUND1" "$TMP_CLASSROOM"' EXIT
+  # 與 scripts/gen_types.sh 的 JSON 產生方式相同，兩邊要一起改。
+  docker compose exec -T backend python -c 'import json; from app.main import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' \
+    > "$TMP_ROUND1" || exit 1
+  docker compose exec -T -e PYTHONPATH=/app backend python scripts/gen_classroom_types.py --print-spec \
+    > "$TMP_CLASSROOM" || exit 1
+  cp "$TMP_ROUND1" frontend/openapi.json
+  (cd frontend && npx --no-install openapi-typescript openapi.json -o src/api/types.ts) || exit 1
+  python3 scripts/gen_classroom_types.py --spec "$TMP_CLASSROOM" >/dev/null || exit 1
+
+  # backend/app 有沒暫存的改動時，產生出來的契約包含這些改動，不能直接塞進這次 commit。
+  if [ -n "$(git diff --name-only -- backend/app)" ]; then
+    # shellcheck disable=SC2086
+    if [ -n "$(git diff --name-only -- $CONTRACTS)" ]; then
+      echo "✗ backend/app 有沒暫存的改動，契約檔已重新產生但沒有自動加入。"
+      echo "  請確認後自行 git add: $CONTRACTS"
+      exit 1
+    fi
+  else
+    # shellcheck disable=SC2086
+    git add -- $CONTRACTS
+  fi
+fi

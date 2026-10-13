@@ -28,7 +28,7 @@ def database(monkeypatch):
     configure("sqlite+pysqlite:///:memory:", create=True)
 
 
-def register(username="arthur", email="arthur@example.test", password="correct-horse-battery"):
+def register(username="arthur", email="arthur@example.test", password="Correct-horse-battery9"):
     return auth.register(Register(username=username, email=email, password=password))
 
 
@@ -52,7 +52,7 @@ def test_stale_unverified_account_releases_username_and_email():
     old_token, old = register()
     expire_verification(old["id"])
 
-    _, new = register(password="another-horse-battery")
+    _, new = register(password="Another-horse-battery9")
 
     assert new["id"] != old["id"]
     assert new["username"] == "arthur"
@@ -71,9 +71,9 @@ def test_stale_unverified_account_releases_username_and_email():
         assert tokens and all(t.consumed for t in tokens)
     # Logging in by the old name reaches the new account only; the released row cannot log in.
     assert code_of(
-        lambda: auth.login(Login(login=f"released-{old['id']}", password="correct-horse-battery"))
+        lambda: auth.login(Login(login=f"released-{old['id']}", password="Correct-horse-battery9"))
     ) == ("請確認登入資料。", 401)
-    _, logged_in = auth.login(Login(login="arthur", password="another-horse-battery"))
+    _, logged_in = auth.login(Login(login="arthur", password="Another-horse-battery9"))
     assert logged_in["id"] == new["id"]
 
 

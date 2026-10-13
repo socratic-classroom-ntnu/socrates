@@ -123,6 +123,9 @@ const CODE_RE = /^[A-Z][A-Z0-9_]{3,}$/
 // FastAPI 422 的 detail 是陣列（loc 最後一段＝欄位名）。認得的欄位轉成針對該欄位的中文說明。
 const FIELDS: Record<string, string> = { email: 'Email', username: '使用者名稱', password: '密碼' }
 
+// 與後端 PASSWORD_RULE 相同的說明（backend/app/api/classroom_schemas.py）。
+export const PASSWORD_RULE = '密碼需 8–32 個字元，並包含大寫字母、小寫字母、數字與特殊字元（可用 ! @ # $ % ^ & * _ - + = . ? ~），不能有空白或其他符號。'
+
 export type FieldError = { field: string; text: string }
 
 const withLabel = (label: string, rest: string) => (/^[A-Za-z]/.test(label) ? `${label} ${rest}` : label + rest)
@@ -136,7 +139,9 @@ export function fieldText(field: string, type?: string, ctx: Record<string, unkn
   if (type === 'string_too_short' && ctx.min_length !== undefined && field !== 'email')
     return withLabel(label, `至少要 ${ctx.min_length} 個字元，請重新輸入。`)
   if (type === 'string_pattern_mismatch' && field === 'username')
-    return '使用者名稱只能用文字、數字、底線（_）、點（.）或連字號（-），不能有空格。'
+    return '使用者名稱只能用英文字母、數字、底線（_）、點（.）或連字號（-），要以英文字母開頭、以字母或數字結尾。'
+  if (type === 'password_policy' && field === 'password')
+    return PASSWORD_RULE
   return withLabel(label, '格式不正確，請重新輸入。')
 }
 

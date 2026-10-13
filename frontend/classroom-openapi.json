@@ -1339,15 +1339,15 @@
             "type": "string"
           },
           "password": {
-            "maxLength": 256,
-            "minLength": 12,
+            "maxLength": 32,
+            "minLength": 8,
             "title": "Password",
             "type": "string"
           },
           "username": {
-            "maxLength": 64,
+            "maxLength": 32,
             "minLength": 3,
-            "pattern": "^[\\w.-]+$",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$",
             "title": "Username",
             "type": "string"
           }
@@ -1364,8 +1364,8 @@
         "additionalProperties": false,
         "properties": {
           "password": {
-            "maxLength": 256,
-            "minLength": 12,
+            "maxLength": 32,
+            "minLength": 8,
             "title": "Password",
             "type": "string"
           },

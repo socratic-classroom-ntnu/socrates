@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, api, command, setCSRF } from './api/classroomClient';
-import { fieldErrors, fieldText } from './api/errorText';
+import { PASSWORD_RULE, fieldErrors, fieldText } from './api/errorText';
 import { Arena } from './features/classroom-stage/Arena';
 import { DraftComposer } from './shared/input/DraftComposer';
 import { phaseLabel } from './shared/phaseLabels';
@@ -20,11 +20,21 @@ const errorText = (e) => e instanceof Error ? e.message : String(e);
 // 與後端 JoinRoom.alias 的 max_length 一致（backend/app/api/classroom_schemas.py）；超過會被後端 422 擋下。
 export const JOIN_ALIAS_MAX_LENGTH = 40;
 // 與後端 Register 一致（backend/app/api/classroom_schemas.py）：送出前先在前端擋下，錯誤說明對應到欄位。
-export const REGISTER_LIMITS = { username: [3, 64], email: [3, 254], password: [12, 256] } as const;
-// 後端 username pattern ^[\w.-]+$ 的 \w 是 Unicode（中文等文字也可以）。
-const USERNAME_RE = /^[\p{Alphabetic}\p{M}\p{Nd}\p{Pc}\p{Join_Control}.-]+$/u;
+export const REGISTER_LIMITS = { username: [3, 32], email: [3, 254], password: [8, 32] } as const;
+// 與後端 USERNAME_PATTERN 一致：英文字母開頭、英文字母或數字結尾，中間可用英數、底線、點、連字號。
+const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$/;
 // 後端只要求 @ 後面有點；這裡同樣要求網域有點（123@g 會被擋下），也不允許空白。
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 與後端 PASSWORD_SPECIALS 一致；密碼需大寫、小寫、數字與其中一個特殊字元，不能有其他符號。
+// 登入不檢查格式：舊規則（12–256 字）設定的密碼要能照常輸入。
+const LOGIN_PASSWORD_MAX = 256;
+export const PASSWORD_SPECIALS = '!@#$%^&*_-+=.?~';
+export function passwordOk(value: string) {
+    const special = (c: string) => PASSWORD_SPECIALS.includes(c);
+    const list = Array.from(value);
+    return list.every(c => /[A-Za-z0-9]/.test(c) || special(c))
+        && /[A-Z]/.test(value) && /[a-z]/.test(value) && /[0-9]/.test(value) && list.some(special);
+}
 const chars = (value: string) => Array.from(value).length;
 /** 註冊欄位的前端預檢；訊息與後端 422 轉成的中文相同。 */
 export function registerProblems({ username, email, password }: { username: string; email: string; password: string }) {
@@ -40,7 +50,7 @@ export function registerProblems({ username, email, password }: { username: stri
     if (user) problems.push({ field: 'username', text: user });
     const mail = length('email', email) || (EMAIL_RE.test(email) ? '' : fieldText('email', 'value_error'));
     if (mail) problems.push({ field: 'email', text: mail });
-    const secret = length('password', password);
+    const secret = length('password', password) || (passwordOk(password) ? '' : fieldText('password', 'password_policy'));
     if (secret) problems.push({ field: 'password', text: secret });
     return problems;
 }
@@ -65,9 +75,9 @@ function Auth({ onLogin }) {
         return next;
     });
     const switchMode = next => { setMode(next); setFieldError({}); };
-    const fieldProps = (field: string) => mode === 'register' && fieldError[field]
-        ? { 'aria-invalid': true, 'aria-describedby': `register-${field}-error` }
-        : {};
+    const fieldProps = (field: string, hint?: string) => mode === 'register' && fieldError[field]
+        ? { 'aria-invalid': true, 'aria-describedby': [hint, `register-${field}-error`].filter(Boolean).join(' ') }
+        : hint ? { 'aria-describedby': hint } : {};
     const fieldMessage = (field: string) => mode === 'register' && fieldError[field]
         ? <small id={`register-${field}-error`} role="alert">{fieldError[field]}</small>
         : null;
@@ -107,6 +117,10 @@ function Auth({ onLogin }) {
                 setNote('重設郵件已排入寄送；請查看信箱。');
             }
             if (mode === 'reset') {
+                if (!passwordOk(password) || Array.from(password).length < REGISTER_LIMITS.password[0] || Array.from(password).length > REGISTER_LIMITS.password[1]) {
+                    setNote(PASSWORD_RULE);
+                    return;
+                }
                 await api('/auth/reset-password', 'POST', { token: query.get('reset_token'), password });
                 history.replaceState({}, '', '/');
                 setMode('login');
@@ -131,7 +145,7 @@ function Auth({ onLogin }) {
       <h2>{{ login: '歡迎回來', register: '建立帳號', forgot: '重設登入密碼', reset: '設定新密碼' }[mode]}</h2>
       {(mode === 'login' || mode === 'register') && <><label>{mode === 'login' ? '使用者名稱或 Email' : '使用者名稱'}<input ref={usernameInput} autoComplete="username" required maxLength={mode === 'login' ? REGISTER_LIMITS.email[1] : REGISTER_LIMITS.username[1]} value={name} {...fieldProps('username')} onChange={e => { setName(e.target.value); clearField('username'); }}/></label>{fieldMessage('username')}</>}
       {(mode === 'register' || mode === 'forgot') && <><label>Email<input ref={emailInput} type="email" required maxLength={REGISTER_LIMITS.email[1]} value={email} {...fieldProps('email')} onChange={e => { setEmail(e.target.value); clearField('email'); }}/></label>{fieldMessage('email')}</>}
-      {mode !== 'forgot' && <><label>密碼<input ref={passwordInput} type="password" maxLength={REGISTER_LIMITS.password[1]} minLength={mode === 'login' ? 1 : REGISTER_LIMITS.password[0]} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} {...fieldProps('password')} onChange={e => { setPassword(e.target.value); clearField('password'); }}/></label>{fieldMessage('password')}</>}
+      {mode !== 'forgot' && <><label>密碼<input ref={passwordInput} type="password" maxLength={mode === 'login' ? LOGIN_PASSWORD_MAX : REGISTER_LIMITS.password[1]} minLength={mode === 'login' ? 1 : REGISTER_LIMITS.password[0]} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} {...fieldProps('password', mode === 'login' ? undefined : 'password-rule')} onChange={e => { setPassword(e.target.value); clearField('password'); }}/></label>{mode !== 'login' && <small id="password-rule" className="muted">{PASSWORD_RULE}</small>}{fieldMessage('password')}</>}
       <button disabled={busy}>{busy ? '處理中…' : '繼續'}</button><p role="status">{note}</p>
       <div className="sc-row"><button type="button" className="quiet" onClick={() => switchMode(mode === 'register' ? 'login' : 'register')}>{mode === 'register' ? '回到登入' : '註冊'}</button><button type="button" className="quiet" onClick={() => switchMode('forgot')}>重設密碼</button></div>
     </form></main>;

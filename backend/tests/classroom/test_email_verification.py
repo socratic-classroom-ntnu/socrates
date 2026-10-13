@@ -42,7 +42,7 @@ def register():
         Register(
             username="arthur",
             email="arthur@example.test",
-            password="correct-horse-battery",
+            password="Correct-horse-battery9",
         )
     )
 

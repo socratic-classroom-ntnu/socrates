@@ -10,6 +10,8 @@ from pydantic import (
     model_validator,
 )
 
+from pydantic_core import PydanticCustomError
+
 from app.api.model_base import TrimmedModel
 
 
@@ -119,10 +121,41 @@ class ScriptDocument(Strict):
         return self
 
 
+# 帳號名：3–32 個字元，英文字母開頭、英文字母或數字結尾，中間可用英數、底線、點、連字號。
+USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
+# 密碼：8–32 個字元，需有大寫、小寫、數字與特殊字元；特殊字元只允許下列這些（不含引號、反斜線、
+# 分號、角括號、空白等）。只套用在設定新密碼（註冊、重設）；登入不檢查格式，舊帳號照常登入。
+PASSWORD_SPECIALS = "!@#$%^&*_-+=.?~"
+PASSWORD_MIN, PASSWORD_MAX = 8, 32  # Register／ResetRequest 的 Field 寫同樣的數字（前端測試逐字比對）
+PASSWORD_RULE = (
+    f"密碼需 {PASSWORD_MIN}–{PASSWORD_MAX} 個字元，並包含大寫字母、小寫字母、數字與特殊字元"
+    f"（可用 {' '.join(PASSWORD_SPECIALS)}），不能有空白或其他符號。"
+)
+
+
+def password_policy(value: str) -> str:
+    allowed = set(PASSWORD_SPECIALS)
+    ok = (
+        all((c.isascii() and c.isalnum()) or c in allowed for c in value)
+        and any(c.isascii() and c.isupper() for c in value)
+        and any(c.isascii() and c.islower() for c in value)
+        and any(c.isdigit() and c.isascii() for c in value)
+        and any(c in allowed for c in value)
+    )
+    if not ok:
+        raise PydanticCustomError("password_policy", PASSWORD_RULE)
+    return value
+
+
 class Register(Strict):
-    username: str = Field(min_length=3, max_length=64, pattern=r"^[\w.-]+$")
+    username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
-    password: str = Field(min_length=12, max_length=256)
+    password: str = Field(min_length=8, max_length=32)
+
+    @field_validator("password")
+    @classmethod
+    def password_rule(cls, v: str) -> str:
+        return password_policy(v)
 
     @field_validator("email")
     @classmethod
@@ -147,7 +180,12 @@ class TokenRequest(Strict):
 
 
 class ResetRequest(TokenRequest):
-    password: str = Field(min_length=12, max_length=256)
+    password: str = Field(min_length=8, max_length=32)
+
+    @field_validator("password")
+    @classmethod
+    def password_rule(cls, v: str) -> str:
+        return password_policy(v)
 
 
 class VerificationDelivery(Strict):

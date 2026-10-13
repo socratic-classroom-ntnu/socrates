@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, REGISTER_LIMITS, registerProblems } from './ClassroomApp'
+import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, PASSWORD_SPECIALS, REGISTER_LIMITS, passwordOk, registerProblems } from './ClassroomApp'
+import { PASSWORD_RULE } from './api/errorText'
 import { ApiError, api } from './api/classroomClient'
 
 jest.mock('./api/classroomClient', () => {
@@ -147,13 +148,40 @@ test('register pre-checks username and password with the backend limits', async 
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: '繼續' }))
   })
-  expect(screen.getByText(/使用者名稱只能用文字、數字/)).toBeInTheDocument()
-  expect(screen.getByText('密碼至少要 12 個字元，請重新輸入。')).toBeInTheDocument()
+  expect(screen.getByText(/使用者名稱只能用英文字母、數字/)).toBeInTheDocument()
+  expect(screen.getByText('密碼至少要 8 個字元，請重新輸入。')).toBeInTheDocument()
   expect(f.username).toHaveFocus()
-  expect(registerProblems({ username: '張三', email: 'a@b.co', password: 'x'.repeat(12) })).toEqual([
+  expect(registerProblems({ username: 'ab', email: 'a@b.co', password: 'Socratic-1' })).toEqual([
     { field: 'username', text: '使用者名稱至少要 3 個字元，請重新輸入。' },
   ])
-  expect(registerProblems({ username: '張三豐', email: 'a@b.co', password: 'x'.repeat(12) })).toEqual([])
+  expect(registerProblems({ username: 'goose', email: 'a@b.co', password: 'Socratic-1' })).toEqual([])
+  expect(registerProblems({ username: '張三豐', email: 'a@b.co', password: 'Socratic-1' })[0].field).toBe('username')
+})
+
+test('register asks for upper, lower, digit and an allowed special character', async () => {
+  const f = await openRegister()
+  expect(f.password).toHaveAttribute('aria-describedby', 'password-rule')
+  expect(screen.getByText(PASSWORD_RULE)).toHaveAttribute('id', 'password-rule')
+  for (const weak of ['socratic-1', 'SOCRATIC-1', 'Socratic-x', 'Socratic12', "Socratic-1'", 'Socratic 1-a'])
+    expect(passwordOk(weak)).toBe(false)
+  for (const c of PASSWORD_SPECIALS) expect(passwordOk(`Socratic1${c}`)).toBe(true)
+  expect(registerProblems({ username: 'goose', email: 'a@b.co', password: 'Socratic12' })).toEqual([
+    { field: 'password', text: PASSWORD_RULE },
+  ])
+  expect(registerProblems({ username: 'goose', email: 'a@b.co', password: 'Ab-1' + 'a'.repeat(29) })).toEqual([
+    { field: 'password', text: '密碼最多 32 個字元，請重新輸入。' },
+  ])
+})
+
+test('login still accepts long passwords set under the old rule', async () => {
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/me') throw new ApiError(401, 'LOGIN_REQUIRED')
+    return []
+  })
+  render(<ClassroomApp />)
+  const password = await screen.findByLabelText('密碼')
+  expect(password).toHaveAttribute('maxLength', '256')
+  expect(password).not.toHaveAttribute('aria-describedby')
 })
 
 test('a 422 from the server lands under the matching register field', async () => {
@@ -181,6 +209,9 @@ withBackend('register limits match the backend Register contract', () => {
     const line = register.match(new RegExp(`${field}: str = Field\\(([^)]*)\\)`))?.[1] || ''
     expect([Number(line.match(/min_length=(\d+)/)?.[1]), Number(line.match(/max_length=(\d+)/)?.[1])]).toEqual([...REGISTER_LIMITS[field]])
   }
+  expect(source.match(/PASSWORD_SPECIALS = "([^"]*)"/)?.[1]).toBe(PASSWORD_SPECIALS)
+  expect(source).toContain('USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"')
+  expect(source).toContain(`PASSWORD_RULE`)
 })
 
 // 使用者名稱／Email 被占用時，錯誤放在該欄位；等待驗證中的帳號在表單說明何時釋出、如何重寄

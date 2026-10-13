@@ -223,10 +223,12 @@ def test_yaml_import_schema_error_returns_field_detail_json(client):
 
 
 def test_teacher_with_a_long_username_can_open_a_classroom(client):
-    # 註冊契約允許 username 到 64 字，所以 membership 的 alias 必須裝得下它；
-    # alias 是由 username 推導的，不經過 join body 的 40 字限制。
+    # 新註冊的 username 最多 32 字，但較早的帳號可能到 64 字（欄位是 String(64)），
+    # 所以 membership 的 alias 必須裝得下 64 字；alias 由 username 推導，不經過 join body 的 40 字限制。
+    user(client, "teacher")
     long_name = "t" * 64
-    user(client, long_name)
+    with storage.transaction() as db:
+        db.scalars(select(storage.Account)).one().username = long_name
     room = create(client)
     assert room["code"]
     with storage.transaction() as db:

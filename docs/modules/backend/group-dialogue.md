@@ -49,6 +49,7 @@
 - `backend/app/api/routes/groups.py`
 - `backend/app/services/ai_students.py`
 - `backend/app/api/routes/ai_students.py`
+- `backend/app/modules/group_dialogue/`
 
 契約：
 - 分組課（/groups/*）（缺 response_model，前端型別手寫（已寄契約請求））
@@ -58,10 +59,8 @@
 
 - `group-dialogue→analytics  backend/app/api/routes/groups.py → backend/app/domain/group_analysis.py`
 - `orm-outside-repositories  backend/app/services/ai_students.py`
-- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/classroom.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py`
-- `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom.py`
 - `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/provider_profiles.py`
 

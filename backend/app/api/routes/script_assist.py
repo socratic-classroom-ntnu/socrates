@@ -22,7 +22,8 @@ from app.api.classroom_schemas import (
     ScriptAssistRequest,
     ScriptAssistResult,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
+from app.modules.platform.rate_limit import enforce_rate_limit
 from app.repositories.classroom_storage import Script, transaction
 from app.tutor.iron_rules import guarded_generate
 from app.tutor.classroom_provider import ProviderWait
@@ -117,7 +118,7 @@ def build_question(result: dict, target: dict | None) -> dict:
 
 @router.post("/scripts/assist")
 async def script_assist(body: ScriptAssistRequest, request: Request):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
     from app.api.routes.provider_profiles import (
         AccountAISettings,
         _settings_view,
@@ -125,7 +126,6 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
         record_direct_call_audit,
         resolve_request_chain,
     )
-    from app.services import classroom as service
     from app.tutor.prompts import compile_program
 
     with transaction() as db:
@@ -143,7 +143,7 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
         )
         if not bindings:
             raise DomainError("SCRIPT_ASSIST_PROVIDER_REQUIRED", 409)
-        service.limit(db, f"script-assist:{actor.id}", 20, 60)
+        enforce_rate_limit(db, f"script-assist:{actor.id}", 20, 60)
         messages, schema, _ = compile_program(db, ROLE, context)
 
     async def no_delta(_):
@@ -246,7 +246,7 @@ def sample_questions(path: str | None = None) -> dict:
 
 @router.get("/scripts/samples", response_model=SampleQuestionSet)
 def script_samples(request: Request):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     with transaction() as db:
         account(db, request)

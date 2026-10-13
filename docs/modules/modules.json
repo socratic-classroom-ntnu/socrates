@@ -16,7 +16,8 @@
       "paths": [
         "backend/app/main.py",
         "backend/app/classroom_app.py",
-        "backend/app/classroom_server.py"
+        "backend/app/classroom_server.py",
+        "backend/app/modules/app_shell/"
       ],
       "uses": [
         "*"
@@ -37,7 +38,8 @@
         "backend/app/feature_flags.py",
         "backend/app/api/deps.py",
         "backend/app/api/model_base.py",
-        "backend/app/api/routes/public_config.py"
+        "backend/app/api/routes/public_config.py",
+        "backend/app/modules/platform/"
       ],
       "uses": [],
       "todo": [
@@ -53,7 +55,8 @@
       "about": "帳號、登入、Email 驗證、重設密碼。",
       "paths": [
         "backend/app/services/classroom_auth.py",
-        "backend/app/services/email_delivery.py"
+        "backend/app/services/email_delivery.py",
+        "backend/app/modules/identity_access/"
       ],
       "uses": [
         "platform"
@@ -69,7 +72,8 @@
       "status": "block",
       "about": "使用者的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。",
       "paths": [
-        "backend/app/api/routes/provider_profiles.py"
+        "backend/app/api/routes/provider_profiles.py",
+        "backend/app/modules/ai_providers/"
       ],
       "uses": [
         "platform",
@@ -88,7 +92,8 @@
         "backend/app/tutor/",
         "backend/app/services/llm_workers.py",
         "backend/app/services/scenario_ai.py",
-        "backend/app/domain/tutor.py"
+        "backend/app/domain/tutor.py",
+        "backend/app/modules/llm_runtime/"
       ],
       "uses": [
         "platform",
@@ -111,7 +116,8 @@
         "backend/app/api/routes/script_assist.py",
         "backend/app/domain/library_decisions.py",
         "backend/app/domain/ladder.py",
-        "backend/app/ladders/"
+        "backend/app/ladders/",
+        "backend/app/modules/content_authoring/"
       ],
       "uses": [
         "platform",
@@ -135,7 +141,8 @@
         "backend/app/services/classroom.py",
         "backend/app/api/routes/classroom.py",
         "backend/app/api/classroom_schemas.py",
-        "backend/app/domain/presence.py"
+        "backend/app/domain/presence.py",
+        "backend/app/modules/classroom_core/"
       ],
       "uses": [
         "platform",
@@ -159,7 +166,8 @@
         "backend/app/domain/group_run.py",
         "backend/app/api/routes/groups.py",
         "backend/app/services/ai_students.py",
-        "backend/app/api/routes/ai_students.py"
+        "backend/app/api/routes/ai_students.py",
+        "backend/app/modules/group_dialogue/"
       ],
       "uses": [
         "platform",
@@ -183,7 +191,8 @@
       "status": "ok",
       "about": "立場分布、組別比較、雷達圖資料。",
       "paths": [
-        "backend/app/domain/group_analysis.py"
+        "backend/app/domain/group_analysis.py",
+        "backend/app/modules/analytics/"
       ],
       "uses": [
         "platform",
@@ -222,7 +231,8 @@
         "backend/app/interaction_models.py",
         "backend/app/api/routes/room.py",
         "backend/app/services/room_view.py",
-        "backend/app/api/room_schemas.py"
+        "backend/app/api/room_schemas.py",
+        "backend/app/modules/solo_dialogue/"
       ],
       "uses": [
         "platform",

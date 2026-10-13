@@ -32,6 +32,7 @@
 - `backend/app/api/routes/room.py`
 - `backend/app/services/room_view.py`
 - `backend/app/api/room_schemas.py`
+- `backend/app/modules/solo_dialogue/`
 
 契約：
 - 單人對話（/api/sessions/*）（產生型別 ✅）

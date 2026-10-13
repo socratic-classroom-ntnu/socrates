@@ -46,6 +46,7 @@
 
 檔案範圍：
 - `backend/app/domain/group_analysis.py`
+- `backend/app/modules/analytics/`
 
 契約：
 - 雷達圖（等契約（設計稿））

@@ -10,20 +10,18 @@
 
 檔案範圍：
 - `backend/app/api/routes/provider_profiles.py`
+- `backend/app/modules/ai_providers/`
 
 契約：
 - AI 供應商（/provider-profiles/*、/ai-settings/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `ai-providers→classroom-core  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom.py`
-- `ai-providers→classroom-core  backend/app/api/routes/provider_profiles.py → backend/app/orchestrator/classroom.py`
 - `ai-providers→content-authoring  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
 - `ai-providers→group-dialogue  backend/app/api/routes/provider_profiles.py → backend/app/services/ai_students.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_gateway.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_provider.py`
 - `orm-outside-repositories  backend/app/api/routes/provider_profiles.py`
-- `route-imports-route  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom.py`
 - `route-imports-route  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）

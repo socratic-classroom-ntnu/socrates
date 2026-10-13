@@ -49,6 +49,7 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 - `backend/app/services/llm_workers.py`
 - `backend/app/services/scenario_ai.py`
 - `backend/app/domain/tutor.py`
+- `backend/app/modules/llm_runtime/`
 
 契約：
 - TTS（文字→音訊＋字時間點）（等契約）
@@ -58,8 +59,6 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 - `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/api/classroom_schemas.py`
 - `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/orchestrator/classroom.py`
 - `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/services/classroom.py`
-- `llm-runtime→classroom-core  backend/app/services/scenario_ai.py → backend/app/orchestrator/classroom.py`
-- `llm-runtime→classroom-core  backend/app/tutor/classroom_gateway.py → backend/app/orchestrator/classroom.py`
 - `llm-runtime→classroom-core  backend/app/tutor/prompts.py → backend/app/api/classroom_schemas.py`
 - `llm-runtime→content-authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py`
 - `llm-runtime→group-dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py`

@@ -10,7 +10,7 @@ from copy import deepcopy
 
 from sqlalchemy import select
 
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 
 
 def _owned_profile_ids(db, owner_id: str, profile_ids: set[str]) -> set[str]:

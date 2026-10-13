@@ -12,7 +12,7 @@ from urllib.parse import quote, urljoin, urlparse
 import httpx
 from pydantic import ValidationError
 
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 from app.tutor.classroom_provider import ProviderWait
 from app.classroom_env import env_int
 from app.tutor.provider_schema import gemini_response_schema, openai_response_schema

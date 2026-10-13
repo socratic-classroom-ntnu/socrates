@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.tutor import prompts
-from app.api.routes.classroom import router
-from app.orchestrator.classroom import DomainError
+from app.modules.app_shell.routes import include_classroom_routers
+from app.modules.platform.errors import DomainError
 from app.realtime import BUS
 from app.repositories.classroom_storage import engine
 from app.services.llm_workers import clock_loop, llm_loop, mail_loop
@@ -36,7 +36,7 @@ def create_app(legacy=False, background=True):
         from app.main import app as first_run
 
         app.router.routes.extend(first_run.router.routes)
-    app.include_router(router)
+    include_classroom_routers(app)
 
     @app.get("/api/v2/readiness")
     def readiness():

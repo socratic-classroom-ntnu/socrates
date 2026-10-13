@@ -1,7 +1,6 @@
 """Thin HTTP↔DTO adapters; secrets and room authorities are resolved server-side."""
 
 import asyncio
-import os
 import time
 from copy import deepcopy
 from uuid import uuid4
@@ -11,8 +10,13 @@ from pydantic import ValidationError
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.services import classroom_auth as auth
+from app.modules.identity_access.dependencies import (
+    account,
+    auth_limit,
+    same_origin,
+    set_session_cookie as _set_session_cookie,
+)
 from app.services import classroom as service
-from app.classroom_env import env_str
 from app.api.classroom_schemas import (
     AccountView,
     Command,
@@ -29,57 +33,12 @@ from app.api.classroom_schemas import (
     ScriptView,
     TokenRequest,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 from app.repositories.classroom_storage import Event, Membership, Room, Script, transaction
 from app.services.scenario_ai import prune_scenario_ai, validate_scenario_ai
 from app.realtime import BUS
 
 router = APIRouter(prefix="/api/v2")
-
-
-def same_origin(request):
-    origin = request.headers.get("origin")
-    allow = {
-        s.rstrip("/")
-        for s in os.environ.get(
-            "SOCRATES_ALLOWED_ORIGINS",
-            os.environ.get("SOCRATES_PUBLIC_ORIGIN", "http://127.0.0.1:8080"),
-        ).split(",")
-    }
-    if origin and origin.rstrip("/") not in allow:
-        raise DomainError("ORIGIN_BINDING_REQUIRED", 403)
-
-
-# 登入 session cookie
-def _set_session_cookie(response: Response, token: str) -> None:
-    response.set_cookie(
-        auth.COOKIE,
-        token,
-        httponly=True,
-        secure=env_str("CLASSROOM_COOKIE_SECURE", "true") == "true",
-        samesite="lax",
-        max_age=43200,
-        path="/",
-    )
-
-
-def account(db, request, mutation=False, verified=True):
-    if mutation:
-        same_origin(request)
-    return auth.identity(
-        db,
-        request.cookies.get(auth.COOKIE),
-        request.headers.get("x-csrf-token"),
-        mutation,
-        verified,
-    )
-
-
-def auth_limit(request, kind):
-    same_origin(request)
-    host = request.client.host if request.client else "unknown"
-    with transaction() as db:
-        service.limit(db, "auth:" + kind + ":" + host, 300, 60)
 
 
 @router.post("/auth/register", response_model=AccountView)
@@ -451,36 +410,3 @@ async def websocket(ws: WebSocket, room_id: str):
     finally:
         BUS.clients[room_id].discard(ws)
         BUS.send_locks.pop(ws, None)
-
-
-# 分組課堂路由
-from app.api.routes.groups import router as _groups_router  # noqa: E402
-
-router.include_router(_groups_router)
-
-# 教室資產庫路由
-from app.api.routes.classroom_library import router as _classroom_library_router  # noqa: E402
-from app.api.routes.public_config import router as _public_config_router  # noqa: E402
-
-router.include_router(_classroom_library_router)
-router.include_router(_public_config_router)
-
-# AI 學生路由
-from app.api.routes.ai_students import router as _ai_students_router  # noqa: E402
-
-router.include_router(_ai_students_router)
-
-# AI 連線設定路由
-from app.api.routes.provider_profiles import router as _provider_profiles_router  # noqa: E402
-
-router.include_router(_provider_profiles_router)
-
-# Question bank (issue #17)
-from app.api.routes.question_bank import router as _question_bank_router  # noqa: E402
-
-router.include_router(_question_bank_router)
-
-# AI-assisted question authoring (issue #16)
-from app.api.routes.script_assist import router as _script_assist_router  # noqa: E402
-
-router.include_router(_script_assist_router)

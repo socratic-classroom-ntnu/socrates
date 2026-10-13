@@ -12,7 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.api.classroom_schemas import LibraryClassroomView
 from app.services import classroom as service
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 from app.services.ai_students import ensure_other_options
 from app.repositories.classroom_storage import (
     Account,
@@ -79,7 +79,7 @@ router = APIRouter(prefix="/library")
 
 
 def user(db, request, mutation=False):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     return account(db, request, mutation)[0]
 

@@ -22,7 +22,8 @@ from app.repositories.classroom_storage import (
     append_event,
     persist_machine,
 )
-from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_notice, fresh_state
+from app.modules.platform.errors import DomainError
+from app.orchestrator.classroom import GameOrchestrator, focus_notice, fresh_state
 from app.domain.group_run import (
     PERSONAL_COMMANDS,
     initialise,
@@ -66,7 +67,7 @@ class GroupCommand(TrimmedModel):
 
 def actor(db, request, mutation=False):
     # Resolve the already-initialised native adapter lazily to preserve imports.
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     return account(db, request, mutation)[0]
 

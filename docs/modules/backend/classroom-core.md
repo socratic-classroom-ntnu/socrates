@@ -51,25 +51,17 @@
 - `backend/app/api/routes/classroom.py`
 - `backend/app/api/classroom_schemas.py`
 - `backend/app/domain/presence.py`
+- `backend/app/modules/classroom_core/`
 
 契約：
 - 教室房間（/classrooms/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `classroom-core→group-dialogue  backend/app/api/routes/classroom.py → backend/app/api/routes/ai_students.py`
-- `classroom-core→group-dialogue  backend/app/api/routes/classroom.py → backend/app/api/routes/groups.py`
 - `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/domain/group_run.py`
 - `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/services/ai_students.py`
 - `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/domain/group_run.py`
 - `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/services/ai_students.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/ai_students.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/classroom_library.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/groups.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/provider_profiles.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/public_config.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/question_bank.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/script_assist.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

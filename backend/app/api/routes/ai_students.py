@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.modules.platform.rate_limit import enforce_rate_limit
 from copy import deepcopy
 from hashlib import sha256
 import json
@@ -62,7 +63,7 @@ def _receipt(db, room: Room, actor: Account, body: BaseModel, operation: str):
     )
     if prior:
         if prior.payload_hash != key_hash:
-            from app.orchestrator.classroom import DomainError
+            from app.modules.platform.errors import DomainError
 
             raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
         return key_hash, prior.receipt
@@ -100,7 +101,7 @@ def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
 
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
@@ -212,7 +213,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
@@ -291,9 +292,9 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 @router.post("/suggestions/other")
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.services import classroom as service
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
     from app.api.classroom_schemas import OtherSuggestionResult
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.iron_rules import guarded_generate
     from app.api.routes.provider_profiles import (
@@ -304,7 +305,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
 
     with transaction() as db:
         actor, session = account(db, request, True)
-        service.limit(db, f"other-suggestion:{actor.id}", 30, 60)
+        enforce_rate_limit(db, f"other-suggestion:{actor.id}", 30, 60)
         room = None
         if body.room_id:
             room, _, _ = service.load(db, body.room_id, actor.id)

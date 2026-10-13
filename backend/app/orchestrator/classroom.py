@@ -8,18 +8,13 @@ from typing import Any
 from copy import deepcopy
 from uuid import uuid4
 from app.api.classroom_schemas import ScriptDocument, Question, public_question
+from app.modules.platform.errors import DomainError
 from app.orchestrator.classroom_policy import (
     choose_representative,
     distribution,
     majority_context,
     stage_goal,
 )
-
-
-class DomainError(ValueError):
-    def __init__(self, code: str, status: int = 409):
-        self.code, self.status = code, status
-        super().__init__(code)
 
 
 _BUDGET_REASONS = {

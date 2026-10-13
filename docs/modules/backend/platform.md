@@ -55,6 +55,7 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 - `backend/app/api/deps.py`
 - `backend/app/api/model_base.py`
 - `backend/app/api/routes/public_config.py`
+- `backend/app/modules/platform/`
 
 契約：
 - 公開設定（/public-config）（✅）
@@ -64,7 +65,6 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 
 - `platform→ai-providers  backend/app/repositories/classroom_storage.py → backend/app/api/routes/provider_profiles.py`
 - `platform→app-shell  backend/app/api/deps.py → backend/app/main.py`
-- `platform→classroom-core  backend/app/feature_flags.py → backend/app/orchestrator/classroom.py`
 - `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/classroom_library.py`
 - `platform→content-authoring  backend/app/repositories/classroom_storage.py → backend/app/api/routes/question_bank.py`
 - `platform→group-dialogue  backend/app/repositories/classroom_storage.py → backend/app/services/ai_students.py`

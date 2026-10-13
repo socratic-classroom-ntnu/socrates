@@ -12,6 +12,7 @@
 - `backend/app/main.py`
 - `backend/app/classroom_app.py`
 - `backend/app/classroom_server.py`
+- `backend/app/modules/app_shell/`
 
 契約：
 - —

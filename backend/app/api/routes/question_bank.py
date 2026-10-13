@@ -16,7 +16,7 @@ from app.api.model_base import TrimmedModel
 from sqlalchemy import and_, func, select
 
 from app.api.classroom_schemas import Question, ScriptDocument
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 from app.repositories.classroom_storage import Account, BankQuestion, Script, transaction
 
 # 每份劇本最多可放的題目數；加入題庫題目時超過就拒絕。
@@ -97,7 +97,7 @@ router = APIRouter(prefix="/bank")
 
 
 def user(db, request, mutation=False):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     return account(db, request, mutation)[0]
 

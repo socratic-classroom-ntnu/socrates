@@ -163,7 +163,7 @@ def test_provider_wait_surfaces_as_its_code(client, monkeypatch):
     login(client, "teacher")
     configure_ai(client)
     r = assist(client)
-    assert r.status_code == 502
+    assert r.status_code == 424
     assert r.json()["detail"] == "PROVIDER_HTTP_401"
 
 
@@ -175,7 +175,7 @@ def test_unusable_output_is_rejected(client, monkeypatch):
     login(client, "teacher")
     configure_ai(client)
     r = assist(client)
-    assert r.status_code == 502
+    assert r.status_code == 422
     assert r.json()["detail"] == "SCRIPT_ASSIST_INVALID_OUTPUT"
 
 
@@ -190,7 +190,7 @@ def test_output_with_more_than_four_options_is_rejected(client, monkeypatch):
     login(client, "teacher")
     configure_ai(client)
     r = assist(client)
-    assert r.status_code == 502
+    assert r.status_code == 422
     assert r.json()["detail"] == "SCRIPT_ASSIST_INVALID_OUTPUT"
 
 

@@ -64,6 +64,9 @@ const CODES: Record<string, string> = {
   PREVIEW_REQUIRED: '目前不在題目預覽階段。',
   PROVIDER_ADAPTER_REQUIRED: '請選擇 AI 服務。',
   PROVIDER_AVAILABILITY: 'AI 服務暫時無法使用，請稍後再試。',
+  PROVIDER_EMPTY_CONTENT: 'AI 服務這次沒有回傳內容，請再試一次或改選其他模型。',
+  PROVIDER_SCHEMA_MISMATCH: 'AI 服務回傳的內容格式不符合這項功能，請改選支援結構化輸出的模型。',
+  PROVIDER_TIMEOUT: 'AI 服務回應時間較長，請稍後再試。',
   PROVIDER_BASE_URL_REQUIRED: '這個 AI 服務需要填自訂服務網址。',
   PROVIDER_CREDENTIAL_DECRYPTION: '保存的 API 金鑰無法讀取，請重新輸入金鑰。',
   PROVIDER_CREDENTIAL_REENTRY_REQUIRED: '請重新輸入 API 金鑰。',
@@ -111,6 +114,7 @@ const STATUS: Record<number, string> = {
   409: '內容已被更新，請重新整理後再試。',
   413: '內容太大，請精簡後再送出。',
   422: '有欄位內容不符合格式，請檢查後再試。',
+  424: 'AI 服務目前無法完成這個請求，請檢查連線或模型後再試。',
   429: '操作太頻繁，請稍候再試。',
 }
 

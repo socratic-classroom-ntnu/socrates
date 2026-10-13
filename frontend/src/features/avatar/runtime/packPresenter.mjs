@@ -1,4 +1,4 @@
-import { AudioLane, validatePack, timeline, weightsAt, safeLocalUrl } from './runtimePack.mjs';
+import { AudioLane, validatePack, timeline, weightsAt, safeLocalUrl, cameraPreset, placeCamera } from './runtimePack.mjs';
 
 /**
  * GLB-native presenter for the shared tutor avatar (Socratic and CE).
@@ -170,10 +170,15 @@ export class PackPresenter {
     const height = top - bottom;
     const centerY = (top + bottom) / 2;
     const distance = (height * 0.62) / Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
-    // glTF 角色面向 +Z；鏡頭放在正前方。
-    this.camera.position.set(headPos.x, centerY + headLen * 0.1, headPos.z + distance);
-    this.camera.lookAt(headPos.x, centerY, headPos.z);
-    this.container.dataset.framing = 'upper-body';
+    // glTF 角色面向 +Z；鏡頭放在正前方，再套 pack 的 camera_preset。
+    const preset = cameraPreset(this.pack);
+    const { position, target } = placeCamera(
+      { x: headPos.x, y: centerY + headLen * 0.1, z: headPos.z + distance },
+      { x: headPos.x, y: centerY, z: headPos.z }, preset, height);
+    this.camera.position.set(position.x, position.y, position.z);
+    this.camera.lookAt(target.x, target.y, target.z);
+    this.container.dataset.framing = preset.framing;
+    this.container.dataset.cameraZoom = String(preset.zoom);
   }
 
   /** 只有頭與脖子會動：緩慢的轉頭與點頭，說話時幅度稍大。 */

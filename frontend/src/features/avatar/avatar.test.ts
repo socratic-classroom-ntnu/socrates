@@ -1,6 +1,6 @@
 import { choosePack, type AvatarPack } from './TutorAvatar'
 import { planSpeech, speak } from './speech'
-import { timeline, VISEMES } from './runtime/runtimePack.mjs'
+import { cameraPreset, placeCamera, timeline, VISEMES } from './runtime/runtimePack.mjs'
 import { lastTutorLine } from '../../pages/GroupClassroom'
 
 const pack = (id: string, products?: string[]): AvatarPack => ({ id, name: id, products, model_sha256: 'a'.repeat(64) })
@@ -60,4 +60,19 @@ test('the group stage speaks only the latest tutor line', () => {
   ]
   expect(lastTutorLine(transcript)).toEqual({ id: '1-0', text: '第二問' })
   expect(lastTutorLine([])).toBeNull()
+})
+
+test('camera_preset pushes the camera toward the face without per-pack branches', () => {
+  expect(cameraPreset({})).toEqual({ zoom: 1, lift: 0, framing: 'upper-body' })
+  const preset = cameraPreset({ camera_preset: { zoom: 1.3, lift: 0, framing: 'upper-body-tight' } })
+  expect(preset.framing).toBe('upper-body-tight')
+  const target = { x: 0, y: 1, z: 0 }
+  const placed = placeCamera({ x: 0, y: 1.1, z: 2.6 }, target, preset, 0.7)
+  expect(placed.position.z).toBeCloseTo(2.0)
+  expect(placed.target).toEqual(target)
+  const lifted = placeCamera({ x: 0, y: 1, z: 2 }, target, { zoom: 1, lift: 0.1, framing: 'upper-body' }, 0.7)
+  expect(lifted.position.y).toBeCloseTo(1.07)
+  expect(lifted.target.y).toBeCloseTo(1.07)
+  expect(() => cameraPreset({ camera_preset: { zoom: 9 } })).toThrow('BOUNDED_CAMERA_PRESET_REQUIRED')
+  expect(() => cameraPreset({ camera_preset: { lift: 'up' } })).toThrow('BOUNDED_CAMERA_PRESET_REQUIRED')
 })

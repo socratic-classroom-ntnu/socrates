@@ -36,7 +36,7 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 
 ## Public contract
 
-- Avatar pack catalog
+- Avatar pack catalog（`/avatar-packs/catalog.json`；每個 pack 可帶 `camera_preset: {zoom, lift, framing}` 微調上半身取景：zoom 是鏡頭往臉推近的倍數，範圍 0.5–3，lift 是上移量、單位為取景高度、範圍 ±0.5；超出範圍時 pack 載入失敗，改顯示文字 fallback）
 - speech transcript draft
 - TTS audio/word timing
 - viseme timeline and license metadata

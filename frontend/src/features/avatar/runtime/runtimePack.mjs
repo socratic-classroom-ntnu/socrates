@@ -22,7 +22,25 @@ export function validatePack(pack) {
   for(const map of Object.values(pack.expression_map||{})) {
     if(!map || typeof map!=='object' || Object.values(map).some(x=>!Number.isFinite(x)||x<0||x>1))throw Error('BOUNDED_EXPRESSION_MAP_REQUIRED');
   }
+  cameraPreset(pack);
   return pack;
+}
+/**
+ * 每個 pack 可在 catalog 帶 camera_preset 微調上半身取景（不分 pack ID 寫分支）：
+ * zoom＝鏡頭沿視線往注視點推近的倍數（1＝通用取景），lift＝鏡頭與注視點一起上移，單位是取景高度的比例。
+ */
+export function cameraPreset(pack) {
+  const preset = pack?.camera_preset ?? {};
+  const zoom = preset.zoom ?? 1, lift = preset.lift ?? 0;
+  if (typeof preset !== 'object' || !Number.isFinite(zoom) || zoom < 0.5 || zoom > 3 || !Number.isFinite(lift) || Math.abs(lift) > 0.5) throw Error('BOUNDED_CAMERA_PRESET_REQUIRED');
+  return { zoom, lift, framing: typeof preset.framing === 'string' ? preset.framing : 'upper-body' };
+}
+/** 依 preset 移動鏡頭位置與注視點；position、target 為 {x,y,z}，frameHeight 為通用取景的高度。 */
+export function placeCamera(position, target, preset, frameHeight) {
+  const up = preset.lift * frameHeight;
+  const at = { x: target.x, y: target.y + up, z: target.z };
+  const from = ['x','y','z'].reduce((o,k)=>({...o,[k]: target[k] + (position[k]-target[k]) / preset.zoom}), {});
+  return { position: { ...from, y: from.y + up }, target: at };
 }
 export function timeline(events, durationMs) {
   if (!Number.isFinite(durationMs) || durationMs <= 0) throw Error('AUDIO_DURATION_REQUIRED');

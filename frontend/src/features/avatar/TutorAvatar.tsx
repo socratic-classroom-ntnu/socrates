@@ -15,6 +15,7 @@ export type AvatarPack = {
   products?: string[]
   license?: string
   model_sha256: string
+  camera_preset?: { zoom?: number; lift?: number; framing?: string }
   [key: string]: unknown
 }
 

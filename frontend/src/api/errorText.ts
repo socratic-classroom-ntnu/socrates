@@ -185,3 +185,6 @@ export function errorText(detail: unknown, status?: number): string {
   if (status && status >= 500) return '伺服器暫時無法處理，請稍後再試。'
   return status ? `操作沒有完成（HTTP ${status}）。` : '操作沒有完成，請稍後再試。'
 }
+
+/** 例外的顯示文字：ApiError 已是中文訊息，其他錯誤取 message。 */
+export const errorMessage = (e: unknown) => e instanceof Error ? e.message : String(e)

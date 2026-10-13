@@ -1,6 +1,6 @@
 import ClassroomApp from './ClassroomApp'
-import Round1App from './Round1App'
-import { isRound1Path } from './round1Routes'
+import Round1App from './features/round1/Round1App'
+import { isRound1Path } from './features/round1/routes'
 import { DevConsole } from './features/dev-console/DevConsole'
 
 // Round1App owns its BrowserRouter; nesting a second one crashed /round1, /history and /sessions/* to a blank page.

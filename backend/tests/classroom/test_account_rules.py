@@ -79,4 +79,7 @@ def test_login_accepts_passwords_set_under_the_old_rule():
 def test_field_limits_match_the_rule_constants():
     for model in (Register, ResetRequest):
         meta = {type(m).__name__: m for m in model.model_fields["password"].metadata}
-        assert (meta["MinLen"].min_length, meta["MaxLen"].max_length) == (PASSWORD_MIN, PASSWORD_MAX)
+        assert (meta["MinLen"].min_length, meta["MaxLen"].max_length) == (
+            PASSWORD_MIN,
+            PASSWORD_MAX,
+        )

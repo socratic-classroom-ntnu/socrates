@@ -126,7 +126,10 @@ USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
 # 密碼：8–32 個字元，需有大寫、小寫、數字與特殊字元；特殊字元只允許下列這些（不含引號、反斜線、
 # 分號、角括號、空白等）。只套用在設定新密碼（註冊、重設）；登入不檢查格式，舊帳號照常登入。
 PASSWORD_SPECIALS = "!@#$%^&*_-+=.?~"
-PASSWORD_MIN, PASSWORD_MAX = 8, 32  # Register／ResetRequest 的 Field 寫同樣的數字（前端測試逐字比對）
+PASSWORD_MIN, PASSWORD_MAX = (
+    8,
+    32,
+)  # Register／ResetRequest 的 Field 寫同樣的數字（前端測試逐字比對）
 PASSWORD_RULE = (
     f"密碼需 {PASSWORD_MIN}–{PASSWORD_MAX} 個字元，並包含大寫字母、小寫字母、數字與特殊字元"
     f"（可用 {' '.join(PASSWORD_SPECIALS)}），不能有空白或其他符號。"
@@ -265,11 +268,16 @@ class Observations(Strict):
     principle_label: Literal["後果主義", "義務論", "混合", "未明"]
 
 
+# 鐵則：模型對這一則學生輸入的守題判定（skills/classroom/iron-rules.md）；舊輸出沒有這欄時視為 on_topic。
+Guard = Literal["on_topic", "off_topic", "instruction_override"]
+
+
 class TutorTurn(Strict):
     reply_text: str = Field(min_length=1, max_length=16000)
     observations: Observations
     move: Literal["probe", "clarify", "challenge", "reflect", "summarize"] = "probe"
     micro_summary: str = ""
+    guard: Guard = "on_topic"
 
 
 class PersonalSummary(Strict):
@@ -288,6 +296,7 @@ class PersonalTutorTurn(Strict):
     observations: Observations
     move: Literal["probe", "clarify", "challenge", "reflect", "summarize"] = "probe"
     summary: PersonalSummary
+    guard: Guard = "on_topic"
 
 
 class SummaryResult(Strict):
@@ -307,6 +316,7 @@ class LLMStudentTurn(Strict):
     text: str = Field(min_length=1, max_length=12000)
     relation: Literal["supports", "challenges", "qualifies", "revises"] = "qualifies"
     should_confirm: bool = True
+    guard: Guard = "on_topic"
 
 
 class OtherSuggestionResult(Strict):

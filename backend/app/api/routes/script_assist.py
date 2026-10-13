@@ -24,7 +24,7 @@ from app.api.classroom_schemas import (
 )
 from app.orchestrator.classroom import DomainError
 from app.repositories.classroom_storage import Script, transaction
-from app.tutor import classroom_gateway
+from app.tutor.iron_rules import guarded_generate
 from app.tutor.classroom_provider import ProviderWait
 
 ROLE = "ai_script_authoring"
@@ -153,7 +153,9 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
     for binding in bindings:
         started = time.monotonic()
         try:
-            result, audit = await classroom_gateway.generate(binding, messages, schema, no_delta)
+            result, audit = await guarded_generate(
+                binding, messages, schema, no_delta, kind=ROLE, context=context
+            )
             result = ScriptAssistResult.model_validate(result).model_dump()
             questions = _draft_questions(body.document)
             target = questions[body.question_index] if body.question_index is not None else None

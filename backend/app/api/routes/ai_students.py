@@ -295,7 +295,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.api.classroom_schemas import OtherSuggestionResult
     from app.orchestrator.classroom import DomainError
     from app.tutor.classroom_provider import ProviderWait
-    from app.tutor.classroom_gateway import generate
+    from app.tutor.iron_rules import guarded_generate
     from app.api.routes.provider_profiles import (
         provider_error_status,
         record_direct_call_audit,
@@ -337,11 +337,13 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     for binding in bindings:
         started = time.monotonic()
         try:
-            result, audit = await generate(
+            result, audit = await guarded_generate(
                 binding,
                 messages,
                 OtherSuggestionResult,
                 no_delta,
+                kind="other_suggestion",
+                context=body.model_dump(),
             )
             response = {
                 "suggestion_text": result["suggestion_text"],

@@ -69,6 +69,7 @@
 | `observations` | `Observations` | 是 | — | — | 本輪觀察；存進該則訊息與 `last_observations`，交給 `stage_goal` 判斷是否結束這位代表的討論。 |
 | `move` | `enum(probe, clarify, challenge, reflect, summarize)` | 否 | `"probe"` | — | 這則回覆的追問方式，只記錄在訊息上，不影響流程。 |
 | `micro_summary` | `string` | 否 | `""` | — | 目前論點的精簡整理；每輪覆寫，結束該代表時作為小結（空字串時改用「本次討論以此論點展開：」加論點前 300 字）。 |
+| `guard` | `enum(on_topic, off_topic, instruction_override)` | 否 | `"on_topic"` | — | 鐵則的守題判定（docs/IRON-RULES.md）：這一則輸入與本題相關／無關／要求改寫規則。不是 `on_topic` 時，送出前檢查要求回應帶一個與本題有關的提問；不合格重新產生一次，仍不合格換成固定拉回句。 |
 
 ```json
 {
@@ -119,6 +120,7 @@
 | `observations` | `Observations` | 是 | — | — | 本輪觀察；存進該則訊息與 `last_observations`，交給 `stage_goal` 判斷能否進入待確認。 |
 | `move` | `enum(probe, clarify, challenge, reflect, summarize)` | 否 | `"probe"` | — | 這則回覆的追問方式，只記錄在訊息上。 |
 | `summary` | `PersonalSummary` | 是 | — | — | 依目前對話整理的候選摘要；每輪覆寫 `summary`。進入 `awaiting_confirm` 時連同 `summary_digest` 給學生確認，確認後成為基準（`baseline`）。 |
+| `guard` | `enum(on_topic, off_topic, instruction_override)` | 否 | `"on_topic"` | — | 鐵則的守題判定（docs/IRON-RULES.md）：這一則輸入與本題相關／無關／要求改寫規則。不是 `on_topic` 時，送出前檢查要求回應帶一個與本題有關的提問；不合格重新產生一次，仍不合格換成固定拉回句。 |
 
 ```json
 {
@@ -217,6 +219,7 @@
 | `text` | `string` | 是 | — | `min_length=1`、`max_length=12000` | 作答理由、對導師的回覆或觀點陳述；去除前後空白後為空就不執行。 |
 | `relation` | `enum(supports, challenges, qualifies, revises)` | 否 | `"qualifies"` | — | 僅 `viewpoint`／`final_reflection`：存成 `group_statement` 的論點關係。 |
 | `should_confirm` | `boolean` | 否 | `true` | — | 僅 `viewpoint`：預設接著送 `group_ack` 確認自己的觀點。 |
+| `guard` | `enum(on_topic, off_topic, instruction_override)` | 否 | `"on_topic"` | — | 鐵則的守題判定（docs/IRON-RULES.md）：這一則輸入與本題相關／無關／要求改寫規則。不是 `on_topic` 時，送出前檢查要求回應帶一個與本題有關的提問；不合格重新產生一次，仍不合格換成固定拉回句。 |
 
 AI 學生不經個人對話：作答一被接受，就以作答本身作為基準（`baseline.source: "ai_student"`）。
 

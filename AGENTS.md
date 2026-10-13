@@ -21,6 +21,7 @@
 | `ended` 之後任何動作一律拒絕 | — |
 | 壞掉的 ladder yaml 要讓服務啟動失敗 | 不能等學生跑到第三階才爆 |
 | Orchestrator 不得 import 任何 provider | 這條線是腳本驗收與真 API 共用流程的原因 |
+| 每個 LLM 呼叫都經過鐵則：`backend/app/tutor/iron_rules.py` 依 L0 路由（`backend/skills/classroom/iron-rules/ROUTER.json`）載入 L1 共通＋該角色的 L2；LLM 功能不得削弱 `docs/IRON-RULES.md` | 學生端的 AI 被帶離題或被改寫角色，課堂就不再是照見自己立場的地方；`backend/tests/classroom/test_iron_rules.py` 列舉所有呼叫點，新呼叫點沒接鐵則會擋 |
 
 ## 範本索引
 

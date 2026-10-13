@@ -15,7 +15,7 @@ from app.orchestrator.classroom import GameOrchestrator
 from app.services.ai_students import fallback_turn
 from app.tutor.prompts import compile_program
 from app.tutor.classroom_provider import ProviderWait
-from app.tutor.classroom_gateway import generate
+from app.tutor.iron_rules import guarded_generate
 from app.classroom_env import env_int
 from app.api.routes.provider_profiles import (
     public_binding,
@@ -356,11 +356,13 @@ async def process_job(item):
     for attempt, binding in enumerate(bindings, start=1):
         try:
             result, audit = await asyncio.wait_for(
-                generate(
+                guarded_generate(
                     binding,
                     item["messages"],
                     item["schema"],
                     on_delta,
+                    kind=item["kind"],
+                    context=item["context"],
                 ),
                 130,
             )

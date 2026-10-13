@@ -6,6 +6,5 @@
 | legacy app composition | Arthur | `backend/app/classroom_server.py`／`classroom_app.py` | explicit composition roots | 單人對話與Classroom routes各有獨立composition與contract tests | Classroom Lifecycle acceptance | readiness＋route inventory |
 | legacy group frontend adapter | 前端組員 | `frontend/src/pages/GroupClassroom.tsx`／`ClassroomApp.tsx` | module view adapters | GroupRun各phase使用generated ViewModel與專屬view adapter | Group Dialogue acceptance | Jest＋toy page fixtures |
 | provider legacy key | Arthur | `backend/app/api/routes/provider_profiles.py` | versioned secret-store adapter | existing encrypted rows完成read／rewrite驗收 | LLM Runtime acceptance | migration fixture＋decrypt readback |
-| stable legacy UUID namespaces | Arthur | `backend/app/api/routes/ai_students.py`（`r88-ai-*`）／`groups.py`（`r70:group:`） | versioned identity registry | existing rows與new rows各有明確namespace version | Group Dialogue acceptance | deterministic identity fixtures |
 
 每筆compatibility在達成remove condition後，以覆蓋式更新移除source、caller、tests與文件中的舊路徑；History保存原lineage。

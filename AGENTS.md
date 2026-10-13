@@ -56,7 +56,7 @@
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
 - 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
-- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人對話」，名稱說明它是什麼、做什麼。已持久化的舊 namespace 只能登記在 `docs/modules/COMPATIBILITY-LEDGER.md`（`scripts/check_naming.sh` 會擋）
+- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人對話」，名稱說明它是什麼、做什麼（`scripts/check_naming.sh` 會擋）
 
 ## 分支流程
 
@@ -83,6 +83,7 @@ docker compose up -d                                  # 起全棧（db / backend
 docker compose exec backend python -m pytest tests -q # 後端測試
 docker compose exec backend ruff check .          # 後端 lint
 docker compose exec backend ruff format --check . # 後端格式
+bash scripts/check_naming.sh && python3 scripts/check_modules.py   # 命名與後端模組地圖
 # 型別：兩條 mypy（核心模組 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
 
 cd frontend && npm test -- --runInBand                # 前端測試

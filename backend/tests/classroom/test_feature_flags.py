@@ -1,4 +1,4 @@
-from uuid import UUID, uuid5
+from uuid import UUID
 
 import pytest
 
@@ -42,11 +42,10 @@ def test_ai_student_routes_return_clear_code_when_disabled(monkeypatch, handler,
     assert error.value.status == 409
 
 
-def test_new_ai_student_ids_use_product_namespace_and_leave_legacy_identity_distinct():
+def test_ai_student_ids_are_deterministic_per_action_and_index():
     room_id = str(UUID(int=1))
     first = ai_student_ids(room_id, "action-id", 0)
     assert first == ai_student_ids(room_id, "action-id", 0)
-    legacy_account = str(uuid5(UUID(room_id), "r88-ai-account:action-id:0"))
-    legacy_membership = str(uuid5(UUID(room_id), f"r88-ai-member:{legacy_account}"))
-    assert first != (legacy_account, legacy_membership)
+    assert first != ai_student_ids(room_id, "action-id", 1)
+    assert first != ai_student_ids(room_id, "other-action", 0)
     assert all(UUID(value) for value in first)

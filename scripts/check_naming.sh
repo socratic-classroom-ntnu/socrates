@@ -76,9 +76,9 @@ round_names=$(git grep -In -E "$round_name" -- . ":!$self" ":!frontend/src" $rec
 report "內容含舊代號（Round 1、round1）" "$round_names"
 
 # 開發回合編號（r2-、g70_、r70:……）不進產品程式：class、CSS 變數、data 屬性、檔名、註解標記都算。
-# 放行：說明這條規則本身的檔案，與相容帳冊登記中的舊 uuid namespace（docs/modules/COMPATIBILITY-LEDGER.md）。
+# 放行：說明這條規則本身的檔案。
 round='(^|[^A-Za-z0-9])[rRgG][0-9]+[-_:]'
-round_allowed=":!AGENTS.md :!backend/tests/migrations/test_no_round_prefix.py :!backend/app/api/routes/ai_students.py :!backend/app/api/routes/groups.py :!backend/tests/classroom/test_feature_flags.py :!docs/modules/COMPATIBILITY-LEDGER.md"
+round_allowed=":!AGENTS.md :!backend/tests/migrations/test_no_round_prefix.py"
 round_paths=$(git ls-files | grep -v "^$self\$" | grep -E '(^|[/_-])[rRgG][0-9]+[-_.]' || true)
 report "路徑含開發回合編號" "$round_paths"
 # shellcheck disable=SC2086

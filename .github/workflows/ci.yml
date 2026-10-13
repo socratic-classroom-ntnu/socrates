@@ -40,6 +40,10 @@ jobs:
         run: python -m ruff check backend
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
+      - name: Naming and backend module map
+        run: |
+          bash scripts/check_naming.sh
+          python scripts/check_modules.py
       - name: Strict core types and classroom contracts
         run: |
           cd backend

@@ -8,6 +8,10 @@ if ! command -v npm >/dev/null 2>&1; then
   echo "  請在 ~/.zshrc 加上: export PATH=\"/opt/homebrew/opt/node@22/bin:\$PATH\""
   exit 1
 fi
+echo "▶ 命名與模組地圖"
+bash scripts/check_naming.sh || exit 1
+python3 scripts/check_modules.py || exit 1
+
 echo "▶ frontend lint + typecheck + test + build"
 (cd frontend && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build) || exit 1
 

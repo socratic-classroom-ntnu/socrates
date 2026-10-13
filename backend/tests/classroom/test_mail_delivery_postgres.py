@@ -42,7 +42,7 @@ def queue_mail(state="PENDING", *, receipt=True):
             subject="Verification regression",
             body="Test message",
             state=state,
-            next_at=time.time() - 1,
+            next_at=time.time() - 3600,
         )
         db.add(mail)
         db.flush()

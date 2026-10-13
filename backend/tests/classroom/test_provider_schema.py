@@ -144,3 +144,36 @@ def test_gemini_adapter_payload_uses_nullable_projection(monkeypatch):
     )
     schema = captured["generationConfig"]["responseSchema"]
     assert schema == gemini_response_schema(LLMStudentTurn)
+
+
+def _object_nodes(value):
+    return [
+        node
+        for node in walk(value)
+        if isinstance(node, dict) and isinstance(node.get("properties"), dict)
+    ]
+
+
+@pytest.mark.parametrize("model", MODELS)
+def test_openai_schema_keeps_every_model_field_required(model):
+    # 欄位名稱叫 title／default 時也要留在 properties 與 required（10-13 AI 出題漏 title 而 502）。
+    schema = openai_response_schema(model)
+    expected = set(model.model_json_schema()["properties"])
+    assert set(schema["properties"]) == expected
+    assert set(schema["required"]) == expected
+    for node in _object_nodes(schema):
+        assert set(node["required"]) == set(node["properties"])
+
+
+@pytest.mark.parametrize("model", MODELS)
+def test_gemini_schema_keeps_every_model_field(model):
+    schema = gemini_response_schema(model)
+    assert set(schema["properties"]) == set(model.model_json_schema()["properties"])
+
+
+def test_title_field_survives_while_title_annotations_go():
+    schema = openai_response_schema(ScriptAssistResult)
+    assert "title" in schema["properties"] and "title" in schema["required"]
+    assert "title" not in schema["properties"]["title"]
+    gemini = gemini_response_schema(ScriptAssistResult)
+    assert "title" in gemini["properties"] and "title" not in gemini["properties"]["title"]

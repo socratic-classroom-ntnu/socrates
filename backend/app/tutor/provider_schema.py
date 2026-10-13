@@ -31,13 +31,16 @@ def _base_schema(model: type[BaseModel]) -> dict[str, Any]:
     return cast(dict[str, Any], _inline_refs(source, definitions))
 
 
-def _without_metadata(value: Any) -> Any:
+def _without_metadata(value: Any, *, field_map: bool = False) -> Any:
+    """Drop schema annotations; keys of a ``properties`` map are field names and stay."""
     if isinstance(value, list):
         return [_without_metadata(item) for item in value]
     if not isinstance(value, dict):
         return value
+    if field_map:
+        return {key: _without_metadata(item) for key, item in value.items()}
     return {
-        key: _without_metadata(item)
+        key: _without_metadata(item, field_map=key == "properties")
         for key, item in value.items()
         if key not in {"title", "default"}
     }
@@ -63,11 +66,14 @@ def openai_response_schema(model: type[BaseModel]) -> dict[str, Any]:
     return cast(dict[str, Any], _openai_strict(_without_metadata(_base_schema(model))))
 
 
-def _gemini(value: Any) -> Any:
+def _gemini(value: Any, *, field_map: bool = False) -> Any:
     if isinstance(value, list):
         return [_gemini(item) for item in value]
     if not isinstance(value, dict):
         return value
+    if field_map:
+        # Keys of a ``properties`` map are field names (a field may be called "title").
+        return {key: _gemini(item) for key, item in value.items()}
     any_of = value.get("anyOf")
     if isinstance(any_of, list):
         non_null = [item for item in any_of if item.get("type") != "null"]
@@ -87,7 +93,7 @@ def _gemini(value: Any) -> Any:
         if key == "const":
             result["enum"] = [_gemini(item)]
             continue
-        result[key] = _gemini(item)
+        result[key] = _gemini(item, field_map=key == "properties")
     return result
 
 

@@ -61,7 +61,6 @@
 - `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/domain/group_run.py`
 - `classroom-core→group-dialogue  backend/app/orchestrator/classroom.py → backend/app/services/ai_students.py`
 - `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/domain/group_run.py`
-- `classroom-core→group-dialogue  backend/app/services/classroom.py → backend/app/services/ai_students.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-
 
 from app.classroom_env import env_str
+from app.modules.content_authoring.normalization import (
+    ensure_other_options as ensure_other_options,
+    ensure_other_question as ensure_other_question,
+)
 from app.modules.group_dialogue.repositories import AIStudentProfile as AIStudentProfile
 
 
 OTHER_ID = "__other__"
+
 PERSONAS = [
     {
         "id": "consequence",
@@ -54,25 +57,6 @@ PERSONAS = [
         "style": "先區分事實、推論與價值",
     },
 ]
-
-
-def ensure_other_options(document: dict) -> dict:
-    """Return a copy whose every question contains one canonical Other option."""
-    value = deepcopy(document)
-    for question in value.get("questions", []):
-        options = question.setdefault("options", [])
-        if any(
-            option.get("id") == OTHER_ID or str(option.get("text", "")).strip() == "其他"
-            for option in options
-        ):
-            continue
-        options.append({"id": OTHER_ID, "text": "其他"})
-    return value
-
-
-def ensure_other_question(question: dict) -> dict:
-    value = {"questions": [deepcopy(question)]}
-    return ensure_other_options(value)["questions"][0]
 
 
 def fallback_turn(context: dict) -> dict:

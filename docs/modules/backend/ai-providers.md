@@ -18,6 +18,7 @@
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
 - `ai-providers→content-authoring  backend/app/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
+- `ai-providers→content-authoring  backend/app/api/routes/provider_profiles.py → backend/app/modules/content_authoring/service.py`
 - `ai-providers→group-dialogue  backend/app/api/routes/provider_profiles.py → backend/app/services/ai_students.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_gateway.py`
 - `ai-providers→llm-runtime  backend/app/api/routes/provider_profiles.py → backend/app/tutor/classroom_provider.py`

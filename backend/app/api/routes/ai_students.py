@@ -102,7 +102,7 @@ def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     from app.modules.platform.errors import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.group_dialogue.service import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
     require_feature("ai_students")
@@ -214,7 +214,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     from app.modules.platform.errors import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.group_dialogue.service import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
     require_feature("ai_students")
@@ -297,7 +297,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.modules.platform.errors import DomainError
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.iron_rules import guarded_generate
-    from app.api.routes.provider_profiles import (
+    from app.modules.ai_providers.service import (
         provider_error_status,
         record_direct_call_audit,
         resolve_request_chain,

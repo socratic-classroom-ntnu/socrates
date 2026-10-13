@@ -423,7 +423,7 @@ class GameOrchestrator:
         raise DomainError("KNOWN_ACTION_REQUIRED", 422)
 
     def accept_preview(self):
-        from app.services.ai_students import ensure_other_question
+        from app.modules.content_authoring.normalization import ensure_other_question
 
         q = Question.model_validate(ensure_other_question(self.s.pop("preview"))).model_dump()
         # Generated questions are run-owned; copying into a teacher draft is an explicit endpoint.
@@ -502,7 +502,7 @@ class GameOrchestrator:
         elif kind == "dynamic_question":
             if key != s.get("pending_generation"):
                 return
-            from app.services.ai_students import ensure_other_question
+            from app.modules.content_authoring.normalization import ensure_other_question
 
             s["preview"] = Question.model_validate(
                 ensure_other_question(result["question"])

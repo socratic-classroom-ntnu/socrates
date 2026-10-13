@@ -119,9 +119,9 @@ def build_question(result: dict, target: dict | None) -> dict:
 @router.post("/scripts/assist")
 async def script_assist(body: ScriptAssistRequest, request: Request):
     from app.modules.identity_access.dependencies import account
-    from app.api.routes.provider_profiles import (
+    from app.modules.ai_providers.service import (
         AccountAISettings,
-        _settings_view,
+        account_settings_view,
         provider_error_status,
         record_direct_call_audit,
         resolve_request_chain,
@@ -135,7 +135,7 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
             if script is None or script.owner_id != actor.id:
                 raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         context = _assist_context(body)
-        model = _settings_view(db.get(AccountAISettings, actor.id))["model_matrix"].get(ROLE)
+        model = account_settings_view(db.get(AccountAISettings, actor.id))["model_matrix"].get(ROLE)
         if not model:
             raise DomainError("SCRIPT_ASSIST_MODEL_REQUIRED", 409)
         bindings, _ = resolve_request_chain(

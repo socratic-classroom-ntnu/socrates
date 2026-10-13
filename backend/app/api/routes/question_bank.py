@@ -103,7 +103,7 @@ def user(db, request, mutation=False):
 
 
 def _mutate(db, account, operation, body, action):
-    from app.api.routes.classroom_library import mutate
+    from app.modules.content_authoring.service import mutate
 
     return mutate(db, account, operation, body, action)
 

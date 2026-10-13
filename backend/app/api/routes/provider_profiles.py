@@ -643,7 +643,7 @@ def _classroom_settings_view(ai: dict | None) -> dict:
 
 @router.get("/library/classrooms/{cid}/ai-settings")
 def classroom_settings(cid: str, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.service import owned_classroom as owned
 
     with transaction() as db:
         account, _ = _account(db, request)
@@ -653,7 +653,7 @@ def classroom_settings(cid: str, request: Request):
 
 @router.put("/library/classrooms/{cid}/ai-settings")
 def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.service import owned_classroom as owned
 
     with transaction() as db:
         account, session = _account(db, request, True)

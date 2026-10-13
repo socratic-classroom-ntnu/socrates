@@ -21,6 +21,7 @@ function lobby(over: Record<string, unknown> = {}) {
     asset_classroom_id: null, roster: people(4), roster_digest: 'd1',
     configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: 'stickman', revision: 0 },
     ai_settings: { default_profile_id: null, model_matrix: {} }, groups: [],
+    available_actions: ['configure', 'start', 'add_ai_students', 'clear_ai_students'], unavailable_actions: {},
     ...over,
   }
 }
@@ -117,7 +118,7 @@ test('live capacity shows people vs groups × size and auto-adjusts the group co
 })
 
 test('the start button explains why it is disabled when nobody is seated', async () => {
-  serve(() => lobby({ roster: [] }))
+  serve(() => lobby({ roster: [], available_actions: ['add_ai_students'], unavailable_actions: { configure: 'CURRENT_POPULATED_ROSTER_REQUIRED', start: 'CURRENT_POPULATED_ROSTER_REQUIRED', clear_ai_students: 'AI_STUDENTS_REQUIRED' } }))
   render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
   const start = await screen.findByRole('button', { name: '2. 開始課堂 →' })
   expect(start).toBeDisabled()
@@ -271,4 +272,13 @@ describe('AI 學生按鈕要立即回報結果', () => {
     await act(async () => { fireEvent.click(add) })
     expect(await screen.findByText(/加入 AI 學生沒有成功/)).toBeInTheDocument()
   })
+})
+
+test('後端沒有給 available_actions 時，老師的按鈕一律停用並說明', async () => {
+  serve(() => lobby({ available_actions: undefined, unavailable_actions: undefined }))
+  render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy} />)
+  expect(await screen.findByRole('button', { name: '1. 儲存分組' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '2. 開始課堂 →' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '加入 AI 學生' })).toBeDisabled()
+  expect(screen.getByText(/後端未提供可用動作/)).toBeInTheDocument()
 })

@@ -92,7 +92,7 @@ test('the publisher can unpublish from the preview', async () => {
 test('each script question can be published to the bank', async () => {
   jest.mocked(api).mockResolvedValue({ id: 'b9' })
   const onNote = jest.fn()
-  render(<PublishQuestions script={{ id: 's1', document: { questions: [question] } }} onNote={onNote} />)
+  render(<PublishQuestions script={{ id: 's1', revision: 1, document: { questions: [question] } }} onNote={onNote} />)
   fireEvent.click(screen.getByRole('button', { name: '發布「共同資源怎麼分？」到題庫' }))
   await waitFor(() => expect(onNote).toHaveBeenCalledWith('「共同資源怎麼分？」已發布到題庫商店。'))
   expect(api).toHaveBeenCalledWith('/bank/questions', 'POST', { script_id: 's1', question_id: 'q1', action_id: expect.any(String) })

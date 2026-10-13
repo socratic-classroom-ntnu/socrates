@@ -1,20 +1,10 @@
 import type { components } from '../../api/classroomTypes'
 
-// /bank/* 沒有 response_model，型別照 backend/app/api/routes/question_bank.py 的回傳手寫
+// 型別一律取自產生的 classroomTypes（/bank/questions 的 response_model）
 export type BankQuestion = components['schemas']['Question']
-export type BankItem = {
-  id: string
-  title: string
-  tags: string[]
-  scenario_excerpt: string
-  option_count: number
-  author: string | null
-  mine: boolean
-  published_at: number
-  revision: number
-  question?: BankQuestion
-}
-export type BankPage = { items: BankItem[]; total: number; offset: number; limit: number }
+/** 搜尋結果的一列；開啟預覽後會帶上完整題目（BankQuestionDetail.question）。 */
+export type BankItem = components['schemas']['BankQuestionSummary'] & Partial<Pick<components['schemas']['BankQuestionDetail'], 'question'>>
+export type BankPage = components['schemas']['BankSearchResult']
 
 export const BANK_PAGE_SIZE = 12
 export const bankByline = (item: BankItem) => (item.mine ? '我發布的題目' : `${item.author || '其他老師'} 分享`)

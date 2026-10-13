@@ -4,7 +4,7 @@ import type { components } from '../../api/classroomTypes'
 import '../../styles/question-bank.css'
 
 type Question = components['schemas']['Question']
-type Samples = { title: string; questions: Question[] }
+type Samples = components['schemas']['SampleQuestionSet']
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
@@ -12,7 +12,7 @@ const message = (error: unknown) => (error instanceof Error ? error.message : St
  * 範例題目只採用 ladder 原本的標題與情境；選項由老師自己填（產品決定）。
  * 不論後端回傳的範例有沒有選項、有幾個，一律換成兩列空白選項，不自動填任何文字。
  */
-export function sampleQuestion(question: Question): Question {
+export function sampleQuestion(question: components['schemas']['SampleQuestionDraft']): Question {
   return { ...question, options: [{ id: 'a', text: '' }, { id: 'b', text: '' }] }
 }
 

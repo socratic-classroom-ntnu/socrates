@@ -3,8 +3,10 @@ import { ApiError, api } from '../api/classroomClient'
 import '../styles/question-bank.css'
 import { BANK_PAGE_SIZE as PAGE_SIZE, BankTags as Tags, bankByline as byline, bankSearchPath } from '../features/question-bank/bank'
 import type { BankItem, BankPage } from '../features/question-bank/bank'
+import type { components } from '../api/classroomTypes'
 
-type ScriptRow = { id: string; revision: number; document: { title: string; questions: unknown[] } }
+// GET /scripts 的一列（ScriptView）；document 依劇本 schema 讀取
+type ScriptRow = Omit<components['schemas']['ScriptView'], 'document'> & { document: components['schemas']['ScriptDocument-Output'] }
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
 

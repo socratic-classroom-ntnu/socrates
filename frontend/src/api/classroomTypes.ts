@@ -42,6 +42,7 @@ export interface components { schemas: {
   "ScriptDocument-Input": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
   "ScriptDocument-Output": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
   "ScriptSave": { "document": components["schemas"]["ScriptDocument-Input"]; "expected_revision"?: (number | null) };
+  "ScriptView": { "id": string; "revision": number; "document": Record<string, unknown> };
   "SettingsUpdate": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "budgets"?: Record<string, unknown>; "active_room_id"?: (string | null) };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
   "TokenRequest": { "token": string };

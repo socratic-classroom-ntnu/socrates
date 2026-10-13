@@ -2,8 +2,11 @@ import { useRef, useState } from 'react'
 import { ApiError, api } from '../../api/classroomClient'
 import '../../styles/question-bank.css'
 
+import type { components } from '../../api/classroomTypes'
+
+// GET /scripts 的一列（ScriptView）；document 照存檔原樣，所以逐欄確認型別再用
+type ScriptRow = components['schemas']['ScriptView']
 type ScriptQuestion = { id?: unknown; title?: unknown }
-type ScriptRow = { id: string; document?: { questions?: ScriptQuestion[] } }
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
@@ -12,7 +15,8 @@ export function PublishQuestions({ script, onNote }: { script: ScriptRow; onNote
   const [busy, setBusy] = useState('')
   // 同一題重試時沿用同一個 action_id，後端才能去重
   const pending = useRef<Record<string, string>>({})
-  const questions = (script.document?.questions || []).filter(
+  const raw = script.document?.questions
+  const questions = (Array.isArray(raw) ? (raw as ScriptQuestion[]) : []).filter(
     (q): q is { id: string; title: string } => typeof q?.id === 'string' && typeof q?.title === 'string',
   )
   if (!questions.length) return null

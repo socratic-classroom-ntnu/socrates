@@ -26,6 +26,7 @@ from app.api.classroom_schemas import (
     RoomView,
     ScriptDocument,
     ScriptSave,
+    ScriptView,
     TokenRequest,
 )
 from app.orchestrator.classroom import DomainError
@@ -167,7 +168,7 @@ async def resend_webhook(request: Request):
     return apply_resend_webhook(body, request.headers)
 
 
-@router.get("/scripts")
+@router.get("/scripts", response_model=list[ScriptView])
 def scripts(request: Request):
     with transaction() as db:
         a, _ = account(db, request)

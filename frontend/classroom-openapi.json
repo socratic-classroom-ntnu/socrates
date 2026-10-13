@@ -1916,6 +1916,31 @@
         "title": "ScriptSave",
         "type": "object"
       },
+      "ScriptView": {
+        "additionalProperties": false,
+        "description": "GET /scripts 的一列：劇本本體照存檔原樣回傳（舊版劇本不因新欄位驗證而讀不到）。",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "document"
+        ],
+        "title": "ScriptView",
+        "type": "object"
+      },
       "SettingsUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -3987,7 +4012,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScriptView"
+                  },
+                  "title": "Response Scripts Api V2 Scripts Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"

@@ -174,6 +174,14 @@ class ScriptSave(Strict):
     expected_revision: int | None = None
 
 
+class ScriptView(Strict):
+    """GET /scripts 的一列：劇本本體照存檔原樣回傳（舊版劇本不因新欄位驗證而讀不到）。"""
+
+    id: str
+    revision: int
+    document: dict[str, Any]
+
+
 class CreateRoom(Strict):
     script_id: str = Field(max_length=36)
 

@@ -174,3 +174,14 @@ def test_fallbacks_are_typed_and_repeatable():
     )
     assert turn["action_mode"] == "answer"
     assert turn["text"]
+
+
+def test_persona_seed_fits_postgres_integer():
+    # ai_students.seed 是有號 32 位元 INTEGER；10-13 測試站加入 AI 學生因 seed＝3520493477 溢位而 500。
+    from uuid import uuid4
+
+    from app.api.routes.ai_students import _persona
+
+    seeds = [_persona(index, str(uuid4()))["seed"] for index in range(400)]
+    assert all(0 <= seed < 2**31 for seed in seeds)
+    assert len(set(seeds)) > 300

@@ -82,7 +82,10 @@ def _save_receipt(db, room, actor, body, key_hash, response):
 
 def _persona(index: int, room_id: str) -> dict:
     base: dict[str, Any] = deepcopy(PERSONAS[index % len(PERSONAS)])
-    base["seed"] = int(sha256(f"{room_id}:{index}:{base['id']}".encode()).hexdigest()[:8], 16)
+    # ai_students.seed 是 Postgres INTEGER（有號 32 位元）；8 個 hex 最大到 2**32-1，約一半的值會溢位。
+    base["seed"] = (
+        int(sha256(f"{room_id}:{index}:{base['id']}".encode()).hexdigest()[:8], 16) % 2**31
+    )
     return base
 
 

@@ -1,6 +1,7 @@
 name: Preview
 # PRs labelled `preview` get their own environment at
 # https://pr-<number>.socrates.driseam.com (deploy/preview/README.md).
+# Every new PR gets the label automatically; remove it to opt out.
 # This only publishes images tagged sha-<PR head sha>; Flux Operator in
 # flux-k8s (apps/base/socrates-preview) polls the labelled PRs and deploys
 # that tag, then deletes the whole environment when the PR closes or the
@@ -14,13 +15,31 @@ concurrency:
   group: socrates-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
+  # A label added with GITHUB_TOKEN triggers no workflow, so the `opened` run
+  # labels the PR and builds in the same run instead of waiting for `labeled`.
+  label:
+    if: >-
+      github.event.action == 'opened'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && !contains(github.event.pull_request.labels.*.name, 'preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {pull-requests: write}
+    steps:
+      - run: gh pr edit "$PR" --repo "$REPO" --add-label preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
   # stage-release.yml builds against the lock CI accepted; here that is the PR's own lock.
   lock:
     # Fork PRs cannot push to GHCR. Adding some other label (e.g. preview-llm) must not rebuild.
     if: >-
-      contains(github.event.pull_request.labels.*.name, 'preview')
-      && github.event.pull_request.head.repo.full_name == github.repository
-      && (github.event.action != 'labeled' || github.event.label.name == 'preview')
+      github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.action == 'opened'
+          || (github.event.action == 'labeled' && github.event.label.name == 'preview')
+          || (github.event.action != 'labeled'
+              && contains(github.event.pull_request.labels.*.name, 'preview')))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -35,3 +54,64 @@ jobs:
     with:
       source_sha: '${{ github.event.pull_request.head.sha }}'
       channel: 'pr-${{ github.event.pull_request.number }}'
+  # Flux Operator picks the new image up within a few minutes. Wait until the
+  # preview actually serves this commit, then keep one comment on the PR with
+  # the link (edited in place on every push, found by its marker line).
+  announce:
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions: {pull-requests: write}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      REPO: ${{ github.repository }}
+      SHA: ${{ github.event.pull_request.head.sha }}
+      URL: https://pr-${{ github.event.pull_request.number }}.socrates.driseam.com
+    steps:
+      - name: Wait for the preview to serve this commit
+        id: wait
+        run: |
+          for _ in $(seq 1 90); do
+            got=$(curl -fsS -m 10 "$URL/api/release" 2>/dev/null \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin).get("source_sha", ""))' 2>/dev/null || true)
+            if [ "$got" = "$SHA" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+            sleep 10
+          done
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+      - name: Post or update the preview comment
+        env:
+          READY: ${{ steps.wait.outputs.ready }}
+        run: |
+          marker='<!-- socrates-preview -->'
+          if [ "$READY" = true ]; then
+            status="✅ 已部署 \`${SHA:0:7}\`"
+          else
+            status="⏳ \`${SHA:0:7}\` 還在部署，請稍候幾分鐘再開（或看 deploy/preview/README.md 的排查）"
+          fi
+          body=$(cat <<EOF
+          $marker
+          ### 🔍 預覽環境
+
+          **👉 $URL**
+
+          $status
+
+          | 帳號 | 身分 |
+          |---|---|
+          | \`teacher001\` | 老師，教室 \`PREVIEW1\`（已有 \`user001\`–\`user010\`） |
+          | \`teacher002\`、\`teacher003\` | 老師，空教室 \`PREVIEW2\`、\`PREVIEW3\` |
+          | \`user001\`–\`user030\` | 學生 |
+
+          密碼都是 \`preview-password\`。這個環境有自己的資料庫；不會真的寄信（驗證連結直接顯示在畫面上），也沒有 LLM 金鑰，需要的話請照 deploy/preview/README.md 申請。
+
+          不需要預覽就把 \`preview\` label 拿掉，環境會在幾分鐘內刪除。
+          EOF
+          )
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" >/dev/null
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$body"
+          fi

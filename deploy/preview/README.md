@@ -5,11 +5,17 @@
 
 ## 怎麼開
 
-1. PR 加上 label **`preview`**（只有 org 成員能加）。
-2. `Preview` workflow（`.github/workflows/preview.yml`）把 PR 最新 commit 建成 image，
+**什麼都不用做。** 新開的 PR 會自動被貼上 label **`preview`**：
+
+1. `Preview` workflow（`.github/workflows/preview.yml`）把 PR 最新 commit 建成 image，
    tag 是 `sha-<PR head sha>`，約 5–10 分鐘。
-3. k8s 上的 Flux Operator 每 3 分鐘掃一次有 `preview` label 的 PR，
+2. k8s 上的 Flux Operator 每 3 分鐘掃一次有 `preview` label 的 PR，
    幫它建好整套環境（flux-k8s 的 `apps/base/socrates-preview`）。
+3. 環境換上這個 commit 之後，workflow 會在 PR 留一則**可以直接點的網址**與測試帳號。
+   之後每次 push 都會更新同一則留言，不會洗版。
+
+**不需要預覽**就把 `preview` label 拿掉，環境會在幾分鐘內刪除；要恢復就再加回去。
+自動加 label 只套用在新開的 PR，舊的 PR 想要預覽就自己加。
 
 之後每次 push 到這個 PR，都會重建 image 並換上新版。**資料庫不會清空**；要從頭來就把 label 拿掉、等環境刪掉後再加回去。
 

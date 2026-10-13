@@ -61,6 +61,8 @@ PR 裡的程式碼還沒有被 review，所以不能直接拿到共用的金鑰�
 ## 排查
 
 ```bash
+curl https://pr-<編號>.socrates.driseam.com/api/release      # backend 跑的是哪個 commit（source_sha）
+curl https://pr-<編號>.socrates.driseam.com/revision.json    # frontend 跑的是哪個 commit
 kubectl -n socrates-pr-<編號> get pods                 # 環境有沒有起來
 kubectl -n socrates-pr-<編號> logs deploy/backend      # migration、seed、啟動訊息
 kubectl -n flux-system get resourceset socrates-previews

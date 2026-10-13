@@ -95,3 +95,9 @@ describe('語音辨識失敗時說清楚原因', () => {
         expect(screen.getByText(/沒有辨識到語音/)).toBeInTheDocument();
     });
 });
+test('輸入框帶長度上限：預設 12000，呼叫端可改（彈幕 500）', () => {
+    const { rerender } = render(<DraftComposer value="" onChange={() => undefined} onSend={() => undefined}/>);
+    expect(screen.getByRole('textbox')).toHaveAttribute('maxLength', '12000');
+    rerender(<DraftComposer value="" onChange={() => undefined} onSend={() => undefined} maxLength={500}/>);
+    expect(screen.getByRole('textbox')).toHaveAttribute('maxLength', '500');
+});

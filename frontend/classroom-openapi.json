@@ -97,6 +97,7 @@
           "provider_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -483,6 +484,10 @@
             "additionalProperties": {
               "type": "integer"
             },
+            "maxProperties": 1600,
+            "propertyNames": {
+              "maxLength": 64
+            },
             "title": "Assignments",
             "type": "object"
           },
@@ -494,6 +499,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           },
@@ -567,6 +573,7 @@
         "additionalProperties": false,
         "properties": {
           "adapter": {
+            "maxLength": 40,
             "title": "Adapter",
             "type": "string"
           },
@@ -653,6 +660,7 @@
         "additionalProperties": false,
         "properties": {
           "script_id": {
+            "maxLength": 36,
             "title": "Script Id",
             "type": "string"
           }
@@ -702,6 +710,7 @@
             "type": "object"
           },
           "kind": {
+            "maxLength": 40,
             "title": "Kind",
             "type": "string"
           }
@@ -760,10 +769,12 @@
           },
           "avatar": {
             "default": "scholar",
+            "maxLength": 120,
             "title": "Avatar",
             "type": "string"
           },
           "code": {
+            "maxLength": 32,
             "minLength": 1,
             "title": "Code",
             "type": "string"
@@ -805,10 +816,12 @@
         "additionalProperties": false,
         "properties": {
           "login": {
+            "maxLength": 254,
             "title": "Login",
             "type": "string"
           },
           "password": {
+            "maxLength": 256,
             "title": "Password",
             "type": "string"
           }
@@ -824,6 +837,7 @@
         "additionalProperties": false,
         "properties": {
           "email": {
+            "maxLength": 254,
             "title": "Email",
             "type": "string"
           }
@@ -940,6 +954,7 @@
         "properties": {
           "existing_options": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,
@@ -955,6 +970,7 @@
           "room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1068,8 +1084,10 @@
           },
           "probe_hints": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Probe Hints",
             "type": "array"
           },
@@ -1099,6 +1117,7 @@
           },
           "tutor_goal": {
             "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
             "title": "Tutor Goal",
             "type": "string"
           }
@@ -1217,8 +1236,10 @@
           },
           "probe_hints": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Probe Hints",
             "type": "array"
           },
@@ -1258,6 +1279,7 @@
           },
           "tutor_goal": {
             "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
             "title": "Tutor Goal",
             "type": "string"
           }
@@ -1281,6 +1303,7 @@
             "type": "string"
           },
           "focus_id": {
+            "maxLength": 64,
             "title": "Focus Id",
             "type": "string"
           },
@@ -1349,6 +1372,7 @@
             "type": "string"
           },
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -1628,8 +1652,10 @@
           },
           "probe_hints": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Probe Hints",
             "type": "array"
           },
@@ -1659,6 +1685,7 @@
           },
           "tutor_goal": {
             "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
             "title": "Tutor Goal",
             "type": "string"
           }
@@ -1898,6 +1925,7 @@
           "active_room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1907,12 +1935,14 @@
             "title": "Active Room Id"
           },
           "budgets": {
+            "maxProperties": 32,
             "title": "Budgets",
             "type": "object"
           },
           "default_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1924,6 +1954,7 @@
           "fallback_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1934,7 +1965,12 @@
           },
           "model_matrix": {
             "additionalProperties": {
+              "maxLength": 200,
               "type": "string"
+            },
+            "maxProperties": 32,
+            "propertyNames": {
+              "maxLength": 64
             },
             "title": "Model Matrix",
             "type": "object"
@@ -1958,6 +1994,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           }
@@ -1973,6 +2010,7 @@
         "additionalProperties": false,
         "properties": {
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -2458,6 +2496,7 @@
             "required": false,
             "schema": {
               "default": "",
+              "maxLength": 200,
               "title": "Q",
               "type": "string"
             }

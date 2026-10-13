@@ -66,7 +66,7 @@ class SessionDetail(BaseModel):
 
 
 class CreateSessionRequest(TrimmedModel):
-    ladder_id: str
+    ladder_id: str = Field(max_length=64)
     restart_existing: bool = Field(default_factory=bool)
 
 

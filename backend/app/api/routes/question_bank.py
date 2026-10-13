@@ -8,7 +8,9 @@ from copy import deepcopy
 import time
 from uuid import UUID, uuid4, uuid5
 
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from app.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, Text, and_, func, select
@@ -226,7 +228,13 @@ def publish(body: Publish, request: Request):
 
 
 @router.get("/questions", response_model=BankSearchResult, response_model_exclude_none=True)
-def search(request: Request, q: str = "", offset: int = 0, limit: int = 20, mine: bool = False):
+def search(
+    request: Request,
+    q: Annotated[str, Query(max_length=200)] = "",
+    offset: int = 0,
+    limit: int = 20,
+    mine: bool = False,
+):
     offset = max(0, offset)
     limit = min(max(1, limit), PAGE_LIMIT)
     with transaction() as db:

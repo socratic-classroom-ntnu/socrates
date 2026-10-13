@@ -6,11 +6,11 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 import time
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from app.api.model_base import TrimmedModel
 from sqlalchemy import select
 
@@ -31,7 +31,7 @@ class AddAIStudents(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
     count: int = Field(ge=1, le=40)
     model: str = Field(default="openrouter/free", min_length=1, max_length=160)
-    provider_profile_id: str | None = None
+    provider_profile_id: str | None = Field(default=None, max_length=36)
 
 
 class ClearAIStudents(TrimmedModel):
@@ -42,8 +42,10 @@ class OtherSuggestionRequest(TrimmedModel):
     question_id: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
-    existing_options: list[str] = Field(default_factory=list, max_length=20)
-    room_id: str | None = None
+    existing_options: list[Annotated[str, StringConstraints(max_length=2000)]] = Field(
+        default_factory=list, max_length=20
+    )
+    room_id: str | None = Field(default=None, max_length=36)
 
 
 router = APIRouter()

@@ -811,6 +811,7 @@
         "properties": {
           "ladder_id": {
             "type": "string",
+            "maxLength": 64,
             "title": "Ladder Id"
           },
           "restart_existing": {

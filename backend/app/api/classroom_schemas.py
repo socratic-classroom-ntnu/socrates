@@ -46,9 +46,9 @@ class PublicQuestion(Strict):
     options: list[Option] = Field(min_length=2)
     duration_seconds: int = Field(default=90, ge=1)
     argument_required: bool = True
-    tutor_goal: str = "協助學生照見自己的立場與理由。"
-    probe_hints: list[str] = Field(
-        default_factory=lambda: ["你採用的原則是什麼？條件改變時，你會如何判斷？"]
+    tutor_goal: str = Field(default="協助學生照見自己的立場與理由。", max_length=2000)
+    probe_hints: list[Annotated[str, StringConstraints(max_length=2000)]] = Field(
+        default_factory=lambda: ["你採用的原則是什麼？條件改變時，你會如何判斷？"], max_length=20
     )
     max_focus_turns: int = Field(default=3, ge=1)
     focus_response_seconds: int = Field(default=90, ge=5)
@@ -127,16 +127,16 @@ class Register(Strict):
 
 
 class Login(Strict):
-    login: str
-    password: str
+    login: str = Field(max_length=254)
+    password: str = Field(max_length=256)
 
 
 class MailRequest(Strict):
-    email: str
+    email: str = Field(max_length=254)
 
 
 class TokenRequest(Strict):
-    token: str
+    token: str = Field(max_length=512)
 
 
 class ResetRequest(TokenRequest):
@@ -168,14 +168,14 @@ class ScriptSave(Strict):
 
 
 class CreateRoom(Strict):
-    script_id: str
+    script_id: str = Field(max_length=36)
 
 
 class JoinRoom(Strict):
     # 空白或全是空格的代碼在驗證層就擋下（422），不會被當成「找不到課程」。
-    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=32)]
     alias: str = Field(min_length=1, max_length=40)
-    avatar: str = "scholar"
+    avatar: str = Field(default="scholar", max_length=120)
 
 
 class Command(Strict):
@@ -198,7 +198,7 @@ class Command(Strict):
 class Reaction(Strict):
     action_id: str = Field(min_length=8, max_length=100)
     kind: Literal["heart", "like", "gift"]
-    focus_id: str
+    focus_id: str = Field(max_length=64)
     turn_index: int = Field(ge=0)
 
 

@@ -115,6 +115,7 @@ function ModelSelect({ label, value, onChange, choices, emptyLabel = '' }) {
       </select>
       {custom && (
         <input
+          maxLength={200}
           aria-label={`${label}（自行輸入）`}
           autoFocus={typing}
           value={value || ''}
@@ -347,6 +348,7 @@ export function ProviderSettings() {
           <label>
             連線名稱
             <input
+              maxLength={100}
               required
               value={form.name}
               onChange={event => setForm({ ...form, name: event.target.value })}
@@ -396,6 +398,7 @@ export function ProviderSettings() {
           <label>
             API 金鑰
             <input
+              maxLength={20000}
               type="password"
               autoComplete="off"
               value={form.credential}
@@ -407,6 +410,7 @@ export function ProviderSettings() {
           <label>
             自訂服務網址（使用 OpenRouter 時留空）
             <input
+              maxLength={500}
               value={form.base_url}
               placeholder="https://provider.example/v1"
               onChange={event => setForm({ ...form, base_url: event.target.value })}
@@ -430,6 +434,7 @@ export function ProviderSettings() {
             <label>
               更新金鑰
               <input
+                maxLength={20000}
                 type="password"
                 autoComplete="off"
                 value={rotation[profile.id] || ''}

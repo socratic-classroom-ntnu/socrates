@@ -46,7 +46,7 @@ export function BankPicker({ onPick }: { onPick: (question: BankQuestion) => str
   const current = Math.floor(offset / BANK_PAGE_SIZE) + 1
   return <div className="r2-card bank-picker">
     <form role="search" className="bank-search" onSubmit={event => { event.preventDefault(); setOffset(0); setTerm(query.trim()) }}>
-      <label>搜尋題庫<input type="search" value={query} placeholder="輸入標題、情境或標籤" onChange={event => setQuery(event.target.value)}/></label>
+      <label>搜尋題庫<input type="search" maxLength={200} value={query} placeholder="輸入標題、情境或標籤" onChange={event => setQuery(event.target.value)}/></label>
       <button type="submit">搜尋</button>
     </form>
     {note && <p role="status">{note}</p>}

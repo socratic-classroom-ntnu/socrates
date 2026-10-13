@@ -64,7 +64,7 @@ export function ResearchSidebar({ sessionId }) {
     return <aside className={'r73-research ' + (open ? 'is-open' : 'is-closed')} data-r73-search aria-label="查資料側欄">
  <button type="button" className="r73-research-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? '收合查資料 →' : '← 查資料'}</button>
  <div hidden={!open}><header><small>選用工具 · GOOGLE</small><h2>查資料</h2><p>自行輸入關鍵字；回到題目時保留查詢與作答。</p></header>
- <form onSubmit={e => { e.preventDefault(); e.stopPropagation(); search(); }}><label htmlFor={id.current + '-q'}>搜尋關鍵字</label><div className="r73-search-field"><input id={id.current + '-q'} value={query} onChange={e => setQuery(e.target.value)} placeholder="輸入想查證的內容"/><button type="submit" disabled={!query.trim()}>搜尋</button></div></form>
+ <form onSubmit={e => { e.preventDefault(); e.stopPropagation(); search(); }}><label htmlFor={id.current + '-q'}>搜尋關鍵字</label><div className="r73-search-field"><input id={id.current + '-q'} maxLength={200} value={query} onChange={e => setQuery(e.target.value)} placeholder="輸入想查證的內容"/><button type="submit" disabled={!query.trim()}>搜尋</button></div></form>
  <p role="status" className="r73-search-status">{status}</p><small>{scope === 'entitled-full-web' ? '既有全網搜尋權益' : scope === 'sites' ? '已設定網站範圍' : ''}</small>
  <div id={id.current} ref={host} className="r73-search-results"/>
  {query.trim() && <a href={'https://www.google.com/search?q=' + encodeURIComponent(query.trim())} target="_blank" rel="noopener noreferrer" className="r73-search-external">在 Google 開啟此查詢 ↗</a>}

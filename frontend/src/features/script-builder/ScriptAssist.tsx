@@ -69,7 +69,7 @@ export function ScriptAssist({ document, onApply, scriptId = null }) {
   const replacing = suggestion && Number.isInteger(suggestion.question_index) && questions[suggestion.question_index]
   return <div className="r2-card script-assist">
     <p>寫下想要的情境或修改方向，AI 會依目前草稿提出一題建議；建議不會自動寫入，確認後再套用。使用的模型在帳號 AI 設定的「AI 劇本協作」。</p>
-    <label>想請 AI 怎麼協助？<textarea rows={3} value={request} placeholder="例如：設計一題關於校園資源分配、適合高中生的兩難情境" onChange={e => setRequest(e.target.value)}/></label>
+    <label>想請 AI 怎麼協助？<textarea rows={3} maxLength={4000} value={request} placeholder="例如：設計一題關於校園資源分配、適合高中生的兩難情境" onChange={e => setRequest(e.target.value)}/></label>
     <label>要處理的題目<select value={target} onChange={e => setTarget(e.target.value)}>
       <option value={NEW}>新增一題</option>
       {questions.map((item, i) => <option key={item.id} value={String(i)}>改寫情境 {i + 1}：{item.title}</option>)}

@@ -90,7 +90,7 @@ export function QuestionBank() {
       <div><small>題目分享</small><h1>題庫商店</h1><p>搜尋其他老師分享的題目，預覽後加入自己的課程腳本。</p></div>
     </header>
     <form role="search" className="bank-search" onSubmit={event => { event.preventDefault(); setOffset(0); setTerm(query.trim()) }}>
-      <label>搜尋題庫<input type="search" value={query} placeholder="輸入標題、情境或標籤" onChange={event => setQuery(event.target.value)}/></label>
+      <label>搜尋題庫<input type="search" maxLength={200} value={query} placeholder="輸入標題、情境或標籤" onChange={event => setQuery(event.target.value)}/></label>
       <button className="teacher-primary">搜尋</button>
     </form>
     {note && <p role="status" className="teacher-note">{note}</p>}

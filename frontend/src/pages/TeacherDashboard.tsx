@@ -265,7 +265,7 @@ export function TeacherDashboard({ user, now = new Date() }: { user: Pick<Accoun
         {note}
       </p>
       {courses && courses.length === 0 && <p className="teacher-empty">還沒有課程。按右上角「建立課程」開始。</p>}
-      <div className="teacher-course-tools"><h2>我的課程 <small>{courses?.length ?? '讀取中'}</small></h2><label>搜尋課程<input type="search" value={filter} placeholder="輸入課程名稱" onChange={event => setFilter(event.target.value)}/></label></div>
+      <div className="teacher-course-tools"><h2>我的課程 <small>{courses?.length ?? '讀取中'}</small></h2><label>搜尋課程<input type="search" maxLength={200} value={filter} placeholder="輸入課程名稱" onChange={event => setFilter(event.target.value)}/></label></div>
       {courses === null && !note && <p role="status">正在讀取課程…</p>}
       {courses === null && note && <button className="teacher-quiet" onClick={() => void refresh()}>重新讀取課程</button>}
       {!!filter && !!courses && !courses.some(course => course.title.toLocaleLowerCase().includes(filter.toLocaleLowerCase())) && <p>換個課程名稱試試，或清空搜尋查看全部課程。</p>}

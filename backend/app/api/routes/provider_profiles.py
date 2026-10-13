@@ -8,12 +8,12 @@ import json
 import os
 import secrets
 import time
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import APIRouter, Request
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 from app.api.model_base import TrimmedModel
 from sqlalchemy import (
     Boolean,
@@ -193,7 +193,7 @@ class AccountAISettings(Base):
 
 class CreateProfile(TrimmedModel):
     name: str = Field(min_length=1, max_length=100)
-    adapter: str
+    adapter: str = Field(max_length=40)
     base_url: str | None = Field(default=None, max_length=500)
     organization: str | None = Field(default=None, max_length=200)
     project: str | None = Field(default=None, max_length=200)
@@ -225,11 +225,14 @@ class CredentialUpdate(TrimmedModel):
 
 
 class SettingsUpdate(TrimmedModel):
-    default_profile_id: str | None = None
-    fallback_profile_id: str | None = None
-    model_matrix: dict[str, str] = Field(default_factory=dict)
-    budgets: dict[str, Any] = Field(default_factory=dict)
-    active_room_id: str | None = None
+    default_profile_id: str | None = Field(default=None, max_length=36)
+    fallback_profile_id: str | None = Field(default=None, max_length=36)
+    model_matrix: dict[
+        Annotated[str, StringConstraints(max_length=64)],
+        Annotated[str, StringConstraints(max_length=200)],
+    ] = Field(default_factory=dict, max_length=32)
+    budgets: dict[str, Any] = Field(default_factory=dict, max_length=32)
+    active_room_id: str | None = Field(default=None, max_length=36)
 
 
 router = APIRouter()

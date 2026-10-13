@@ -32,6 +32,8 @@ export type DraftComposerProps = {
   onTranscript?: (text: string, meta: { adapter: string; locale: string; confidence?: number; final: boolean }) => void
   ghostText?: string
   onGhostAccepted?: (text: string) => void
+  /** 與後端欄位上限一致（作答／導師回覆 12000、彈幕 500）。 */
+  maxLength?: number
 }
 
 /** Web Speech 錯誤碼 → 使用者看得懂、做得到的說明。 */
@@ -52,7 +54,7 @@ export function speechErrorNote(code) {
             return `語音辨識中斷（${code || '未知原因'}）；目前文字已保留，可以再按一次或直接打字。`;
     }
 }
-export function DraftComposer({ value, onChange, onSend, enabled = true, busy = false, canSend, label = '文字輸入', placeholder = '輸入文字或使用語音…', autoFocus = false, onListening, onTranscript, ghostText = '', onGhostAccepted }: DraftComposerProps) {
+export function DraftComposer({ value, onChange, onSend, enabled = true, busy = false, canSend, label = '文字輸入', placeholder = '輸入文字或使用語音…', autoFocus = false, onListening, onTranscript, ghostText = '', onGhostAccepted, maxLength = 12000 }: DraftComposerProps) {
     const id = useId(), [active, setActive] = useState(false), [sending, setSending] = useState(false), [note, setNote] = useState('');
     const recognition = useRef(null), lock = useRef(false), latest = useRef(value);
     const callbacks = useRef({ onChange, onSend, onListening, onTranscript });
@@ -154,7 +156,7 @@ export function DraftComposer({ value, onChange, onSend, enabled = true, busy = 
     <div className="socratic-composer-row">
       <button className={'socratic-mic ' + (active ? 'listening' : '')} type="button" aria-label={active ? '停止語音輸入' : '開始語音輸入'} aria-pressed={active} disabled={!enabled || busy} title={supported ? '語音輸入' : '文字輸入可用；語音請使用支援的瀏覽器'} onClick={toggle}><MicIcon active={active}/></button>
       <label className="socratic-visually-hidden" htmlFor={id}>{label}</label>
-      <textarea id={id} autoFocus={autoFocus} value={value} placeholder={ghostText && !value ? ghostText : placeholder} disabled={!enabled || busy} onChange={e => { if (active)
+      <textarea id={id} maxLength={maxLength} autoFocus={autoFocus} value={value} placeholder={ghostText && !value ? ghostText : placeholder} disabled={!enabled || busy} onChange={e => { if (active)
         stop(true); latest.current = e.target.value; onChange(e.target.value); }} onKeyDown={e => { if (e.key === 'Tab' && ghostText && !value) { e.preventDefault(); latest.current = ghostText; onChange(ghostText); onGhostAccepted?.(ghostText); return; } if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
         e.preventDefault();
         void send();

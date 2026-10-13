@@ -39,7 +39,9 @@
 ## API 慣例：兩條並列的規則
 
 1. 資源的 CRUD 用 REST
-2. **狀態機轉換用 `POST /{resource}/{id}/{action}`**，且 action 名稱必須出現在 `Action` Literal union 裡
+2. **狀態機轉換用 `POST /{resource}/{id}/{action}`**，且 action 名稱必須出現在該資源 `available_actions` 的 Literal union 裡
+
+子資源自己的生命週期動作（例如逐字稿草稿的 `POST .../transcript-drafts/{draft_id}/confirm`）不屬於 session 狀態機，不列入 `available_actions`。
 
 `/advance`、`/end`、`/retry` 屬規則 2，**不要把它們重構成 `PATCH`**——
 它們與後端回傳的 `available_actions` 是 1:1 對應，改掉前後端契約當場斷掉。

@@ -199,3 +199,20 @@ def test_ended_session_rejects_further_messages(client, learner_id):
         headers={"X-Learner-Id": learner_id},
     )
     assert response.status_code == 409
+
+
+def test_summary_key_points_come_from_reached_stages_only(client, learner_id):
+    """重點來自學生走到的那幾階（立場＋說明）；沒走到的階的內容不能出現在總結裡。"""
+    session_id = _create(client, learner_id)
+    client.post(
+        f"/api/sessions/{session_id}/messages",
+        json={"text": "我會轉向，因為救下的人比較多"},
+        headers={"X-Learner-Id": learner_id},
+    )
+    client.post(f"/api/sessions/{session_id}/end", headers={"X-Learner-Id": learner_id})
+
+    summary = client.post(
+        f"/api/sessions/{session_id}/summary", headers={"X-Learner-Id": learner_id}
+    ).json()
+    assert summary["key_points"] == ["後果主義：選擇轉向以減少死亡人數"]
+    assert "器官" not in str(summary["key_points"]) and "殺害" not in str(summary["key_points"])

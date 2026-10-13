@@ -12,7 +12,7 @@ from app.api.schemas import (
     SummaryView,
 )
 from app.domain.session_state import SessionState, actions_for
-from app.domain.tutor import PromptMessage, SummaryDraft
+from app.domain.tutor import PromptMessage, StanceEntry, SummaryDraft
 from app.domain.types import Action
 from app.ladders.repository import LadderRepository
 from app.models import Session, Summary
@@ -306,13 +306,13 @@ class ConversationService:
 
     def _summary_view(self, session: Session, row: Summary) -> SummaryView:
         state = SessionRepository.to_state(session)
+        # 只列學生走到的階；沒走到的階不能從總結漏出內容（§4.1 不劇透）。
+        reached = {s.key for s in state.stages if s.status not in ("skipped", "not_started")}
         points: list[str] = []
-        for item in row.stance_by_stage:
-            if not isinstance(item, dict):
-                continue
-            value = item.get("principle_label") or item.get("principle") or item.get("stance")
-            if value and str(value) not in points:
-                points.append(str(value))
+        for entry in (StanceEntry.model_validate(item) for item in row.stance_by_stage):
+            point = f"{entry.label}：{entry.note}" if entry.note else entry.label
+            if entry.stage_key in reached and point not in points:
+                points.append(point)
         if not points:
             points = [row.core_principle]
         student_lines = [

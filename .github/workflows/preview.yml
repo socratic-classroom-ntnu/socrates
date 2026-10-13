@@ -1,0 +1,37 @@
+name: Preview
+# PRs labelled `preview` get their own environment at
+# https://pr-<number>.socrates.driseam.com (deploy/preview/README.md).
+# This only publishes images tagged sha-<PR head sha>; Flux Operator in
+# flux-k8s (apps/base/socrates-preview) polls the labelled PRs and deploys
+# that tag, then deletes the whole environment when the PR closes or the
+# label is removed.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+permissions:
+  contents: read
+concurrency:
+  group: socrates-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  # stage-release.yml builds against the lock CI accepted; here that is the PR's own lock.
+  lock:
+    # Fork PRs cannot push to GHCR. Adding some other label (e.g. preview-llm) must not rebuild.
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'preview')
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (github.event.action != 'labeled' || github.event.label.name == 'preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.event.pull_request.head.sha }}'}
+      - uses: actions/upload-artifact@v4
+        with: {name: frontend-build-lock, path: frontend/package-lock.json, retention-days: 1}
+  build:
+    needs: [lock]
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/stage-release.yml
+    with:
+      source_sha: '${{ github.event.pull_request.head.sha }}'
+      channel: 'pr-${{ github.event.pull_request.number }}'

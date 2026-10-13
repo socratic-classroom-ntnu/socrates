@@ -60,5 +60,19 @@ if [ -n "$content" ]; then
   echo "✗ 內容提及 run2 或 portal_（$(echo "$content" | cut -d: -f1 | sort -u | wc -l | tr -d ' ') 個檔案、$(echo "$content" | wc -l | tr -d ' ') 處）:"; echo "$content" | sed 's/^/    /'; fail=1
 fi
 
-[ "$fail" -eq 0 ] && echo "✓ run2 與 portal_ 已從已追蹤檔案中消失"
+# 開發回合編號（r2-、g70-、R73_……）不進產品程式：class、CSS 變數、data 屬性、檔名、註解標記都算。
+# 放行：說明這條規則本身的檔案，與相容帳冊（docs/modules/COMPATIBILITY-LEDGER.md）登記中的舊 uuid namespace。
+round='(^|[^A-Za-z0-9])[rRgG][0-9]+[-_]'
+round_allowed=":!AGENTS.md :!backend/tests/migrations/test_no_round_prefix.py :!backend/app/api/routes/ai_students.py :!backend/tests/classroom/test_feature_flags.py :!docs/modules/COMPATIBILITY-LEDGER.md"
+round_paths=$(git ls-files | grep -v "^$self\$" | grep -E "(^|/)[rRgG][0-9]+[-_]" || true)
+if [ -n "$round_paths" ]; then
+  echo "✗ 路徑含開發回合編號（$(echo "$round_paths" | wc -l | tr -d ' ') 個）:"; echo "$round_paths" | sed 's/^/    /'; fail=1
+fi
+# shellcheck disable=SC2086
+round_content=$(git grep -InE "$round" -- . ":!$self" $records $round_allowed || true)
+if [ -n "$round_content" ]; then
+  echo "✗ 內容含開發回合編號（$(echo "$round_content" | cut -d: -f1 | sort -u | wc -l | tr -d ' ') 個檔案、$(echo "$round_content" | wc -l | tr -d ' ') 處）:"; echo "$round_content" | sed 's/^/    /'; fail=1
+fi
+
+[ "$fail" -eq 0 ] && echo "✓ run2、portal_ 與開發回合編號已從已追蹤檔案中消失"
 exit "$fail"

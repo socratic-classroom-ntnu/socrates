@@ -11,8 +11,14 @@ on:
     types: [opened, synchronize, reopened, labeled]
 permissions:
   contents: read
+# A new push supersedes the running build. Any other label (frontend, P1,
+# preview-llm...) does nothing here, so it gets a group of its own instead of
+# cancelling a build that is still needed.
 concurrency:
-  group: socrates-preview-${{ github.event.pull_request.number }}
+  group: >-
+    socrates-preview-${{ github.event.pull_request.number }}${{
+    github.event.action == 'labeled' && github.event.label.name != 'preview'
+    && format('-label-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 env:
   REPO: ${{ github.repository }}

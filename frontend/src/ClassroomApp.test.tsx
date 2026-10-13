@@ -1,7 +1,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import ClassroomApp, { Home, JOIN_ALIAS_MAX_LENGTH, PASSWORD_SPECIALS, REGISTER_LIMITS, keepPasswordChars, passwordOk, registerProblems } from './ClassroomApp'
+import ClassroomApp from './ClassroomApp'
+import { Home } from './features/student-classroom/StudentHome'
+import { JOIN_ALIAS_MAX_LENGTH } from './features/student-classroom/limits'
+import { PASSWORD_SPECIALS, REGISTER_LIMITS, keepPasswordChars, passwordOk, registerProblems } from './features/auth/AuthForm'
 import { PASSWORD_RULE } from './api/errorText'
 import { ApiError, api } from './api/classroomClient'
 
@@ -12,8 +15,8 @@ jest.mock('./api/classroomClient', () => {
 
 // 3D 舞台與團體課堂與這裡的測試無關，jsdom 也載不了它們用到的 ESM（three、.mjs），換成空元件
 jest.mock('./features/classroom-stage/Arena', () => ({ Arena: () => null }))
-jest.mock('./pages/GroupClassroom', () => ({ GroupClassroomGate: () => null }))
-jest.mock('./pages/ProviderSettings', () => ({ ProviderSettings: () => null }))
+jest.mock('./features/group-dialogue/GroupClassroom', () => ({ GroupClassroomGate: () => null }))
+jest.mock('./features/ai-settings/ProviderSettings', () => ({ ProviderSettings: () => null }))
 
 const account = { id: 'u-1', username: 'Fizzy', verified: true, csrf_token: 'csrf' }
 

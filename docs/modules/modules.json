@@ -1,11 +1,11 @@
 {
-  "schema": "socrates/module-map/v3",
-  "note": "後端模組地圖：每個原始碼檔屬於一個模組，跨模組 import 只走 uses；前端由前端組員負責，兩端只透過 contracts 接。檢查：scripts/check_modules.py；待清違規：violations.json（只能變短）。",
+  "schema": "socrates/module-map/v4",
+  "note": "前後端各自模組化；兩端只透過 generated contracts、ViewModel、available_actions 與 stable reason codes 連接。後端由 Portal-Goose、前端由 Portal-Heron，Arthur 保留產品與整合批准。",
   "owners": {
-    "architecture": "Arthur",
-    "backend_worker": "Arthur",
-    "frontend": "前端組員",
-    "visual": "Arthur（設計）"
+    "backend": "Portal-Goose",
+    "frontend": "Portal-Heron",
+    "visual": "Design-Goose",
+    "acceptance": "PO-Goose／Arthur"
   },
   "backend": [
     {
@@ -238,77 +238,298 @@
       "backend": "identity-access",
       "source": "classroom_schemas.py（Register、Login、ResetRequest…）→ api/types.ts",
       "state": "產生型別 ✅；端點在 routes/classroom.py",
-      "consumer": "登入、註冊、驗證畫面"
+      "consumer": "登入、註冊、驗證畫面",
+      "frontend": [
+        "auth"
+      ]
     },
     {
       "name": "教室房間（/classrooms/*）",
       "backend": "classroom-core",
       "source": "classroom_schemas.py、room_schemas.py → api/types.ts",
       "state": "產生型別 ✅",
-      "consumer": "學生端課堂畫面"
+      "consumer": "學生端課堂畫面",
+      "frontend": [
+        "student-classroom"
+      ]
     },
     {
       "name": "分組課（/groups/*）",
       "backend": "group-dialogue",
       "source": "routes/groups.py",
       "state": "缺 response_model，前端型別手寫（已寄契約請求）",
-      "consumer": "分組課、教師分析畫面"
+      "consumer": "分組課、教師分析畫面",
+      "frontend": [
+        "group-dialogue",
+        "teacher-analytics"
+      ]
     },
     {
       "name": "AI 學生（/ai-students/*）",
       "backend": "group-dialogue",
       "source": "routes/ai_students.py",
       "state": "部分手寫",
-      "consumer": "分組課畫面"
+      "consumer": "分組課畫面",
+      "frontend": [
+        "group-dialogue"
+      ]
     },
     {
       "name": "雷達圖",
       "backend": "analytics",
       "source": "待定",
       "state": "等契約（設計稿）",
-      "consumer": "教師分析畫面"
+      "consumer": "教師分析畫面",
+      "frontend": [
+        "teacher-analytics"
+      ]
     },
     {
       "name": "AI 供應商（/provider-profiles/*、/ai-settings/*）",
       "backend": "ai-providers",
       "source": "routes/provider_profiles.py → api/types.ts",
       "state": "產生型別 ✅",
-      "consumer": "AI 設定、出題畫面"
+      "consumer": "AI 設定、出題畫面",
+      "frontend": [
+        "ai-settings",
+        "authoring"
+      ]
     },
     {
       "name": "出題與題庫（/library/*、/question-bank/*、/script-assist/*）",
       "backend": "content-authoring",
       "source": "各 route 的 schema → api/types.ts",
       "state": "產生型別 ✅",
-      "consumer": "教師端出題畫面"
+      "consumer": "教師端出題畫面",
+      "frontend": [
+        "authoring"
+      ]
     },
     {
       "name": "單人對話（/api/sessions/*）",
       "backend": "solo-dialogue",
       "source": "api/schemas.py、transcript_schemas.py → api/types.ts",
       "state": "產生型別 ✅",
-      "consumer": "單人對話畫面"
+      "frontend": [],
+      "frontend_note": "單人對話畫面"
     },
     {
       "name": "公開設定（/public-config）",
       "backend": "platform",
       "source": "routes/public_config.py",
       "state": "✅",
-      "consumer": "全站"
+      "consumer": "全站",
+      "frontend": [
+        "platform"
+      ]
     },
     {
       "name": "TTS（文字→音訊＋字時間點）",
       "backend": "llm-runtime",
       "source": "待定",
       "state": "等契約",
-      "consumer": "導師人像"
+      "consumer": "導師人像",
+      "frontend": [
+        "media"
+      ]
     },
     {
       "name": "人像模型清單（/avatar-packs/catalog.json）",
       "backend": "platform",
       "source": "Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts",
       "state": "✅",
-      "consumer": "導師人像"
+      "consumer": "導師人像",
+      "frontend": [
+        "media"
+      ]
+    }
+  ],
+  "frontend": [
+    {
+      "id": "shell",
+      "name": "Shell",
+      "status": "ok",
+      "about": "進入點與路由：登入狀態判斷後交給各模組的畫面。",
+      "paths": [
+        "frontend/src/App.tsx",
+        "frontend/src/main.tsx",
+        "frontend/src/ClassroomApp.tsx",
+        "frontend/src/teacherRoute.ts"
+      ],
+      "uses": [
+        "*"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.00 封面.模組總表卡",
+      "todo": []
+    },
+    {
+      "id": "platform",
+      "name": "Platform",
+      "status": "ok",
+      "about": "呼叫後端的唯一出口（api/：產生的型別、client、錯誤文字）、共用 UI、開發控制台與 toy page。",
+      "paths": [
+        "frontend/src/api/",
+        "frontend/src/components/",
+        "frontend/src/shared/phaseLabels.ts",
+        "frontend/src/shared/personalStatus.ts",
+        "frontend/src/features/dev-console/",
+        "frontend/src/identity.ts",
+        "frontend/src/testkit.ts",
+        "frontend/src/setupTests.ts",
+        "frontend/src/types/window-globals.d.ts"
+      ],
+      "uses": [],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.08 Platform Adapters.模組卡",
+      "todo": [
+        "DevConsole 底下開 toy page 註冊點：每個後端模組一頁，直接呼叫 API、顯示原始回應與 available_actions。"
+      ]
+    },
+    {
+      "id": "media",
+      "name": "Media",
+      "status": "ok",
+      "about": "導師人像（Socratic 與 CE 共用）、語音輸出、語音輸入元件。",
+      "paths": [
+        "frontend/src/features/avatar/",
+        "frontend/src/features/conversation-room/avatar/",
+        "frontend/src/features/conversation-room/voice/",
+        "frontend/src/shared/input/",
+        "frontend/src/types/speech-recognition.d.ts",
+        "frontend/src/types/talkinghead.d.ts"
+      ],
+      "uses": [
+        "platform"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.07 Media Adapters.模組卡",
+      "todo": [
+        "TTS／STT 後端契約（Portal-Goose）：TTS 回音訊＋字的時間點，人像改用音訊時間軸。",
+        "TalkingHead 已不再使用：移除 types/talkinghead.d.ts、@met4citizen/talkinghead 依賴、public/avatars/ce-brunette 與 build 時下載（deploy/stage 由 Platform owner 審）。",
+        "學生端每個輸入框都要有按住說話（PO-Heron c30r2-G6）。",
+        "人像授權小字與狀態膠囊重疊；手機 debug 選單蓋到標題。"
+      ]
+    },
+    {
+      "id": "auth",
+      "name": "Auth",
+      "status": "ok",
+      "about": "登入、註冊、Email 驗證、重設密碼畫面。",
+      "paths": [
+        "frontend/src/features/auth/"
+      ],
+      "uses": [
+        "platform"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.06 Identity & Access.模組卡",
+      "todo": []
+    },
+    {
+      "id": "ai-settings",
+      "name": "AI Settings",
+      "status": "ok",
+      "about": "金鑰、模型矩陣、課堂 AI 設定。",
+      "paths": [
+        "frontend/src/features/ai-settings/"
+      ],
+      "uses": [
+        "platform"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.04 LLM Runtime.模組卡",
+      "todo": []
+    },
+    {
+      "id": "teacher-analytics",
+      "name": "Teacher Analytics",
+      "status": "warn",
+      "about": "教師端立場分布、組別比較、每題紀錄、雷達圖。",
+      "paths": [
+        "frontend/src/features/group-analytics/",
+        "frontend/src/features/teacher-records/"
+      ],
+      "uses": [
+        "platform"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.03 Analytics.模組卡",
+      "todo": [
+        "型別手寫（等後端分組 view 的 response_model）。"
+      ]
+    },
+    {
+      "id": "authoring",
+      "name": "Authoring",
+      "status": "ok",
+      "about": "教師首頁、課程庫、出題編輯、題庫。",
+      "paths": [
+        "frontend/src/features/authoring/",
+        "frontend/src/features/script-builder/",
+        "frontend/src/features/question-bank/"
+      ],
+      "uses": [
+        "platform",
+        "ai-settings",
+        "teacher-analytics"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.05 Content Authoring.模組卡",
+      "todo": []
+    },
+    {
+      "id": "group-dialogue",
+      "name": "Group Dialogue",
+      "status": "warn",
+      "about": "分組課堂、個人追問、分組舞台。",
+      "paths": [
+        "frontend/src/features/group-dialogue/",
+        "frontend/src/features/personal-dialogue/",
+        "frontend/src/features/classroom-stage/"
+      ],
+      "uses": [
+        "platform",
+        "media",
+        "ai-settings",
+        "teacher-analytics"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.02 Group Dialogue.模組卡",
+      "todo": [
+        "GroupStance、PersonalDialogue 型別手寫（等後端分組 view 的 response_model）。",
+        "GroupClassroom.tsx 裡的流程邏輯：契約補上後只留畫面與接線。"
+      ]
+    },
+    {
+      "id": "student-classroom",
+      "name": "Student Classroom",
+      "status": "ok",
+      "about": "學生首頁、加入課堂、教室房間（作答、討論、回顧）、查資料側欄。",
+      "paths": [
+        "frontend/src/features/student-classroom/",
+        "frontend/src/features/research/"
+      ],
+      "uses": [
+        "platform",
+        "media",
+        "auth",
+        "ai-settings",
+        "group-dialogue",
+        "teacher-analytics"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡",
+      "todo": [
+        "查資料側欄：框選文字後出現 Google 搜尋（Arthur G3）。"
+      ]
+    },
+    {
+      "id": "round1",
+      "name": "Round 1",
+      "status": "ok",
+      "about": "一對一對話室（規格擱置：維持可跑、不加功能）。",
+      "paths": [
+        "frontend/src/features/round1/",
+        "frontend/src/features/conversation-room/"
+      ],
+      "uses": [
+        "platform",
+        "media"
+      ],
+      "figma": "Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡",
+      "todo": []
     }
   ]
 }

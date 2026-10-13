@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../../api/classroomClient'
-import { ModelMatrix, mismatchedRoles } from '../../pages/ProviderSettings'
+import { ModelMatrix, mismatchedRoles } from './ProviderSettings'
 import '../../styles/provider-settings.css'
 
 function errorText(error) {

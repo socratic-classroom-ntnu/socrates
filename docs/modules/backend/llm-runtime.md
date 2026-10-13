@@ -41,7 +41,7 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
 
-- 架構與審查：Arthur；執行：Arthur
+- 端：後端；default owner：Portal-Goose
 - 可依賴的模組：platform、ai-providers
 
 檔案範圍：

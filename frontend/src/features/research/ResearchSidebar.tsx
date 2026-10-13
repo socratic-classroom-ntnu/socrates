@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { getPublicConfig } from '../../api/classroomClient';
 import '../../styles/research.css';
 let loader;
 let loadedCx = '';
@@ -29,9 +30,7 @@ export function ResearchSidebar({ sessionId }) {
     const id = useRef('research-search-' + Math.random().toString(36).slice(2));
     useEffect(() => {
         let active = true;
-        const abort = new AbortController();
-        fetch('/api/v2/public-config', { credentials: 'same-origin', signal: abort.signal }).then(async (r) => { if (!r.ok)
-            throw Error('SEARCH_CONFIG_READBACK'); return r.json(); }).then(async (cfg) => {
+        getPublicConfig().then(async (cfg) => {
             if (!active)
                 return;
             setScope(cfg.search_scope);
@@ -52,7 +51,7 @@ export function ResearchSidebar({ sessionId }) {
                 handle.current.execute(last.current);
         }).catch(() => { if (active)
             setStatus('搜尋服務正在恢復；查詢文字保留於本頁。'); });
-        return () => { active = false; abort.abort(); handle.current = null; };
+        return () => { active = false; handle.current = null; };
     }, [sessionId]);
     function search() { const text = query.trim(); if (!text)
         return; last.current = text; if (handle.current) {

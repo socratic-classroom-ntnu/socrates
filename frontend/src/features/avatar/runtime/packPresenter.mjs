@@ -1,3 +1,4 @@
+import { loadAvatarModel } from '../../../api/avatarCatalog';
 import { AudioLane, validatePack, timeline, weightsAt, safeLocalUrl, cameraPreset, placeCamera } from './runtimePack.mjs';
 
 /**
@@ -32,9 +33,7 @@ export class PackPresenter {
     this.clearModel();
     const THREE = await import('three');
     const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-    const response = await fetch(safeLocalUrl(pack.model_url), { credentials: 'same-origin' });
-    if (!response.ok) throw Error('MODEL_HTTP_' + response.status);
-    const bytes = await response.arrayBuffer();
+    const bytes = await loadAvatarModel(safeLocalUrl(pack.model_url));
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)))
       .map((x) => x.toString(16).padStart(2, '0')).join('');
     if (digest !== pack.model_sha256) throw Error('MODEL_DIGEST_BINDING_REQUIRED');

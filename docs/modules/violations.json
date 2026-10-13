@@ -52,6 +52,7 @@
     "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/gateway.py",
     "platform→llm-runtime  backend/app/api/deps.py → backend/app/tutor/scripted.py",
     "platform→solo-dialogue  backend/app/api/deps.py → backend/app/services/conversation.py",
+    "solo-dialogue→app-shell  backend/app/api/routes/history.py → backend/app/main.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/classroom.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py",
     "route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py",
@@ -71,7 +72,7 @@
     "route-imports-route  backend/app/api/routes/question_bank.py → backend/app/api/routes/classroom.py",
     "route-imports-route  backend/app/api/routes/question_bank.py → backend/app/api/routes/classroom_library.py",
     "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/classroom.py",
-    "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/provider_profiles.py",
-    "solo-dialogue→app-shell  backend/app/api/routes/history.py → backend/app/main.py"
-  ]
+    "route-imports-route  backend/app/api/routes/script_assist.py → backend/app/api/routes/provider_profiles.py"
+  ],
+  "frontend": []
 }

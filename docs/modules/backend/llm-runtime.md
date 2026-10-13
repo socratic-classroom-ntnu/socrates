@@ -56,10 +56,8 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/api/classroom_schemas.py`
 - `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/orchestrator/classroom.py`
 - `llm-runtime→classroom-core  backend/app/services/llm_workers.py → backend/app/services/classroom.py`
-- `llm-runtime→classroom-core  backend/app/tutor/prompts.py → backend/app/api/classroom_schemas.py`
 - `llm-runtime→content-authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py`
 - `llm-runtime→group-dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py`
 - `llm-runtime→identity-access  backend/app/services/llm_workers.py → backend/app/services/email_delivery.py`

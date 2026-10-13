@@ -17,21 +17,25 @@ from app.modules.identity_access.dependencies import (
     set_session_cookie as _set_session_cookie,
 )
 from app.services import classroom as service
-from app.api.classroom_schemas import (
+from app.modules.identity_access.contracts import (
     AccountView,
-    Command,
-    CreateRoom,
-    JoinRoom,
     Login,
     MailRequest,
-    Reaction,
     Register,
     ResetRequest,
-    RoomView,
+    TokenRequest,
+)
+from app.modules.content_authoring.contracts import (
     ScriptDocument,
     ScriptSave,
     ScriptView,
-    TokenRequest,
+)
+from app.modules.classroom_core.contracts import (
+    Command,
+    CreateRoom,
+    JoinRoom,
+    Reaction,
+    RoomView,
 )
 from app.modules.platform.errors import DomainError
 from app.repositories.classroom_storage import Event, Membership, Room, Script, transaction

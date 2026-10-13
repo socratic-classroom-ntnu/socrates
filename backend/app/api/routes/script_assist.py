@@ -15,7 +15,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Request
 from pydantic import ValidationError
 
-from app.api.classroom_schemas import (
+from app.modules.content_authoring.contracts import (
     PublicQuestion,
     SampleQuestionDraft,
     SampleQuestionSet,

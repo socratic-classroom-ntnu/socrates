@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from app.api.model_base import TrimmedModel
 from sqlalchemy import and_, func, select
 
-from app.api.classroom_schemas import Question, ScriptDocument
+from app.modules.content_authoring.contracts import Question, ScriptDocument
 from app.modules.platform.errors import DomainError
 from app.repositories.classroom_storage import Account, BankQuestion, Script, transaction
 

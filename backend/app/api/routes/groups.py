@@ -37,7 +37,7 @@ from app.domain.group_analysis import analysis as project_analysis, current_stan
 from app.services import classroom as service
 from app.domain.library_decisions import visible_evidence
 from app.api.routes.classroom_library import link_group_session, ClassroomAssets
-from app.api.classroom_schemas import public_question
+from app.modules.content_authoring.contracts import public_question
 
 router = APIRouter(prefix="/groups")
 

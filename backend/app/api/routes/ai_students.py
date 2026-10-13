@@ -293,7 +293,7 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.services import classroom as service
     from app.modules.identity_access.dependencies import account
-    from app.api.classroom_schemas import OtherSuggestionResult
+    from app.modules.llm_runtime.contracts import OtherSuggestionResult
     from app.modules.platform.errors import DomainError
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.iron_rules import guarded_generate

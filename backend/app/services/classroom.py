@@ -6,7 +6,8 @@ import time
 from typing import Any, cast
 from uuid import uuid4
 from sqlalchemy import func, select
-from app.api.classroom_schemas import MemberView, PublicQuestion, RoomView, public_question
+from app.modules.classroom_core.contracts import MemberView, RoomView
+from app.modules.content_authoring.contracts import PublicQuestion, public_question
 from app.domain.group_run import baseline_answers, personal_records
 from app.modules.platform.errors import DomainError
 from app.orchestrator.classroom import GameOrchestrator, fresh_state

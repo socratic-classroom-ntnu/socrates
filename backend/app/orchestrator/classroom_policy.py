@@ -5,7 +5,7 @@ import random
 from app.domain.tutor import Observations as DomainObservations
 from app.orchestrator import policy as advance_policy
 
-from app.api.classroom_schemas import Observations
+from app.modules.llm_runtime.contracts import Observations
 
 
 def stage_goal(observations: dict, completed_turns: int) -> bool:

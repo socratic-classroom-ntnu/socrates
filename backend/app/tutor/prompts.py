@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from app.api.classroom_schemas import (
+from app.modules.llm_runtime.contracts import (
     DynamicResult,
     LLMStudentTurn,
     PersonalTutorTurn,

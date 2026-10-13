@@ -10,7 +10,7 @@ from app.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.api.classroom_schemas import LibraryClassroomView
+from app.modules.content_authoring.contracts import LibraryClassroomView
 from app.services import classroom as service
 from app.modules.platform.errors import DomainError
 from app.services.ai_students import ensure_other_options
@@ -254,7 +254,7 @@ def classroom(cid: str, request: Request):
 
 @router.post("/classrooms/{cid}/scripts")
 def attach_script(cid: str, body: AttachScript, request: Request):
-    from app.api.classroom_schemas import ScriptDocument
+    from app.modules.content_authoring.contracts import ScriptDocument
 
     with transaction() as db:
         account = user(db, request, True)

@@ -19,8 +19,7 @@ docs/CLASSROOM-ARCHITECTURE.md:RUN2_|PORTAL_AI_
 AGENTS.md:backend/app/run2/|frontend/src/run2/|`run2`、`Run 2`、`Round 1`、`round1`
 '
 # 前端組員負責的名稱，文件引用時照原樣寫；前端改名後刪掉對應的字串。
-# round1-e2e 是 CI 的 job id，可能是 develop 的 required check，改名要與 repo 設定同步。
-frontend_names='/round1|Round1App|round1-e2e'
+frontend_names='/round1|Round1App'
 # 有日期的歷史紀錄：本文照原樣保留，不改寫也不檢查。
 records=":!docs/CI-REVIEW.md :!docs/development/backend-branches.md"
 
@@ -54,7 +53,7 @@ if [ "${1:-}" = "--self-test" ]; then
     "deploy/stage/compose.yml:18:      X: \${RUN2_A:-1}" \
     "backend/app/x.py:1:os.environ['RUN2_A']" \
     "AGENTS.md:9:old home was backend/app/run2/ and app.run2.storage" | violations | cut -d: -f1-2 | tr '\n' ' ')
-  want="a.yml:2 a.yml:4 a.md:5 a.md:7 a.py:8 backend/app/x.py:1 AGENTS.md:9 "
+  want="a.yml:2 a.yml:4 a.md:5 a.md:7 a.py:8 a.md:9 backend/app/x.py:1 AGENTS.md:9 "
   if [ "$got" = "$want" ]; then echo "✓ self-test"; exit 0; fi
   echo "✗ self-test: expected [$want] got [$got]"; exit 1
 fi

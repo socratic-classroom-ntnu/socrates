@@ -104,7 +104,7 @@ jobs:
       - run: ./scripts/gen_types.sh
       - run: python scripts/gen_classroom_types.py
       - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
-  round1-e2e:
+  solo-dialogue-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -159,7 +159,7 @@ jobs:
   ci-required:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, frontend, contract, round1-e2e, classroom-load]
+    needs: [backend, frontend, contract, solo-dialogue-e2e, classroom-load]
     steps:
       - env:
           RESULTS: ${{ toJSON(needs) }}

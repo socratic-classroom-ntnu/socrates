@@ -125,7 +125,7 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 `alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
 **hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`round1-e2e`（`docker compose up --build` 加 `scripts/solo_dialogue_smoke.py`）、`classroom-load`，
+`solo-dialogue-e2e`（`docker compose up --build` 加 `scripts/solo_dialogue_smoke.py`）、`classroom-load`，
 以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
@@ -138,7 +138,7 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
 **push 前、以及 commit 有改到 `backend/` 時，backend 容器都要是開著的**（先跑 `docker compose up -d`）：hook 用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
-PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`round1-e2e`、`classroom-load`。
+PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`solo-dialogue-e2e`、`classroom-load`。
 
 Commit 訊息用 conventional commits：`type(scope): description`。
 因為 repo 只開放 squash merge，**這條規範實際落在 PR 標題上**。

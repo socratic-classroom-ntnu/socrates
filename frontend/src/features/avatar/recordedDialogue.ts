@@ -1,7 +1,7 @@
 import { timeline } from './runtime/runtimePack.mjs'
 import type { PackPresenter } from './runtime/packPresenter.mjs'
 
-// Historical Portal-Goose recording, not the Jenny multi-segment CE fixture.
+// Single-segment coffee-shop recording with matching audio and speech timings.
 export const RECORDED_DIALOGUE = {
   packageSha256: 'e07766c3411535271db91c8cb9d30c04a1855cd0d461dde46b05ef2e4fa433cc',
   text: 'Hello! Welcome to our coffee shop. What can I get started for you today? Are you in the mood for coffee, tea, or something else?',
@@ -34,7 +34,7 @@ export async function playRecordedDialogue(presenter: PackPresenter, signal: Abo
   signal.addEventListener('abort', stop!, { once: true })
   const replay = async () => {
     // Start unlock synchronously in the click handler, before any fetch or decode.
-    const [_, metadata, audio, visemes, words] = await Promise.all([
+    const [, metadata, audio, visemes, words] = await Promise.all([
       presenter.prepareAudio(),
       ...(['fixture.json', 'audio.mp3', 'viseme-events.json', 'word-timing.json'] as const).map(name => asset(name, signal)),
     ])

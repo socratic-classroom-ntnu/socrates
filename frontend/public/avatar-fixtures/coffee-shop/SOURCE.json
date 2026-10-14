@@ -1,12 +1,9 @@
 {
-  "schema": "portal/avatar-azure-fixture-source/v1",
-  "generatedAt": "2026-10-09T21:31:08.156Z",
-  "generator": "Portal-Goose",
-  "generationCount": 1,
-  "transientAuthOnly": true,
+  "schema": "avatar/recorded-dialogue-source/v1",
+  "text": "Hello! Welcome to our coffee shop. What can I get started for you today? Are you in the mood for coffee, tea, or something else?",
+  "voice": "en-US-GuyNeural",
+  "language": "en-US",
   "speechSdkVersion": "1.46.0",
-  "selectedHarness": "83cb95472af82fb9af4070abec55706578e7bf7e2553d5f0c0ad2d34f52aef23",
-  "ceSourceCommit": "1703a46439f490523b6de0a1a481b91057c516b0",
-  "specMessageId": "5a6054b49bccf2bd3fdc63451e05165bee6fa8657e48ac9523f558f085272c0c",
-  "specSha256": "b4a03038ed95b5d948b676be2356082c1edd1659d27ef292a0e7f7168807c52e"
+  "generatedAt": "2026-10-09T21:31:08.156Z",
+  "audioSha256": "6cc2b782be71a9a2767574ae65f3b50c2537928b8cf21f2d6eb7d4b182321ab3"
 }

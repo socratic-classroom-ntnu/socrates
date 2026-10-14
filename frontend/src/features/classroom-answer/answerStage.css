@@ -1,11 +1,12 @@
-/* 所有規則都掛在 .ce-room 底下：畫面實際放在 main.r2-classroom 裡，
-   `.r2-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉 */
+/* 所有規則都掛在 .ans-room 底下：畫面實際放在 main.r2-classroom 裡，
+   `.r2-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉。
+   前綴不用 ce-：對話室的 conversation-room/shell/room.css 已經用了 .ce-room，會一起載入而互相覆蓋 */
 /* ===== 作答畫面：Figma「3 問題作答」「4 選定並寫下想法」 =====
    桌機：1280×800 畫布照設計稿絕對定位，整張等比放大填滿螢幕（stage.ts useStageScale）。
-   900px 以下（ce-room--mobile）：改成直向排列，背景固定在後面。 */
+   900px 以下（ans-room--mobile）：改成直向排列，背景固定在後面。 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
-.ce-room {
+.ans-room {
   position: fixed;
   inset: 0;
   z-index: 40; /* 蓋過教室頂列；低於 r2-toast（90），錯誤訊息仍看得到 */
@@ -15,10 +16,10 @@
   color: #F4EFE4;
   font-family: 'Noto Sans TC', system-ui, sans-serif;
 }
-.ce-room *, .ce-room *::before, .ce-room *::after { box-sizing: border-box; }
+.ans-room *, .ans-room *::before, .ans-room *::after { box-sizing: border-box; }
 
 /* 畫布為了不裁掉內容而沒有完全填滿時，四周用同一張背景模糊補滿 */
-.ce-room::before {
+.ans-room::before {
   content: "";
   position: absolute;
   inset: -40px;
@@ -26,7 +27,7 @@
   filter: blur(18px) brightness(.5);
 }
 
-.ce-room .ce-canvas {
+.ans-room .ans-canvas {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -38,7 +39,7 @@
   overflow: clip;
 }
 
-.ce-room .ce-bg-scene {
+.ans-room .ans-bg-scene {
   position: absolute;
   inset: 0;
   background: #15120F url('/scene/classroom-bg.png') center / cover no-repeat;
@@ -46,7 +47,7 @@
 }
 
 /* ----- Progress（16,14） ----- */
-.ce-room .ce-progress {
+.ans-room .ans-progress {
   position: absolute;
   left: 16px;
   top: 14px;
@@ -54,7 +55,7 @@
   align-items: center;
   gap: 10px;
 }
-.ce-room .ce-seal {
+.ans-room .ans-seal {
   width: 30px;
   height: 30px;
   border-radius: 7px;
@@ -67,7 +68,7 @@
   font-weight: 900;
   font-size: 16px;
 }
-.ce-room .ce-progress-text {
+.ans-room .ans-progress-text {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 14px;
@@ -75,13 +76,13 @@
 }
 
 /* ----- Timer（132,100 92×92；Face 64×64） ----- */
-.ce-room .ce-timer {
+.ans-room .ans-timer {
   position: absolute;
   left: 132px;
   top: 100px;
   width: 92px;
 }
-.ce-room .ce-timer-ring {
+.ans-room .ans-timer-ring {
   width: 92px;
   height: 92px;
   border-radius: 50%;
@@ -93,7 +94,7 @@
   justify-content: center;
   box-shadow: 0 6px 14px rgba(0,0,0,.4);
 }
-.ce-room .ce-timer-face {
+.ans-room .ans-timer-face {
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -105,11 +106,11 @@
   justify-content: center;
   line-height: 1;
 }
-.ce-room .ce-timer-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px; }
-.ce-room .ce-timer-unit { font-size: 11px; color: #1A1713; }
+.ans-room .ans-timer-value { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 26px; }
+.ans-room .ans-timer-unit { font-size: 11px; color: #1A1713; }
 
-.ce-room .ce-timer--up .ce-timer-ring { animation: ce-time-up-pulse 1s ease-in-out infinite; }
-.ce-room .ce-time-up {
+.ans-room .ans-timer--up .ans-timer-ring { animation: ans-time-up-pulse 1s ease-in-out infinite; }
+.ans-room .ans-time-up {
   position: absolute;
   top: calc(100% + 10px);
   left: 50%;
@@ -122,13 +123,13 @@
   font-size: 14px;
   font-weight: 700;
   box-shadow: 0 6px 14px rgba(0,0,0,.4);
-  animation: ce-pop .3s cubic-bezier(.2,.8,.2,1) both;
+  animation: ans-pop .3s cubic-bezier(.2,.8,.2,1) both;
 }
-@keyframes ce-time-up-pulse { 50% { transform: scale(1.06); } }
-@keyframes ce-pop { from { opacity: 0; transform: translateX(-50%) scale(.6); } }
+@keyframes ans-time-up-pulse { 50% { transform: scale(1.06); } }
+@keyframes ans-pop { from { opacity: 0; transform: translateX(-50%) scale(.6); } }
 
 /* ----- Chalkboard text（243,67 794×200；上下 20、左右 48、間距 10） ----- */
-.ce-room .ce-chalkboard {
+.ans-room .ans-chalkboard {
   position: absolute;
   left: 243px;
   top: 67px;
@@ -144,8 +145,8 @@
   text-shadow: 0 0 2px rgba(241,238,228,.45);
   pointer-events: none;
 }
-.ce-room .ce-q-index { font-size: 20px; color: #F4D774; flex-shrink: 0; }
-.ce-room .ce-q-text {
+.ans-room .ans-q-index { font-size: 20px; color: #F4D774; flex-shrink: 0; }
+.ans-room .ans-q-text {
   margin: 0;
   font-family: 'LXGW WenKai TC', serif;
   font-size: 40px;
@@ -157,14 +158,14 @@
 }
 
 /* ----- 情境說明（黑板下方，預設收起） ----- */
-.ce-room .ce-scenario {
+.ans-room .ans-scenario {
   position: absolute;
   left: 291px;
   top: 272px;
   z-index: 5;
   max-width: 698px;
 }
-.ce-room .ce-scenario-toggle {
+.ans-room .ans-scenario-toggle {
   border: 0;
   border-radius: 999px;
   padding: 4px 12px;
@@ -174,8 +175,8 @@
   font-size: 13px;
   cursor: pointer;
 }
-.ce-room .ce-scenario-toggle:hover { background: rgba(26,23,19,.85); }
-.ce-room .ce-scenario-text {
+.ans-room .ans-scenario-toggle:hover { background: rgba(26,23,19,.85); }
+.ans-room .ans-scenario-text {
   margin: 8px 0 0;
   max-height: 260px;
   overflow: auto;
@@ -191,7 +192,7 @@
 }
 
 /* ----- Options（OptionCard 280×150，left 53、top 614、間距 18） ----- */
-.ce-room .ce-options {
+.ans-room .ans-options {
   position: absolute;
   left: 53px;
   bottom: 36px; /* 設計稿 top 614 + 高 150 = 764；以底邊對齊，選項很長時卡片往上長 */
@@ -201,7 +202,7 @@
   grid-template-columns: repeat(var(--count, 4), minmax(0, 1fr));
   gap: 18px;
 }
-.ce-room .ce-option {
+.ans-room .ans-option {
   min-height: 150px;
   max-height: 340px; /* 選項最長可到 2000 字：超過這個高度就在卡片裡捲動，不蓋到題目 */
   display: flex;
@@ -221,15 +222,14 @@
   transform: rotate(var(--rotation, 0deg));
   box-shadow: 0 12px 22px rgba(0,0,0,.4);
   cursor: pointer;
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
-.ce-room .ce-option:hover { transform: rotate(var(--rotation, 0deg)) scale(1.02); box-shadow: 0 16px 28px rgba(0,0,0,.5); }
 /* 黃色卡（#E3A72F）一律黑字：白字在黃底上對比不夠；設計稿 C 也是黑字 */
-.ce-room .ce-option.ce-option--dark, .ce-room .ce-chip.ce-option--dark, .ce-room .ce-selected.ce-option--dark { color: #1C1A16; }
-.ce-room .ce-options--many .ce-option { padding: 16px; }
+.ans-room .ans-option.ans-option--dark, .ans-room .ans-chip.ans-option--dark, .ans-room .ans-selected.ans-option--dark { color: #1C1A16; }
+.ans-room .ans-options--many .ans-option { padding: 16px; }
 /* 撐滿卡片寬度，縮字時才量得到有沒有超出一行 */
-.ce-room .ce-option-text { display: block; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.ce-room .ce-option-letter {
+.ans-room .ans-option-text { display: block; align-self: stretch; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.ans-room .ans-option-letter {
   width: 42px;
   height: 42px;
   border-radius: 10px;
@@ -240,23 +240,36 @@
   font-family: 'JetBrains Mono', monospace;
   font-size: 20px;
 }
-.ce-room .ce-option--dark .ce-option-letter, .ce-room .ce-option--dark .ce-selected-letter { background: rgba(0,0,0,.12); }
+.ans-room .ans-option--dark .ans-option-letter, .ans-room .ans-option--dark .ans-selected-letter { background: rgba(0,0,0,.12); }
 /* 教室共用的 `.r2-classroom button:hover` 會把按鈕往上推 2px 並加亮，在作答畫面取消；卡片保留自己的旋轉 */
-.ce-room .ce-canvas button:hover { transform: none; filter: none; }
-.ce-room .ce-options .ce-option:hover { transform: rotate(var(--rotation, 0deg)) scale(1.02); }
-.ce-room .ce-other-options .ce-chip:hover { transform: rotate(var(--rotation, 0deg)); }
-.ce-room .ce-scenario-toggle, .ce-room .ce-reselect { font-weight: 400; }
-.ce-room button:focus-visible { outline: 2px solid #F4D774; outline-offset: 3px; }
+.ans-room .ans-canvas button:hover { transform: none; filter: none; }
+/* 滑過／鍵盤選到時發亮：往上浮、變亮、外圍一圈卡片本身顏色的光暈（不用白邊） */
+.ans-room .ans-options .ans-option:hover,
+.ans-room .ans-options .ans-option:focus-visible {
+  transform: rotate(var(--rotation, 0deg)) translateY(-6px) scale(1.03);
+  filter: brightness(1.1);
+  box-shadow: 0 18px 30px rgba(0,0,0,.5), 0 0 26px 4px color-mix(in srgb, var(--option-color) 70%, transparent);
+}
+/* 第四頁左側的未選小卡：平常淡淡的，滑過時亮起來，提示可以直接點來改選 */
+.ans-room .ans-other-options .ans-chip:hover,
+.ans-room .ans-other-options .ans-chip:focus-visible {
+  opacity: 1;
+  filter: brightness(1.08);
+  transform: rotate(var(--rotation, 0deg)) translateX(6px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.45), 0 0 18px 3px color-mix(in srgb, var(--option-color) 70%, transparent);
+}
+.ans-room .ans-scenario-toggle, .ans-room .ans-reselect { font-weight: 400; }
+.ans-room button:focus-visible { outline: 2px solid #F4D774; outline-offset: 3px; }
 
 /* 按「換一個」回來：剛才選的那張已經飛回原位，其他卡在自己的位置淡入 */
-.ce-room .ce-options--return .ce-option:not(.ce-option--previous) { animation: ce-fade-in .25s ease-out both; }
-@keyframes ce-fade-in { from { opacity: 0; } }
+.ans-room .ans-options--return .ans-option:not(.ans-option--previous) { animation: ans-fade-in .25s ease-out both; }
+@keyframes ans-fade-in { from { opacity: 0; } }
 
 /* ----- 第四頁 ----- */
-.ce-room .ce-writing { display: contents; }
+.ans-room .ans-writing { display: contents; }
 
 /* Other options（44,606；Chip 150×46，整組透明度 .3；可直接點來改選） */
-.ce-room .ce-other-options {
+.ans-room .ans-other-options {
   position: absolute;
   left: 44px;
   bottom: 40px; /* 設計稿三張：606 + 3×46 + 2×8 = 760；選項多時往上長，不會超出畫面 */
@@ -264,7 +277,7 @@
   flex-direction: column;
   gap: 8px;
 }
-.ce-room .ce-chip {
+.ans-room .ans-chip {
   width: 150px;
   height: 46px;
   display: flex;
@@ -281,13 +294,12 @@
   opacity: .3;
   transform: rotate(var(--rotation, 0deg));
   cursor: pointer;
-  transition: opacity .15s ease;
+  transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
-.ce-room .ce-chip:hover { opacity: .75; }
-.ce-room .ce-chip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ans-room .ans-chip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Selected（220,588 360×180，旋轉 -1.5°） */
-.ce-room .ce-selected {
+.ans-room .ans-selected {
   position: absolute;
   left: 220px;
   bottom: 32px; /* 設計稿 top 588 + 高 180 = 768；選項很長時往上長 */
@@ -305,8 +317,8 @@
   box-shadow: 0 26px 40px rgba(0,0,0,.55);
   z-index: 2;
 }
-.ce-room .ce-selected-top { display: flex; align-items: flex-start; justify-content: space-between; }
-.ce-room .ce-selected-letter {
+.ans-room .ans-selected-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.ans-room .ans-selected-letter {
   width: 52px;
   height: 52px;
   border-radius: 12px;
@@ -318,12 +330,12 @@
   font-weight: 700;
   font-size: 28px;
 }
-.ce-room .ce-selected-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.ce-room .ce-selected-label { font-size: 14px; letter-spacing: .1em; opacity: .85; }
-.ce-room .ce-selected-text { display: block; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 32px; line-height: 1.25; }
+.ans-room .ans-selected-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ans-room .ans-selected-label { font-size: 14px; letter-spacing: .1em; opacity: .85; }
+.ans-room .ans-selected-text { display: block; min-height: 0; overflow-y: auto; overscroll-behavior: contain; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 32px; line-height: 1.25; }
 
 /* 換一個：在選定卡「你的選擇」下方，平常是淡淡的小字，滑過才浮出底色 */
-.ce-room .ce-reselect {
+.ans-room .ans-reselect {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -339,10 +351,10 @@
   cursor: pointer;
   transition: opacity .15s ease, background .15s ease;
 }
-.ce-room .ce-reselect:hover { opacity: 1; background: rgba(0,0,0,.22); }
+.ans-room .ans-reselect:hover { opacity: 1; background: rgba(0,0,0,.22); }
 
 /* Thought notebook（612,602 620×176，旋轉 0.8°） */
-.ce-room .ce-notebook {
+.ans-room .ans-notebook {
   position: absolute;
   left: 612px;
   top: 602px;
@@ -361,11 +373,11 @@
   transform: rotate(.8deg);
   box-shadow: 0 10px 20px rgba(0,0,0,.4);
 }
-.ce-room .ce-notebook-label { font-size: 14px; font-weight: 700; color: #5E584C; }
+.ans-room .ans-notebook-label { font-size: 14px; font-weight: 700; color: #5E584C; }
 
 /* 共用的 DraftComposer（麥克風、Enter 送出、其他選項的 AI 建議）換上筆記紙的樣子 */
-.ce-room .ce-notebook .socratic-composer { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.ce-room .ce-notebook .socratic-composer-row {
+.ans-room .ans-notebook .socratic-composer { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ans-room .ans-notebook .socratic-composer-row {
   flex: 1;
   min-height: 0;
   align-items: flex-end;
@@ -376,7 +388,7 @@
   border-radius: 0;
   box-shadow: none;
 }
-.ce-room .ce-notebook .socratic-composer-row textarea {
+.ans-room .ans-notebook .socratic-composer-row textarea {
   order: 1;
   align-self: stretch;
   min-height: 0;
@@ -389,10 +401,10 @@
   line-height: 32px;
   outline: none;
 }
-.ce-room .ce-notebook .socratic-composer-row textarea::placeholder { color: rgba(28,26,22,.45); }
+.ans-room .ans-notebook .socratic-composer-row textarea::placeholder { color: rgba(28,26,22,.45); }
 /* 共用輸入框的 padding: 0 和 `.r2-classroom button` 的 padding: 12px 20px 權重一樣、後者較晚載入而勝出，
    48px 的按鈕被塞進左右 20px 的內距，圖示就偏掉了；這裡明確歸零並置中 */
-.ce-room .ce-notebook .socratic-composer-row button {
+.ans-room .ans-notebook .socratic-composer-row button {
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
@@ -403,21 +415,21 @@
   line-height: 0;
   cursor: pointer;
 }
-.ce-room .ce-notebook .socratic-mic {
+.ans-room .ans-notebook .socratic-mic {
   order: 2;
   border-radius: 12px !important;
   background: rgba(28,26,22,.08) !important;
   color: #1C1A16;
 }
-.ce-room .ce-notebook .socratic-mic.listening {
+.ans-room .ans-notebook .socratic-mic.listening {
   background: #C8431A !important;
   color: #FFFDF8;
   box-shadow: 0 0 0 5px rgba(200,67,26,.22);
 }
-.ce-room .ce-notebook .socratic-enter { order: 3; border-radius: 12px; background: #1C1A16 !important; color: #FFFDF8 !important; }
-.ce-room .ce-notebook .socratic-composer button:focus-visible { outline: 2px solid #1C1A16; }
-.ce-room .ce-notebook .socratic-composer-caption { padding: 2px 0 0; font-size: 12px; color: #5E584C; opacity: 1; }
-.ce-room .ce-notebook .r88-ghost-accept {
+.ans-room .ans-notebook .socratic-enter { order: 3; border-radius: 12px; background: #1C1A16 !important; color: #FFFDF8 !important; }
+.ans-room .ans-notebook .socratic-composer button:focus-visible { outline: 2px solid #1C1A16; }
+.ans-room .ans-notebook .socratic-composer-caption { padding: 2px 0 0; font-size: 12px; color: #5E584C; opacity: 1; }
+.ans-room .ans-notebook .r88-ghost-accept {
   align-self: flex-start;
   border: 0;
   border-radius: 999px;
@@ -430,46 +442,47 @@
 }
 
 /* 進入第四頁：選定卡從第三頁的位置飛過來、未選的縮到左下、筆記紙從底部滑上 */
-.ce-room .ce-writing--enter .ce-selected { animation: ce-card-fly .75s cubic-bezier(.2,.8,.2,1) both; }
-.ce-room .ce-writing--enter .ce-chip { animation: ce-chip-in .6s cubic-bezier(.2,.8,.2,1) both; }
-.ce-room .ce-writing--enter .ce-chip:nth-child(2) { animation-delay: 80ms; }
-.ce-room .ce-writing--enter .ce-chip:nth-child(n+3) { animation-delay: 160ms; }
-.ce-room .ce-writing--enter .ce-notebook { animation: ce-notebook-in .65s .3s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes ce-card-fly {
+.ans-room .ans-writing--enter .ans-selected { animation: ans-card-fly .75s cubic-bezier(.2,.8,.2,1) both; }
+/* 用 backwards 而不是 both：播完就交回一般樣式，滑過時的發亮才會生效 */
+.ans-room .ans-writing--enter .ans-chip { animation: ans-chip-in .6s cubic-bezier(.2,.8,.2,1) backwards; }
+.ans-room .ans-writing--enter .ans-chip:nth-child(2) { animation-delay: 80ms; }
+.ans-room .ans-writing--enter .ans-chip:nth-child(n+3) { animation-delay: 160ms; }
+.ans-room .ans-writing--enter .ans-notebook { animation: ans-notebook-in .65s .3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes ans-card-fly {
   /* 從第三頁那張卡的位置、大小（280/360）、角度出發 */
   from { transform: translate(var(--from-x, 0), var(--from-y, 0)) scale(.78) rotate(var(--rotation, 0deg)); }
   70% { transform: translate(0, -8px) scale(1.03) rotate(-2deg); }
   to { transform: rotate(-1.5deg); }
 }
-@keyframes ce-chip-in {
+@keyframes ans-chip-in {
   from { opacity: 0; transform: translate(60px, 60px) scale(1.4) rotate(var(--rotation, 0deg)); }
   to { opacity: .3; transform: rotate(var(--rotation, 0deg)); }
 }
-@keyframes ce-notebook-in {
+@keyframes ans-notebook-in {
   from { opacity: 0; transform: translateY(220px) rotate(4deg); }
   to { opacity: 1; transform: rotate(.8deg); }
 }
 
 /* 換一個：倒著播回第三頁（選定卡飛回原位、小卡飛向各自的選項位置並淡出、筆記紙滑下） */
-.ce-room .ce-writing--leave .ce-selected { animation: ce-card-back .42s cubic-bezier(.4,0,.2,1) forwards; }
-.ce-room .ce-writing--leave .ce-chip { animation: ce-chip-back .38s cubic-bezier(.4,0,.2,1) forwards; }
-.ce-room .ce-writing--leave .ce-notebook { animation: ce-notebook-out .3s ease-in forwards; }
-.ce-room .ce-writing--leave button { pointer-events: none; }
-@keyframes ce-card-back {
+.ans-room .ans-writing--leave .ans-selected { animation: ans-card-back .42s cubic-bezier(.4,0,.2,1) forwards; }
+.ans-room .ans-writing--leave .ans-chip { animation: ans-chip-back .38s cubic-bezier(.4,0,.2,1) forwards; }
+.ans-room .ans-writing--leave .ans-notebook { animation: ans-notebook-out .3s ease-in forwards; }
+.ans-room .ans-writing--leave button { pointer-events: none; }
+@keyframes ans-card-back {
   from { transform: rotate(-1.5deg); }
   to { transform: translate(var(--from-x, 0), var(--from-y, 0)) scale(.78) rotate(var(--rotation, 0deg)); box-shadow: 0 12px 22px rgba(0,0,0,.4); }
 }
-@keyframes ce-chip-back {
+@keyframes ans-chip-back {
   from { opacity: .3; transform: rotate(var(--rotation, 0deg)); }
   to { opacity: 0; transform: translate(var(--to-x, 0), var(--to-y, 0)) scale(1.4); }
 }
-@keyframes ce-notebook-out {
+@keyframes ans-notebook-out {
   from { opacity: 1; transform: rotate(.8deg); }
   to { opacity: 0; transform: translateY(220px) rotate(4deg); }
 }
 
 /* ----- 查資料側欄（其他組的功能）：作答畫面全螢幕時浮在右上角 ----- */
-.r73-answer-layout:has(.ce-room) .r73-research {
+.r73-answer-layout:has(.ans-room) .r73-research {
   position: fixed;
   top: 14px;
   right: 16px;
@@ -477,7 +490,7 @@
   width: min(360px, calc(100vw - 32px));
   max-height: calc(100dvh - 28px);
 }
-.r73-answer-layout:has(.ce-room) .r73-research.is-closed {
+.r73-answer-layout:has(.ans-room) .r73-research.is-closed {
   width: auto;
   padding: 0;
   border: 0;
@@ -485,7 +498,7 @@
   box-shadow: none;
   overflow: visible;
 }
-.r73-answer-layout:has(.ce-room) .r73-research.is-closed .r73-research-toggle {
+.r73-answer-layout:has(.ans-room) .r73-research.is-closed .r73-research-toggle {
   float: none;
   margin: 0;
   padding: 6px 14px;
@@ -497,9 +510,9 @@
 }
 
 /* ===== 900px 以下：直向排列 ===== */
-.ce-room.ce-room--mobile { overflow-y: auto; overscroll-behavior: contain; }
-.ce-room.ce-room--mobile::before { display: none; }
-.ce-room.ce-room--mobile .ce-canvas {
+.ans-room.ans-room--mobile { overflow-y: auto; overscroll-behavior: contain; }
+.ans-room.ans-room--mobile::before { display: none; }
+.ans-room.ans-room--mobile .ans-canvas {
   position: relative;
   top: auto;
   left: auto;
@@ -513,24 +526,24 @@
   gap: 16px;
   padding: 14px 16px 88px;
 }
-.ce-room.ce-room--mobile .ce-bg-scene { position: fixed; filter: brightness(.45); }
-.ce-room.ce-room--mobile .ce-progress,
-.ce-room.ce-room--mobile .ce-chalkboard,
-.ce-room.ce-room--mobile .ce-scenario,
-.ce-room.ce-room--mobile .ce-options,
-.ce-room.ce-room--mobile .ce-other-options,
-.ce-room.ce-room--mobile .ce-selected,
-.ce-room.ce-room--mobile .ce-notebook { position: relative; left: auto; top: auto; bottom: auto; }
-.ce-room.ce-room--mobile .ce-progress { height: 64px; }
+.ans-room.ans-room--mobile .ans-bg-scene { position: fixed; filter: brightness(.45); }
+.ans-room.ans-room--mobile .ans-progress,
+.ans-room.ans-room--mobile .ans-chalkboard,
+.ans-room.ans-room--mobile .ans-scenario,
+.ans-room.ans-room--mobile .ans-options,
+.ans-room.ans-room--mobile .ans-other-options,
+.ans-room.ans-room--mobile .ans-selected,
+.ans-room.ans-room--mobile .ans-notebook { position: relative; left: auto; top: auto; bottom: auto; }
+.ans-room.ans-room--mobile .ans-progress { height: 64px; }
 
-.ce-room.ce-room--mobile .ce-timer { position: absolute; left: auto; right: 16px; top: 14px; width: 64px; }
-.ce-room.ce-room--mobile .ce-timer-ring { width: 64px; height: 64px; border-width: 4px; }
-.ce-room.ce-room--mobile .ce-timer-face { width: 44px; height: 44px; }
-.ce-room.ce-room--mobile .ce-timer-value { font-size: 18px; }
-.ce-room.ce-room--mobile .ce-timer-unit { font-size: 10px; }
-.ce-room.ce-room--mobile .ce-time-up { top: 50%; left: auto; right: calc(100% + 10px); transform: translateY(-50%); animation: none; }
+.ans-room.ans-room--mobile .ans-timer { position: absolute; left: auto; right: 16px; top: 14px; width: 64px; }
+.ans-room.ans-room--mobile .ans-timer-ring { width: 64px; height: 64px; border-width: 4px; }
+.ans-room.ans-room--mobile .ans-timer-face { width: 44px; height: 44px; }
+.ans-room.ans-room--mobile .ans-timer-value { font-size: 18px; }
+.ans-room.ans-room--mobile .ans-timer-unit { font-size: 10px; }
+.ans-room.ans-room--mobile .ans-time-up { top: 50%; left: auto; right: calc(100% + 10px); transform: translateY(-50%); animation: none; }
 
-.ce-room.ce-room--mobile .ce-chalkboard {
+.ans-room.ans-room--mobile .ans-chalkboard {
   width: auto;
   height: auto;
   padding: 20px;
@@ -538,17 +551,17 @@
   background: #25372F;
   box-shadow: 0 12px 22px rgba(0,0,0,.4);
 }
-.ce-room.ce-room--mobile .ce-q-index { font-size: 16px; }
-.ce-room.ce-room--mobile .ce-q-text { font-size: clamp(22px, 5.6vw, 32px); }
-.ce-room.ce-room--mobile .ce-scenario { max-width: none; margin-top: -6px; }
+.ans-room.ans-room--mobile .ans-q-index { font-size: 16px; }
+.ans-room.ans-room--mobile .ans-q-text { font-size: clamp(22px, 5.6vw, 32px); }
+.ans-room.ans-room--mobile .ans-scenario { max-width: none; margin-top: -6px; }
 
-.ce-room.ce-room--mobile .ce-options { width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.ce-room.ce-room--mobile .ce-option { height: auto; min-height: 112px; gap: 12px; padding: 14px 16px; font-size: 18px; }
-.ce-room.ce-room--mobile .ce-option-letter { width: 36px; height: 36px; font-size: 17px; }
+.ans-room.ans-room--mobile .ans-options { width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ans-room.ans-room--mobile .ans-option { height: auto; min-height: 112px; gap: 12px; padding: 14px 16px; font-size: 18px; }
+.ans-room.ans-room--mobile .ans-option-letter { width: 36px; height: 36px; font-size: 17px; }
 
-.ce-room.ce-room--mobile .ce-writing { display: flex; flex-direction: column; gap: 16px; }
-.ce-room.ce-room--mobile .ce-selected { order: 1; width: auto; height: auto; min-height: 140px; gap: 16px; transform: rotate(-1deg); }
-.ce-room.ce-room--mobile .ce-notebook {
+.ans-room.ans-room--mobile .ans-writing { display: flex; flex-direction: column; gap: 16px; }
+.ans-room.ans-room--mobile .ans-selected { order: 1; width: auto; height: auto; min-height: 140px; gap: 16px; transform: rotate(-1deg); }
+.ans-room.ans-room--mobile .ans-notebook {
   order: 2;
   width: auto;
   height: auto;
@@ -560,28 +573,28 @@
     repeating-linear-gradient(transparent 0 31px, #C9D6E8 31px 32px),
     #F7F3EA;
 }
-.ce-room.ce-room--mobile .ce-notebook .socratic-composer-row textarea { min-height: 96px; font-size: 18px; }
-.ce-room.ce-room--mobile .ce-other-options { order: 3; flex-direction: row; flex-wrap: wrap; }
-.ce-room.ce-room--mobile .ce-chip { flex: 1 1 140px; width: auto; opacity: .55; }
+.ans-room.ans-room--mobile .ans-notebook .socratic-composer-row textarea { min-height: 96px; font-size: 18px; }
+.ans-room.ans-room--mobile .ans-other-options { order: 3; flex-direction: row; flex-wrap: wrap; }
+.ans-room.ans-room--mobile .ans-chip { flex: 1 1 140px; width: auto; opacity: .55; }
 
 /* 手機上卡片沒有第三頁的對應位置可飛，改成往上浮出 */
-.ce-room.ce-room--mobile .ce-writing--enter .ce-selected { animation: ce-rise .6s cubic-bezier(.2,.8,.2,1) both; }
-.ce-room.ce-room--mobile .ce-writing--enter .ce-notebook { animation: ce-rise .6s .15s cubic-bezier(.2,.8,.2,1) both; }
-.ce-room.ce-room--mobile .ce-writing--enter .ce-chip { animation: ce-rise .6s .25s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes ce-rise { from { opacity: 0; transform: translateY(40px); } }
-.ce-room.ce-room--mobile .ce-writing--leave .ce-selected,
-.ce-room.ce-room--mobile .ce-writing--leave .ce-notebook,
-.ce-room.ce-room--mobile .ce-writing--leave .ce-chip { animation: ce-sink .3s ease-in forwards; }
-@keyframes ce-sink { to { opacity: 0; transform: translateY(40px); } }
+.ans-room.ans-room--mobile .ans-writing--enter .ans-selected { animation: ans-rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.ans-room.ans-room--mobile .ans-writing--enter .ans-notebook { animation: ans-rise .6s .15s cubic-bezier(.2,.8,.2,1) both; }
+.ans-room.ans-room--mobile .ans-writing--enter .ans-chip { animation: ans-rise .6s .25s cubic-bezier(.2,.8,.2,1) backwards; }
+@keyframes ans-rise { from { opacity: 0; transform: translateY(40px); } }
+.ans-room.ans-room--mobile .ans-writing--leave .ans-selected,
+.ans-room.ans-room--mobile .ans-writing--leave .ans-notebook,
+.ans-room.ans-room--mobile .ans-writing--leave .ans-chip { animation: ans-sink .3s ease-in forwards; }
+@keyframes ans-sink { to { opacity: 0; transform: translateY(40px); } }
 
 /* 查資料側欄在手機上移到右下角，避開計時器 */
-.r73-answer-layout:has(.ce-room--mobile) .r73-research { top: auto; bottom: 16px; max-height: 70dvh; }
+.r73-answer-layout:has(.ans-room--mobile) .r73-research { top: auto; bottom: 16px; max-height: 70dvh; }
 
 @media (max-width: 600px) {
-  .ce-room.ce-room--mobile .ce-option { min-height: 100px; font-size: 17px; }
-  .ce-room.ce-room--mobile .ce-q-text { font-size: clamp(20px, 6vw, 26px); }
+  .ans-room.ans-room--mobile .ans-option { min-height: 100px; font-size: 17px; }
+  .ans-room.ans-room--mobile .ans-q-text { font-size: clamp(20px, 6vw, 26px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ce-room *, .ce-room *::before, .ce-room *::after { animation: none !important; }
+  .ans-room *, .ans-room *::before, .ans-room *::after { animation: none !important; }
 }

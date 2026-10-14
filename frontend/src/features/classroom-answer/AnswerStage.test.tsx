@@ -63,6 +63,6 @@ describe('AnswerStage', () => {
 
     it('五個以上選項（含後端補上的「其他」）時縮小選項字級', () => {
         renderStage({ options: [...options, { id: '__other__', text: '其他' }] });
-        expect(screen.getByRole('group', { name: '選擇你的立場' })).toHaveClass('ce-options--many');
+        expect(screen.getByRole('group', { name: '選擇你的立場' })).toHaveClass('ans-options--many');
     });
 });

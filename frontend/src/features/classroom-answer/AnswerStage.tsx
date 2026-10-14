@@ -20,7 +20,7 @@ const CARD_CENTER = { x: 220 + 180, y: 588 + 90 };
 // Other options 的小卡（150×46，間距 8，最後一張底部在 760）共 n 張時第 k 張的中心點
 const chipCenter = (k: number, n: number) => ({ x: 44 + 75, y: 760 - (n - 1 - k) * 54 - 23 });
 
-// 按「換一個」時，第四頁倒著播回第三頁的時間，要和 answerStage.css 的 ce-writing--leave 一致
+// 按「換一個」時，第四頁倒著播回第三頁的時間，要和 answerStage.css 的 ans-writing--leave 一致
 const LEAVE_MS = 420;
 
 export interface StageOption {
@@ -110,42 +110,42 @@ export function AnswerStage(props: AnswerStageProps) {
   const from = slotCenter(Math.max(0, selectedIndex), options.length);
 
   return (
-    <div className={`ce-room${mobile ? ' ce-room--mobile' : ''}`}>
-      <div className="ce-canvas" ref={canvas}>
-        <div className="ce-bg-scene" aria-hidden="true"/>
+    <div className={`ans-room${mobile ? ' ans-room--mobile' : ''}`}>
+      <div className="ans-canvas" ref={canvas}>
+        <div className="ans-bg-scene" aria-hidden="true"/>
 
-        <div className="ce-progress">
-          <span className="ce-seal" aria-hidden="true">問</span>
-          <span className="ce-progress-text">Q{questionNumber} / {questionCount}</span>
+        <div className="ans-progress">
+          <span className="ans-seal" aria-hidden="true">問</span>
+          <span className="ans-progress-text">Q{questionNumber} / {questionCount}</span>
         </div>
 
-        <div className={`ce-timer${timeUp ? ' ce-timer--up' : ''}`}>
-          <div className="ce-timer-ring" role="timer" aria-label={`剩餘 ${seconds} 秒`} style={{ '--progress': `${progress}%` } as CSSProperties}>
-            <div className="ce-timer-face">
-              <span className="ce-timer-value">{seconds}</span>
-              <span className="ce-timer-unit">秒</span>
+        <div className={`ans-timer${timeUp ? ' ans-timer--up' : ''}`}>
+          <div className="ans-timer-ring" role="timer" aria-label={`剩餘 ${seconds} 秒`} style={{ '--progress': `${progress}%` } as CSSProperties}>
+            <div className="ans-timer-face">
+              <span className="ans-timer-value">{seconds}</span>
+              <span className="ans-timer-unit">秒</span>
             </div>
           </div>
-          {timeUp && <span className="ce-time-up" role="status">時間到</span>}
+          {timeUp && <span className="ans-time-up" role="status">時間到</span>}
         </div>
 
-        <section className="ce-chalkboard" ref={board} aria-label="目前題目">
-          <span className="ce-q-index" ref={index}>第 {questionNumber} 題</span>
-          <h1 className="ce-q-text" ref={question}>{title}</h1>
+        <section className="ans-chalkboard" ref={board} aria-label="目前題目">
+          <span className="ans-q-index" ref={index}>第 {questionNumber} 題</span>
+          <h1 className="ans-q-text" ref={question}>{title}</h1>
         </section>
 
         {scenario && scenario !== title && (
-          <div className="ce-scenario">
-            <button type="button" className="ce-scenario-toggle" aria-expanded={scenarioOpen} onClick={() => setScenarioOpen(open => !open)}>
+          <div className="ans-scenario">
+            <button type="button" className="ans-scenario-toggle" aria-expanded={scenarioOpen} onClick={() => setScenarioOpen(open => !open)}>
               {scenarioOpen ? '收起情境' : '閱讀情境'}
             </button>
-            {scenarioOpen && <p className="ce-scenario-text">{scenario}</p>}
+            {scenarioOpen && <p className="ans-scenario-text">{scenario}</p>}
           </div>
         )}
 
         {!showWriting ? (
           <div
-            className={`ce-options${options.length > 4 ? ' ce-options--many' : ''}${transition === 'toOptions' ? ' ce-options--return' : ''}`}
+            className={`ans-options${options.length > 4 ? ' ans-options--many' : ''}${transition === 'toOptions' ? ' ans-options--return' : ''}`}
             role="group"
             aria-label="選擇你的立場"
             style={{ '--count': options.length } as CSSProperties}
@@ -154,18 +154,18 @@ export function AnswerStage(props: AnswerStageProps) {
               <button
                 key={option.id}
                 type="button"
-                className={`ce-option${darkText(i) ? ' ce-option--dark' : ''}${option.id === choice ? ' ce-option--previous' : ''}`}
+                className={`ans-option${darkText(i) ? ' ans-option--dark' : ''}${option.id === choice ? ' ans-option--previous' : ''}`}
                 style={cardStyle(i)}
                 onClick={() => choose(option.id)}
               >
-                <span className="ce-option-letter">{letter(i)}</span>
-                <FitLine className="ce-option-text" text={option.text} max={optionMax} min={optionMin}/>
+                <span className="ans-option-letter">{letter(i)}</span>
+                <FitLine className="ans-option-text" text={option.text} max={optionMax} min={optionMin}/>
               </button>
             ))}
           </div>
         ) : (
-          <div className={`ce-writing${leaving ? ' ce-writing--leave' : transition === 'toWriting' ? ' ce-writing--enter' : ''}`}>
-            <div className="ce-other-options" role="group" aria-label="改選其他選項">
+          <div className={`ans-writing${leaving ? ' ans-writing--leave' : transition === 'toWriting' ? ' ans-writing--enter' : ''}`}>
+            <div className="ans-other-options" role="group" aria-label="改選其他選項">
               {options.filter(o => o.id !== choice).map(option => {
                 const i = options.indexOf(option);
                 const k = options.filter(o => o.id !== choice).indexOf(option);
@@ -174,7 +174,7 @@ export function AnswerStage(props: AnswerStageProps) {
                 <button
                   key={option.id}
                   type="button"
-                  className={`ce-chip${darkText(i) ? ' ce-option--dark' : ''}`}
+                  className={`ans-chip${darkText(i) ? ' ans-option--dark' : ''}`}
                   style={{
                     ...cardStyle(i),
                     '--rotation': `${CHIP_ROTATIONS[k % CHIP_ROTATIONS.length]}deg`,
@@ -184,8 +184,8 @@ export function AnswerStage(props: AnswerStageProps) {
                   aria-label={`改選 ${letter(i)}：${option.text}`}
                   onClick={() => { setTransition('toWriting'); onChoose(option.id); }}
                 >
-                  <span className="ce-chip-letter">{letter(i)}</span>
-                  <FitLine className="ce-chip-text" text={option.text} max={chipMax} min={chipMin} wrap={false}/>
+                  <span className="ans-chip-letter">{letter(i)}</span>
+                  <FitLine className="ans-chip-text" text={option.text} max={chipMax} min={chipMin} wrap={false}/>
                 </button>
                 );
               })}
@@ -193,18 +193,18 @@ export function AnswerStage(props: AnswerStageProps) {
 
             <div
               key={choice}
-              className={`ce-selected${darkText(selectedIndex) ? ' ce-option--dark' : ''}`}
+              className={`ans-selected${darkText(selectedIndex) ? ' ans-option--dark' : ''}`}
               style={{
                 ...cardStyle(selectedIndex),
                 '--from-x': `${from.x - CARD_CENTER.x}px`,
                 '--from-y': `${from.y - CARD_CENTER.y}px`,
               } as CSSProperties}
             >
-              <div className="ce-selected-top">
-                <span className="ce-selected-letter">{letter(selectedIndex)}</span>
-                <div className="ce-selected-meta">
-                  <span className="ce-selected-label">你的選擇</span>
-                  <button type="button" className="ce-reselect" onClick={reselect}>
+              <div className="ans-selected-top">
+                <span className="ans-selected-letter">{letter(selectedIndex)}</span>
+                <div className="ans-selected-meta">
+                  <span className="ans-selected-label">你的選擇</span>
+                  <button type="button" className="ans-reselect" onClick={reselect}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/>
                     </svg>
@@ -212,11 +212,11 @@ export function AnswerStage(props: AnswerStageProps) {
                   </button>
                 </div>
               </div>
-              <FitLine className="ce-selected-text" text={selected.text} max={selectedMax} min={selectedMin}/>
+              <FitLine className="ans-selected-text" text={selected.text} max={selectedMax} min={selectedMin}/>
             </div>
 
-            <div className="ce-notebook">
-              <span className="ce-notebook-label" aria-hidden="true">為什麼？寫下你的想法</span>
+            <div className="ans-notebook">
+              <span className="ans-notebook-label" aria-hidden="true">為什麼？寫下你的想法</span>
               {composer}
             </div>
           </div>

@@ -41,7 +41,9 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   const presenter = useRef<PackPresenter | null>(null)
   const spoken = useRef<string | null>(say?.text ? say.id : null)
   const [packs, setPacks] = useState<AvatarPack[]>([])
-  const [pack, setPack] = useState<AvatarPack | null>(null)
+  const [selection, setSelection] = useState<{ pack: AvatarPack; product: AvatarProduct; requestedId: string | null } | null>(null)
+  const loadedSelection = useRef<typeof selection>(null)
+  const pack = selection?.pack ?? null
   const [status, setStatus] = useState<'loading' | 'ready' | 'fallback'>('loading')
   const [talking, setTalking] = useState(false)
   const [voice, setVoice] = useState(() => read('avatar-voice') !== 'off')
@@ -49,6 +51,8 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   const recording = useRef<AbortController | null>(null)
   const [replayState, setReplayState] = useState('idle')
   const storeKey = `avatar-pack:${product}`
+  const selectionMatches = selection?.product === product && selection.requestedId === (packId ?? null)
+  const modelReady = status === 'ready' && selectionMatches && loadedSelection.current === selection
 
   useEffect(() => {
     let live = true
@@ -61,7 +65,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     loadAvatarCatalog(abort.signal).then(list => {
       setPacks(list)
       const chosen = choosePack(list, product, packId, read(storeKey))
-      if (chosen) setPack(chosen)
+      if (chosen) setSelection({ pack: chosen, product, requestedId: packId ?? null })
       else setStatus('fallback')
     }).catch(() => { if (!abort.signal.aborted) setStatus('fallback') })
     return () => abort.abort()
@@ -72,10 +76,11 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     let alive = true
     const current = new PackPresenter(host.current)
     presenter.current = current
+    loadedSelection.current = null
     setStatus('loading')
-    current.load(pack).then(() => { if (alive) setStatus('ready') }).catch(() => { if (alive) setStatus('fallback') })
-    return () => { alive = false; presenter.current = null; void current.dispose() }
-  }, [pack])
+    current.load(pack).then(() => { if (alive) { loadedSelection.current = selection; setStatus('ready') } }).catch(() => { if (alive) setStatus('fallback') })
+    return () => { alive = false; loadedSelection.current = null; presenter.current = null; void current.dispose() }
+  }, [selection])
 
   useEffect(() => () => {
     if (recording.current) {
@@ -86,7 +91,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 
   const replay = async () => {
     const current = presenter.current
-    if (!voice || !current || status !== 'ready') return
+    if (!voice || !current || !modelReady) return
     recording.current?.abort()
     const controller = new AbortController()
     recording.current = controller
@@ -106,13 +111,13 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 
   useEffect(() => {
     if (!say?.text || say.id === spoken.current) return
-    if (status === 'loading' || recording.current) return
+    if (status === 'loading' || recording.current || (status === 'ready' && !modelReady)) return
     spoken.current = say.id
     if (!voice) return
     setTalking(true)
     const stop = speak(say.text, presenter.current, { lang: LANGS[lang], onEnd: () => setTalking(false) })
     return () => { stop(); setTalking(false) }
-  }, [say?.id, say?.text, voice, lang, replayState, status])
+  }, [say?.id, say?.text, voice, lang, replayState, status, selection, product, packId])
 
   const shown: AvatarState = talking ? 'speaking' : state
   return <section className="tutor-avatar" data-testid="avatar-stage" data-avatar-id={pack?.id ?? 'none'} data-avatar-state={shown} data-render-status={status} aria-label={`${label}人像`}>
@@ -127,13 +132,13 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     {pack?.license && <small className="tutor-avatar-license">人像：{pack.name} · {pack.license}</small>}
     {lab && packs.length > 0 && <details className="tutor-avatar-lab">
       <summary>人像選擇（開發）</summary>
-      <label>模型<select value={pack?.id ?? ''} onChange={e => { const next = choosePack(packs, product, e.target.value, null); if (next) { write(storeKey, next.id); setPack(next) } }}>
+      <label>模型<select value={pack?.id ?? ''} onChange={e => { const next = choosePack(packs, product, e.target.value, null); if (next) { write(storeKey, next.id); setSelection({ pack: next, product, requestedId: packId ?? null }) } }}>
         {packs.filter(p => !p.products || p.products.includes(product)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select></label>
       <p>id {pack?.id} · sha {pack?.model_sha256.slice(0, 12)}</p>
       <p>{RECORDED_DIALOGUE.text}</p>
       <p>{RECORDED_DIALOGUE.voice} · {RECORDED_DIALOGUE.language}</p>
-      <button type="button" disabled={!voice || status !== 'ready' || talking} onClick={() => { void replay() }}>重播既有錄音對話</button>
+      <button type="button" disabled={!voice || !modelReady || talking} onClick={() => { void replay() }}>重播既有錄音對話</button>
       <button type="button" disabled={!recording.current} onClick={() => { recording.current?.abort(); setReplayState('STOPPED') }}>停止錄音</button>
       <p role="status" data-recorded-replay-state={replayState}>{replayState}</p>
     </details>}

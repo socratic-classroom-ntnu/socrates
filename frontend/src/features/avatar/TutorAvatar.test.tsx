@@ -9,6 +9,7 @@ jest.mock('./runtime/packPresenter.mjs', () => ({ PackPresenter: class {
   setMood() {}
   stop() {}
   stopSpeech() {}
+  prepareAudio() { return Promise.resolve() }
   speakTimeline() {}
   alignSpeech() {}
   dispose() { return Promise.resolve() }
@@ -46,6 +47,20 @@ test('a new tutor line waits for model loading before it starts speaking', async
   expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'loading')
   expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'idle')
   await act(async () => loaded())
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+})
+
+test('a tutor line arriving with a model change waits for that model, not the old presenter', async () => {
+  const view = render(<TutorAvatar product="socratic" packId="fixture" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  let loaded: () => void
+  mockModelLoad = new Promise(resolve => { loaded = resolve })
+  view.rerender(<TutorAvatar product="socratic" packId="second" say={{ id: 'next-model', text: '切換模型同時到達的導師訊息' }} />)
+  await act(async () => {})
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'idle')
+  await act(async () => loaded())
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second')
   expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
   expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
 })

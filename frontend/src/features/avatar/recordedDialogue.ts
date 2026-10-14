@@ -26,22 +26,31 @@ async function asset(name: keyof typeof hashes, signal: AbortSignal) {
 
 /** Decode the existing recording; only the presenter's AudioLane starts playback. */
 export async function playRecordedDialogue(presenter: PackPresenter, signal: AbortSignal) {
-  const [metadata, audio, visemes, words] = await Promise.all(
-    (['fixture.json', 'audio.mp3', 'viseme-events.json', 'word-timing.json'] as const).map(name => asset(name, signal)),
-  )
-  const fixture = JSON.parse(new TextDecoder().decode(metadata))
-  const events = JSON.parse(new TextDecoder().decode(visemes)).events
-  if (fixture.text !== RECORDED_DIALOGUE.text || fixture.voice !== RECORDED_DIALOGUE.voice ||
-      fixture.language !== RECORDED_DIALOGUE.language || events.length !== 90 || JSON.parse(new TextDecoder().decode(words)).events.length !== 31) {
-    throw Error('RECORDED_DIALOGUE_IDENTITY_MISMATCH')
-  }
-  const context = new AudioContext()
-  let buffer: AudioBuffer
-  try { buffer = await context.decodeAudioData(audio) } finally { await context.close() }
-  timeline(events, buffer.duration * 1000) // Reject invalid offsets before any audible effect.
   if (signal.aborted) return { state: 'SUPERSEDED' }
-  const stop = () => presenter.stop()
-  signal.addEventListener('abort', stop, { once: true })
-  try { return await presenter.play(buffer, events) }
-  finally { signal.removeEventListener('abort', stop) }
+  let stop: () => void
+  const cancelled = new Promise<{ state: string }>(resolve => {
+    stop = () => { presenter.stop(); resolve({ state: 'SUPERSEDED' }) }
+  })
+  signal.addEventListener('abort', stop!, { once: true })
+  const replay = async () => {
+    // Start unlock synchronously in the click handler, before any fetch or decode.
+    const [_, metadata, audio, visemes, words] = await Promise.all([
+      presenter.prepareAudio(),
+      ...(['fixture.json', 'audio.mp3', 'viseme-events.json', 'word-timing.json'] as const).map(name => asset(name, signal)),
+    ])
+    const fixture = JSON.parse(new TextDecoder().decode(metadata))
+    const events = JSON.parse(new TextDecoder().decode(visemes)).events
+    if (fixture.text !== RECORDED_DIALOGUE.text || fixture.voice !== RECORDED_DIALOGUE.voice ||
+        fixture.language !== RECORDED_DIALOGUE.language || events.length !== 90 || JSON.parse(new TextDecoder().decode(words)).events.length !== 31) {
+      throw Error('RECORDED_DIALOGUE_IDENTITY_MISMATCH')
+    }
+    const context = new AudioContext()
+    let buffer: AudioBuffer
+    try { buffer = await context.decodeAudioData(audio) } finally { await context.close() }
+    timeline(events, buffer.duration * 1000) // Reject invalid offsets before any audible effect.
+    if (signal.aborted) return { state: 'SUPERSEDED' }
+    return presenter.play(buffer, events)
+  }
+  try { return await Promise.race([replay(), cancelled]) }
+  finally { signal.removeEventListener('abort', stop!) }
 }

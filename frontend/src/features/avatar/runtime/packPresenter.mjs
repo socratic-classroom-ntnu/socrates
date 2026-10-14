@@ -250,6 +250,8 @@ export class PackPresenter {
     this.lastWeights = weights;
   }
 
+  prepareAudio() { return this.audio.unlock(); }
+
   async play(buffer, events) {
     const pack = this.pack;
     const frames = timeline(events, buffer.duration * 1000);

@@ -63,20 +63,31 @@ export function weightsAt(pack, frames, elapsedMs) {
 }
 export class AudioLane {
   constructor(contextFactory=()=>new (window.AudioContext||window.webkitAudioContext)()) {this.factory=contextFactory;this.context=null;this.current=null;this.generation=0;}
+  unlock(){this.context??=this.factory();return this.context.resume();}
   async play(buffer,onFrame=()=>{}) {
     this.stop();const generation=++this.generation;this.context??=this.factory();
-    await this.context.resume();if(generation!==this.generation)return {state:'SUPERSEDED'};
-    const source=this.context.createBufferSource();source.buffer=buffer;source.connect(this.context.destination);
-    const started=this.context.currentTime;let raf=0;
     return new Promise((resolve,reject)=>{
-      let settled=false;const finish=(state)=>{if(settled)return;settled=true;cancelAnimationFrame(raf);source.disconnect();if(this.current?.source===source)this.current=null;onFrame(buffer.duration*1000,true);resolve({state});};
-      this.current={source,finish};source.onended=()=>finish('ENDED');
-      const render=()=>{if(generation!==this.generation)return;onFrame(Math.max(0,(this.context.currentTime-started)*1000),false);raf=requestAnimationFrame(render)};
-      try{source.start();render()}catch(error){
-        if(!settled){settled=true;cancelAnimationFrame(raf);source.disconnect();if(this.current?.source===source)this.current=null;onFrame(buffer.duration*1000,true);reject(error)}
-      }
+      let settled=false,raf=0;
+      const current={source:null,finish:null};
+      const clear=()=>{if(raf)cancelAnimationFrame(raf);current.source?.disconnect();if(this.current===current)this.current=null;onFrame(buffer.duration*1000,true);};
+      const finish=(state)=>{if(settled)return;settled=true;try{clear();resolve({state})}catch(error){reject(error)}};
+      const fail=(error)=>{if(settled)return;settled=true;try{clear()}catch(cleanupError){reject(cleanupError);return}reject(error)};
+      current.finish=finish;this.current=current;
+      let resumed;
+      try{resumed=this.context.resume()}catch(error){fail(error);return;}
+      Promise.resolve(resumed).then(()=>{
+        if(settled)return;
+        if(generation!==this.generation){finish('SUPERSEDED');return;}
+        try{
+          const source=this.context.createBufferSource();current.source=source;source.buffer=buffer;source.connect(this.context.destination);
+          const started=this.context.currentTime;
+          source.onended=()=>finish('ENDED');
+          const render=()=>{if(generation!==this.generation)return;onFrame(Math.max(0,(this.context.currentTime-started)*1000),false);raf=requestAnimationFrame(render)};
+          source.start();render();
+        }catch(error){fail(error)}
+      },fail);
     });
   }
-  stop(){this.generation++;if(this.current){const old=this.current;this.current=null;old.finish('STOPPED');try{old.source.stop()}catch{/* source already stopped */}}}
+  stop(){this.generation++;if(this.current){const old=this.current;this.current=null;old.finish('STOPPED');try{old.source?.stop()}catch{/* source already stopped */}}}
   async dispose(){this.stop();await this.context?.close();this.context=null}
 }

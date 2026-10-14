@@ -12,7 +12,9 @@ Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architect
 
 `recordedDialogue.ts` 在解碼前比對四份原件 SHA256（音訊為 `6cc2b782be71a9a2767574ae65f3b50c2537928b8cf21f2d6eb7d4b182321ab3`），由 `PackPresenter.play(AudioBuffer, events)` 交給既有 `AudioLane` 音訊時鐘；資料失配或越界直接失敗，不生成靜音、不估算嘴型、不降級成 audio-only 成功。畫面明示錄音原文、聲音及 replay state；`ENDED` 只是播放結束，不是人類驗收。
 
-掛載時已有的舊導師訊息不自動重播；掛載後第一則新訊息無論是否正在錄音都能發話。模型仍在載入時不消費新訊息，等人像載入完成後才開始發話與嘴型。Round 1 以 session ID 加訊息 seq 辨識發話，學生追加訊息不會重播舊提問；focus 共思舞台沿用目前 focus 的真導師訊息。錄音期間到達的新訊息會在錄音完成後接續。關閉語音或切換模型會停止音訊，並明確顯示 `STOPPED`，不把取消留在 `loading`。語音關閉時禁止再啟動錄音重播，重新開啟語音才恢復播放操作。
+播放用的 `AudioContext` 在重播點擊內同步解鎖，再下載與解碼錄音；停止不等待未完成的 `resume()`，晚到的解鎖不得重新啟動已取消音訊。即使結束幀回呼失敗，播放 Promise 仍會拒絕；停止仍會終止 source，`dispose()` 仍可關閉 context，不留永久等待。
+
+掛載時已有的舊導師訊息不自動重播；掛載後第一則新訊息無論是否正在錄音都能發話。模型仍在載入時不消費新訊息，等人像載入完成後才開始發話與嘴型；模型選擇與導師訊息同批變更時，ready 必須綁定目前 product、requested pack ID 與已載入的 selection，不能使用舊 presenter 的 ready。Round 1 以 session ID 加訊息 seq 辨識發話，學生追加訊息不會重播舊提問；focus 共思舞台沿用目前 focus 的真導師訊息。錄音期間到達的新訊息會在錄音完成後接續。關閉語音或切換模型會停止音訊，並明確顯示 `STOPPED`，不把取消留在 `loading`。語音關閉時禁止再啟動錄音重播，重新開啟語音才恢復播放操作。
 
 模型仍取自既有 Portal catalog／GLB：`/mnt/d/Work/Obsidian/BH/Portal/avatar-serve/`，部署須保留 same-origin `/avatar-packs/` 的唯讀掛載。Raven 的 Vite Source preview 不會自行包含這個外置資產根；不可用 custody JSON 或改寫產品授權來代替真正模型。
 

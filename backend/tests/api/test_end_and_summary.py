@@ -132,7 +132,7 @@ def test_active_session_cannot_generate_summary(client, learner_id):
 def test_wrap_up_cap_ends_as_completed(client, learner_id, monkeypatch):
     """單階案例第三輪達成；再講三輪達到 ladder 的追加上限。"""
     import app.main as main
-    from app.ladders.repository import LadderRepository
+    from app.modules.content_authoring.ladders.repository import LadderRepository
 
     ladder = main.ladder_repository.get()
     monkeypatch.setattr(

@@ -497,7 +497,7 @@ def update_credential(profile_id: str, body: CredentialUpdate, request: Request)
 
 @router.delete("/provider-profiles/{profile_id}")
 def delete_profile(profile_id: str, request: Request):
-    from app.api.routes.classroom_library import ClassroomAssets
+    from app.modules.content_authoring.api.routes.classroom_library import ClassroomAssets
 
     with transaction() as db:
         account, _ = _account(db, request, True)
@@ -629,7 +629,7 @@ def _classroom_settings_view(ai: dict | None) -> dict:
 
 @router.get("/library/classrooms/{cid}/ai-settings")
 def classroom_settings(cid: str, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.api.routes.classroom_library import owned
 
     with transaction() as db:
         account, _ = _account(db, request)
@@ -639,7 +639,7 @@ def classroom_settings(cid: str, request: Request):
 
 @router.put("/library/classrooms/{cid}/ai-settings")
 def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.api.routes.classroom_library import owned
 
     with transaction() as db:
         account, session = _account(db, request, True)
@@ -739,7 +739,7 @@ def _room_ai_settings(db, room: Room) -> tuple[str, dict, str | None]:
     if snapshot:
         ai = deepcopy(snapshot.get("assets", {}).get("ai_settings", {}))
     if not ai and state.get("asset_classroom_id"):
-        from app.api.routes.classroom_library import ClassroomAssets
+        from app.modules.content_authoring.api.routes.classroom_library import ClassroomAssets
 
         classroom = db.get(ClassroomAssets, state["asset_classroom_id"])
         if classroom and classroom.owner_id == owner_id:

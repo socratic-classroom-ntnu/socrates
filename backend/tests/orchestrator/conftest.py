@@ -1,8 +1,8 @@
 import pytest
 
-from app.domain.ladder import Ladder, Stage
+from app.modules.content_authoring.domain.ladder import Ladder, Stage
 from app.modules.llm_runtime.domain.tutor import Observations, PromptMessage, TutorTurn
-from app.ladders.repository import LadderRepository
+from app.modules.content_authoring.ladders.repository import LadderRepository
 
 
 def make_ladder(stage_count: int = 1, max_turns: int = 4) -> LadderRepository:

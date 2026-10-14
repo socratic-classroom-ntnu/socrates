@@ -20,7 +20,7 @@
 | [Identity & Access](./backend/identity_access.md) | ⚠️ | `backend/app/modules/identity_access/` | platform | 3 |
 | [AI Providers](./backend/ai_providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity_access | 8 |
 | [LLM Runtime](./backend/llm_runtime.md) | ⚠️ | `backend/app/modules/llm_runtime/` | platform、ai_providers | 9 |
-| [Content Authoring](./backend/content_authoring.md) | ✅ | `backend/app/api/routes/classroom_library.py`<br>`backend/app/domain/library_decisions.py`<br>`backend/app/domain/ladder.py`<br>`backend/app/ladders/` | platform、identity_access、ai_providers、llm_runtime | 7 |
+| [Content Authoring](./backend/content_authoring.md) | ✅ | `backend/app/modules/content_authoring/` | platform、identity_access、ai_providers、llm_runtime | 7 |
 | [Classroom Core](./backend/classroom_core.md) | ✅ | `backend/app/orchestrator/classroom.py`<br>`backend/app/orchestrator/classroom_policy.py`<br>`backend/app/services/classroom.py`<br>`backend/app/api/routes/classroom.py`<br>`backend/app/api/classroom_schemas.py`<br>`backend/app/domain/presence.py` | platform、identity_access、ai_providers、llm_runtime、content_authoring | 10 |
 | [Group Dialogue](./backend/group_dialogue.md) | ✅ | `backend/app/domain/group_run.py`<br>`backend/app/api/routes/groups.py`<br>`backend/app/services/ai_students.py`<br>`backend/app/api/routes/ai_students.py` | platform、identity_access、ai_providers、llm_runtime、content_authoring、classroom_core | 8 |
 | [Analytics](./backend/analytics.md) | ✅ | `backend/app/domain/group_analysis.py` | platform、classroom_core、group_dialogue | 0 |

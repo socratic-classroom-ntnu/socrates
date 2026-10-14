@@ -18,12 +18,12 @@
 
 - `ai_providers→classroom_core  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/api/routes/classroom.py`
 - `ai_providers→classroom_core  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/orchestrator/classroom.py`
-- `ai_providers→content_authoring  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
+- `ai_providers→content_authoring  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/modules/content_authoring/api/routes/classroom_library.py`
 - `ai_providers→group_dialogue  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/services/ai_students.py`
 - `ai_providers→llm_runtime  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/modules/llm_runtime/tutor/classroom_gateway.py`
 - `orm-outside-repositories  backend/app/modules/ai_providers/api/routes/provider_profiles.py`
 - `route-imports-route  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/api/routes/classroom.py`
-- `route-imports-route  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/api/routes/classroom_library.py`
+- `route-imports-route  backend/app/modules/ai_providers/api/routes/provider_profiles.py → backend/app/modules/content_authoring/api/routes/classroom_library.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

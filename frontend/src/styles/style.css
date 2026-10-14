@@ -108,3 +108,58 @@ main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { heigh
 main.r2-classroom .r2-focus-chat > small, main.r2-classroom .r2-transcript-panel > small { font-size: 16px; font-weight: 700; }
 main.r2-classroom .r2-focus-chat .r2-message small, main.r2-classroom .r2-transcript-panel .r2-message small { font-size: 12px; }
 main.r2-classroom .r2-focus-chat .r2-message p, main.r2-classroom .r2-transcript-panel .r2-message p { font-size: 15px; line-height: 1.8; }
+
+/* Student classroom - personal history */
+main.r2-classroom .r2-focus-chat h3 { margin: 0 0 16px; color: #f5f1eb; font-size: 17px; font-weight: 700; }
+main.r2-classroom .r2-original-answer { padding: 14px; margin-bottom: 20px; background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; border-radius: 14px; }
+main.r2-classroom .r2-original-answer small { display: block; margin-bottom: 10px; color: #e87343; font-size: 12px; }
+main.r2-classroom .r2-original-answer strong { display: block; color: #f5f1eb; font-size: 14px; line-height: 1.6; }
+main.r2-classroom .r2-original-answer p { margin: 8px 0 0; color: #f5f1eb; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+main.r2-classroom .r2-my-history h4 { margin: 0 0 12px; color: #aaa29a; font-size: 13px; font-weight: 600; }
+main.r2-classroom .r2-history-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+main.r2-classroom .r2-history-item span { flex-shrink: 0; color: #aaa29a; font-family: monospace; font-size: 12px; }
+main.r2-classroom .r2-history-item p { margin: 0; color: #f5f1eb; font-size: 13px; line-height: 1.6; }
+main.r2-classroom .r2-history-note { color: #aaa29a !important; font-size: 12px; }
+
+/* Student classroom - Socrates dialogue */
+main.r2-classroom .r2-transcript-panel > small { display: block; margin-bottom: 14px; color: #f5f1eb; font-size: 16px; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message { padding: 12px; margin: 12px 0; border-radius: 14px; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor { background: #f0ebe2; border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor small { color: #c94a21; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor p { color: #29221b; }
+main.r2-classroom .r2-transcript-panel .r2-message.student { background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.student small { color: #e87343; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message.student p { color: #f5f1eb; }
+main.r2-classroom .r2-transcript-panel .r2-message p { margin: 6px 0 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+/* Student classroom - input text visibility */
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea { color: #f5f1eb !important; caret-color: #f5f1eb; -webkit-text-fill-color: #f5f1eb; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea::placeholder { color: #b8ada8 !important; opacity: 1; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea:focus { border-color: #cf471c !important; outline: 2px solid rgba(207, 71, 28, 0.35); outline-offset: 2px; }
+/* Student classroom - panel headings */
+main.r2-classroom .r2-focus-chat h4 { margin: 0 0 12px; color: #e87343; font-size: 14px; font-weight: 600; }
+main.r2-classroom .r2-transcript-panel h3 { margin: 0 0 18px; color: #f5f1eb; font-size: 18px; font-weight: 700; }
+
+/* Student classroom - alternating dialogue bubbles */
+main.r2-classroom .r2-transcript-panel .r2-message { display: block; width: fit-content; max-width: 88%; min-width: 0; box-sizing: border-box; padding: 12px; margin-top: 12px; margin-bottom: 12px; overflow-wrap: anywhere; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor { margin-left: 0; margin-right: auto; background: #f0ebe2; border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.student { margin-left: auto; margin-right: 0; background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor small { color: #c94a21; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor p { color: #29221b; }
+main.r2-classroom .r2-transcript-panel .r2-message.student small { color: #e87343; }
+main.r2-classroom .r2-transcript-panel .r2-message.student p { color: #f5f1eb; }
+
+/* Student classroom - scroll within the panel */
+main.r2-classroom .r2-transcript-panel { overflow-x: hidden; overflow-y: auto; }
+main.r2-classroom .r2-transcript-panel .r2-message p { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+
+/* Student classroom - bottom input hint */
+main.r2-classroom .r2-live-dialog .r2-input-hint { margin: 8px 0 12px; color: #d4c8bd; font-size: 14px; line-height: 1.6; }
+/* Student classroom - personal speaking history */
+main.r2-classroom .r2-history-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+main.r2-classroom .r2-history-time { flex-shrink: 0; min-width: 40px; color: #e87343; font-size: 12px; font-weight: 700; }
+main.r2-classroom .r2-history-item p { flex: 1; min-width: 0; margin: 0; padding: 10px; background: rgba(48, 37, 30, 0.92); border-radius: 10px; color: #f5f1eb; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* Student classroom - latest Socrates question */
+main.r2-classroom .r2-latest-question { margin: 12px 0; padding: 12px 16px; background: rgba(48, 37, 30, 0.92); border-left: 3px solid #cf471c; border-radius: 10px; }
+main.r2-classroom .r2-latest-question small { display: block; margin-bottom: 6px; color: #e87343; font-size: 12px; font-weight: 700; }
+main.r2-classroom .r2-latest-question p { margin: 0; color: #f5f1eb; font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }

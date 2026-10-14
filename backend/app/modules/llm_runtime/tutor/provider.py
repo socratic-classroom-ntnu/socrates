@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.domain.tutor import ProviderRequest, ProviderResponse
+from app.modules.llm_runtime.domain.tutor import ProviderRequest, ProviderResponse
 
 
 class LLMProvider(Protocol):

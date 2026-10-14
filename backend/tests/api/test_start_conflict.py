@@ -12,8 +12,8 @@ from app.modules.platform.db import SessionLocal
 from app.models import Session
 from app.repositories.session_repository import SessionRepository
 from app.services.conversation import ConversationService
-from app.tutor.gateway import TutorGateway
-from app.tutor.scripted import ScriptedProvider
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
 
 
 def test_restart_requires_explicit_choice_and_preserves_history(client, db, learner_id):

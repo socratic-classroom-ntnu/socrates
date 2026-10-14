@@ -15,9 +15,9 @@ from app.modules.identity_access.services.email_delivery import (
 )
 from app.orchestrator.classroom import GameOrchestrator
 from app.services.ai_students import fallback_turn
-from app.tutor.prompts import compile_program
-from app.tutor.classroom_provider import ProviderWait
-from app.tutor.classroom_gateway import generate
+from app.modules.llm_runtime.tutor.prompts import compile_program
+from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
+from app.modules.llm_runtime.tutor.classroom_gateway import generate
 from app.modules.platform.classroom_env import env_int
 from app.modules.ai_providers.api.routes.provider_profiles import (
     public_binding,

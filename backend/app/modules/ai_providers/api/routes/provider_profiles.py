@@ -428,7 +428,7 @@ def list_profiles(request: Request):
 def create_profile(body: CreateProfile, request: Request):
     with transaction() as db:
         account, session = _account(db, request, True)
-        from app.tutor.classroom_gateway import validate_base_url
+        from app.modules.llm_runtime.tutor.classroom_gateway import validate_base_url
 
         validated_base = (
             validate_base_url(body.adapter, body.base_url)
@@ -465,7 +465,7 @@ def update_profile(profile_id: str, body: UpdateProfile, request: Request):
         row = _owned_profile(db, account.id, profile_id, True)
         values = body.model_dump(exclude_unset=True)
         if "base_url" in values and row.adapter == "openai-compatible":
-            from app.tutor.classroom_gateway import validate_base_url
+            from app.modules.llm_runtime.tutor.classroom_gateway import validate_base_url
 
             values["base_url"] = validate_base_url(row.adapter, values["base_url"])
         for key, value in values.items():
@@ -538,7 +538,7 @@ def delete_profile(profile_id: str, request: Request):
 
 @router.post("/provider-profiles/{profile_id}/test")
 async def test_profile(profile_id: str, request: Request):
-    from app.tutor.classroom_gateway import test_connection
+    from app.modules.llm_runtime.tutor.classroom_gateway import test_connection
 
     with transaction() as db:
         account, session = _account(db, request, True)
@@ -558,7 +558,7 @@ async def test_profile(profile_id: str, request: Request):
 
 @router.get("/provider-profiles/{profile_id}/models")
 async def provider_models(profile_id: str, request: Request):
-    from app.tutor.classroom_gateway import discover_models
+    from app.modules.llm_runtime.tutor.classroom_gateway import discover_models
 
     with transaction() as db:
         account, session = _account(db, request)

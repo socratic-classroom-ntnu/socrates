@@ -3,8 +3,8 @@ import subprocess
 import sys
 
 PROVIDER_MODULES = (
-    "app.tutor.classroom_provider",
-    "app.tutor.classroom_gateway",
+    "app.modules.llm_runtime.tutor.classroom_provider",
+    "app.modules.llm_runtime.tutor.classroom_gateway",
     "app.modules.ai_providers.api.routes.provider_profiles",
 )
 

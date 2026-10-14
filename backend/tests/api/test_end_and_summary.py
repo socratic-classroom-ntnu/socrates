@@ -1,7 +1,7 @@
 from app.api.deps import get_service
 from app.main import app
 from app.services.conversation import ConversationService
-from app.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
 
 
 def _create(client, learner_id):

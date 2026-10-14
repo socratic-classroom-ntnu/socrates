@@ -1,7 +1,7 @@
 import pytest
 
 from app.domain.ladder import Ladder, Stage
-from app.domain.tutor import Observations, PromptMessage, TutorTurn
+from app.modules.llm_runtime.domain.tutor import Observations, PromptMessage, TutorTurn
 from app.ladders.repository import LadderRepository
 
 

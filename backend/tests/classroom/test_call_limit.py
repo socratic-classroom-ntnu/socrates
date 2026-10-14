@@ -1,8 +1,8 @@
 import pytest
 
-from app.services import llm_workers as workers
+from app.modules.llm_runtime.services import llm_workers as workers
 from app.api.classroom_schemas import ScriptDocument
-from app.tutor.classroom_provider import ProviderWait
+from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     Job,
@@ -11,7 +11,7 @@ from app.modules.platform.repositories.classroom_storage import (
     configure,
     transaction,
 )
-from app.services.llm_workers import effective_call_limit
+from app.modules.llm_runtime.services.llm_workers import effective_call_limit
 
 
 def test_teacher_budget_caps_the_account_limit():

@@ -278,8 +278,8 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.services import classroom as service
     from app.api.routes.classroom import account
     from app.api.classroom_schemas import OtherSuggestionResult
-    from app.tutor.classroom_provider import ProviderWait
-    from app.tutor.classroom_gateway import generate
+    from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
+    from app.modules.llm_runtime.tutor.classroom_gateway import generate
     from app.modules.ai_providers.api.routes.provider_profiles import resolve_request_chain
 
     with transaction() as db:

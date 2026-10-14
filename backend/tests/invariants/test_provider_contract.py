@@ -1,7 +1,7 @@
 import pytest
 
 from app.domain.ladder import Stage
-from app.tutor.gateway import TutorGateway, TutorUnavailable
+from app.modules.llm_runtime.tutor.gateway import TutorGateway, TutorUnavailable
 
 STAGE = Stage(
     key="s1",

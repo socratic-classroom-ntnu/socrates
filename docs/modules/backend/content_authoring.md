@@ -9,23 +9,20 @@
 - 可依賴的模組：platform、identity_access、ai_providers、llm_runtime
 
 檔案範圍：
-- `backend/app/api/routes/classroom_library.py`
-- `backend/app/domain/library_decisions.py`
-- `backend/app/domain/ladder.py`
-- `backend/app/ladders/`
+- `backend/app/modules/content_authoring/`
 
 契約：
 - —
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
-- `content_authoring→classroom_core  backend/app/api/routes/classroom_library.py → backend/app/api/classroom_schemas.py`
-- `content_authoring→classroom_core  backend/app/api/routes/classroom_library.py → backend/app/api/routes/classroom.py`
-- `content_authoring→classroom_core  backend/app/api/routes/classroom_library.py → backend/app/orchestrator/classroom.py`
-- `content_authoring→classroom_core  backend/app/api/routes/classroom_library.py → backend/app/services/classroom.py`
-- `content_authoring→group_dialogue  backend/app/api/routes/classroom_library.py → backend/app/services/ai_students.py`
-- `orm-outside-repositories  backend/app/api/routes/classroom_library.py`
-- `route-imports-route  backend/app/api/routes/classroom_library.py → backend/app/api/routes/classroom.py`
+- `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/api/classroom_schemas.py`
+- `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/api/routes/classroom.py`
+- `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/orchestrator/classroom.py`
+- `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/services/classroom.py`
+- `content_authoring→group_dialogue  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/services/ai_students.py`
+- `orm-outside-repositories  backend/app/modules/content_authoring/api/routes/classroom_library.py`
+- `route-imports-route  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/api/routes/classroom.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

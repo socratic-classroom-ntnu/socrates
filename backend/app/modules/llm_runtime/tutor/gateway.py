@@ -2,7 +2,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from app.domain.ladder import Stage
+from app.modules.content_authoring.domain.ladder import Stage
 from app.modules.llm_runtime.domain.tutor import (
     ProviderRequest,
     PromptMessage,

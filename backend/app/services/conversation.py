@@ -14,7 +14,7 @@ from app.api.schemas import (
 from app.domain.session_state import SessionState, actions_for
 from app.modules.llm_runtime.domain.tutor import PromptMessage, SummaryDraft
 from app.domain.types import Action
-from app.ladders.repository import LadderRepository
+from app.modules.content_authoring.ladders.repository import LadderRepository
 from app.models import Session, Summary
 from app.orchestrator.orchestrator import ConversationEnded, InvalidAction, Orchestrator
 from app.repositories.session_repository import SessionRepository

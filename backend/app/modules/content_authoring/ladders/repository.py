@@ -3,7 +3,7 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
-from app.domain.ladder import Ladder, Stage
+from app.modules.content_authoring.domain.ladder import Ladder, Stage
 
 
 class LadderRepository:

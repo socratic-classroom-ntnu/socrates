@@ -17,7 +17,7 @@
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
 - `platform→ai_providers  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py`
-- `platform→content_authoring  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/api/routes/classroom_library.py`
+- `platform→content_authoring  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/content_authoring/api/routes/classroom_library.py`
 - `platform→group_dialogue  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/services/ai_students.py`
 - `platform→identity_access  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/identity_access/services/email_delivery.py`
 

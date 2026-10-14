@@ -431,7 +431,9 @@ from app.api.routes.groups import router as _groups_router  # noqa: E402
 router.include_router(_groups_router)
 
 # PORTAL-R73-CLASSROOM-LIBRARY
-from app.api.routes.classroom_library import router as _classroom_library_router  # noqa: E402
+from app.modules.content_authoring.api.routes.classroom_library import (  # noqa: E402
+    router as _classroom_library_router,
+)
 from app.modules.platform.api.routes.public_config import router as _public_config_router  # noqa: E402
 
 router.include_router(_classroom_library_router)

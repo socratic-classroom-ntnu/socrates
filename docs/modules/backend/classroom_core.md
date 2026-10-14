@@ -27,9 +27,9 @@
 - `classroom_core→group_dialogue  backend/app/orchestrator/classroom.py → backend/app/services/ai_students.py`
 - `classroom_core→group_dialogue  backend/app/services/classroom.py → backend/app/services/ai_students.py`
 - `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/ai_students.py`
-- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/api/routes/classroom.py → backend/app/api/routes/groups.py`
 - `route-imports-route  backend/app/api/routes/classroom.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py`
+- `route-imports-route  backend/app/api/routes/classroom.py → backend/app/modules/content_authoring/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/api/routes/classroom.py → backend/app/modules/platform/api/routes/public_config.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）

@@ -1,4 +1,4 @@
-from app.domain.ladder import Stage
+from app.modules.content_authoring.domain.ladder import Stage
 from app.modules.llm_runtime.domain.tutor import ProviderRequest, ProviderResponse
 from app.modules.llm_runtime.tutor.gateway import TutorGateway
 

@@ -13,6 +13,17 @@ test('CE only lists packs cleared for CE; Socratic may use non-commercial ones',
   expect(choosePack([pack('brunette', ['socratic'])], 'ce', null, null)).toBeNull()
 })
 
+test('missing product permissions are Socratic-only, never a CE request or remembered fallback', () => {
+  const unspecified = pack('unspecified')
+  const cleared = pack('cleared', ['ce', 'socratic'])
+  expect(choosePack([unspecified, cleared], 'ce', 'unspecified', 'unspecified')?.id).toBe('cleared')
+  expect(choosePack([cleared, unspecified], 'ce', 'missing', 'unspecified')?.id).toBe('cleared')
+  expect(choosePack([unspecified], 'ce', 'unspecified', 'unspecified')).toBeNull()
+  expect(choosePack([pack('empty', [])], 'ce')).toBeNull()
+  expect(choosePack([unspecified, cleared], 'socratic', 'unspecified')?.id).toBe('unspecified')
+  expect(choosePack([cleared, unspecified], 'socratic', 'missing', 'unspecified')?.id).toBe('unspecified')
+})
+
 test('the group stage speaks only the latest tutor line', () => {
   const transcript = [
     { messages: [{ role: 'tutor', text: '第一問' }, { role: 'student', text: '答' }] },

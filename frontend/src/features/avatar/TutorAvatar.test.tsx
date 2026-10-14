@@ -2,31 +2,43 @@ import React from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { TutorAvatar } from './TutorAvatar'
 import { playRecordedDialogue } from './recordedDialogue'
+import { loadAvatarCatalog, type AvatarPack } from '../../api/avatarCatalog'
+import { planSpeech } from './speech'
 
 // Isolate WebGL/recorded audio; the real component and classroom speech lifecycle run.
 jest.mock('./runtime/packPresenter.mjs', () => ({ PackPresenter: class {
-  load() { return mockModelLoad ?? Promise.resolve() }
+  load(pack: AvatarPack) { return mockLoadModel(pack) }
   setMood() {}
   stop() {}
-  stopSpeech() {}
+  stopSpeech() { mockStopSpeech() }
   prepareAudio() { return Promise.resolve() }
-  speakTimeline() {}
+  speakTimeline(...args: unknown[]) { mockSpeakTimeline(...args) }
   alignSpeech() {}
-  dispose() { return Promise.resolve() }
+  dispose() { mockDispose(); return Promise.resolve() }
 } }))
 jest.mock('../../api/classroomClient', () => ({ getPublicConfig: async () => ({ debug_mode: true }) }))
-jest.mock('../../api/avatarCatalog', () => ({ loadAvatarCatalog: async () => [
-  { id: 'fixture', name: 'Fixture', products: ['socratic'], model_sha256: 'a'.repeat(64) },
-  { id: 'second', name: 'Second fixture', products: ['socratic'], model_sha256: 'b'.repeat(64) },
-] }))
+jest.mock('../../api/avatarCatalog', () => ({ loadAvatarCatalog: jest.fn() }))
 jest.mock('./recordedDialogue', () => ({ ...jest.requireActual('./recordedDialogue'), playRecordedDialogue: jest.fn() }))
 
 let complete: () => void
 let mockModelLoad: Promise<void> | undefined
+const fixturePacks: AvatarPack[] = [
+  { id: 'fixture', name: 'Fixture', products: ['socratic'], model_sha256: 'a'.repeat(64) },
+  { id: 'second', name: 'Second fixture', products: ['socratic', 'ce'], model_sha256: 'b'.repeat(64) },
+]
+const mockLoadModel = jest.fn<Promise<void>, [AvatarPack]>(() => mockModelLoad ?? Promise.resolve())
+const mockSpeakTimeline = jest.fn()
+const mockStopSpeech = jest.fn()
+const mockDispose = jest.fn()
 beforeEach(() => {
   mockModelLoad = undefined
+  jest.mocked(loadAvatarCatalog).mockReset().mockResolvedValue(fixturePacks)
+  mockLoadModel.mockReset().mockImplementation(() => mockModelLoad ?? Promise.resolve())
+  mockSpeakTimeline.mockClear()
+  mockStopSpeech.mockClear()
+  mockDispose.mockClear()
   window.localStorage.clear()
-  jest.mocked(playRecordedDialogue).mockImplementation((_presenter, signal) => new Promise(resolve => {
+  jest.mocked(playRecordedDialogue).mockClear().mockImplementation((_presenter, signal) => new Promise(resolve => {
     complete = () => resolve({ state: 'COMPLETED' })
     signal.addEventListener('abort', () => resolve({ state: 'SUPERSEDED' }), { once: true })
   }))
@@ -122,4 +134,142 @@ test('muted playback stays unavailable until the user enables voice again', asyn
   expect(screen.getByRole('status')).toHaveTextContent('idle')
   fireEvent.click(screen.getByRole('button', { name: '語音關' }))
   expect(screen.getByRole('button', { name: '重播既有錄音對話' })).toBeEnabled()
+})
+
+test('CE selection and the debug menu require explicit product permission', async () => {
+  const unspecified = { id: 'unspecified', name: 'Unspecified license', model_sha256: 'c'.repeat(64) }
+  jest.mocked(loadAvatarCatalog).mockResolvedValue([unspecified, ...fixturePacks])
+  window.localStorage.setItem('avatar-pack:ce', 'unspecified')
+  const view = render(<TutorAvatar product="ce" packId="unspecified" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second')
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Second fixture'])
+  view.rerender(<TutorAvatar product="socratic" packId="unspecified" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'unspecified'))
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Unspecified license', 'Fixture', 'Second fixture'])
+})
+
+test('a failed catalog can be reloaded into a usable model', async () => {
+  jest.mocked(loadAvatarCatalog).mockRejectedValueOnce(Error('CATALOG_UNAVAILABLE'))
+  render(<TutorAvatar product="socratic" />)
+  fireEvent.click(await screen.findByRole('button', { name: '重新載入人像' }))
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(loadAvatarCatalog).toHaveBeenCalledTimes(2)
+  expect(mockLoadModel).toHaveBeenCalledWith(fixturePacks[0])
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  expect(screen.getByRole('button', { name: '重播既有錄音對話' })).toBeEnabled()
+  expect(screen.queryByRole('button', { name: '重新載入人像' })).not.toBeInTheDocument()
+})
+
+test('a failed model retry refreshes the catalog and waits for the newly selected presenter', async () => {
+  mockLoadModel.mockRejectedValueOnce(Error('MODEL_UNAVAILABLE'))
+  render(<TutorAvatar product="socratic" say={{ id: 'entry', text: '進頁前的訊息重試後仍不應重播' }} />)
+  await screen.findByRole('button', { name: '重新載入人像' })
+  let loaded!: () => void
+  mockModelLoad = new Promise(resolve => { loaded = resolve })
+  jest.mocked(loadAvatarCatalog).mockResolvedValueOnce([fixturePacks[1]])
+  fireEvent.click(screen.getByRole('button', { name: '重新載入人像' }))
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second'))
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'loading')
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  expect(screen.getByRole('button', { name: '重播既有錄音對話' })).toBeDisabled()
+  expect(loadAvatarCatalog).toHaveBeenCalledTimes(2)
+  expect(mockLoadModel.mock.calls.map(([pack]) => pack.id)).toEqual(['fixture', 'second'])
+  expect(mockDispose).toHaveBeenCalledTimes(1)
+  await act(async () => loaded())
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+  expect(screen.getByRole('button', { name: '重播既有錄音對話' })).toBeEnabled()
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+})
+
+test.each(['product', 'pack'] as const)('a late catalog cannot replace the selection after a %s change', async change => {
+  let finish!: (packs: AvatarPack[]) => void
+  jest.mocked(loadAvatarCatalog).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+  const view = render(<TutorAvatar product="socratic" packId="fixture" />)
+  const oldSignal = jest.mocked(loadAvatarCatalog).mock.calls[0][0]
+  view.rerender(<TutorAvatar product={change === 'product' ? 'ce' : 'socratic'} packId="second" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(oldSignal?.aborted).toBe(true)
+  await act(async () => finish([fixturePacks[0]]))
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+  expect(mockLoadModel.mock.calls.map(([pack]) => pack.id)).toEqual(['second'])
+})
+
+test.each(['resolve', 'reject'] as const)('a superseded model cannot %s into the new selection', async outcome => {
+  let finish!: () => void
+  let fail!: (error: Error) => void
+  mockLoadModel.mockReturnValueOnce(new Promise((resolve, reject) => { finish = resolve; fail = reject }))
+  render(<TutorAvatar product="socratic" />)
+  await waitFor(() => expect(mockLoadModel).toHaveBeenCalledTimes(1))
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  fireEvent.change(screen.getByLabelText('模型'), { target: { value: 'second' } })
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  await act(async () => { if (outcome === 'resolve') finish(); else fail(Error('OLD_MODEL_FAILED')) })
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+})
+
+test('unmount aborts a pending catalog and ignores its late result', async () => {
+  let finish!: (packs: AvatarPack[]) => void
+  jest.mocked(loadAvatarCatalog).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+  const view = render(<TutorAvatar product="socratic" />)
+  const signal = jest.mocked(loadAvatarCatalog).mock.calls[0][0]
+  view.unmount()
+  expect(signal?.aborted).toBe(true)
+  await act(async () => finish(fixturePacks))
+  expect(mockLoadModel).not.toHaveBeenCalled()
+})
+
+test('unmount disposes a loading presenter before its model settles', async () => {
+  let loaded!: () => void
+  mockModelLoad = new Promise(resolve => { loaded = resolve })
+  const view = render(<TutorAvatar product="socratic" />)
+  await waitFor(() => expect(mockLoadModel).toHaveBeenCalledTimes(1))
+  view.unmount()
+  expect(mockDispose).toHaveBeenCalledTimes(1)
+  await act(async () => loaded())
+  expect(screen.queryByTestId('avatar-stage')).not.toBeInTheDocument()
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+})
+
+test('stopping a recording immediately starts only the latest deferred line, even before the recording settles', async () => {
+  let finish!: () => void
+  let signal!: AbortSignal
+  jest.mocked(playRecordedDialogue).mockImplementationOnce((_presenter, abortSignal) => {
+    signal = abortSignal
+    return new Promise(resolve => { finish = () => resolve({ state: 'SUPERSEDED' }) })
+  })
+  const view = render(<TutorAvatar product="socratic" say={{ id: 'entry', text: '進頁前舊訊息' }} />)
+  await recording()
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'deferred', text: '被後一則取代的訊息' }} />)
+  const latest = { id: 'latest', text: '停止錄音後應開始的最新導師訊息' }
+  view.rerender(<TutorAvatar product="socratic" say={latest} />)
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: '停止錄音' }))
+  expect(signal.aborted).toBe(true)
+  expect(screen.getByRole('button', { name: '停止錄音' })).toBeDisabled()
+  expect(screen.getByRole('status')).toHaveTextContent('STOPPED')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+  const plan = planSpeech(latest.text)
+  expect(mockSpeakTimeline).toHaveBeenCalledTimes(1)
+  expect(mockSpeakTimeline).toHaveBeenCalledWith(plan.events, plan.durationMs)
+  await act(async () => finish())
+  expect(screen.getByRole('status')).toHaveTextContent('STOPPED')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+  expect(mockStopSpeech).not.toHaveBeenCalled()
+})
+
+test('unmount cancels a recording without starting its deferred tutor line', async () => {
+  const view = render(<TutorAvatar product="socratic" />)
+  await recording()
+  const signal = jest.mocked(playRecordedDialogue).mock.calls[0][1]
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'deferred', text: '離頁後不應發聲的訊息' }} />)
+  view.unmount()
+  expect(signal.aborted).toBe(true)
+  await act(async () => {})
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+  expect(mockDispose).toHaveBeenCalledTimes(1)
 })

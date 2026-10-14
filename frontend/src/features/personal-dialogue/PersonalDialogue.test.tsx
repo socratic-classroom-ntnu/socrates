@@ -1,5 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { PersonalPanel, PersonalProgress, type PersonalView } from './PersonalDialogue'
+import { PersonalPanel, PersonalProgress, lastTutorOf, type PersonalView } from './PersonalDialogue'
+
+// 人像（WebGL＋語音）另有自己的測試；這裡只看後端動作決定的按鈕，人像只記下要念的那則。
+const avatarSays: unknown[] = []
+jest.mock('../avatar/TutorAvatar', () => ({ TutorAvatar: ({ say }: { say: unknown }) => { avatarSays.push(say); return null } }))
 
 const question = { title: '情境一', scenario: '要不要拉下拉桿？' }
 const summary = {
@@ -109,4 +113,10 @@ test('teacher progress shows counts and summaries, retry only from row actions',
   expect(retry).toHaveLength(1)
   fireEvent.click(retry[0])
   expect(send).toHaveBeenCalledWith('personal_retry', { member_id: 'm2' })
+})
+
+test('the avatar is handed the latest tutor line, keyed by its position', () => {
+  expect(lastTutorOf([{ role: 'tutor', text: '一' }, { role: 'student', text: '二' }, { role: 'tutor', text: '三' }, { role: 'student', text: '四' }]))
+    .toEqual({ id: '2', text: '三' })
+  expect(lastTutorOf([{ role: 'student', text: '只有學生' }])).toBeNull()
 })

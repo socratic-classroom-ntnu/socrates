@@ -3,7 +3,7 @@ from typing import Any
 
 import yaml
 
-from app.domain.tutor import ProviderRequest, ProviderResponse
+from app.modules.llm_runtime.domain.tutor import ProviderRequest, ProviderResponse
 
 
 class ScriptedProvider:

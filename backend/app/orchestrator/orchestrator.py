@@ -6,11 +6,11 @@ from app.domain.session_state import (
     SessionState,
     StageState,
 )
-from app.domain.tutor import PromptMessage
+from app.modules.llm_runtime.domain.tutor import PromptMessage
 from app.domain.types import FlowState
 from app.ladders.repository import LadderRepository
 from app.orchestrator.policy import should_advance
-from app.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
 
 
 class ConversationEnded(RuntimeError):

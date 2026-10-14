@@ -58,7 +58,7 @@ from app.api.deps import get_service  # noqa: E402
 from app.modules.platform.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services.conversation import ConversationService  # noqa: E402
-from app.tutor.gateway import TutorGateway  # noqa: E402
+from app.modules.llm_runtime.tutor.gateway import TutorGateway  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session as OrmSession
 from app.modules.platform.config import settings
 from app.modules.platform.db import SessionLocal
 from app.services.conversation import ConversationService
-from app.tutor.gateway import TutorGateway
-from app.tutor.scripted import ScriptedProvider
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
 
 
 def get_db() -> Iterator[OrmSession]:

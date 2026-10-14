@@ -7,7 +7,7 @@ from app.api.deps import get_learner_id, get_service
 from app.api.schemas import SessionView, SummaryView
 from app.orchestrator.orchestrator import ConversationEnded, InvalidAction
 from app.services.conversation import ConversationService, Forbidden, NotFound
-from app.tutor.gateway import TutorUnavailable
+from app.modules.llm_runtime.tutor.gateway import TutorUnavailable
 
 router = APIRouter(prefix="/api/sessions", tags=["summaries"])
 

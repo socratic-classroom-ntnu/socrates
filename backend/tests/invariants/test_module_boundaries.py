@@ -1,7 +1,7 @@
 import ast
 import pathlib
 
-FORBIDDEN = ("app.tutor.provider", "app.tutor.scripted")
+FORBIDDEN = ("app.modules.llm_runtime.tutor.provider", "app.modules.llm_runtime.tutor.scripted")
 
 
 def test_orchestrator_does_not_import_llm_modules():

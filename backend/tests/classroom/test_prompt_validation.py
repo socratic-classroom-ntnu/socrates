@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from app.tutor import prompts
+from app.modules.llm_runtime.tutor import prompts
 
 JOB_KINDS = [
     "focused_tutor",

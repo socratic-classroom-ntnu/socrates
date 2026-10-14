@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from app.tutor.classroom_gateway import validate_base_url
+from app.modules.llm_runtime.tutor.classroom_gateway import validate_base_url
 from app.modules.ai_providers.api.routes.provider_profiles import (
     AccountAISettings,
     ProviderProfile,

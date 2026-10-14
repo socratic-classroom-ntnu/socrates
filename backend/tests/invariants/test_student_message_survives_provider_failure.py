@@ -96,7 +96,7 @@ def test_second_message_cannot_skip_pending_reply(client, learner_id, exploding_
 
 
 def test_provider_receives_latest_persisted_student_message(client, learner_id, db):
-    from app.tutor.gateway import TutorGateway
+    from app.modules.llm_runtime.tutor.gateway import TutorGateway
     import app.main as main
 
     provider = CapturingProvider()

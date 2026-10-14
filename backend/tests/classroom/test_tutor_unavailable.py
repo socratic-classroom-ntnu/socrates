@@ -1,7 +1,7 @@
 import pytest
 
 from app.orchestrator.classroom_policy import majority_context
-from app.services.llm_workers import deterministic_result
+from app.modules.llm_runtime.services.llm_workers import deterministic_result
 from tests.classroom.test_domain import focus_room
 
 CURRENT = {

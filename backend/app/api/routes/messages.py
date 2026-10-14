@@ -8,7 +8,7 @@ from app.api.deps import get_learner_id, get_service
 from app.api.schemas import SessionView
 from app.orchestrator.orchestrator import ConversationEnded, InvalidAction
 from app.services.conversation import ConversationService, Forbidden, NotFound, RetryLimitReached
-from app.tutor.gateway import TutorUnavailable
+from app.modules.llm_runtime.tutor.gateway import TutorUnavailable
 
 router = APIRouter(prefix="/api/sessions", tags=["messages"])
 

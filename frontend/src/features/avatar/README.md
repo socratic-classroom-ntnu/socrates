@@ -1,5 +1,4 @@
 # 人像開發測試
-
 - 模型由同源 `/avatar-packs/` 提供；部署需保留唯讀資產掛載與各產品的模型許可篩選。
 - CE 只接受 catalog 明示 `products` 含 `ce` 的模型；載入失敗時「重新載入人像」會重新取得 catalog 與模型。
 - 啟用 `debug_mode` 後展開「人像選擇（開發）」並點「重播既有錄音對話」；使用既有錄音，不呼叫 LLM、TTS、STT 或 SpeechSynthesis。

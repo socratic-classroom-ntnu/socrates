@@ -106,13 +106,13 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 
   useEffect(() => {
     if (!say?.text || say.id === spoken.current) return
-    if (recording.current) return
+    if (status === 'loading' || recording.current) return
     spoken.current = say.id
     if (!voice) return
     setTalking(true)
     const stop = speak(say.text, presenter.current, { lang: LANGS[lang], onEnd: () => setTalking(false) })
     return () => { stop(); setTalking(false) }
-  }, [say?.id, say?.text, voice, lang, replayState])
+  }, [say?.id, say?.text, voice, lang, replayState, status])
 
   const shown: AvatarState = talking ? 'speaking' : state
   return <section className="tutor-avatar" data-testid="avatar-stage" data-avatar-id={pack?.id ?? 'none'} data-avatar-state={shown} data-render-status={status} aria-label={`${label}人像`}>

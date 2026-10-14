@@ -5,7 +5,7 @@ import { playRecordedDialogue } from './recordedDialogue'
 
 // Isolate WebGL/recorded audio; the real component and classroom speech lifecycle run.
 jest.mock('./runtime/packPresenter.mjs', () => ({ PackPresenter: class {
-  load() { return Promise.resolve() }
+  load() { return mockModelLoad ?? Promise.resolve() }
   setMood() {}
   stop() {}
   stopSpeech() {}
@@ -21,7 +21,9 @@ jest.mock('../../api/avatarCatalog', () => ({ loadAvatarCatalog: async () => [
 jest.mock('./recordedDialogue', () => ({ ...jest.requireActual('./recordedDialogue'), playRecordedDialogue: jest.fn() }))
 
 let complete: () => void
+let mockModelLoad: Promise<void> | undefined
 beforeEach(() => {
+  mockModelLoad = undefined
   window.localStorage.clear()
   jest.mocked(playRecordedDialogue).mockImplementation((_presenter, signal) => new Promise(resolve => {
     complete = () => resolve({ state: 'COMPLETED' })
@@ -34,6 +36,19 @@ async function recording() {
   fireEvent.click(screen.getByRole('button', { name: '重播既有錄音對話' }))
   expect(screen.getByRole('status')).toHaveTextContent('loading')
 }
+
+test('a new tutor line waits for model loading before it starts speaking', async () => {
+  let loaded: () => void
+  mockModelLoad = new Promise(resolve => { loaded = resolve })
+  const view = render(<TutorAvatar product="socratic" />)
+  await act(async () => {})
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'first', text: '人像載入時到達的導師訊息' }}/>)
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'loading')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'idle')
+  await act(async () => loaded())
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+})
 
 test('the first tutor line arriving after an empty mount is spoken without a recording', async () => {
   const view = render(<TutorAvatar product="socratic" />)

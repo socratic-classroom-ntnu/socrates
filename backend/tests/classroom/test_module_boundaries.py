@@ -5,7 +5,7 @@ import sys
 PROVIDER_MODULES = (
     "app.tutor.classroom_provider",
     "app.tutor.classroom_gateway",
-    "app.api.routes.provider_profiles",
+    "app.modules.ai_providers.api.routes.provider_profiles",
 )
 
 

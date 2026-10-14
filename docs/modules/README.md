@@ -18,7 +18,7 @@
 | [App Shell](./backend/app_shell.md) | ✅ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py` | 全部（組裝層） | 0 |
 | [Platform](./backend/platform.md) | ⚠️ | `backend/app/modules/platform/` | 不依賴其他模組 | 4 |
 | [Identity & Access](./backend/identity_access.md) | ⚠️ | `backend/app/modules/identity_access/` | platform | 3 |
-| [AI Providers](./backend/ai_providers.md) | ⚠️ | `backend/app/api/routes/provider_profiles.py` | platform、identity_access | 8 |
+| [AI Providers](./backend/ai_providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity_access | 8 |
 | [LLM Runtime](./backend/llm_runtime.md) | ⚠️ | `backend/app/tutor/`<br>`backend/app/services/llm_workers.py`<br>`backend/app/domain/tutor.py` | platform、ai_providers | 9 |
 | [Content Authoring](./backend/content_authoring.md) | ✅ | `backend/app/api/routes/classroom_library.py`<br>`backend/app/domain/library_decisions.py`<br>`backend/app/domain/ladder.py`<br>`backend/app/ladders/` | platform、identity_access、ai_providers、llm_runtime | 7 |
 | [Classroom Core](./backend/classroom_core.md) | ✅ | `backend/app/orchestrator/classroom.py`<br>`backend/app/orchestrator/classroom_policy.py`<br>`backend/app/services/classroom.py`<br>`backend/app/api/routes/classroom.py`<br>`backend/app/api/classroom_schemas.py`<br>`backend/app/domain/presence.py` | platform、identity_access、ai_providers、llm_runtime、content_authoring | 10 |

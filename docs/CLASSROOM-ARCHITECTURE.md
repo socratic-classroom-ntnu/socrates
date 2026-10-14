@@ -38,7 +38,7 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 | `api/routes/classroom_library.py` | `/library/*` | 教室庫、教室資產與 session |
 | `api/routes/groups.py`／`domain/group_run.py` | `/groups/*` | 分組課堂（group runs） |
 | `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
-| `api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
+| `modules/ai_providers/api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
 | `modules/platform/api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
 
 ## 資料與並發

@@ -439,7 +439,7 @@ def view(rid: str, request: Request):
                 )
         asset_id = state.get("asset_classroom_id")
         asset_classroom = db.get(ClassroomAssets, asset_id) if asset_id else None
-        from app.api.routes.provider_profiles import _classroom_settings_view
+        from app.modules.ai_providers.api.routes.provider_profiles import _classroom_settings_view
 
         ai_settings = _classroom_settings_view(
             asset_classroom.assets.get("ai_settings") if asset_classroom else {}

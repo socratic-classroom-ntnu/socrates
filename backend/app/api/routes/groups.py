@@ -19,10 +19,15 @@ from app.modules.platform.repositories.classroom_storage import (
     append_event,
     persist_machine,
 )
-from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_notice, fresh_state
+from app.modules.classroom_core.orchestrator.classroom import (
+    GameOrchestrator,
+    DomainError,
+    focus_notice,
+    fresh_state,
+)
 from app.domain.group_run import initialise, person_summary
 from app.domain.group_analysis import analysis as project_analysis
-from app.services import classroom as service
+from app.modules.classroom_core.services import classroom as service
 from app.modules.content_authoring.domain.library_decisions import visible_evidence
 from app.modules.content_authoring.api.routes.classroom_library import (
     link_group_session,
@@ -55,7 +60,7 @@ class GroupCommand(BaseModel):
 
 def actor(db, request, mutation=False):
     # Resolve the already-initialised native adapter lazily to preserve imports.
-    from app.api.routes.classroom import account
+    from app.modules.classroom_core.api.routes.classroom import account
 
     return account(db, request, mutation)[0]
 

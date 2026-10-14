@@ -106,12 +106,7 @@
       "status": "ok",
       "about": "多人課堂的狀態機：大廳、倒數、作答、分佈、焦點討論、換題、總結。",
       "paths": [
-        "backend/app/orchestrator/classroom.py",
-        "backend/app/orchestrator/classroom_policy.py",
-        "backend/app/services/classroom.py",
-        "backend/app/api/routes/classroom.py",
-        "backend/app/api/classroom_schemas.py",
-        "backend/app/domain/presence.py"
+        "backend/app/modules/classroom_core/"
       ],
       "uses": [
         "platform",

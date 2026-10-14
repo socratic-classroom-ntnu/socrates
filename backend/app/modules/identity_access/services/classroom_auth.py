@@ -17,7 +17,7 @@ from app.modules.identity_access.services.email_delivery import (
     mask_recipient,
     queue_delivery,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     EmailToken,

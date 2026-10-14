@@ -5,8 +5,8 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.modules.llm_runtime.tutor import prompts
-from app.api.routes.classroom import router
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.api.routes.classroom import router
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.realtime import BUS
 from app.modules.platform.repositories.classroom_storage import engine
 from app.modules.llm_runtime.services.llm_workers import clock_loop, llm_loop, mail_loop

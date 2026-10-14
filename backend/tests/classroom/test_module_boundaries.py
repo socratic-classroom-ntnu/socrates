@@ -16,7 +16,7 @@ def run(code: str) -> str:
 
 def test_classroom_orchestrator_imports_no_provider_module():
     code = (
-        "import sys, app.orchestrator.classroom; "
+        "import sys, app.modules.classroom_core.orchestrator.classroom; "
         f"print([m for m in {PROVIDER_MODULES!r} if m in sys.modules])"
     )
     assert run(code) == "[]"

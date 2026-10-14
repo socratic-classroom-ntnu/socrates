@@ -34,6 +34,7 @@ jobs:
       github.event.action == 'opened'
       && github.event.pull_request.head.repo.full_name == github.repository
       && !contains(github.event.pull_request.labels.*.name, 'preview')
+      && !startsWith(github.event.pull_request.head.ref, 'backend/arthur/')
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions: {pull-requests: write}
@@ -47,9 +48,10 @@ jobs:
   # It also tells the PR right away that a new commit is building, so nobody
   # mistakes the still-running old commit for this one.
   lock:
-    # Fork PRs cannot push to GHCR. Adding some other label (e.g. preview-llm) must not rebuild.
+    # Fork PRs cannot push to GHCR; backend/arthur/** branches skip previews. Adding some other label (e.g. preview-llm) must not rebuild.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository
+      && !startsWith(github.event.pull_request.head.ref, 'backend/arthur/')
       && (github.event.action == 'opened'
           || (github.event.action == 'labeled' && github.event.label.name == 'preview')
           || (github.event.action != 'labeled'

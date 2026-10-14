@@ -223,7 +223,7 @@ export function ConversationRoom({ sessionId }) {
 
       <section className="ce-stage" aria-label="導師與對話舞台">
         <div className="ce-stage-grid" aria-hidden="true"/><div className="ce-room-kicker"><span>THE SOCRATIC ROOM</span><p>留一點空間，<br />給正在成形的想法。</p></div>
-        <PortraitStage state={presence} say={lastTutor ? { id: String(lastTutor.id ?? `${messages.length}`), text: lastTutor.content } : null}/>
+        {room && <PortraitStage key={sessionId} state={presence} say={lastTutor ? { id: `${sessionId}:${lastTutor.seq}`, text: lastTutor.content } : null}/>}
         <div className="ce-dialogue ce-tutor-dialogue" data-testid="tutor-dialogue" role="region" aria-label="導師目前的回覆" aria-live="polite">
           <div className="ce-bubble-label"><span className="ce-spark">✧</span> 蘇格拉底導師<span>{busy ? '思考中' : '給你的提問'}</span></div>
           <div className="ce-bubble-content">{lastTutor?.content ?? (error || '正在接回你的對話…')}</div>

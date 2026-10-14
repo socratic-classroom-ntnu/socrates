@@ -35,6 +35,21 @@ async function recording() {
   expect(screen.getByRole('status')).toHaveTextContent('loading')
 }
 
+test('the first tutor line arriving after an empty mount is spoken without a recording', async () => {
+  const view = render(<TutorAvatar product="socratic" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'first', text: '掛載後到達的導師回覆' }}/>)
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+})
+
+test('an existing entry message stays silent until a genuinely new tutor line arrives', async () => {
+  const view = render(<TutorAvatar product="socratic" say={{ id: 'old', text: '進頁前的訊息' }}/>)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'idle')
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'new', text: '掛載後到達的導師回覆' }}/>)
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+})
+
 test('a tutor line arriving during a recording is spoken after that recording completes', async () => {
   const view = render(<TutorAvatar product="socratic" say={{ id: 'old', text: '進頁前的訊息' }}/>)
   await recording()

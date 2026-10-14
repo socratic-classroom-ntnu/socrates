@@ -39,8 +39,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 }) {
   const host = useRef<HTMLDivElement>(null)
   const presenter = useRef<PackPresenter | null>(null)
-  const spoken = useRef<string | null>(null)
-  const deferredTutor = useRef<string | null>(null)
+  const spoken = useRef<string | null>(say?.text ? say.id : null)
   const [packs, setPacks] = useState<AvatarPack[]>([])
   const [pack, setPack] = useState<AvatarPack | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'fallback'>('loading')
@@ -107,12 +106,9 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
 
   useEffect(() => {
     if (!say?.text || say.id === spoken.current) return
-    const first = spoken.current === null
-    if (recording.current) { deferredTutor.current = say.id; return }
-    const receivedDuringRecording = deferredTutor.current === say.id
-    deferredTutor.current = null
+    if (recording.current) return
     spoken.current = say.id
-    if ((first && !receivedDuringRecording) || !voice) return // 只略過進頁舊訊息，不略過錄音期間的新訊息
+    if (!voice) return
     setTalking(true)
     const stop = speak(say.text, presenter.current, { lang: LANGS[lang], onEnd: () => setTalking(false) })
     return () => { stop(); setTalking(false) }

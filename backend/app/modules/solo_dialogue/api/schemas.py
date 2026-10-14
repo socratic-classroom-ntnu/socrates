@@ -3,7 +3,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.domain.types import Action, EndReason, FlowState, MessageRole, SessionStatus, StageStatus
+from app.modules.solo_dialogue.domain.types import (
+    Action,
+    EndReason,
+    FlowState,
+    MessageRole,
+    SessionStatus,
+    StageStatus,
+)
 
 
 class SessionInfo(BaseModel):

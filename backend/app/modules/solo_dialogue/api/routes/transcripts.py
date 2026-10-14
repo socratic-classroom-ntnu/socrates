@@ -4,10 +4,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session as OrmSession
 
-from app.api.deps import get_db, get_learner_id
-from app.api.transcript_schemas import TranscriptDraftCreate, TranscriptDraftView
-from app.repositories.transcript_repository import TranscriptForbidden, TranscriptNotFound
-from app.services.transcripts import TranscriptService
+from app.modules.solo_dialogue.api.deps import get_db, get_learner_id
+from app.modules.solo_dialogue.api.transcript_schemas import (
+    TranscriptDraftCreate,
+    TranscriptDraftView,
+)
+from app.modules.solo_dialogue.repositories.transcript_repository import (
+    TranscriptForbidden,
+    TranscriptNotFound,
+)
+from app.modules.solo_dialogue.services.transcripts import TranscriptService
 
 router = APIRouter(prefix="/api/sessions", tags=["transcripts"])
 

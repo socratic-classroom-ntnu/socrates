@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session as OrmSession
 
-from app.api.deps import get_db, get_learner_id
-from app.api.history_schemas import SessionHistoryPage
-from app.services.history import HistoryService
+from app.modules.solo_dialogue.api.deps import get_db, get_learner_id
+from app.modules.solo_dialogue.api.history_schemas import SessionHistoryPage
+from app.modules.solo_dialogue.services.history import HistoryService
 
 router = APIRouter(prefix="/api/sessions", tags=["history"])
 

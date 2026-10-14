@@ -462,7 +462,7 @@ class GameOrchestrator:
                 self.close_focus("reselect_after_argument_comment")
             elif f["advance_requested"]:
                 self.close_focus("teacher_next")
-            # Goal before cap, as in Round 1 (app/orchestrator/orchestrator.py): a goal met on the
+            # Goal before cap, as in Round 1 (app/modules/solo_dialogue/orchestrator/orchestrator.py): a goal met on the
             # cap turn is goal_met; a cap without the goal is capped, never goal_met.
             elif stage_goal(result["observations"], f["completed_turns"]):
                 self.close_focus("goal_met")

@@ -9,7 +9,7 @@
    但最能體會「照見」的流程）；http://localhost:5173 是教室（多人課堂），註冊後驗證頁會顯示本機驗證連結。
 3. 讀 `backend/tests/invariants/`
    測試是規格的可執行版，比實作短，而且不會過期。
-4. 讀 `backend/app/orchestrator/orchestrator.py` 與 `policy.py`
+4. 讀 `backend/app/modules/solo_dialogue/orchestrator/orchestrator.py` 與 `policy.py`
    系統的心臟。讀完就懂流程怎麼推進。
 5. 讀自己那條線對應的範本檔案（見 `AGENTS.md` 的範本索引）
 6. 讀設計規格的相關章節

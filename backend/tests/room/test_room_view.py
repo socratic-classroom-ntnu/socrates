@@ -1,8 +1,8 @@
 import uuid
 
-from app.api.schemas import MessageView, SessionDetail, SessionInfo, StageView
-from app.domain.types import MessageRole
-from app.services.room_view import build_room_view
+from app.modules.solo_dialogue.api.schemas import MessageView, SessionDetail, SessionInfo, StageView
+from app.modules.solo_dialogue.domain.types import MessageRole
+from app.modules.solo_dialogue.services.room_view import build_room_view
 
 
 def make_detail(role: MessageRole = "tutor") -> SessionDetail:

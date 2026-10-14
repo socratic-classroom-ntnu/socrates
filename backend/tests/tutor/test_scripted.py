@@ -5,7 +5,7 @@ import pytest
 from app.modules.platform.config import settings
 from app.modules.llm_runtime.domain.tutor import ProviderRequest
 from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.orchestrator.policy import should_advance
+from app.modules.solo_dialogue.orchestrator.policy import should_advance
 from app.modules.llm_runtime.tutor.gateway import TutorGateway
 from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
 

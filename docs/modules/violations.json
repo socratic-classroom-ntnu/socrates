@@ -26,13 +26,13 @@
     "llm_runtime→content_authoring  backend/app/modules/llm_runtime/tutor/gateway.py → backend/app/modules/content_authoring/domain/ladder.py",
     "llm_runtime→group_dialogue  backend/app/modules/llm_runtime/services/llm_workers.py → backend/app/modules/group_dialogue/services/ai_students.py",
     "llm_runtime→identity_access  backend/app/modules/llm_runtime/services/llm_workers.py → backend/app/modules/identity_access/services/email_delivery.py",
-    "llm_runtime→solo_dialogue  backend/app/modules/llm_runtime/domain/tutor.py → backend/app/domain/types.py",
-    "orm-outside-repositories  backend/app/interaction_models.py",
-    "orm-outside-repositories  backend/app/models.py",
+    "llm_runtime→solo_dialogue  backend/app/modules/llm_runtime/domain/tutor.py → backend/app/modules/solo_dialogue/domain/types.py",
     "orm-outside-repositories  backend/app/modules/ai_providers/api/routes/provider_profiles.py",
     "orm-outside-repositories  backend/app/modules/content_authoring/api/routes/classroom_library.py",
     "orm-outside-repositories  backend/app/modules/group_dialogue/services/ai_students.py",
     "orm-outside-repositories  backend/app/modules/identity_access/services/email_delivery.py",
+    "orm-outside-repositories  backend/app/modules/solo_dialogue/interaction_models.py",
+    "orm-outside-repositories  backend/app/modules/solo_dialogue/models.py",
     "platform→ai_providers  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py",
     "platform→content_authoring  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/content_authoring/api/routes/classroom_library.py",
     "platform→group_dialogue  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/group_dialogue/services/ai_students.py",
@@ -51,7 +51,7 @@
     "route-imports-route  backend/app/modules/group_dialogue/api/routes/groups.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py",
     "route-imports-route  backend/app/modules/group_dialogue/api/routes/groups.py → backend/app/modules/classroom_core/api/routes/classroom.py",
     "route-imports-route  backend/app/modules/group_dialogue/api/routes/groups.py → backend/app/modules/content_authoring/api/routes/classroom_library.py",
-    "solo_dialogue→app_shell  backend/app/api/deps.py → backend/app/main.py",
-    "solo_dialogue→app_shell  backend/app/api/routes/history.py → backend/app/main.py"
+    "solo_dialogue→app_shell  backend/app/modules/solo_dialogue/api/deps.py → backend/app/main.py",
+    "solo_dialogue→app_shell  backend/app/modules/solo_dialogue/api/routes/history.py → backend/app/main.py"
   ]
 }

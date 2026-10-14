@@ -43,6 +43,14 @@ test('a tutor line arriving during a recording is spoken after that recording co
   expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
 })
 
+test('the first tutor line received during recording is not mistaken for an old entry message', async () => {
+  const view = render(<TutorAvatar product="socratic" />)
+  await recording()
+  view.rerender(<TutorAvatar product="socratic" say={{ id: 'first', text: '錄音期間才到達的第一則導師訊息' }}/>)
+  await act(async () => complete())
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-state', 'speaking')
+})
+
 test('muting during recording leaves a stopped visible replay state and an idle avatar', async () => {
   render(<TutorAvatar product="socratic" say={{ id: 'old', text: '進頁前的訊息' }}/>)
   await recording()

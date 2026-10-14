@@ -1,9 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { PersonalPanel, PersonalProgress, lastTutorOf, type PersonalView } from './PersonalDialogue'
 
-// 人像（WebGL＋語音）另有自己的測試；這裡只看後端動作決定的按鈕，人像只記下要念的那則。
-const avatarSays: unknown[] = []
-jest.mock('../avatar/TutorAvatar', () => ({ TutorAvatar: ({ say }: { say: unknown }) => { avatarSays.push(say); return null } }))
+// 人像（WebGL＋語音）另有自己的測試；這裡只看後端動作決定的按鈕。
+jest.mock('../avatar/TutorAvatar', () => ({ TutorAvatar: () => null }))
 
 const question = { title: '情境一', scenario: '要不要拉下拉桿？' }
 const summary = {

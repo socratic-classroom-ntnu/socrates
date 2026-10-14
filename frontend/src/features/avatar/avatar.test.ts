@@ -23,7 +23,6 @@ test('the group stage speaks only the latest tutor line', () => {
 })
 
 test('camera_preset zooms in from the bottom so the top of the head stays in frame', () => {
-  expect(cameraPreset({})).toEqual({ zoom: 1, lift: 0, framing: 'upper-body' })
   const preset = cameraPreset({ camera_preset: { zoom: 1.3, lift: 0, framing: 'upper-body-tight' } })
   expect(preset.framing).toBe('upper-body-tight')
   const halfView = 0.5

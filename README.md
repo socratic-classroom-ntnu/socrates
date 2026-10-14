@@ -12,7 +12,7 @@ Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architect
 
 `recordedDialogue.ts` 在解碼前比對四份原件 SHA256（音訊為 `6cc2b782be71a9a2767574ae65f3b50c2537928b8cf21f2d6eb7d4b182321ab3`），由 `PackPresenter.play(AudioBuffer, events)` 交給既有 `AudioLane` 音訊時鐘；資料失配或越界直接失敗，不生成靜音、不估算嘴型、不降級成 audio-only 成功。畫面明示錄音原文、聲音及 replay state；`ENDED` 只是播放結束，不是人類驗收。
 
-錄音期間抵達的新教室導師訊息會在錄音完成後繼續發話；關閉語音或切換模型會停止音訊，並明確顯示 `STOPPED`，不把取消留在 `loading`。語音關閉時禁止再啟動錄音重播，重新開啟語音才恢復播放操作。
+錄音期間抵達的新教室導師訊息會在錄音完成後繼續發話，包含進頁時沒有訊息、錄音中才到達的第一則；進頁前已有的舊訊息仍不自動發話。關閉語音或切換模型會停止音訊，並明確顯示 `STOPPED`，不把取消留在 `loading`。語音關閉時禁止再啟動錄音重播，重新開啟語音才恢復播放操作。
 
 模型仍取自既有 Portal catalog／GLB：`/mnt/d/Work/Obsidian/BH/Portal/avatar-serve/`，部署須保留 same-origin `/avatar-packs/` 的唯讀掛載。Raven 的 Vite Source preview 不會自行包含這個外置資產根；不可用 custody JSON 或改寫產品授權來代替真正模型。
 

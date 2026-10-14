@@ -123,10 +123,7 @@
       "status": "ok",
       "about": "分組：分組設定、各組課堂、觀點確認與結算、AI 學生。",
       "paths": [
-        "backend/app/domain/group_run.py",
-        "backend/app/api/routes/groups.py",
-        "backend/app/services/ai_students.py",
-        "backend/app/api/routes/ai_students.py"
+        "backend/app/modules/group_dialogue/"
       ],
       "uses": [
         "platform",

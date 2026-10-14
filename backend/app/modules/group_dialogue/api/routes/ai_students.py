@@ -22,7 +22,7 @@ from app.modules.platform.repositories.classroom_storage import (
     transaction,
 )
 
-from app.services.ai_students import PERSONAS, AIStudentProfile
+from app.modules.group_dialogue.services.ai_students import PERSONAS, AIStudentProfile
 
 
 class AddAIStudents(BaseModel):
@@ -87,7 +87,12 @@ def _persona(index: int, room_id: str) -> dict:
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     from app.modules.classroom_core.orchestrator.classroom import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.group_dialogue.api.routes.groups import (
+        actor,
+        roster,
+        roster_hash,
+        teacher_room,
+    )
     from app.modules.platform.repositories.classroom_storage import append_event
 
     with transaction() as db:
@@ -199,7 +204,12 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     from app.modules.classroom_core.orchestrator.classroom import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.group_dialogue.api.routes.groups import (
+        actor,
+        roster,
+        roster_hash,
+        teacher_room,
+    )
     from app.modules.platform.repositories.classroom_storage import append_event
 
     with transaction() as db:

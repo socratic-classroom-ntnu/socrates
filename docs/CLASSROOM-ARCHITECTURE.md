@@ -30,14 +30,14 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 
 ## 教室功能模組
 
-以下掛在 `/api/v2` 之下；`domain/group_run.py` 與 `services/ai_students.py` 以 `extend()` 包裝
+以下掛在 `/api/v2` 之下；`modules/group_dialogue/domain/group_run.py` 與 `modules/group_dialogue/services/ai_students.py` 以 `extend()` 包裝
 `GameOrchestrator`（`modules/classroom_core/orchestrator/classroom.py`）。路徑皆相對於 `backend/app/`。
 
 | 模組 | 路由 | 內容 |
 |---|---|---|
 | `modules/content_authoring/api/routes/classroom_library.py` | `/library/*` | 教室庫、教室資產與 session |
-| `api/routes/groups.py`／`domain/group_run.py` | `/groups/*` | 分組課堂（group runs） |
-| `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
+| `modules/group_dialogue/api/routes/groups.py`／`modules/group_dialogue/domain/group_run.py` | `/groups/*` | 分組課堂（group runs） |
+| `modules/group_dialogue/api/routes/ai_students.py`／`modules/group_dialogue/services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
 | `modules/ai_providers/api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
 | `modules/platform/api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
 

@@ -230,7 +230,7 @@ def extend(Native):
                         continue
                     summary = None
                     try:
-                        from app.domain.group_run import person_summary
+                        from app.modules.group_dialogue.domain.group_run import person_summary
 
                         summary = person_summary(self.s, member_id)
                     except (KeyError, ValueError):
@@ -329,7 +329,7 @@ def extend(Native):
                     False,
                 )
                 if mode == "viewpoint" and result.get("should_confirm", True):
-                    from app.domain.group_run import person_summary
+                    from app.modules.group_dialogue.domain.group_run import person_summary
 
                     summary = person_summary(self.s, member_id)
                     self.command(

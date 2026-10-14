@@ -1,11 +1,11 @@
 from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, fresh_state
-from app.api.routes.ai_students import fallback_other_suggestion
-from app.services.ai_students import (
+from app.modules.group_dialogue.api.routes.ai_students import fallback_other_suggestion
+from app.modules.group_dialogue.services.ai_students import (
     OTHER_ID,
     ensure_other_options,
     fallback_turn,
 )
-from app.domain.group_run import initialise
+from app.modules.group_dialogue.domain.group_run import initialise
 
 
 def document():

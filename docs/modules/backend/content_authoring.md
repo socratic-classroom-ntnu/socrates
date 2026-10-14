@@ -20,7 +20,7 @@
 - `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/api/routes/classroom.py`
 - `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/orchestrator/classroom.py`
 - `content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/services/classroom.py`
-- `content_authoring→group_dialogue  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/services/ai_students.py`
+- `content_authoring→group_dialogue  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/group_dialogue/services/ai_students.py`
 - `orm-outside-repositories  backend/app/modules/content_authoring/api/routes/classroom_library.py`
 - `route-imports-route  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/api/routes/classroom.py`
 

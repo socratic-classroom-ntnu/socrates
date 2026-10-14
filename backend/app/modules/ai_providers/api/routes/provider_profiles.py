@@ -518,7 +518,7 @@ def delete_profile(profile_id: str, request: Request):
                 ai.get("fallback_profile_id"),
             }:
                 raise DomainError("PROVIDER_PROFILE_IN_CLASSROOM_SETTINGS", 409)
-        from app.services.ai_students import AIStudentProfile
+        from app.modules.group_dialogue.services.ai_students import AIStudentProfile
 
         if (
             db.scalar(
@@ -689,7 +689,7 @@ def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
                     member["provider_profile_id"] = body.default_profile_id
             room.state = state
 
-            from app.services.ai_students import AIStudentProfile
+            from app.modules.group_dialogue.services.ai_students import AIStudentProfile
 
             for profile in db.scalars(
                 select(AIStudentProfile).where(

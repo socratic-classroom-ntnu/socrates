@@ -1,8 +1,11 @@
 name: CI
 on:
+  # backend/arthur/** 由本機 CI 檢查：以它為 base 的疊層 PR 與它的 push 都不跑；
+  # PR 進 develop 時照常跑完整 CI（pull_request 的 branches 比對的是 base 分支）。
   pull_request:
+    branches-ignore: ['backend/arthur/**']
   push:
-    branches: [master, develop, stage, 'backend/**']
+    branches: [master, develop, stage, 'backend/**', '!backend/arthur/**']
 permissions:
   contents: read
 concurrency:

@@ -25,7 +25,7 @@
 - `llm_runtime→classroom_core  backend/app/tutor/prompts.py → backend/app/api/classroom_schemas.py`
 - `llm_runtime→content_authoring  backend/app/tutor/gateway.py → backend/app/domain/ladder.py`
 - `llm_runtime→group_dialogue  backend/app/services/llm_workers.py → backend/app/services/ai_students.py`
-- `llm_runtime→identity_access  backend/app/services/llm_workers.py → backend/app/services/email_delivery.py`
+- `llm_runtime→identity_access  backend/app/services/llm_workers.py → backend/app/modules/identity_access/services/email_delivery.py`
 - `llm_runtime→solo_dialogue  backend/app/domain/tutor.py → backend/app/domain/types.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）

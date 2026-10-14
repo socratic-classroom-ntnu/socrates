@@ -42,8 +42,7 @@
       "status": "warn",
       "about": "帳號、登入、Email 驗證、重設密碼與寄信。",
       "paths": [
-        "backend/app/services/classroom_auth.py",
-        "backend/app/services/email_delivery.py"
+        "backend/app/modules/identity_access/"
       ],
       "uses": [
         "platform"

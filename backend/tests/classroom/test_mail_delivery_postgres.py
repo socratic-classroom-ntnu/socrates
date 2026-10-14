@@ -10,7 +10,11 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 from app.modules.platform.repositories import classroom_storage as storage
-from app.services.email_delivery import MailDelivery, _claim_mail, send_mail_once
+from app.modules.identity_access.services.email_delivery import (
+    MailDelivery,
+    _claim_mail,
+    send_mail_once,
+)
 
 
 @pytest.fixture

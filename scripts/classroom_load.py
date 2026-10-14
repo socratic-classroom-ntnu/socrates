@@ -19,7 +19,7 @@ sys.path.insert(0,str(ROOT/'backend'))
 import httpx
 import websockets
 from sqlalchemy import select
-from app.services.classroom_auth import COOKIE, HASHER
+from app.modules.identity_access.services.classroom_auth import COOKIE, HASHER
 from app.api.classroom_schemas import Command, JoinRoom, ScriptDocument
 from app.services import classroom as service
 from app.modules.platform.repositories import classroom_storage as storage

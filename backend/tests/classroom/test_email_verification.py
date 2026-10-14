@@ -8,9 +8,9 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from sqlalchemy import func, select
 
-from app.services import classroom_auth as auth
+from app.modules.identity_access.services import classroom_auth as auth
 from app.api.classroom_schemas import Register
-from app.services.email_delivery import (
+from app.modules.identity_access.services.email_delivery import (
     MailDelivery,
     apply_resend_webhook,
     send_mail_once,

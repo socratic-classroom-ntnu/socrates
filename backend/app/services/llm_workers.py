@@ -10,7 +10,9 @@ from uuid import uuid4
 from sqlalchemy import or_, select
 
 from app.api.classroom_schemas import DynamicResult, SummaryResult
-from app.services.email_delivery import send_mail_once as _send_transactional_mail_once
+from app.modules.identity_access.services.email_delivery import (
+    send_mail_once as _send_transactional_mail_once,
+)
 from app.orchestrator.classroom import GameOrchestrator
 from app.services.ai_students import fallback_turn
 from app.tutor.prompts import compile_program

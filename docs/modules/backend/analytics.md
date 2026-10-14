@@ -9,7 +9,7 @@
 - 可依賴的模組：platform、classroom_core、group_dialogue
 
 檔案範圍：
-- `backend/app/domain/group_analysis.py`
+- `backend/app/modules/analytics/`
 
 契約：
 - —

@@ -443,6 +443,8 @@ from app.api.routes.ai_students import router as _ai_students_router  # noqa: E4
 router.include_router(_ai_students_router)
 
 # PORTAL-R97-PROVIDER-PROFILES
-from app.api.routes.provider_profiles import router as _provider_profiles_router  # noqa: E402
+from app.modules.ai_providers.api.routes.provider_profiles import (  # noqa: E402
+    router as _provider_profiles_router,
+)
 
 router.include_router(_provider_profiles_router)

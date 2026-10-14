@@ -3,7 +3,7 @@ import time
 import pytest
 
 from app.tutor.classroom_gateway import validate_base_url
-from app.api.routes.provider_profiles import (
+from app.modules.ai_providers.api.routes.provider_profiles import (
     AccountAISettings,
     ProviderProfile,
     SessionProviderSecret,
@@ -206,7 +206,7 @@ def test_local_allowlist_accepts_local_openai_compatible(monkeypatch):
 
 
 def test_derived_key_roundtrip_without_master_key():
-    from app.api.routes.provider_profiles import DERIVED_VERSION, _open, _seal
+    from app.modules.ai_providers.api.routes.provider_profiles import DERIVED_VERSION, _open, _seal
 
     payload, version = _seal("sk-test", profile_id="p1", owner_id="o1")
     assert version == DERIVED_VERSION

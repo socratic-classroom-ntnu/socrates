@@ -23,10 +23,10 @@
 - `orm-outside-repositories  backend/app/services/ai_students.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/classroom.py`
 - `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/groups.py`
-- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/api/routes/provider_profiles.py`
+- `route-imports-route  backend/app/api/routes/ai_students.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py`
 - `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom.py`
 - `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/classroom_library.py`
-- `route-imports-route  backend/app/api/routes/groups.py → backend/app/api/routes/provider_profiles.py`
+- `route-imports-route  backend/app/api/routes/groups.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 

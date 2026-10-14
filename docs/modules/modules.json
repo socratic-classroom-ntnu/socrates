@@ -58,7 +58,7 @@
       "status": "warn",
       "about": "使用者自備的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。",
       "paths": [
-        "backend/app/api/routes/provider_profiles.py"
+        "backend/app/modules/ai_providers/"
       ],
       "uses": [
         "platform",

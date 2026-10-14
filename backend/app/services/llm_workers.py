@@ -19,7 +19,7 @@ from app.tutor.prompts import compile_program
 from app.tutor.classroom_provider import ProviderWait
 from app.tutor.classroom_gateway import generate
 from app.modules.platform.classroom_env import env_int
-from app.api.routes.provider_profiles import (
+from app.modules.ai_providers.api.routes.provider_profiles import (
     public_binding,
     resolve_provider_chain,
 )

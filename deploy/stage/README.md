@@ -52,7 +52,7 @@ Flux 每個環境有獨立的 ImagePolicy，只追自己前綴的 tag（flux-k8s
 郵件 key 留在伺服器 `.env`／credential store，GitHub source 只收 `.env.example`。
 
 > **`DATABASE_URL` 一旦使用就不要改寫。** 教室擁有者存的 provider 憑證以 `DATABASE_URL`
-> 字串衍生的金鑰加密（`backend/app/api/routes/provider_profiles.py`）。改密碼、換主機別名、
+> 字串衍生的金鑰加密（`backend/app/modules/ai_providers/api/routes/provider_profiles.py`）。改密碼、換主機別名、
 > 改編碼或參數，即使指向同一個資料庫，既有憑證都會解不開（`PROVIDER_CREDENTIAL_DECRYPTION`，503），
 > 擁有者必須重新輸入。k8s Secret 裡的 `DATABASE_URL`（以及自架時 `deploy/stage/.env` 的值）
 > 換環境時也必須逐字相同。

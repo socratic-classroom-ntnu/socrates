@@ -280,7 +280,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.api.classroom_schemas import OtherSuggestionResult
     from app.tutor.classroom_provider import ProviderWait
     from app.tutor.classroom_gateway import generate
-    from app.api.routes.provider_profiles import resolve_request_chain
+    from app.modules.ai_providers.api.routes.provider_profiles import resolve_request_chain
 
     with transaction() as db:
         actor, session = account(db, request, True)

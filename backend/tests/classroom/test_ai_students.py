@@ -1,4 +1,4 @@
-from app.orchestrator.classroom import GameOrchestrator, fresh_state
+from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, fresh_state
 from app.api.routes.ai_students import fallback_other_suggestion
 from app.services.ai_students import (
     OTHER_ID,

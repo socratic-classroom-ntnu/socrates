@@ -5,9 +5,13 @@ import secrets
 import time
 from uuid import uuid4
 from sqlalchemy import func, select
-from app.api.classroom_schemas import MemberView, RoomView
-from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
-from app.orchestrator.classroom_policy import distribution
+from app.modules.classroom_core.api.classroom_schemas import MemberView, RoomView
+from app.modules.classroom_core.orchestrator.classroom import (
+    DomainError,
+    GameOrchestrator,
+    fresh_state,
+)
+from app.modules.classroom_core.orchestrator.classroom_policy import distribution
 from app.modules.platform.repositories.classroom_storage import (
     ActionReceipt,
     Membership,

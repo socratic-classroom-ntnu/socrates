@@ -10,9 +10,9 @@ from fastapi import APIRouter, Request, Response, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.modules.identity_access.services import classroom_auth as auth
-from app.services import classroom as service
+from app.modules.classroom_core.services import classroom as service
 from app.modules.platform.classroom_env import env_str
-from app.api.classroom_schemas import (
+from app.modules.classroom_core.api.classroom_schemas import (
     AccountView,
     Command,
     CreateRoom,
@@ -27,7 +27,7 @@ from app.api.classroom_schemas import (
     ScriptSave,
     TokenRequest,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Event,
     Membership,

@@ -7,8 +7,8 @@ Provider work runs after that transaction. An accepted answer is immutable.
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
-from app.api.classroom_schemas import ScriptDocument, Question
-from app.orchestrator.classroom_policy import (
+from app.modules.classroom_core.api.classroom_schemas import ScriptDocument, Question
+from app.modules.classroom_core.orchestrator.classroom_policy import (
     choose_representative,
     distribution,
     majority_context,

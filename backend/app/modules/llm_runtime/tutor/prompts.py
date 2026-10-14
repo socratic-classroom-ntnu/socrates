@@ -2,7 +2,12 @@
 
 import json
 from pathlib import Path
-from app.api.classroom_schemas import TutorTurn, SummaryResult, DynamicResult, LLMStudentTurn
+from app.modules.classroom_core.api.classroom_schemas import (
+    TutorTurn,
+    SummaryResult,
+    DynamicResult,
+    LLMStudentTurn,
+)
 from app.modules.platform.repositories.classroom_storage import Program, digest
 
 ROOT = Path(__file__).resolve().parents[4]

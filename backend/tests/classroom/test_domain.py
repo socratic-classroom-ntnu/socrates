@@ -1,8 +1,16 @@
 import random
 import pytest
-from app.api.classroom_schemas import ScriptDocument
-from app.orchestrator.classroom import GameOrchestrator, DomainError, fresh_state
-from app.orchestrator.classroom_policy import choose_representative, stage_goal, majority_context
+from app.modules.classroom_core.api.classroom_schemas import ScriptDocument
+from app.modules.classroom_core.orchestrator.classroom import (
+    GameOrchestrator,
+    DomainError,
+    fresh_state,
+)
+from app.modules.classroom_core.orchestrator.classroom_policy import (
+    choose_representative,
+    stage_goal,
+    majority_context,
+)
 
 DOC = {
     "title": "倫理教室",

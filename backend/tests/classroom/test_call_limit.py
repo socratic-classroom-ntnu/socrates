@@ -1,7 +1,7 @@
 import pytest
 
 from app.modules.llm_runtime.services import llm_workers as workers
-from app.api.classroom_schemas import ScriptDocument
+from app.modules.classroom_core.api.classroom_schemas import ScriptDocument
 from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.platform.repositories.classroom_storage import (
     Account,

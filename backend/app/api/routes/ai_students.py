@@ -58,7 +58,7 @@ def _receipt(db, room: Room, actor: Account, body: BaseModel, operation: str):
     )
     if prior:
         if prior.payload_hash != key_hash:
-            from app.orchestrator.classroom import DomainError
+            from app.modules.classroom_core.orchestrator.classroom import DomainError
 
             raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
         return key_hash, prior.receipt
@@ -86,7 +86,7 @@ def _persona(index: int, room_id: str) -> dict:
 
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.classroom_core.orchestrator.classroom import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.modules.platform.repositories.classroom_storage import append_event
 
@@ -198,7 +198,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.classroom_core.orchestrator.classroom import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
     from app.modules.platform.repositories.classroom_storage import append_event
 
@@ -275,9 +275,9 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 
 @router.post("/suggestions/other")
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
-    from app.services import classroom as service
-    from app.api.routes.classroom import account
-    from app.api.classroom_schemas import OtherSuggestionResult
+    from app.modules.classroom_core.services import classroom as service
+    from app.modules.classroom_core.api.routes.classroom import account
+    from app.modules.classroom_core.api.classroom_schemas import OtherSuggestionResult
     from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
     from app.modules.llm_runtime.tutor.classroom_gateway import generate
     from app.modules.ai_providers.api.routes.provider_profiles import resolve_request_chain

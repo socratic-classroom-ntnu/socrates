@@ -11,9 +11,9 @@ import pytest
 from starlette.requests import Request
 from sqlalchemy import select
 from app.modules.platform.repositories import classroom_storage as storage
-from app.services import classroom as service
+from app.modules.classroom_core.services import classroom as service
 from app.api.routes import groups as group
-from app.orchestrator.classroom import GameOrchestrator, DomainError
+from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, DomainError
 from app.domain.group_run import person_summary
 
 

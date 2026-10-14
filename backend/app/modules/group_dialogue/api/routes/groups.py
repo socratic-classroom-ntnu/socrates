@@ -25,7 +25,7 @@ from app.modules.classroom_core.orchestrator.classroom import (
     focus_notice,
     fresh_state,
 )
-from app.domain.group_run import initialise, person_summary
+from app.modules.group_dialogue.domain.group_run import initialise, person_summary
 from app.domain.group_analysis import analysis as project_analysis
 from app.modules.classroom_core.services import classroom as service
 from app.modules.content_authoring.domain.library_decisions import visible_evidence
@@ -222,7 +222,7 @@ def start(rid: str, body: Start, request: Request):
         script = db.scalar(select(Script).where(Script.id == room.script_id).with_for_update())
         if script is None or script.owner_id != a.id:
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
-        from app.services.ai_students import ensure_other_options
+        from app.modules.group_dialogue.services.ai_students import ensure_other_options
 
         document = ensure_other_options(script.document)
         snap = Snapshot(

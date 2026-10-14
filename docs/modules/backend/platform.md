@@ -18,7 +18,7 @@
 
 - `platform→ai_providers  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/ai_providers/api/routes/provider_profiles.py`
 - `platform→content_authoring  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/content_authoring/api/routes/classroom_library.py`
-- `platform→group_dialogue  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/services/ai_students.py`
+- `platform→group_dialogue  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/group_dialogue/services/ai_students.py`
 - `platform→identity_access  backend/app/modules/platform/repositories/classroom_storage.py → backend/app/modules/identity_access/services/email_delivery.py`
 
 ## 待清項（源頭修正，做完從這裡刪掉）

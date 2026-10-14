@@ -1,4 +1,4 @@
-from app.config import settings
+from app.modules.platform.config import settings
 from app.ladders.repository import LadderRepository
 
 

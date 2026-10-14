@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from app.config import settings
+from app.modules.platform.config import settings
 from app.domain.tutor import ProviderRequest
 from app.ladders.repository import LadderRepository
 from app.orchestrator.policy import should_advance

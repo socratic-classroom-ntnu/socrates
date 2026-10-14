@@ -8,7 +8,7 @@ import time
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Room,
     Membership,
     Script,

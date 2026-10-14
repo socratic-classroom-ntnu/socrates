@@ -1,6 +1,6 @@
 import app.main as main
 from app.api.deps import get_service
-from app.db import SessionLocal
+from app.modules.platform.db import SessionLocal
 from app.main import app
 from app.services.conversation import ConversationService
 from app.tutor.gateway import TutorGateway

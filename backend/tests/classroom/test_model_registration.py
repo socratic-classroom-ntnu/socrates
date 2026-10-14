@@ -20,7 +20,7 @@ def test_configure_registers_models_even_without_create():
     """
     result = _run(
         "from app.api.routes.classroom_library import ClassroomAssets  # noqa: F401\n"
-        "from app.repositories import classroom_storage as storage\n"
+        "from app.modules.platform.repositories import classroom_storage as storage\n"
         "storage.configure('sqlite://')\n"
         "storage.Base.metadata.sorted_tables\n"
         "print('ok')\n"
@@ -32,7 +32,7 @@ def test_configure_registers_models_even_without_create():
 def test_register_models_is_callable_on_its_own():
     """It must resolve the metadata on its own, without an engine or a configure() call."""
     result = _run(
-        "from app.repositories import classroom_storage as storage\n"
+        "from app.modules.platform.repositories import classroom_storage as storage\n"
         "storage.register_models()\n"
         "storage.Base.metadata.sorted_tables\n"
         "print('ok')\n"

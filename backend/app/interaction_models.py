@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db import Base
+from app.modules.platform.db import Base
 
 
 def _now() -> datetime:

@@ -22,7 +22,7 @@ from sqlalchemy import select
 from app.services.classroom_auth import COOKIE, HASHER
 from app.api.classroom_schemas import Command, JoinRoom, ScriptDocument
 from app.services import classroom as service
-from app.repositories import classroom_storage as storage
+from app.modules.platform.repositories import classroom_storage as storage
 
 DOC=ScriptDocument.model_validate({'title':'教室 2×60 同步驗收','questions':[{'id':'q1','title':'共同抉擇','scenario':'你會優先保護哪一種價值？','duration_seconds':60,'max_focus_turns':1,'focus_response_seconds':5,'options':[{'id':'a','text':'結果'},{'id':'b','text':'責任'},{'id':'c','text':'關係'}]}],'live_llm_call_budget':0}).model_dump()
 

@@ -7,6 +7,7 @@
 
 - `docs/superpowers/specs/2026-09-19-socratic-tutor-design.md` §4（教學設計決策）
 - 同檔 §5.1（Orchestrator／TutorGateway 的分界線）
+- `docs/modules/README.md`（後端模組地圖：每個模組一個目錄 `backend/app/modules/<id>/`，新檔案放進所屬模組，跨模組只能 import `uses` 列出的模組；`scripts/check_modules.py` 在 CI 與 pre-push 都會跑）
 
 ## 不可妥協條款
 

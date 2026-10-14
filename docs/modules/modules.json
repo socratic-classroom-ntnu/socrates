@@ -1,0 +1,222 @@
+{
+  "schema": "socrates/module-map/v4",
+  "note": "後端模組地圖：每個模組一個目錄 backend/app/modules/<id>/（搬移期間列出尚未搬入的原路徑），每個原始碼檔屬於一個模組，跨模組 import 只走 uses。檢查：scripts/check_modules.py；待清違規：docs/modules/violations.json（只能變短）。",
+  "owners": {
+    "architecture": "Arthur",
+    "backend_worker": "Arthur",
+    "frontend": "前端組員",
+    "visual": "設計"
+  },
+  "backend": [
+    {
+      "id": "app_shell",
+      "name": "App Shell",
+      "status": "ok",
+      "about": "組裝層：建立 FastAPI app、掛上各模組的 router、啟動背景工作。只做接線，不放業務流程。",
+      "paths": [
+        "backend/app/main.py",
+        "backend/app/classroom_app.py",
+        "backend/app/classroom_server.py"
+      ],
+      "uses": [
+        "*"
+      ],
+      "todo": []
+    },
+    {
+      "id": "platform",
+      "name": "Platform",
+      "status": "warn",
+      "about": "資料庫連線、設定、環境變數、交易邊界、即時事件匯流排與公開設定端點；不依賴任何業務模組。",
+      "paths": [
+        "backend/app/modules/platform/"
+      ],
+      "uses": [],
+      "todo": [
+        "repositories/classroom_storage.py 為了建表與清理而延遲 import 業務模組（classroom_library、provider_profiles、ai_students、email_delivery）：各模組的 ORM 歸位後刪掉這段。"
+      ]
+    },
+    {
+      "id": "identity_access",
+      "name": "Identity & Access",
+      "status": "warn",
+      "about": "帳號、登入、Email 驗證、重設密碼與寄信。",
+      "paths": [
+        "backend/app/services/classroom_auth.py",
+        "backend/app/services/email_delivery.py"
+      ],
+      "uses": [
+        "platform"
+      ],
+      "todo": [
+        "/auth/* 端點目前寫在 classroom_core 的 routes/classroom.py：抽到本模組的 api/routes/auth.py。",
+        "services/email_delivery.py 定義 ORM：移到本模組 repositories/。"
+      ]
+    },
+    {
+      "id": "ai_providers",
+      "name": "AI Providers",
+      "status": "warn",
+      "about": "使用者自備的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。",
+      "paths": [
+        "backend/app/api/routes/provider_profiles.py"
+      ],
+      "uses": [
+        "platform",
+        "identity_access"
+      ],
+      "todo": [
+        "api/routes/provider_profiles.py 866 行：ORM、金鑰加解密、路由鏈、稽核都在 route 檔，拆成 repositories／services／route。"
+      ]
+    },
+    {
+      "id": "llm_runtime",
+      "name": "LLM Runtime",
+      "status": "warn",
+      "about": "呼叫模型：prompt 組裝、各家 adapter、單人對話的導師介面、背景工作佇列。",
+      "paths": [
+        "backend/app/tutor/",
+        "backend/app/services/llm_workers.py",
+        "backend/app/domain/tutor.py"
+      ],
+      "uses": [
+        "platform",
+        "ai_providers"
+      ],
+      "todo": [
+        "services/llm_workers.py 直接 import ai_providers 的 route 檔：拆出 service 後改引用 service。"
+      ]
+    },
+    {
+      "id": "content_authoring",
+      "name": "Content Authoring",
+      "status": "ok",
+      "about": "課程、題本與教材：課程資產、題本附掛、場次建立、單人對話的階梯（ladder）。",
+      "paths": [
+        "backend/app/api/routes/classroom_library.py",
+        "backend/app/domain/library_decisions.py",
+        "backend/app/domain/ladder.py",
+        "backend/app/ladders/"
+      ],
+      "uses": [
+        "platform",
+        "identity_access",
+        "ai_providers",
+        "llm_runtime"
+      ],
+      "todo": []
+    },
+    {
+      "id": "classroom_core",
+      "name": "Classroom Core",
+      "status": "ok",
+      "about": "多人課堂的狀態機：大廳、倒數、作答、分佈、焦點討論、換題、總結。",
+      "paths": [
+        "backend/app/orchestrator/classroom.py",
+        "backend/app/orchestrator/classroom_policy.py",
+        "backend/app/services/classroom.py",
+        "backend/app/api/routes/classroom.py",
+        "backend/app/api/classroom_schemas.py",
+        "backend/app/domain/presence.py"
+      ],
+      "uses": [
+        "platform",
+        "identity_access",
+        "ai_providers",
+        "llm_runtime",
+        "content_authoring"
+      ],
+      "todo": []
+    },
+    {
+      "id": "group_dialogue",
+      "name": "Group Dialogue",
+      "status": "ok",
+      "about": "分組：分組設定、各組課堂、觀點確認與結算、AI 學生。",
+      "paths": [
+        "backend/app/domain/group_run.py",
+        "backend/app/api/routes/groups.py",
+        "backend/app/services/ai_students.py",
+        "backend/app/api/routes/ai_students.py"
+      ],
+      "uses": [
+        "platform",
+        "identity_access",
+        "ai_providers",
+        "llm_runtime",
+        "content_authoring",
+        "classroom_core"
+      ],
+      "todo": []
+    },
+    {
+      "id": "analytics",
+      "name": "Analytics",
+      "status": "ok",
+      "about": "教師分析：全班 → 組別 → 個人的觀點分佈與論點流向（純函式）。",
+      "paths": [
+        "backend/app/domain/group_analysis.py"
+      ],
+      "uses": [
+        "platform",
+        "classroom_core",
+        "group_dialogue"
+      ],
+      "todo": []
+    },
+    {
+      "id": "solo_dialogue",
+      "name": "Solo Dialogue",
+      "status": "ok",
+      "about": "單人對話：學生與導師一對一走完階梯，含逐字稿、歷史紀錄與總結。",
+      "paths": [
+        "backend/app/orchestrator/orchestrator.py",
+        "backend/app/orchestrator/policy.py",
+        "backend/app/services/conversation.py",
+        "backend/app/services/transcripts.py",
+        "backend/app/services/history.py",
+        "backend/app/services/room_view.py",
+        "backend/app/repositories/session_repository.py",
+        "backend/app/repositories/transcript_repository.py",
+        "backend/app/repositories/history_repository.py",
+        "backend/app/api/deps.py",
+        "backend/app/api/schemas.py",
+        "backend/app/api/transcript_schemas.py",
+        "backend/app/api/history_schemas.py",
+        "backend/app/api/room_schemas.py",
+        "backend/app/api/routes/sessions.py",
+        "backend/app/api/routes/messages.py",
+        "backend/app/api/routes/transcripts.py",
+        "backend/app/api/routes/summaries.py",
+        "backend/app/api/routes/history.py",
+        "backend/app/api/routes/room.py",
+        "backend/app/models.py",
+        "backend/app/interaction_models.py",
+        "backend/app/domain/types.py",
+        "backend/app/domain/session_state.py"
+      ],
+      "uses": [
+        "platform",
+        "llm_runtime",
+        "content_authoring"
+      ],
+      "todo": []
+    }
+  ],
+  "contracts": [
+    {
+      "name": "Classroom OpenAPI → 前端型別",
+      "backend": "classroom_core",
+      "consumer": "frontend/src/api/classroomTypes.ts",
+      "source": "scripts/gen_classroom_types.py → frontend/classroom-openapi.json",
+      "state": "產生"
+    },
+    {
+      "name": "單人對話 OpenAPI → 前端型別",
+      "backend": "solo_dialogue",
+      "consumer": "frontend/src/api/types.ts",
+      "source": "scripts/gen_types.sh",
+      "state": "產生"
+    }
+  ]
+}

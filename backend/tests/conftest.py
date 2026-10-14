@@ -53,11 +53,11 @@ _ensure_test_database(_TEST_URL)
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session as OrmSession  # noqa: E402
 
-from app.api.deps import get_db  # noqa: E402
-from app.api.deps import get_service  # noqa: E402
+from app.modules.solo_dialogue.api.deps import get_db  # noqa: E402
+from app.modules.solo_dialogue.api.deps import get_service  # noqa: E402
 from app.modules.platform.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.services.conversation import ConversationService  # noqa: E402
+from app.modules.solo_dialogue.services.conversation import ConversationService  # noqa: E402
 from app.modules.llm_runtime.tutor.gateway import TutorGateway  # noqa: E402
 
 

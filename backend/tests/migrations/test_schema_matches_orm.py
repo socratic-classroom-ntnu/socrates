@@ -21,7 +21,7 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, text
 
-from app import interaction_models, models  # noqa: F401
+from app.modules.solo_dialogue import interaction_models, models  # noqa: F401
 from app.modules.platform.db import Base as RoundOneBase
 from app.modules.platform.repositories import classroom_storage as storage
 

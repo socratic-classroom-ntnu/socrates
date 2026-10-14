@@ -1,6 +1,6 @@
 import itertools
 
-import app.orchestrator.policy as round1
+import app.modules.solo_dialogue.orchestrator.policy as round1
 from app.modules.llm_runtime.domain.tutor import Observations
 from app.modules.classroom_core.orchestrator import classroom_policy as classroom
 

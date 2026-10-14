@@ -2,7 +2,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from app.domain.types import PrincipleLabel
+from app.modules.solo_dialogue.domain.types import PrincipleLabel
 
 
 class Observations(BaseModel):

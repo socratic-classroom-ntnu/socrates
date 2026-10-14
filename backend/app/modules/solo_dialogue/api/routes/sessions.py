@@ -3,9 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_learner_id, get_service
-from app.api.schemas import CreateSessionRequest, SessionDetail, SessionView
-from app.services.conversation import ActiveSessionExists, ConversationService, Forbidden, NotFound
+from app.modules.solo_dialogue.api.deps import get_learner_id, get_service
+from app.modules.solo_dialogue.api.schemas import CreateSessionRequest, SessionDetail, SessionView
+from app.modules.solo_dialogue.services.conversation import (
+    ActiveSessionExists,
+    ConversationService,
+    Forbidden,
+    NotFound,
+)
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 

@@ -1,5 +1,5 @@
-from app.api.history_schemas import SessionHistoryPage
-from app.api.schemas import SummaryView
+from app.modules.solo_dialogue.api.history_schemas import SessionHistoryPage
+from app.modules.solo_dialogue.api.schemas import SummaryView
 
 
 def test_round1_summary_contract() -> None:

@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import and_, case, or_, select
 from sqlalchemy.orm import Session as OrmSession
 
-from app.models import Session, Summary
+from app.modules.solo_dialogue.models import Session, Summary
 
 
 @dataclass(frozen=True)

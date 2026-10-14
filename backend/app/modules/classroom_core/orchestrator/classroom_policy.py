@@ -3,7 +3,7 @@
 import random
 
 from app.modules.llm_runtime.domain.tutor import Observations as DomainObservations
-from app.orchestrator import policy as round1
+from app.modules.solo_dialogue.orchestrator import policy as round1
 
 from app.modules.classroom_core.api.classroom_schemas import Observations
 

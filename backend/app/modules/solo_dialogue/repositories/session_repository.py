@@ -5,9 +5,9 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session as OrmSession
 
-from app.domain.session_state import OutgoingMessage, SessionState, StageState
-from app.domain.types import EndReason
-from app.models import Learner, Message, Session, StageProgress
+from app.modules.solo_dialogue.domain.session_state import OutgoingMessage, SessionState, StageState
+from app.modules.solo_dialogue.domain.types import EndReason
+from app.modules.solo_dialogue.models import Learner, Message, Session, StageProgress
 
 
 class SessionRepository:

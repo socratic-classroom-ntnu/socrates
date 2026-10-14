@@ -1,7 +1,13 @@
 from dataclasses import dataclass
 
 from app.modules.llm_runtime.domain.tutor import Observations
-from app.domain.types import Action, FlowState, MessageRole, PrincipleLabel, StageStatus
+from app.modules.solo_dialogue.domain.types import (
+    Action,
+    FlowState,
+    MessageRole,
+    PrincipleLabel,
+    StageStatus,
+)
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from app.repositories.history_repository import decode_cursor, encode_cursor
+from app.modules.solo_dialogue.repositories.history_repository import decode_cursor, encode_cursor
 
 
 def test_cursor_round_trip() -> None:

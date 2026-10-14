@@ -2,7 +2,7 @@
 
 import re
 
-from app import interaction_models, models  # noqa: F401
+from app.modules.solo_dialogue import interaction_models, models  # noqa: F401
 from app.modules.platform.db import Base as RoundOneBase
 from app.modules.platform.repositories import classroom_storage as storage
 

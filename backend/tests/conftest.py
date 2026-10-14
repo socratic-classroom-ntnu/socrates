@@ -1,6 +1,6 @@
 """測試專用的資料庫隔離。
 
-**這個區塊必須留在所有 `app.*` import 之前。** `app/db.py` 的 engine 是在 import
+**這個區塊必須留在所有 `app.*` import 之前。** `app/modules/platform/db.py` 的 engine 是在 import
 時就建立的，所以只有在那之前改寫 `DATABASE_URL`，測試才會連到自己的資料庫。
 
 沒有這層隔離時，`_create_schema` 的 `drop_all` 會把開發用資料庫的表整個刪掉，
@@ -55,7 +55,7 @@ from sqlalchemy.orm import Session as OrmSession  # noqa: E402
 
 from app.api.deps import get_db  # noqa: E402
 from app.api.deps import get_service  # noqa: E402
-from app.db import Base, SessionLocal, engine  # noqa: E402
+from app.modules.platform.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services.conversation import ConversationService  # noqa: E402
 from app.tutor.gateway import TutorGateway  # noqa: E402

@@ -12,7 +12,7 @@ import os
 import time
 from contextlib import contextmanager
 from uuid import uuid4
-from app.classroom_env import env_str
+from app.modules.platform.classroom_env import env_str
 from sqlalchemy import (
     ForeignKey,
     JSON,

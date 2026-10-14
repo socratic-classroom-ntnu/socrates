@@ -13,7 +13,7 @@ from app.api.routes.provider_profiles import (
     profile_secret,
     resolve_provider_chain,
 )
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Account,
     LoginSession,
     Room,

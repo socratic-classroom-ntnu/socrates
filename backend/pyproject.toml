@@ -19,7 +19,7 @@ module = [
     "app.api.routes.classroom",
     "app.api.routes.groups",
     "app.api.routes.ai_students",
-    "app.api.routes.public_config",
+    "app.modules.platform.api.routes.public_config",
     "app.api.routes.provider_profiles",
     "app.api.routes.classroom_library",
     "app.api.classroom_schemas",
@@ -28,7 +28,7 @@ module = [
     "app.domain.group_run",
     "app.domain.group_analysis",
     "app.domain.library_decisions",
-    "app.repositories.classroom_storage",
+    "app.modules.platform.repositories.classroom_storage",
     "app.services.classroom",
     "app.services.llm_workers",
     "app.services.email_delivery",
@@ -38,7 +38,7 @@ module = [
     "app.tutor.classroom_gateway",
     "app.tutor.prompts",
     "app.classroom_app",
-    "app.realtime",
+    "app.modules.platform.realtime",
     "app.classroom_server",
 ]
 follow_imports = "skip"

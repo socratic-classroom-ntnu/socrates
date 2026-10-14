@@ -9,7 +9,7 @@ allowed='socrates/run2-release/v1|socrates-run2-release-'
 
 # 只在特定檔案放行的字串（檔案:字串正則）。舊名 fallback 移除時，刪掉對應的列。
 file_allowed='
-backend/app/classroom_env.py:RUN2_|PORTAL_AI_
+backend/app/modules/platform/classroom_env.py:RUN2_|PORTAL_AI_
 backend/tests/classroom/test_env_fallback.py:RUN2_|PORTAL_AI_
 deploy/stage/compose.yml:RUN2_
 deploy/local/compose.yml:RUN2_

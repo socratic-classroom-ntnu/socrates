@@ -28,7 +28,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.orchestrator.classroom import DomainError
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Account,
     Base,
     LoginSession,

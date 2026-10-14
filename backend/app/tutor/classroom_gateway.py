@@ -13,7 +13,7 @@ import httpx
 
 from app.orchestrator.classroom import DomainError
 from app.tutor.classroom_provider import ProviderWait
-from app.classroom_env import env_int
+from app.modules.platform.classroom_env import env_int
 
 KNOWN_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",

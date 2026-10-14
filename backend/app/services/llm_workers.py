@@ -16,14 +16,14 @@ from app.services.ai_students import fallback_turn
 from app.tutor.prompts import compile_program
 from app.tutor.classroom_provider import ProviderWait
 from app.tutor.classroom_gateway import generate
-from app.classroom_env import env_int
+from app.modules.platform.classroom_env import env_int
 from app.api.routes.provider_profiles import (
     public_binding,
     resolve_provider_chain,
 )
-from app.realtime import BUS
+from app.modules.platform.realtime import BUS
 from app.services.classroom import hydrate, tick_due
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Budget,
     CallAudit,
     Job,

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.services import classroom_auth as auth
 from app.services import classroom as service
-from app.classroom_env import env_str
+from app.modules.platform.classroom_env import env_str
 from app.api.classroom_schemas import (
     AccountView,
     Command,
@@ -28,8 +28,14 @@ from app.api.classroom_schemas import (
     TokenRequest,
 )
 from app.orchestrator.classroom import DomainError
-from app.repositories.classroom_storage import Event, Membership, Room, Script, transaction
-from app.realtime import BUS
+from app.modules.platform.repositories.classroom_storage import (
+    Event,
+    Membership,
+    Room,
+    Script,
+    transaction,
+)
+from app.modules.platform.realtime import BUS
 
 router = APIRouter(prefix="/api/v2")
 
@@ -325,7 +331,7 @@ def adjust_budget(room_id: str, request: Request, live_llm_call_budget: int):
             raise DomainError("STARTED_CLASSROOM_REQUIRED")
         state["script"]["live_llm_call_budget"] = live_llm_call_budget
         room.state = state
-        from app.repositories.classroom_storage import Job, append_event
+        from app.modules.platform.repositories.classroom_storage import Job, append_event
 
         for j in db.scalars(select(Job).where(Job.room_id == room.id, Job.state == "PENDING")):
             j.next_at = time.time()
@@ -426,7 +432,7 @@ router.include_router(_groups_router)
 
 # PORTAL-R73-CLASSROOM-LIBRARY
 from app.api.routes.classroom_library import router as _classroom_library_router  # noqa: E402
-from app.api.routes.public_config import router as _public_config_router  # noqa: E402
+from app.modules.platform.api.routes.public_config import router as _public_config_router  # noqa: E402
 
 router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)

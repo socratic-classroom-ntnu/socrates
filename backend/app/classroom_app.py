@@ -7,10 +7,10 @@ from fastapi.responses import JSONResponse
 from app.tutor import prompts
 from app.api.routes.classroom import router
 from app.orchestrator.classroom import DomainError
-from app.realtime import BUS
-from app.repositories.classroom_storage import engine
+from app.modules.platform.realtime import BUS
+from app.modules.platform.repositories.classroom_storage import engine
 from app.services.llm_workers import clock_loop, llm_loop, mail_loop
-from app.classroom_env import env_int
+from app.modules.platform.classroom_env import env_int
 
 
 @asynccontextmanager

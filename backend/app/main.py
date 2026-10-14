@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.api.routes import history, messages, room, sessions, summaries, transcripts
 from app.api.schemas import ReleaseView
-from app.config import settings
+from app.modules.platform.config import settings
 from app.ladders.repository import LadderRepository
 
 ladder_repository = LadderRepository.load(settings.ladder_path)

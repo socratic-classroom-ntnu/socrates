@@ -2,7 +2,7 @@
 
 import pytest
 
-from app import classroom_env
+from app.modules.platform import classroom_env
 
 
 @pytest.mark.parametrize(

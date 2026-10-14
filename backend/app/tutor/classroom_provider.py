@@ -7,7 +7,7 @@ import time
 from typing import Any
 from uuid import uuid4
 import httpx
-from app.classroom_env import env_int, env_str
+from app.modules.platform.classroom_env import env_int, env_str
 
 
 class ProviderWait(RuntimeError):

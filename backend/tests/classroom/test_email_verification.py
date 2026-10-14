@@ -16,7 +16,7 @@ from app.services.email_delivery import (
     send_mail_once,
 )
 from app.orchestrator.classroom import DomainError
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Account,
     EmailToken,
     LoginSession,

@@ -17,7 +17,7 @@ jest.mock('./runtime/packPresenter.mjs', () => ({ PackPresenter: class {
   dispose() { mockDispose(); return Promise.resolve() }
 } }))
 jest.mock('../../api/classroomClient', () => ({ getPublicConfig: async () => ({ debug_mode: true }) }))
-jest.mock('../../api/avatarCatalog', () => ({ loadAvatarCatalog: jest.fn() }))
+jest.mock('../../api/avatarCatalog', () => ({ ...jest.requireActual('../../api/avatarCatalog'), loadAvatarCatalog: jest.fn() }))
 jest.mock('./recordedDialogue', () => ({ ...jest.requireActual('./recordedDialogue'), playRecordedDialogue: jest.fn() }))
 
 let complete: () => void
@@ -149,6 +149,26 @@ test('CE selection and the debug menu require explicit product permission', asyn
   await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'unspecified'))
   fireEvent.click(screen.getByText('人像選擇（開發）'))
   expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Unspecified license', 'Fixture', 'Second fixture'])
+})
+
+test('Socratic runtime lists the same eligible packs and never substitutes a saved incompatible model', async () => {
+  const ceOnly = { id: 'ce-only', name: 'CE only', products: ['ce'], model_sha256: 'c'.repeat(64) }
+  const unspecified = { id: 'unspecified', name: 'Unspecified license', model_sha256: 'd'.repeat(64) }
+  const empty = { id: 'empty', name: 'No products', products: [], model_sha256: 'e'.repeat(64) }
+  jest.mocked(loadAvatarCatalog).mockResolvedValue([ceOnly, ...fixturePacks, unspecified, empty])
+  window.localStorage.setItem('avatar-pack:socratic', 'second')
+  const view = render(<TutorAvatar product="socratic" packId="ce-only" />)
+  expect(await screen.findByText(/設定的人像「ce-only」不適用於 Socratic 或已不在模型清單/)).toBeInTheDocument()
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'none')
+  expect(mockLoadModel).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Fixture', 'Second fixture', 'Unspecified license'])
+
+  view.rerender(<TutorAvatar product="socratic" packId="second" />)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'second')
+  expect(mockLoadModel.mock.calls.map(([pack]) => pack.id)).toEqual(['second'])
+  expect(screen.queryByText(/設定的人像「ce-only」/)).not.toBeInTheDocument()
 })
 
 test('a failed catalog can be reloaded into a usable model', async () => {

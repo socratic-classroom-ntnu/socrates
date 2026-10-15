@@ -5,7 +5,7 @@
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
-- 端：前端；default owner：Portal-Heron；視覺：Design-Goose
+- 端：前端；default owner：前端開發團隊；視覺：視覺設計團隊
 - 可依賴的模組：platform、media、auth、ai-settings、group-dialogue、teacher-analytics
 - Figma：Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡
 

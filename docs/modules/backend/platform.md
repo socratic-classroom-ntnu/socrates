@@ -42,7 +42,7 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
 
-- 端：後端；default owner：Portal-Goose
+- 端：後端；default owner：後端開發團隊
 - 可依賴的模組：不依賴其他模組
 
 檔案範圍：

@@ -6,7 +6,7 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
-- 端：前端；default owner：Portal-Heron；視覺：Design-Goose
+- 端：前端；default owner：前端開發團隊；視覺：視覺設計團隊
 - 可依賴的模組：platform
 - Figma：Figma:Project/Socratic.Socratic · Frontend.07 Media Adapters.模組卡
 
@@ -19,7 +19,7 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 - `frontend/src/types/talkinghead.d.ts`
 
 契約：
-- TTS（文字→音訊＋字時間點）（等契約（已寄 Portal-Goose））
+- TTS（文字→音訊＋字時間點）（等後端契約）
 - 人像模型清單（/avatar-packs/catalog.json）（✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
@@ -28,9 +28,9 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- TTS／STT 後端契約（Portal-Goose）：TTS 回音訊＋字的時間點，人像改用音訊時間軸。
+- TTS／STT 後端契約（後端開發團隊）：TTS 回音訊＋字的時間點，人像改用音訊時間軸。
 - TalkingHead 已不再使用：移除 types/talkinghead.d.ts、@met4citizen/talkinghead 依賴、public/avatars/ce-brunette 與 build 時下載（deploy/stage 由 Platform owner 審）。
-- 學生端每個輸入框都要有按住說話（PO-Heron c30r2-G6）。
+- 學生端每個輸入框都要有按住說話。
 - 人像授權小字與狀態膠囊重疊；手機 debug 選單蓋到標題。
 <!-- module-map:end -->
 
@@ -71,7 +71,7 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 <!-- module-map:begin -->
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
-- 端：前端；default owner：Portal-Heron；視覺：Design-Goose
+- 端：前端；default owner：前端開發團隊；視覺：視覺設計團隊
 - 可依賴的模組：platform
 - Figma：Figma:Project/Socratic.Socratic · Frontend.07 Media Adapters.模組卡
 
@@ -93,8 +93,8 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- TTS／STT 後端契約（Portal-Goose）：TTS 回音訊＋字的時間點，人像改用音訊時間軸。
+- TTS／STT 後端契約（後端開發團隊）：TTS 回音訊＋字的時間點，人像改用音訊時間軸。
 - TalkingHead 已不再使用：移除 types/talkinghead.d.ts、@met4citizen/talkinghead 依賴、public/avatars/ce-brunette 與 build 時下載（deploy/stage 由 Platform owner 審）。
-- 學生端每個輸入框都要有按住說話（PO-Heron c30r2-G6）。
+- 學生端每個輸入框都要有按住說話。
 - 人像授權小字與狀態膠囊重疊；手機 debug 選單蓋到標題。
 <!-- module-map:end -->

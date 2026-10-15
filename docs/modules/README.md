@@ -21,7 +21,7 @@
 
 ✅＝可以直接交給一個人；⚠️＝能交，先清待清違規；❌＝先做源頭修正再交。
 
-**後端模組**（default owner：Portal-Goose）
+**後端模組**（default owner：後端開發團隊）
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
@@ -36,7 +36,7 @@
 | [Analytics](./backend/analytics.md) | ✅ | `backend/app/domain/group_analysis.py`<br>`backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
 | [Solo Dialogue（單人對話）](./backend/solo-dialogue.md) | ✅ | `backend/app/orchestrator/orchestrator.py`<br>`backend/app/orchestrator/policy.py`<br>`backend/app/services/conversation.py`<br>`backend/app/services/transcripts.py`<br>`backend/app/services/history.py`<br>`backend/app/repositories/session_repository.py`<br>`backend/app/repositories/transcript_repository.py`<br>`backend/app/repositories/history_repository.py`<br>`backend/app/api/schemas.py`<br>`backend/app/api/transcript_schemas.py`<br>`backend/app/api/history_schemas.py`<br>`backend/app/models.py`<br>`backend/app/domain/types.py`<br>`backend/app/domain/session_state.py`<br>`backend/app/interaction_models.py`<br>`backend/app/services/room_view.py`<br>`backend/app/api/room_schemas.py`<br>`backend/app/modules/solo_dialogue/`<br>`backend/app/domain/tutor.py`<br>`backend/app/tutor/gateway.py`<br>`backend/app/tutor/provider.py`<br>`backend/app/tutor/scripted.py` | platform、llm-runtime、content-authoring | 0 |
 
-**前端模組**（default owner：Portal-Heron）
+**前端模組**（default owner：前端開發團隊）
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
@@ -49,7 +49,7 @@
 | [Authoring](./frontend/authoring.md) | ✅ | `frontend/src/features/authoring/`<br>`frontend/src/features/script-builder/`<br>`frontend/src/features/question-bank/` | platform、ai-settings、teacher-analytics | 0 |
 | [Group Dialogue](./frontend/group-dialogue.md) | ⚠️ | `frontend/src/features/group-dialogue/`<br>`frontend/src/features/personal-dialogue/`<br>`frontend/src/features/classroom-stage/` | platform、media、ai-settings、teacher-analytics | 0 |
 | [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics | 0 |
-| [Round 1](./frontend/round1.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media | 0 |
+| [單人對話](./frontend/solo-dialogue.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media | 0 |
 
 **契約（兩端唯一的接縫）**
 

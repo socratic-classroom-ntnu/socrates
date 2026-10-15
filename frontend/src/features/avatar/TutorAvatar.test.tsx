@@ -4,6 +4,7 @@ import { TutorAvatar } from './TutorAvatar'
 import { playRecordedDialogue } from './recordedDialogue'
 import { loadAvatarCatalog, type AvatarPack } from '../../api/avatarCatalog'
 import { planSpeech } from './speech'
+import { GroupAvatar } from '../classroom-stage/GroupAvatar'
 
 // Isolate WebGL/recorded audio; the real component and classroom speech lifecycle run.
 jest.mock('./runtime/packPresenter.mjs', () => ({ PackPresenter: class {
@@ -49,6 +50,19 @@ async function recording() {
   fireEvent.click(screen.getByRole('button', { name: '重播既有錄音對話' }))
   expect(screen.getByRole('status')).toHaveTextContent('loading')
 }
+
+test.each([false, true])('group stickman ignores remembered/catalog choices (catalog failure: %s)', async failed => {
+  window.localStorage.setItem('avatar-pack:socratic', 'second')
+  if (failed) jest.mocked(loadAvatarCatalog).mockRejectedValue(Error('CATALOG_UNAVAILABLE'))
+  render(<GroupAvatar packId="stickman" />)
+  expect(await screen.findByRole('img', { name: '基本教室角色' })).toBeInTheDocument()
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-avatar-id', 'stickman')
+  expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready')
+  expect(loadAvatarCatalog).not.toHaveBeenCalled()
+  expect(mockLoadModel).not.toHaveBeenCalled()
+  expect(screen.queryByText('人像選擇（開發）')).not.toBeInTheDocument()
+  expect(window.localStorage.getItem('avatar-pack:socratic')).toBe('second')
+})
 
 test('a new tutor line waits for model loading before it starts speaking', async () => {
   let loaded: () => void

@@ -53,6 +53,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   const recording = useRef<AbortController | null>(null)
   const [replayState, setReplayState] = useState('idle')
   const storeKey = `avatar-pack:${product}`
+  const builtIn = packId === 'stickman'
   const selectionMatches = selection?.product === product && selection.requestedId === (packId ?? null) && selection.reload === reload
   const modelReady = status === 'ready' && selectionMatches && loadedSelection.current === selection
 
@@ -78,10 +79,14 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     setUnavailablePack(null)
     loadedSelection.current = null
     setStatus('loading')
+    if (builtIn) {
+      setStatus('fallback')
+      return () => abort.abort()
+    }
     loadAvatarCatalog(abort.signal).then(list => {
       if (abort.signal.aborted) return
       setPacks(list)
-      // 教室明確指定的模型不可被偏好或第一個模型取代；stickman 由 GroupAvatar 轉成未指定。
+      // 教室明確指定的模型不可被偏好或第一個模型取代。
       if (product === 'socratic' && packId && !list.some(p => p.id === packId && permitsProduct(p, product))) {
         setUnavailablePack(packId)
         setStatus('fallback')
@@ -138,10 +143,11 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   }, [say?.id, say?.text, voice, lang, replayState, status, selection, product, packId])
 
   const shown: AvatarState = talking ? 'speaking' : state
-  return <section className="tutor-avatar" data-testid="avatar-stage" data-avatar-id={pack?.id ?? 'none'} data-avatar-state={shown} data-render-status={status} aria-label={`${label}人像`}>
+  return <section className="tutor-avatar" data-testid="avatar-stage" data-avatar-id={builtIn ? 'stickman' : pack?.id ?? 'none'} data-avatar-state={shown} data-render-status={builtIn ? 'ready' : status} aria-label={`${label}人像`}>
     <div className="tutor-avatar-canvas" ref={host}/>
+    {status === 'fallback' && <svg viewBox="0 0 200 240" aria-label="基本教室角色" role="img" style={{ position: 'absolute', inset: 20, height: 280, width: '100%' }}><circle cx="100" cy="55" r="25" fill="none" stroke="currentColor" strokeWidth="6"/><path d="M100 80V155 M50 117L100 98L150 117 M100 155L65 210 M100 155L135 210" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round"/></svg>}
     {status === 'loading' && <p className="tutor-avatar-message">導師正在入座…</p>}
-    {status === 'fallback' && <div className="tutor-avatar-message"><p>{unavailablePack ? `設定的人像「${unavailablePack}」不適用於 Socratic 或已不在模型清單，請老師在教室角色重新選擇；對話照常進行。` : '人像暫時無法載入，對話照常進行。'}</p><button type="button" onClick={() => setReload(value => value + 1)}>重新載入人像</button></div>}
+    {status === 'fallback' && !builtIn && <div className="tutor-avatar-message"><p>{unavailablePack ? `設定的人像「${unavailablePack}」不適用於 Socratic 或已不在模型清單，請老師在教室角色重新選擇；對話照常進行。` : '人像暫時無法載入，對話照常進行。'}</p><button type="button" onClick={() => setReload(value => value + 1)}>重新載入人像</button></div>}
     <div className="tutor-avatar-caption">
       <span className={`tutor-avatar-presence ${shown}`} aria-hidden="true"/>
       <div><strong>{label}</strong><span aria-live="polite">{STATE_LABEL[shown]}</span></div>

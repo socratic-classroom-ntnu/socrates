@@ -174,6 +174,7 @@ function GroupCollection({ view, refresh }) {
         : catalogStatus === 'loading' ? '正在確認已選教室角色，請稍候。'
             : catalogStatus === 'error' ? '無法確認教室角色，請重新整理模型清單，或選擇 Stickman · 教室基本角色後儲存。'
                 : `教室角色「${pack}」不適用於 Socratic 或已不在模型清單，請重新選擇可用角色並儲存分組。`;
+    const packChangeBlocked = !!packIssue && pack !== (view.configuration?.avatar_pack_id || 'stickman');
     // 「已儲存分組」＝目前畫面上的名單與分組，等於最後一次成功儲存（或後端已確認可開始時載入）的那一份。
     const localKey = JSON.stringify([view.roster_digest, count, size, pack, assignment]);
     const [savedKey, setSavedKey] = useState(() => (gate.can('start') ? localKey : null));
@@ -232,7 +233,7 @@ function GroupCollection({ view, refresh }) {
         }
     }
     async function configure() {
-        if (packIssue) return;
+        if (packChangeBlocked) return;
         if (await mutation.send(`/groups/classrooms/${view.id}/configure`, {
             expected_roster_digest: view.roster_digest, group_count: count, members_per_group: size, assignments: assignment, avatar_pack_id: pack
         })) {
@@ -242,7 +243,6 @@ function GroupCollection({ view, refresh }) {
     }
     // 「開始課堂」不能按時，直接說明原因。
     const startBlocked = mutation.busy ? '正在處理上一個操作，請稍候。'
-        : packIssue ? packIssue
         : !gate.can('start') && gate.reason('start') !== 'CURRENT_GROUP_CONFIGURATION_REQUIRED' ? gate.text('start')
             : !fit.enough ? '分組容量不足，請先調整組數或每組人數，再按「1. 儲存分組」。'
                 : !configured ? '請先按「1. 儲存分組」保存目前的名單與分組（名單或分組設定變更後要重新儲存）。' : '';
@@ -283,6 +283,7 @@ function GroupCollection({ view, refresh }) {
       </div><p role="status" aria-live="polite">目前 {fit.people} 人（含 AI）／容量 {count}×{size}＝{fit.capacity} 人</p>
       {!fit.enough && <div className="sc-row" role="alert"><p>{fit.people > fit.capacity ? `分組容量不足：還差 ${fit.people - fit.capacity} 個座位。請增加組數或每組人數，或按「自動調整組數」。` : `第 ${fit.overfull.join('、')} 組手動指定的學生超過每組人數，請改派組別或增加每組人數。`}{fit.people > fit.capacity && !fit.adjustable ? '每組人數太少，組數最多 40 組，請先增加每組人數。' : ''}</p>{fit.people > fit.capacity && fit.adjustable && <button type="button" className="quiet" onClick={() => setCount(fit.neededGroups)}>自動調整組數</button>}</div>}<details><summary>{aiEnabled ? 'AI 學生與教室角色（選用）' : '教室角色（選用）'}</summary><div className="sc-grid">{aiEnabled && <label>AI 學生數<input type="number" min={1} max={40} value={aiCount} onChange={e => setAICount(Math.max(1, Math.min(40, +e.target.value)))}/></label>}
       <label>教室角色<select value={pack} aria-invalid={!!packIssue} aria-describedby={packIssue ? 'group-avatar-reason' : undefined} onChange={e => setPack(e.target.value)}>{!packAvailable && <option value={pack} disabled>{pack}（不可用，請重新選擇）</option>}{catalog.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label></div>
+      {packIssue && <p id="group-avatar-reason" role={catalogStatus === 'loading' ? 'status' : 'alert'}>{packIssue}</p>}
       {aiEnabled && <><p>AI 學生可與真人共同討論；加入後一起安排分組。</p>
       <div className="sc-row ai-roster-controls"><button disabled={mutation.busy || aiAddBlocked} onClick={() => void addAI(aiCount)}>加入 AI 學生</button><button disabled={mutation.busy || aiAddBlocked || Math.max(0, count * size - (view.roster?.length || 0)) === 0} onClick={() => void addAI(Math.max(0, count * size - (view.roster?.length || 0)))}>補滿剩餘席位</button><button className="quiet" disabled={mutation.busy || !gate.can('clear_ai_students')} onClick={() => void clearAI()}>清除 AI 學生</button></div>
       <p>{(view.roster || []).length > 0 && (view.roster || []).every(m => m.actor_type === 'llm_student') ? '目前都是 AI 學生；開課後會自動進行討論。' : '真人與 AI 學生皆可加入同一組。'}</p>
@@ -291,8 +292,7 @@ function GroupCollection({ view, refresh }) {
       <div className="sc-script-grid">{(view.roster || []).map((m, i) => <article className="sc-card" key={m.id}><strong>{m.alias.startsWith('~pending-') ? `學生 ${i + 1}（暫時名稱）` : m.alias}{m.actor_type === 'llm_student' && <small className="ai-badge">AI</small>}</strong>
         <label>組別<select value={assignment[m.id] ?? m.group ?? -1} onChange={e => setAssignment({ ...assignment, [m.id]: +e.target.value })}><option value={-1} disabled>自動平均分組</option>{Array.from({ length: count }, (_, g) => <option key={g} value={g}>第 {g + 1} 組</option>)}</select></label></article>)}</div>
       <label className="group-check"><input type="checkbox" checked={acceptAlias} onChange={e => setAcceptAlias(e.target.checked)}/>開課時，待填暱稱使用「學生 N」。</label>
-      {packIssue && <p id="group-avatar-reason" role={catalogStatus === 'loading' ? 'status' : 'alert'}>{packIssue}</p>}
-      <div className="sc-row"><button disabled={mutation.busy || !!packIssue || !fit.enough || !gate.can('configure')} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (packIssue ? '請先確認教室角色，再儲存分組或開始課堂。' : configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
+      <div className="sc-row"><button disabled={mutation.busy || packChangeBlocked || !fit.enough || !gate.can('configure')} onClick={() => void configure()}>1. 儲存分組</button><button disabled={!!startBlocked} aria-describedby={startBlocked ? 'group-start-reason' : undefined} onClick={() => void start()}>2. 開始課堂 →</button></div>{startBlocked && <p id="group-start-reason" className="muted">無法開始課堂：{startBlocked}</p>}<p role="status">{mutation.note || (configured ? '分組已保存，可以開始課堂。' : ((view.roster || []).length ? '先按「儲存分組」，確認後即可開始課堂。' : '學生加入後即可儲存分組，也可展開上方選用設定加入 AI 學生。'))}</p>
     </section> : <><div className="sc-row"><button onClick={() => setAnalysis(!analysis)}>{analysis ? '返回組別' : '全班 → 組別 → 個人分析'}</button><button onClick={() => void batchNext()}>推進各組到下一步</button></div><p role="status">{batchNote}</p>
       {analysis ? <GroupAnalytics id={view.id}/> : <div className="sc-script-grid">{(view.groups || []).map(g => <a className="sc-card group-card" key={g.id} href={`/classrooms/${g.id}?mode=teacher`}><small>{phaseLabel(g.phase)}</small><h2>{g.label}</h2><GroupStance stance={g.stance}/><PersonalCounts progress={g.personal_progress}/><p>{g.acked} / {g.members} 人確認觀點</p><meter min={0} max={g.members} value={g.acked}/><p>{g.settlement === 'SETTLED' ? '全組已確認' : '等待全組確認觀點'}</p><span>進入本組 →</span></a>)}</div>}</>}
   </main>;

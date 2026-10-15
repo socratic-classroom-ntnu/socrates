@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getPublicConfig } from '../../api/classroomClient'
-import { loadAvatarCatalog, type AvatarPack } from '../../api/avatarCatalog'
+import { loadAvatarCatalog, permitsProduct, type AvatarPack } from '../../api/avatarCatalog'
 import { PackPresenter } from './runtime/packPresenter.mjs'
 import { LANGS, speak } from './speech'
 import { playRecordedDialogue, RECORDED_DIALOGUE } from './recordedDialogue'
@@ -22,9 +22,6 @@ const STATE_LABEL: Record<AvatarState, string> = {
 
 const read = (key: string) => { try { return window.localStorage.getItem(key) } catch { return null } }
 const write = (key: string, value: string) => { try { window.localStorage.setItem(key, value) } catch { /* 無痕或封鎖儲存時只在本次有效 */ } }
-
-const permitsProduct = (pack: AvatarPack, product: AvatarProduct) =>
-  product === 'ce' ? pack.products?.includes('ce') === true : !pack.products || pack.products.includes(product)
 
 /** 由 catalog 挑出這個產品可用的 pack；指定的 id 不可用時改用記住的選擇，再不行用第一個。 */
 export function choosePack(packs: AvatarPack[], product: AvatarProduct, wanted?: string | null, remembered?: string | null) {
@@ -48,6 +45,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   const loadedSelection = useRef<typeof selection>(null)
   const pack = selection?.pack ?? null
   const [status, setStatus] = useState<'loading' | 'ready' | 'fallback'>('loading')
+  const [unavailablePack, setUnavailablePack] = useState<string | null>(null)
   const [reload, setReload] = useState(0)
   const [talking, setTalking] = useState(false)
   const [voice, setVoice] = useState(() => read('avatar-voice') !== 'off')
@@ -77,11 +75,18 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     const abort = new AbortController()
     setPacks([])
     setSelection(null)
+    setUnavailablePack(null)
     loadedSelection.current = null
     setStatus('loading')
     loadAvatarCatalog(abort.signal).then(list => {
       if (abort.signal.aborted) return
       setPacks(list)
+      // 教室明確指定的模型不可被偏好或第一個模型取代；stickman 由 GroupAvatar 轉成未指定。
+      if (product === 'socratic' && packId && !list.some(p => p.id === packId && permitsProduct(p, product))) {
+        setUnavailablePack(packId)
+        setStatus('fallback')
+        return
+      }
       const chosen = choosePack(list, product, packId, read(storeKey))
       if (chosen) setSelection({ pack: chosen, product, requestedId: packId ?? null, reload })
       else setStatus('fallback')
@@ -136,7 +141,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
   return <section className="tutor-avatar" data-testid="avatar-stage" data-avatar-id={pack?.id ?? 'none'} data-avatar-state={shown} data-render-status={status} aria-label={`${label}人像`}>
     <div className="tutor-avatar-canvas" ref={host}/>
     {status === 'loading' && <p className="tutor-avatar-message">導師正在入座…</p>}
-    {status === 'fallback' && <div className="tutor-avatar-message"><p>人像暫時無法載入，對話照常進行。</p><button type="button" onClick={() => setReload(value => value + 1)}>重新載入人像</button></div>}
+    {status === 'fallback' && <div className="tutor-avatar-message"><p>{unavailablePack ? `設定的人像「${unavailablePack}」不適用於 Socratic 或已不在模型清單，請老師在教室角色重新選擇；對話照常進行。` : '人像暫時無法載入，對話照常進行。'}</p><button type="button" onClick={() => setReload(value => value + 1)}>重新載入人像</button></div>}
     <div className="tutor-avatar-caption">
       <span className={`tutor-avatar-presence ${shown}`} aria-hidden="true"/>
       <div><strong>{label}</strong><span aria-live="polite">{STATE_LABEL[shown]}</span></div>
@@ -145,7 +150,7 @@ export function TutorAvatar({ product, state = 'idle', say, packId, label = '蘇
     {pack?.license && <small className="tutor-avatar-license">人像：{pack.name} · {pack.license}</small>}
     {lab && packs.length > 0 && <details className="tutor-avatar-lab">
       <summary>人像選擇（開發）</summary>
-      <label>模型<select value={pack?.id ?? ''} onChange={e => { const next = choosePack(packs, product, e.target.value, null); if (next) { write(storeKey, next.id); setSelection({ pack: next, product, requestedId: packId ?? null, reload }) } }}>
+      <label>模型<select value={pack?.id ?? ''} onChange={e => { const next = choosePack(packs, product, e.target.value, null); if (next) { setUnavailablePack(null); write(storeKey, next.id); setSelection({ pack: next, product, requestedId: packId ?? null, reload }) } }}>
         {packs.filter(p => permitsProduct(p, product)).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
       </select></label>
       <p>id {pack?.id} · sha {pack?.model_sha256.slice(0, 12)}</p>

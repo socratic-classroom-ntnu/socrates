@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { GroupClassroomGate, groupCapacity } from './GroupClassroom'
 import { ApiError, api } from '../api/classroomClient'
 
@@ -47,6 +47,70 @@ function serve(view: () => Record<string, unknown>, handlers: Record<string, (bo
 }
 
 const Legacy = () => null
+
+describe('教室角色與 Socratic runtime 使用相同產品資格', () => {
+  const packs = [
+    { id: 'ce-only', name: 'CE only', products: ['ce'], model_sha256: 'a'.repeat(64) },
+    { id: 'socratic', name: 'Socratic tutor', products: ['socratic'], model_sha256: 'b'.repeat(64) },
+    { id: 'shared', name: 'Shared tutor', products: ['socratic', 'ce'], model_sha256: 'c'.repeat(64) },
+    { id: 'legacy', name: 'Legacy tutor', model_sha256: 'd'.repeat(64) },
+    { id: 'empty', name: 'No products', products: [], model_sha256: 'e'.repeat(64) },
+  ]
+  function catalog() {
+    jest.mocked(fetch).mockResolvedValue({
+      ok: true, headers: { get: () => 'application/json' }, json: async () => ({ packs }),
+    } as unknown as Response)
+  }
+
+  test.each(['socratic', 'shared', 'legacy', 'stickman'])('教師只可選可顯示的模型，並原樣保存 %s', async id => {
+    catalog()
+    serve(() => lobby())
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    await waitFor(() => expect(within(picker).getAllByRole('option', { hidden: true }).map(option => option.getAttribute('value')))
+      .toEqual(['stickman', 'socratic', 'shared', 'legacy']))
+    fireEvent.change(picker, { target: { value: id } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: id })
+  })
+
+  test.each(['ce-only', 'missing'])('舊存不適用的 %s 明示且不可保存或開課，明確改選後才能繼續', async id => {
+    catalog()
+    serve(() => lobby({ configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: id } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    expect(picker).toHaveValue(id)
+    expect(await screen.findByRole('alert')).toHaveTextContent(`教室角色「${id}」不適用於 Socratic 或已不在模型清單`)
+    expect(picker).toHaveValue(id)
+    expect(within(picker).getByRole('option', { name: `${id}（不可用，請重新選擇）`, hidden: true })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '1. 儲存分組' })).toBeDisabled()
+    const start = screen.getByRole('button', { name: '2. 開始課堂 →' })
+    expect(start).toBeDisabled()
+    expect(start).toHaveAccessibleDescription(/教室角色/)
+    fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' }))
+    fireEvent.click(start)
+    expect(posts()).toEqual([])
+
+    fireEvent.change(picker, { target: { value: 'shared' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(start).toBeDisabled()
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: 'shared' })
+    expect(start).toBeEnabled()
+  })
+
+  test('catalog 無法確認時保留舊值，教師仍可明確改選 stickman 預設角色', async () => {
+    serve(() => lobby({ configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: 'saved' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    expect(await screen.findByRole('alert')).toHaveTextContent('無法確認教室角色')
+    expect(picker).toHaveValue('saved')
+    expect(screen.getByRole('button', { name: '1. 儲存分組' })).toBeDisabled()
+    fireEvent.change(picker, { target: { value: 'stickman' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: 'stickman' })
+  })
+})
 
 test('a later action first re-sends the unconfirmed one with its original action_id, then saves the groups', async () => {
   let aiAttempts = 0

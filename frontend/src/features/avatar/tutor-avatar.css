@@ -2,6 +2,7 @@
 .tutor-avatar-canvas { position: absolute; inset: 0 0 64px; max-width: 680px; margin: 0 auto; }
 .tutor-avatar-canvas canvas { display: block; width: 100% !important; height: 100% !important; outline: 0; }
 .tutor-avatar-message { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); margin: 0; color: #c0accd; font-size: 13px; text-align: center; }
+.tutor-avatar-message button { pointer-events: auto; }
 .tutor-avatar-caption { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; border: 1px solid #d2b4d630; border-radius: 100px; background: #19151fcc; backdrop-filter: blur(18px); padding: 9px 12px 9px 20px; box-shadow: 0 10px 35px #0003; white-space: nowrap; color: #f4ecf6; pointer-events: auto; }
 .tutor-avatar-caption strong { display: block; font-weight: 500; font-size: 14px; letter-spacing: .055em; }
 .tutor-avatar-caption span[aria-live] { display: block; color: #c0accd; font-size: 11px; margin-top: 4px; }

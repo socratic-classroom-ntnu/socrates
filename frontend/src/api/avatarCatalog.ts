@@ -9,6 +9,10 @@ export type AvatarPack = {
   [key: string]: unknown
 }
 
+/** CE 必須明列產品資格；缺少 products 的既有 pack 只允許 Socratic。 */
+export const permitsProduct = (pack: AvatarPack, product: 'socratic' | 'ce') =>
+  product === 'ce' ? pack.products?.includes('ce') === true : !pack.products || pack.products.includes(product)
+
 export async function loadAvatarCatalog(signal?: AbortSignal): Promise<AvatarPack[]> {
   const response = await fetch('/avatar-packs/catalog.json', { signal, credentials: 'same-origin' })
   if (!response.ok || !(response.headers.get('content-type') || '').includes('json')) throw Error('AVATAR_CATALOG_UNAVAILABLE')

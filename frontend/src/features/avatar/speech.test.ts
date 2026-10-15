@@ -96,6 +96,41 @@ test('the first message waits for voices and then speaks with start and boundary
   expect(speaker.speakTimeline).toHaveBeenCalledTimes(1)
 })
 
+test.each([
+  { text: '🙂你好嗎', expected: [0, 0, 62, 272, 482], durationMs: 742 },
+  { text: '你🙂ab好🙂', expected: [0, 210, 210, 272, 334, 466, 676, 676], durationMs: 788 },
+])('UTF-16 boundaries align each code unit in $text without advancing past its code point', ({ text, expected, durationMs }) => {
+  const plan = planSpeech(text)
+  expect(plan.charAt).toEqual(expected)
+  expect(plan.charAt).toHaveLength(text.length)
+  expect(plan.durationMs).toBe(durationMs)
+  expect(plan.events[plan.events.length - 1]).toEqual({ viseme: 'sil', timeMs: durationMs - 50 })
+  voices = [voice]
+  const stop = speak(text, speaker)
+  const utterance = spoken[0]
+  fire(utterance, 'start')
+  for (let charIndex = 0; charIndex < text.length; charIndex++) {
+    fire(utterance, 'boundary', charIndex)
+    expect(speaker.alignSpeech).toHaveBeenNthCalledWith(charIndex + 1, expected[charIndex])
+  }
+  // End-of-text (and later) offsets retain the existing final-character clamp.
+  fire(utterance, 'boundary', text.length)
+  fire(utterance, 'boundary', text.length + 1)
+  expect(speaker.alignSpeech).toHaveBeenNthCalledWith(text.length + 1, expected[expected.length - 1])
+  expect(speaker.alignSpeech).toHaveBeenNthCalledWith(text.length + 2, expected[expected.length - 1])
+  expect(speaker.alignSpeech).toHaveBeenCalledTimes(text.length + 2)
+  stop()
+})
+
+test('empty speech safely ignores the zero end-of-text boundary', () => {
+  expect(planSpeech('').charAt).toEqual([])
+  voices = [voice]
+  const stop = speak('', speaker)
+  fire(spoken[0], 'boundary', 0)
+  expect(speaker.alignSpeech).not.toHaveBeenCalled()
+  stop()
+})
+
 test('empty voices fall back only at the deadline and late voices do not restart playback', () => {
   const onEnd = jest.fn()
   const plan = planSpeech('你好')

@@ -39,6 +39,8 @@ export function planSpeech(text: string, rate = 1): SpeechPlan {
   while (i < chars.length) {
     const c = chars[i]
     charAt.push(t)
+    // SpeechSynthesisEvent.charIndex counts UTF-16 code units, including both surrogate halves.
+    if (c.length === 2) charAt.push(t)
     if (CJK.test(c)) {
       const code = c.codePointAt(0) ?? 0
       events.push({ viseme: ZH_ONSETS[code % ZH_ONSETS.length], timeMs: t })

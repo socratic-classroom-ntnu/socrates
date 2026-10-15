@@ -22,6 +22,7 @@ from app.api.classroom_schemas import (
     Reaction,
     Register,
     ResetRequest,
+    RoomSummary,
     RoomView,
     ScriptDocument,
     ScriptSave,
@@ -254,7 +255,7 @@ def join(body: JoinRoom, request: Request):
         return service.join(db, a, body)
 
 
-@router.get("/classrooms")
+@router.get("/classrooms", response_model=list[RoomSummary])
 def rooms(request: Request):
     with transaction() as db:
         a, _ = account(db, request)

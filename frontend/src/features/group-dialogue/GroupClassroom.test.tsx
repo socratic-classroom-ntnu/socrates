@@ -1,15 +1,31 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { GroupClassroomGate, groupCapacity } from './GroupClassroom'
-import { ApiError, api } from '../../api/classroomClient'
+import { ApiError, api, getPublicConfig } from '../../api/classroomClient'
+import { playRecordedDialogue } from '../avatar/recordedDialogue'
+import { planSpeech } from '../avatar/speech'
 
 jest.mock('../../api/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../api/classroomClient')>('../../api/classroomClient')
-  return { ApiError: actual.ApiError, api: jest.fn() }
+  return { ApiError: actual.ApiError, api: jest.fn(), getPublicConfig: jest.fn() }
 })
 // 3D 角色、分析圖與 AI 設定面板與這裡無關，jsdom 也載不了它們用到的 ESM
 jest.mock('../group-analytics/GroupAnalytics', () => ({ GroupAnalytics: () => null }))
 jest.mock('../classroom-stage/GroupAvatar', () => ({ GroupAvatar: () => null }))
 jest.mock('../ai-settings/ClassroomAISettings', () => ({ ClassroomAISettings: () => null }))
+// 保留真實 PersonalPanel → TutorAvatar → speech；只隔離 WebGL 與既有音訊播放。
+jest.mock('../avatar/runtime/packPresenter.mjs', () => ({ PackPresenter: class {
+  load() { return Promise.resolve() }
+  setMood() {}
+  stop() {}
+  stopSpeech() {}
+  speakTimeline(...args: unknown[]) { mockSpeakTimeline(...args) }
+  alignSpeech() {}
+  dispose() { return Promise.resolve() }
+} }))
+jest.mock('../avatar/recordedDialogue', () => ({
+  ...jest.requireActual('../avatar/recordedDialogue'), playRecordedDialogue: jest.fn(),
+}))
+const mockSpeakTimeline = jest.fn()
 
 type Row = { id: string; alias: string; group: number | null; actor_type: string }
 const people = (n: number): Row[] =>
@@ -33,6 +49,10 @@ let ids = 0
 beforeEach(() => {
   ids = 0
   jest.mocked(api).mockReset()
+  jest.mocked(getPublicConfig).mockReset().mockResolvedValue({ debug_mode: false })
+  jest.mocked(playRecordedDialogue).mockReset()
+  mockSpeakTimeline.mockClear()
+  window.localStorage.clear()
   Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { randomUUID: () => `action-${++ids}` } })
   Object.defineProperty(globalThis, 'fetch', { configurable: true, writable: true, value: jest.fn(() => Promise.reject(new Error('offline'))) })
   window.history.replaceState({}, '', '/classrooms/room-1?mode=teacher')
@@ -47,6 +67,103 @@ function serve(view: () => Record<string, unknown>, handlers: Record<string, (bo
 }
 
 const Legacy = () => null
+
+describe('教室角色與 Socratic runtime 使用相同產品資格', () => {
+  const packs = [
+    { id: 'ce-only', name: 'CE only', products: ['ce'], model_sha256: 'a'.repeat(64) },
+    { id: 'socratic', name: 'Socratic tutor', products: ['socratic'], model_sha256: 'b'.repeat(64) },
+    { id: 'shared', name: 'Shared tutor', products: ['socratic', 'ce'], model_sha256: 'c'.repeat(64) },
+    { id: 'legacy', name: 'Legacy tutor', model_sha256: 'd'.repeat(64) },
+    { id: 'empty', name: 'No products', products: [], model_sha256: 'e'.repeat(64) },
+  ]
+  function catalog() {
+    jest.mocked(fetch).mockResolvedValue({
+      ok: true, headers: { get: () => 'application/json' }, json: async () => ({ packs }),
+    } as unknown as Response)
+  }
+
+  test.each(['socratic', 'shared', 'legacy', 'stickman'])('教師只可選可顯示的模型，並原樣保存 %s', async id => {
+    catalog()
+    serve(() => lobby())
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    await waitFor(() => expect(within(picker).getAllByRole('option', { hidden: true }).map(option => option.getAttribute('value')))
+      .toEqual(['stickman', 'socratic', 'shared', 'legacy']))
+    fireEvent.change(picker, { target: { value: id } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: id })
+  })
+
+  test.each(['ce-only', 'missing'])('舊存不適用的 %s 保留設定提示，改選仍須重新保存', async id => {
+    catalog()
+    serve(() => lobby({ configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: id } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    fireEvent.click(screen.getByText('AI 學生與教室角色（選用）'))
+    expect(picker).toHaveValue(id)
+    expect(await screen.findByRole('alert')).toHaveTextContent(`教室角色「${id}」不適用於 Socratic 或已不在模型清單`)
+    expect(picker).toHaveValue(id)
+    expect(within(picker).getByRole('option', { name: `${id}（不可用，請重新選擇）`, hidden: true })).toBeDisabled()
+    const start = screen.getByRole('button', { name: '2. 開始課堂 →' })
+    const save = screen.getByRole('button', { name: '1. 儲存分組' })
+    expect(start).toBeEnabled()
+    expect(save).toBeDisabled()
+    await act(async () => fireEvent.click(save))
+    expect(posts().some(([url]) => url.endsWith('/configure'))).toBe(false)
+    await act(async () => fireEvent.click(start))
+    expect(posts().filter(([url]) => url.endsWith('/start'))).toHaveLength(1)
+    expect(posts().find(([url]) => url.endsWith('/start'))?.[2]).toMatchObject({ expected_roster_digest: 'd1' })
+
+    fireEvent.change(picker, { target: { value: 'shared' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(start).toBeDisabled()
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: 'shared' })
+    expect(start).toBeEnabled()
+  })
+
+  test('catalog 失敗不阻擋 backend 授權開課或原值重新保存', async () => {
+    serve(() => lobby({ configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: 'saved' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    fireEvent.click(screen.getByText('AI 學生與教室角色（選用）'))
+    expect(await screen.findByRole('alert')).toHaveTextContent('無法確認教室角色')
+    expect(picker).toHaveValue('saved')
+    const start = screen.getByRole('button', { name: '2. 開始課堂 →' })
+    expect(start).toBeEnabled()
+    await act(async () => fireEvent.click(start))
+    expect(posts().find(([url]) => url.endsWith('/start'))?.[2]).toMatchObject({ expected_roster_digest: 'd1' })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().find(([url]) => url.endsWith('/configure'))?.[2]).toMatchObject({ avatar_pack_id: 'saved' })
+    fireEvent.change(picker, { target: { value: 'stickman' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: '1. 儲存分組' })))
+    expect(posts().filter(([url]) => url.endsWith('/configure')).slice(-1)[0]?.[2]).toMatchObject({ avatar_pack_id: 'stickman' })
+  })
+
+  test.each(['saved', 'stickman'])('catalog 還在載入時，%s 不會阻擋 backend 授權的普通開課', async id => {
+    jest.mocked(fetch).mockReturnValue(new Promise<Response>(() => {}))
+    serve(() => lobby({ configuration: { group_count: 1, members_per_group: 4, avatar_pack_id: id } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const start = await screen.findByRole('button', { name: '2. 開始課堂 →' })
+    expect(screen.getByLabelText('教室角色')).toHaveValue(id)
+    expect(start).toBeEnabled()
+    await act(async () => fireEvent.click(start))
+    expect(posts().find(([url]) => url.endsWith('/start'))?.[2]).toMatchObject({ expected_roster_digest: 'd1' })
+  })
+
+  test('可用人像不能越過 backend 的開課拒絕', async () => {
+    catalog()
+    serve(() => lobby({ available_actions: ['configure'], unavailable_actions: { start: 'LOBBY_REQUIRED' } }))
+    render(<GroupClassroomGate user={{}} id="room-1" Legacy={Legacy}/>)
+    const picker = await screen.findByLabelText('教室角色')
+    await waitFor(() => expect(within(picker).getAllByRole('option', { hidden: true })).toHaveLength(4))
+    const start = screen.getByRole('button', { name: '2. 開始課堂 →' })
+    expect(start).toBeDisabled()
+    expect(start).toHaveAccessibleDescription(/課堂已開始/)
+    await act(async () => fireEvent.click(start))
+    expect(posts().some(([url]) => url.endsWith('/start'))).toBe(false)
+  })
+})
 
 test('a later action first re-sends the unconfirmed one with its original action_id, then saves the groups', async () => {
   let aiAttempts = 0
@@ -281,4 +398,55 @@ test('後端沒有給 available_actions 時，老師的按鈕一律停用並說�
   expect(screen.getByRole('button', { name: '2. 開始課堂 →' })).toBeDisabled()
   expect(screen.getByRole('button', { name: '加入 AI 學生' })).toBeDisabled()
   expect(screen.getByText(/後端未提供可用動作/)).toBeInTheDocument()
+})
+
+test.each([false, true])('分組個人對話錄音期間的新導師回覆只在錄音結束後念出（已有入場訊息：%s）', async hasEntry => {
+  jest.mocked(getPublicConfig).mockResolvedValue({ debug_mode: true })
+  jest.mocked(fetch).mockResolvedValue({
+    ok: true, headers: { get: () => 'application/json' },
+    json: async () => ({ packs: [{ id: 'socratic', name: 'Socratic tutor', products: ['socratic'], model_sha256: 'b'.repeat(64) }] }),
+  } as unknown as Response)
+  let finishRecording!: () => void
+  jest.mocked(playRecordedDialogue).mockImplementation((_presenter, signal) => new Promise(resolve => {
+    finishRecording = () => resolve({ state: 'COMPLETED' })
+    signal.addEventListener('abort', () => resolve({ state: 'SUPERSEDED' }), { once: true })
+  }))
+  const entry = { role: 'tutor', text: '進入教室之前的問題' }
+  const next = { role: 'tutor', text: '錄音期間才到達的追問' }
+  const personal = {
+    status: 'probing', generating: false, messages: hasEntry ? [entry] : [], completed_turns: 0, max_turns: 6,
+    summary: null, summary_digest: null, baseline: null, notice: null, open: true,
+  }
+  serve(() => ({
+    kind: 'GroupRun', id: 'run-1', role: 'student', phase: 'personal', group_label: '第1組', title: '倫理課',
+    member_id: 'm1', members: [{ id: 'm1', alias: '甲' }], confirmed_members: [], arguments: [], transcript: [],
+    question: { title: '情境一', scenario: '你會如何選擇？' }, personal,
+    available_actions: ['personal_message'], unavailable_actions: {},
+  }), {
+    '/commands': () => {
+      personal.messages = [...personal.messages, { role: 'student', text: '我還在思考' }, next]
+      return { status: 'RECORDED' }
+    },
+  })
+  render(<GroupClassroomGate user={{}} id="run-1" Legacy={Legacy}/>)
+  await waitFor(() => expect(screen.getByTestId('avatar-stage')).toHaveAttribute('data-render-status', 'ready'))
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByText('人像選擇（開發）'))
+  fireEvent.click(screen.getByRole('button', { name: '重播既有錄音對話' }))
+  expect(playRecordedDialogue).toHaveBeenCalledTimes(1)
+  fireEvent.change(screen.getByLabelText('回覆導師'), { target: { value: '我還在思考' } })
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '送出' })))
+  expect(posts().find(([url]) => url.endsWith('/commands'))?.[2]).toMatchObject({
+    kind: 'personal_message', data: { text: '我還在思考' },
+  })
+  expect(screen.getByText(next.text)).toBeInTheDocument()
+  expect(screen.getByLabelText('回覆導師')).toHaveValue('')
+  expect(mockSpeakTimeline).not.toHaveBeenCalled()
+  await act(async () => finishRecording())
+  const plan = planSpeech(next.text)
+  expect(mockSpeakTimeline).toHaveBeenCalledTimes(1)
+  expect(mockSpeakTimeline).toHaveBeenCalledWith(plan.events, plan.durationMs)
+  fireEvent.change(screen.getByLabelText('回覆導師'), { target: { value: '尚未送出的下一則草稿' } })
+  expect(mockSpeakTimeline).toHaveBeenCalledTimes(1)
+  expect(screen.getByLabelText('回覆導師')).toHaveValue('尚未送出的下一則草稿')
 })

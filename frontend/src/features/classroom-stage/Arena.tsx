@@ -8,6 +8,12 @@ export function Arena({ room }) {
     const host = useRef(null);
     const latest = useRef(room);
     latest.current = room;
+    const messages = room.focus?.messages ?? [];
+    const tutorIndex = messages.reduce((last, message, index) => message.role === 'tutor' ? index : last, -1);
+    const say = tutorIndex < 0 ? null : {
+        id: `${room.id}:${room.question_run_id}:${room.focus.id}:${tutorIndex}`,
+        text: messages[tutorIndex].text,
+    };
     useEffect(() => {
         if (!host.current)
             return;
@@ -134,5 +140,5 @@ export function Arena({ room }) {
             renderer.domElement.remove();
         };
     }, []);
-    return <div className="sc-arena" ref={host} aria-label="共享教室舞台"><div className="native-avatar"><GroupAvatar roomId={room.id}/></div><div className="sc-stage-caption">SOCRATES · 共思劇場</div></div>;
+    return <div className="sc-arena" ref={host} aria-label="共享教室舞台"><div className="native-avatar"><GroupAvatar roomId={room.id} say={say}/></div><div className="sc-stage-caption">SOCRATES · 共思劇場</div></div>;
 }

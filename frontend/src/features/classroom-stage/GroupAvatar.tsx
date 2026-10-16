@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/classroomClient';
 import { TutorAvatar } from '../avatar/TutorAvatar';
-/** 分組舞台的導師人像：給 packId 就直接用；只給 roomId 時向後端查。'stickman' 視為未指定，用預設模型。 */
+/** 分組舞台的導師人像：給 packId 就直接用；stickman 使用內建角色，不讀偏好或模型清單。 */
 export function GroupAvatar({ packId: inputId, roomId, say }: { packId?: string; roomId?: string; say?: { id: string; text: string } | null }) {
     const [resolved, setResolved] = useState<string | null>(null);
     useEffect(() => {
@@ -13,6 +13,6 @@ export function GroupAvatar({ packId: inputId, roomId, say }: { packId?: string;
     }, [roomId, inputId]);
     const chosen = inputId || resolved;
     return <div className="group-avatar" style={{ position: 'relative', height: 360 }}>
-      <TutorAvatar product="socratic" packId={chosen && chosen !== 'stickman' ? chosen : null} say={say}/>
+      <TutorAvatar product="socratic" packId={chosen || 'stickman'} say={say}/>
     </div>;
 }

@@ -39,6 +39,8 @@ export function planSpeech(text: string, rate = 1): SpeechPlan {
   while (i < chars.length) {
     const c = chars[i]
     charAt.push(t)
+    // SpeechSynthesisEvent.charIndex counts UTF-16 code units, including both surrogate halves.
+    if (c.length === 2) charAt.push(t)
     if (CJK.test(c)) {
       const code = c.codePointAt(0) ?? 0
       events.push({ viseme: ZH_ONSETS[code % ZH_ONSETS.length], timeMs: t })
@@ -88,7 +90,7 @@ function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
   return voices.find(v => v.lang === lang) ?? voices.find(v => v.lang.replace('_', '-').startsWith(base))
 }
 
-/** 念出 text 並驅動 speaker 的嘴型；回傳停止函式。不支援語音時只播嘴型。 */
+/** 念出 text 並驅動 speaker 的嘴型；聲音尚未載入時最多等一秒。不支援語音時只播嘴型。回傳停止函式。 */
 export function speak(text: string, speaker: Speaker | null, opts: { lang?: string; rate?: number; onEnd?: () => void } = {}): () => void {
   const rate = opts.rate ?? 1
   const plan = planSpeech(text, rate)
@@ -98,24 +100,85 @@ export function speak(text: string, speaker: Speaker | null, opts: { lang?: stri
     const timer = window.setTimeout(() => opts.onEnd?.(), plan.durationMs)
     return () => { window.clearTimeout(timer); speaker?.stopSpeech() }
   }
-  if (!speechSupported() || window.speechSynthesis.getVoices().length === 0) return mouthOnly()
+  if (!speechSupported()) return mouthOnly()
   const synth = window.speechSynthesis
-  synth.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = opts.lang ?? LANGS.zh
-  utterance.rate = rate
-  const voice = pickVoice(utterance.lang)
-  if (voice) utterance.voice = voice
-  utterance.onboundary = (e: SpeechSynthesisEvent) => {
-    const at = plan.charAt[Math.min(e.charIndex, plan.charAt.length - 1)]
-    if (at !== undefined) speaker?.alignSpeech(at)
-  }
-  let started = false
+  let stopped = false
+  let finished = false
+  let waiting = false
+  let waitTimer: number | undefined
+  let utterance: SpeechSynthesisUtterance | null = null
   let fallbackStop: (() => void) | null = null
-  const done = () => { speaker?.stopSpeech(); opts.onEnd?.() }
-  utterance.onstart = () => { started = true; speaker?.speakTimeline(plan.events, plan.durationMs) }
-  utterance.onend = done
-  utterance.onerror = () => { if (started) done(); else fallbackStop = mouthOnly() }
-  synth.speak(utterance)
-  return () => { utterance.onend = null; utterance.onerror = null; synth.cancel(); fallbackStop?.(); speaker?.stopSpeech() }
+  const clearWait = () => {
+    if (waitTimer !== undefined) window.clearTimeout(waitTimer)
+    waitTimer = undefined
+    if (waiting) synth.removeEventListener('voiceschanged', voicesChanged)
+    waiting = false
+  }
+  const clearUtterance = () => {
+    if (!utterance) return
+    utterance.onstart = null
+    utterance.onboundary = null
+    utterance.onend = null
+    utterance.onerror = null
+  }
+  const start = () => {
+    if (stopped || finished || utterance || fallbackStop) return
+    clearWait()
+    if (synth.getVoices().length === 0) {
+      fallbackStop = mouthOnly()
+      return
+    }
+    synth.cancel()
+    utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = opts.lang ?? LANGS.zh
+    utterance.rate = rate
+    const voice = pickVoice(utterance.lang)
+    if (voice) utterance.voice = voice
+    let started = false
+    const done = () => {
+      if (stopped || finished) return
+      finished = true
+      clearUtterance()
+      speaker?.stopSpeech()
+      opts.onEnd?.()
+    }
+    utterance.onboundary = (e: SpeechSynthesisEvent) => {
+      if (stopped || finished) return
+      const at = plan.charAt[Math.min(e.charIndex, plan.charAt.length - 1)]
+      if (at !== undefined) speaker?.alignSpeech(at)
+    }
+    utterance.onstart = () => {
+      if (stopped || finished) return
+      started = true
+      speaker?.speakTimeline(plan.events, plan.durationMs)
+    }
+    utterance.onend = done
+    utterance.onerror = () => {
+      if (stopped || finished) return
+      if (started) done()
+      else {
+        finished = true
+        clearUtterance()
+        fallbackStop = mouthOnly()
+      }
+    }
+    synth.speak(utterance)
+  }
+  function voicesChanged() {
+    if (waiting && synth.getVoices().length > 0) start()
+  }
+  if (synth.getVoices().length > 0) start()
+  else {
+    waiting = true
+    synth.addEventListener('voiceschanged', voicesChanged)
+    waitTimer = window.setTimeout(start, 1000)
+  }
+  return () => {
+    stopped = true
+    clearWait()
+    clearUtterance()
+    synth.cancel()
+    fallbackStop?.()
+    speaker?.stopSpeech()
+  }
 }

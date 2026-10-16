@@ -33,7 +33,9 @@ body{margin:0;background:radial-gradient(ellipse at 72% 0%,#51445c 0%,#292333 42
 .r2-hamburger{font-size:23px!important;line-height:1;background:transparent!important;color:inherit!important;border:1px solid var(--r2-line)!important}.r2-menu{position:absolute;right:25px;top:73px;background:#312a3d;border:1px solid var(--r2-line);padding:10px;border-radius:15px;min-width:190px;display:grid;box-shadow:0 18px 60px #0005}.r2-menu button,.r2-menu a{padding:12px;background:transparent;color:inherit;text-align:left}
 .r2-drawer{position:fixed;top:84px;bottom:0;width:300px;z-index:15;background:#27212ff5;backdrop-filter:blur(16px);border:1px solid var(--r2-line);padding:22px;overflow-y:auto;animation:r2-expand .25s}.r2-drawer.left{left:0}.r2-drawer.right{right:0}.r2-member{display:flex;align-items:center;gap:13px;margin:17px 0}.r2-member small{display:block}.r2-message{padding:15px;border-radius:13px;background:#ffffff07;margin:12px 0}.r2-message p{white-space:pre-wrap;margin:5px 0}.r2-message.student{background:#dbb78c18}
 .r2-distribution{text-align:left;max-width:850px}.r2-distribution .r2-card{margin:15px 0}.r2-bar{height:8px;border-radius:9px;background:#ffffff12;margin:12px 0 16px;overflow:hidden}.r2-bar i{display:block;height:100%;background:linear-gradient(90deg,#9f8bb4,#e6bf8e);border-radius:9px;transition:width .5s}.r2-mini-person{font-size:12px;display:flex;gap:5px;align-items:center}.r2-mini-person i{font-style:normal;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;background:#9d83ad44}
-.r2-arena{height:calc(100dvh - 84px);min-height:560px;position:relative}.r2-arena canvas{display:block}.r2-stage-caption{position:absolute;top:32px;left:0;right:0;text-align:center;color:var(--r2-muted);font-size:11px;letter-spacing:.32em;pointer-events:none}
+/* Student classroom stage background */
+.r2-classroom .r2-arena { height: calc(100dvh - 84px); min-height: 560px; background-image: linear-gradient(rgba(0,0,0,0.25),rgba(0,0,0,0.25)), url('/images/classroom-stage.png'); background-position: center; background-size: cover; background-repeat: no-repeat; }
+.r2-arena canvas{display:block}.r2-stage-caption{position:absolute;top:32px;left:0;right:0;text-align:center;color:var(--r2-muted);font-size:11px;letter-spacing:.32em;pointer-events:none}
 .r2-arena[data-renderer=static]::after,.r2-arena[data-renderer=portrait-loading]::after{content:'導師';position:absolute;top:25%;left:calc(50% - 55px);border:1px solid #d6bf9f55;border-radius:50% 50% 40% 40%;width:110px;height:170px;display:grid;place-items:center;background:linear-gradient(150deg,#ddc6b526,#8672a244)}
 .r2-live-dialog{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);width:min(780px,calc(100% - 40px));padding:20px 26px;border:1px solid #ffffff40;border-radius:20px;background:#f0e8dfed;backdrop-filter:blur(18px);color:var(--r2-dark);box-shadow:0 15px 80px #0006;z-index:6}.r2-live-dialog small{color:#7f6b7c}.r2-live-dialog>p{font-size:20px;line-height:1.65;max-height:160px;overflow:auto;white-space:pre-wrap;margin:10px 0 15px}.r2-live-dialog textarea{background:#fff8;color:var(--r2-dark);border-color:#c6b9c6;min-height:55px;max-height:100px}.r2-live-dialog .r2-row{margin-top:9px}.r2-voice{border-radius:50%!important;width:45px;height:45px;padding:0!important;background:#735975!important;color:#fff!important;font-size:23px!important}.r2-voice.active{animation:r2-breathe 1s infinite}.r2-reaction{border-radius:50%!important;min-width:43px;font-size:19px!important;padding:7px 12px!important;background:#e8ded9!important}
 .r2-focus-chat{position:absolute;left:20px;top:110px;bottom:290px;max-height:440px;width:280px;overflow:auto;padding:18px;background:#211b28ce;border:1px solid var(--r2-line);border-radius:20px;z-index:3}.r2-barrage-layer{position:absolute;inset:84px 0 280px;overflow:hidden;pointer-events:none;z-index:4}.r2-barrage-layer span{position:absolute;white-space:nowrap;left:100%;background:#251f3288;border:1px solid var(--r2-line);border-radius:18px;padding:5px 15px;font-size:14px;animation:r2-fly 7s linear forwards}
@@ -63,3 +65,101 @@ main.r2-classroom{max-width:none}
 body:has(.g70-evidence.floating) .r2-classroom:not(:has(.r2-arena)){padding-bottom:88px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.r2-barrage-layer span{animation-duration:7s!important}}
 .r2-focus-notice{margin:6px 0 0;padding:8px 12px;border-radius:10px;background:#3a2a1f;color:#f3d9b5;font-size:13px;line-height:1.6}
+/* Student classroom - symmetric conversation panels */
+main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { position: absolute; top: 110px; bottom: 150px; height: auto; max-height: 550px; width: 320px; box-sizing: border-box; overflow: auto; overflow-wrap: anywhere; padding: 18px; background: rgba(23, 21, 30, 0.5); color: #f5f1eb; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 18px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 3; }
+main.r2-classroom .r2-focus-chat { left: 20px; right: auto; }
+main.r2-classroom .r2-transcript-panel { right: 20px; left: auto; }
+main.r2-classroom .r2-focus-chat p, main.r2-classroom .r2-focus-chat small, main.r2-classroom .r2-transcript-panel p, main.r2-classroom .r2-transcript-panel small { color: #f5f1eb; }
+main.r2-classroom .r2-live-dialog { width: min(82vw, 1500px); max-width: calc(100% - 32px); background: rgba(23, 21, 30, 0.82); color: #f5f1eb; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+main.r2-classroom .r2-live-dialog small, main.r2-classroom .r2-live-dialog > p { color: #f5f1eb; }
+@media(max-width:760px) { main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { top: 85px; bottom: auto; height: 190px; max-height: 190px; width: min(180px, calc((100% - 30px) / 2)); padding: 10px; font-size: 12px; } main.r2-classroom .r2-focus-chat { left: 10px; } main.r2-classroom .r2-transcript-panel { right: 10px; } }
+main.r2-classroom .r2-answer-controls { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 10px; align-items: start; margin-top: 12px; }
+main.r2-classroom .r2-answer-controls .socratic-composer { min-width: 0; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row { display: grid; grid-template-columns: minmax(0, 1fr) 128px; grid-template-rows: 42px 42px; gap: 8px 10px; align-items: stretch; padding: 0; border: 0; background: transparent; box-shadow: none; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea { grid-column: 1; grid-row: 1 / 3; width: 100%; height: 92px; min-height: 92px; max-height: 92px; resize: none; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.055) !important; }
+main.r2-classroom .r2-answer-controls .socratic-mic { grid-column: 2; grid-row: 1; width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; color: #f5f1eb; white-space: nowrap; border-radius: 12px !important; }
+main.r2-classroom .r2-answer-controls .socratic-mic svg { flex: 0 0 18px; width: 18px; height: 18px; }
+main.r2-classroom .r2-answer-controls .socratic-enter { grid-column: 2; grid-row: 2; width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; background: #cf471c !important; color: #fff !important; }
+main.r2-classroom .r2-answer-controls .socratic-enter::after { content: "送出回答"; font-size: 13px; font-weight: 700; }
+main.r2-classroom .r2-answer-controls .socratic-enter svg { display: none; }
+main.r2-classroom .r2-answer-controls .socratic-mic::after { content: "用說的"; display: block; flex: none; font-size: 13px; font-weight: 600; line-height: 1; }
+main.r2-classroom .r2-answer-controls .socratic-mic.listening::after { content: "停止語音"; }
+main.r2-classroom .r2-answer-controls .r2-end-speaking { width: 100%; height: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 0; background: #30281f; color: #eee5da; border: 1px solid #65503a; border-radius: 12px; font-weight: 600; }
+main.r2-classroom .r2-answer-controls .r2-end-speaking:disabled { opacity: 0.65; cursor: not-allowed; }
+@media(max-width:600px) { main.r2-classroom .r2-answer-controls { grid-template-columns: minmax(0, 1fr) 76px; gap: 6px; } main.r2-classroom .r2-answer-controls .socratic-composer-row { grid-template-columns: minmax(0, 1fr) 90px; column-gap: 6px; } main.r2-classroom .r2-answer-controls .r2-end-speaking { font-size: 13px; } }
+/* Student classroom - mobile RWD */
+@media (max-width: 600px) {
+main.r2-classroom .r2-live-dialog { bottom: 12px; padding: 12px; width: calc(100% - 20px); max-height: 58dvh; overflow-y: auto; }
+main.r2-classroom .r2-live-dialog > p { font-size: 14px; line-height: 1.5; max-height: 76px; margin: 8px 0; }
+main.r2-classroom .r2-answer-controls { display: block; margin-top: 8px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 68px 42px; gap: 8px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea { grid-column: 1 / 4; grid-row: 1; width: 100%; height: 68px; min-height: 68px; max-height: 68px; }
+main.r2-classroom .r2-answer-controls .socratic-mic { grid-column: 1; grid-row: 2; width: 100%; height: 42px; }
+main.r2-classroom .r2-answer-controls .socratic-enter { grid-column: 2; grid-row: 2; width: 100%; height: 42px; }
+main.r2-classroom .r2-answer-controls .r2-end-speaking { width: 100%; height: 42px; margin-top: 8px; flex-direction: row; gap: 4px; font-size: 12px; }
+main.r2-classroom .r2-answer-controls .socratic-composer-caption { font-size: 10px; }
+main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { top: 82px; height: 145px; max-height: 145px; padding: 10px; }
+main.r2-classroom .r2-focus-chat > small, main.r2-classroom .r2-transcript-panel > small { font-size: 13px; }
+main.r2-classroom .r2-focus-chat .r2-message p, main.r2-classroom .r2-transcript-panel .r2-message p { font-size: 12px; line-height: 1.5; }
+body:has(main.r2-classroom .r2-arena) .g70-evidence.floating { display: none !important; }
+main.r2-classroom .r2-focus-chat, main.r2-classroom .r2-transcript-panel { height: 220px; max-height: 220px; overflow-y: auto; }
+}
+
+main.r2-classroom .r2-focus-chat > small, main.r2-classroom .r2-transcript-panel > small { font-size: 16px; font-weight: 700; }
+main.r2-classroom .r2-focus-chat .r2-message small, main.r2-classroom .r2-transcript-panel .r2-message small { font-size: 12px; }
+main.r2-classroom .r2-focus-chat .r2-message p, main.r2-classroom .r2-transcript-panel .r2-message p { font-size: 15px; line-height: 1.8; }
+
+/* Student classroom - personal history */
+main.r2-classroom .r2-focus-chat h3 { margin: 0 0 16px; color: #f5f1eb; font-size: 17px; font-weight: 700; }
+main.r2-classroom .r2-original-answer { padding: 14px; margin-bottom: 20px; background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; border-radius: 14px; }
+main.r2-classroom .r2-original-answer small { display: block; margin-bottom: 10px; color: #e87343; font-size: 12px; }
+main.r2-classroom .r2-original-answer strong { display: block; color: #f5f1eb; font-size: 14px; line-height: 1.6; }
+main.r2-classroom .r2-original-answer p { margin: 8px 0 0; color: #f5f1eb; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+main.r2-classroom .r2-my-history h4 { margin: 0 0 12px; color: #aaa29a; font-size: 13px; font-weight: 600; }
+main.r2-classroom .r2-history-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+main.r2-classroom .r2-history-item span { flex-shrink: 0; color: #aaa29a; font-family: monospace; font-size: 12px; }
+main.r2-classroom .r2-history-item p { margin: 0; color: #f5f1eb; font-size: 13px; line-height: 1.6; }
+main.r2-classroom .r2-history-note { color: #aaa29a !important; font-size: 12px; }
+
+/* Student classroom - Socrates dialogue */
+main.r2-classroom .r2-transcript-panel > small { display: block; margin-bottom: 14px; color: #f5f1eb; font-size: 16px; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message { padding: 12px; margin: 12px 0; border-radius: 14px; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor { background: #f0ebe2; border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor small { color: #c94a21; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor p { color: #29221b; }
+main.r2-classroom .r2-transcript-panel .r2-message.student { background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.student small { color: #e87343; font-weight: 700; }
+main.r2-classroom .r2-transcript-panel .r2-message.student p { color: #f5f1eb; }
+main.r2-classroom .r2-transcript-panel .r2-message p { margin: 6px 0 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+/* Student classroom - input text visibility */
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea { color: #f5f1eb !important; caret-color: #f5f1eb; -webkit-text-fill-color: #f5f1eb; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea::placeholder { color: #b8ada8 !important; opacity: 1; }
+main.r2-classroom .r2-answer-controls .socratic-composer-row textarea:focus { border-color: #cf471c !important; outline: 2px solid rgba(207, 71, 28, 0.35); outline-offset: 2px; }
+/* Student classroom - panel headings */
+main.r2-classroom .r2-focus-chat h4 { margin: 0 0 12px; color: #e87343; font-size: 14px; font-weight: 600; }
+main.r2-classroom .r2-transcript-panel h3 { margin: 0 0 18px; color: #f5f1eb; font-size: 18px; font-weight: 700; }
+
+/* Student classroom - alternating dialogue bubbles */
+main.r2-classroom .r2-transcript-panel .r2-message { display: block; width: fit-content; max-width: 88%; min-width: 0; box-sizing: border-box; padding: 12px; margin-top: 12px; margin-bottom: 12px; overflow-wrap: anywhere; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor { margin-left: 0; margin-right: auto; background: #f0ebe2; border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.student { margin-left: auto; margin-right: 0; background: rgba(48, 37, 30, 0.92); border: 1px solid #cf471c; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor small { color: #c94a21; }
+main.r2-classroom .r2-transcript-panel .r2-message.tutor p { color: #29221b; }
+main.r2-classroom .r2-transcript-panel .r2-message.student small { color: #e87343; }
+main.r2-classroom .r2-transcript-panel .r2-message.student p { color: #f5f1eb; }
+
+/* Student classroom - scroll within the panel */
+main.r2-classroom .r2-transcript-panel { overflow-x: hidden; overflow-y: auto; }
+main.r2-classroom .r2-transcript-panel .r2-message p { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+
+/* Student classroom - bottom input hint */
+main.r2-classroom .r2-live-dialog .r2-input-hint { margin: 8px 0 12px; color: #d4c8bd; font-size: 14px; line-height: 1.6; }
+/* Student classroom - personal speaking history */
+main.r2-classroom .r2-history-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+main.r2-classroom .r2-history-time { flex-shrink: 0; min-width: 40px; color: #e87343; font-size: 12px; font-weight: 700; }
+main.r2-classroom .r2-history-item p { flex: 1; min-width: 0; margin: 0; padding: 10px; background: rgba(48, 37, 30, 0.92); border-radius: 10px; color: #f5f1eb; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* Student classroom - latest Socrates question */
+main.r2-classroom .r2-latest-question { margin: 12px 0; padding: 12px 16px; background: rgba(48, 37, 30, 0.92); border-left: 3px solid #cf471c; border-radius: 10px; }
+main.r2-classroom .r2-latest-question small { display: block; margin-bottom: 6px; color: #e87343; font-size: 12px; font-weight: 700; }
+main.r2-classroom .r2-latest-question p { margin: 0; color: #f5f1eb; font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }

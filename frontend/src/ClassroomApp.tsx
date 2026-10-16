@@ -212,25 +212,99 @@ function LegacyClassroom({ id }) {
     const [left, setLeft] = useState(false), [right, setRight] = useState(false), [menu, setMenu] = useState(false), [text, setText] = useState('');
     const [alias, setAlias] = useState('');
     const f = room?.focus;
+    const dialogueMessages = f?.messages ?? [];
+    const myMessages = dialogueMessages.filter(m => m.role === 'student');
+    const latestTutorMessage =
+        buffer || [...dialogueMessages].reverse().find(m => m.role === 'tutor')?.text;
     const selected = !!room?.member_id && f?.member_id === room.member_id && mode === 'student';
     const run = (kind, data = {}) => command(id, kind, data).then(async () => { await refresh(); return true; }).catch(e => { setNote(errorText(e)); return false; });
     if (!room)
         return <main className="r2-loading"><div className="r2-pulse"/><h2>正在進入教室</h2><p>{note}</p><a href="/">首頁</a></main>;
     return <main className="r2-classroom"><header className="r2-top"><button className="quiet" aria-label="展開教室側欄" onClick={() => setLeft(!left)}>☷</button><a className="r2-wordmark" href="/">Socrates</a><span>{room.title}</span><Clock deadline={room.deadline_at} offset={offset}/><button className="r2-hamburger" aria-label="三槓選單" onClick={() => setMenu(!menu)}>☰</button>{menu && <nav className="r2-menu"><button onClick={() => { setLeft(!left); setMenu(false); }}>教室成員</button><button onClick={() => { setRight(!right); setMenu(false); }}>完整對話</button><a href="/">回首頁</a>{room.role === 'teacher' && room.code && <button onClick={() => { location.href = `/classrooms/${id}?mode=student`; }}>以學生視角加入</button>}</nav>}</header>
     {left && <aside className="r2-drawer left"><button className="quiet" onClick={() => setLeft(false)}>收合 ←</button><h2>同一個教室</h2><p>{room.members.length} 位學生</p>{room.members.map(m => <div className="r2-member" key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0, 1)}</span><span>{m.alias}{m.username && <span title={m.username} tabIndex={0} aria-label="教師身分對照"> ⓘ</span>}<small>{m.points} 點 · {m.online ? '在線' : '離席'}</small></span></div>)}</aside>}
-    {right && <aside className="r2-drawer right"><button className="quiet" onClick={() => setRight(false)}>收合 →</button><h2>本題對話</h2>{room.transcript.map(x => <div key={x.id}>{x.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '同學'}</small><p>{m.text}</p></article>)}</div>)}</aside>}
+    {right && <aside className="r2-drawer right">
+      <button className="quiet" onClick={() => setRight(false)}>收合 →</button>
+      <h2>本題對話</h2>
+      {room.transcript.map(x => <div key={x.id}>
+        {x.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}>
+          <small>{m.role === 'tutor' ? '導師' : '同學'}</small>
+          <p>{m.text}</p>
+        </article>)}
+      </div>)}
+    </aside>}
     {room.phase === 'lobby' && <section className="r2-lobby"><small>WELCOME TO THE CLASSROOM</small><h1>觀點在此相遇。</h1><div className="r2-code-display">{room.code}</div><p>分享課程代碼，邀請同學入座。</p><div className="r2-seat-grid">{room.members.map(m => <div key={m.id}><span className="r2-seat-avatar">{m.alias.slice(0, 1)}</span>{m.alias}</div>)}</div>{room.role === 'teacher' ? <button onClick={() => void run('start')}>開始課堂 →</button> : room.member_id ? <p>已入座，等待老師開始。</p> : <div className="r2-row"><input value={alias} onChange={e => setAlias(e.target.value)} aria-label="匿名名稱"/><button onClick={() => void api('/classrooms/join', 'POST', { code: room.code, alias, avatar: 'scholar' }).then(refresh).catch(e => setNote(errorText(e)))}>以學生身份入座</button></div>}</section>}
     {room.phase === 'countdown' && <section className="r2-countdown"><small>讓我們開始思考</small><Clock deadline={room.deadline_at} offset={offset}/></section>}
     {room.phase === 'answering' && (room.role === 'teacher' ? <section className="r2-lobby"><small>QUESTION {room.question_index + 1}</small><h1>{room.question?.title}</h1><p>{room.question?.scenario}</p><p>學員正在作答，倒數由伺服器同步。</p></section> : <AnswerWithResearch sessionId={room.id} defaultOpen={false}><AnswerPanel key={room.question_run_id} room={room} refresh={refresh} setNote={setNote} offset={offset}/></AnswerWithResearch>)}
     {room.phase === 'distribution' && <section className="r2-distribution"><small>OUR PERSPECTIVES</small><h1>同一個問題，不同的看法。</h1>{room.distribution.map((raw, i) => { const d = raw; return <article className="r2-card" key={i}><h2>{d.text}</h2><b>{d.percent.toFixed(1)}% · {d.count} 人</b><div className="r2-bar"><i style={{ width: d.percent + '%' }}/></div><div className="r2-row">{d.members?.map((m, j) => <span className="r2-mini-person" key={j}><i>{m.alias.slice(0, 1)}</i>{m.alias}</span>)}</div></article>; })}</section>}
-    {['arena', 'focus', 'focus_summary'].includes(room.phase) && <><Arena room={room}/><div className="r2-barrage-layer">{barrage.map((b, i) => <span key={b.id} style={{ top: (12 + (i % 6) * 10) + '%' }}>{b.text}</span>)}</div>
-      {selected && <aside className="r2-focus-chat"><small>你的深入討論</small>{f?.messages.map((m, i) => <article className={'r2-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}</aside>}
-      <section className="r2-live-dialog"><small>{room.source_mode === 'openrouter' ? 'LIVE TUTOR' : 'SCRIPTED PROBE'} · {selected ? '導師正與你對話' : '一起聽聽這個觀點'}</small><FocusNotice status={f?.status} message={room.last_error}/><p>{buffer || f?.messages.filter(m => m.role === 'tutor').at(-1)?.text || (f?.status === 'TUTOR_UNAVAILABLE' ? '' : '導師正在整理問題…')}</p>{room.phase === 'focus_summary' && <p>{f?.micro_summary}</p>}
-        {room.role === 'student' && <><DraftComposer value={text} onChange={setText} label={selected ? '回覆導師' : '匿名彈幕'} enabled={!selected || room.available_actions.includes('focus_message')} placeholder={selected ? '說說你現在的想法…' : '分享一則匿名彈幕…'} onSend={async () => { if (text.trim()) {
+    {['arena', 'focus', 'focus_summary'].includes(room.phase) && <>
+      {room.role === 'student' ? <div className="r2-arena" aria-label="教室背景"/> : <Arena room={room}/>}
+      <div className="r2-barrage-layer">{barrage.map((b, i) => <span key={b.id} style={{ top: (12 + (i % 6) * 10) + '%' }}>{b.text}</span>)}</div>
+      {room.role === 'student' && (
+        <aside className="r2-focus-chat">
+          <h3>我的紀錄</h3>
+          <h4>我剛剛說過</h4>
+            {myMessages.length > 0 ? (
+            myMessages.map((m, i) => (
+                <article className="r2-history-item" key={i}>
+                <span className="r2-history-time">00:00</span>
+                <p>{m.text}</p>
+                </article>
+            ))
+            ) : (
+            <p className="r2-history-note">尚無發言紀錄</p>
+            )}
+        </aside>
+      )}
+      {room.role === 'student' && (
+        <aside className="r2-transcript-panel">
+          <h3>蘇格拉底對話</h3>
+          {dialogueMessages.map((m, i) => (
+            <article className={`r2-message ${m.role}`} key={i}>
+              <small>{m.role === 'tutor' ? '蘇格拉底' : '學生'}</small>
+              <p>{m.text}</p>
+            </article>
+          ))}
+          {!dialogueMessages.length && !buffer && (
+            <p className="r2-history-note">等待蘇格拉底與學生開始討論…</p>
+          )}
+          {buffer && (
+            <article className="r2-message tutor">
+              <small>蘇格拉底 · 回覆中</small>
+              <p>{buffer}</p>
+            </article>
+          )}
+        </aside>
+      )}
+      <section className="r2-live-dialog">
+        <small>{selected ? '回覆蘇格拉底' : '課堂互動'}</small>
+        <FocusNotice status={f?.status} message={room.last_error}/>
+        <div className="r2-latest-question">
+        <small>蘇格拉底剛剛說</small>
+        <p>
+            {latestTutorMessage ||
+            '等待蘇格拉底提出問題…'}
+        </p>
+        </div>
+        {room.phase === 'focus_summary' && f?.micro_summary && (
+          <p>{f.micro_summary}</p>
+        )}
+        {room.role === 'student' && <><div className="r2-answer-controls"><DraftComposer value={text} onChange={setText} label={selected ? '回覆導師' : '匿名彈幕'} enabled={!selected || room.available_actions.includes('focus_message')} placeholder={selected ? '說說你現在的想法…' : '分享一則匿名彈幕…'} onSend={async () => {
+            if (text.trim()) {
             const ok = await run(selected ? 'focus_message' : 'barrage', { text });
             if (ok)
                 setText('');
-        } }}/><div className="r2-row">{f && !selected && ['heart', 'like', 'gift'].map((kind, i) => <button className="r2-reaction" key={kind} aria-label={kind} onClick={() => void api(`/classrooms/${id}/reactions`, 'POST', { action_id: crypto.randomUUID(), kind, focus_id: f.id, turn_index: f.turn_index }).catch(e => setNote(errorText(e)))}>{['♡', '讚', '◇'][i]}</button>)}</div></>}
+        } }}/>
+        <button
+          type="button"
+          className="r2-end-speaking"
+          disabled
+          title="目前教室系統尚未提供結束發言功能"
+        >
+          <span aria-hidden="true">→</span>
+          <span>結束發言</span>
+        </button>
+        </div>
+        <div className="r2-row">{f && !selected && ['heart', 'like', 'gift'].map((kind, i) => <button className="r2-reaction" key={kind} aria-label={kind} onClick={() => void api(`/classrooms/${id}/reactions`, 'POST', { action_id: crypto.randomUUID(), kind, focus_id: f.id, turn_index: f.turn_index }).catch(e => setNote(errorText(e)))}>{['♡', '讚', '◇'][i]}</button>)}</div></>}
       </section></>}
     {room.phase === 'question_summary' && <section className="r2-lobby"><div className="r2-pulse"/><h1>正在醞釀下一個問題。</h1><p>本題討論已保存。模型可用時，課堂會自動接續。</p></section>}
     {room.phase === 'preview' && <section className="r2-lobby"><small>NEXT QUESTION</small><h1>{room.preview?.title || '下一個思考，即將展開。'}</h1><p>{room.preview?.scenario}</p>{room.role === 'teacher' && <div className="r2-row"><button onClick={() => void run('approve_question')}>採用題目</button><button className="quiet" onClick={() => void run('regenerate_question')}>重新生成</button></div>}</section>}

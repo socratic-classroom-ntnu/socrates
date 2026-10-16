@@ -1,0 +1,124 @@
+/* 教室門口場景：身份選擇（RoleSelect）、登入頁（Auth，學生／老師兩種外觀）與輸入課程碼頁（JoinDoor）共用。 */
+.entrance{
+  --door-wall-top:#e8e0d2;--door-wall-bottom:#d4c8b5;
+  --door-wainscot:#7b5b3f;--door-wainscot-line:#6a4c33;--door-rail:#5e432d;--door-floor:#3d3128;
+  --door-wood:#6e4a2f;--door-frame:#4f3220;--door-panel:#644229;--door-brass:#c9a24c;
+  --door-ink:#22201d;--door-ink-soft:#6b6257;--door-plate:#1f1d1a;--door-plate-text:#f3efe6;
+  --door-field:#f6f4ef;--door-danger:#a3361f;--door-ok:#2f6b43;
+  --door-serif:"Noto Serif TC","Source Han Serif TC","Songti TC","PMingLiU",serif;
+  position:relative;min-height:100dvh;overflow:hidden;color-scheme:light;color:var(--door-ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6;
+  background:linear-gradient(170deg,var(--door-wall-top) 0%,var(--door-wall-bottom) 100%)
+}
+.entrance::before{
+  content:"";position:absolute;left:0;right:0;bottom:6vh;height:25vh;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 2px),var(--door-wainscot-line) calc(12.5% - 2px) 12.5%),var(--door-wainscot);
+  border-top:12px solid var(--door-rail)
+}
+.entrance::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6vh;background:linear-gradient(var(--door-floor),#2e251e)}
+.entrance :focus-visible{outline:2px solid var(--door-ink);outline-offset:2px}
+
+.entrance-brand{position:absolute;z-index:2;top:16px;left:18px;display:flex;align-items:center;gap:10px;font-family:var(--door-serif);font-weight:700;font-size:18px}
+.entrance-brand i{display:grid;place-items:center;width:30px;height:30px;border-radius:7px;background:var(--door-plate);color:var(--door-plate-text);font-style:normal;font-size:15px}
+
+.entrance-leaf{position:absolute;z-index:1;right:8%;bottom:6vh;width:min(30vw,346px);height:83vh;background:var(--door-wood);border:13px solid var(--door-frame);border-bottom:0}
+.entrance-leaf>span{position:absolute}
+.entrance-leaf .glass{left:14%;right:14%;top:6%;height:24%;background:linear-gradient(160deg,#3b3833,#23211e);border:8px solid var(--door-panel)}
+.entrance-leaf .panel{left:14%;right:14%;border:2px solid var(--door-panel)}
+.entrance-leaf .upper{top:40%;height:22%}
+.entrance-leaf .lower{top:67%;height:26%}
+.entrance-leaf .handle{left:6%;top:50%;width:20px;height:54px;border-radius:10px;background:linear-gradient(90deg,#a8822f,var(--door-brass) 45%,#e2c271 60%,#a8822f)}
+
+.entrance-stage{position:relative;z-index:2;min-height:100dvh;display:flex;align-items:center;padding:72px 16px 10vh calc(4vw + 16px)}
+.entrance-sign{position:relative;display:grid;gap:14px;width:min(100%,490px);padding:26px 32px 28px;border-radius:8px;background:linear-gradient(135deg,#e9e6df 0%,#d5d1c8 45%,#e4e1da 100%);box-shadow:0 18px 40px rgba(60,40,20,.28),inset 0 1px 0 rgba(255,255,255,.7)}
+.entrance-sign .screw{position:absolute;width:10px;height:10px;border-radius:50%;background:#8f8b84;box-shadow:inset 0 1px 1px rgba(0,0,0,.3)}
+.entrance-sign .tl{top:11px;left:11px}.entrance-sign .tr{top:11px;right:11px}
+.entrance-sign .bl{bottom:11px;left:11px}.entrance-sign .br{bottom:11px;right:11px}
+
+.entrance-plate{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 20px;border-radius:3px;background:var(--door-plate);color:var(--door-plate-text)}
+.entrance-plate h1{margin:0;font-family:var(--door-serif);font-weight:500;font-size:clamp(26px,3.4vw,36px);letter-spacing:.04em;line-height:1.3}
+.entrance-plate small{color:#b9b1a3;font-size:13px;white-space:nowrap}
+
+.entrance-meta{margin:4px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 22px;font-size:15px}
+.entrance-meta dt{color:var(--door-ink-soft)}
+.entrance-meta dd{margin:0;font-weight:700}
+
+.entrance-sign label{display:grid;gap:6px;font-size:13px;font-weight:700}
+.entrance-sign .hint{font-weight:400;color:var(--door-ink-soft)}
+.entrance-sign input{width:100%;font:inherit;font-size:16px;font-weight:400;padding:12px 16px;border:0;border-radius:4px;background:var(--door-field);color:var(--door-ink);box-shadow:inset 0 2px 4px rgba(0,0,0,.12)}
+
+.entrance-note{margin:0;font-size:14px;color:var(--door-ok)}
+/* 空的時候不佔 grid 間距，但不用 display:none，以免螢幕閱讀器漏報之後填入的訊息 */
+.entrance-note:empty{position:absolute}
+.entrance-note.error{color:var(--door-danger)}
+
+.entrance-primary{font:inherit;font-weight:700;font-size:17px;letter-spacing:.06em;padding:13px;border:0;border-radius:5px;background:var(--door-plate);color:var(--door-plate-text)}
+.entrance-primary:hover:not(:disabled){background:#33302b}
+.entrance-primary:disabled{opacity:.5;cursor:progress}
+
+.entrance-links{display:flex;justify-content:center;gap:18px;font-size:13px}
+.entrance-links button{font:inherit;color:var(--door-ink-soft);background:none;border:0;padding:2px;text-decoration:underline;text-underline-offset:3px}
+.entrance-links button:hover{color:var(--door-ink)}
+.entrance-links a{color:var(--door-ink-soft);text-underline-offset:3px}
+.entrance-links a:hover{color:var(--door-ink)}
+
+.entrance-account{position:absolute;z-index:3;top:16px;right:18px;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:4px 14px;font-size:13px;color:var(--door-ink-soft)}
+.entrance-account button{font:inherit;color:var(--door-ink);background:none;border:0;padding:4px 2px;text-decoration:underline;text-underline-offset:3px}
+
+.entrance-sign input.entrance-code{font-family:"JetBrains Mono","Cascadia Mono",Consolas,ui-monospace,monospace;font-size:clamp(24px,3vw,32px);font-weight:700;letter-spacing:.32em;padding:10px 18px}
+.entrance-sign input.entrance-code::placeholder{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:16px;font-weight:400;letter-spacing:normal;color:#9a9286}
+
+.entrance-recent{font-size:14px}
+.entrance-recent summary{cursor:pointer;color:var(--door-ink-soft)}
+.entrance-recent ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;max-height:180px;overflow:auto}
+.entrance-recent button{width:100%;display:flex;justify-content:space-between;gap:12px;font:inherit;text-align:left;padding:8px 12px;border:0;border-radius:4px;background:rgba(255,255,255,.55);color:var(--door-ink)}
+.entrance-recent button:hover{background:rgba(255,255,255,.85)}
+.entrance-recent button span{color:var(--door-ink-soft);font-size:13px}
+
+/* 回到身份選擇 */
+.entrance-switch{justify-self:center;font-size:12px;color:var(--door-ink-soft);text-underline-offset:3px}
+.entrance-switch:hover{color:var(--door-ink)}
+
+/* ---------- 老師入口：黑板＋門牌 ---------- */
+.entrance--teacher .entrance-stage{justify-content:center;align-items:center;gap:clamp(24px,5vw,64px);padding:72px 24px 30vh}
+.entrance-title{margin:0 0 2px;font-family:var(--door-serif);font-size:clamp(24px,2.6vw,30px);font-weight:700;letter-spacing:.04em}
+.entrance-links--outlined{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.entrance-links--outlined:has(>:only-child){grid-template-columns:1fr}
+.entrance-links--outlined button{padding:10px;border:1.5px solid var(--door-ink);border-radius:5px;text-decoration:none;font-weight:700;color:var(--door-ink);background:rgba(255,255,255,.35)}
+.entrance-links--outlined button:hover{background:rgba(255,255,255,.7)}
+.entrance--teacher .entrance-sign{width:min(100%,400px)}
+
+.entrance-chalkboard{position:relative;flex:0 1 560px;min-width:0;padding:clamp(28px,4vw,48px) clamp(24px,4vw,44px) clamp(36px,5vw,56px);
+  background:radial-gradient(ellipse at 30% 20%,#3a4a42 0%,#2b3832 60%,#25302b 100%);color:#f1ede4;
+  border:14px solid #5a3a24;border-radius:4px;box-shadow:0 18px 40px rgba(40,25,10,.35),inset 0 0 40px rgba(0,0,0,.35)}
+.entrance-chalkboard-mark{display:flex;align-items:center;gap:14px;font-size:12px;letter-spacing:.18em;color:#cfc8b8}
+.entrance-chalkboard-mark i{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:2px solid var(--door-brass);color:var(--door-brass);font-family:var(--door-serif);font-style:normal;font-size:20px;letter-spacing:0}
+.entrance-chalkboard h2{margin:28px 0 18px;font-family:var(--door-serif);font-weight:700;font-size:clamp(28px,3.6vw,44px);line-height:1.35;letter-spacing:.03em}
+.entrance-chalkboard p{margin:0;font-size:15px;color:#d9d3c6}
+.entrance-chalkboard-chalk{position:absolute;left:44px;bottom:-9px;width:46px;height:8px;border-radius:2px;background:#f4f1ea}
+
+/* ---------- 身份選擇 ---------- */
+.entrance-roles{position:relative;z-index:2;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding:88px 16px 30vh}
+.entrance-roles-heading{margin:0;font-family:var(--door-serif);font-weight:700;font-size:clamp(26px,3.4vw,40px);letter-spacing:.06em;text-align:center}
+.entrance-roles-grid{display:grid;grid-template-columns:repeat(2,minmax(0,320px));gap:clamp(20px,4vw,48px)}
+a.entrance-roles-card{color:var(--door-ink);text-decoration:none;transition:transform .18s,box-shadow .18s}
+a.entrance-roles-card:hover{transform:translateY(-4px);box-shadow:0 24px 48px rgba(60,40,20,.34),inset 0 1px 0 rgba(255,255,255,.7)}
+.entrance-roles-card .entrance-plate{justify-content:center}
+.entrance-roles-card .entrance-plate strong{font-family:var(--door-serif);font-weight:500;font-size:clamp(26px,3vw,34px);letter-spacing:.08em}
+.entrance-roles-line{min-height:3.2em;font-size:15px;color:var(--door-ink-soft)}
+.entrance-roles-card .entrance-primary{display:block;text-align:center}
+a.entrance-roles-card:hover .entrance-primary{background:#33302b}
+@media(prefers-reduced-motion:reduce){a.entrance-roles-card{transition:none}a.entrance-roles-card:hover{transform:none}}
+
+@media(max-width:760px){
+  .entrance-leaf{display:none}
+  /* 頂部要留給品牌與帳號列，窄螢幕時帳號列可能換行 */
+  .entrance-stage{justify-content:center;padding:96px 16px 10vh}
+  .entrance-sign{padding:22px 20px 24px}
+  .entrance--teacher .entrance-stage{flex-direction:column;align-items:stretch;padding:96px 16px 10vh}
+  .entrance--teacher .entrance-sign{width:100%;align-self:center}
+  .entrance-chalkboard{flex:none;border-width:10px}
+  .entrance-chalkboard h2{margin:18px 0 12px}
+  .entrance-roles{padding-bottom:10vh}
+  .entrance-roles-grid{grid-template-columns:minmax(0,1fr);width:min(100%,420px)}
+}

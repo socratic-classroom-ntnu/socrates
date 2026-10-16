@@ -23,8 +23,8 @@ export function prepareSearch(cx) {
     });
     return loader;
 }
-export function ResearchSidebar({ sessionId }) {
-    const [open, setOpen] = useState(true), [query, setQuery] = useState(''), [status, setStatus] = useState('搜尋設定讀取中'), [scope, setScope] = useState('');
+export function ResearchSidebar({ sessionId, defaultOpen = true }) {
+    const [open, setOpen] = useState(defaultOpen), [query, setQuery] = useState(''), [status, setStatus] = useState('搜尋設定讀取中'), [scope, setScope] = useState('');
     const host = useRef(null), handle = useRef(null), last = useRef('');
     const id = useRef('r73-search-' + Math.random().toString(36).slice(2));
     useEffect(() => {
@@ -70,6 +70,7 @@ export function ResearchSidebar({ sessionId }) {
  {query.trim() && <a href={'https://www.google.com/search?q=' + encodeURIComponent(query.trim())} target="_blank" rel="noopener noreferrer" className="r73-search-external">在 Google 開啟此查詢 ↗</a>}
  <footer>Google 接收你送出的搜尋文字。引用資料時，請保留來源與上下文。</footer></div></aside>;
 }
-export function AnswerWithResearch({ sessionId, children }) {
-    return <div className="r73-answer-layout"><div className="r73-answer-content">{children}</div><ResearchSidebar key={sessionId} sessionId={sessionId}/></div>;
+// defaultOpen：全螢幕的作答畫面傳 false，側欄先收合，才不會蓋住題目與情境
+export function AnswerWithResearch({ sessionId, children, defaultOpen = true }) {
+    return <div className="r73-answer-layout"><div className="r73-answer-content">{children}</div><ResearchSidebar key={sessionId} sessionId={sessionId} defaultOpen={defaultOpen}/></div>;
 }

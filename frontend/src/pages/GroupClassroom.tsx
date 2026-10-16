@@ -174,7 +174,7 @@ function GroupCollection({ view, refresh }) {
         : catalogStatus === 'loading' ? '正在確認已選教室角色，請稍候。'
             : catalogStatus === 'error' ? '無法確認教室角色，請重新整理模型清單，或選擇 Stickman · 教室基本角色後儲存。'
                 : `教室角色「${pack}」不適用於 Socratic 或已不在模型清單，請重新選擇可用角色並儲存分組。`;
-    const packChangeBlocked = !!packIssue && pack !== (view.configuration?.avatar_pack_id || 'stickman');
+    const packChangeBlocked = !!packIssue && (catalogStatus === 'ready' || pack !== (view.configuration?.avatar_pack_id || 'stickman'));
     // 「已儲存分組」＝目前畫面上的名單與分組，等於最後一次成功儲存（或後端已確認可開始時載入）的那一份。
     const localKey = JSON.stringify([view.roster_digest, count, size, pack, assignment]);
     const [savedKey, setSavedKey] = useState(() => (gate.can('start') ? localKey : null));

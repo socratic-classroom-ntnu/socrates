@@ -1,6 +1,6 @@
 # 人像開發測試
 - 模型由同源 `/avatar-packs/` 唯讀供應並依產品篩選；目前 checked-in stage 未供 catalog／GLB，會顯示 fallback。
-- CE 只接受明列 `ce` 的模型；Socratic 教師與學生共用許可篩選，舊存不可用模型須明確重選；「重新載入人像」會重抓 catalog 與模型。
+- CE 只接受明列 `ce` 的模型；Socratic 教師與學生共用許可篩選，清單確認不可用的舊值須重選後才能保存；清單載入中或失敗可保留原值，後端允許的開課不受影響。「重新載入人像」會重抓 catalog 與模型。
 - 啟用 `debug_mode` 後展開「人像選擇（開發）」並點「重播既有錄音對話」；使用既有錄音，不呼叫 LLM、TTS、STT 或 SpeechSynthesis。
 - 錄音為 `en-US-GuyNeural`、90 筆 visemes、31 筆 word timings；四份資產在解碼前驗 SHA256，音訊時鐘驅動嘴型。
 - 點擊時同步解鎖音訊；停止、關閉語音或換模型會取消播放，晚到的解鎖不得重新啟動音訊。

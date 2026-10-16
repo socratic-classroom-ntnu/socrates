@@ -85,6 +85,11 @@ describe('教室角色與 Socratic runtime 使用相同產品資格', () => {
     expect(picker).toHaveValue(id)
     expect(within(picker).getByRole('option', { name: `${id}（不可用，請重新選擇）`, hidden: true })).toBeDisabled()
     const start = screen.getByRole('button', { name: '2. 開始課堂 →' })
+    const save = screen.getByRole('button', { name: '1. 儲存分組' })
+    expect(start).toBeEnabled()
+    expect(save).toBeDisabled()
+    await act(async () => fireEvent.click(save))
+    expect(posts().some(([url]) => url.endsWith('/configure'))).toBe(false)
 
     fireEvent.change(picker, { target: { value: 'shared' } })
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()

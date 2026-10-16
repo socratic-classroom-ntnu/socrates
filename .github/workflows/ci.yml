@@ -100,6 +100,57 @@ jobs:
       - run: ./scripts/gen_types.sh
       - run: python scripts/gen_classroom_types.py
       - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
+  # contract 對不上時，把重新產生的契約檔推回 PR 分支（只限本 repo 的分支；fork 沒有寫入權限）。
+  # 用 GITHUB_TOKEN 推的 commit 不會自動跑 CI（run 會停在 action_required，要人手動核准），
+  # 所以推之前先跑前端 typecheck，確認新型別不會讓前端壞掉。
+  # 只修個人開發分支：develop、stage、master、backend/* 這類共用或部署分支不能收到沒跑過 CI 的 commit。
+  contract-fix:
+    needs: [contract]
+    if: >-
+      failure() && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (startsWith(github.head_ref, 'feature/') || startsWith(github.head_ref, 'fix/') || startsWith(github.head_ref, 'frontend/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: write, pull-requests: write}
+    env:
+      LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
+      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
+      HEAD_REF: ${{ github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+      CONTRACTS: frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.head_ref }}'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install -r backend/requirements.txt
+      - run: npm ci --no-audit --no-fund
+        working-directory: frontend
+      - run: ./scripts/gen_types.sh
+      - run: python scripts/gen_classroom_types.py
+      - id: diff
+        run: |
+          if git diff --quiet -- $CONTRACTS; then
+            echo "分支上的契約檔已經是最新的；不一致只出現在與 base 合併後的結果，請先 rebase 或 merge base 分支。"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.diff.outputs.changed == 'true'
+        run: npm run typecheck
+        working-directory: frontend
+      - if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $CONTRACTS
+          git commit -m "chore(contracts): regenerate OpenAPI contracts"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          gh pr comment "$PR_NUMBER" --body "🤖 OpenAPI 契約檔跟程式碼對不上，已自動重新產生並推上 \`$(git rev-parse --short HEAD)\`（前端 typecheck 已通過）。這個 commit 的 CI 不會自動跑（停在等待核准），下次 push 時會一併檢查；要馬上檢查的話，到 Actions 頁面核准，或先 \`git pull\` 再推一個 commit。"
   round1-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

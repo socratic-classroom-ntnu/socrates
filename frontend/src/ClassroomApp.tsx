@@ -15,6 +15,8 @@ import { Auth } from './pages/Auth';
 import { JoinDoor } from './pages/JoinDoor';
 import { RoleSelect } from './pages/RoleSelect';
 import { rememberRole, roleFromPath, storedRole } from './entryRole';
+import { TeacherDashboard, TeacherShell } from './pages/TeacherDashboard';
+import { pathAfterLogin, teacherRoute } from './teacherRoute';
 const errorText = (e) => e instanceof Error ? e.message : String(e);
 function Home({ user, initialMode = 'student' }) {
     const [mode, setMode] = useState(initialMode), [, setScripts] = useState([]);
@@ -28,11 +30,11 @@ function Home({ user, initialMode = 'student' }) {
         return <JoinDoor user={user} rooms={rooms} note={note} onMode={setMode}/>;
     const enter = (id, role) => { location.href = `/classrooms/${id}?mode=${role}`; };
     return <main className="r2-home"><header className="r2-top"><a href="/" className="r2-wordmark">Socrates<span>共思教室</span></a><span>{user.username} · {user.points} 點</span><button className="quiet" onClick={() => void api('/auth/logout', 'POST').then(() => location.reload())}>登出</button></header>
-    <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => setMode('teacher')}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
+    <section className="r2-home-hero"><small>每一種立場，都值得被理解</small><h1>今天，換個角度思考。</h1><div className="r2-tabs"><button aria-pressed={mode === 'student'} onClick={() => setMode('student')}>學生入口</button><button aria-pressed={mode === 'teacher'} onClick={() => { location.href = '/teacher/home'; }}>教師工作室</button><button aria-pressed={mode === 'providers'} onClick={() => setMode('providers')}>LLM 設定</button></div></section>
     {!user.verified && <section className="r2-card"><h2>完成 Email 驗證</h2><p>驗證後即可建立與加入教室。</p><button onClick={() => void api('/auth/verification-email', 'POST', { email: user.email }).then(() => setNote('驗證信已排入寄送。'))}>寄送驗證信</button></section>}
     {mode === 'teacher' ?
             <ClassroomLibrary /> : <ProviderSettings />}
-    <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? mode : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
+    <p role="status">{note}</p><section><h2>近期教室</h2><div className="r2-script-grid">{rooms.map(r => <button className="r2-card" key={r.id} onClick={() => enter(r.id, r.teacher ? 'teacher' : 'student')}><strong>{r.title}</strong><span>{r.phase}</span></button>)}</div></section><footer>多人課堂 · <a href="/round1">單人 Round1</a> · 外觀商店列於 Run3</footer></main>;
 }
 function useRoom(id, mode) {
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');
@@ -315,18 +317,60 @@ function LegacyClassroom({ id }) {
 }
 export default function ClassroomApp() {
     const [user, setUser] = useState(null), [ready, setReady] = useState(false);
-    useEffect(() => { void api('/auth/me').then(a => { setCSRF(a.csrf_token); setUser(a); }).catch(() => undefined).finally(() => setReady(true)); }, []);
-    // /student、/teacher 是入口；已登入的人走進來也算換了身份
-    useEffect(() => { const r = roleFromPath(location.pathname); if (r) rememberRole(r); }, []);
+
+    useEffect(() => {
+        void api('/auth/me')
+            .then(a => {
+                setCSRF(a.csrf_token);
+                setUser(a);
+            })
+            .catch(() => undefined)
+            .finally(() => setReady(true));
+    }, []);
+
+    useEffect(() => {
+        const r = roleFromPath(location.pathname);
+        if (r) rememberRole(r);
+    }, []);
+
     if (!ready)
         return <main className="r2-loading"><div className="r2-pulse"/></main>;
-    const search = new URLSearchParams(location.search), tokenLink = search.has('reset_token') || search.has('verify_token');
-    const pathRole = roleFromPath(location.pathname), role = pathRole || storedRole() || 'student';
+
+    const search = new URLSearchParams(location.search);
+    const tokenLink = search.has('reset_token') || search.has('verify_token');
+    const pathRole = roleFromPath(location.pathname);
+    const role = pathRole || storedRole() || 'student';
+
     if (!user || tokenLink) {
-        if (!tokenLink && !pathRole)
+        if (!tokenLink && !pathRole && !storedRole())
             return <RoleSelect/>;
-        return <Auth variant={role} onLogin={a => { rememberRole(role); setUser(a); history.replaceState({}, '', '/'); }}/>;
+
+        return <Auth
+            variant={role}
+            onLogin={a => {
+                rememberRole(role);
+                setUser(a);
+                history.replaceState({}, '', pathAfterLogin(location.pathname));
+            }}
+        />;
     }
+
     const room = location.pathname.match(/^\/classrooms\/([\w-]+)/);
-    return room ? <Classroom user={user} id={room[1]}/> : <Home user={user} initialMode={role}/>;
+    if (room)
+        return <Classroom user={user} id={room[1]}/>;
+
+    const teacher = teacherRoute(location.pathname, user.verified);
+
+    if (teacher?.page === 'verify')
+        return <VerificationGate user={user} onVerified={() => location.reload()}/>;
+
+    if (teacher?.page === 'home')
+        return <TeacherDashboard user={user}/>;
+
+    if (teacher?.page === 'course')
+        return <TeacherShell active="home">
+            <ClassroomLibrary initialSelected={teacher.courseId}/>
+        </TeacherShell>;
+
+    return <Home user={user} initialMode={role}/>;
 }

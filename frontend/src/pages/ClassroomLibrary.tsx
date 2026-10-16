@@ -3,9 +3,9 @@ import { ApiError, api } from '../api/classroomClient'
 import { ScriptBuilder, newDocument } from '../features/script-builder/ScriptBuilder'
 import { ClassroomAISettings } from '../features/ai-settings/ClassroomAISettings'
 
-export function ClassroomLibrary() {
+export function ClassroomLibrary({ initialSelected = '' }: { initialSelected?: string } = {}) {
   const [rows, setRows] = useState([])
-  const [selected, setSelected] = useState('')
+  const [selected, setSelected] = useState(initialSelected)
   const [workspace, setWorkspace] = useState(null)
   const [editing, setEditing] = useState(null)
   const [title, setTitle] = useState('')

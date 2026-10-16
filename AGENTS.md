@@ -97,6 +97,9 @@ python scripts/gen_classroom_types.py                 # 教室（/api/v2）schem
 會自動用 `backend/.venv`，也可以用 `PYTHON_BIN` 指定；`gen_classroom_types.py` 請用
 `backend/.venv/bin/python scripts/gen_classroom_types.py` 執行），前端也要先 `npm ci`。
 CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新產生就會紅燈。
+通常不用手動跑：裝了 husky（根目錄 `npm install`）且 backend 容器有在跑時，每次 commit 都會自動重新產生
+這四個檔案並加入 commit（OpenAPI JSON 由容器印出，主機只負責寫檔與產生 TS，不需要主機的後端依賴）。
+漏掉的話，`feature/`、`fix/`、`frontend/` 分支的 PR 在 `contract` 失敗時，`contract-fix` 會把重新產生的檔案推回 PR 分支（那個 commit 的 CI 要在 Actions 頁面手動核准才會跑）。
 
 **後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** `conftest.py` 會把任何
 `DATABASE_URL` 自動改寫成 `<原名>_test`，不需要、也不要為了跑測試手動改 `DATABASE_URL`。

@@ -191,6 +191,15 @@ class MemberView(Strict):
     persona_id: str | None = None
 
 
+class RoomSummary(Strict):
+    """`GET /classrooms` 的一筆：帳號建立或加入過的教室，供首頁「近期教室」列出。"""
+
+    id: str
+    title: str
+    phase: str
+    teacher: bool
+
+
 class RoomView(Strict):
     id: str
     code: str | None

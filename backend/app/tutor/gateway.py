@@ -38,8 +38,16 @@ class TutorGateway:
         hint = iron_rules.screen_input({"history": latest})
         return self._call(request, TutorTurn, kind="solo_tutor", hint=hint)
 
-    def summarize(self, history: list[PromptMessage]) -> SummaryDraft:
-        request = ProviderRequest(kind="summarize", stage_key=None, turn_index=0, messages=history)
+    def summarize(
+        self, history: list[PromptMessage], reached_stage_keys: tuple[str, ...]
+    ) -> SummaryDraft:
+        request = ProviderRequest(
+            kind="summarize",
+            stage_key=None,
+            turn_index=0,
+            messages=history,
+            reached_stage_keys=reached_stage_keys,
+        )
         return self._call(request, SummaryDraft, kind="solo_summary")
 
     def _build_respond_request(
@@ -51,6 +59,7 @@ class TutorGateway:
             stage_key=stage.key,
             turn_index=turn_index,
             messages=history,
+            reached_stage_keys=(),
         )
 
     def _call(
@@ -62,7 +71,13 @@ class TutorGateway:
             try:
                 raw = self._provider.generate(request)
                 # post-processor：格式驗證，再做鐵則檢查（不透露設定；被要求改寫規則時要提問拉回）。
-                parsed = model.model_validate(raw)
+                candidate = model.model_validate(raw)
+                if isinstance(candidate, SummaryDraft) and any(
+                    entry.stage_key not in request.reached_stage_keys
+                    for entry in candidate.stance_by_stage
+                ):
+                    raise ValueError("summary contains a stage outside the reached scope")
+                parsed = candidate
             except Exception as exc:
                 # provider 邊界統一轉成可重試的 503；不要讓連線錯誤變成未處理的 500。
                 last_error = exc

@@ -277,9 +277,14 @@ class ConversationService:
 
         has_student_message = any(m.role == "student" for m in session.messages)
         history = _provider_history(session)
+        reached_stage_keys = tuple(
+            stage.stage_key
+            for stage in session.stage_progress
+            if stage.status not in ("skipped", "not_started")
+        )
         # 無發言時只存固定的中性佔位內容，不呼叫 provider 猜測學生立場。
         draft = (
-            self._gateway.summarize(history)
+            self._gateway.summarize(history, reached_stage_keys)
             if has_student_message
             else SummaryDraft(
                 core_principle="尚未提出立場", tension="", stance_by_stage=[], shifted=False
@@ -291,7 +296,7 @@ class ConversationService:
             tension=draft.tension,
             stance_by_stage=[s.model_dump() for s in draft.stance_by_stage],
             shifted=draft.shifted,
-            raw=draft.model_dump(),
+            raw={**draft.model_dump(), "reached_stage_keys": list(reached_stage_keys)},
         )
         self._db.add(row)
         self._db.commit()

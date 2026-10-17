@@ -15,16 +15,17 @@ from uuid import uuid4
 from fastapi import APIRouter, Request
 from pydantic import ValidationError
 
-from app.api.classroom_schemas import (
+from app.modules.content_authoring.contracts import (
     PublicQuestion,
     SampleQuestionDraft,
     SampleQuestionSet,
     ScriptAssistRequest,
     ScriptAssistResult,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
+from app.modules.platform.rate_limit import enforce_rate_limit
 from app.repositories.classroom_storage import Script, transaction
-from app.tutor import classroom_gateway
+from app.tutor.iron_rules import guarded_generate
 from app.tutor.classroom_provider import ProviderWait
 
 ROLE = "ai_script_authoring"
@@ -117,15 +118,14 @@ def build_question(result: dict, target: dict | None) -> dict:
 
 @router.post("/scripts/assist")
 async def script_assist(body: ScriptAssistRequest, request: Request):
-    from app.api.routes.classroom import account
-    from app.api.routes.provider_profiles import (
+    from app.modules.identity_access.dependencies import account
+    from app.modules.ai_providers.service import (
         AccountAISettings,
-        _settings_view,
+        account_settings_view,
         provider_error_status,
         record_direct_call_audit,
         resolve_request_chain,
     )
-    from app.services import classroom as service
     from app.tutor.prompts import compile_program
 
     with transaction() as db:
@@ -135,7 +135,7 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
             if script is None or script.owner_id != actor.id:
                 raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         context = _assist_context(body)
-        model = _settings_view(db.get(AccountAISettings, actor.id))["model_matrix"].get(ROLE)
+        model = account_settings_view(db.get(AccountAISettings, actor.id))["model_matrix"].get(ROLE)
         if not model:
             raise DomainError("SCRIPT_ASSIST_MODEL_REQUIRED", 409)
         bindings, _ = resolve_request_chain(
@@ -143,7 +143,7 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
         )
         if not bindings:
             raise DomainError("SCRIPT_ASSIST_PROVIDER_REQUIRED", 409)
-        service.limit(db, f"script-assist:{actor.id}", 20, 60)
+        enforce_rate_limit(db, f"script-assist:{actor.id}", 20, 60)
         messages, schema, _ = compile_program(db, ROLE, context)
 
     async def no_delta(_):
@@ -153,7 +153,9 @@ async def script_assist(body: ScriptAssistRequest, request: Request):
     for binding in bindings:
         started = time.monotonic()
         try:
-            result, audit = await classroom_gateway.generate(binding, messages, schema, no_delta)
+            result, audit = await guarded_generate(
+                binding, messages, schema, no_delta, kind=ROLE, context=context
+            )
             result = ScriptAssistResult.model_validate(result).model_dump()
             questions = _draft_questions(body.document)
             target = questions[body.question_index] if body.question_index is not None else None
@@ -244,7 +246,7 @@ def sample_questions(path: str | None = None) -> dict:
 
 @router.get("/scripts/samples", response_model=SampleQuestionSet)
 def script_samples(request: Request):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     with transaction() as db:
         account(db, request)

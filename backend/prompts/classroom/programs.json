@@ -1,7 +1,8 @@
 {
-  "version": "classroom-prompt-programs-1",
-  "skill_set_version": "socratic-reflection-v1",
+  "version": "classroom-prompt-programs-2",
+  "skill_set_version": "iron-rules-v1+socratic-reflection-v1",
   "skills": [
+    "iron-rules/ROUTER.json",
     "socratic.md"
   ],
   "programs": {

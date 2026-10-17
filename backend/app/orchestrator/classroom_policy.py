@@ -2,20 +2,18 @@
 
 import random
 
-from app.domain.tutor import Observations as DomainObservations
-from app.orchestrator import policy as round1
-
-from app.api.classroom_schemas import Observations
+from app.modules.llm_runtime.contracts import Observations
+from app.orchestrator import policy as advance_policy
 
 
 def stage_goal(observations: dict, completed_turns: int) -> bool:
-    """Advance criteria live once, in Round 1's policy (AGENTS.md non-negotiable).
+    """Advance criteria live once, in app/orchestrator/policy.py (AGENTS.md non-negotiable).
 
-    Round 1's turn_count (exchanges completed before this one) and Run 2's completed_turns
-    (index of the exchange just answered) have the same value at the same moment.
+    Solo dialogue's turn_count (exchanges completed before this one) and the classroom's
+    completed_turns (index of the exchange just answered) have the same value at the same moment.
     """
     o = Observations.model_validate(observations)
-    return round1.should_advance(DomainObservations.model_validate(o.model_dump()), completed_turns)
+    return advance_policy.should_advance(o, completed_turns)
 
 
 def choose_representative(

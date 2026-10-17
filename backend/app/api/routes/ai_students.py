@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.modules.platform.rate_limit import enforce_rate_limit
 from copy import deepcopy
 from hashlib import sha256
 import json
@@ -62,7 +63,7 @@ def _receipt(db, room: Room, actor: Account, body: BaseModel, operation: str):
     )
     if prior:
         if prior.payload_hash != key_hash:
-            from app.orchestrator.classroom import DomainError
+            from app.modules.platform.errors import DomainError
 
             raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
         return key_hash, prior.receipt
@@ -92,7 +93,7 @@ def _persona(index: int, room_id: str) -> dict:
 
 
 def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
-    """Stable product namespaces for new rows; rows created under the legacy "r88-ai-*" namespaces keep their ids (data compatibility)."""
+    """Deterministic ids for one add-ai-students action; a replay returns the stored receipt."""
     account_id = str(uuid5(UUID(room_id), f"ai-student-account:{action_id}:{index}"))
     membership_id = str(uuid5(UUID(room_id), f"ai-student-member:{account_id}"))
     return account_id, membership_id
@@ -100,8 +101,8 @@ def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
 
 @router.post("/groups/classrooms/{rid}/ai-students")
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.platform.errors import DomainError
+    from app.modules.group_dialogue.service import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
     require_feature("ai_students")
@@ -212,8 +213,8 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 
 @router.post("/groups/classrooms/{rid}/ai-students/clear")
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
-    from app.orchestrator.classroom import DomainError
-    from app.api.routes.groups import actor, roster, roster_hash, teacher_room
+    from app.modules.platform.errors import DomainError
+    from app.modules.group_dialogue.service import actor, roster, roster_hash, teacher_room
     from app.repositories.classroom_storage import append_event
 
     require_feature("ai_students")
@@ -291,12 +292,12 @@ def fallback_other_suggestion(body: OtherSuggestionRequest) -> dict:
 @router.post("/suggestions/other")
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.services import classroom as service
-    from app.api.routes.classroom import account
-    from app.api.classroom_schemas import OtherSuggestionResult
-    from app.orchestrator.classroom import DomainError
+    from app.modules.identity_access.dependencies import account
+    from app.modules.llm_runtime.contracts import OtherSuggestionResult
+    from app.modules.platform.errors import DomainError
     from app.tutor.classroom_provider import ProviderWait
-    from app.tutor.classroom_gateway import generate
-    from app.api.routes.provider_profiles import (
+    from app.tutor.iron_rules import guarded_generate
+    from app.modules.ai_providers.service import (
         provider_error_status,
         record_direct_call_audit,
         resolve_request_chain,
@@ -304,7 +305,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
 
     with transaction() as db:
         actor, session = account(db, request, True)
-        service.limit(db, f"other-suggestion:{actor.id}", 30, 60)
+        enforce_rate_limit(db, f"other-suggestion:{actor.id}", 30, 60)
         room = None
         if body.room_id:
             room, _, _ = service.load(db, body.room_id, actor.id)
@@ -337,11 +338,13 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     for binding in bindings:
         started = time.monotonic()
         try:
-            result, audit = await generate(
+            result, audit = await guarded_generate(
                 binding,
                 messages,
                 OtherSuggestionResult,
                 no_delta,
+                kind="other_suggestion",
+                context=body.model_dump(),
             )
             response = {
                 "suggestion_text": result["suggestion_text"],

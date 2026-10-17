@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-import time
-
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
 
 from app.classroom_env import env_str
-from app.repositories.classroom_storage import (
-    Base,
+from app.modules.content_authoring.normalization import (
+    ensure_other_options as ensure_other_options,
+    ensure_other_question as ensure_other_question,
 )
+from app.modules.group_dialogue.repositories import AIStudentProfile as AIStudentProfile
+
 
 OTHER_ID = "__other__"
+
 PERSONAS = [
     {
         "id": "consequence",
@@ -58,42 +57,6 @@ PERSONAS = [
         "style": "先區分事實、推論與價值",
     },
 ]
-
-
-class AIStudentProfile(Base):
-    __tablename__ = "ai_students"
-
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
-    parent_room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_runs.id"), index=True
-    )
-    persona: Mapped[dict] = mapped_column(JSON)
-    model: Mapped[str] = mapped_column(String(160), default="openrouter/free")
-    provider_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("provider_profiles.id"), nullable=True
-    )
-    seed: Mapped[int] = mapped_column(Integer)
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-def ensure_other_options(document: dict) -> dict:
-    """Return a copy whose every question contains one canonical Other option."""
-    value = deepcopy(document)
-    for question in value.get("questions", []):
-        options = question.setdefault("options", [])
-        if any(
-            option.get("id") == OTHER_ID or str(option.get("text", "")).strip() == "其他"
-            for option in options
-        ):
-            continue
-        options.append({"id": OTHER_ID, "text": "其他"})
-    return value
-
-
-def ensure_other_question(question: dict) -> dict:
-    value = {"questions": [deepcopy(question)]}
-    return ensure_other_options(value)["questions"][0]
 
 
 def fallback_turn(context: dict) -> dict:

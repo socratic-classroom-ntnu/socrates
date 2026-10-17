@@ -1,6 +1,6 @@
 # Socrates 報告速記｜CE Stage 交付候選
 
-> 狀態（2026-10-03）：本文件只描述 2026-09-24 的 Round 1 展示。現行教室（多人課堂）說明見 [Classroom Architecture](../CLASSROOM-ARCHITECTURE.md)。
+> 狀態（2026-10-03）：本文件只描述 2026-09-24 的單人對話展示。現行教室（多人課堂）說明見 [Classroom Architecture](../CLASSROOM-ARCHITECTURE.md)。
 
 ## 30 秒
 
@@ -33,7 +33,7 @@ API family：sessions、messages、advance、retry、end、summary、room、hist
 
 ## Demo 能力範圍
 
-目前 provider 為固定腳本，適合課程演示與可重現旅程。真實 LLM 使用相同 provider boundary 接入；人像的 audio／viseme 由 Portal-Goose 後續整合。UUID 是瀏覽器紀錄識別，正式帳號驗證屬後續版本。
+目前 provider 為固定腳本，適合課程演示與可重現旅程。真實 LLM 使用相同 provider boundary 接入；人像的 audio／viseme 後續整合。UUID 是瀏覽器紀錄識別，正式帳號驗證屬後續版本。
 
 ## 常見問答
 

@@ -1,5 +1,5 @@
 /* 劇本編輯器裡的「AI 協助出題」（ScriptAssist）與單題 AI 模型（ScenarioModelSelect）。
-   顏色沿用教師端外框的 --desk-* 變數；不在教師端外框時退回深色主題的 --r2-* 變數。
+   顏色沿用教師端外框的 --desk-* 變數；不在教師端外框時退回深色主題的 --sc-* 變數。
    按鈕、輸入框的基本外觀交給既有的教師端樣式，這裡只補版面、層次與狀態。 */
 .sc-card.script-assist{display:grid;gap:2px;margin:12px 0}
 .sc-card.script-assist>p:first-child{margin:0 0 4px;color:var(--desk-ink-soft,var(--sc-muted));font-size:14px;line-height:1.7}

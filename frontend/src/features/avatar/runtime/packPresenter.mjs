@@ -254,8 +254,9 @@ export class PackPresenter {
 
   async play(buffer, events) {
     const pack = this.pack;
-    const frames = timeline(events, buffer.duration * 1000);
-    this.container.dataset.timingState = 'SOURCE_TIMELINE_BOUND';
+    let frames;
+    try { frames = timeline(events, buffer.duration * 1000); this.container.dataset.timingState = 'SOURCE_TIMELINE_BOUND'; }
+    catch { frames = timeline([], buffer.duration * 1000); this.container.dataset.timingState = 'AUDIO_ONLY_TIMING_RECONCILIATION'; }
     return this.audio.play(buffer, (ms, ended) => {
       if (pack?.talk_mode === 'viseme') this.speechWeights = ended ? {} : weightsAt(pack, frames, ms);
       if (pack?.talk_mode === 'audio-reactive' && this.model) {

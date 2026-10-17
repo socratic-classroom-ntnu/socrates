@@ -6,15 +6,16 @@ import time
 from typing import Any, cast
 from uuid import uuid4
 from sqlalchemy import func, select
-from app.api.classroom_schemas import MemberView, PublicQuestion, RoomView, public_question
+from app.modules.classroom_core.contracts import MemberView, RoomView
+from app.modules.content_authoring.contracts import PublicQuestion, public_question
 from app.domain.group_run import baseline_answers, personal_records
-from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
+from app.modules.platform.errors import DomainError
+from app.orchestrator.classroom import GameOrchestrator, fresh_state
 from app.orchestrator.classroom_policy import distribution
 from app.repositories.classroom_storage import (
     ActionReceipt,
     Membership,
     PointEntry,
-    RateBucket,
     Room,
     Script,
     Snapshot,
@@ -25,42 +26,8 @@ from app.repositories.classroom_storage import (
 )
 
 
-def limit(db, key: str, maximum: int, seconds: int):
-    now = time.time()
-    bucket_key = f"{key}:{int(now)//seconds}"
-    # Room operations hold their aggregate lock; auth buckets use atomic upsert.
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
-    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-
-    ins = pg_insert if db.bind.dialect.name == "postgresql" else sqlite_insert
-    stmt = ins(RateBucket).values(id=bucket_key, count=1, expires_at=now + seconds)
-    value = db.scalar(
-        stmt.on_conflict_do_update(
-            index_elements=[RateBucket.id], set_={"count": RateBucket.count + 1}
-        ).returning(RateBucket.count)
-    )
-    if value > maximum:
-        raise DomainError("稍候即可再次送出。", 429)
-
-
-def load(db, room_id, account_id, locked=False):
-    query = select(Room).where(Room.id == room_id)
-    if locked:
-        query = query.with_for_update()
-    room = db.scalar(query)
-    if room is None:
-        raise DomainError("CLASSROOM_REQUIRED", 404)
-    member = db.scalar(
-        select(Membership).where(
-            Membership.room_id == room_id,
-            Membership.account_id == account_id,
-            Membership.role == "student",
-        )
-    )
-    teacher = room.creator_id == account_id
-    if not teacher and member is None:
-        raise DomainError("CLASSROOM_MEMBERSHIP_REQUIRED", 403)
-    return room, member, teacher
+from app.modules.platform.rate_limit import enforce_rate_limit as limit
+from app.modules.classroom_core.service import load as load
 
 
 def hydrate(db, room):
@@ -325,7 +292,7 @@ def execute(db, a, room_id, cmd):
     data = deepcopy(cmd.data)
     if cmd.kind == "start":
         script = db.get(Script, room.script_id)
-        from app.services.ai_students import ensure_other_options
+        from app.modules.content_authoring.normalization import ensure_other_options
 
         document = ensure_other_options(script.document)
         snapshot = Snapshot(

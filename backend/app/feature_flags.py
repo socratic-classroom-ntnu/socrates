@@ -50,6 +50,6 @@ def feature_states(*names: str) -> dict[str, FeatureState]:
 def require_feature(name: str) -> None:
     if feature_enabled(name):
         return
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
 
     raise DomainError(FEATURES[name].disabled_reason, 409)

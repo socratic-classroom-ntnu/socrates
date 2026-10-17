@@ -1,4 +1,4 @@
-// Existing Round 1 journey on an isolated browser learner; test records remain in the dev database.
+// Existing solo-dialogue journey on an isolated browser learner; test records remain in the dev database.
 import { chromium } from '@playwright/test';
 import fs from 'node:fs/promises';
 import path from 'node:path';

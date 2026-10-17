@@ -20,7 +20,7 @@ def get_db() -> Iterator[OrmSession]:
 
 
 def get_learner_id(x_learner_id: Annotated[uuid.UUID, Header()]) -> uuid.UUID:
-    """不是真的安全機制，但它是第二輪換成真認證時唯一要改的地方。"""
+    """不是真的安全機制，但它是後續版本換成真認證時唯一要改的地方。"""
     return x_learner_id
 
 

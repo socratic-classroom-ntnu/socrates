@@ -101,7 +101,7 @@ def person_summary(state, member_id):
 def record_statement(
     state, member_id, text, now, *, relation="qualifies", parents=(), node_id=None
 ):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
 
     p = state["group"]
     if member_id not in p["member_snapshot"]:
@@ -156,7 +156,7 @@ def record_statement(
 
 
 def confirm(state, member_id, digest, now):
-    from app.orchestrator.classroom import DomainError
+    from app.modules.platform.errors import DomainError
 
     p = state["group"]
     if member_id not in p["member_snapshot"]:
@@ -408,7 +408,7 @@ def extend(Native):
         def settle(self, *, ended_by="system", force=False):
             p = self.group()
             if not force and p["settlement"]["state"] != "FINAL_STAGE":
-                from app.orchestrator.classroom import DomainError
+                from app.modules.platform.errors import DomainError
 
                 raise DomainError("COMPLETE_FINAL_STAGE_REQUIRED", 409)
             incomplete = [m for m in p["member_snapshot"] if m not in p["confirmations"]]
@@ -456,7 +456,7 @@ def extend(Native):
             p = self.group()
             if not p:
                 return Native.command(self, kind, data, member_id, teacher)
-            from app.orchestrator.classroom import DomainError
+            from app.modules.platform.errors import DomainError
 
             try:
                 if kind in PERSONAL_COMMANDS:
@@ -598,7 +598,7 @@ def extend(Native):
             self.emit("personal.tutor.started", member_id=member_id, generation_id=key)
 
         def personal_command(self, kind, data, member_id, teacher):
-            from app.orchestrator.classroom import DomainError
+            from app.modules.platform.errors import DomainError
 
             if teacher and kind == "personal_retry" and member_id is None:
                 member_id = data.get("member_id")
@@ -660,7 +660,7 @@ def extend(Native):
             self.maybe_finish_personal()
 
         def personal_reply(self, member_id, entry, data, message_kind):
-            from app.orchestrator.classroom import DomainError
+            from app.modules.platform.errors import DomainError
 
             text = data.get("text")
             text = text.strip() if isinstance(text, str) else ""
@@ -675,7 +675,7 @@ def extend(Native):
             self.queue_personal(member_id, entry)
 
         def complete_personal(self, key, result, provider):
-            from app.orchestrator.classroom import tutor_unavailable_notice
+            from app.modules.classroom_core.notices import tutor_unavailable_notice
 
             parts = key.split(":")
             if len(parts) != 5:
@@ -716,7 +716,7 @@ def extend(Native):
             entry["last_observations"] = observations
             entry["summary"] = personal_summary_value(result.get("summary"))
             entry["completed_turns"] = entry["turn_index"]
-            # Goal before cap, as for a focus; the goal is the shared Round 1 policy.
+            # Goal before cap, as for a focus; the goal is the shared advance policy.
             if stage_goal(observations, entry["completed_turns"]):
                 entry["status"] = "awaiting_confirm"
                 entry["summary_digest"] = personal_digest(run_id, member_id, entry)

@@ -1,61 +1,33 @@
 """Long-lived teacher Classroom assets, immutable Lessons, and linked Group Sessions."""
 
 from copy import deepcopy
-import time
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
 from pydantic import Field
 from app.api.model_base import TrimmedModel
-from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import select
 
-from app.api.classroom_schemas import LibraryClassroomView
+from app.modules.content_authoring.contracts import LibraryClassroomView
+from app.modules.content_authoring.service import (
+    link_group_session as link_group_session,
+    mutate as mutate,
+    owned_classroom as owned,
+)
+from app.modules.content_authoring.repositories import (
+    ClassroomAssets,
+    SessionLink,
+)
 from app.services import classroom as service
-from app.orchestrator.classroom import DomainError
-from app.services.ai_students import ensure_other_options
+from app.modules.platform.errors import DomainError
+from app.modules.content_authoring.normalization import ensure_other_options
 from app.repositories.classroom_storage import (
     Account,
-    Base,
     Room,
     Script,
     Snapshot,
-    digest,
     transaction,
 )
-
-
-class ClassroomAssets(Base):
-    __tablename__ = "classroom_assets"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
-    title: Mapped[str] = mapped_column(String(160))
-    revision: Mapped[int] = mapped_column(Integer, default=1)
-    assets: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class SessionLink(Base):
-    __tablename__ = "classroom_sessions"
-
-    room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_runs.id"), primary_key=True
-    )
-    classroom_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_assets.id"), index=True
-    )
-    batch_id: Mapped[str] = mapped_column(String(36), index=True)
-    kind: Mapped[str] = mapped_column(String(20))
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class LibraryReceipt(Base):
-    __tablename__ = "library_receipts"
-
-    key: Mapped[str] = mapped_column(String(200), primary_key=True)
-    payload_hash: Mapped[str] = mapped_column(String(64))
-    response: Mapped[dict] = mapped_column(JSON)
 
 
 class Mutation(TrimmedModel):
@@ -79,35 +51,9 @@ router = APIRouter(prefix="/library")
 
 
 def user(db, request, mutation=False):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     return account(db, request, mutation)[0]
-
-
-def owned(db, cid, account, lock=False):
-    query = select(ClassroomAssets).where(ClassroomAssets.id == cid)
-    if lock:
-        query = query.with_for_update()
-    classroom = db.scalar(query)
-    if classroom is None or classroom.owner_id != account.id:
-        raise DomainError("CLASSROOM_ASSET_OWNER_REQUIRED", 403)
-    return classroom
-
-
-def mutate(db, account, operation, body, action):
-    key = f"{account.id}:{operation}:{body.action_id}"
-    if len(key) > 200:
-        raise DomainError("ACTION_SCOPE_REQUIRED", 422)
-    hashed = digest(body.model_dump())
-    old = db.get(LibraryReceipt, key)
-    if old:
-        if old.payload_hash != hashed:
-            raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
-        return old.response
-    result = action()
-    db.add(LibraryReceipt(key=key, payload_hash=hashed, response=result))
-    db.flush()
-    return result
 
 
 def _lesson_kind(state: dict) -> str:
@@ -254,7 +200,7 @@ def classroom(cid: str, request: Request):
 
 @router.post("/classrooms/{cid}/scripts")
 def attach_script(cid: str, body: AttachScript, request: Request):
-    from app.api.classroom_schemas import ScriptDocument
+    from app.modules.content_authoring.contracts import ScriptDocument
 
     with transaction() as db:
         account = user(db, request, True)
@@ -328,16 +274,3 @@ def create_batch(cid: str, body: CreateBatch, request: Request):
             }
 
         return mutate(db, account, "batch:" + cid, body, action)
-
-
-def link_group_session(db, parent, group):
-    cid = parent.state.get("asset_classroom_id")
-    if cid and db.get(SessionLink, group.id) is None:
-        db.add(
-            SessionLink(
-                room_id=group.id,
-                classroom_id=cid,
-                batch_id=parent.id,
-                kind="SESSION",
-            )
-        )

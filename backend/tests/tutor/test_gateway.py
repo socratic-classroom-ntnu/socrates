@@ -46,3 +46,40 @@ def test_retries_once_then_succeeds():
     turn = gateway.respond(STAGE, [], turn_index=0)
     assert turn.reply_text == "為什麼？"
     assert provider.calls == 2
+
+
+def test_summary_retries_and_rejects_out_of_scope_stances():
+    import pytest
+
+    from app.tutor.gateway import TutorUnavailable
+
+    provider = FakeProvider(
+        [
+            {
+                "core_principle": "fixture",
+                "tension": "",
+                "stance_by_stage": [
+                    {"stage_key": "unreached", "label": "未明", "note": "future fixture"}
+                ],
+                "shifted": False,
+            }
+        ]
+    )
+    with pytest.raises(TutorUnavailable, match="outside the reached scope"):
+        TutorGateway(provider).summarize([], ("s1",))
+    assert provider.calls == 2
+
+
+def test_summary_provider_receives_the_authoritative_reached_scope():
+    class ScopeProvider:
+        def generate(self, request):
+            assert request.kind == "summarize"
+            assert request.reached_stage_keys == ("s1",)
+            return {
+                "core_principle": "fixture",
+                "tension": "",
+                "stance_by_stage": [{"stage_key": "s1", "label": "未明", "note": "fixture"}],
+                "shifted": False,
+            }
+
+    assert TutorGateway(ScopeProvider()).summarize([], ("s1",)).core_principle == "fixture"

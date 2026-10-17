@@ -22,7 +22,9 @@ from app.repositories.classroom_storage import (
     append_event,
     persist_machine,
 )
-from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_notice, fresh_state
+from app.modules.platform.errors import DomainError
+from app.modules.group_dialogue.service import actor, roster, roster_hash, teacher_room
+from app.orchestrator.classroom import GameOrchestrator, focus_notice, fresh_state
 from app.domain.group_run import (
     PERSONAL_COMMANDS,
     initialise,
@@ -35,8 +37,9 @@ from app.domain.group_run import (
 from app.domain.group_analysis import analysis as project_analysis, current_stance
 from app.services import classroom as service
 from app.domain.library_decisions import visible_evidence
-from app.api.routes.classroom_library import link_group_session, ClassroomAssets
-from app.api.classroom_schemas import public_question
+from app.modules.content_authoring.repositories import ClassroomAssets
+from app.modules.content_authoring.service import link_group_session
+from app.modules.content_authoring.contracts import public_question
 
 router = APIRouter(prefix="/groups")
 
@@ -62,27 +65,6 @@ class GroupCommand(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
     kind: str = Field(max_length=40)
     data: dict = Field(default_factory=dict)
-
-
-def actor(db, request, mutation=False):
-    # Resolve the already-initialised native adapter lazily to preserve imports.
-    from app.api.routes.classroom import account
-
-    return account(db, request, mutation)[0]
-
-
-def roster(db, room):
-    return list(
-        db.scalars(
-            select(Membership)
-            .where(Membership.room_id == room.id, Membership.role == "student")
-            .order_by(Membership.seat, Membership.id)
-        )
-    )
-
-
-def roster_hash(rows):
-    return digest([{"id": r.id, "alias": r.alias, "seat": r.seat} for r in rows])
 
 
 def _action_contract(reasons: dict[str, str | None]) -> dict:
@@ -173,15 +155,6 @@ def save_receipt(db, room, a, body, hashed, value):
         )
     )
     return value
-
-
-def teacher_room(db, rid, a):
-    room, _, teacher = service.load(db, rid, a.id, True)
-    if not teacher:
-        raise DomainError("TEACHER_MEMBERSHIP_REQUIRED", 403)
-    if room.state.get("group"):
-        raise DomainError("CLASSROOM_PARENT_REQUIRED", 422)
-    return room
 
 
 def allocate(rows, count, capacity, chosen):
@@ -289,7 +262,7 @@ def start(rid: str, body: Start, request: Request):
         script = db.scalar(select(Script).where(Script.id == room.script_id).with_for_update())
         if script is None or script.owner_id != a.id:
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
-        from app.services.ai_students import ensure_other_options
+        from app.modules.content_authoring.normalization import ensure_other_options
 
         document = ensure_other_options(script.document)
         snap = Snapshot(
@@ -339,8 +312,8 @@ def start(rid: str, body: Start, request: Request):
             assigned = [r for r in rows if assignments[r.id] == number]
             if not assigned:
                 continue
-            # namespace 字串是既有資料的相容契約（已建立的組別 id 由它推導），不可改名。
-            gid = str(uuid5(UUID(room.id), f"r70:group:{body.action_id}:{number}"))
+            # 組別 id 只在開課這一次推導並存進資料列；重送同一個開課動作由 receipt 回傳原結果。
+            gid = str(uuid5(UUID(room.id), f"classroom-group:{body.action_id}:{number}"))
             g = Room(
                 id=gid,
                 creator_id=a.id,
@@ -533,10 +506,10 @@ def view(rid: str, request: Request):
                 )
         asset_id = state.get("asset_classroom_id")
         asset_classroom = db.get(ClassroomAssets, asset_id) if asset_id else None
-        from app.api.routes.provider_profiles import _classroom_settings_view
+        from app.modules.ai_providers.service import classroom_settings_view
         from app.feature_flags import feature_states
 
-        ai_settings = _classroom_settings_view(
+        ai_settings = classroom_settings_view(
             asset_classroom.assets.get("ai_settings") if asset_classroom else {}
         )
         teacher_actions = parent_teacher_actions(state, rows)

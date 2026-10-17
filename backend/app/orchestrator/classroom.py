@@ -7,7 +7,9 @@ Provider work runs after that transaction. An accepted answer is immutable.
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
-from app.api.classroom_schemas import ScriptDocument, Question, public_question
+from app.modules.content_authoring.contracts import Question, ScriptDocument, public_question
+from app.modules.platform.errors import DomainError
+from app.modules.classroom_core.notices import tutor_unavailable_notice as tutor_unavailable_notice
 from app.orchestrator.classroom_policy import (
     choose_representative,
     distribution,
@@ -16,27 +18,12 @@ from app.orchestrator.classroom_policy import (
 )
 
 
-class DomainError(ValueError):
-    def __init__(self, code: str, status: int = 409):
-        self.code, self.status = code, status
-        super().__init__(code)
-
-
 _BUDGET_REASONS = {
     "CLASSROOM_BUDGET_AVAILABILITY",
     "CLASSROOM_TOKEN_BUDGET_AVAILABILITY",
     "CLASSROOM_COST_BUDGET_AVAILABILITY",
     "GLOBAL_BUDGET_AVAILABILITY",
 }
-
-
-def tutor_unavailable_notice(reason: str) -> str:
-    """Classroom-visible reason for a paused tutor; the teacher's 下一步 resumes the class."""
-    if reason in _BUDGET_REASONS:
-        return "導師暫停回應：本教室的 LLM 額度已達上限。老師可調整額度後按「下一步」繼續。"
-    if reason == "OWNER_PROVIDER_PROFILE_REQUIRED":
-        return "導師暫停回應：教室擁有者尚未設定 LLM。老師可設定後按「下一步」繼續。"
-    return "導師暫停回應：LLM 暫時無法連線。老師可按「下一步」繼續。"
 
 
 def focus_notice(state: dict) -> str | None:
@@ -428,7 +415,7 @@ class GameOrchestrator:
         raise DomainError("KNOWN_ACTION_REQUIRED", 422)
 
     def accept_preview(self):
-        from app.services.ai_students import ensure_other_question
+        from app.modules.content_authoring.normalization import ensure_other_question
 
         q = Question.model_validate(ensure_other_question(self.s.pop("preview"))).model_dump()
         # Generated questions are run-owned; copying into a teacher draft is an explicit endpoint.
@@ -494,7 +481,7 @@ class GameOrchestrator:
                 self.close_focus("reselect_after_argument_comment")
             elif f["advance_requested"]:
                 self.close_focus("teacher_next")
-            # Goal before cap, as in Round 1 (app/orchestrator/orchestrator.py): a goal met on the
+            # Goal before cap, as in solo dialogue (app/orchestrator/orchestrator.py): a goal met on the
             # cap turn is goal_met; a cap without the goal is capped, never goal_met.
             elif stage_goal(result["observations"], f["completed_turns"]):
                 self.close_focus("goal_met")
@@ -507,7 +494,7 @@ class GameOrchestrator:
         elif kind == "dynamic_question":
             if key != s.get("pending_generation"):
                 return
-            from app.services.ai_students import ensure_other_question
+            from app.modules.content_authoring.normalization import ensure_other_question
 
             s["preview"] = Question.model_validate(
                 ensure_other_question(result["question"])

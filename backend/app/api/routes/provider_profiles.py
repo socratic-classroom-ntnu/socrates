@@ -9,30 +9,26 @@ import os
 import secrets
 import time
 from typing import Annotated, Any, Literal
-from uuid import uuid4
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import APIRouter, Request
 from pydantic import Field, StringConstraints, field_validator
 from app.api.model_base import TrimmedModel
 from sqlalchemy import (
-    Boolean,
     delete,
-    Float,
-    ForeignKey,
-    JSON,
-    String,
-    Text,
-    UniqueConstraint,
     select,
 )
-from sqlalchemy.orm import Mapped, mapped_column
 
-from app.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
+from app.modules.ai_providers.repositories import (
+    AccountAISettings,
+    DEFAULT_BUDGET,
+    ProviderProfile,
+    SessionProviderSecret,
+)
 from app.tutor.classroom_provider import ProviderWait
 from app.repositories.classroom_storage import (
     Account,
-    Base,
     CallAudit,
     LoginSession,
     Room,
@@ -69,12 +65,6 @@ JOB_ROLE = {
     "personal_summary": "personal_summary",
     "other_suggestion": "other_suggestion",
     "ai_script_authoring": "ai_script_authoring",
-}
-DEFAULT_BUDGET = {
-    "max_calls": 240,
-    "max_tokens": 1_000_000,
-    "estimated_cost_ceiling": None,
-    "fallback_policy": "owner-profile-then-deterministic",
 }
 
 PROVIDER_OUTPUT_REASONS = frozenset(
@@ -134,61 +124,6 @@ def record_direct_call_audit(
         db.flush()
         audit_id = row.id
     return {"audit_id": audit_id, **metadata}
-
-
-class ProviderProfile(Base):
-    __tablename__ = "provider_profiles"
-    __table_args__ = (UniqueConstraint("owner_id", "name"),)
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
-    name: Mapped[str] = mapped_column(String(100))
-    adapter: Mapped[str] = mapped_column(String(32))
-    base_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    organization: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    project: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    default_model: Mapped[str] = mapped_column(String(200))
-    credential_mode: Mapped[str] = mapped_column(String(24), default="PERSISTENT")
-    encrypted_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
-    secret_last4: Mapped[str | None] = mapped_column(String(4), nullable=True)
-    key_version: Mapped[str] = mapped_column(String(40), default="v1")
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-    updated_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class SessionProviderSecret(Base):
-    __tablename__ = "session_provider_secrets"
-
-    profile_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("provider_profiles.id"), primary_key=True
-    )
-    session_token_hash: Mapped[str] = mapped_column(
-        String(64), ForeignKey("login_sessions.token_hash"), primary_key=True
-    )
-    encrypted_secret: Mapped[str] = mapped_column(Text)
-    secret_last4: Mapped[str] = mapped_column(String(4))
-    key_version: Mapped[str] = mapped_column(String(40), default="v1")
-    expires_at: Mapped[float] = mapped_column(Float, index=True)
-    updated_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-class AccountAISettings(Base):
-    __tablename__ = "account_ai_settings"
-
-    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
-    default_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("provider_profiles.id"), nullable=True
-    )
-    fallback_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("provider_profiles.id"), nullable=True
-    )
-    model_matrix: Mapped[dict] = mapped_column(JSON, default=dict)
-    budgets: Mapped[dict] = mapped_column(JSON, default=lambda: deepcopy(DEFAULT_BUDGET))
-    session_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    revision: Mapped[int] = mapped_column(default=1)
-    updated_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
 class CreateProfile(TrimmedModel):
@@ -307,7 +242,7 @@ def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
 
 
 def _account(db, request: Request, mutation=False):
-    from app.api.routes.classroom import account
+    from app.modules.identity_access.dependencies import account
 
     return account(db, request, mutation)
 
@@ -708,7 +643,7 @@ def _classroom_settings_view(ai: dict | None) -> dict:
 
 @router.get("/library/classrooms/{cid}/ai-settings")
 def classroom_settings(cid: str, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.service import owned_classroom as owned
 
     with transaction() as db:
         account, _ = _account(db, request)
@@ -718,7 +653,7 @@ def classroom_settings(cid: str, request: Request):
 
 @router.put("/library/classrooms/{cid}/ai-settings")
 def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
-    from app.api.routes.classroom_library import owned
+    from app.modules.content_authoring.service import owned_classroom as owned
 
     with transaction() as db:
         account, session = _account(db, request, True)

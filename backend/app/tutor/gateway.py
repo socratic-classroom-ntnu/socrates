@@ -1,4 +1,4 @@
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -9,6 +9,7 @@ from app.domain.tutor import (
     SummaryDraft,
     TutorTurn,
 )
+from app.tutor import iron_rules
 from app.tutor.provider import LLMProvider
 
 
@@ -33,31 +34,60 @@ class TutorGateway:
 
     def respond(self, stage: Stage, history: list[PromptMessage], turn_index: int) -> TutorTurn:
         request = self._build_respond_request(stage, history, turn_index)
-        return self._call(request, TutorTurn)
+        latest = [m.content for m in history if m.role == "student"][-1:]
+        hint = iron_rules.screen_input({"history": latest})
+        return self._call(request, TutorTurn, kind="solo_tutor", hint=hint)
 
-    def summarize(self, history: list[PromptMessage]) -> SummaryDraft:
-        request = ProviderRequest(kind="summarize", stage_key=None, turn_index=0, messages=history)
-        return self._call(request, SummaryDraft)
+    def summarize(
+        self, history: list[PromptMessage], reached_stage_keys: tuple[str, ...]
+    ) -> SummaryDraft:
+        request = ProviderRequest(
+            kind="summarize",
+            stage_key=None,
+            turn_index=0,
+            messages=history,
+            reached_stage_keys=reached_stage_keys,
+        )
+        return self._call(request, SummaryDraft, kind="solo_summary")
 
     def _build_respond_request(
         self, stage: Stage, history: list[PromptMessage], turn_index: int
     ) -> ProviderRequest:
-        # pre-processor：目前只組裝請求。之後的脫敏、離題偵測加在這裡。
+        # pre-processor：組裝請求；指令覆寫偵測（鐵則）在 respond 做，結果交給 post-processor。
         return ProviderRequest(
             kind="respond",
             stage_key=stage.key,
             turn_index=turn_index,
             messages=history,
+            reached_stage_keys=(),
         )
 
-    def _call(self, request: ProviderRequest, model: type[ModelT]) -> ModelT:
+    def _call(
+        self, request: ProviderRequest, model: type[ModelT], *, kind: str, hint: str = ""
+    ) -> ModelT:
         last_error: Exception | None = None
+        parsed: ModelT | None = None
         for _ in range(self._MAX_ATTEMPTS):
             try:
                 raw = self._provider.generate(request)
-                # post-processor：格式驗證。之後的反諂媚檢查加在這裡。
-                return model.model_validate(raw)
+                # post-processor：格式驗證，再做鐵則檢查（不透露設定；被要求改寫規則時要提問拉回）。
+                candidate = model.model_validate(raw)
+                if isinstance(candidate, SummaryDraft) and any(
+                    entry.stage_key not in request.reached_stage_keys
+                    for entry in candidate.stance_by_stage
+                ):
+                    raise ValueError("summary contains a stage outside the reached scope")
+                parsed = candidate
             except Exception as exc:
                 # provider 邊界統一轉成可重試的 503；不要讓連線錯誤變成未處理的 500。
                 last_error = exc
+                continue
+            if not iron_rules.check(kind, parsed.model_dump(), hint):
+                return parsed
+        if parsed is not None:
+            # 兩次都沒通過鐵則：可見文字換成固定的拉回句（摘要沒有可見對話，保留內容）。
+            if isinstance(parsed, TutorTurn):
+                replaced = parsed.model_copy(update={"reply_text": iron_rules.fallback_text(kind)})
+                return cast(ModelT, replaced)
+            return parsed
         raise TutorUnavailable(str(last_error))

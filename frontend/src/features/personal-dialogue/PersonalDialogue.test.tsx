@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { PersonalPanel, PersonalProgress, lastTutorOf, type PersonalView } from './PersonalDialogue'
 
-// 人像（WebGL＋語音）另有自己的測試；這裡只看後端動作決定的按鈕。
+// 人像（WebGL＋語音）另有自己的測試；這裡只看後端動作與個人對話內容。
 jest.mock('../avatar/TutorAvatar', () => ({ TutorAvatar: () => null }))
 
 const question = { title: '情境一', scenario: '要不要拉下拉桿？' }
@@ -42,6 +42,23 @@ test('shows the original question and own dialogue; reply follows available_acti
   expect(send).toHaveBeenCalledWith('personal_message', { text: '人數' })
   expect(screen.getByLabelText('回覆導師')).toHaveValue('')
   expect(screen.queryByRole('button', { name: '符合我的想法' })).not.toBeInTheDocument()
+})
+
+test('incoming tutor lines preserve an unsent reply, and a rejected send keeps it editable', async () => {
+  const send = jest.fn().mockResolvedValue(false)
+  const view = personal()
+  const { rerender } = render(<PersonalPanel question={question} personal={view} actions={['personal_message']} send={send}/>)
+  fireEvent.change(screen.getByLabelText('回覆導師'), { target: { value: '還沒想完的回答' } })
+  const updated = { ...view, messages: [...view.messages, { role: 'tutor', text: '還有其他判準嗎？' }] }
+  rerender(<PersonalPanel question={question} personal={updated} actions={['personal_message']} send={send}/>)
+  expect(screen.getByText('還有其他判準嗎？')).toBeInTheDocument()
+  expect(screen.getByLabelText('回覆導師')).toHaveValue('還沒想完的回答')
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '送出' })))
+  expect(send).toHaveBeenCalledWith('personal_message', { text: '還沒想完的回答' })
+  expect(screen.getByLabelText('回覆導師')).toHaveValue('還沒想完的回答')
+  send.mockResolvedValue(true)
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '送出' })))
+  expect(screen.getByLabelText('回覆導師')).toHaveValue('')
 })
 
 test('no reply box while the backend does not allow personal_message', () => {

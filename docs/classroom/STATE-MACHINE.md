@@ -6,7 +6,7 @@
 - `backend/app/orchestrator/classroom.py`：`GameOrchestrator`（全班課堂的原生狀態機）。
 - `backend/app/domain/group_run.py`：`extend()` 包裝出的 `GroupOrchestrator`（個人對話、觀點確認與結算）。
 - `backend/app/services/ai_students.py`：`extend()` 包裝出的 AI 學生排程與全 AI 課堂加速。
-- `backend/app/orchestrator/policy.py`：推進判準 `should_advance`（唯一修改點）。
+- `backend/app/modules/llm_runtime/policy.py`：推進判準 `should_advance`（唯一修改點）；`orchestrator/policy.py` 保留相容匯出。
 - `backend/app/services/classroom.py`：`execute`（指令）、`tick_due`（計時器）、`view`（全班檢視與可用動作）。
 - `backend/app/api/routes/groups.py`：分組的建立、開始、分組檢視與分組指令。
 
@@ -26,7 +26,7 @@
 ## 推進判準（結束條件）
 
 issue #13 的結束條件是「**能判定學生目前的立場**」（規格 R2）。程式中它只有一個實作：
-`orchestrator/policy.py` 的 `should_advance(obs, turn_count)`，課堂經 `classroom_policy.stage_goal` 呼叫：
+`modules/llm_runtime/policy.py` 的 `should_advance(obs, turn_count)`，課堂經 `classroom_policy.stage_goal` 呼叫：
 
 ```
 completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_reason  AND  reason_tested
@@ -37,8 +37,8 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 - 判準先於上限：同一輪達成判準又碰到上限，算達成；只碰到上限則是 `capped`。
 - 用在兩處：代表討論（`focus`，達成時以 `goal_met` 結束該代表）與分組課堂的個人對話（達成時進入
   `awaiting_confirm`，由學生確認摘要後成為基準）。
-- **詳細定義屬 issue #19，仍待小組確認。** 個人對話的預設值（`max_personal_turns` 6 回合、
-  `personal_seconds` 600 秒）也待團隊確認，目前老師可逐題調整。
+- **issue #19 的本地整合決議已採用。** 推進判準固定為上式；個人對話預設 `max_personal_turns = 6`、
+  `personal_seconds = 600`，老師仍可逐題調整。
 
 ## 全班課堂（`GameOrchestrator`）
 
@@ -156,14 +156,12 @@ completed_turns >= 1  AND  not position_shifted  AND  has_position  AND  has_rea
 沒有計時器的階段（例如 `focus`、`viewpoint_review`）不受影響。AI 學生作答即有基準，所以全 AI 的組不會進入
 `personal`。
 
-## 待決
+## 已採用決議
 
-- **推進判準的詳細定義（issue #19）仍待小組確認**；目前實作即上方「推進判準」。個人對話預設值
-  （6 回合、600 秒）同樣待確認。
-- **分組課堂的收尾條件也受 #19 影響。** 現況：學生可在 `viewpoint_review`／`final_reflection`
-  送 `group_ack` 保存本人確認；`next` 維持正常推進（`viewpoint_review` → `final_reflection` →
-  `summary`）。教師可另送 `end` 強制結束；已確認者保留原話證據，其餘成員在 settlement 中標為
-  `incomplete`，結算原因記為 `teacher_force_end`。
+- **issue #19 的推進判準**採用上方單一 `should_advance` 契約；個人對話預設為 6 回合、600 秒。
+- **分組課堂收尾**採 `viewpoint_review → final_reflection → summary`。學生以 `group_ack` 保存本人確認；
+  教師可送 `end` 強制結束，已確認者保留原話證據，其餘成員標為 `incomplete`，結算原因為
+  `teacher_force_end`。
 
 ## 已知落差
 

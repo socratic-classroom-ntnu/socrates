@@ -1,5 +1,5 @@
 /* 開發控制台（DevConsole）：只在 debug_mode 時出現的開發者工具。
-   自帶一組深色 token（對齊 --r2-* 深色主題），不受教師端淺色外框影響；資料一律等寬字。 */
+   自帶一組深色 token（對齊 --sc-* 深色主題），不受教師端淺色外框影響；資料一律等寬字。 */
 .dev-console-toggle,.dev-console{
   --devc-bg:#15121b;--devc-panel:#1d1924;--devc-line:#ffffff1f;--devc-ink:#f4eee7;--devc-muted:#a99db4;
   --devc-accent:#e8c79a;--devc-error:#ff9f8a;--devc-radius:8px;

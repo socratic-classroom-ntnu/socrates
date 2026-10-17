@@ -1,0 +1,28 @@
+{
+  "schema": "socrates/iron-rules-router/v1",
+  "version": "iron-rules-v1",
+  "about": "L0 路由：每個 LLM 角色載入 L1（共通）＋自己的 L2，並決定送出前要做哪些檢查。後端每次呼叫都重新讀取，改檔不必重啟。說明：docs/IRON-RULES.md",
+  "L1": "L1-general.md",
+  "checks": {
+    "screen_input": "前處理：學生輸入含換角色、忽略規則、索取設定時，在 system prompt 加提醒",
+    "no_leak": "送出前：不得逐字透露鐵則或程式模板",
+    "pull_back": "送出前：學生離題或試圖改寫規則時，回應要有一個與本題有關的提問"
+  },
+  "fallbacks": {
+    "tutor": "這個我們先放一邊。回到這一題：你目前的想法是什麼？是什麼理由讓你這樣想？",
+    "student": "我想先回到這一題，說說我自己的想法和理由。"
+  },
+  "roles": {
+    "focused_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
+    "personal_tutor": {"L2": "L2/personal_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
+    "solo_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back"], "fallback": "tutor"},
+    "llm_student_turn": {"L2": "L2/llm_student_turn.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
+    "other_suggestion": {"L2": "L2/other_suggestion.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
+    "dynamic_question": {"L2": "L2/dynamic_question.md", "checks": ["no_leak"], "fallback": null},
+    "question_summary": {"L2": "L2/question_summary.md", "checks": ["no_leak"], "fallback": null},
+    "class_summary": {"L2": "L2/class_summary.md", "checks": ["no_leak"], "fallback": null},
+    "personal_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
+    "solo_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
+    "ai_script_authoring": {"L2": "L2/ai_script_authoring.md", "checks": ["no_leak"], "fallback": null}
+  }
+}

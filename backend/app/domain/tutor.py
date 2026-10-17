@@ -1,22 +1,11 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from app.domain.types import PrincipleLabel
 
 
-class Observations(BaseModel):
-    """Provider 每輪回報的觀察。
-
-    刻意**不含**「是否達成」——判準由 StageAdvancePolicy 套用（設計規格 §12）。
-    讓模型直接說「達成了」等於把規則藏進模型裡：不可驗證、換家模型就變。
-    """
-
-    has_position: bool
-    has_reason: bool
-    reason_tested: bool
-    principle_label: PrincipleLabel
-    position_shifted: bool
+from app.modules.llm_runtime.contracts import Observations as Observations
 
 
 class TutorTurn(BaseModel):
@@ -47,6 +36,13 @@ class ProviderRequest(BaseModel):
     stage_key: str | None
     turn_index: int
     messages: list[PromptMessage]
+    reached_stage_keys: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def require_summary_scope(self) -> "ProviderRequest":
+        if self.kind == "summarize" and not self.reached_stage_keys:
+            raise ValueError("summary requires the stages actually reached")
+        return self
 
 
 ProviderResponse = dict[str, Any]

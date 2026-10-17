@@ -1,12 +1,12 @@
-# 蘇格拉底式對話機器人 — 第一輪設計規格
+# 蘇格拉底式對話機器人 — 單人對話設計規格
 
 - 日期：2026-09-19
-- 範圍：第一輪（Round 1）產品功能設計
+- 範圍：單人對話產品功能設計
 - 相關文件：
   - `docs/product/product-overview.md`（產品說明，PM 取向）
   - `AGENTS.md`（專案規則：不可妥協條款、範本索引、API 慣例）
 
-> 狀態（2026-10-03）：Round 1 目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
+> 狀態（2026-10-03）：單人對話目前擱置不開發。§5.3、§7、§8、§9、§11.0、§13.3、§14 已同步到程式碼現況；
 > 規格原意與程式不一致、尚待決定的兩處保留原文並標註：§5.2／§7 的路口提示由誰產生（計畫盤點 B8）、
 > §11.1／§13 的結束確認框與「還有 N 個情境」（計畫盤點 B5）。教室（多人課堂）的設計見 `docs/CLASSROOM-ARCHITECTURE.md`。
 
@@ -27,18 +27,18 @@
 
 ### 單人模式的定位
 
-第一輪只支援單人對話。原課堂有一半的力量來自同儕壓力（其他學生的反駁、全場舉手表決），單人模式必然缺這塊。但單人也提供了一個**隱蔽、可以放心表達真實想法的空間** — 幾百人注視下，很多人不敢講真話。這被視為設計上的取捨而非純粹的損失。同儕維度（匿名立場分佈）留到第二輪。
+目前版本只支援單人對話。原課堂有一半的力量來自同儕壓力（其他學生的反駁、全場舉手表決），單人模式必然缺這塊。但單人也提供了一個**隱蔽、可以放心表達真實想法的空間** — 幾百人注視下，很多人不敢講真話。這被視為設計上的取捨而非純粹的損失。同儕維度（匿名立場分佈）留到後續版本。
 
 ---
 
-## 2. 第一輪範圍
+## 2. 單人對話版範圍
 
 ### 做
 
 - 一條寫死的案例階梯：電車難題（三階）
 - 純文字對話介面（之後已加入語音轉文字草稿，見 `docs/adr/ADR-ROOM-003-voice-message-convergence.md`）
 - 對話推進狀態機（後端主導）
-- LLM Provider 抽象層，第一輪以腳本實作驗收
+- LLM Provider 抽象層，單人對話版以腳本實作驗收
 - 結束後的結構化立場總結（畫面上只顯示一句話）
 - 學生端四個畫面：首頁、對話、總結、歷史紀錄
 - Local 身分（前端 uuid，無登入）
@@ -49,15 +49,15 @@
 
 | 項目 | 延後理由 |
 |---|---|
-| 教師出題介面 | 第一輪固定情境。但階梯以外部定義檔存放，第二輪的出題介面本質上就是這個檔案的編輯器 |
+| 教師出題介面 | 單人對話版固定情境。但階梯以外部定義檔存放，後續版本的出題介面本質上就是這個檔案的編輯器 |
 | 同儕匿名立場分佈 | 有冷啟動問題（第一個使用者看不到任何同儕）。需先累積資料 |
 | 班級論點分佈儀表板 | 依賴同儕資料 |
 | 真實帳號系統 | MVP 風險不在此。Local 身分已足夠驗證流程 |
 | 語音（STT） | 未來提供錄音轉文字，非即時 speech-to-speech。**已實作**：瀏覽器語音轉成文字草稿，確認後走同一個送出訊息端點（ADR-ROOM-003） |
 | 串流輸出（SSE） | 體驗優化。API 契約已預留接縫，之後是替換傳輸層，不動流程邏輯 |
-| 疲乏偵測 | 優化項目。判定為第二輪之後 |
+| 疲乏偵測 | 優化項目。判定為更後續的版本 |
 | 續跑「已結束」的 session | 改以「續篇 session」形式實作（見 §11） |
-| 對話品質驗證（反諂媚等） | 第一輪驗收的是流程與資料流，不是對話品質。專門的一輪處理 |
+| 對話品質驗證（反諂媚等） | 單人對話版驗收的是流程與資料流，不是對話品質。另外專門處理 |
 
 ### 驗收標準
 
@@ -69,8 +69,8 @@
 
 | 詞 | 定義 |
 |---|---|
-| **大主題 / 階梯（ladder）** | 一組遞進的道德情境，共同測試同一條軸線。第一輪只有「電車難題」一條 |
-| **階段（stage）** | 階梯中的一個情境。第一輪三階：電車難題 → 天橋胖子 → 器官移植醫生 |
+| **大主題 / 階梯（ladder）** | 一組遞進的道德情境，共同測試同一條軸線。單人對話版只有「電車難題」一條 |
+| **階段（stage）** | 階梯中的一個情境。單人對話版三階：電車難題 → 天橋胖子 → 器官移植醫生 |
 | **輪（turn）** | 學生發言 + 教授回應的一次來回 |
 | **session** | 學生跑一次階梯的完整紀錄，產生一份總結 |
 | **路口（crossroad）** | 一階達成後的分歧點，學生選擇進入下一階或在此結束 |
@@ -165,7 +165,7 @@ React SPA ──HTTP──▶ FastAPI
                       │    不知道推進規則
                       │      └─ LLMProvider 介面
                       │           ├─ ScriptedProvider（本輪驗收）
-                      │           └─ 真實 provider（Round 1 尚未實作）
+                      │           └─ 真實 provider（單人對話尚未實作）
                       │
                       └─ Repository ──▶ PostgreSQL
 ```
@@ -199,7 +199,7 @@ React SPA ──HTTP──▶ FastAPI
 | **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway（持久化由 `services/conversation.py` 的 application service 負責，Orchestrator 不碰 Repository） |
 | **StageAdvancePolicy** | 具名純函式（`orchestrator/policy.py` 的 `should_advance`），實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
 | **TutorGateway** | 對外兩個方法：`respond(stage, history, turn_index)`、`summarize(history)`。內部 pre-processor → provider → post-processor，格式不合自動重試一次 | LLMProvider |
-| **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；Round 1 目前只有 `ScriptedProvider`） | — |
+| **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；單人對話目前只有 `ScriptedProvider`） | — |
 | **Repository** | 持久化 CRUD | SQLAlchemy |
 | **Identity** | 前端 uuid 存 localStorage，header 帶入。後端只認此 id，不存姓名 | — |
 
@@ -213,7 +213,7 @@ React SPA ──HTTP──▶ FastAPI
 
 ## 6. 案例階梯定義檔
 
-第一輪雖然寫死，仍以外部檔案存放（`ladders/trolley.yaml`），因為第二輪的教師出題介面本質上就是這個檔案的編輯器。
+單人對話版雖然寫死，仍以外部檔案存放（`ladders/trolley.yaml`），因為後續版本的教師出題介面本質上就是這個檔案的編輯器。
 
 ```yaml
 id: trolley
@@ -251,20 +251,20 @@ wrap_up:
 ### `learners`
 `id`(uuid, PK, 前端產生) · `created_at`
 
-極簡，不存姓名。第二輪接真帳號時補上 `account_id`，其他表不動。
+極簡，不存姓名。後續版本接真帳號時補上 `account_id`，其他表不動。
 
 ### `sessions`
 `id` · `learner_id`(FK) · `ladder_id` · `ladder_version` · `status`(active/ended) · `flow_state` · `current_stage_index` · `extra_turns_used` · `parent_session_id`(nullable) · `started_at` · `ended_at` · `end_reason`(student_ended/completed/restarted)
 
 - `ladder_version`：階梯定義之後會改。沒有這欄，半年後看舊 session 不知道學生當時被問了什麼
-- `parent_session_id`：為未來的「續篇 session」預留，第一輪永遠為 null
+- `parent_session_id`：為未來的「續篇 session」預留，單人對話版永遠為 null
 - `extra_turns_used`：最後一階達成後，學生在 `awaiting_wrap_up` 繼續講的輪數（§8）
 - `end_reason=restarted`：學生選擇放棄進行中的 session、重新開始時（§11.4）
 
 ### `stage_progress`
 `session_id` · `stage_index` · `stage_key` · `status`(not_started/in_progress/goal_met/capped/stopped_early/skipped) · `turn_count` · `principle_label` · `position_shifted` · `started_at` · `ended_at`
 
-**這張表是第二輪教師端的資料來源** —「這位學生答了哪幾題」直接查，不用另外做。
+**這張表是後續版本教師端的資料來源** —「這位學生答了哪幾題」直接查，不用另外做。
 
 ### `messages`
 `session_id` · `seq` · `stage_index` · `role`(student/tutor/system) · `content` · `observations`(jsonb，僅 tutor) · `retry_count` · `created_at`
@@ -280,7 +280,7 @@ unique: `session_id`
 - **一個 session 一份總結。** 這不是簡化，是 §11.5 刻意要的性質——續篇採「開新 session」的形式，正是為了讓每份總結各自對應一段完整、乾淨的對話。續篇鏈由 `sessions.parent_session_id` 承載，續篇的總結掛在新 session 上
 - 曾一度規劃 `(session_id, seq)` 複合鍵「為續篇預留」，已移除：續篇既然是新的一列 session，`seq` 永遠不會超過 1，而那句理由會誤導人去假設「一個 session 可以有多份總結」並據此寫聚合查詢或畫面。§10 的總結重試是覆寫而非追加，同樣不需要 `seq`
 - API 路徑因此維持單數 `/summary`（§9）
-- 第一輪畫面只顯示 `core_principle`，但四個欄位全部存。第二輪的班級分佈直接聚合 `stance_by_stage` 與 `shifted`，不用回頭重新解析文字
+- 單人對話版畫面只顯示 `core_principle`，但四個欄位全部存。後續版本的班級分佈直接聚合 `stance_by_stage` 與 `shifted`，不用回頭重新解析文字
 
 `stance_by_stage` 形狀：
 ```json
@@ -348,13 +348,13 @@ unique: `session_id`
 
 ## 9. API
 
-**端點形式遵循兩條並列規則**（見 `AGENTS.md`「API 慣例」）：資源的 CRUD 用 REST；狀態機轉換用 `POST /{resource}/{id}/{action}`，且 action 名稱必須出現在 `available_actions` 的 Literal union 裡。下表中 `/advance`、`/end`、`/retry` 屬後者，其餘皆屬前者。
+**端點形式遵循兩條並列規則**（見 `AGENTS.md`「API 慣例」）：資源的 CRUD 用 REST；狀態機轉換用 `POST /{resource}/{id}/{action}`，且 action 名稱必須出現在 `available_actions` 的 Literal union 裡。下表中 `/advance`、`/end`、`/retry` 屬後者（session 狀態機）；`/transcript-drafts/{draft_id}/confirm` 是草稿自己的生命週期動作，不屬於 session 狀態機、不列入 `available_actions`；其餘皆屬前者。
 
-身分：header `X-Learner-Id: <uuid>`。後端驗證 session 屬於該 learner，否則 403。這不是真的安全機制，但它是第二輪換成真認證時唯一要改的地方。
+身分：header `X-Learner-Id: <uuid>`。後端驗證 session 屬於該 learner，否則 403。這不是真的安全機制，但它是後續版本換成真認證時唯一要改的地方。
 
 | 端點 | 說明 |
 |---|---|
-| `POST /api/sessions` | body `{ladder_id, restart_existing}`（第一輪固定 `trolley`，目前未讀取 `ladder_id`）。建立 session，回傳第一階開場白；已有進行中的 session 且 `restart_existing` 為假時回 409 `active_session_exists`（§11.4） |
+| `POST /api/sessions` | body `{ladder_id, restart_existing}`（單人對話版固定 `trolley`，目前未讀取 `ladder_id`）。建立 session，回傳第一階開場白；已有進行中的 session 且 `restart_existing` 為假時回 409 `active_session_exists`（§11.4） |
 | `GET /api/sessions/{id}` | 完整狀態 + 全部訊息。續跑與歷史回顧共用 |
 | `POST /api/sessions/{id}/messages` | body `{text}`。送出學生發言 |
 | `POST /api/sessions/{id}/advance` | 路口：進入下一個情境 |
@@ -432,13 +432,13 @@ unique: `session_id`
 
 ## 11. 前端
 
-### 11.0 第一輪的前端刻意很薄
+### 11.0 單人對話版的前端刻意很薄
 
-第一輪的驗收是流程，不是視覺。但「簡單」有兩種意思，只有其中一種適用：
+單人對話版的驗收是流程，不是視覺。但「簡單」有兩種意思，只有其中一種適用：
 
 **視覺簡單 ✅** — 砍掉元件庫（Mantine／MUI／Tailwind）、設計系統、動畫與過場、資料層抽象（React Query 之類；總共就那幾支 API，手寫 client ＋ `useState` 足夠，多一個抽象會讓 15 個人的 AI 寫出 15 種用法）。蘇格拉底頭像先用佔位圖。對話畫面天生單欄，不做手機專用優化也不會壞，但版面別寫死寬度。
 
-**結構簡單 ❌** — 第一輪的前端**不是拋棄式的，它是後續十幾個畫面會照抄的範本**。若寫成「全部塞在一個元件、fetch 寫在 JSX 裡、自己判斷 `flow_state`」，接下來每個畫面都會長成那樣，而且每個都違反 §9.1。
+**結構簡單 ❌** — 單人對話版的前端**不是拋棄式的，它是後續十幾個畫面會照抄的範本**。若寫成「全部塞在一個元件、fetch 寫在 JSX 裡、自己判斷 `flow_state`」，接下來每個畫面都會長成那樣，而且每個都違反 §9.1。
 
 做對結構幾乎不花額外時間——前端本來就很薄（§11.2），差別只是多分幾個檔案。四件不能砍：
 
@@ -479,7 +479,7 @@ frontend/src/
 ```
 
 實際目錄（2026-10-03）另有 `features/conversation-room/`（對話室，`pages/Conversation.tsx` 只包一層 `ConversationRoom`）、
-`Round1App.tsx`（`/round1` 的路由）與 `ClassroomApp.tsx`（教室）；`App.tsx` 依路徑分流到 Round 1 或教室。
+`Round1App.tsx`（`/round1` 的路由）與 `ClassroomApp.tsx`（教室）；`App.tsx` 依路徑分流到單人對話或教室。
 
 **`ActionBar` 只接收 `available_actions`，渲染對應按鈕，不知道 `flow_state` 是什麼。**
 
@@ -497,7 +497,7 @@ frontend/src/
 
 ### 11.2 前端不維護任何流程狀態
 
-只持有當前的 `SessionView` 與輸入框文字。這讓前端很薄，第一輪的測試重心可全部壓在後端。
+只持有當前的 `SessionView` 與輸入框文字。這讓前端很薄，單人對話版的測試重心可全部壓在後端。
 
 ### 11.3 結束討論需二次確認
 
@@ -507,7 +507,7 @@ frontend/src/
 
 按「開始討論」時若已有未完成的 session，詢問「繼續上次的，還是重新開始（舊的會被封存）」。
 
-理由：第一輪只有一條階梯，同時開好幾個同樣的題目沒有意義，且會讓歷史紀錄頁很亂。
+理由：單人對話版只有一條階梯，同時開好幾個同樣的題目沒有意義，且會讓歷史紀錄頁很亂。
 
 ### 11.5 續跑與封存的區別
 
@@ -530,7 +530,7 @@ frontend/src/
 
 #### 維持這個性質的三個條件
 
-1. **不導入設計系統或元件庫。** 第一輪用純 CSS 不是將就——導入 Mantine／MUI 之後，要換風格就得先把它的版面原語從每個檔案拆出來，重做前面多一道拆除工程
+1. **不導入設計系統或元件庫。** 單人對話版用純 CSS 不是將就——導入 Mantine／MUI 之後，要換風格就得先把它的版面原語從每個檔案拆出來，重做前面多一道拆除工程
 2. **元件邊界照領域切，不照視覺切。** `MessageList`／`ActionBar`／`ProgressIndicator` 是按「這塊資料是什麼」切的，換皮時可以逐個替換甚至保留。若把 fetch、狀態、訊息、按鈕、進度全混在一個頁面元件裡，重做就只能整個丟掉
 3. **任何流程判斷都不得進前端**（§9.1）。一旦前端開始自己由 `flow_state` 推導東西，那段邏輯就得在每個新客戶端重寫一次
 
@@ -544,7 +544,7 @@ frontend/src/
 
 ### 11.7 Local 身分的代價
 
-清掉瀏覽器資料或換一台電腦，歷史就找不回來。這是 local 身分的固有性質，第一輪接受。**團隊測試前須先說明**，否則會被當成 bug。
+清掉瀏覽器資料或換一台電腦，歷史就找不回來。這是 local 身分的固有性質，單人對話版接受。**團隊測試前須先說明**，否則會被當成 bug。
 
 ---
 
@@ -628,7 +628,7 @@ TutorTurn {
 
 ### 13.3 人工驗收腳本
 
-環境：`docker compose up -d` 起全棧，開 `http://localhost:5173/round1`；後端固定使用 `ScriptedProvider`，以 `SCRIPT_PATH` 切換腳本（見 `docs/testing/trolley-round1-acceptance.md`）。
+環境：`docker compose up -d` 起全棧，開 `http://localhost:5173/round1`；後端固定使用 `ScriptedProvider`，以 `SCRIPT_PATH` 切換腳本（見 `docs/testing/trolley-solo-dialogue-acceptance.md`）。
 
 1. 首次進入 → 開始討論 → 第一階開場白出現，進度顯示「情境 1 / 3」
 2. 對話三輪 → 路口出現，提示「還有 2 個情境」，**且畫面上任何地方都沒有「天橋」字樣**
@@ -642,7 +642,7 @@ TutorTurn {
 
 **九步全通 = 本輪通過。** 此腳本須寫入文件，團隊多人測試需要同一套步驟。
 
-> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。Round 1 驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。（2026-10-03：學生端流程已補完，狀態轉換測試已全部啟用，不再有 `xfail`。）
+> **執行時機**：這份腳本要等學生端流程補完之後才跑得通。核心組的垂直切片刻意不實作第二三階、路口、`capped`／`stopped_early`／`skipped` 分支，因此切片完成時第 2、3、5、6、7、8 步必然失敗——這是預期的，不是缺陷。單人對話驗收時，切片暫列為 `xfail`／`skip` 的狀態轉換測試也必須全部啟用並通過。（2026-10-03：學生端流程已補完，狀態轉換測試已全部啟用，不再有 `xfail`。）
 
 ---
 
@@ -653,7 +653,7 @@ TutorTurn {
 | 前端 | React |
 | 後端 | FastAPI |
 | 資料庫 | PostgreSQL |
-| LLM | Provider 抽象，可自由切換供應商。第一輪以 ScriptedProvider 驗收 |
+| LLM | Provider 抽象，可自由切換供應商。單人對話版以 ScriptedProvider 驗收 |
 | 開發環境 | **docker-compose 涵蓋全棧**（前端 + 後端 + postgres），`docker-compose up` 即可跑完整對話 |
 | repo 形態 | 單一 repo（前後端同 repo），public |
 | 前端 | Vite + TypeScript + React Router + Jest／RTL + 純 CSS，不用元件庫。見 §11.0 |

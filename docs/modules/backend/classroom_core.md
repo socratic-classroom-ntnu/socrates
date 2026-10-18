@@ -6,7 +6,7 @@
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 架構與審查：Arthur；執行：Arthur
-- 可依賴的模組：platform、identity_access、ai_providers、llm_runtime、content_authoring
+- 可依賴的模組：platform、identity_access、ai_providers、llm_runtime、content_authoring、solo_dialogue
 
 檔案範圍：
 - `backend/app/orchestrator/classroom.py`

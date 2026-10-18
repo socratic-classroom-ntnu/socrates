@@ -1,15 +1,15 @@
 from dataclasses import replace
 
-from app.domain.session_state import (
+from app.modules.solo_dialogue.domain.session_state import (
     Outcome,
     OutgoingMessage,
     SessionState,
     StageState,
 )
 from app.modules.llm_runtime.domain.tutor import PromptMessage
-from app.domain.types import FlowState
+from app.modules.solo_dialogue.domain.types import FlowState
 from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.orchestrator.policy import should_advance
+from app.modules.solo_dialogue.orchestrator.policy import should_advance
 from app.modules.llm_runtime.tutor.gateway import TutorGateway
 
 

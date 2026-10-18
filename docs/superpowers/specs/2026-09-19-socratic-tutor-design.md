@@ -124,7 +124,7 @@ turn_count >= 1  AND  (not position_shifted)  AND  has_position  AND  has_reason
 
 **這些規則（輪數地板、立場未改變、三條件）必須全部住在 `StageAdvancePolicy`，不得有任何一條留在 Orchestrator**（§5.3 稱它為「判準的唯一修改點」，那句話要字面成立）。否則讀 `policy.py` 的人會以為自己看到了全部規則。
 
-程式中的位置：`backend/app/orchestrator/policy.py` 的 `should_advance`（三條件在 `stage_goal_met`），真值表測試在 `backend/tests/invariants/test_stage_advance_policy.py`。`StageAdvancePolicy` 是概念名稱，不是類別名。
+程式中的位置：`backend/app/modules/solo_dialogue/orchestrator/policy.py` 的 `should_advance`（三條件在 `stage_goal_met`），真值表測試在 `backend/tests/invariants/test_stage_advance_policy.py`。`StageAdvancePolicy` 是概念名稱，不是類別名。
 
 ### 4.4 兩種否決推進的情況
 
@@ -196,8 +196,8 @@ React SPA ──HTTP──▶ FastAPI
 |---|---|---|
 | **Ladder 定義檔** | 純資料。大主題 → 階段序列，每階含情境敘述、教學目標、追問提示、硬上限 | 無 |
 | **LadderRepository** | 載入 + schema 驗證。定義檔不合法則服務啟動失敗（不等到跑到第三階才爆） | 定義檔 |
-| **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway（持久化由 `services/conversation.py` 的 application service 負責，Orchestrator 不碰 Repository） |
-| **StageAdvancePolicy** | 具名純函式（`orchestrator/policy.py` 的 `should_advance`），實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
+| **Orchestrator** | 推進狀態機，見 §5.2 | LadderRepository、TutorGateway（持久化由 `modules/solo_dialogue/services/conversation.py` 的 application service 負責，Orchestrator 不碰 Repository） |
+| **StageAdvancePolicy** | 具名純函式（`modules/solo_dialogue/orchestrator/policy.py` 的 `should_advance`），實作 §4.3 的完整判準（輪數地板 + 三條件 + 立場未改變）。**判準的唯一修改點——不得有任何一條規則留在 Orchestrator** | 無 |
 | **TutorGateway** | 對外兩個方法：`respond(stage, history, turn_index)`、`summarize(history)`。內部 pre-processor → provider → post-processor，格式不合自動重試一次 | LLMProvider |
 | **LLMProvider** | `generate(request: ProviderRequest) -> dict`（Protocol；Round 1 目前只有 `ScriptedProvider`） | — |
 | **Repository** | 持久化 CRUD | SQLAlchemy |

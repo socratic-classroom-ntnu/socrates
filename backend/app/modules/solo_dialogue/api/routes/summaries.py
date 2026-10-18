@@ -3,10 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_learner_id, get_service
-from app.api.schemas import SessionView, SummaryView
-from app.orchestrator.orchestrator import ConversationEnded, InvalidAction
-from app.services.conversation import ConversationService, Forbidden, NotFound
+from app.modules.solo_dialogue.api.deps import get_learner_id, get_service
+from app.modules.solo_dialogue.api.schemas import SessionView, SummaryView
+from app.modules.solo_dialogue.orchestrator.orchestrator import ConversationEnded, InvalidAction
+from app.modules.solo_dialogue.services.conversation import ConversationService, Forbidden, NotFound
 from app.modules.llm_runtime.tutor.gateway import TutorUnavailable
 
 router = APIRouter(prefix="/api/sessions", tags=["summaries"])

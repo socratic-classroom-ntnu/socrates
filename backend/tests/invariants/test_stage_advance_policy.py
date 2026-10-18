@@ -3,7 +3,7 @@ import itertools
 import pytest
 
 from app.modules.llm_runtime.domain.tutor import Observations
-from app.orchestrator.policy import should_advance, stage_goal_met
+from app.modules.solo_dialogue.orchestrator.policy import should_advance, stage_goal_met
 
 
 def _obs(has_position: bool, has_reason: bool, reason_tested: bool, shifted: bool):

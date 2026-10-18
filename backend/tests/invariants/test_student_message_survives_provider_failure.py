@@ -1,6 +1,6 @@
-from app.api.deps import get_service
+from app.modules.solo_dialogue.api.deps import get_service
 from app.main import app
-from app.services.conversation import ConversationService
+from app.modules.solo_dialogue.services.conversation import ConversationService
 
 
 class CapturingProvider:

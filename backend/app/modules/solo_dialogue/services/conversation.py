@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy.orm import Session as OrmSession
 
-from app.api.schemas import (
+from app.modules.solo_dialogue.api.schemas import (
     MessageView,
     SessionDetail,
     SessionInfo,
@@ -11,13 +11,17 @@ from app.api.schemas import (
     StageOutcomeView,
     SummaryView,
 )
-from app.domain.session_state import SessionState, actions_for
+from app.modules.solo_dialogue.domain.session_state import SessionState, actions_for
 from app.modules.llm_runtime.domain.tutor import PromptMessage, SummaryDraft
-from app.domain.types import Action
+from app.modules.solo_dialogue.domain.types import Action
 from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.models import Session, Summary
-from app.orchestrator.orchestrator import ConversationEnded, InvalidAction, Orchestrator
-from app.repositories.session_repository import SessionRepository
+from app.modules.solo_dialogue.models import Session, Summary
+from app.modules.solo_dialogue.orchestrator.orchestrator import (
+    ConversationEnded,
+    InvalidAction,
+    Orchestrator,
+)
+from app.modules.solo_dialogue.repositories.session_repository import SessionRepository
 from app.modules.llm_runtime.tutor.gateway import TutorGateway, TutorUnavailable
 
 

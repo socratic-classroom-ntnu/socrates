@@ -3,10 +3,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.api.deps import get_learner_id, get_service
-from app.api.room_schemas import ConversationRoomView
-from app.services.conversation import ConversationService, Forbidden, NotFound
-from app.services.room_view import build_room_view
+from app.modules.solo_dialogue.api.deps import get_learner_id, get_service
+from app.modules.solo_dialogue.api.room_schemas import ConversationRoomView
+from app.modules.solo_dialogue.services.conversation import ConversationService, Forbidden, NotFound
+from app.modules.solo_dialogue.services.room_view import build_room_view
 
 router = APIRouter(prefix="/api/sessions", tags=["room"])
 

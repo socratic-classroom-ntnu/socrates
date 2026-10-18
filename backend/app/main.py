@@ -4,8 +4,15 @@ import subprocess
 
 from fastapi import FastAPI
 
-from app.api.routes import history, messages, room, sessions, summaries, transcripts
-from app.api.schemas import ReleaseView
+from app.modules.solo_dialogue.api.routes import (
+    history,
+    messages,
+    room,
+    sessions,
+    summaries,
+    transcripts,
+)
+from app.modules.solo_dialogue.api.schemas import ReleaseView
 from app.modules.platform.config import settings
 from app.modules.content_authoring.ladders.repository import LadderRepository
 

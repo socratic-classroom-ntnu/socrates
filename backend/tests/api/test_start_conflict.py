@@ -9,9 +9,9 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 import app.main as main
 from app.modules.platform.config import settings
 from app.modules.platform.db import SessionLocal
-from app.models import Session
-from app.repositories.session_repository import SessionRepository
-from app.services.conversation import ConversationService
+from app.modules.solo_dialogue.models import Session
+from app.modules.solo_dialogue.repositories.session_repository import SessionRepository
+from app.modules.solo_dialogue.services.conversation import ConversationService
 from app.modules.llm_runtime.tutor.gateway import TutorGateway
 from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
 
@@ -58,7 +58,7 @@ def test_restart_requires_explicit_choice_and_preserves_history(client, db, lear
 
 
 def test_concurrent_start_creates_one_active_session():
-    from app.services.conversation import ActiveSessionExists
+    from app.modules.solo_dialogue.services.conversation import ActiveSessionExists
 
     learner = uuid.uuid4()
     gate = threading.Barrier(2)

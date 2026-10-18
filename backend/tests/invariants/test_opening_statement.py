@@ -1,4 +1,4 @@
-from app.orchestrator.orchestrator import Orchestrator
+from app.modules.solo_dialogue.orchestrator.orchestrator import Orchestrator
 from tests.orchestrator.conftest import FakeGateway, make_ladder, obs
 
 

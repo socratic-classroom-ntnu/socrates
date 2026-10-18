@@ -16,7 +16,7 @@
 | 未進入的階段不回傳 `title` | 學生若知道下一題是什麼，答第一題時就會自我保護，鏡子照不到真實直覺 |
 | 情境開場白逐字輸出、不經 LLM | 經典難題的效力在於敘述的精確，換句話說會稀釋掉它 |
 | 學生訊息先落地才呼叫 provider | 學生想很久寫的一段話因模型超時而消失，是最不能發生的事 |
-| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `backend/app/orchestrator/policy.py`（`should_advance`／`stage_goal_met`，測試 `backend/tests/invariants/test_stage_advance_policy.py`） | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
+| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `backend/app/modules/solo_dialogue/orchestrator/policy.py`（`should_advance`／`stage_goal_met`，測試 `backend/tests/invariants/test_stage_advance_policy.py`） | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
 | 上限到了未達成標 `capped` 不標 `goal_met` | 照見包含照見自己的模糊 |
 | `available_actions` 由後端決定 | 前端一旦自己推導，狀態機就被實作兩次，然後兩邊走鐘 |
 | `ended` 之後任何動作一律拒絕 | — |
@@ -27,9 +27,9 @@
 
 | 要做什麼 | 照這個檔案寫 |
 |---|---|
-| 新增 API 端點 | `backend/app/api/routes/messages.py` |
-| 新增讀取查詢 | `backend/app/api/routes/sessions.py` 的 `get_session` |
-| 改狀態機 | `backend/app/orchestrator/orchestrator.py`，先改 `backend/tests/invariants/test_state_machine_table.py` |
+| 新增 API 端點 | `backend/app/modules/solo_dialogue/api/routes/messages.py` |
+| 新增讀取查詢 | `backend/app/modules/solo_dialogue/api/routes/sessions.py` 的 `get_session` |
+| 改狀態機 | `backend/app/modules/solo_dialogue/orchestrator/orchestrator.py`，先改 `backend/tests/invariants/test_state_machine_table.py` |
 | 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
 | 新增前端畫面 | `frontend/src/pages/Conversation.tsx` |
 | 呼叫 API | `frontend/src/api/client.ts`，型別一律從 `types.ts` 取，不要手寫 |

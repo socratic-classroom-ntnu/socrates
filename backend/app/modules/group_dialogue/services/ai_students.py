@@ -1,4 +1,4 @@
-"""R88 LLM Student actors, automatic all-AI games, and AI suggestion provenance."""
+"""LLM student actors, automatic all-AI games, and AI suggestion provenance."""
 
 from __future__ import annotations
 
@@ -150,7 +150,6 @@ def extend(Native):
                 "countdown": 2.0,
                 "answering": 45.0,
                 "distribution": 2.0,
-                "focus": 30.0,
                 "focus_summary": 2.0,
                 "preview": 2.0,
                 "final_reflection": 45.0,
@@ -288,10 +287,10 @@ def extend(Native):
                 run = self.current()
                 if member_id in run["answers"]:
                     return
-                option_ids = {option["id"] for option in self.question()["options"]}
+                option_ids = [option["id"] for option in self.question()["options"]]
                 option_id = result.get("option_id")
                 if option_id not in option_ids:
-                    option_id = next(iter(option_ids))
+                    option_id = option_ids[0]
                 self.command(
                     "answer",
                     {

@@ -10,10 +10,15 @@ import time
 from urllib.parse import quote, urljoin, urlparse
 
 import httpx
+from pydantic import ValidationError
 
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.platform.classroom_env import env_int
+from app.modules.llm_runtime.tutor.provider_schema import (
+    gemini_response_schema,
+    openai_response_schema,
+)
 
 KNOWN_BASE_URLS = {
     "openrouter": "https://openrouter.ai/api/v1",
@@ -176,31 +181,65 @@ def _extract_json_text(value: str) -> str:
     return text
 
 
+def _provider_json(response) -> dict:
+    try:
+        body = response.json()
+    except (TypeError, ValueError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+    if not isinstance(body, dict):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    return body
+
+
+def _validated_structured_result(value, schema) -> dict:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        raise ProviderWait("PROVIDER_EMPTY_CONTENT", 30)
+    if not isinstance(value, str):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    try:
+        return schema.model_validate_json(_extract_json_text(value)).model_dump()
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+
+
 async def _openai_generate(binding, messages, schema):
+    output_budget = env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048)
+    reasoning_budget = env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
+    payload = {
+        "model": binding["model"],
+        "messages": messages,
+        "stream": False,
+        "max_tokens": output_budget + reasoning_budget,
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": schema.__name__,
+                "strict": True,
+                "schema": openai_response_schema(schema),
+            },
+        },
+    }
+    if binding.get("adapter") == "openrouter":
+        payload["provider"] = {"require_parameters": True}
+        payload["reasoning"] = {
+            "exclude": True,
+            "max_tokens": reasoning_budget,
+        }
     response = await _bounded_request(
         binding,
         method="POST",
         path="/chat/completions",
-        payload={
-            "model": binding["model"],
-            "messages": messages,
-            "stream": False,
-            "max_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema.__name__,
-                    "strict": True,
-                    "schema": schema.model_json_schema(),
-                },
-            },
-        },
+        payload=payload,
         timeout=120,
     )
-    body = response.json()
-    raw = body["choices"][0]["message"]["content"]
+    body = _provider_json(response)
+    try:
+        message = body["choices"][0]["message"]
+        raw = message.get("content")
+    except (AttributeError, IndexError, KeyError, TypeError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     return (
-        schema.model_validate_json(_extract_json_text(raw)).model_dump(),
+        _validated_structured_result(raw, schema),
         body.get("usage", {}),
         body.get("model"),
     )
@@ -228,13 +267,21 @@ async def _anthropic_generate(binding, messages, schema):
         },
         timeout=120,
     )
-    body = response.json()
-    raw = "".join(
-        item.get("text", "") for item in body.get("content", []) if item.get("type") == "text"
-    )
+    body = _provider_json(response)
+    content = body.get("content", [])
+    if not isinstance(content, list):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    text_parts = [
+        item.get("text")
+        for item in content
+        if isinstance(item, dict) and item.get("type") == "text"
+    ]
+    if any(value is not None and not isinstance(value, str) for value in text_parts):
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
+    raw = "".join(value for value in text_parts if isinstance(value, str))
     usage = body.get("usage", {})
     return (
-        schema.model_validate_json(_extract_json_text(raw)).model_dump(),
+        _validated_structured_result(raw, schema),
         usage,
         body.get("model"),
     )
@@ -253,16 +300,41 @@ async def _gemini_generate(binding, messages, schema):
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "responseSchema": schema.model_json_schema(),
+                "responseSchema": gemini_response_schema(schema),
                 "maxOutputTokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
             },
         },
         timeout=120,
     )
-    body = response.json()
-    raw = body["candidates"][0]["content"]["parts"][0]["text"]
+    body = _provider_json(response)
+    try:
+        raw = body["candidates"][0]["content"]["parts"][0].get("text")
+    except (AttributeError, IndexError, KeyError, TypeError) as exc:
+        raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     usage = body.get("usageMetadata", {})
-    return schema.model_validate_json(_extract_json_text(raw)).model_dump(), usage, binding["model"]
+    return _validated_structured_result(raw, schema), usage, binding["model"]
+
+
+def _token_breakdown(usage: dict) -> tuple[int, int]:
+    details = usage.get("completion_tokens_details") or usage.get("output_tokens_details") or {}
+    reasoning = (
+        details.get("reasoning_tokens")
+        or usage.get("reasoning_tokens")
+        or usage.get("thoughtsTokenCount")
+        or 0
+    )
+    output = (
+        usage.get("completion_tokens")
+        or usage.get("output_tokens")
+        or usage.get("candidatesTokenCount")
+        or 0
+    )
+    try:
+        reasoning_value = max(0, int(reasoning))
+        output_value = max(0, int(output))
+    except (TypeError, ValueError):
+        return 0, 0
+    return reasoning_value, max(0, output_value - reasoning_value)
 
 
 def _estimated_cost(binding: dict, usage: dict) -> float | None:
@@ -309,6 +381,7 @@ async def generate(binding, messages, schema, on_delta):
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
+    reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
     audit = {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
@@ -318,45 +391,83 @@ async def generate(binding, messages, schema, on_delta):
         "use_case": binding["role"],
         "latency_ms": round((time.monotonic() - started) * 1000),
         "token_usage": usage,
+        "reasoning_tokens": reasoning_tokens,
+        "visible_output_tokens": visible_output_tokens,
+        "output_budget_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
+        "reasoning_budget_tokens": (
+            env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024) if adapter == "openrouter" else None
+        ),
         "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,
     }
     return result, audit
 
 
+def _model_capabilities(item: dict, adapter: str) -> dict:
+    raw_parameters = item.get("supported_parameters", item.get("supportedParameters"))
+    reasoning = item.get("reasoning") if isinstance(item.get("reasoning"), dict) else None
+    parameters = (
+        [str(value) for value in raw_parameters if value]
+        if isinstance(raw_parameters, list)
+        else []
+    )
+    structured_outputs = None
+    if adapter == "openrouter" and isinstance(raw_parameters, list):
+        structured_outputs = any(
+            value in {"response_format", "structured_outputs", "json_schema"}
+            for value in parameters
+        )
+    elif parameters:
+        structured_outputs = any(
+            value in {"response_format", "responseSchema", "structured_outputs", "json_schema"}
+            for value in parameters
+        )
+    return {
+        "supported_parameters": parameters,
+        "structured_outputs": structured_outputs,
+        "reasoning": reasoning,
+    }
+
+
 async def discover_models(binding: dict) -> dict:
     adapter = binding["adapter"]
     if adapter == "gemini":
         response = await _bounded_request(binding, method="GET", path="/v1beta/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("name", "").removeprefix("models/"),
                 "name": item.get("displayName") or item.get("name"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("models", [])
-            if "generateContent" in item.get("supportedGenerationMethods", [])
+            if isinstance(item, dict)
+            and "generateContent" in item.get("supportedGenerationMethods", [])
         ]
     elif adapter == "anthropic":
         response = await _bounded_request(binding, method="GET", path="/v1/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("id"),
                 "name": item.get("display_name") or item.get("id"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("data", [])
+            if isinstance(item, dict)
         ]
     else:
         response = await _bounded_request(binding, method="GET", path="/models")
-        body = response.json()
+        body = _provider_json(response)
         models = [
             {
                 "id": item.get("id"),
                 "name": item.get("name") or item.get("id"),
                 "pricing": item.get("pricing"),
+                **_model_capabilities(item, adapter),
             }
             for item in body.get("data", [])
+            if isinstance(item, dict)
         ]
     return {
         "provider_profile_id": binding["profile_id"],
@@ -368,6 +479,9 @@ async def discover_models(binding: dict) -> dict:
 
 
 async def test_connection(binding: dict) -> dict:
+    # OpenRouter 的 /models 不需要金鑰，只列模型無法證明金鑰有效；先打 /key 驗證金鑰。
+    if binding["adapter"] == "openrouter":
+        await _bounded_request(binding, method="GET", path="/key")
     result = await discover_models(binding)
     return {
         "status": "READY",

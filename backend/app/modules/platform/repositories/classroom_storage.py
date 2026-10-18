@@ -179,6 +179,22 @@ class Job(Base):
     audit: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
+# 題庫商店：老師發布到共享題庫的單一題目（路由在 app/api/routes/question_bank.py）。
+class BankQuestion(Base):
+    __tablename__ = "bank_questions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    question: Mapped[dict] = mapped_column(JSON)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    search_text: Mapped[str] = mapped_column(Text, default="")
+    source_script_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    source_question_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    published_at: Mapped[float] = mapped_column(Float, default=time.time, index=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+
+
 class Budget(Base):
     __tablename__ = "llm_budget"
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
@@ -194,7 +210,9 @@ class Program(Base):
 class CallAudit(Base):
     __tablename__ = "llm_call_audit"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    job_id: Mapped[str] = mapped_column(String(36), ForeignKey("llm_jobs.id"), index=True)
+    job_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("llm_jobs.id"), index=True, nullable=True
+    )
     metadata_json: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
@@ -312,6 +330,7 @@ def persist_machine(db, room, machine):
     priority = {
         "llm_student_turn": 0,
         "focused_tutor": 1,
+        "personal_tutor": 1,
         "dynamic_question": 2,
         "question_summary": 3,
         "class_summary": 4,

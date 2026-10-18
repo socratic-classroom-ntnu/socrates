@@ -8,12 +8,13 @@ import json
 import os
 import secrets
 import time
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
+from app.modules.platform.api.model_base import TrimmedModel
 from sqlalchemy import (
     Boolean,
     delete,
@@ -28,9 +29,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.modules.classroom_core.orchestrator.classroom import DomainError
+from app.modules.llm_runtime.tutor.classroom_gateway import ProviderWait
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     Base,
+    CallAudit,
     LoginSession,
     Room,
     digest,
@@ -58,6 +61,7 @@ ROLE_KEYS = (
 )
 JOB_ROLE = {
     "focused_tutor": "socratic_tutor",
+    "personal_tutor": "socratic_tutor",
     "llm_student_turn": "ai_student",
     "dynamic_question": "dynamic_question",
     "question_summary": "question_summary",
@@ -72,6 +76,64 @@ DEFAULT_BUDGET = {
     "estimated_cost_ceiling": None,
     "fallback_policy": "owner-profile-then-deterministic",
 }
+
+PROVIDER_OUTPUT_REASONS = frozenset(
+    {
+        "PROVIDER_EMPTY_CONTENT",
+        "PROVIDER_SCHEMA_MISMATCH",
+        "SCRIPT_ASSIST_INVALID_OUTPUT",
+    }
+)
+
+
+def provider_error_status(reason: str) -> int:
+    """Keep typed provider errors in the application response body through the proxy."""
+    if reason in PROVIDER_OUTPUT_REASONS:
+        return 422
+    if reason.startswith("PROVIDER_HTTP_"):
+        return 424
+    return 503
+
+
+def record_direct_call_audit(
+    *,
+    actor_id: str,
+    endpoint: str,
+    role: str,
+    binding: dict | None,
+    state: str,
+    audit: dict | None = None,
+    reason_code: str | None = None,
+    latency_ms: int | None = None,
+) -> dict:
+    """Persist one interactive LLM attempt without requiring a classroom Job row."""
+    audit = deepcopy(audit or {})
+    metadata = {
+        "state": state,
+        "endpoint": endpoint,
+        "account_id": actor_id,
+        "role": role,
+        "provider": audit.get("provider") or (binding or {}).get("adapter"),
+        "provider_profile_id": audit.get("provider_profile_id")
+        or (binding or {}).get("profile_id"),
+        "requested_model": audit.get("requested_model") or (binding or {}).get("model"),
+        "actual_model": audit.get("actual_model"),
+        "latency_ms": audit.get("latency_ms", latency_ms),
+        "token_usage": deepcopy(audit.get("token_usage", {})),
+        "reasoning_tokens": audit.get("reasoning_tokens"),
+        "visible_output_tokens": audit.get("visible_output_tokens"),
+        "output_budget_tokens": audit.get("output_budget_tokens"),
+        "reasoning_budget_tokens": audit.get("reasoning_budget_tokens"),
+        "estimated_cost": audit.get("estimated_cost"),
+        "reason_code": reason_code,
+        "recorded_at": time.time(),
+    }
+    with transaction() as db:
+        row = CallAudit(job_id=None, metadata_json=metadata)
+        db.add(row)
+        db.flush()
+        audit_id = row.id
+    return {"audit_id": audit_id, **metadata}
 
 
 class ProviderProfile(Base):
@@ -129,9 +191,9 @@ class AccountAISettings(Base):
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
-class CreateProfile(BaseModel):
+class CreateProfile(TrimmedModel):
     name: str = Field(min_length=1, max_length=100)
-    adapter: str
+    adapter: str = Field(max_length=40)
     base_url: str | None = Field(default=None, max_length=500)
     organization: str | None = Field(default=None, max_length=200)
     project: str | None = Field(default=None, max_length=200)
@@ -148,7 +210,7 @@ class CreateProfile(BaseModel):
         return value
 
 
-class UpdateProfile(BaseModel):
+class UpdateProfile(TrimmedModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     base_url: str | None = Field(default=None, max_length=500)
     organization: str | None = Field(default=None, max_length=200)
@@ -157,17 +219,20 @@ class UpdateProfile(BaseModel):
     enabled: bool | None = None
 
 
-class CredentialUpdate(BaseModel):
+class CredentialUpdate(TrimmedModel):
     credential: str = Field(min_length=1, max_length=20000)
     credential_mode: Literal["PERSISTENT", "SESSION"]
 
 
-class SettingsUpdate(BaseModel):
-    default_profile_id: str | None = None
-    fallback_profile_id: str | None = None
-    model_matrix: dict[str, str] = Field(default_factory=dict)
-    budgets: dict[str, Any] = Field(default_factory=dict)
-    active_room_id: str | None = None
+class SettingsUpdate(TrimmedModel):
+    default_profile_id: str | None = Field(default=None, max_length=36)
+    fallback_profile_id: str | None = Field(default=None, max_length=36)
+    model_matrix: dict[
+        Annotated[str, StringConstraints(max_length=64)],
+        Annotated[str, StringConstraints(max_length=200)],
+    ] = Field(default_factory=dict, max_length=32)
+    budgets: dict[str, Any] = Field(default_factory=dict, max_length=32)
+    active_room_id: str | None = Field(default=None, max_length=36)
 
 
 router = APIRouter()
@@ -529,6 +594,14 @@ def delete_profile(profile_id: str, request: Request):
             is not None
         ):
             raise DomainError("PROVIDER_PROFILE_IN_AI_STUDENT", 409)
+        from app.modules.platform.repositories.classroom_storage import Script
+
+        for script in db.scalars(select(Script).where(Script.owner_id == account.id)):
+            if any(
+                (question.get("scenario_ai") or {}).get("provider_profile_id") == profile_id
+                for question in (script.document or {}).get("questions", [])
+            ):
+                raise DomainError("PROVIDER_PROFILE_IN_SCRIPT", 409)
         db.execute(
             delete(SessionProviderSecret).where(SessionProviderSecret.profile_id == profile_id)
         )
@@ -553,7 +626,10 @@ async def test_profile(profile_id: str, request: Request):
             role="connection_test",
             owner_id=account.id,
         )
-    return await test_connection(binding)
+    try:
+        return await test_connection(binding)
+    except ProviderWait as exc:
+        raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
 
 
 @router.get("/provider-profiles/{profile_id}/models")
@@ -573,7 +649,10 @@ async def provider_models(profile_id: str, request: Request):
             role="model_discovery",
             owner_id=account.id,
         )
-    result = await discover_models(binding)
+    try:
+        result = await discover_models(binding)
+    except ProviderWait as exc:
+        raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
     with transaction() as db:
         current = _owned_profile(db, account.id, profile_id, True)
         current.metadata_json = {
@@ -773,16 +852,23 @@ def resolve_provider_chain(
     owner_id, settings, session_hash = _room_ai_settings(db, room)
     role = JOB_ROLE.get(job_kind, job_kind)
     model_matrix = settings.get("model_matrix", {})
-    scenario = context.get("scenario_ai", {})
+    # A question's scenario_ai (lifted into the job context by the orchestrator) names one
+    # profile+model pair; the fallback profile keeps the classroom/role model.
+    scenario = context.get("scenario_ai") or {}
     profile_id = (
         context.get("provider_profile_id")
         or scenario.get("provider_profile_id")
         or settings.get("default_profile_id")
     )
     model = context.get("model") or scenario.get("model") or model_matrix.get(role)
+    fallback_model = context.get("model") or model_matrix.get(role)
     fallback_id = settings.get("fallback_profile_id")
     profile_ids = []
-    for candidate in [profile_id, fallback_id]:
+    # When a question routes to its own profile, the classroom default still backs it up
+    # (with the role model) before the fallback profile, so a removed or disabled override
+    # profile degrades to 沿用課堂設定 instead of leaving the question without a tutor.
+    backups = [settings.get("default_profile_id")] if scenario else []
+    for candidate in [profile_id, *backups, fallback_id]:
         if candidate and candidate not in profile_ids:
             profile_ids.append(candidate)
 
@@ -804,7 +890,8 @@ def resolve_provider_chain(
             binding_from_profile(
                 profile,
                 secret=secret,
-                model=model or profile.default_model,
+                model=(model if candidate == profile_id else fallback_model)
+                or profile.default_model,
                 role=role,
                 owner_id=owner_id,
             )
@@ -817,6 +904,7 @@ def resolve_provider_chain(
         "selected_profile_id": profile_id,
         "fallback_profile_id": fallback_id,
         "requested_model": model,
+        "scenario_ai": bool(scenario),
     }
 
 

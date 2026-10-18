@@ -73,6 +73,7 @@
         "type": "object"
       },
       "AddAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -96,6 +97,7 @@
           "provider_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -113,6 +115,7 @@
         "type": "object"
       },
       "AttachScript": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -149,7 +152,274 @@
         "title": "AttachScript",
         "type": "object"
       },
+      "BankImportResult": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/ScriptDocument-Output"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "question_id",
+          "document"
+        ],
+        "title": "BankImportResult",
+        "type": "object"
+      },
+      "BankMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "BankMutation",
+        "type": "object"
+      },
+      "BankQuestionDetail": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision",
+          "question"
+        ],
+        "title": "BankQuestionDetail",
+        "type": "object"
+      },
+      "BankQuestionSummary": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision"
+        ],
+        "title": "BankQuestionSummary",
+        "type": "object"
+      },
+      "BankSearchResult": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BankQuestionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "BankSearchResult",
+        "type": "object"
+      },
+      "BankUnpublishResult": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "BankUnpublishResult",
+        "type": "object"
+      },
       "ClearAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -185,6 +455,7 @@
               "barrage",
               "focus_message",
               "next",
+              "end",
               "approve_question",
               "regenerate_question",
               "personal_summary"
@@ -201,6 +472,7 @@
         "type": "object"
       },
       "Configure": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -211,6 +483,10 @@
           "assignments": {
             "additionalProperties": {
               "type": "integer"
+            },
+            "maxProperties": 1600,
+            "propertyNames": {
+              "maxLength": 64
             },
             "title": "Assignments",
             "type": "object"
@@ -223,6 +499,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           },
@@ -249,6 +526,7 @@
         "type": "object"
       },
       "CreateBatch": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -269,6 +547,7 @@
         "type": "object"
       },
       "CreateClassroom": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -291,8 +570,10 @@
         "type": "object"
       },
       "CreateProfile": {
+        "additionalProperties": false,
         "properties": {
           "adapter": {
+            "maxLength": 40,
             "title": "Adapter",
             "type": "string"
           },
@@ -379,6 +660,7 @@
         "additionalProperties": false,
         "properties": {
           "script_id": {
+            "maxLength": 36,
             "title": "Script Id",
             "type": "string"
           }
@@ -390,6 +672,7 @@
         "type": "object"
       },
       "CredentialUpdate": {
+        "additionalProperties": false,
         "properties": {
           "credential": {
             "maxLength": 20000,
@@ -414,6 +697,7 @@
         "type": "object"
       },
       "GroupCommand": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -426,6 +710,7 @@
             "type": "object"
           },
           "kind": {
+            "maxLength": 40,
             "title": "Kind",
             "type": "string"
           }
@@ -450,6 +735,29 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id"
+        ],
+        "title": "ImportQuestion",
+        "type": "object"
+      },
       "JoinRoom": {
         "additionalProperties": false,
         "properties": {
@@ -461,10 +769,13 @@
           },
           "avatar": {
             "default": "scholar",
+            "maxLength": 120,
             "title": "Avatar",
             "type": "string"
           },
           "code": {
+            "maxLength": 32,
+            "minLength": 1,
             "title": "Code",
             "type": "string"
           }
@@ -476,14 +787,41 @@
         "title": "JoinRoom",
         "type": "object"
       },
+      "LibraryClassroomView": {
+        "additionalProperties": false,
+        "description": "One row of GET /library/classrooms: a teacher's long-lived Classroom asset.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "revision"
+        ],
+        "title": "LibraryClassroomView",
+        "type": "object"
+      },
       "Login": {
         "additionalProperties": false,
         "properties": {
           "login": {
+            "maxLength": 254,
             "title": "Login",
             "type": "string"
           },
           "password": {
+            "maxLength": 256,
             "title": "Password",
             "type": "string"
           }
@@ -499,6 +837,7 @@
         "additionalProperties": false,
         "properties": {
           "email": {
+            "maxLength": 254,
             "title": "Email",
             "type": "string"
           }
@@ -611,9 +950,11 @@
         "type": "object"
       },
       "OtherSuggestionRequest": {
+        "additionalProperties": false,
         "properties": {
           "existing_options": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,
@@ -629,6 +970,7 @@
           "room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -656,6 +998,186 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "PublicConfigView": {
+        "properties": {
+          "debug_mode": {
+            "title": "Debug Mode",
+            "type": "boolean"
+          },
+          "google_cse_id": {
+            "title": "Google Cse Id",
+            "type": "string"
+          },
+          "search_scope": {
+            "title": "Search Scope",
+            "type": "string"
+          },
+          "search_state": {
+            "title": "Search State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "google_cse_id",
+          "search_scope",
+          "search_state",
+          "debug_mode"
+        ],
+        "title": "PublicConfigView",
+        "type": "object"
+      },
+      "PublicQuestion": {
+        "additionalProperties": false,
+        "description": "A question as students and the LLM see it: no teacher-only routing fields.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario",
+          "options"
+        ],
+        "title": "PublicQuestion",
+        "type": "object"
+      },
+      "Publish": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id",
+          "question_id"
+        ],
+        "title": "Publish",
         "type": "object"
       },
       "Question": {
@@ -690,6 +1212,13 @@
             "title": "Max Focus Turns",
             "type": "integer"
           },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
           "options": {
             "items": {
               "$ref": "#/components/schemas/Option"
@@ -698,10 +1227,17 @@
             "title": "Options",
             "type": "array"
           },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
           "probe_hints": {
             "items": {
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Probe Hints",
             "type": "array"
           },
@@ -717,6 +1253,16 @@
             "title": "Scenario",
             "type": "string"
           },
+          "scenario_ai": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioAI"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sender_point_cap": {
             "default": 5,
             "minimum": 0.0,
@@ -731,6 +1277,7 @@
           },
           "tutor_goal": {
             "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
             "title": "Tutor Goal",
             "type": "string"
           }
@@ -754,6 +1301,7 @@
             "type": "string"
           },
           "focus_id": {
+            "maxLength": 64,
             "title": "Focus Id",
             "type": "string"
           },
@@ -822,6 +1370,7 @@
             "type": "string"
           },
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -945,7 +1494,7 @@
           "preview": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -955,7 +1504,7 @@
           "question": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -1046,7 +1595,251 @@
         "title": "RoomView",
         "type": "object"
       },
-      "ScriptDocument": {
+      "SampleQuestionDraft": {
+        "additionalProperties": false,
+        "description": "A repository sample before teacher-authored options make it a valid saved Question.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario"
+        ],
+        "title": "SampleQuestionDraft",
+        "type": "object"
+      },
+      "SampleQuestionSet": {
+        "additionalProperties": false,
+        "properties": {
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SampleQuestionDraft"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "SampleQuestionSet",
+        "type": "object"
+      },
+      "ScenarioAI": {
+        "additionalProperties": false,
+        "description": "Teacher-only routing for one question's LLM jobs; owner scope is checked against the DB.",
+        "properties": {
+          "model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider_profile_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Provider Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_profile_id",
+          "model"
+        ],
+        "title": "ScenarioAI",
+        "type": "object"
+      },
+      "ScriptAssistRequest": {
+        "additionalProperties": false,
+        "description": "Teacher's AI-assisted design request against the draft currently in the editor.",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "question_index": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Index"
+          },
+          "request": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Request",
+            "type": "string"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "ScriptAssistRequest",
+        "type": "object"
+      },
+      "ScriptDocument-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "live_llm_call_budget": {
+            "default": 240,
+            "minimum": 0.0,
+            "title": "Live Llm Call Budget",
+            "type": "integer"
+          },
+          "max_questions": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Questions",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "static",
+            "enum": [
+              "static",
+              "dynamic"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "preview_seconds": {
+            "default": 8,
+            "maximum": 10.0,
+            "minimum": 5.0,
+            "title": "Preview Seconds",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/Question"
+            },
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "ScriptDocument",
+        "type": "object"
+      },
+      "ScriptDocument-Output": {
         "additionalProperties": false,
         "properties": {
           "live_llm_call_budget": {
@@ -1103,7 +1896,7 @@
         "additionalProperties": false,
         "properties": {
           "document": {
-            "$ref": "#/components/schemas/ScriptDocument"
+            "$ref": "#/components/schemas/ScriptDocument-Input"
           },
           "expected_revision": {
             "anyOf": [
@@ -1123,11 +1916,38 @@
         "title": "ScriptSave",
         "type": "object"
       },
+      "ScriptView": {
+        "additionalProperties": false,
+        "description": "GET /scripts 的一列：劇本本體照存檔原樣回傳（舊版劇本不因新欄位驗證而讀不到）。",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "document"
+        ],
+        "title": "ScriptView",
+        "type": "object"
+      },
       "SettingsUpdate": {
+        "additionalProperties": false,
         "properties": {
           "active_room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1137,12 +1957,14 @@
             "title": "Active Room Id"
           },
           "budgets": {
+            "maxProperties": 32,
             "title": "Budgets",
             "type": "object"
           },
           "default_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1154,6 +1976,7 @@
           "fallback_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1164,7 +1987,12 @@
           },
           "model_matrix": {
             "additionalProperties": {
+              "maxLength": 200,
               "type": "string"
+            },
+            "maxProperties": 32,
+            "propertyNames": {
+              "maxLength": 64
             },
             "title": "Model Matrix",
             "type": "object"
@@ -1174,6 +2002,7 @@
         "type": "object"
       },
       "Start": {
+        "additionalProperties": false,
         "properties": {
           "accept_temporary_aliases": {
             "default": false,
@@ -1187,6 +2016,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           }
@@ -1202,6 +2032,7 @@
         "additionalProperties": false,
         "properties": {
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -1213,6 +2044,7 @@
         "type": "object"
       },
       "UpdateProfile": {
+        "additionalProperties": false,
         "properties": {
           "base_url": {
             "anyOf": [
@@ -1674,6 +2506,250 @@
           }
         },
         "summary": "Verify"
+      }
+    },
+    "/api/v2/bank/questions": {
+      "get": {
+        "operationId": "search_api_v2_bank_questions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankSearchResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search"
+      },
+      "post": {
+        "operationId": "publish_api_v2_bank_questions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Publish"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}": {
+      "get": {
+        "operationId": "detail_api_v2_bank_questions__bank_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/import": {
+      "post": {
+        "operationId": "import_question_api_v2_bank_questions__bank_id__import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Question"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/unpublish": {
+      "post": {
+        "operationId": "unpublish_api_v2_bank_questions__bank_id__unpublish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankMutation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankUnpublishResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unpublish"
       }
     },
     "/api/v2/classrooms": {
@@ -2364,7 +3440,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryClassroomView"
+                  },
+                  "title": "Response List Classrooms Api V2 Library Classrooms Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2896,7 +3978,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2928,7 +4012,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScriptView"
+                  },
+                  "title": "Response Scripts Api V2 Scripts Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2971,6 +4061,42 @@
         "summary": "Create Script"
       }
     },
+    "/api/v2/scripts/assist": {
+      "post": {
+        "operationId": "script_assist_api_v2_scripts_assist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Script Assist"
+      }
+    },
     "/api/v2/scripts/import": {
       "post": {
         "operationId": "import_script_api_v2_scripts_import_post",
@@ -2985,6 +4111,24 @@
           }
         },
         "summary": "Import Script"
+      }
+    },
+    "/api/v2/scripts/samples": {
+      "get": {
+        "operationId": "script_samples_api_v2_scripts_samples_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleQuestionSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Script Samples"
       }
     },
     "/api/v2/scripts/{script_id}": {

@@ -6,6 +6,7 @@ from app.modules.llm_runtime.tutor import prompts
 
 JOB_KINDS = [
     "focused_tutor",
+    "personal_tutor",
     "dynamic_question",
     "question_summary",
     "class_summary",

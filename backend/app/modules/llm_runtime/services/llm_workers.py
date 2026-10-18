@@ -239,9 +239,10 @@ def finish_job(item, result, audit):
 def deterministic_result(item, reason):
     context = item["context"]
     kind = item["kind"]
-    if kind == "focused_tutor":
+    if kind in {"focused_tutor", "personal_tutor"}:
         # The tutor pauses instead of reading the teacher's probe_hints aloud; the orchestrator
-        # shows the reason and waits for the teacher to move on.
+        # shows the reason. A focus waits for the teacher to move on; a personal dialogue keeps
+        # the student's message and offers a retry (never an automatic completion).
         result = {"tutor_unavailable": reason}
         provider = "tutor-unavailable"
     elif kind == "llm_student_turn":
@@ -309,13 +310,20 @@ def deterministic_result(item, reason):
     return result, audit
 
 
+# Jobs whose output belongs to one student: never streamed to the shared room channel.
+PRIVATE_JOB_KINDS = frozenset({"personal_tutor"})
+
+
 async def process_job(item):
     offset = 0
     pending = ""
     last_flush = time.monotonic()
+    private = item["kind"] in PRIVATE_JOB_KINDS
 
     async def on_delta(delta):
         nonlocal offset, pending, last_flush
+        if private:
+            return
         pending += delta
         if time.monotonic() - last_flush < 0.12 and len(pending) < 500:
             return

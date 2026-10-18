@@ -6,7 +6,10 @@ from uuid import UUID, uuid4, uuid5
 import secrets
 import time
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from typing import Annotated
+
+from pydantic import Field, StringConstraints
+from app.modules.platform.api.model_base import TrimmedModel
 from sqlalchemy import select
 from app.modules.platform.repositories.classroom_storage import (
     Room,
@@ -25,36 +28,47 @@ from app.modules.classroom_core.orchestrator.classroom import (
     focus_notice,
     fresh_state,
 )
-from app.modules.group_dialogue.domain.group_run import initialise, person_summary
-from app.modules.analytics.domain.group_analysis import analysis as project_analysis
+from app.modules.group_dialogue.domain.group_run import (
+    PERSONAL_COMMANDS,
+    initialise,
+    person_summary,
+    personal_progress,
+    personal_student_view,
+    personal_teacher_view,
+    student_actions,
+)
+from app.modules.analytics.domain.group_analysis import analysis as project_analysis, current_stance
 from app.modules.classroom_core.services import classroom as service
 from app.modules.content_authoring.domain.library_decisions import visible_evidence
 from app.modules.content_authoring.api.routes.classroom_library import (
     link_group_session,
     ClassroomAssets,
 )
+from app.modules.classroom_core.api.classroom_schemas import public_question
 
 router = APIRouter(prefix="/groups")
 
 
-class Configure(BaseModel):
+class Configure(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
-    expected_roster_digest: str
+    expected_roster_digest: str = Field(max_length=128)
     group_count: int = Field(ge=1, le=40)
     members_per_group: int = Field(ge=1, le=40)
-    assignments: dict[str, int] = Field(default_factory=dict)
+    assignments: dict[Annotated[str, StringConstraints(max_length=64)], int] = Field(
+        default_factory=dict, max_length=1600
+    )
     avatar_pack_id: str = Field(default="stickman", min_length=1, max_length=120)
 
 
-class Start(BaseModel):
+class Start(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
-    expected_roster_digest: str
+    expected_roster_digest: str = Field(max_length=128)
     accept_temporary_aliases: bool = False
 
 
-class GroupCommand(BaseModel):
+class GroupCommand(TrimmedModel):
     action_id: str = Field(min_length=1, max_length=100)
-    kind: str
+    kind: str = Field(max_length=40)
     data: dict = Field(default_factory=dict)
 
 
@@ -77,6 +91,67 @@ def roster(db, room):
 
 def roster_hash(rows):
     return digest([{"id": r.id, "alias": r.alias, "seat": r.seat} for r in rows])
+
+
+def _action_contract(reasons: dict[str, str | None]) -> dict:
+    return {
+        "available_actions": [action for action, reason in reasons.items() if reason is None],
+        "unavailable_actions": {
+            action: reason for action, reason in reasons.items() if reason is not None
+        },
+    }
+
+
+def parent_teacher_actions(state: dict, rows) -> dict:
+    """Backend authority for teacher controls on the group overview."""
+    from app.modules.group_dialogue.services.feature_flags import feature_state
+
+    phase = state.get("phase")
+    cfg = state.get("classroom") or {}
+    roster_digest = roster_hash(rows)
+    ai_feature = feature_state("ai_students")
+    has_ai = any(
+        state.get("members", {}).get(row.id, {}).get("actor_type") == "llm_student" for row in rows
+    )
+    lobby_reason = None if phase == "lobby" else "LOBBY_REQUIRED"
+    configure_reason = lobby_reason or (None if rows else "CURRENT_POPULATED_ROSTER_REQUIRED")
+    start_reason = lobby_reason
+    if start_reason is None and not rows:
+        start_reason = "CURRENT_POPULATED_ROSTER_REQUIRED"
+    elif start_reason is None and (
+        cfg.get("state") != "CONFIGURED" or cfg.get("roster_digest") != roster_digest
+    ):
+        start_reason = "CURRENT_GROUP_CONFIGURATION_REQUIRED"
+    add_reason = lobby_reason or ai_feature["reason"]
+    clear_reason = (
+        lobby_reason or ai_feature["reason"] or (None if has_ai else "AI_STUDENTS_REQUIRED")
+    )
+    return _action_contract(
+        {
+            "configure": configure_reason,
+            "start": start_reason,
+            "add_ai_students": add_reason,
+            "clear_ai_students": clear_reason,
+        }
+    )
+
+
+def group_teacher_actions(state: dict) -> dict:
+    """Backend authority for teacher controls on one group run."""
+    next_phases = {
+        "answering",
+        "personal",
+        "distribution",
+        "focus",
+        "focus_summary",
+        "preview",
+        "viewpoint_review",
+        "final_reflection",
+    }
+    next_reason = None if state.get("phase") in next_phases else "CURRENT_PHASE_ACTIONS"
+    settled = state.get("group", {}).get("settlement", {}).get("state") == "SETTLED"
+    end_reason = "GROUP_ALREADY_SETTLED" if settled else None
+    return _action_contract({"next": next_reason, "end": end_reason})
 
 
 def receipt(db, room, a, body, operation):
@@ -272,6 +347,7 @@ def start(rid: str, body: Start, request: Request):
             assigned = [r for r in rows if assignments[r.id] == number]
             if not assigned:
                 continue
+            # namespace 字串是既有資料的相容契約（已建立的組別 id 由它推導），不可改名。
             gid = str(uuid5(UUID(room.id), f"r70:group:{body.action_id}:{number}"))
             g = Room(
                 id=gid,
@@ -386,6 +462,7 @@ def view(rid: str, request: Request):
                 }
                 for mid, m in state["members"].items()
             ]
+            teacher_actions = group_teacher_actions(state) if mode == "teacher" else None
             return {
                 "kind": "GroupRun",
                 "id": rid,
@@ -400,7 +477,7 @@ def view(rid: str, request: Request):
                 "session_batch_id": p["classroom_id"],
                 "group_label": p["label"],
                 "classroom_id": p["classroom_id"],
-                "question": state["questions"][state["question_index"]]
+                "question": public_question(state["questions"][state["question_index"]])
                 if state["question_index"] >= 0
                 else None,
                 "transcript": [
@@ -419,6 +496,20 @@ def view(rid: str, request: Request):
                 "avatar_pack_id": p.get("avatar_pack_id", "stickman"),
                 "source_mode": state["source_mode"],
                 "focus_notice": focus_notice(state),
+                # Own dialogue only; other students' personal dialogues never reach a student.
+                "personal": personal_student_view(state, member.id)
+                if member and mode == "student"
+                else None,
+                "available_actions": student_actions(state, member.id)
+                if member and mode == "student"
+                else teacher_actions["available_actions"]
+                if teacher_actions
+                else [],
+                "unavailable_actions": teacher_actions["unavailable_actions"]
+                if teacher_actions
+                else {},
+                "personal_progress": personal_progress(state) if mode == "teacher" else None,
+                "personal_overview": personal_teacher_view(state) if mode == "teacher" else None,
             }
         rows = roster(db, room)
         cfg = state.get("classroom", {})
@@ -443,15 +534,20 @@ def view(rid: str, request: Request):
                         "members": len(p["member_snapshot"]),
                         "acked": len(p["confirmations"]),
                         "settlement": p["settlement"]["state"],
+                        "personal_progress": personal_progress(g.state),
+                        # Teacher-only branch: students are routed above and never reach it.
+                        "stance": current_stance(g.state),
                     }
                 )
         asset_id = state.get("asset_classroom_id")
         asset_classroom = db.get(ClassroomAssets, asset_id) if asset_id else None
         from app.modules.ai_providers.api.routes.provider_profiles import _classroom_settings_view
+        from app.modules.group_dialogue.services.feature_flags import feature_states
 
         ai_settings = _classroom_settings_view(
             asset_classroom.assets.get("ai_settings") if asset_classroom else {}
         )
+        teacher_actions = parent_teacher_actions(state, rows)
         return {
             "kind": "GroupCollection",
             "id": rid,
@@ -461,6 +557,7 @@ def view(rid: str, request: Request):
             "code": room.code if state["phase"] == "lobby" else None,
             "asset_classroom_id": asset_id,
             "ai_settings": ai_settings,
+            "features": feature_states("ai_students"),
             "roster": [
                 {
                     "id": r.id,
@@ -478,12 +575,13 @@ def view(rid: str, request: Request):
                 for k in ["group_count", "members_per_group", "avatar_pack_id", "revision"]
             },
             "groups": groups,
+            **teacher_actions,
         }
 
 
 @router.post("/runs/{rid}/commands")
 def command(rid: str, body: GroupCommand, request: Request):
-    if body.kind not in {"group_statement", "group_ack", "next"}:
+    if body.kind not in {"group_statement", "group_ack", "next", *PERSONAL_COMMANDS}:
         raise DomainError("GROUP_COMMAND_REQUIRED", 422)
     with transaction() as db:
         a = actor(db, request, True)

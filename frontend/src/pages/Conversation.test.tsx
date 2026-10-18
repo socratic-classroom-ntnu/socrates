@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import Conversation from './Conversation';
 import { vi } from '../testkit';
 // Interaction tests use a renderer stub. GLB pixels are recorded by browser-readback.
@@ -28,13 +28,28 @@ function installFetch(initial = room, afterAdvance?: typeof room) {
     vi.stubGlobal('fetch', mock);
     return mock;
 }
+function Where() { return <output data-testid="where">{useLocation().pathname}</output>; }
 function renderPage() {
     return render(<MemoryRouter initialEntries={['/sessions/s1']}><Routes>
     <Route path="/sessions/:sessionId" element={<Conversation />}/>
     <Route path="/sessions/:sessionId/summary" element={<p>總結畫面</p>}/>
-  </Routes></MemoryRouter>);
+    <Route path="/round1" element={<p>Round 1 首頁</p>}/>
+  </Routes><Where/></MemoryRouter>);
 }
 describe('CE portrait room', () => {
+    // 回首頁／開新討論都回 Round 1 首頁，網址用 /round1：用 "/" 重新整理會變成共思教室首頁
+    it.each([
+        ['選單的回到首頁', () => { fireEvent.click(screen.getByRole('button', { name: '三槓選單' })); fireEvent.click(screen.getByRole('button', { name: '回到首頁' })); }],
+        ['開啟新的討論', () => { fireEvent.click(screen.getByRole('button', { name: '展開歷史側欄' })); fireEvent.click(screen.getByRole('button', { name: '開啟新的討論' })); }],
+        ['Socrates 字標', () => { fireEvent.click(screen.getByRole('button', { name: /^S?Socrates/ })); }],
+    ])('%s lands on the Round 1 home with a reload-safe URL', async (_label, go) => {
+        installFetch();
+        renderPage();
+        await screen.findByText('失控的電車');
+        go();
+        expect(await screen.findByText('Round 1 首頁')).toBeInTheDocument();
+        expect(screen.getByTestId('where')).toHaveTextContent('/round1');
+    });
     it('中央人像、浮動導師對話框與文字語音輸入', async () => {
         installFetch();
         renderPage();

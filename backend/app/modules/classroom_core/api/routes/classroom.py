@@ -1,15 +1,16 @@
 """Thin HTTP↔DTO adapters; secrets and room authorities are resolved server-side."""
 
 import asyncio
-import os
 import time
 from copy import deepcopy
 from uuid import uuid4
 import yaml
-from fastapi import APIRouter, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
 from app.modules.identity_access.services import classroom_auth as auth
+from app.modules.classroom_core.api.request_account import account, same_origin
 from app.modules.classroom_core.services import classroom as service
 from app.modules.platform.classroom_env import env_str
 from app.modules.classroom_core.api.classroom_schemas import (
@@ -25,9 +26,11 @@ from app.modules.classroom_core.api.classroom_schemas import (
     RoomView,
     ScriptDocument,
     ScriptSave,
+    ScriptView,
     TokenRequest,
 )
 from app.modules.classroom_core.orchestrator.classroom import DomainError
+from app.modules.classroom_core.services.scenario_ai import prune_scenario_ai, validate_scenario_ai
 from app.modules.platform.repositories.classroom_storage import (
     Event,
     Membership,
@@ -40,20 +43,7 @@ from app.modules.platform.realtime import BUS
 router = APIRouter(prefix="/api/v2")
 
 
-def same_origin(request):
-    origin = request.headers.get("origin")
-    allow = {
-        s.rstrip("/")
-        for s in os.environ.get(
-            "SOCRATES_ALLOWED_ORIGINS",
-            os.environ.get("SOCRATES_PUBLIC_ORIGIN", "http://127.0.0.1:8080"),
-        ).split(",")
-    }
-    if origin and origin.rstrip("/") not in allow:
-        raise DomainError("ORIGIN_BINDING_REQUIRED", 403)
-
-
-# PORTAL-R104-SESSION-COOKIE
+# 登入 session cookie
 def _set_session_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         auth.COOKIE,
@@ -63,18 +53,6 @@ def _set_session_cookie(response: Response, token: str) -> None:
         samesite="lax",
         max_age=43200,
         path="/",
-    )
-
-
-def account(db, request, mutation=False, verified=True):
-    if mutation:
-        same_origin(request)
-    return auth.identity(
-        db,
-        request.cookies.get(auth.COOKIE),
-        request.headers.get("x-csrf-token"),
-        mutation,
-        verified,
     )
 
 
@@ -171,7 +149,7 @@ async def resend_webhook(request: Request):
     return apply_resend_webhook(body, request.headers)
 
 
-@router.get("/scripts")
+@router.get("/scripts", response_model=list[ScriptView])
 def scripts(request: Request):
     with transaction() as db:
         a, _ = account(db, request)
@@ -185,7 +163,9 @@ def scripts(request: Request):
 def create_script(body: ScriptSave, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
-        s = Script(owner_id=a.id, document=body.document.model_dump())
+        document = body.document.model_dump()
+        validate_scenario_ai(db, a.id, document)
+        s = Script(owner_id=a.id, document=document)
         db.add(s)
         db.flush()
         return {"id": s.id, "revision": s.revision, "document": s.document}
@@ -200,7 +180,9 @@ def update_script(script_id: str, body: ScriptSave, request: Request):
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         if body.expected_revision != s.revision:
             raise DomainError("請讀取新版劇本後合併編輯。")
-        s.document = body.document.model_dump()
+        document = body.document.model_dump()
+        validate_scenario_ai(db, a.id, document)
+        s.document = document
         s.revision += 1
         return {"id": s.id, "revision": s.revision, "document": s.document}
 
@@ -208,9 +190,35 @@ def update_script(script_id: str, body: ScriptSave, request: Request):
 @router.post("/scripts/import")
 async def import_script(request: Request):
     raw = await request.body()
-    if len(raw) > 1000000:
-        raise DomainError("SCRIPT_SIZE", 413)
-    doc = ScriptDocument.model_validate(yaml.safe_load(raw))
+    if len(raw) > 256 * 1024:
+        raise DomainError("YAML 內容最多 256 KB。", 413)
+    if not raw.strip():
+        raise DomainError("請貼上 YAML 內容。", 422)
+
+    try:
+        value = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        location = f"第 {mark.line + 1} 行、第 {mark.column + 1} 欄：" if mark is not None else ""
+        problem = getattr(exc, "problem", None) or "語法格式不符"
+        raise DomainError(f"YAML 格式錯誤：{location}{problem}", 422) from exc
+
+    try:
+        doc = ScriptDocument.model_validate(value)
+    except ValidationError as exc:
+        detail = []
+        for item in exc.errors(include_url=False, include_input=False):
+            ctx = item.get("ctx")
+            if isinstance(ctx, dict):
+                item["ctx"] = {
+                    key: current
+                    if current is None or isinstance(current, (str, int, float, bool))
+                    else str(current)
+                    for key, current in ctx.items()
+                }
+            detail.append(item)
+        raise HTTPException(status_code=422, detail=detail) from exc
+
     return await run_in_threadpool(create_script, ScriptSave(document=doc), request)
 
 
@@ -237,7 +245,8 @@ def adopt_question(script_id: str, room_id: str, index: int, request: Request):
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
         if index < 0 or index >= len(room.state["questions"]):
             raise DomainError("QUESTION_REQUIRED", 404)
-        q = deepcopy(room.state["questions"][index])
+        # A run question keeps its scenario_ai only while that profile is still the owner's.
+        q = prune_scenario_ai(db, a.id, room.state["questions"][index])
         q["id"] = "adopted-" + uuid4().hex[:10]
         doc = deepcopy(s.document)
         doc["questions"].append(q)
@@ -425,12 +434,12 @@ async def websocket(ws: WebSocket, room_id: str):
         BUS.send_locks.pop(ws, None)
 
 
-# PORTAL-R70-GROUP-ROUTER
+# 分組課堂路由
 from app.modules.group_dialogue.api.routes.groups import router as _groups_router  # noqa: E402
 
 router.include_router(_groups_router)
 
-# PORTAL-R73-CLASSROOM-LIBRARY
+# 教室資產庫路由
 from app.modules.content_authoring.api.routes.classroom_library import (  # noqa: E402
     router as _classroom_library_router,
 )
@@ -439,12 +448,12 @@ from app.modules.platform.api.routes.public_config import router as _public_conf
 router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)
 
-# PORTAL-R88-AI-STUDENTS
+# AI 學生路由
 from app.modules.group_dialogue.api.routes.ai_students import router as _ai_students_router  # noqa: E402
 
 router.include_router(_ai_students_router)
 
-# PORTAL-R97-PROVIDER-PROFILES
+# AI 連線設定路由
 from app.modules.ai_providers.api.routes.provider_profiles import (  # noqa: E402
     router as _provider_profiles_router,
 )

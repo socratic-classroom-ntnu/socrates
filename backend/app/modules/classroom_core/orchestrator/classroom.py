@@ -7,7 +7,11 @@ Provider work runs after that transaction. An accepted answer is immutable.
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
-from app.modules.classroom_core.api.classroom_schemas import ScriptDocument, Question
+from app.modules.classroom_core.api.classroom_schemas import (
+    ScriptDocument,
+    Question,
+    public_question,
+)
 from app.modules.classroom_core.orchestrator.classroom_policy import (
     choose_representative,
     distribution,
@@ -48,6 +52,25 @@ def focus_notice(state: dict) -> str | None:
     return None
 
 
+# Jobs that belong to one question and so follow that question's scenario_ai override.
+SCENARIO_AI_JOB_KINDS = frozenset({"focused_tutor", "personal_tutor", "question_summary"})
+
+
+def scoped_job_context(kind: str, context: dict) -> dict:
+    """Keep teacher-only routing out of the prompt payload and lift it to the job context.
+
+    resolve_provider_chain reads context["scenario_ai"]; the question the LLM sees never
+    carries provider ids. Jobs outside SCENARIO_AI_JOB_KINDS keep the classroom/role default.
+    """
+    question = context.get("question")
+    if not isinstance(question, dict) or "scenario_ai" not in question:
+        return context
+    context = {**context, "question": public_question(question)}
+    if kind in SCENARIO_AI_JOB_KINDS and question.get("scenario_ai"):
+        context["scenario_ai"] = deepcopy(question["scenario_ai"])
+    return context
+
+
 def fresh_state(title: str) -> dict:
     return {
         "phase": "lobby",
@@ -82,7 +105,7 @@ class GameOrchestrator:
         self.emit("phase.changed", phase=name, deadline_at=self.s["deadline_at"])
 
     def job(self, kind: str, key: str, context: dict):
-        self.jobs.append({"key": key, "kind": kind, "context": context})
+        self.jobs.append({"key": key, "kind": kind, "context": scoped_job_context(kind, context)})
 
     def current(self):
         return self.s["runs"][self.s["question_index"]]
@@ -116,6 +139,11 @@ class GameOrchestrator:
         self.s["due_at"] = self.s["deadline_at"] + 0.1
 
     def finalize(self):
+        self.accept_drafts()
+        self.open_distribution()
+
+    def accept_drafts(self):
+        """At the answering deadline, valid drafts become answers (via server-finalize)."""
         r, q = self.current(), self.question()
         for m, d in r["drafts"].items():
             if m in r["answers"]:
@@ -134,19 +162,27 @@ class GameOrchestrator:
                     "suggestion": deepcopy(d.get("suggestion")),
                 }
                 self.award(m, "first_answer")
+
+    def open_distribution(self):
+        r, q = self.current(), self.question()
         r["phase"] = "distribution"
-        r["distribution"] = distribution(q, r["answers"], self.s["members"])
+        r["distribution"] = distribution(q, self.representative_answers(), self.s["members"])
         self.phase("distribution", 5)
+
+    def representative_answers(self) -> dict:
+        """Answers that count for the distribution and representative choice of this question."""
+        return self.current()["answers"]
 
     def next_focus(self):
         r, q = self.current(), self.question()
         self.s["focus"] = None
         r["phase"] = "arena"
+        pool = self.representative_answers()
         for o in q["options"]:
             if o["id"] in r["covered_options"]:
                 continue
             chosen = choose_representative(
-                o["id"], r["answers"], self.s["members"], set(r["excluded"]), self.now
+                o["id"], pool, self.s["members"], set(r["excluded"]), self.now
             )
             r["covered_options"].append(o["id"])
             if chosen is None:
@@ -155,7 +191,7 @@ class GameOrchestrator:
                 "id": str(uuid4()),
                 "member_id": chosen,
                 "option_id": o["id"],
-                "argument": r["answers"][chosen]["argument"],
+                "argument": pool[chosen]["argument"],
                 "messages": [],
                 "turn_index": 0,
                 "completed_turns": 0,
@@ -351,7 +387,7 @@ class GameOrchestrator:
                 self.emit("answer.recorded", member_id=member_id)
             return
         if kind == "barrage":
-            if s["phase"] not in {"focus", "focus_summary", "arena"}:
+            if s["phase"] not in {"focus", "focus_summary"}:
                 raise DomainError("ARENA_REQUIRED")
             text = str(data.get("text", "")).strip()
             if not 1 <= len(text) <= 500:
@@ -498,12 +534,16 @@ class GameOrchestrator:
             self.emit("summary.ready", kind=kind)
 
 
-# PORTAL-R70-GROUP-EXTENSION
-from app.modules.group_dialogue.domain.group_run import extend as _extend_group_run  # noqa: E402
+# 分組課堂擴充；投影 helper 經這條既有模組邊提供給 classroom service。
+from app.modules.group_dialogue.domain.group_run import (  # noqa: E402
+    baseline_answers as baseline_answers,
+    extend as _extend_group_run,
+    personal_records as personal_records,
+)
 
 GameOrchestrator = _extend_group_run(GameOrchestrator)  # type: ignore[misc]
 
-# PORTAL-R88-AI-STUDENT-EXTENSION
+# AI 學生擴充
 from app.modules.group_dialogue.services.ai_students import extend as _extend_ai_students  # noqa: E402
 
 GameOrchestrator = _extend_ai_students(GameOrchestrator)  # type: ignore[misc]

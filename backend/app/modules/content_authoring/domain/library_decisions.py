@@ -1,4 +1,4 @@
-"""R73 pure decision helpers. Timers and option groups keep native authority."""
+"""Pure decision helpers for the classroom library. Timers and option groups keep native authority."""
 
 from copy import deepcopy
 import random

@@ -6,6 +6,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.modules.llm_runtime.tutor import prompts
 from app.modules.classroom_core.api.routes.classroom import router
+from app.modules.classroom_core.api.routes.question_bank import router as question_bank_router
+from app.modules.classroom_core.api.routes.script_assist import router as script_assist_router
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.realtime import BUS
 from app.modules.platform.repositories.classroom_storage import engine
@@ -37,6 +39,8 @@ def create_app(legacy=False, background=True):
 
         app.router.routes.extend(first_run.router.routes)
     app.include_router(router)
+    app.include_router(question_bank_router, prefix="/api/v2")
+    app.include_router(script_assist_router, prefix="/api/v2")
 
     @app.get("/api/v2/readiness")
     def readiness():

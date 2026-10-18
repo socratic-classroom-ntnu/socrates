@@ -1,4 +1,5 @@
 from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, fresh_state
+from app.modules.classroom_core.api.classroom_schemas import LLMStudentTurn
 from app.modules.group_dialogue.api.routes.ai_students import fallback_other_suggestion
 from app.modules.group_dialogue.services.ai_students import (
     OTHER_ID,
@@ -10,7 +11,7 @@ from app.modules.group_dialogue.domain.group_run import initialise
 
 def document():
     return {
-        "title": "R88",
+        "title": "AI 學生課堂",
         "mode": "static",
         "max_questions": 1,
         "preview_seconds": 8,
@@ -38,7 +39,7 @@ def document():
 
 
 def state():
-    s = fresh_state("R88")
+    s = fresh_state("AI 學生課堂")
     s["members"]["m1"] = {
         "account_id": "a1",
         "username": "ai-1",
@@ -95,6 +96,59 @@ def test_llm_student_uses_native_job_and_answer_contract(monkeypatch):
     assert completed.current()["answers"]["m1"]["suggestion"]["actor_type"] == "llm_student"
 
 
+def test_invalid_option_id_falls_back_to_first_question_option():
+    machine = GameOrchestrator(state(), 0)
+    machine.command("start", {"script_document": ensure_other_options(document())}, None, True)
+    tick = GameOrchestrator(machine.s, 4)
+    tick.tick()
+    job = next(row for row in tick.jobs if row["kind"] == "llm_student_turn")
+    completed = GameOrchestrator(tick.s, 5)
+    completed.complete_job(
+        "llm_student_turn",
+        job["key"],
+        {
+            "action_mode": "answer",
+            "option_id": "outside-contract",
+            "text": "我先採第一個正式選項。",
+            "relation": "qualifies",
+            "should_confirm": False,
+        },
+        {"provider": "fixture", "actual_model": "fixture"},
+    )
+    assert completed.current()["answers"]["m1"]["option_id"] == "a"
+
+
+def test_should_confirm_defaults_to_true_when_model_omits_it():
+    turn = LLMStudentTurn.model_validate(
+        {
+            "action_mode": "viewpoint",
+            "text": "我確認這是目前的觀點。",
+        }
+    )
+    assert turn.should_confirm is True
+
+
+def test_viewpoint_turn_without_should_confirm_records_confirmation():
+    value = state()
+    value["phase"] = "viewpoint_review"
+    machine = GameOrchestrator(value, 10)
+    machine.complete_job(
+        "llm_student_turn",
+        "ai:m1:viewpoint:review",
+        {
+            "action_mode": "viewpoint",
+            "option_id": "",
+            "text": "我目前優先考量公平。",
+            "relation": "qualifies",
+        },
+        {"provider": "fixture", "actual_model": "fixture"},
+    )
+    assert "m1" in machine.s["group"]["confirmations"]
+    assert machine.s["group"]["confirmations"]["m1"]["authority"] == (
+        "student_explicit_confirmation"
+    )
+
+
 def test_fallbacks_are_typed_and_repeatable():
     body = type(
         "Body",
@@ -120,3 +174,14 @@ def test_fallbacks_are_typed_and_repeatable():
     )
     assert turn["action_mode"] == "answer"
     assert turn["text"]
+
+
+def test_persona_seed_fits_postgres_integer():
+    # ai_students.seed 是有號 32 位元 INTEGER；8 個 hex 的種子（例如 3520493477）會溢位，加入 AI 學生回 500。
+    from uuid import uuid4
+
+    from app.modules.group_dialogue.api.routes.ai_students import _persona
+
+    seeds = [_persona(index, str(uuid4()))["seed"] for index in range(400)]
+    assert all(0 <= seed < 2**31 for seed in seeds)
+    assert len(set(seeds)) > 300

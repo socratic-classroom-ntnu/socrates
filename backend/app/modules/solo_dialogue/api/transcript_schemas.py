@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+from app.modules.platform.api.model_base import TrimmedModel
 
 
-class TranscriptDraftCreate(BaseModel):
+class TranscriptDraftCreate(TrimmedModel):
     text: str = Field(min_length=1, max_length=4000)
     adapter: str = Field(default="browser-speech", min_length=1, max_length=64)
     locale: str = Field(default="zh-TW", min_length=2, max_length=32)

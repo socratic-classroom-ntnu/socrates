@@ -98,7 +98,9 @@
         "ai_providers",
         "llm_runtime"
       ],
-      "todo": []
+      "todo": [
+        "schema 和 DomainError 抽離 classroom_core 之後，把 question_bank、script_assist 搬回 content_authoring。"
+      ]
     },
     {
       "id": "classroom_core",

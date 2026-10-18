@@ -5,20 +5,22 @@ import time
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import Field
+from app.modules.platform.api.model_base import TrimmedModel
 from sqlalchemy import JSON, Float, ForeignKey, Integer, String, select
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.modules.classroom_core.api.classroom_schemas import LibraryClassroomView
 from app.modules.classroom_core.services import classroom as service
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.group_dialogue.services.ai_students import ensure_other_options
+from app.modules.content_authoring.services.library_receipts import mutate
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     Base,
     Room,
     Script,
     Snapshot,
-    digest,
     transaction,
 )
 
@@ -56,7 +58,7 @@ class LibraryReceipt(Base):
     response: Mapped[dict] = mapped_column(JSON)
 
 
-class Mutation(BaseModel):
+class Mutation(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 
 
@@ -90,22 +92,6 @@ def owned(db, cid, account, lock=False):
     if classroom is None or classroom.owner_id != account.id:
         raise DomainError("CLASSROOM_ASSET_OWNER_REQUIRED", 403)
     return classroom
-
-
-def mutate(db, account, operation, body, action):
-    key = f"{account.id}:{operation}:{body.action_id}"
-    if len(key) > 200:
-        raise DomainError("ACTION_SCOPE_REQUIRED", 422)
-    hashed = digest(body.model_dump())
-    old = db.get(LibraryReceipt, key)
-    if old:
-        if old.payload_hash != hashed:
-            raise DomainError("ACTION_ID_PAYLOAD_CONFLICT", 409)
-        return old.response
-    result = action()
-    db.add(LibraryReceipt(key=key, payload_hash=hashed, response=result))
-    db.flush()
-    return result
 
 
 def _lesson_kind(state: dict) -> str:
@@ -164,7 +150,7 @@ def _lesson_projection(db, classroom_id: str) -> list[dict]:
     return lessons
 
 
-@router.get("/classrooms")
+@router.get("/classrooms", response_model=list[LibraryClassroomView])
 def list_classrooms(request: Request):
     with transaction() as db:
         account = user(db, request)
@@ -267,6 +253,7 @@ def attach_script(cid: str, body: AttachScript, request: Request):
                 document = ScriptDocument.model_validate(
                     ensure_other_options(body.document or {})
                 ).model_dump()
+                service.validate_scenario_ai(db, account.id, document)
                 script = Script(
                     id=str(uuid5(UUID(classroom.id), body.action_id)),
                     owner_id=account.id,

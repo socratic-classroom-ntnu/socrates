@@ -26,5 +26,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 無
+- schema 和 DomainError 抽離 classroom_core 之後，把 question_bank、script_assist 搬回 content_authoring。
 <!-- module-map:end -->

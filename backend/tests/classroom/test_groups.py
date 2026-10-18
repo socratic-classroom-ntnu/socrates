@@ -15,6 +15,10 @@ from app.modules.classroom_core.services import classroom as service
 from app.modules.group_dialogue.api.routes import groups as group
 from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, DomainError
 from app.modules.group_dialogue.domain.group_run import person_summary
+from app.modules.group_dialogue.api.routes.groups import (
+    group_teacher_actions,
+    parent_teacher_actions,
+)
 
 
 def document():
@@ -98,6 +102,57 @@ def start(classroom, count=3, capacity=1):
     return group.start(rid, body, request), body
 
 
+def test_parent_teacher_actions_include_reason_codes(monkeypatch):
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "true")
+    rows = [SimpleNamespace(id="m1", alias="學生", seat=0)]
+    state = {
+        "phase": "lobby",
+        "members": {"m1": {"actor_type": "human"}},
+        "classroom": {},
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "add_ai_students"]
+    assert actions["unavailable_actions"] == {
+        "start": "CURRENT_GROUP_CONFIGURATION_REQUIRED",
+        "clear_ai_students": "AI_STUDENTS_REQUIRED",
+    }
+
+    state["classroom"] = {
+        "state": "CONFIGURED",
+        "roster_digest": group.roster_hash(rows),
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "start", "add_ai_students"]
+
+
+def test_group_teacher_actions_follow_command_phases():
+    assert group_teacher_actions(
+        {"phase": "answering", "group": {"settlement": {"state": "EXPLORING"}}}
+    ) == {
+        "available_actions": ["next", "end"],
+        "unavailable_actions": {},
+    }
+    assert group_teacher_actions(
+        {"phase": "summary", "group": {"settlement": {"state": "SETTLED"}}}
+    ) == {
+        "available_actions": [],
+        "unavailable_actions": {
+            "next": "CURRENT_PHASE_ACTIONS",
+            "end": "GROUP_ALREADY_SETTLED",
+        },
+    }
+
+
+def test_teacher_view_marks_ai_student_feature_unavailable(classroom, monkeypatch):
+    rid, _, request = classroom
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "false")
+    view = group.view(rid, request)
+    assert view["features"]["ai_students"] == {
+        "enabled": False,
+        "reason": "AI_STUDENTS_DISABLED",
+    }
+
+
 def test_shared_snapshot_independent_runs_and_exact_start(classroom):
     result, body = start(classroom)
     rid, _, request = classroom
@@ -123,6 +178,16 @@ def test_grace_phase_and_post_ack_evidence(classroom):
         machine = GameOrchestrator(state, time.time() + 4)
         machine.tick()
         machine.command("group_statement", {"text": "我重視每個人的需要。"}, mid, False)
+        # 作答中確認會跳過代表討論並提早結束課堂，所以只在題目都結束後的 viewpoint_review 開放。
+        with pytest.raises(DomainError, match="CONFIRMABLE_PHASE_REQUIRED"):
+            machine.command(
+                "group_ack",
+                {"summary_digest": person_summary(machine.s, mid)["digest"]},
+                mid,
+                False,
+            )
+        assert machine.s["group"]["settlement"]["state"] == "EXPLORING"
+        machine.s["phase"] = "viewpoint_review"
         machine.command(
             "group_ack", {"summary_digest": person_summary(machine.s, mid)["digest"]}, mid, False
         )

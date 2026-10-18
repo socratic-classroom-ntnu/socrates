@@ -3,30 +3,37 @@
 import json
 from pathlib import Path
 from app.modules.classroom_core.api.classroom_schemas import (
-    TutorTurn,
-    SummaryResult,
     DynamicResult,
     LLMStudentTurn,
+    PersonalTutorTurn,
+    ScriptAssistResult,
+    SummaryResult,
+    TutorTurn,
 )
 from app.modules.platform.repositories.classroom_storage import Program, digest
 
 ROOT = Path(__file__).resolve().parents[4]
 SCHEMAS = {
     "TutorTurn": TutorTurn,
+    "PersonalTutorTurn": PersonalTutorTurn,
     "SummaryResult": SummaryResult,
     "DynamicResult": DynamicResult,
     "LLMStudentTurn": LLMStudentTurn,
+    "ScriptAssistResult": ScriptAssistResult,
 }
 
 
 JOB_KINDS = (
     "focused_tutor",
+    "personal_tutor",
     "dynamic_question",
     "question_summary",
     "class_summary",
     "personal_summary",
     "llm_student_turn",
 )
+# Request-time programs (no classroom job); same file, same validation.
+REQUEST_PROGRAMS = ("ai_script_authoring",)
 
 
 def validate_programs() -> None:
@@ -48,7 +55,7 @@ def validate_programs() -> None:
     programs = spec["programs"]
     if not isinstance(programs, dict):
         raise RuntimeError(f"{path}: 'programs' must be an object")
-    for kind in JOB_KINDS:
+    for kind in (*JOB_KINDS, *REQUEST_PROGRAMS):
         entry = programs.get(kind)
         if not isinstance(entry, dict):
             raise RuntimeError(f"{path} has no program for {kind!r}")
@@ -94,7 +101,14 @@ def compile_program(db, kind, context):
     return (
         [
             {"role": "system", "content": skill_text + "\n\n" + entry["template"]},
-            {"role": "user", "content": json.dumps(context, ensure_ascii=False)},
+            {
+                "role": "user",
+                # Routing (scenario_ai) selects the provider; it is not prompt content.
+                "content": json.dumps(
+                    {k: v for k, v in context.items() if k != "scenario_ai"},
+                    ensure_ascii=False,
+                ),
+            },
         ],
         SCHEMAS[entry["schema"]],
         metadata,

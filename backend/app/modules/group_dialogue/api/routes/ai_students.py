@@ -6,11 +6,12 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 import time
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid5
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
+from app.modules.platform.api.model_base import TrimmedModel
 from sqlalchemy import select
 
 from app.modules.platform.repositories.classroom_storage import (
@@ -22,26 +23,29 @@ from app.modules.platform.repositories.classroom_storage import (
     transaction,
 )
 
+from app.modules.group_dialogue.services.feature_flags import require_feature
 from app.modules.group_dialogue.services.ai_students import PERSONAS, AIStudentProfile
 
 
-class AddAIStudents(BaseModel):
+class AddAIStudents(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
     count: int = Field(ge=1, le=40)
     model: str = Field(default="openrouter/free", min_length=1, max_length=160)
-    provider_profile_id: str | None = None
+    provider_profile_id: str | None = Field(default=None, max_length=36)
 
 
-class ClearAIStudents(BaseModel):
+class ClearAIStudents(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 
 
-class OtherSuggestionRequest(BaseModel):
+class OtherSuggestionRequest(TrimmedModel):
     question_id: str = Field(min_length=1, max_length=100)
     title: str = Field(min_length=1, max_length=300)
     scenario: str = Field(min_length=1, max_length=12000)
-    existing_options: list[str] = Field(default_factory=list, max_length=20)
-    room_id: str | None = None
+    existing_options: list[Annotated[str, StringConstraints(max_length=2000)]] = Field(
+        default_factory=list, max_length=20
+    )
+    room_id: str | None = Field(default=None, max_length=36)
 
 
 router = APIRouter()
@@ -80,8 +84,18 @@ def _save_receipt(db, room, actor, body, key_hash, response):
 
 def _persona(index: int, room_id: str) -> dict:
     base: dict[str, Any] = deepcopy(PERSONAS[index % len(PERSONAS)])
-    base["seed"] = int(sha256(f"{room_id}:{index}:{base['id']}".encode()).hexdigest()[:8], 16)
+    # ai_students.seed 是 Postgres INTEGER（有號 32 位元）；8 個 hex 最大到 2**32-1，約一半的值會溢位。
+    base["seed"] = (
+        int(sha256(f"{room_id}:{index}:{base['id']}".encode()).hexdigest()[:8], 16) % 2**31
+    )
     return base
+
+
+def ai_student_ids(room_id: str, action_id: str, index: int) -> tuple[str, str]:
+    """Stable product namespaces for new rows; rows created under the legacy "r88-ai-*" namespaces keep their ids (data compatibility)."""
+    account_id = str(uuid5(UUID(room_id), f"ai-student-account:{action_id}:{index}"))
+    membership_id = str(uuid5(UUID(room_id), f"ai-student-member:{account_id}"))
+    return account_id, membership_id
 
 
 @router.post("/groups/classrooms/{rid}/ai-students")
@@ -95,6 +109,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     )
     from app.modules.platform.repositories.classroom_storage import append_event
 
+    require_feature("ai_students")
     with transaction() as db:
         teacher = actor(db, request, True)
         room = teacher_room(db, rid, teacher)
@@ -113,8 +128,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
         for offset in range(body.count):
             index = start_index + offset
             persona = _persona(index, rid)
-            account_id = str(uuid5(UUID(rid), f"r88-ai-account:{body.action_id}:{index}"))
-            membership_id = str(uuid5(UUID(rid), f"r88-ai-member:{account_id}"))
+            account_id, membership_id = ai_student_ids(rid, body.action_id, index)
             alias = f"{persona['name']} · AI"
             account = db.get(Account, account_id)
             if account is None:
@@ -212,6 +226,7 @@ def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     )
     from app.modules.platform.repositories.classroom_storage import append_event
 
+    require_feature("ai_students")
     with transaction() as db:
         teacher = actor(db, request, True)
         room = teacher_room(db, rid, teacher)
@@ -288,9 +303,14 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.modules.classroom_core.services import classroom as service
     from app.modules.classroom_core.api.routes.classroom import account
     from app.modules.classroom_core.api.classroom_schemas import OtherSuggestionResult
+    from app.modules.classroom_core.orchestrator.classroom import DomainError
     from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
     from app.modules.llm_runtime.tutor.classroom_gateway import generate
-    from app.modules.ai_providers.api.routes.provider_profiles import resolve_request_chain
+    from app.modules.ai_providers.api.routes.provider_profiles import (
+        provider_error_status,
+        record_direct_call_audit,
+        resolve_request_chain,
+    )
 
     with transaction() as db:
         actor, session = account(db, request, True)
@@ -323,7 +343,9 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     async def no_delta(_):
         return None
 
+    failure: DomainError | None = None
     for binding in bindings:
+        started = time.monotonic()
         try:
             result, audit = await generate(
                 binding,
@@ -331,7 +353,7 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
                 OtherSuggestionResult,
                 no_delta,
             )
-            return {
+            response = {
                 "suggestion_text": result["suggestion_text"],
                 "suggestion_id": audit.get("request_id")
                 or sha256(result["suggestion_text"].encode()).hexdigest()[:16],
@@ -340,8 +362,52 @@ async def other_suggestion(body: OtherSuggestionRequest, request: Request):
                 "provider_profile_id": audit.get("provider_profile_id"),
                 "classroom_owner_id": routing.get("owner_id"),
             }
-        except ProviderWait:
-            continue
-        except Exception:
-            continue
-    return fallback_other_suggestion(body)
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="READY",
+                audit=audit,
+            )
+            return response
+        except ProviderWait as exc:
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="FAILED",
+                reason_code=exc.reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(exc.reason, provider_error_status(exc.reason))
+        except (KeyError, TypeError, ValueError):
+            reason = "PROVIDER_SCHEMA_MISMATCH"
+            record_direct_call_audit(
+                actor_id=actor.id,
+                endpoint="suggestions.other",
+                role="other_suggestion",
+                binding=binding,
+                state="FAILED",
+                reason_code=reason,
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            failure = DomainError(reason, provider_error_status(reason))
+    if failure is not None:
+        raise failure
+    response = fallback_other_suggestion(body)
+    record_direct_call_audit(
+        actor_id=actor.id,
+        endpoint="suggestions.other",
+        role="other_suggestion",
+        binding=None,
+        state="READY",
+        audit={
+            "provider": response["suggestion_provider"],
+            "actual_model": response["suggestion_model"],
+            "latency_ms": 0,
+            "token_usage": {},
+        },
+    )
+    return response

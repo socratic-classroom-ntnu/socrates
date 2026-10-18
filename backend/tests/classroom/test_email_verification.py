@@ -9,13 +9,13 @@ import pytest
 from sqlalchemy import func, select
 
 from app.modules.identity_access.services import classroom_auth as auth
-from app.api.classroom_schemas import Register
+from app.modules.classroom_core.api.classroom_schemas import Register
 from app.modules.identity_access.services.email_delivery import (
     MailDelivery,
     apply_resend_webhook,
     send_mail_once,
 )
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     EmailToken,

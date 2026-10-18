@@ -27,7 +27,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     Base,
@@ -242,7 +242,7 @@ def _open(payload: str, *, profile_id: str, owner_id: str) -> str:
 
 
 def _account(db, request: Request, mutation=False):
-    from app.api.routes.classroom import account
+    from app.modules.classroom_core.api.routes.classroom import account
 
     return account(db, request, mutation)
 

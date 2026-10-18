@@ -31,7 +31,7 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 ## 教室功能模組
 
 以下掛在 `/api/v2` 之下；`domain/group_run.py` 與 `services/ai_students.py` 以 `extend()` 包裝
-`GameOrchestrator`（`orchestrator/classroom.py`）。路徑皆相對於 `backend/app/`。
+`GameOrchestrator`（`modules/classroom_core/orchestrator/classroom.py`）。路徑皆相對於 `backend/app/`。
 
 | 模組 | 路由 | 內容 |
 |---|---|---|

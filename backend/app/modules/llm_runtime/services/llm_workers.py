@@ -9,11 +9,11 @@ from uuid import uuid4
 
 from sqlalchemy import or_, select
 
-from app.api.classroom_schemas import DynamicResult, SummaryResult
+from app.modules.classroom_core.api.classroom_schemas import DynamicResult, SummaryResult
 from app.modules.identity_access.services.email_delivery import (
     send_mail_once as _send_transactional_mail_once,
 )
-from app.orchestrator.classroom import GameOrchestrator
+from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator
 from app.services.ai_students import fallback_turn
 from app.modules.llm_runtime.tutor.prompts import compile_program
 from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
@@ -24,7 +24,7 @@ from app.modules.ai_providers.api.routes.provider_profiles import (
     resolve_provider_chain,
 )
 from app.modules.platform.realtime import BUS
-from app.services.classroom import hydrate, tick_due
+from app.modules.classroom_core.services.classroom import hydrate, tick_due
 from app.modules.platform.repositories.classroom_storage import (
     Budget,
     CallAudit,

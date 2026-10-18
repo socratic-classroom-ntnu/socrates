@@ -18,7 +18,7 @@ import httpx
 from sqlalchemy import JSON, Float, ForeignKey, String, Text, and_, or_, select
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.orchestrator.classroom import DomainError
+from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import Base, Mail, digest, transaction
 
 

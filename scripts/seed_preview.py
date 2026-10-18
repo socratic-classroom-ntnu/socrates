@@ -28,9 +28,9 @@ for candidate in (Path(__file__).resolve().parents[1] / "backend", Path("/app"))
 
 from sqlalchemy import select  # noqa: E402
 
-from app.api.classroom_schemas import JoinRoom, ScriptDocument  # noqa: E402
+from app.modules.classroom_core.api.classroom_schemas import JoinRoom, ScriptDocument  # noqa: E402
 from app.modules.platform.repositories import classroom_storage as storage  # noqa: E402
-from app.services import classroom as service  # noqa: E402
+from app.modules.classroom_core.services import classroom as service  # noqa: E402
 from app.modules.identity_access.services.classroom_auth import HASHER  # noqa: E402
 
 ALLOWED_ENVIRONMENTS = {"preview", "local-dev"}

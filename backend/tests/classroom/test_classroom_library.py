@@ -8,7 +8,7 @@ from uuid import uuid4
 import time
 import pytest
 from starlette.requests import Request
-from app.repositories import classroom_storage as storage
+from app.modules.platform.repositories import classroom_storage as storage
 from app.services import classroom as service
 from app.api.routes import groups as group
 from app.api.routes import classroom_library as library

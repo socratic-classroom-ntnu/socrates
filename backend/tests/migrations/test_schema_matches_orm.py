@@ -22,8 +22,8 @@ from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, text
 
 from app import interaction_models, models  # noqa: F401
-from app.db import Base as RoundOneBase
-from app.repositories import classroom_storage as storage
+from app.modules.platform.db import Base as RoundOneBase
+from app.modules.platform.repositories import classroom_storage as storage
 
 BACKEND = Path(__file__).resolve().parents[2]
 

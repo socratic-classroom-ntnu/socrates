@@ -2,7 +2,7 @@ import threading
 import time
 import uuid
 
-from app.db import SessionLocal
+from app.modules.platform.db import SessionLocal
 from app.models import Learner, Session
 from app.repositories.session_repository import SessionRepository
 

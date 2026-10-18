@@ -24,7 +24,7 @@ def test_classroom_orchestrator_imports_no_provider_module():
 
 def test_fresh_sqlite_schema_from_storage_alone_has_every_table():
     code = (
-        "from sqlalchemy import inspect; from app.repositories import classroom_storage as storage; "
+        "from sqlalchemy import inspect; from app.modules.platform.repositories import classroom_storage as storage; "
         "e = storage.configure('sqlite+pysqlite:///:memory:', create=True); "
         "print(sorted(inspect(e).get_table_names()))"
     )

@@ -3,7 +3,14 @@ import pytest
 from app.services import llm_workers as workers
 from app.api.classroom_schemas import ScriptDocument
 from app.tutor.classroom_provider import ProviderWait
-from app.repositories.classroom_storage import Account, Job, Room, Script, configure, transaction
+from app.modules.platform.repositories.classroom_storage import (
+    Account,
+    Job,
+    Room,
+    Script,
+    configure,
+    transaction,
+)
 from app.services.llm_workers import effective_call_limit
 
 

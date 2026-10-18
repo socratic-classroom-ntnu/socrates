@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from app.api.classroom_schemas import MemberView, RoomView
 from app.orchestrator.classroom import DomainError, GameOrchestrator, fresh_state
 from app.orchestrator.classroom_policy import distribution
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     ActionReceipt,
     Membership,
     PointEntry,

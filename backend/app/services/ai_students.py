@@ -8,8 +8,8 @@ import time
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.classroom_env import env_str
-from app.repositories.classroom_storage import (
+from app.modules.platform.classroom_env import env_str
+from app.modules.platform.repositories.classroom_storage import (
     Base,
 )
 

@@ -7,8 +7,8 @@ from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 import app.main as main
-from app.config import settings
-from app.db import SessionLocal
+from app.modules.platform.config import settings
+from app.modules.platform.db import SessionLocal
 from app.models import Session
 from app.repositories.session_repository import SessionRepository
 from app.services.conversation import ConversationService

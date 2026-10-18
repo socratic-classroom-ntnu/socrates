@@ -12,7 +12,7 @@
 ## 責任分層
 
 React元件→集中HTTP commands／WS events→FastAPI DTO layer→application service
-→GameOrchestrator／policy純逻辑→transaction＋`repositories/classroom_storage.py` 的持久化函式→PostgreSQL。
+→GameOrchestrator／policy純逻辑→transaction＋`modules/platform/repositories/classroom_storage.py` 的持久化函式→PostgreSQL。
 
 LLM jobs為typed intent；worker在transaction後消費，`prompts.compile_program` 從repo templates
 （`prompts/classroom/programs.json`）／skills（`skills/classroom/`）與DB metadata組裝要求，再交給
@@ -39,7 +39,7 @@ GameRun目前以ClassroomRun aggregate內的global state表示，QuestionRun另�
 | `api/routes/groups.py`／`domain/group_run.py` | `/groups/*` | 分組課堂（group runs） |
 | `api/routes/ai_students.py`／`services/ai_students.py` | `/groups/classrooms/{rid}/ai-students*`、`/suggestions/other` | AI 學生、「其他」選項的建議 |
 | `api/routes/provider_profiles.py` | `/provider-profiles*`、`/ai-settings/account`、`/library/classrooms/{cid}/ai-settings` | 帳號 provider profile 與 AI 設定 |
-| `api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
+| `modules/platform/api/routes/public_config.py` | `/public-config` | 研究側欄的搜尋設定（`SOCRATES_GOOGLE_CSE_ID`／`SCOPE`） |
 
 ## 資料與並發
 

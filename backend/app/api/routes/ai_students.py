@@ -13,7 +13,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.repositories.classroom_storage import (
+from app.modules.platform.repositories.classroom_storage import (
     Account,
     ActionReceipt,
     Membership,
@@ -88,7 +88,7 @@ def _persona(index: int, room_id: str) -> dict:
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     from app.orchestrator.classroom import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
-    from app.repositories.classroom_storage import append_event
+    from app.modules.platform.repositories.classroom_storage import append_event
 
     with transaction() as db:
         teacher = actor(db, request, True)
@@ -200,7 +200,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     from app.orchestrator.classroom import DomainError
     from app.api.routes.groups import actor, roster, roster_hash, teacher_room
-    from app.repositories.classroom_storage import append_event
+    from app.modules.platform.repositories.classroom_storage import append_event
 
     with transaction() as db:
         teacher = actor(db, request, True)

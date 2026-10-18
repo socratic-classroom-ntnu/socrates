@@ -4,8 +4,8 @@ from typing import Annotated, Iterator
 from fastapi import Depends, Header
 from sqlalchemy.orm import Session as OrmSession
 
-from app.config import settings
-from app.db import SessionLocal
+from app.modules.platform.config import settings
+from app.modules.platform.db import SessionLocal
 from app.services.conversation import ConversationService
 from app.tutor.gateway import TutorGateway
 from app.tutor.scripted import ScriptedProvider

@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 
-from app.domain.tutor import Observations
+from app.modules.llm_runtime.domain.tutor import Observations
 from app.orchestrator.policy import should_advance, stage_goal_met
 
 

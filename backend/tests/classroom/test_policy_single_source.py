@@ -1,7 +1,7 @@
 import itertools
 
 import app.orchestrator.policy as round1
-from app.domain.tutor import Observations
+from app.modules.llm_runtime.domain.tutor import Observations
 from app.orchestrator import classroom_policy as classroom
 
 FIELDS = ("has_position", "has_reason", "reason_tested", "position_shifted")

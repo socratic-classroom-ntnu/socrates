@@ -1,5 +1,5 @@
 import pytest
-from app.tutor.classroom_provider import partial_reply
+from app.modules.llm_runtime.tutor.classroom_provider import partial_reply
 from app.modules.platform.realtime import RealtimeBus
 from app.api.classroom_schemas import SummaryResult
 

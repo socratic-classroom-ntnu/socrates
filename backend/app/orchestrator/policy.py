@@ -1,4 +1,4 @@
-from app.domain.tutor import Observations
+from app.modules.llm_runtime.domain.tutor import Observations
 
 
 def stage_goal_met(obs: Observations) -> bool:

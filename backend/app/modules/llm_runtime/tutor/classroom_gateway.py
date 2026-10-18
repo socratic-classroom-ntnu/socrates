@@ -12,7 +12,7 @@ from urllib.parse import quote, urljoin, urlparse
 import httpx
 
 from app.orchestrator.classroom import DomainError
-from app.tutor.classroom_provider import ProviderWait
+from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.platform.classroom_env import env_int
 
 KNOWN_BASE_URLS = {

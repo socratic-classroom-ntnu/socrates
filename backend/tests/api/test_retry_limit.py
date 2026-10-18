@@ -3,7 +3,7 @@ from app.api.deps import get_service
 from app.modules.platform.db import SessionLocal
 from app.main import app
 from app.services.conversation import ConversationService
-from app.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
 
 
 def test_retry_limit_preserves_student_message(client, learner_id, exploding_service):

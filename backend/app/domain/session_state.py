@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.domain.tutor import Observations
+from app.modules.llm_runtime.domain.tutor import Observations
 from app.domain.types import Action, FlowState, MessageRole, PrincipleLabel, StageStatus
 
 

@@ -2,7 +2,7 @@
 
 import random
 
-from app.domain.tutor import Observations as DomainObservations
+from app.modules.llm_runtime.domain.tutor import Observations as DomainObservations
 from app.orchestrator import policy as round1
 
 from app.api.classroom_schemas import Observations

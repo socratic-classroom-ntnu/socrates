@@ -74,9 +74,7 @@
       "status": "warn",
       "about": "呼叫模型：prompt 組裝、各家 adapter、單人對話的導師介面、背景工作佇列。",
       "paths": [
-        "backend/app/tutor/",
-        "backend/app/services/llm_workers.py",
-        "backend/app/domain/tutor.py"
+        "backend/app/modules/llm_runtime/"
       ],
       "uses": [
         "platform",

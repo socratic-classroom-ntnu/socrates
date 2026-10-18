@@ -3,13 +3,13 @@ from typing import TypeVar
 from pydantic import BaseModel
 
 from app.domain.ladder import Stage
-from app.domain.tutor import (
+from app.modules.llm_runtime.domain.tutor import (
     ProviderRequest,
     PromptMessage,
     SummaryDraft,
     TutorTurn,
 )
-from app.tutor.provider import LLMProvider
+from app.modules.llm_runtime.tutor.provider import LLMProvider
 
 
 class TutorUnavailable(RuntimeError):

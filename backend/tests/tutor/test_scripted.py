@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 
 from app.modules.platform.config import settings
-from app.domain.tutor import ProviderRequest
+from app.modules.llm_runtime.domain.tutor import ProviderRequest
 from app.ladders.repository import LadderRepository
 from app.orchestrator.policy import should_advance
-from app.tutor.gateway import TutorGateway
-from app.tutor.scripted import ScriptedProvider
+from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
 
 
 def _request(turn_index: int) -> ProviderRequest:

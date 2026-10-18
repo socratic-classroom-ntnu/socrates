@@ -20,7 +20,7 @@ module = [
     "app.api.routes.groups",
     "app.api.routes.ai_students",
     "app.modules.platform.api.routes.public_config",
-    "app.api.routes.provider_profiles",
+    "app.modules.ai_providers.api.routes.provider_profiles",
     "app.api.routes.classroom_library",
     "app.api.classroom_schemas",
     "app.orchestrator.classroom",

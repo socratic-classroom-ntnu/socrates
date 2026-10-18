@@ -41,7 +41,16 @@ jobs:
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
       - name: Backend module map
-        run: python scripts/check_modules.py
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python -m pytest scripts/test_check_modules.py -q
+          if [ -n "$BASE_REF" ]; then
+            git fetch --depth=1 origin "$BASE_REF"
+            python scripts/check_modules.py --baseline-ref "origin/$BASE_REF"
+          else
+            python scripts/check_modules.py
+          fi
       - name: Strict Round1 types and classroom contracts
         run: |
           cd backend

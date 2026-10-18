@@ -7,15 +7,18 @@
 3. route 檔不 import 其他 route 檔（組裝層除外）；ORM 只定義在 repositories/。
 
 尚未清掉的違規逐條列在 docs/modules/violations.json：清單只能變短——新違規會失敗，
-已修好的違規還留在清單上也會失敗（請把那一行刪掉）。`--write` 依地圖重寫 README 的模組表與各模組文件的 Scope 段。
+已修好的違規還留在清單上也會失敗（請把那一行刪掉）。PR 的 CI 另以 `--baseline-ref origin/<base>` 比對 base 分支的清單（依種類／模組對計數，搬檔改路徑不算新違規），
+`--update-baseline` 收進來的新違規也會被擋。import 以 ast 解析（含相對 import、有程式碼的 __init__.py；docstring 不算）。`--write` 依地圖重寫 README 的模組表與各模組文件的 Scope 段。
 """
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,9 +29,18 @@ STATUS = {"ok": "✅", "warn": "⚠️", "block": "❌"}
 BEGIN, END = "<!-- module-map:begin -->", "<!-- module-map:end -->"
 
 
+def has_code(path: str) -> bool:
+    """__init__.py 只有 docstring 或空白時不算原始碼；有任何敘述就納入檢查。"""
+    body = ast.parse((ROOT / path).read_text(encoding="utf-8")).body
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant):
+        body = body[1:]
+    return bool(body)
+
+
 def tracked() -> list[str]:
     out = subprocess.check_output(["git", "ls-files", "backend/app"], cwd=ROOT, text=True)
-    return [f for f in out.split() if f.endswith(".py") and not f.endswith("__init__.py")]
+    files = [f for f in out.split() if f.endswith(".py")]
+    return [f for f in files if not f.endswith("__init__.py") or has_code(f)]
 
 
 def owner_of(path: str, modules: list[dict]) -> list[str]:
@@ -43,20 +55,50 @@ def owner_of(path: str, modules: list[dict]) -> list[str]:
     return owners
 
 
-def targets(text: str) -> list[str]:
-    found = []
-    for mod in re.findall(r"^\s*(?:from|import)\s+(app(?:\.\w+)+)", text, re.M):
-        base = "backend/" + mod.replace(".", "/")
-        for cand in (base + ".py", base + "/__init__.py"):
-            if (ROOT / cand).exists():
-                found.append(cand)
-                break
-    for mod, names in re.findall(r"^\s*from\s+(app(?:\.\w+)*)\s+import\s+\(?([\w ,\n]+)\)?", text, re.M):
-        for name in re.findall(r"\w+", names):
-            cand = "backend/" + mod.replace(".", "/") + "/" + name + ".py"
-            if (ROOT / cand).exists():
-                found.append(cand)
-    return sorted({t for t in found if not t.endswith("__init__.py")})
+def module_file(dotted: str) -> str | None:
+    """app.x.y → backend/app/x/y.py 或 backend/app/x/y/__init__.py（後者要有程式碼才算依賴）。"""
+    base = "backend/" + dotted.replace(".", "/")
+    if (ROOT / (base + ".py")).exists():
+        return base + ".py"
+    init = base + "/__init__.py"
+    if (ROOT / init).exists() and has_code(init):
+        return init
+    return None
+
+
+def imported_modules(path: str, tree: ast.Module) -> list[str]:
+    """以 ast 讀出檔案 import 的模組（含 from 的名稱當子模組候選）；相對 import 依檔案位置還原。"""
+    parts = path[len("backend/") : -len(".py")].split("/")
+    package = parts[:-1]
+    found: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            found += [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                anchor = package[: len(package) - (node.level - 1)] if node.level > 1 else package
+                base = ".".join(anchor + ([node.module] if node.module else []))
+            else:
+                base = node.module or ""
+            found.append(base)
+            found += [f"{base}.{alias.name}" for alias in node.names if alias.name != "*"]
+    return [m for m in found if m == "app" or m.startswith("app.")]
+
+
+def targets(path: str, tree: ast.Module) -> list[str]:
+    found = {module_file(m) for m in imported_modules(path, tree)}
+    return sorted(t for t in found if t and t != path)
+
+
+def defines_table(tree: ast.Module) -> bool:
+    """class 內有 __tablename__ = …（含 `__tablename__: ClassVar[str] = …`）就是 ORM 定義。"""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "__tablename__" for t in node.targets):
+            return True
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "__tablename__":
+            return True
+    return False
+
 
 
 def check(spec: dict) -> tuple[list[str], list[str]]:
@@ -70,15 +112,15 @@ def check(spec: dict) -> tuple[list[str], list[str]]:
             problems.append(f"{path}：{'沒有歸屬模組' if not owners else '同時屬於 ' + ', '.join(owners)}")
             continue
         me = by_id[owners[0]]
-        text = (ROOT / path).read_text(encoding="utf-8")
-        deps = targets(text)
+        tree = ast.parse((ROOT / path).read_text(encoding="utf-8"))
+        deps = targets(path, tree)
         for target in deps:
             other = owner_of(target, modules)
             if other and other[0] != me["id"] and "*" not in me["uses"] and other[0] not in me["uses"]:
                 found.append(f"{me['id']}→{other[0]}  {path} → {target}")
         if "/api/routes/" in path and "*" not in me["uses"]:
             found += [f"route-imports-route  {path} → {t}" for t in deps if "/api/routes/" in t and t != path]
-        if "/repositories/" not in path and re.search(r"__tablename__\s*=", text):
+        if "/repositories/" not in path and defines_table(tree):
             found.append(f"orm-outside-repositories  {path}")
     return problems, sorted(set(found))
 
@@ -139,9 +181,27 @@ def write(spec: dict, current: list[str]) -> None:
         doc.write_text(replace_block(text, module_block(m, spec, current)), encoding="utf-8")
 
 
+def kind(violation: str) -> str:
+    """違規的種類與模組對，例：`classroom_core→group_dialogue`、`orm-outside-repositories`。"""
+    return violation.partition("  ")[0]
+
+
+def base_violations(ref: str) -> list[str] | None:
+    """PR 的 base 分支上的 violations.json；base 還沒有這個檔時回 None（不比對）。"""
+    shown = subprocess.run(["git", "show", f"{ref}:docs/modules/violations.json"], cwd=ROOT, capture_output=True, text=True)
+    return json.loads(shown.stdout).get("backend", []) if shown.returncode == 0 else None
+
+
 def main() -> int:
     spec = json.loads(MAP.read_text(encoding="utf-8"))
     problems, current = check(spec)
+    if "--baseline-ref" in sys.argv:
+        ref = sys.argv[sys.argv.index("--baseline-ref") + 1]
+        base = base_violations(ref)
+        if base is not None:
+            # 以「種類／模組對」計數比對：搬檔會改路徑，但同一對模組的違規條數只能持平或變少
+            mine, theirs = Counter(kind(v) for v in current), Counter(kind(v) for v in base)
+            problems += [f"{k} 的違規 {n} 條，多於 base 分支（{ref}）的 {theirs[k]} 條" for k, n in sorted(mine.items()) if n > theirs[k]]
     if "--update-baseline" in sys.argv:
         BASELINE.write_text(json.dumps({"backend": current}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if "--write" in sys.argv:

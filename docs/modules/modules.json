@@ -118,7 +118,8 @@
         "identity_access",
         "ai_providers",
         "llm_runtime",
-        "content_authoring"
+        "content_authoring",
+        "solo_dialogue"
       ],
       "todo": []
     },

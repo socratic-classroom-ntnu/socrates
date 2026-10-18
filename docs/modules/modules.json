@@ -90,10 +90,7 @@
       "status": "ok",
       "about": "課程、題本與教材：課程資產、題本附掛、場次建立、單人對話的階梯（ladder）。",
       "paths": [
-        "backend/app/api/routes/classroom_library.py",
-        "backend/app/domain/library_decisions.py",
-        "backend/app/domain/ladder.py",
-        "backend/app/ladders/"
+        "backend/app/modules/content_authoring/"
       ],
       "uses": [
         "platform",

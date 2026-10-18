@@ -19,7 +19,7 @@ def test_configure_registers_models_even_without_create():
     `alembic upgrade head` against a fresh database (.husky/pre-push, and CI's backend job).
     """
     result = _run(
-        "from app.api.routes.classroom_library import ClassroomAssets  # noqa: F401\n"
+        "from app.modules.content_authoring.api.routes.classroom_library import ClassroomAssets  # noqa: F401\n"
         "from app.modules.platform.repositories import classroom_storage as storage\n"
         "storage.configure('sqlite://')\n"
         "storage.Base.metadata.sorted_tables\n"

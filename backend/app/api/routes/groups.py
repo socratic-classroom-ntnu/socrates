@@ -23,8 +23,11 @@ from app.orchestrator.classroom import GameOrchestrator, DomainError, focus_noti
 from app.domain.group_run import initialise, person_summary
 from app.domain.group_analysis import analysis as project_analysis
 from app.services import classroom as service
-from app.domain.library_decisions import visible_evidence
-from app.api.routes.classroom_library import link_group_session, ClassroomAssets
+from app.modules.content_authoring.domain.library_decisions import visible_evidence
+from app.modules.content_authoring.api.routes.classroom_library import (
+    link_group_session,
+    ClassroomAssets,
+)
 
 router = APIRouter(prefix="/groups")
 

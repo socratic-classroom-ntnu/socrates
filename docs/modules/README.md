@@ -21,7 +21,7 @@
 | [AI Providers](./backend/ai_providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity_access | 8 |
 | [LLM Runtime](./backend/llm_runtime.md) | ⚠️ | `backend/app/modules/llm_runtime/` | platform、ai_providers | 9 |
 | [Content Authoring](./backend/content_authoring.md) | ✅ | `backend/app/modules/content_authoring/` | platform、identity_access、ai_providers、llm_runtime | 7 |
-| [Classroom Core](./backend/classroom_core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity_access、ai_providers、llm_runtime、content_authoring | 10 |
+| [Classroom Core](./backend/classroom_core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity_access、ai_providers、llm_runtime、content_authoring、solo_dialogue | 10 |
 | [Group Dialogue](./backend/group_dialogue.md) | ✅ | `backend/app/modules/group_dialogue/` | platform、identity_access、ai_providers、llm_runtime、content_authoring、classroom_core | 8 |
 | [Analytics](./backend/analytics.md) | ✅ | `backend/app/modules/analytics/` | platform、classroom_core、group_dialogue | 0 |
 | [Solo Dialogue](./backend/solo_dialogue.md) | ✅ | `backend/app/modules/solo_dialogue/` | platform、llm_runtime、content_authoring | 4 |

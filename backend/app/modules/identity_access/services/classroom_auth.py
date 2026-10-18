@@ -12,7 +12,11 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from sqlalchemy import delete, func, select
 
-from app.services.email_delivery import delivery_status, mask_recipient, queue_delivery
+from app.modules.identity_access.services.email_delivery import (
+    delivery_status,
+    mask_recipient,
+    queue_delivery,
+)
 from app.orchestrator.classroom import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Account,

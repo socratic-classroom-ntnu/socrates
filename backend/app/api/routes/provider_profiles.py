@@ -261,7 +261,7 @@ def _owned_profile(db, owner_id: str, profile_id: str, lock=False) -> ProviderPr
 
 
 def _session_hash(request: Request) -> str:
-    from app.services import classroom_auth as auth
+    from app.modules.identity_access.services import classroom_auth as auth
 
     token = request.cookies.get(auth.COOKIE)
     if not token:

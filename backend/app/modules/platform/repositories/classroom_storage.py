@@ -234,7 +234,7 @@ def register_models() -> None:
     Imported inside the function, not at module level, to keep provider modules out of
     the orchestrator's import path (AGENTS.md: Orchestrator 不得 import 任何 provider).
     """
-    from app.services import email_delivery  # noqa: F401
+    from app.modules.identity_access.services import email_delivery  # noqa: F401
     from app.services import ai_students  # noqa: F401
     from app.api.routes import classroom_library  # noqa: F401
     from app.api.routes import provider_profiles  # noqa: F401

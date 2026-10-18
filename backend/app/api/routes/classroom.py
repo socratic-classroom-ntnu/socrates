@@ -9,7 +9,7 @@ import yaml
 from fastapi import APIRouter, Request, Response, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from starlette.concurrency import run_in_threadpool
-from app.services import classroom_auth as auth
+from app.modules.identity_access.services import classroom_auth as auth
 from app.services import classroom as service
 from app.modules.platform.classroom_env import env_str
 from app.api.classroom_schemas import (
@@ -165,7 +165,7 @@ def reset(body: ResetRequest, request: Request):
 
 @router.post("/webhooks/resend")
 async def resend_webhook(request: Request):
-    from app.services.email_delivery import apply_resend_webhook
+    from app.modules.identity_access.services.email_delivery import apply_resend_webhook
 
     body = await request.body()
     return apply_resend_webhook(body, request.headers)

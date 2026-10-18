@@ -16,7 +16,7 @@ React元件→集中HTTP commands／WS events→FastAPI DTO layer→application 
 
 LLM jobs為typed intent；worker在transaction後消費，`prompts.compile_program` 從repo templates
 （`prompts/classroom/programs.json`）／skills（`skills/classroom/`）與DB metadata組裝要求，再交給
-`tutor/classroom_gateway.generate`。Provider沒有branch、classroom mutation或shell權限。
+`modules/llm_runtime/tutor/classroom_gateway.generate`。Provider沒有branch、classroom mutation或shell權限。
 Tutor observations由policy判定；phase、selection與deadline由server決定。
 
 **Provider 鏈：** 每次呼叫依教室擁有者帳號解析 provider profile——先用預設 profile，失敗再試

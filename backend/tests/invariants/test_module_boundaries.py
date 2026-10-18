@@ -2,7 +2,7 @@ import ast
 import pathlib
 
 # 兩個狀態機：單人對話（solo）與課堂（classroom）。搬家時改這裡，空目錄會讓測試失敗而不是空轉。
-ORCHESTRATOR_DIRS = ("orchestrator", "modules/classroom_core/orchestrator")
+ORCHESTRATOR_DIRS = ("modules/solo_dialogue/orchestrator", "modules/classroom_core/orchestrator")
 FORBIDDEN = ("app.modules.llm_runtime.tutor.provider", "app.modules.llm_runtime.tutor.scripted")
 
 

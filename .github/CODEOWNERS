@@ -10,5 +10,5 @@
 /backend/tests/invariants/  @Fizzy143 @arthur0824hao
 /frontend/src/invariants/   @Fizzy143 @arthur0824hao
 /backend/migrations/        @Fizzy143 @arthur0824hao
-/backend/app/orchestrator/  @Fizzy143 @arthur0824hao
+/backend/app/modules/solo_dialogue/orchestrator/  @Fizzy143 @arthur0824hao
 /backend/app/modules/classroom_core/orchestrator/  @Fizzy143 @arthur0824hao

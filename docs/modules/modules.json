@@ -142,7 +142,7 @@
       "status": "ok",
       "about": "教師分析：全班 → 組別 → 個人的觀點分佈與論點流向（純函式）。",
       "paths": [
-        "backend/app/domain/group_analysis.py"
+        "backend/app/modules/analytics/"
       ],
       "uses": [
         "platform",

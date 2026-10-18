@@ -15,7 +15,7 @@
     "content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/orchestrator/classroom.py",
     "content_authoring→classroom_core  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/classroom_core/services/classroom.py",
     "content_authoring→group_dialogue  backend/app/modules/content_authoring/api/routes/classroom_library.py → backend/app/modules/group_dialogue/services/ai_students.py",
-    "group_dialogue→analytics  backend/app/modules/group_dialogue/api/routes/groups.py → backend/app/domain/group_analysis.py",
+    "group_dialogue→analytics  backend/app/modules/group_dialogue/api/routes/groups.py → backend/app/modules/analytics/domain/group_analysis.py",
     "identity_access→classroom_core  backend/app/modules/identity_access/services/classroom_auth.py → backend/app/modules/classroom_core/orchestrator/classroom.py",
     "identity_access→classroom_core  backend/app/modules/identity_access/services/email_delivery.py → backend/app/modules/classroom_core/orchestrator/classroom.py",
     "llm_runtime→classroom_core  backend/app/modules/llm_runtime/services/llm_workers.py → backend/app/modules/classroom_core/api/classroom_schemas.py",

@@ -26,7 +26,7 @@ from app.modules.classroom_core.orchestrator.classroom import (
     fresh_state,
 )
 from app.modules.group_dialogue.domain.group_run import initialise, person_summary
-from app.domain.group_analysis import analysis as project_analysis
+from app.modules.analytics.domain.group_analysis import analysis as project_analysis
 from app.modules.classroom_core.services import classroom as service
 from app.modules.content_authoring.domain.library_decisions import visible_evidence
 from app.modules.content_authoring.api.routes.classroom_library import (

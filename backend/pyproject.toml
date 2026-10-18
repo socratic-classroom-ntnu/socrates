@@ -26,7 +26,7 @@ module = [
     "app.modules.classroom_core.orchestrator.classroom",
     "app.modules.classroom_core.orchestrator.classroom_policy",
     "app.modules.group_dialogue.domain.group_run",
-    "app.domain.group_analysis",
+    "app.modules.analytics.domain.group_analysis",
     "app.modules.content_authoring.domain.library_decisions",
     "app.modules.platform.repositories.classroom_storage",
     "app.modules.classroom_core.services.classroom",

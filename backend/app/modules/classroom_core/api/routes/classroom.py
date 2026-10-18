@@ -426,7 +426,7 @@ async def websocket(ws: WebSocket, room_id: str):
 
 
 # PORTAL-R70-GROUP-ROUTER
-from app.api.routes.groups import router as _groups_router  # noqa: E402
+from app.modules.group_dialogue.api.routes.groups import router as _groups_router  # noqa: E402
 
 router.include_router(_groups_router)
 
@@ -440,7 +440,7 @@ router.include_router(_classroom_library_router)
 router.include_router(_public_config_router)
 
 # PORTAL-R88-AI-STUDENTS
-from app.api.routes.ai_students import router as _ai_students_router  # noqa: E402
+from app.modules.group_dialogue.api.routes.ai_students import router as _ai_students_router  # noqa: E402
 
 router.include_router(_ai_students_router)
 

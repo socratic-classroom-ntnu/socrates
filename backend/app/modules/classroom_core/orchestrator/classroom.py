@@ -396,7 +396,7 @@ class GameOrchestrator:
         raise DomainError("KNOWN_ACTION_REQUIRED", 422)
 
     def accept_preview(self):
-        from app.services.ai_students import ensure_other_question
+        from app.modules.group_dialogue.services.ai_students import ensure_other_question
 
         q = Question.model_validate(ensure_other_question(self.s.pop("preview"))).model_dump()
         # Generated questions are run-owned; copying into a teacher draft is an explicit endpoint.
@@ -475,7 +475,7 @@ class GameOrchestrator:
         elif kind == "dynamic_question":
             if key != s.get("pending_generation"):
                 return
-            from app.services.ai_students import ensure_other_question
+            from app.modules.group_dialogue.services.ai_students import ensure_other_question
 
             s["preview"] = Question.model_validate(
                 ensure_other_question(result["question"])
@@ -499,11 +499,11 @@ class GameOrchestrator:
 
 
 # PORTAL-R70-GROUP-EXTENSION
-from app.domain.group_run import extend as _extend_group_run  # noqa: E402
+from app.modules.group_dialogue.domain.group_run import extend as _extend_group_run  # noqa: E402
 
 GameOrchestrator = _extend_group_run(GameOrchestrator)  # type: ignore[misc]
 
 # PORTAL-R88-AI-STUDENT-EXTENSION
-from app.services.ai_students import extend as _extend_ai_students  # noqa: E402
+from app.modules.group_dialogue.services.ai_students import extend as _extend_ai_students  # noqa: E402
 
 GameOrchestrator = _extend_ai_students(GameOrchestrator)  # type: ignore[misc]

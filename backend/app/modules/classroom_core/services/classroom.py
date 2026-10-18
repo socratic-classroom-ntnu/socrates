@@ -273,7 +273,7 @@ def execute(db, a, room_id, cmd):
     data = deepcopy(cmd.data)
     if cmd.kind == "start":
         script = db.get(Script, room.script_id)
-        from app.services.ai_students import ensure_other_options
+        from app.modules.group_dialogue.services.ai_students import ensure_other_options
 
         document = ensure_other_options(script.document)
         snapshot = Snapshot(

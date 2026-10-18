@@ -14,7 +14,7 @@ from app.modules.identity_access.services.email_delivery import (
     send_mail_once as _send_transactional_mail_once,
 )
 from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator
-from app.services.ai_students import fallback_turn
+from app.modules.group_dialogue.services.ai_students import fallback_turn
 from app.modules.llm_runtime.tutor.prompts import compile_program
 from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.llm_runtime.tutor.classroom_gateway import generate

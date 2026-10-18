@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.modules.classroom_core.services import classroom as service
 from app.modules.classroom_core.orchestrator.classroom import DomainError
-from app.services.ai_students import ensure_other_options
+from app.modules.group_dialogue.services.ai_students import ensure_other_options
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     Base,

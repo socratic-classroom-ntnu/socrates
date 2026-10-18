@@ -235,7 +235,7 @@ def register_models() -> None:
     the orchestrator's import path (AGENTS.md: Orchestrator 不得 import 任何 provider).
     """
     from app.modules.identity_access.services import email_delivery  # noqa: F401
-    from app.services import ai_students  # noqa: F401
+    from app.modules.group_dialogue.services import ai_students  # noqa: F401
     from app.modules.content_authoring.api.routes import classroom_library  # noqa: F401
     from app.modules.ai_providers.api.routes import provider_profiles  # noqa: F401
 

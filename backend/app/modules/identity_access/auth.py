@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any, Callable
 import html
 import os
 import secrets
@@ -12,42 +13,36 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 from sqlalchemy import delete, func, select
 
-from app.modules.identity_access.services.email_delivery import (
+from app.modules.identity_access.email_delivery import (
     delivery_status,
     mask_recipient,
     queue_delivery,
 )
-from app.modules.classroom_core.orchestrator.classroom import DomainError
-from app.modules.platform.repositories.classroom_storage import (
-    Account,
-    EmailToken,
-    LoginSession,
-    Mail,
-    PointEntry,
-    Room,
-    digest,
-    transaction,
-)
+from app.modules.platform.errors import DomainError
+from app.modules.identity_access.repositories import Account, EmailToken, LoginSession, Mail
+from app.modules.platform.storage import digest, transaction
 
 HASHER = PasswordHasher(time_cost=2, memory_cost=19456, parallelism=1)
 COOKIE = "socrates_session"
+# Email 驗證連結與重設密碼連結的有效期間（秒）。
+VERIFY_TOKEN_SECONDS = 86400
+RESET_TOKEN_SECONDS = 1800
+# 釋出的帳號不能再用密碼登入（不是合法的 argon2 雜湊，verify 會失敗）。
+RELEASED_PASSWORD_HASH = "RELEASED_UNVERIFIED_ACCOUNT"
+
+
+# Modules that keep per-account progress (classroom points and achievements) add fields to the
+# account view through this registry; the app shell wires them. Each extension returns a dict.
+ACCOUNT_VIEW_EXTENSIONS: list[Callable[[Any, Any], dict]] = []
+
+
+def extend_account_view(extension: Callable[[Any, Any], dict]) -> None:
+    if extension not in ACCOUNT_VIEW_EXTENSIONS:
+        ACCOUNT_VIEW_EXTENSIONS.append(extension)
 
 
 def account_view(db, account, csrf=""):
-    points = (
-        db.scalar(
-            select(func.coalesce(func.sum(PointEntry.amount), 0)).where(
-                PointEntry.account_id == account.id
-            )
-        )
-        or 0
-    )
-    achievements = set()
-    for room in db.scalars(select(Room)).all():
-        for member in room.state.get("members", {}).values():
-            if member.get("account_id") == account.id:
-                achievements.update(member.get("achievements", []))
-    return {
+    view = {
         "id": account.id,
         "username": account.username,
         "email": account.email,
@@ -55,9 +50,12 @@ def account_view(db, account, csrf=""):
         "verified": account.verified,
         "authority_state": ("FULL_PRODUCT" if account.verified else "EMAIL_VERIFICATION"),
         "csrf_token": csrf,
-        "points": points,
-        "achievements": sorted(achievements),
+        "points": 0,
+        "achievements": [],
     }
+    for extension in ACCOUNT_VIEW_EXTENSIONS:
+        view.update(extension(db, account))
+    return view
 
 
 def _new_session(db, account):
@@ -106,7 +104,7 @@ def _mail_copy(purpose: str, link: str) -> tuple[str, str, str]:
 
 def queue_token(db, account, purpose):
     current = time.time()
-    seconds = 1800 if purpose == "reset" else 86400
+    seconds = RESET_TOKEN_SECONDS if purpose == "reset" else VERIFY_TOKEN_SECONDS
 
     # One current token per account/purpose keeps the recovery path deterministic.
     rows = db.scalars(
@@ -171,14 +169,70 @@ def queue_token(db, account, purpose):
     }
 
 
+def _verification_open(db, account, now):
+    """未驗證帳號的驗證連結是否仍在有效期間（以最後一次寄出的驗證連結為準；沒有連結時以註冊時間計）。"""
+    latest = db.scalar(
+        select(func.max(EmailToken.expires_at)).where(
+            EmailToken.account_id == account.id,
+            EmailToken.purpose == "verify",
+        )
+    )
+    if latest is None:
+        return (account.created_at or 0) + VERIFY_TOKEN_SECONDS > now
+    return latest > now
+
+
+def _release(db, account, now):
+    """釋出過期未驗證帳號的使用者名稱與 Email：改成唯一的墓碑值、停用登入與連結。
+
+    不刪除帳號列：其他資料表以外鍵指向 accounts.id。"""
+    account.username = f"released-{account.id}"
+    account.email = f"{account.id}@released.invalid"
+    account.password_hash = RELEASED_PASSWORD_HASH
+    for session in db.scalars(
+        select(LoginSession).where(LoginSession.account_id == account.id).with_for_update()
+    ):
+        session.expires_at = min(session.expires_at, now)
+    for token in db.scalars(
+        select(EmailToken)
+        .where(EmailToken.account_id == account.id, EmailToken.consumed.is_(False))
+        .with_for_update()
+    ):
+        token.consumed = True
+        token.expires_at = min(token.expires_at, now)
+
+
+def _claim_identity(db, username, email, now):
+    """新註冊要用的使用者名稱／Email：已驗證帳號佔用就拒絕；驗證連結仍有效的未驗證帳號佔用也拒絕；
+    驗證連結已過期的未驗證帳號在同一個交易內釋出。"""
+    holders = db.scalars(
+        select(Account)
+        .where((Account.username == username) | (Account.email == email))
+        .with_for_update()
+    ).all()
+    for field, code in (("username", "USERNAME_TAKEN"), ("email", "EMAIL_TAKEN")):
+        value = username if field == "username" else email
+        if any(a.verified and getattr(a, field) == value for a in holders):
+            raise DomainError(code, 409)
+    if any(_verification_open(db, a, now) for a in holders):
+        raise DomainError("ACCOUNT_PENDING_VERIFICATION", 409)
+    for stale in holders:
+        _release(db, stale, now)
+    if holders:
+        db.flush()
+
+
 def register(body):
     from sqlalchemy.exc import IntegrityError
 
+    username = body.username.casefold()
+    email = body.email.strip().casefold()
     try:
         with transaction() as db:
+            _claim_identity(db, username, email, time.time())
             account = Account(
-                username=body.username.casefold(),
-                email=body.email.strip().casefold(),
+                username=username,
+                email=email,
                 password_hash=HASHER.hash(body.password),
             )
             db.add(account)

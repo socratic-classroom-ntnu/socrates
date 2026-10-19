@@ -1,16 +1,8 @@
 import random
 import pytest
-from app.modules.classroom_core.api.classroom_schemas import ScriptDocument
-from app.modules.classroom_core.orchestrator.classroom import (
-    GameOrchestrator,
-    DomainError,
-    fresh_state,
-)
-from app.modules.classroom_core.orchestrator.classroom_policy import (
-    choose_representative,
-    stage_goal,
-    majority_context,
-)
+from app.modules.content_authoring.contracts import ScriptDocument
+from app.modules.classroom_core.orchestrator import GameOrchestrator, DomainError, fresh_state
+from app.modules.classroom_core.policy import choose_representative, stage_goal, majority_context
 
 DOC = {
     "title": "倫理教室",
@@ -170,6 +162,29 @@ def result():
         "move": "probe",
         "micro_summary": "用原則衡量選擇",
     }
+
+
+def test_focus_response_deadline_uses_question_contract():
+    g = focus_room()
+    key = g.focus()["job_key"]
+    g.complete_job("focused_tutor", key, result(), {"provider": "scripted"})
+    assert g.focus()["status"] == "AWAITING_STUDENT"
+    assert g.s["deadline_at"] == pytest.approx(289.1)
+    assert g.s["due_at"] == pytest.approx(289.1)
+
+
+def test_barrage_uses_reachable_classroom_phases_only():
+    g = focus_room()
+    g.command("barrage", {"text": "一起思考"}, "m2", False)
+    assert g.events[-1]["type"] == "barrage"
+
+    g.s["phase"] = "focus_summary"
+    g.command("barrage", {"text": "保留討論"}, "m2", False)
+    assert g.events[-1]["type"] == "barrage"
+
+    g.s["phase"] = "arena"
+    with pytest.raises(DomainError, match="ARENA_REQUIRED"):
+        g.command("barrage", {"text": "不可達 phase"}, "m2", False)
 
 
 def test_teacher_next_finishes_current_reply():

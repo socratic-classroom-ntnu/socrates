@@ -4,9 +4,12 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
-from app.modules.platform.repositories import classroom_storage as storage
+from app.modules.platform import storage as storage
 from app.classroom_app import create_app
-from app.modules.platform.classroom_env import env_str
+from app.modules.platform.env import env_str
+from app.modules.identity_access.repositories import Account, Mail
+from app.modules.content_authoring.repositories import Snapshot
+from app.modules.classroom_core.repositories import Membership
 
 os.environ["CLASSROOM_COOKIE_SECURE"] = "false"
 os.environ["SOCRATES_ALLOWED_ORIGINS"] = "http://testserver"
@@ -38,7 +41,7 @@ def user(c, name="teacher"):
     body = {"username": name, "email": name + "@example.org", "password": "Socratic-123456"}
     assert c.post("/api/v2/auth/register", json=body).status_code == 200
     with storage.transaction() as db:
-        mail = db.scalars(select(storage.Mail)).all()[-1]
+        mail = db.scalars(select(Mail)).all()[-1]
         token = re.search(r"verify_token=(\S+)", mail.body)[1]
     assert c.post("/api/v2/auth/verify", json={"token": token}).status_code == 200
     r = c.post("/api/v2/auth/login", json={"login": name, "password": body["password"]})
@@ -88,9 +91,7 @@ def test_registration_verification_reset_and_revocation(client):
     )
     client.post("/api/v2/auth/forgot-password", json={"email": "teacher@example.org"})
     with storage.transaction() as db:
-        mail = db.scalars(
-            select(storage.Mail).where(storage.Mail.subject == "Socratic Classroom 重設密碼")
-        ).one()
+        mail = db.scalars(select(Mail).where(Mail.subject == "Socratic Classroom 重設密碼")).one()
         token = re.search(r"reset_token=(\S+)", mail.body)[1]
     r = client.post(
         "/api/v2/auth/reset-password", json={"token": token, "password": "New-password123!"}
@@ -116,7 +117,23 @@ def test_teacher_student_dual_membership_and_start(client):
     assert x["phase"] == "countdown"
     assert x["code"] is None
     with storage.transaction() as db:
-        assert len(db.scalars(select(storage.Snapshot)).all()) == 1
+        assert len(db.scalars(select(Snapshot)).all()) == 1
+
+
+def test_join_empty_code_is_a_validation_error_and_wrong_code_is_not_found(client):
+    user(client)
+    r = create(client)
+    user(client, "student")
+    for empty in ("", "   "):
+        res = client.post("/api/v2/classrooms/join", json={"code": empty, "alias": "匿名"})
+        assert res.status_code == 422
+        assert res.json()["detail"][0]["loc"][-1] == "code"
+    res = client.post("/api/v2/classrooms/join", json={"code": "ZZZZ9999", "alias": "匿名"})
+    assert res.status_code == 404
+    assert res.json()["detail"] == "COURSE_CODE_NOT_FOUND"
+    padded = "  " + r["code"].lower() + " "
+    res = client.post("/api/v2/classrooms/join", json={"code": padded, "alias": "匿名"})
+    assert res.status_code == 200
 
 
 def test_csrf_required_and_roles_server_owned(client):
@@ -138,7 +155,7 @@ def test_idempotency_and_payload_conflict(client):
     assert a.json() == b.json()
     assert cmd(client, r, "start", data={"changed": True}, aid=aid).status_code == 409
     with storage.transaction() as db:
-        assert len(db.scalars(select(storage.Snapshot)).all()) == 1
+        assert len(db.scalars(select(Snapshot)).all()) == 1
 
 
 def test_late_join_and_snapshot_are_fixed(client):
@@ -170,13 +187,66 @@ def test_yaml_roundtrip_and_revision_conflict(client):
     )
 
 
+def test_yaml_import_empty_body_returns_specific_json_error(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import", content=b"", headers={"Content-Type": "application/yaml"}
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"detail": "請貼上 YAML 內容。"}
+
+
+def test_yaml_import_rejects_content_over_256kb_before_parsing(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content=b"x" * (256 * 1024 + 1),
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 413
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"detail": "YAML 內容最多 256 KB。"}
+
+
+def test_yaml_import_syntax_error_returns_line_and_column_json(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content="title: [\n",
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json()["detail"].startswith("YAML 格式錯誤：第 ")
+    assert "行、第 " in response.json()["detail"]
+    assert "欄" in response.json()["detail"]
+
+
+def test_yaml_import_schema_error_returns_field_detail_json(client):
+    user(client)
+    response = client.post(
+        "/api/v2/scripts/import",
+        content="title: ''\nquestions: []\n",
+        headers={"Content-Type": "application/yaml"},
+    )
+    assert response.status_code == 422
+    assert response.headers["content-type"].startswith("application/json")
+    detail = response.json()["detail"]
+    assert isinstance(detail, list)
+    assert any(item["loc"] == ["title"] and item["type"] == "string_too_short" for item in detail)
+    assert any(item["loc"] == ["questions"] and item["type"] == "too_short" for item in detail)
+
+
 def test_teacher_with_a_long_username_can_open_a_classroom(client):
-    # 註冊契約允許 username 到 64 字，所以 membership 的 alias 必須裝得下它；
-    # alias 是由 username 推導的，不經過 join body 的 40 字限制。
+    # 新註冊的 username 最多 32 字，但較早的帳號可能到 64 字（欄位是 String(64)），
+    # 所以 membership 的 alias 必須裝得下 64 字；alias 由 username 推導，不經過 join body 的 40 字限制。
+    user(client, "teacher")
     long_name = "t" * 64
-    user(client, long_name)
+    with storage.transaction() as db:
+        db.scalars(select(Account)).one().username = long_name
     room = create(client)
     assert room["code"]
     with storage.transaction() as db:
-        alias = db.scalars(select(storage.Membership.alias)).one()
+        alias = db.scalars(select(Membership.alias)).one()
     assert alias == long_name

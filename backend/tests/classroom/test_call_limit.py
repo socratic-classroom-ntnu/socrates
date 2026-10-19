@@ -1,17 +1,14 @@
 import pytest
 
-from app.modules.llm_runtime.services import llm_workers as workers
-from app.modules.classroom_core.api.classroom_schemas import ScriptDocument
-from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
-from app.modules.platform.repositories.classroom_storage import (
-    Account,
-    Job,
-    Room,
-    Script,
-    configure,
-    transaction,
-)
-from app.modules.llm_runtime.services.llm_workers import effective_call_limit
+from app.modules.app_shell import llm_workers as workers
+from app.modules.content_authoring.contracts import ScriptDocument
+from app.modules.ai_providers.classroom_provider import ProviderWait
+from app.modules.identity_access.repositories import Account
+from app.modules.llm_runtime.repositories import Job
+from app.modules.classroom_core.repositories import Room
+from app.modules.content_authoring.repositories import Script
+from app.modules.platform.storage import configure, transaction
+from app.modules.app_shell.llm_workers import effective_call_limit
 
 
 def test_teacher_budget_caps_the_account_limit():
@@ -91,7 +88,7 @@ def seeded_job(monkeypatch):
         db.add_all([account, script, room, job])
     monkeypatch.setattr(
         workers,
-        "resolve_provider_chain",
+        "room_provider_chain",
         lambda db, room, kind, context: (
             [{"profile_id": "p"}],
             {"budgets": {"max_calls": 240, "max_tokens": 1_000_000}},

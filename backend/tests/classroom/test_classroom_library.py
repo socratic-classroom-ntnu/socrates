@@ -8,16 +8,22 @@ from uuid import uuid4
 import time
 import pytest
 from starlette.requests import Request
-from app.modules.platform.repositories import classroom_storage as storage
-from app.modules.classroom_core.services import classroom as service
-from app.modules.group_dialogue.api.routes import groups as group
-from app.modules.content_authoring.api.routes import classroom_library as library
-from app.modules.classroom_core.orchestrator.classroom import DomainError, GameOrchestrator
-from app.modules.content_authoring.domain.library_decisions import visible_evidence
+from app.modules.platform import storage as storage
+from app.modules.classroom_core import runtime as service
+from app.modules.group_dialogue.routes import groups as group
+from app.modules.classroom_core import library_routes as library
+from app.modules.classroom_core.orchestrator import DomainError, GameOrchestrator
+from app.modules.content_authoring.library_decisions import visible_evidence
+from tests.classroom.test_group_personal import confirm_personal
+from app.modules.identity_access.repositories import Account
+from app.modules.content_authoring.repositories import Script, Snapshot
+from app.modules.classroom_core.repositories import Room
+from app.modules.group_dialogue.contracts import Configure, Start
+from app.modules.classroom_core.contracts import AttachScript, CreateBatch, CreateClassroom
 
 
 def doc():
-    from app.modules.classroom_core.api.classroom_schemas import ScriptDocument
+    from app.modules.content_authoring.contracts import ScriptDocument
 
     return ScriptDocument.model_validate(
         {
@@ -44,7 +50,7 @@ def environment(monkeypatch):
     storage.configure("sqlite+pysqlite:///:memory:", create=True)
     with storage.transaction() as db:
         people = [
-            storage.Account(
+            Account(
                 id=str(uuid4()),
                 username=f"actor{i}",
                 email=f"{i}@fixture.invalid",
@@ -59,7 +65,7 @@ def environment(monkeypatch):
     who = {"id": ids[0]}
 
     def actor(db, request, mutation=False):
-        return db.get(storage.Account, who["id"])
+        return db.get(Account, who["id"])
 
     monkeypatch.setattr(library, "user", actor)
     monkeypatch.setattr(group, "actor", actor)
@@ -70,30 +76,26 @@ def environment(monkeypatch):
 
 def create_assets(environment):
     ids, who, req = environment
-    c = library.create_classroom(
-        library.CreateClassroom(action_id=uuid4().hex, title="九月共思教室"), req
-    )
-    s = library.attach_script(
-        c["id"], library.AttachScript(action_id=uuid4().hex, document=doc()), req
-    )
+    c = library.create_classroom(CreateClassroom(action_id=uuid4().hex, title="九月共思教室"), req)
+    s = library.attach_script(c["id"], AttachScript(action_id=uuid4().hex, document=doc()), req)
     return c, s
 
 
 def batch(environment, c, s):
     ids, who, req = environment
-    body = library.CreateBatch(action_id=uuid4().hex, script_id=s["id"])
+    body = CreateBatch(action_id=uuid4().hex, script_id=s["id"])
     b = library.create_batch(c["id"], body, req)
     assert library.create_batch(c["id"], body, req) == b
     with storage.transaction() as db:
         for i, pid in enumerate(ids[1:13]):
-            a = db.get(storage.Account, pid)
+            a = db.get(Account, pid)
             service.join(
                 db, a, SimpleNamespace(code=b["code"], alias=f"同學{i+1}", avatar="scholar")
             )
     v = group.view(b["id"], req)
     group.configure(
         b["id"],
-        group.Configure(
+        Configure(
             action_id=uuid4().hex,
             expected_roster_digest=v["roster_digest"],
             group_count=4,
@@ -102,18 +104,50 @@ def batch(environment, c, s):
         req,
     )
     return group.start(
-        b["id"], group.Start(action_id=uuid4().hex, expected_roster_digest=v["roster_digest"]), req
+        b["id"], Start(action_id=uuid4().hex, expected_roster_digest=v["roster_digest"]), req
     )
 
 
 def test_library_action_idempotency_and_payload_integrity(environment):
     _, _, req = environment
-    body = library.CreateClassroom(action_id=uuid4().hex, title="同一資產容器")
+    body = CreateClassroom(action_id=uuid4().hex, title="同一資產容器")
     a = library.create_classroom(body, req)
     assert library.create_classroom(body, req) == a
     with pytest.raises(DomainError):
         library.create_classroom(body.model_copy(update={"title": "新內容"}), req)
     assert len(library.list_classrooms(req)) == 1
+
+
+def test_list_classrooms_contract_keeps_its_json_shape(environment):
+    """The list now has a response_model; the wire JSON must stay exactly id/title/revision."""
+    from fastapi.testclient import TestClient
+    from app.classroom_app import create_app
+
+    _, _, req = environment
+    first = library.create_classroom(
+        CreateClassroom(action_id=uuid4().hex, title="  科技倫理  "), req
+    )
+    second = library.create_classroom(
+        CreateClassroom(action_id=uuid4().hex, title="科技系統與社會發展"), req
+    )
+    app = create_app(background=False)
+    with TestClient(app) as client:
+        response = client.get("/api/v2/library/classrooms")
+    assert response.status_code == 200
+    rows = response.json()
+    assert rows == library.list_classrooms(req)
+    assert {row["id"] for row in rows} == {first["id"], second["id"]}
+    for row in rows:
+        assert list(row) == ["id", "title", "revision"]
+        assert isinstance(row["id"], str)
+        assert isinstance(row["title"], str)
+        assert isinstance(row["revision"], int)
+    assert {row["title"] for row in rows} == {"科技倫理", "科技系統與社會發展"}
+
+    operation = app.openapi()["paths"]["/api/v2/library/classrooms"]["get"]
+    schema = operation["responses"]["200"]["content"]["application/json"]["schema"]
+    assert schema["type"] == "array"
+    assert schema["items"]["$ref"].endswith("/LibraryClassroomView")
 
 
 def test_classroom_owner_scope(environment):
@@ -124,8 +158,16 @@ def test_classroom_owner_scope(environment):
     with pytest.raises(DomainError):
         library.classroom(c["id"], req)
     with pytest.raises(DomainError):
+        library.attach_script(c["id"], AttachScript(action_id=uuid4().hex, script_id=s["id"]), req)
+    with pytest.raises(DomainError):
+        library.create_batch(c["id"], CreateBatch(action_id=uuid4().hex, script_id=s["id"]), req)
+    with pytest.raises(DomainError):
         library.attach_script(
-            c["id"], library.AttachScript(action_id=uuid4().hex, script_id=s["id"]), req
+            library.create_classroom(
+                CreateClassroom(action_id=uuid4().hex, title="第二個教室"), req
+            )["id"],
+            AttachScript(action_id=uuid4().hex, script_id=s["id"]),
+            req,
         )
 
 
@@ -135,7 +177,7 @@ def test_twelve_members_four_independent_sessions(environment):
     out = batch(environment, c, s)
     assert len(out["groups"]) == 4
     with storage.transaction() as db:
-        rooms = [db.get(storage.Room, g["id"]) for g in out["groups"]]
+        rooms = [db.get(Room, g["id"]) for g in out["groups"]]
         assert sum(len(r.state["members"]) for r in rooms) == 12
         assert all(len(r.state["members"]) == 3 for r in rooms)
         assert len({r.snapshot_id for r in rooms}) == 1
@@ -154,7 +196,7 @@ def test_multiple_batches_retain_history_and_snapshot(environment):
     c, s = create_assets(environment)
     first = batch(environment, c, s)
     with storage.transaction() as db:
-        script = db.get(storage.Script, s["id"])
+        script = db.get(Script, s["id"])
         new = deepcopy(script.document)
         new["title"] = "第二次課堂"
         script.document = new
@@ -166,10 +208,10 @@ def test_multiple_batches_retain_history_and_snapshot(environment):
     history = library.classroom(c["id"], req)["sessions"]
     assert len([x for x in history if x["kind"] == "SESSION"]) == 8
     with storage.transaction() as db:
-        a = db.get(storage.Room, next(iter(first_ids)))
-        b = db.get(storage.Room, next(iter(second_ids)))
-        assert db.get(storage.Snapshot, a.snapshot_id).revision == 1
-        assert db.get(storage.Snapshot, b.snapshot_id).revision == 2
+        a = db.get(Room, next(iter(first_ids)))
+        b = db.get(Room, next(iter(second_ids)))
+        assert db.get(Snapshot, a.snapshot_id).revision == 1
+        assert db.get(Snapshot, b.snapshot_id).revision == 2
 
 
 def test_private_evidence_and_stage_projection(environment):
@@ -177,7 +219,7 @@ def test_private_evidence_and_stage_projection(environment):
     c, s = create_assets(environment)
     out = batch(environment, c, s)
     with storage.transaction() as db:
-        room = db.get(storage.Room, out["groups"][0]["id"])
+        room = db.get(Room, out["groups"][0]["id"])
         machine = GameOrchestrator(room.state, time.time() + 4)
         machine.tick()
         members = list(machine.s["members"])
@@ -197,7 +239,7 @@ def test_per_option_representative_and_countdown(environment):
     c, s = create_assets(environment)
     out = batch(environment, c, s)
     with storage.transaction() as db:
-        room = db.get(storage.Room, out["groups"][0]["id"])
+        room = db.get(Room, out["groups"][0]["id"])
         machine = GameOrchestrator(room.state, time.time() + 4)
         machine.tick()
         qid = machine.current()["id"]
@@ -214,6 +256,8 @@ def test_per_option_representative_and_countdown(environment):
                 mid,
                 False,
             )
+            # 分組課堂的分布與代表只採已確認的個人基準（個人對話先完成）。
+            confirm_personal(machine, mid)
         assert machine.s["phase"] == "answering"
         at_end = GameOrchestrator(machine.s, machine.s["due_at"] + 0.01)
         at_end.tick()

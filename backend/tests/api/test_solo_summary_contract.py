@@ -1,8 +1,8 @@
-from app.modules.solo_dialogue.api.history_schemas import SessionHistoryPage
-from app.modules.solo_dialogue.api.schemas import SummaryView
+from app.modules.solo_dialogue.history_schemas import SessionHistoryPage
+from app.modules.solo_dialogue.schemas import SummaryView
 
 
-def test_round1_summary_contract() -> None:
+def test_solo_summary_contract() -> None:
     summary = SummaryView(
         core_principle="降低可避免的傷害",
         key_points=["人數會影響判斷", "介入方式也重要"],

@@ -10,11 +10,19 @@ import time
 import pytest
 from starlette.requests import Request
 from sqlalchemy import select
-from app.modules.platform.repositories import classroom_storage as storage
-from app.modules.classroom_core.services import classroom as service
-from app.modules.group_dialogue.api.routes import groups as group
-from app.modules.classroom_core.orchestrator.classroom import GameOrchestrator, DomainError
-from app.modules.group_dialogue.domain.group_run import person_summary
+from app.modules.platform import storage as storage
+from app.modules.classroom_core import runtime as service
+from app.modules.group_dialogue.routes import groups as group
+from app.modules.analytics import routes as analytics_routes
+from app.modules.group_dialogue.service import group_teacher_actions, parent_teacher_actions
+from app.modules.classroom_core.orchestrator import GameOrchestrator, DomainError
+from app.modules.group_dialogue.group_run import person_summary
+from app.modules.identity_access.repositories import Account
+from app.modules.content_authoring.repositories import Script
+from app.modules.classroom_core.repositories import Membership, Room, persist_machine
+from app.modules.analytics.routes import analysis
+from app.modules.group_dialogue.contracts import Configure, GroupCommand, Start
+from app.modules.group_dialogue.service import roster_hash
 
 
 def document():
@@ -48,7 +56,7 @@ def classroom(monkeypatch):
     storage.configure("sqlite+pysqlite:///:memory:", create=True)
     with storage.transaction() as db:
         people = [
-            storage.Account(
+            Account(
                 id=str(uuid4()),
                 username="user" + str(i),
                 email=f"u{i}@example.test",
@@ -60,12 +68,12 @@ def classroom(monkeypatch):
         db.add_all(people)
         db.flush()
         teacher = people[0].id
-        s = storage.Script(id=str(uuid4()), owner_id=teacher, document=document(), revision=1)
+        s = Script(id=str(uuid4()), owner_id=teacher, document=document(), revision=1)
         db.add(s)
         db.flush()
         result = service.create_room(db, people[0], s.id)
         rid = result["id"]
-        room = db.get(storage.Room, rid)
+        room = db.get(Room, rid)
         for i, person in enumerate(people[1:]):
             service.join(
                 db,
@@ -73,9 +81,12 @@ def classroom(monkeypatch):
                 SimpleNamespace(code=room.code, alias="同學" + str(i + 1), avatar="scholar"),
             )
     selected = {"id": teacher}
-    monkeypatch.setattr(
-        group, "actor", lambda db, request, mutation=False: db.get(storage.Account, selected["id"])
-    )
+
+    def fake_actor(db, request, mutation=False):
+        return db.get(Account, selected["id"])
+
+    monkeypatch.setattr(group, "actor", fake_actor)
+    monkeypatch.setattr(analytics_routes, "actor", fake_actor)
     request = Request({"type": "http", "query_string": b"mode=teacher", "headers": []})
     yield rid, selected, request
     storage.engine().dispose()
@@ -86,7 +97,7 @@ def start(classroom, count=3, capacity=1):
     v = group.view(rid, request)
     group.configure(
         rid,
-        group.Configure(
+        Configure(
             action_id=uuid4().hex,
             expected_roster_digest=v["roster_digest"],
             group_count=count,
@@ -94,8 +105,59 @@ def start(classroom, count=3, capacity=1):
         ),
         request,
     )
-    body = group.Start(action_id=uuid4().hex, expected_roster_digest=v["roster_digest"])
+    body = Start(action_id=uuid4().hex, expected_roster_digest=v["roster_digest"])
     return group.start(rid, body, request), body
+
+
+def test_parent_teacher_actions_include_reason_codes(monkeypatch):
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "true")
+    rows = [SimpleNamespace(id="m1", alias="學生", seat=0)]
+    state = {
+        "phase": "lobby",
+        "members": {"m1": {"actor_type": "human"}},
+        "classroom": {},
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "add_ai_students"]
+    assert actions["unavailable_actions"] == {
+        "start": "CURRENT_GROUP_CONFIGURATION_REQUIRED",
+        "clear_ai_students": "AI_STUDENTS_REQUIRED",
+    }
+
+    state["classroom"] = {
+        "state": "CONFIGURED",
+        "roster_digest": roster_hash(rows),
+    }
+    actions = parent_teacher_actions(state, rows)
+    assert actions["available_actions"] == ["configure", "start", "add_ai_students"]
+
+
+def test_group_teacher_actions_follow_command_phases():
+    assert group_teacher_actions(
+        {"phase": "answering", "group": {"settlement": {"state": "EXPLORING"}}}
+    ) == {
+        "available_actions": ["next", "end"],
+        "unavailable_actions": {},
+    }
+    assert group_teacher_actions(
+        {"phase": "summary", "group": {"settlement": {"state": "SETTLED"}}}
+    ) == {
+        "available_actions": [],
+        "unavailable_actions": {
+            "next": "CURRENT_PHASE_ACTIONS",
+            "end": "GROUP_ALREADY_SETTLED",
+        },
+    }
+
+
+def test_teacher_view_marks_ai_student_feature_unavailable(classroom, monkeypatch):
+    rid, _, request = classroom
+    monkeypatch.setenv("SOCRATES_FEATURE_AI_STUDENTS", "false")
+    view = group.view(rid, request)
+    assert view["features"]["ai_students"] == {
+        "enabled": False,
+        "reason": "AI_STUDENTS_DISABLED",
+    }
 
 
 def test_shared_snapshot_independent_runs_and_exact_start(classroom):
@@ -103,13 +165,13 @@ def test_shared_snapshot_independent_runs_and_exact_start(classroom):
     rid, _, request = classroom
     assert group.start(rid, body, request) == result
     with storage.transaction() as db:
-        rooms = [db.get(storage.Room, g["id"]) for g in result["groups"]]
+        rooms = [db.get(Room, g["id"]) for g in result["groups"]]
         assert len(rooms) == 3 and len({r.snapshot_id for r in rooms}) == 1
         assert all(len(r.state["group"]["member_snapshot"]) == 1 for r in rooms)
-        assert db.get(storage.Room, rid).state["phase"] == "group_overview"
+        assert db.get(Room, rid).state["phase"] == "group_overview"
         first = GameOrchestrator(rooms[0].state, time.time() + 4)
         first.tick()
-        storage.persist_machine(db, rooms[0], first)
+        persist_machine(db, rooms[0], first)
         assert rooms[0].state["phase"] == "answering"
         assert rooms[1].state["phase"] == "countdown"
 
@@ -117,12 +179,22 @@ def test_shared_snapshot_independent_runs_and_exact_start(classroom):
 def test_grace_phase_and_post_ack_evidence(classroom):
     result, _ = start(classroom)
     with storage.transaction() as db:
-        room = db.get(storage.Room, result["groups"][0]["id"])
+        room = db.get(Room, result["groups"][0]["id"])
         state = deepcopy(room.state)
         mid = next(iter(state["members"]))
         machine = GameOrchestrator(state, time.time() + 4)
         machine.tick()
         machine.command("group_statement", {"text": "我重視每個人的需要。"}, mid, False)
+        # 作答中確認會跳過代表討論並提早結束課堂，所以只在題目都結束後的 viewpoint_review 開放。
+        with pytest.raises(DomainError, match="CONFIRMABLE_PHASE_REQUIRED"):
+            machine.command(
+                "group_ack",
+                {"summary_digest": person_summary(machine.s, mid)["digest"]},
+                mid,
+                False,
+            )
+        assert machine.s["group"]["settlement"]["state"] == "EXPLORING"
+        machine.s["phase"] = "viewpoint_review"
         machine.command(
             "group_ack", {"summary_digest": person_summary(machine.s, mid)["digest"]}, mid, False
         )
@@ -144,7 +216,7 @@ def test_grace_phase_and_post_ack_evidence(classroom):
 def test_multiplayer_preserves_native_answer_logic(classroom):
     result, _ = start(classroom, count=1, capacity=3)
     with storage.transaction() as db:
-        room = db.get(storage.Room, result["groups"][0]["id"])
+        room = db.get(Room, result["groups"][0]["id"])
         machine = GameOrchestrator(room.state, time.time() + 4)
         machine.tick()
         mid = next(iter(machine.s["members"]))
@@ -166,7 +238,7 @@ def test_capacity_and_roster_guards(classroom):
     with pytest.raises(DomainError):
         group.configure(
             rid,
-            group.Configure(
+            Configure(
                 action_id=uuid4().hex,
                 expected_roster_digest=v["roster_digest"],
                 group_count=1,
@@ -177,7 +249,7 @@ def test_capacity_and_roster_guards(classroom):
     with pytest.raises(DomainError):
         group.configure(
             rid,
-            group.Configure(
+            Configure(
                 action_id=uuid4().hex,
                 expected_roster_digest="old",
                 group_count=3,
@@ -192,19 +264,17 @@ def test_student_routing_and_teacher_only_analysis(classroom):
     rid, selected, request = classroom
     with storage.transaction() as db:
         row = db.scalar(
-            select(storage.Membership).where(
-                storage.Membership.room_id == rid, storage.Membership.role == "student"
-            )
+            select(Membership).where(Membership.room_id == rid, Membership.role == "student")
         )
         selected["id"] = row.account_id
     with pytest.raises(DomainError):
-        group.analysis(rid, request)
+        analysis(rid, request)
     student_request = Request({"type": "http", "query_string": b"mode=student", "headers": []})
     v = group.view(rid, student_request)
     assert v["route"]["group_id"] in [g["id"] for g in result["groups"]]
     with pytest.raises(DomainError):
         group.command(
             v["route"]["group_id"],
-            group.GroupCommand(action_id=uuid4().hex, kind="next"),
+            GroupCommand(action_id=uuid4().hex, kind="next"),
             student_request,
         )

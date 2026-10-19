@@ -1,6 +1,7 @@
-from app.modules.solo_dialogue.api.deps import get_service
+from app.modules.solo_dialogue import deps
+from app.modules.solo_dialogue.deps import get_service
 from app.main import app
-from app.modules.solo_dialogue.services.conversation import ConversationService
+from app.modules.solo_dialogue.conversation import ConversationService
 
 
 class CapturingProvider:
@@ -96,12 +97,11 @@ def test_second_message_cannot_skip_pending_reply(client, learner_id, exploding_
 
 
 def test_provider_receives_latest_persisted_student_message(client, learner_id, db):
-    from app.modules.llm_runtime.tutor.gateway import TutorGateway
-    import app.main as main
+    from app.modules.solo_dialogue.tutor_gateway import TutorGateway
 
     provider = CapturingProvider()
     app.dependency_overrides[get_service] = lambda: ConversationService(
-        db, main.ladder_repository, TutorGateway(provider)
+        db, deps.ladder_repository, TutorGateway(provider)
     )
     try:
         session_id = client.post(

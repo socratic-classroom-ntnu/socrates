@@ -3,8 +3,8 @@ import time
 import uuid
 
 from app.modules.platform.db import SessionLocal
-from app.modules.solo_dialogue.models import Learner, Session
-from app.modules.solo_dialogue.repositories.session_repository import SessionRepository
+from app.modules.solo_dialogue.repositories import Learner, Session
+from app.modules.solo_dialogue.session_repository import SessionRepository
 
 
 def test_get_for_update_blocks_a_second_real_connection():

@@ -8,22 +8,16 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from sqlalchemy import func, select
 
-from app.modules.identity_access.services import classroom_auth as auth
-from app.modules.classroom_core.api.classroom_schemas import Register
-from app.modules.identity_access.services.email_delivery import (
+from app.modules.identity_access import auth as auth
+from app.modules.identity_access.contracts import Register
+from app.modules.identity_access.email_delivery import (
     MailDelivery,
     apply_resend_webhook,
     send_mail_once,
 )
-from app.modules.classroom_core.orchestrator.classroom import DomainError
-from app.modules.platform.repositories.classroom_storage import (
-    Account,
-    EmailToken,
-    LoginSession,
-    Mail,
-    configure,
-    transaction,
-)
+from app.modules.classroom_core.orchestrator import DomainError
+from app.modules.identity_access.repositories import Account, EmailToken, LoginSession, Mail
+from app.modules.platform.storage import configure, transaction
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +36,7 @@ def register():
         Register(
             username="arthur",
             email="arthur@example.test",
-            password="correct-horse-battery",
+            password="Correct-horse-battery9",
         )
     )
 
@@ -128,7 +122,7 @@ def test_delivery_status_returns_local_preview_only_in_fixture():
 def test_resend_webhook_updates_durable_receipt(monkeypatch):
     register()
     send_mail_once()
-    secret_bytes = b"r104-webhook-secret"
+    secret_bytes = b"test-webhook-secret"
     secret = base64.b64encode(secret_bytes).decode()
     monkeypatch.setenv("RESEND_WEBHOOK_SECRET", "whsec_" + secret)
 
@@ -144,7 +138,7 @@ def test_resend_webhook_updates_durable_receipt(monkeypatch):
         separators=(",", ":"),
     ).encode()
     timestamp = str(int(time.time()))
-    event_id = "msg_r104"
+    event_id = "msg_verification_bounce"
     signed = f"{event_id}.{timestamp}.".encode() + body
     signature = base64.b64encode(hmac.new(secret_bytes, signed, hashlib.sha256).digest()).decode()
 

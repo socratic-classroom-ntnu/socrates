@@ -1,7 +1,7 @@
 import pytest
 
-from app.modules.content_authoring.domain.ladder import Stage
-from app.modules.llm_runtime.tutor.gateway import TutorGateway, TutorUnavailable
+from app.modules.content_authoring.ladder import Stage
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway, TutorUnavailable
 
 STAGE = Stage(
     key="s1",

@@ -1,6 +1,6 @@
 import pytest
 
-from app.modules.content_authoring.ladders.repository import LadderRepository
+from app.modules.content_authoring.ladder_repository import LadderRepository
 
 
 def test_broken_ladder_raises_on_load():

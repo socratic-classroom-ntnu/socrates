@@ -53,12 +53,15 @@ _ensure_test_database(_TEST_URL)
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy.orm import Session as OrmSession  # noqa: E402
 
-from app.modules.solo_dialogue.api.deps import get_db  # noqa: E402
-from app.modules.solo_dialogue.api.deps import get_service  # noqa: E402
+from app.modules.solo_dialogue.deps import get_db  # noqa: E402
+from app.modules.solo_dialogue.deps import get_service  # noqa: E402
 from app.modules.platform.db import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.modules.solo_dialogue.services.conversation import ConversationService  # noqa: E402
-from app.modules.llm_runtime.tutor.gateway import TutorGateway  # noqa: E402
+from app.modules.solo_dialogue import deps  # noqa: E402
+from app.modules.app_shell import models as _models  # noqa: E402,F401  所有模組的 ORM 先進 metadata
+from app.modules.app_shell import wiring as _wiring  # noqa: E402,F401  跨模組 hook
+from app.modules.solo_dialogue.conversation import ConversationService  # noqa: E402
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -98,9 +101,9 @@ def learner_id() -> str:
 def two_stage_app(monkeypatch):
     """Use two stages so future stage titles can actually leak in an API response."""
     from tests.orchestrator.conftest import make_ladder
-    import app.main as main
+    from app.modules.solo_dialogue import deps
 
-    monkeypatch.setattr(main, "ladder_repository", make_ladder(stage_count=2))
+    monkeypatch.setattr(deps, "ladder_repository", make_ladder(stage_count=2))
     yield
 
 
@@ -111,14 +114,12 @@ class ExplodingProvider:
 
 @pytest.fixture
 def exploding_service():
-    import app.main as main
-
     def _override():
         # Each request gets its own transaction, so a later GET proves that the
         # student message was committed before the provider failed.
         with SessionLocal() as service_db:
             yield ConversationService(
-                service_db, main.ladder_repository, TutorGateway(ExplodingProvider())
+                service_db, deps.ladder_repository, TutorGateway(ExplodingProvider())
             )
 
     app.dependency_overrides[get_service] = _override

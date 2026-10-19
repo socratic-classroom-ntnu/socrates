@@ -1,4 +1,4 @@
-from app.modules.solo_dialogue.api.transcript_schemas import TranscriptDraftCreate
+from app.modules.solo_dialogue.transcript_schemas import TranscriptDraftCreate
 
 
 def test_transcript_create_defaults() -> None:

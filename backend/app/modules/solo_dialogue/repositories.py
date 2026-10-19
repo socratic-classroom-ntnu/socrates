@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.modules.platform.db import Base
-from app.modules.solo_dialogue.domain.types import (
+from app.modules.solo_dialogue.types import (
     EndReason,
     FlowState,
     MessageRole,

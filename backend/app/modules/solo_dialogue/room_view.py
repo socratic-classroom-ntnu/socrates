@@ -1,9 +1,9 @@
-from app.modules.solo_dialogue.api.room_schemas import (
+from app.modules.solo_dialogue.room_schemas import (
     ConversationRoomView,
     RoomProjection,
     TutorPresenceState,
 )
-from app.modules.solo_dialogue.api.schemas import SessionDetail
+from app.modules.solo_dialogue.schemas import SessionDetail
 
 
 def build_room_view(detail: SessionDetail) -> ConversationRoomView:

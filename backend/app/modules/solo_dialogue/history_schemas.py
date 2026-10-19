@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.modules.solo_dialogue.domain.types import EndReason, FlowState, SessionStatus
+from app.modules.solo_dialogue.types import EndReason, FlowState, SessionStatus
 
 
 class SessionHistoryItem(BaseModel):

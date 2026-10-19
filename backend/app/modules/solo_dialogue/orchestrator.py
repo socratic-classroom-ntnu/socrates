@@ -1,16 +1,16 @@
 from dataclasses import replace
 
-from app.modules.solo_dialogue.domain.session_state import (
+from app.modules.solo_dialogue.session_state import (
     Outcome,
     OutgoingMessage,
     SessionState,
     StageState,
 )
-from app.modules.llm_runtime.domain.tutor import PromptMessage
-from app.modules.solo_dialogue.domain.types import FlowState
-from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.modules.solo_dialogue.orchestrator.policy import should_advance
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.solo_dialogue.tutor_contracts import PromptMessage
+from app.modules.solo_dialogue.types import FlowState
+from app.modules.content_authoring.service import LadderRepository
+from app.modules.llm_runtime.service import should_advance
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
 
 
 class ConversationEnded(RuntimeError):

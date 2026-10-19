@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.modules.solo_dialogue.api.deps import get_learner_id, get_service
-from app.modules.solo_dialogue.api.schemas import CreateSessionRequest, SessionDetail, SessionView
-from app.modules.solo_dialogue.services.conversation import (
+from app.modules.solo_dialogue.deps import get_learner_id, get_service
+from app.modules.solo_dialogue.schemas import CreateSessionRequest, SessionDetail, SessionView
+from app.modules.solo_dialogue.conversation import (
     ActiveSessionExists,
     ConversationService,
     Forbidden,

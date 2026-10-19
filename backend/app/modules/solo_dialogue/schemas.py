@@ -2,8 +2,9 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field
+from app.modules.platform.model_base import TrimmedModel
 
-from app.modules.solo_dialogue.domain.types import (
+from app.modules.solo_dialogue.types import (
     Action,
     EndReason,
     FlowState,
@@ -71,8 +72,8 @@ class SessionDetail(BaseModel):
     summary: SummaryView | None
 
 
-class CreateSessionRequest(BaseModel):
-    ladder_id: str
+class CreateSessionRequest(TrimmedModel):
+    ladder_id: str = Field(max_length=64)
     restart_existing: bool = Field(default_factory=bool)
 
 

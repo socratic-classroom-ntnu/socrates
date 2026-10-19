@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.modules.solo_dialogue.api.schemas import SessionDetail
+from app.modules.solo_dialogue.schemas import SessionDetail
 
 TutorPresenceState = Literal["idle", "listening", "thinking", "speaking"]
 

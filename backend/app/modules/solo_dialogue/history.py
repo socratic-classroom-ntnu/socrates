@@ -2,9 +2,9 @@ import uuid
 
 from sqlalchemy.orm import Session as OrmSession
 
-from app.modules.solo_dialogue.api.history_schemas import SessionHistoryItem, SessionHistoryPage
-from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.modules.solo_dialogue.repositories.history_repository import HistoryRepository
+from app.modules.solo_dialogue.history_schemas import SessionHistoryItem, SessionHistoryPage
+from app.modules.content_authoring.service import LadderRepository
+from app.modules.solo_dialogue.history_repository import HistoryRepository
 
 
 class HistoryService:

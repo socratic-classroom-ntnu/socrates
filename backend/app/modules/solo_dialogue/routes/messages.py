@@ -2,31 +2,20 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
 
-from app.modules.solo_dialogue.api.deps import get_learner_id, get_service
-from app.modules.solo_dialogue.api.schemas import SessionView
-from app.modules.solo_dialogue.orchestrator.orchestrator import ConversationEnded, InvalidAction
-from app.modules.solo_dialogue.services.conversation import (
+from app.modules.solo_dialogue.deps import get_learner_id, get_service
+from app.modules.solo_dialogue.schemas import SessionView
+from app.modules.solo_dialogue.orchestrator import ConversationEnded, InvalidAction
+from app.modules.solo_dialogue.conversation import (
     ConversationService,
     Forbidden,
     NotFound,
     RetryLimitReached,
 )
-from app.modules.llm_runtime.tutor.gateway import TutorUnavailable
+from app.modules.solo_dialogue.tutor_gateway import TutorUnavailable
+from app.modules.solo_dialogue.contracts import SendMessageRequest
 
 router = APIRouter(prefix="/api/sessions", tags=["messages"])
-
-
-class SendMessageRequest(BaseModel):
-    text: str = Field(min_length=1, max_length=2000)
-
-    @field_validator("text")
-    @classmethod
-    def not_blank(cls, value: str) -> str:
-        if not value.strip():
-            raise ValueError("訊息不可為空白")
-        return value
 
 
 @router.post("/{session_id}/messages", response_model=SessionView)

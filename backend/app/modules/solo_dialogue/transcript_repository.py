@@ -4,8 +4,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session as OrmSession
 
-from app.modules.solo_dialogue.interaction_models import InteractionEvent, TranscriptDraft
-from app.modules.solo_dialogue.models import Session
+from app.modules.solo_dialogue.interaction_repositories import InteractionEvent, TranscriptDraft
+from app.modules.solo_dialogue.repositories import Session
 
 
 class TranscriptNotFound(RuntimeError):

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from app.modules.llm_runtime.domain.tutor import Observations
-from app.modules.solo_dialogue.domain.types import (
+from app.modules.solo_dialogue.tutor_contracts import Observations
+from app.modules.solo_dialogue.types import (
     Action,
     FlowState,
     MessageRole,

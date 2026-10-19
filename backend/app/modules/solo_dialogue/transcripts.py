@@ -2,12 +2,9 @@ import uuid
 
 from sqlalchemy.orm import Session as OrmSession
 
-from app.modules.solo_dialogue.api.transcript_schemas import (
-    TranscriptDraftCreate,
-    TranscriptDraftView,
-)
-from app.modules.solo_dialogue.interaction_models import TranscriptDraft
-from app.modules.solo_dialogue.repositories.transcript_repository import TranscriptRepository
+from app.modules.solo_dialogue.transcript_schemas import TranscriptDraftCreate, TranscriptDraftView
+from app.modules.solo_dialogue.interaction_repositories import TranscriptDraft
+from app.modules.solo_dialogue.transcript_repository import TranscriptRepository
 
 
 class TranscriptService:

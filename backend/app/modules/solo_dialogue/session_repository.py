@@ -5,9 +5,16 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session as OrmSession
 
-from app.modules.solo_dialogue.domain.session_state import OutgoingMessage, SessionState, StageState
-from app.modules.solo_dialogue.domain.types import EndReason
-from app.modules.solo_dialogue.models import Learner, Message, Session, StageProgress
+from app.modules.solo_dialogue.session_state import OutgoingMessage, SessionState, StageState
+from app.modules.solo_dialogue.types import EndReason
+from app.modules.solo_dialogue.repositories import Learner, Message, Session, StageProgress
+
+# 階段結束的狀態：進入過的階走到這些狀態時寫入 ended_at。
+_CLOSED = ("goal_met", "capped", "stopped_early")
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class SessionRepository:
@@ -66,6 +73,7 @@ class SessionRepository:
                     turn_count=stage.turn_count,
                     principle_label=stage.principle_label,
                     position_shifted=stage.position_shifted,
+                    started_at=_now() if stage.status == "in_progress" else None,
                 )
             )
         self._db.flush()
@@ -122,11 +130,16 @@ class SessionRepository:
             if end_reason is None:
                 raise ValueError("結束 session 時必須提供 end_reason")
             session.status = "ended"
-            session.ended_at = datetime.now(timezone.utc)
+            session.ended_at = _now()
             session.end_reason = end_reason
         by_index = {s.index: s for s in state.stages}
+        now = _now()
         for row in session.stage_progress:
             stage = by_index[row.stage_index]
+            if row.started_at is None and stage.status not in ("not_started", "skipped"):
+                row.started_at = now
+            if row.started_at is not None and row.ended_at is None and stage.status in _CLOSED:
+                row.ended_at = now
             row.status = stage.status
             row.turn_count = stage.turn_count
             row.principle_label = stage.principle_label

@@ -8,6 +8,10 @@ if ! command -v npm >/dev/null 2>&1; then
   echo "  請在 ~/.zshrc 加上: export PATH=\"/opt/homebrew/opt/node@22/bin:\$PATH\""
   exit 1
 fi
+echo "▶ 命名與模組地圖"
+bash scripts/check_naming.sh || exit 1
+python3 scripts/check_modules.py || exit 1
+
 echo "▶ frontend lint + typecheck + test + build"
 (cd frontend && npm run lint && npm run typecheck && npm test -- --runInBand && npm run build) || exit 1
 
@@ -22,16 +26,12 @@ if ! docker compose exec -T backend true 2>/dev/null; then
   exit 1
 fi
 
-echo "▶ backend module map"
-python3 scripts/check_modules.py || exit 1
-
 echo "▶ backend ruff check + format check"
 docker compose exec -T backend ruff check . || exit 1
 docker compose exec -T backend ruff format --check . || exit 1
 
-echo "▶ backend mypy（Round1 strict，classroom 走 mypy-classroom.ini）"
-docker compose exec -T backend python -m mypy app --exclude 'app/modules/classroom_core/api/routes/classroom\.py|app/modules/group_dialogue/api/routes/groups\.py|app/modules/group_dialogue/api/routes/ai_students\.py|app/modules/platform/api/routes/public_config\.py|app/modules/ai_providers/api/routes/provider_profiles\.py|app/modules/content_authoring/api/routes/classroom_library\.py|app/modules/classroom_core/api/classroom_schemas\.py|app/modules/classroom_core/orchestrator/classroom\.py|app/modules/classroom_core/orchestrator/classroom_policy\.py|app/modules/group_dialogue/domain/group_run\.py|app/modules/analytics/domain/group_analysis\.py|app/modules/content_authoring/domain/library_decisions\.py|app/modules/platform/repositories/classroom_storage\.py|app/modules/classroom_core/services/classroom\.py|app/modules/llm_runtime/services/llm_workers\.py|app/modules/identity_access/services/email_delivery\.py|app/modules/group_dialogue/services/ai_students\.py|app/modules/identity_access/services/classroom_auth\.py|app/modules/llm_runtime/tutor/classroom_provider\.py|app/modules/llm_runtime/tutor/classroom_gateway\.py|app/modules/llm_runtime/tutor/prompts\.py|app/classroom_app\.py|app/modules/platform/realtime\.py|app/classroom_server\.py' || exit 1
-docker compose exec -T backend python -m mypy --config-file mypy-classroom.ini app/modules/classroom_core/api/routes/classroom.py app/modules/group_dialogue/api/routes/groups.py app/modules/group_dialogue/api/routes/ai_students.py app/modules/platform/api/routes/public_config.py app/modules/ai_providers/api/routes/provider_profiles.py app/modules/content_authoring/api/routes/classroom_library.py app/modules/classroom_core/api/classroom_schemas.py app/modules/classroom_core/orchestrator/classroom.py app/modules/classroom_core/orchestrator/classroom_policy.py app/modules/group_dialogue/domain/group_run.py app/modules/analytics/domain/group_analysis.py app/modules/content_authoring/domain/library_decisions.py app/modules/platform/repositories/classroom_storage.py app/modules/classroom_core/services/classroom.py app/modules/llm_runtime/services/llm_workers.py app/modules/identity_access/services/email_delivery.py app/modules/group_dialogue/services/ai_students.py app/modules/identity_access/services/classroom_auth.py app/modules/llm_runtime/tutor/classroom_provider.py app/modules/llm_runtime/tutor/classroom_gateway.py app/modules/llm_runtime/tutor/prompts.py app/classroom_app.py app/modules/platform/realtime.py app/classroom_server.py || exit 1
+echo "▶ backend mypy（核心 strict，classroom 走 mypy-classroom.ini）"
+docker compose exec -T backend python tools/mypy_check.py || exit 1
 
 echo "▶ backend alembic upgrade head（對全新資料庫，對應 CI 的 backend job）"
 # CI 的資料庫是全新的，會從頭跑完整條 migration 鏈；開發資料庫已經在 head，

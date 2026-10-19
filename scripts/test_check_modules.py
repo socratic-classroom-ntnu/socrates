@@ -1,4 +1,4 @@
-"""scripts/check_modules.py 的解析規則（#55 審查：改用 ast）。從 repo 根目錄執行：
+"""scripts/check_modules.py 的解析規則（import 以 ast 解析）。從 repo 根目錄執行：
 `python -m pytest scripts/test_check_modules.py -q`
 """
 
@@ -41,3 +41,8 @@ def test_violation_kind_ignores_paths():
     moved = "identity_access→classroom_core  backend/app/modules/identity_access/x.py → backend/app/orchestrator/classroom.py"
     before = "identity_access→classroom_core  backend/app/services/x.py → backend/app/orchestrator/classroom.py"
     assert check_modules.kind(moved) == check_modules.kind(before) == "identity_access→classroom_core"
+
+
+def test_dynamic_import_is_detected_by_call_not_by_text():
+    assert check_modules.calls_import_module(ast.parse("import importlib\nimportlib.import_module('app.x')\n"))
+    assert not check_modules.calls_import_module(ast.parse('"""不要用 import_module() 繞過檢查"""\n'))

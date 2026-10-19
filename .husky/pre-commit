@@ -17,9 +17,9 @@ if docker compose exec -T backend true 2>/dev/null; then
   docker compose exec -T -e PYTHONPATH=/app backend python scripts/gen_classroom_types.py --print-spec \
     > "$TMP_CLASSROOM" || exit 1
   cp "$TMP_ROUND1" frontend/openapi.json
-  (cd frontend && npx --no-install openapi-typescript openapi.json -o src/api/types.ts) || exit 1
+  (cd frontend && npx --no-install openapi-typescript openapi.json -o src/contract/types.ts) || exit 1
   python3 scripts/gen_classroom_types.py --spec "$TMP_CLASSROOM" >/dev/null || exit 1
-  git add -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
+  git add -- frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
 else
   # 有 backend/ 改動時，下面的 backend 檢查會因為容器沒啟動而擋下。
   echo "⚠ backend 容器未啟動，略過 OpenAPI 契約的重新產生（docker compose up -d 後就會自動產生）"

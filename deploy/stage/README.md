@@ -52,7 +52,7 @@ Flux 每個環境有獨立的 ImagePolicy，只追自己前綴的 tag（flux-k8s
 郵件 key 留在伺服器 `.env`／credential store，GitHub source 只收 `.env.example`。
 
 > **`DATABASE_URL` 一旦使用就不要改寫。** 教室擁有者存的 provider 憑證以 `DATABASE_URL`
-> 字串衍生的金鑰加密（`backend/app/modules/ai_providers/api/routes/provider_profiles.py`）。改密碼、換主機別名、
+> 字串衍生的金鑰加密（`backend/app/modules/ai_providers/routes.py`）。改密碼、換主機別名、
 > 改編碼或參數，即使指向同一個資料庫，既有憑證都會解不開（`PROVIDER_CREDENTIAL_DECRYPTION`，503），
 > 擁有者必須重新輸入。k8s Secret 裡的 `DATABASE_URL`（以及自架時 `deploy/stage/.env` 的值）
 > 換環境時也必須逐字相同。
@@ -108,7 +108,7 @@ bash deploy/stage/up.sh
 Backend 啟動時執行 Alembic 升版，再啟動2個 Uvicorn workers；frontend 使用 Nginx，
 `/api/*` 及 WebSocket upgrade 轉交 `backend:8000`。
 
-每個 worker 有兩個資料庫連線池：教室模組的引擎（`pool_size=5`＋`max_overflow=5`）與 Round 1 路由
+每個 worker 有兩個資料庫連線池：教室模組的引擎（`pool_size=5`＋`max_overflow=5`）與單人對話路由
 使用的引擎（SQLAlchemy 預設 5＋10，有流量才連線），另有一條專用 LISTEN 連線。
 最壞情況約每 worker 26 條、預設 2 個 worker 共約 52 條；請依同機其他服務預留資料庫 connection budget。
 
@@ -168,7 +168,7 @@ curl -fsS https://socrates.driseam.com/api/release
 
 ## 5. CI／Release
 
-stage push 走 CI。CI的backend、frontend、contract、Round1、教室負載（`classroom-load`）皆成功後，
+stage push 走 CI。CI的backend、frontend、contract、單人對話 e2e、教室負載（`classroom-load`）皆成功後，
 呼叫同一revision的Stage Release。Release.json以image digest固定來源與相依lock，
 image 以 `sha-<source sha>` 與 `stage-<時間戳>-<source sha>` 標記。Flux 追 `stage-*` tag 自動部署
 （見最上方〈目前的部署方式〉）。
@@ -224,6 +224,6 @@ docker compose --env-file deploy/stage/.env -f deploy/stage/compose.yml logs --t
 
 ## 歷史紀錄：2026-09-24 首次發佈
 
-首次發佈由 Loom 執行：source commit 以 `[skip ci]` 先發布、回讀遠端，再以**相同 Git tree**
+首次發佈由 Arthur 的發佈工具執行：source commit 以 `[skip ci]` 先發布、回讀遠端，再以**相同 Git tree**
 的 CI 啟動 commit 觸發 CI；工具鏈遷移的 lock 也在那次建立。Source publication、CI 結果、
 image publication、public adoption 各有獨立 receipt。之後一般 stage push 直接走第 5 節的流程。

@@ -3,7 +3,17 @@
 import time
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+    false,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.modules.platform.repositories.classroom_storage import Base
@@ -55,6 +65,10 @@ class Activity(Base):
             use_alter=True,
         ),
         nullable=True,
+    )
+    # Soft delete: hidden from every normal query, rows and revisions kept.
+    deleted: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
     )
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)

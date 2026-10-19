@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
 
+from app.modules.course_management.api.schemas import ActivityDraft
 from app.modules.course_management.repositories.models import Activity, ActivityRevision, Enrollment
 from app.modules.course_management.services import activities as activity_service
 from app.modules.platform.classroom_env import env_str
@@ -118,7 +119,7 @@ def test_saved_draft_roundtrip(client):
 
     assert created["status"] == "draft"
     assert created["revision"] is None
-    assert created["available_actions"] == ["update", "publish", "copy"]
+    assert created["available_actions"] == ["update", "publish", "copy", "delete"]
     assert fetched["draft"] == {
         **body,
         "starts_at": None,
@@ -201,7 +202,7 @@ def test_locked_activity_rejects_update_and_publish(client):
     copied = act(client, activity["id"], "copy")
 
     assert view["locked"] is True
-    assert view["available_actions"] == ["end_now", "copy"]
+    assert view["available_actions"] == ["update_details", "end_now", "copy", "delete"]
     assert put.status_code == 409 and put.json() == {"detail": "ACTIVITY_LOCKED"}
     assert publish.status_code == 409
     assert publish.json() == {"detail": "ACTIVITY_ACTION_UNAVAILABLE"}
@@ -256,6 +257,91 @@ def test_lock_current_revision_wins_race_with_republish(client):
     assert count(ActivityRevision) == 1
 
 
+def scheduled_activity(client, course_id):
+    activity = create_activity(client, course_id, starts_at=time.time() + 1800)
+    assert act(client, activity["id"], "publish").status_code == 200
+    return activity
+
+
+def test_start_now_twice_second_is_unavailable(client):
+    teacher, course = teacher_with_course(client)
+    activity = scheduled_activity(client, course["id"])
+
+    first = act(client, activity["id"], "start_now")
+    second = act(client, activity["id"], "start_now")
+
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert second.json() == {"detail": "ACTIVITY_ACTION_UNAVAILABLE"}
+    with storage.transaction() as db:
+        assert db.get(Activity, activity["id"]).starts_at == first.json()["starts_at"]
+
+
+@pytest.mark.parametrize("action", ["start_now", "end_now"])
+def test_transition_rechecks_after_taking_the_row_lock(client, action):
+    """The route checked the action on a row read before the lock; whoever held the
+    lock may have changed the status, so the service checks again on the locked row."""
+    teacher, course = teacher_with_course(client)
+    activity = scheduled_activity(client, course["id"])
+    ended = time.time() - 1
+
+    with pytest.raises(DomainError) as raised:
+        with storage.transaction() as db:
+            stale = db.get(Activity, activity["id"])
+            # Another request ends the activity after this one read it (core update:
+            # the stale object in this session is not refreshed).
+            db.connection().execute(
+                Activity.__table__.update()
+                .where(Activity.__table__.c.id == activity["id"])
+                .values(ends_at=ended)
+            )
+            getattr(activity_service, action)(db, stale, time.time())
+
+    assert raised.value.code == "ACTIVITY_ACTION_UNAVAILABLE"
+
+
+@pytest.mark.skipif(TEST_DIALECT != "postgresql", reason="requires PostgreSQL row locks")
+def test_start_now_keeps_a_concurrent_put(client):
+    teacher, course = teacher_with_course(client)
+    activity = scheduled_activity(client, course["id"])
+    saved = threading.Event()
+    release = threading.Event()
+    outcome: dict = {}
+    edited = draft(starts_at=time.time() + 1800, questions=[question(title="新的題目")])
+
+    def teacher_saves():
+        with storage.transaction() as db:
+            row = db.get(Activity, activity["id"])
+            activity_service.update_draft(db, row, ActivityDraft.model_validate(edited))
+            saved.set()
+            release.wait(timeout=5)
+
+    def other_tab_starts():
+        try:
+            with storage.transaction() as db:
+                row = db.get(Activity, activity["id"])
+                activity_service.start_now(db, row, time.time())
+            outcome["result"] = "started"
+        except DomainError as error:
+            outcome["result"] = error.code
+
+    saver = threading.Thread(target=teacher_saves)
+    saver.start()
+    assert saved.wait(timeout=5)
+    starter = threading.Thread(target=other_tab_starts)
+    starter.start()
+    starter.join(timeout=0.5)
+    release.set()
+    saver.join(timeout=5)
+    starter.join(timeout=5)
+
+    assert outcome["result"] == "started"
+    with storage.transaction() as db:
+        row = db.get(Activity, activity["id"])
+        assert row.draft["questions"][0]["title"] == "新的題目"
+        assert row.draft["starts_at"] == row.starts_at
+
+
 def test_end_now_ends_and_join_rejected(client):
     teacher, course = teacher_with_course(client)
     activity = create_activity(client, course["id"])
@@ -266,7 +352,7 @@ def test_end_now_ends_and_join_rejected(client):
     joined = client.post(f"/api/v2/activities/{activity['id']}/join", json={"display_name": "學生"})
 
     assert ended.json()["status"] == "ended"
-    assert ended.json()["available_actions"] == ["copy"]
+    assert ended.json()["available_actions"] == ["copy", "delete"]
     assert joined.status_code == 409
     assert joined.json() == {"detail": "ACTIVITY_ENDED"}
 
@@ -345,7 +431,7 @@ def test_teacher_list_includes_drafts_with_actions(client):
 
     assert body["role"] == "teacher"
     assert body["items"][0]["status"] == "draft"
-    assert body["items"][0]["available_actions"] == ["update", "publish", "copy"]
+    assert body["items"][0]["available_actions"] == ["update", "publish", "copy", "delete"]
     assert body["items"][0]["question_count"] == 1
 
 
@@ -372,3 +458,17 @@ def test_student_sees_published_title_not_unpublished_edit(client):
 
     assert student_items(client, course["id"])[0]["title"] == "第三週倫理討論"
     switch(client, teacher_account)
+
+
+def test_join_preview_includes_the_window(client):
+    teacher, course = teacher_with_course(client)
+    starts = time.time() + 3600
+    activity = create_activity(client, course["id"], starts_at=starts, ends_at=starts + 3600)
+    act(client, activity["id"], "publish")
+    enrolled_student(client, course)
+
+    preview = client.get(f"/api/v2/activities/{activity['id']}/join-preview").json()
+
+    assert preview["status"] == "scheduled"
+    assert preview["starts_at"] == pytest.approx(starts)
+    assert preview["ends_at"] == pytest.approx(starts + 3600)

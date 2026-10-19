@@ -89,6 +89,38 @@
         "title": "AccountView",
         "type": "object"
       },
+      "ActivityDetailsUpdate": {
+        "additionalProperties": false,
+        "description": "Operational fields a teacher may still change after the content locks.",
+        "properties": {
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ActivityDetailsUpdate",
+        "type": "object"
+      },
       "ActivityDraft-Input": {
         "additionalProperties": false,
         "description": "Complete but unpublished content; incomplete drafts are rejected, never stored.",
@@ -248,6 +280,10 @@
             "title": "Question Count",
             "type": "integer"
           },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "number"
+          },
           "status": {
             "enum": [
               "scheduled",
@@ -273,6 +309,7 @@
           "course_name",
           "teacher_name",
           "question_count",
+          "starts_at",
           "ends_at",
           "status",
           "already_enrolled",
@@ -402,10 +439,12 @@
             "items": {
               "enum": [
                 "update",
+                "update_details",
                 "publish",
                 "start_now",
                 "end_now",
-                "copy"
+                "copy",
+                "delete"
               ],
               "type": "string"
             },
@@ -423,9 +462,17 @@
             ],
             "title": "Ends At"
           },
+          "has_unpublished_changes": {
+            "title": "Has Unpublished Changes",
+            "type": "boolean"
+          },
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
           },
           "question_count": {
             "title": "Question Count",
@@ -461,6 +508,8 @@
           "id",
           "title",
           "status",
+          "locked",
+          "has_unpublished_changes",
           "question_count",
           "starts_at",
           "ends_at",
@@ -499,10 +548,12 @@
             "items": {
               "enum": [
                 "update",
+                "update_details",
                 "publish",
                 "start_now",
                 "end_now",
-                "copy"
+                "copy",
+                "delete"
               ],
               "type": "string"
             },
@@ -526,6 +577,10 @@
               }
             ],
             "title": "Ends At"
+          },
+          "has_unpublished_changes": {
+            "title": "Has Unpublished Changes",
+            "type": "boolean"
           },
           "id": {
             "title": "Id",
@@ -573,6 +628,7 @@
           "course_id",
           "status",
           "locked",
+          "has_unpublished_changes",
           "revision",
           "draft",
           "starts_at",
@@ -1035,44 +1091,6 @@
         "title": "Configure",
         "type": "object"
       },
-      "CourseCard": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "open_activity_count": {
-            "title": "Open Activity Count",
-            "type": "integer"
-          },
-          "role": {
-            "enum": [
-              "teacher",
-              "student"
-            ],
-            "title": "Role",
-            "type": "string"
-          },
-          "teacher_name": {
-            "title": "Teacher Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "teacher_name",
-          "role",
-          "open_activity_count"
-        ],
-        "title": "CourseCard",
-        "type": "object"
-      },
       "CourseCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1131,19 +1149,59 @@
         "title": "CourseJoin",
         "type": "object"
       },
+      "CourseLearningCard": {
+        "additionalProperties": false,
+        "properties": {
+          "highlight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityStudentCard"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_activity_count": {
+            "title": "Open Activity Count",
+            "type": "integer"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "teacher_name",
+          "open_activity_count",
+          "highlight"
+        ],
+        "title": "CourseLearningCard",
+        "type": "object"
+      },
       "CourseLists": {
         "additionalProperties": false,
         "properties": {
           "learning": {
             "items": {
-              "$ref": "#/components/schemas/CourseCard"
+              "$ref": "#/components/schemas/CourseLearningCard"
             },
             "title": "Learning",
             "type": "array"
           },
           "teaching": {
             "items": {
-              "$ref": "#/components/schemas/CourseCard"
+              "$ref": "#/components/schemas/CourseTeachingCard"
             },
             "title": "Teaching",
             "type": "array"
@@ -1159,6 +1217,17 @@
       "CourseStudentView": {
         "additionalProperties": false,
         "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -1191,6 +1260,7 @@
           "name",
           "teacher_name",
           "intro",
+          "code",
           "display_name"
         ],
         "title": "CourseStudentView",
@@ -1269,6 +1339,55 @@
           "available_actions"
         ],
         "title": "CourseTeacherView",
+        "type": "object"
+      },
+      "CourseTeachingCard": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_count": {
+            "title": "Activity Count",
+            "type": "integer"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "code_enabled": {
+            "title": "Code Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_activity_count": {
+            "title": "Open Activity Count",
+            "type": "integer"
+          },
+          "student_count": {
+            "title": "Student Count",
+            "type": "integer"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "teacher_name",
+          "code",
+          "code_enabled",
+          "student_count",
+          "activity_count",
+          "open_activity_count"
+        ],
+        "title": "CourseTeachingCard",
         "type": "object"
       },
       "CourseUpdate": {
@@ -1580,6 +1699,17 @@
             "title": "Name",
             "type": "string"
           },
+          "open_activity_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Activity Title"
+          },
           "teacher_name": {
             "title": "Teacher Name",
             "type": "string"
@@ -1590,7 +1720,8 @@
           "name",
           "teacher_name",
           "already_enrolled",
-          "default_display_name"
+          "default_display_name",
+          "open_activity_title"
         ],
         "title": "JoinPreview",
         "type": "object"
@@ -1883,6 +2014,21 @@
           "debug_mode"
         ],
         "title": "PublicConfigView",
+        "type": "object"
+      },
+      "PublicJoinPreview": {
+        "additionalProperties": false,
+        "description": "What an anonymous visitor may learn from a code or activity link: the course name only.",
+        "properties": {
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_name"
+        ],
+        "title": "PublicJoinPreview",
         "type": "object"
       },
       "PublicQuestion": {
@@ -3286,6 +3432,39 @@
       }
     },
     "/api/v2/activities/{activity_id}": {
+      "delete": {
+        "operationId": "delete_activity_api_v2_activities__activity_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Activity",
+        "tags": [
+          "activities"
+        ]
+      },
       "get": {
         "operationId": "get_activity_api_v2_activities__activity_id__get",
         "parameters": [
@@ -3322,6 +3501,56 @@
           }
         },
         "summary": "Get Activity",
+        "tags": [
+          "activities"
+        ]
+      },
+      "patch": {
+        "operationId": "update_activity_details_api_v2_activities__activity_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityDetailsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Activity Details",
         "tags": [
           "activities"
         ]
@@ -3508,6 +3737,48 @@
           }
         },
         "summary": "Activity Join Preview",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/public-preview": {
+      "get": {
+        "operationId": "activity_public_preview_api_v2_activities__activity_id__public_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicJoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity Public Preview",
         "tags": [
           "activities"
         ]
@@ -4498,6 +4769,48 @@
           }
         },
         "summary": "Preview Join",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/course-join/public-preview": {
+      "get": {
+        "operationId": "public_preview_join_api_v2_course_join_public_preview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicJoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Preview Join",
         "tags": [
           "courses"
         ]

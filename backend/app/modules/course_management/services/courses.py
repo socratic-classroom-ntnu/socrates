@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.modules.course_management.domain.codes import new_code
 from app.modules.course_management.repositories.models import Activity, Course, Enrollment
+from app.modules.course_management.services import activities as activity_service
 from app.modules.platform.errors import DomainError
 from app.modules.platform.repositories.classroom_storage import Account
 
@@ -81,7 +82,9 @@ def teacher_view(db, course: Course) -> dict:
         select(func.count()).select_from(Enrollment).where(Enrollment.course_id == course.id)
     )
     activity_count = db.scalar(
-        select(func.count()).select_from(Activity).where(Activity.course_id == course.id)
+        select(func.count())
+        .select_from(Activity)
+        .where(Activity.course_id == course.id, Activity.deleted.is_(False))
     )
     return {
         "role": "teacher",
@@ -105,38 +108,22 @@ def student_view(course: Course, enrollment: Enrollment) -> dict:
         "name": course.name,
         "teacher_name": course.teacher_name,
         "intro": course.intro,
+        "code": course.code if course.code_enabled else None,
         "display_name": enrollment.display_name,
     }
 
 
-def _open_activity_count(db, course_id: str, now: float) -> int:
-    count = db.scalar(
-        select(func.count())
-        .select_from(Activity)
-        .where(
-            Activity.course_id == course_id,
-            Activity.published_at.is_not(None),
-            Activity.starts_at.is_not(None),
-            Activity.starts_at <= now,
-            Activity.ends_at.is_not(None),
-            Activity.ends_at > now,
-        )
-    )
-    return count or 0
+def highlight(db, course: Course, at: float) -> dict | None:
+    return activity_service.course_summaries(db, [course.id], at)[course.id]["highlight"]
 
 
-def _card(db, course: Course, role: Literal["teacher", "student"], now: float) -> dict:
-    return {
-        "id": course.id,
-        "name": course.name,
-        "teacher_name": course.teacher_name,
-        "role": role,
-        "open_activity_count": _open_activity_count(db, course.id, now),
-    }
+def open_activity_title(db, course: Course, at: float) -> str | None:
+    return activity_service.course_summaries(db, [course.id], at)[course.id]["open_activity_title"]
 
 
 def lists(db, account: Account) -> dict:
-    current = time.time()
+    """Both home tabs in a fixed number of queries, however many courses the account has."""
+    at = activity_service.now()
     teaching = db.scalars(
         select(Course).where(Course.owner_id == account.id).order_by(Course.created_at, Course.id)
     ).all()
@@ -146,9 +133,43 @@ def lists(db, account: Account) -> dict:
         .where(Enrollment.account_id == account.id)
         .order_by(Enrollment.created_at, Course.id)
     ).all()
+    summaries = activity_service.course_summaries(
+        db, sorted({course.id for course in [*teaching, *learning]}), at
+    )
+    students: dict[str, int] = {}
+    if teaching:
+        students = {
+            course_id: count
+            for course_id, count in db.execute(
+                select(Enrollment.course_id, func.count())
+                .where(Enrollment.course_id.in_([course.id for course in teaching]))
+                .group_by(Enrollment.course_id)
+            ).all()
+        }
     return {
-        "teaching": [_card(db, course, "teacher", current) for course in teaching],
-        "learning": [_card(db, course, "student", current) for course in learning],
+        "teaching": [
+            {
+                "id": course.id,
+                "name": course.name,
+                "teacher_name": course.teacher_name,
+                "code": course.code,
+                "code_enabled": course.code_enabled,
+                "student_count": students.get(course.id, 0),
+                "activity_count": summaries[course.id]["activity_count"],
+                "open_activity_count": summaries[course.id]["open_activity_count"],
+            }
+            for course in teaching
+        ],
+        "learning": [
+            {
+                "id": course.id,
+                "name": course.name,
+                "teacher_name": course.teacher_name,
+                "open_activity_count": summaries[course.id]["open_activity_count"],
+                "highlight": summaries[course.id]["highlight"],
+            }
+            for course in learning
+        ],
     }
 
 

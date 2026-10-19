@@ -2,10 +2,12 @@ import { useRef, useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../api/classroomClient'
 import { useAuth } from '../../app/AuthContext'
-import { safeNext } from '../../app/next'
+import { joinTarget, safeNext } from '../../app/next'
+import { JoinLayout } from '../join/JoinLayout'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
 import { AuthLayout, Screws } from './AuthLayout'
+import { JoinLoginBanner, usePublicCourseName } from './JoinLoginCard'
 import { type Field, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset'
@@ -38,6 +40,9 @@ export function LoginPage() {
   const [note, setNote] = useState<Note>(null)
   const [issues, setIssues] = useState<Partial<Record<Field, FieldIssue>>>({})
   const refs = { username: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), password: useRef<HTMLInputElement>(null) }
+  // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
+  const join = mode === 'login' ? joinTarget(next) : null
+  const courseName = usePublicCourseName(join)
 
   // 登入或註冊成功後 account 出現：已驗證回原網址，未驗證先到驗證頁（驗證完再回原網址）
   if (account && mode !== 'reset') {
@@ -128,6 +133,43 @@ export function LoginPage() {
   const noteText = note === null ? '' : 'key' in note ? t(note.key) : errorMessage(t, note.error)
   const hint = mode === 'register' ? t('register.hint') : mode === 'forgot' ? t('forgot.hint') : ''
 
+  const fields = <>
+    {(mode === 'login' || mode === 'register') && input('username', mode === 'login' ? t('fields.identifier') : t('fields.username'), {
+      value: name, autoComplete: 'username', required: true,
+      maxLength: mode === 'login' ? REGISTER_LIMITS.email[1] : REGISTER_LIMITS.username[1],
+      onChange: event => { setName(event.target.value); clearIssue('username') },
+    })}
+    {(mode === 'register' || mode === 'forgot') && input('email', t('fields.email'), {
+      type: 'email', value: email, autoComplete: 'email', required: true,
+      onChange: event => { setEmail(event.target.value); clearIssue('email') },
+    })}
+    {mode !== 'forgot' && input('password', mode === 'reset' ? t('fields.newPassword') : t('fields.password'), {
+      type: 'password', value: password, required: true,
+      minLength: mode === 'login' ? 1 : REGISTER_LIMITS.password[0],
+      autoComplete: mode === 'login' ? 'current-password' : 'new-password',
+      onChange: event => { setPassword(event.target.value); clearIssue('password') },
+    })}
+  </>
+
+  if (join) return <JoinLayout>
+    <div className="join-login">
+      <JoinLoginBanner courseName={courseName} />
+      <form className="join-login__card" onSubmit={event => void submit(event)}>
+        <h1>{t('join:login.title')}</h1>
+        {fields}
+        <button type="submit" className="button button--primary join-login__submit" disabled={busy} aria-busy={busy}>
+          {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
+        </button>
+        <div className="join-login__links">
+          <button type="button" className="join-link" onClick={() => switchMode('register')}>{t('join:login.register')}</button>
+          <button type="button" className="join-link join-link--quiet" onClick={() => switchMode('forgot')}>{t('join:login.forgot')}</button>
+        </div>
+        <p role="status" className="auth-card__note">{noteText}</p>
+      </form>
+      <p className="join-login__note">{t('join:login.registerNote')}</p>
+    </div>
+  </JoinLayout>
+
   return <AuthLayout>
     <main className="auth-main">
       <section className="auth-board" aria-label={t('common:brand')}>
@@ -138,21 +180,7 @@ export function LoginPage() {
       <form className="auth-card" noValidate={mode === 'register'} onSubmit={event => void submit(event)}>
         <Screws />
         <h1>{t(`${mode}.title`)}</h1>
-        {(mode === 'login' || mode === 'register') && input('username', mode === 'login' ? t('fields.identifier') : t('fields.username'), {
-          value: name, autoComplete: 'username', required: true,
-          maxLength: mode === 'login' ? REGISTER_LIMITS.email[1] : REGISTER_LIMITS.username[1],
-          onChange: event => { setName(event.target.value); clearIssue('username') },
-        })}
-        {(mode === 'register' || mode === 'forgot') && input('email', t('fields.email'), {
-          type: 'email', value: email, autoComplete: 'email', required: true,
-          onChange: event => { setEmail(event.target.value); clearIssue('email') },
-        })}
-        {mode !== 'forgot' && input('password', mode === 'reset' ? t('fields.newPassword') : t('fields.password'), {
-          type: 'password', value: password, required: true,
-          minLength: mode === 'login' ? 1 : REGISTER_LIMITS.password[0],
-          autoComplete: mode === 'login' ? 'current-password' : 'new-password',
-          onChange: event => { setPassword(event.target.value); clearIssue('password') },
-        })}
+        {fields}
         {hint && <p className="auth-card__hint">{hint}</p>}
         <button type="submit" className="auth-button auth-button--primary" disabled={busy} aria-busy={busy}>
           {t(`${mode}.submit`)}<span aria-hidden="true">→</span>

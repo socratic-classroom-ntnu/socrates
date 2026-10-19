@@ -16,6 +16,7 @@ from app.modules.course_management.api.schemas import (
     CourseTeacherView,
     CourseUpdate,
     JoinPreview,
+    PublicJoinPreview,
 )
 from app.modules.course_management.services import activities as activity_service
 from app.modules.course_management.services import courses as service
@@ -35,7 +36,8 @@ def _join_limit(request: Request, mutation: bool) -> None:
     with transaction() as db:
         current, _ = account(db, request, mutation=mutation)
         limit(db, f"course-join:{current.id}", 20, 60, error_code="RATE_LIMITED")
-        limit(db, f"course-join-ip:{host}", 60, 60, error_code="RATE_LIMITED")
+        # A whole class often shares the school's address; 200/min lets ~40 students retry.
+        limit(db, f"course-join-ip:{host}", 200, 60, error_code="RATE_LIMITED")
 
 
 def _teacher_course(db, current, course_id: str):
@@ -81,7 +83,16 @@ def preview_join(code: str, request: Request):
             "teacher_name": course.teacher_name,
             "already_enrolled": enrollment.existing(db, current, course) is not None,
             "default_display_name": current.username,
+            "open_activity_title": service.open_activity_title(db, course, activity_service.now()),
         }
+
+
+@preview_router.get("/public-preview", response_model=PublicJoinPreview)
+def public_preview_join(code: str, request: Request):
+    enrollment.public_preview_limit(request.client.host if request.client else "unknown")
+    with transaction() as db:
+        course = enrollment.find_by_code(db, code)
+        return {"course_name": course.name}
 
 
 @router.get(

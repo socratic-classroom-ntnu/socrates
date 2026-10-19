@@ -1,0 +1,61 @@
+/* M2 新頁共用的按鈕、表單欄位與狀態標籤（配色：#F3F3F1 #FFFFFF #2E5045 #E3E3DF） */
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; box-sizing: border-box;
+  padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 700;
+  line-height: 1.3; text-align: center; text-decoration: none; cursor: pointer;
+}
+.button:disabled { opacity: 0.55; cursor: not-allowed; }
+.button--primary { background: #2E5045; color: #FFFFFF; }
+.button--primary:hover:not(:disabled) { background: #24413A; }
+.button--dark { background: #23332C; color: #FFFFFF; }
+.button--outline { background: #FFFFFF; border-color: #CFCFC9; color: #2E5045; }
+.button--outline:hover:not(:disabled) { background: #F7F7F5; }
+.button--quiet { background: #FFFFFF; border-color: #CFCFC9; color: #1F2421; font-weight: 400; }
+.button--danger { background: #B03A2E; color: #FFFFFF; }
+.icon-button {
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 8px;
+  background: #F3F3F1; color: #2E5045; cursor: pointer;
+}
+.button:focus-visible, .icon-button:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.copy-button { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.copy-button__status { font-size: 12px; color: #2E5045; white-space: nowrap; }
+
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field > label { font-size: 15px; font-weight: 700; }
+.form-field__star { color: #B03A2E; }
+.form-field input, .form-field textarea, .form-field select {
+  box-sizing: border-box; width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid #CFCFC9; border-radius: 8px;
+  background: #FFFFFF; color: #1F2421; font: inherit; font-size: 16px; line-height: 1.5;
+}
+.form-field textarea { resize: vertical; }
+.form-field input:focus, .form-field textarea:focus { outline: none; border: 2px solid #2E5045; padding: 9px 13px; }
+.form-field--error input, .form-field--error textarea { border: 2px solid #B03A2E; padding: 9px 13px; }
+.form-field__hint { margin: 0; font-size: 13px; line-height: 1.6; color: #5F6661; }
+.form-field__error { margin: 0; font-size: 13px; font-weight: 700; color: #B03A2E; }
+.form-error { margin: 0; padding: 10px 14px; border-radius: 8px; background: #FBE7E3; color: #8A2A1F; font-size: 14px; }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.status-pill--open { background: #E7EEEA; color: #2E5045; }
+.status-pill--open::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #2F8F5B; }
+.status-pill--scheduled { background: #E8EDF7; color: #2D4B8E; }
+.status-pill--draft { background: #EFEFEA; color: #5F6661; }
+.status-pill--ended { background: #FBE7E3; color: #A3311A; }
+.status-pill--quiet { background: #F3F3F1; color: #5F6661; font-weight: 400; }
+
+.qr-code { display: block; border-radius: 6px; image-rendering: pixelated; }
+.qr-code--loading { background: #F3F3F1; }
+
+/* 篩選 chip（T4、C1） */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 34px; padding: 4px 14px; border: 1px solid #CFCFC9; border-radius: 999px; background: #FFFFFF;
+  color: #3F4642; font: inherit; font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: #23332C; background: #23332C; color: #FFFFFF; font-weight: 700; }
+.chip:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.icon-button--quiet { background: transparent; color: #3F4642; }
+.icon-button--quiet:hover, .icon-button--quiet[aria-expanded="true"] { background: #F3F3F1; }
+.dialog__question { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
+.dialog__text { margin: 0; color: #3F4642; font-size: 14px; line-height: 1.7; }

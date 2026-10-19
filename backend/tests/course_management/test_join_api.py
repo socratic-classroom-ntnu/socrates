@@ -1,3 +1,4 @@
+import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 
@@ -13,7 +14,7 @@ from app.modules.course_management.repositories.models import Course, Enrollment
 from app.modules.platform.classroom_env import env_str
 from app.modules.platform.repositories import classroom_storage as storage
 from app.modules.platform.repositories.classroom_storage import Membership
-from tests.course_management.conftest import user
+from tests.course_management.conftest import switch, user
 from tests.course_management.test_courses_api import create_course
 
 TEST_DIALECT = make_url(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://")).get_backend_name()
@@ -164,6 +165,20 @@ def test_join_rate_limited(client):
     assert responses[20].json() == {"detail": "RATE_LIMITED"}
 
 
+def test_join_ip_limit_allows_a_classroom_behind_one_address(client):
+    """A whole class shares the school's address: 10 students × 20 tries all get through."""
+    for index in range(10):
+        user(client, f"student{index:02d}")
+        responses = [client.get("/api/v2/course-join/preview?code=XXXXXXXX") for _ in range(20)]
+        assert {response.status_code for response in responses} == {404}
+
+    user(client, "student10")
+    blocked = client.get("/api/v2/course-join/preview?code=XXXXXXXX")
+
+    assert blocked.status_code == 429
+    assert blocked.json() == {"detail": "RATE_LIMITED"}
+
+
 def test_preview_shows_course_without_enrolling(client):
     user(client, "owner")
     course = create_course(client)
@@ -193,3 +208,31 @@ def test_owner_can_enroll_as_student(client):
     assert client.get(f"/api/v2/courses/{course['id']}?role=student").json()["role"] == "student"
     with storage.transaction() as db:
         assert db.scalar(select(func.count()).select_from(Enrollment)) == 1
+
+
+def test_join_preview_open_activity_title(client):
+    user(client, "owner")
+    course = create_course(client)
+    draft_payload = {
+        "title": "第三週倫理討論",
+        "topic_direction": "主動與不作為",
+        "ends_at": time.time() + 3600,
+        "questions": [
+            {
+                "id": "q1",
+                "title": "岔道",
+                "scenario": "電車",
+                "options": [{"id": "a", "text": "拉"}, {"id": "b", "text": "不拉"}],
+            }
+        ],
+    }
+    user(client, "student")
+    preview = client.get("/api/v2/course-join/preview", params={"code": course["code"]})
+    assert preview.json()["open_activity_title"] is None
+
+    switch(client, {"username": "owner"})
+    activity = client.post(f"/api/v2/courses/{course['id']}/activities", json=draft_payload)
+    assert client.post(f"/api/v2/activities/{activity.json()['id']}/publish").status_code == 200
+    switch(client, {"username": "student"})
+    preview = client.get("/api/v2/course-join/preview", params={"code": course["code"]})
+    assert preview.json()["open_activity_title"] == "第三週倫理討論"

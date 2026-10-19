@@ -125,3 +125,23 @@ def test_owner_is_not_auto_enrolled(client):
     switch(client, owner)
     assert client.get(f"/api/v2/courses/{course['id']}").json()["role"] == "teacher"
     switch(client, other)
+
+
+def test_student_view_has_code_unless_disabled(client):
+    owner = user(client, "owner")
+    course = create_course(client)
+    student = user(client, "student")
+    joined = client.post(
+        "/api/v2/courses/join", json={"code": course["code"], "display_name": "學生"}
+    )
+    assert joined.json()["code"] == course["code"]
+
+    switch(client, owner)
+    assert client.post(f"/api/v2/courses/{course['id']}/disable_code").status_code == 200
+    switch(client, student)
+    assert client.get(f"/api/v2/courses/{course['id']}").json()["code"] is None
+
+    switch(client, owner)
+    assert client.post(f"/api/v2/courses/{course['id']}/enable_code").status_code == 200
+    switch(client, student)
+    assert client.get(f"/api/v2/courses/{course['id']}").json()["code"] == course["code"]

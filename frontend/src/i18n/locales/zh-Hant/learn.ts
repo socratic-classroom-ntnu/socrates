@@ -1,0 +1,31 @@
+export default {
+  breadcrumb: '我學的課',
+  teacher: '{{name}} 老師',
+  code: '課程代碼',
+  copyCode: '複製課程代碼',
+  filterLabel: '篩選活動',
+  filters: {
+    all: '全部',
+    open: '進行中',
+    scheduled: '即將開始',
+    ended: '已結束',
+  },
+  sections: {
+    open: '進行中',
+    scheduled: '即將開始',
+    ended: '已結束',
+  },
+  questions: '{{count}} 題',
+  openUntil: '開放到 {{end}}',
+  phoneOpen: '{{questions}} ・ 開放到 {{end}}',
+  opensAt: '{{start}} 開放',
+  endedAt: '{{end}} 結束',
+  start: '開始',
+  nothing: '老師還沒有開放活動',
+  notFound: {
+    title: '找不到這門課',
+    body: '這門課可能不存在，或你還沒有加入。',
+    back: '回到首頁',
+  },
+  noMatch: '沒有符合的活動',
+};

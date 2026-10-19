@@ -3,9 +3,19 @@
 from typing import Literal, Protocol
 
 ActivityStatus = Literal["draft", "scheduled", "open", "ended"]
-TeacherAction = Literal["update", "publish", "start_now", "end_now", "copy"]
+TeacherAction = Literal[
+    "update", "update_details", "publish", "start_now", "end_now", "copy", "delete"
+]
 
-_ORDER: tuple[TeacherAction, ...] = ("update", "publish", "start_now", "end_now", "copy")
+_ORDER: tuple[TeacherAction, ...] = (
+    "update",
+    "update_details",
+    "publish",
+    "start_now",
+    "end_now",
+    "copy",
+    "delete",
+)
 
 
 class ActivityTimes(Protocol):
@@ -31,11 +41,12 @@ def status(activity: ActivityTimes, now: float) -> ActivityStatus:
 
 
 def teacher_actions(current: ActivityStatus, locked: bool) -> list[TeacherAction]:
-    allowed: set[TeacherAction] = {"copy"}
+    allowed: set[TeacherAction] = {"copy", "delete"}
     if current == "draft":
         allowed |= {"update", "publish"}
     if current in ("scheduled", "open"):
-        allowed.add("end_now")
+        # Name and end time stay editable after the content locks; the questions do not.
+        allowed |= {"update_details", "end_now"}
         if not locked:
             allowed |= {"update", "publish"}
     if current == "scheduled":

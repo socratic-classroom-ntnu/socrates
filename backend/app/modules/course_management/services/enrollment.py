@@ -8,7 +8,8 @@ from sqlalchemy.exc import IntegrityError
 from app.modules.course_management.domain.codes import normalize
 from app.modules.course_management.repositories.models import Course, Enrollment
 from app.modules.platform.errors import DomainError
-from app.modules.platform.repositories.classroom_storage import Account
+from app.modules.platform.repositories.classroom_storage import Account, transaction
+from app.modules.platform.services.rate_limit import limit
 
 
 def find_by_code(db, raw_code: str) -> Course:
@@ -47,3 +48,11 @@ def enroll(db, account: Account, course: Course, display_name: str) -> tuple[Enr
         if winner is None:
             raise
         return winner, False
+
+
+def public_preview_limit(host: str) -> None:
+    """Anonymous previews share one per-IP bucket, counted in its own transaction so a 404
+    from the lookup that follows cannot roll the count back."""
+    with transaction() as db:
+        # Like the signed-in join, room for a whole class behind one address.
+        limit(db, f"public-join-ip:{host}", 100, 60, error_code="RATE_LIMITED")

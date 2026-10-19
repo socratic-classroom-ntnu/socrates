@@ -1,4 +1,4 @@
-import { deepLink, safeNext } from './next'
+import { deepLink, joinTarget, safeNext } from './next'
 
 // 登入後回到原網址：路徑、查詢字串、錨點都要留著（教師書籤、活動 QR 都靠這個）
 test('deep links keep path, query and hash', () => {
@@ -33,4 +33,14 @@ test('next accepts only same-site paths', () => {
 test('next never sends the user back to the login or verify screens', () => {
   expect(safeNext('/login?next=/x')).toBe('/')
   expect(safeNext('/verify?token=t')).toBe('/')
+})
+
+// 登入頁靠這個判斷要不要換成 J0（掃描後登入）的版面
+test('join targets come from invite and activity QR links only', () => {
+  expect(joinTarget('/join?code=AB12')).toEqual({ kind: 'course', code: 'AB12' })
+  expect(joinTarget('/activities/a-1/join?from=qr#x')).toEqual({ kind: 'activity', activityId: 'a-1' })
+  expect(joinTarget('/learn/courses/c-1')).toBeNull()
+  expect(joinTarget('/join')).toBeNull()
+  expect(joinTarget('/join?code=')).toBeNull()
+  expect(joinTarget('/activities/a-1')).toBeNull()
 })

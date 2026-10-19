@@ -15,7 +15,7 @@ def test_classroom_migration_extends_the_round1_head() -> None:
     script = _script()
 
     # 單一 head：分岔會讓 `alembic upgrade head` 在部署時失敗。
-    assert script.get_heads() == ["0013"]
+    assert script.get_heads() == ["0014"]
     # 教室的 schema 接在 Round 1 的最後一支上，而不是另起一條鏈。
     assert script.get_revision("0010").down_revision == "9a0c1d2e3f42"
     # 題庫商店（issue #17）接在教室 schema 之後。
@@ -24,6 +24,8 @@ def test_classroom_migration_extends_the_round1_head() -> None:
     assert script.get_revision("0012").down_revision == "0011"
     # 長期課程、選課與活動版本沿用同一條 migration 鏈。
     assert script.get_revision("0013").down_revision == "0012"
+    # 活動軟刪除只加一個欄位。
+    assert script.get_revision("0014").down_revision == "0013"
 
 
 @pytest.mark.parametrize("revision", SQUASHED)

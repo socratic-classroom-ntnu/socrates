@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import time
+from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, cast
 from uuid import uuid4
@@ -29,7 +30,11 @@ from app.modules.platform.errors import DomainError
 from app.modules.platform.repositories.classroom_storage import Account
 
 if TYPE_CHECKING:
-    from app.modules.course_management.api.schemas import ActivityDraft
+    from app.modules.course_management.api.schemas import ActivityDetailsUpdate, ActivityDraft
+
+# Fields a teacher may change without a new revision, and the course snapshot publish adds.
+_OPERATIONAL = ("title", "starts_at", "ends_at")
+_COURSE_SNAPSHOT = ("course_intro", "course_goals")
 
 
 def now() -> float:
@@ -43,7 +48,10 @@ def _status(activity: Activity, at: float) -> ActivityStatus:
 
 
 def get_activity(db, activity_id: str) -> Activity:
-    activity = db.get(Activity, activity_id)
+    """A soft-deleted activity is indistinguishable from a missing one."""
+    activity = db.scalar(
+        select(Activity).where(Activity.id == activity_id, Activity.deleted.is_(False))
+    )
     if activity is None:
         raise DomainError("ACTIVITY_NOT_FOUND", 404)
     return activity
@@ -53,7 +61,7 @@ def _lock_row(db, activity_id: str) -> Activity:
     """Row lock shared by update, publish and lock, so a first attempt and a republish serialize."""
     activity = db.scalar(
         select(Activity)
-        .where(Activity.id == activity_id)
+        .where(Activity.id == activity_id, Activity.deleted.is_(False))
         .with_for_update()
         .execution_options(populate_existing=True)
     )
@@ -96,7 +104,10 @@ def update_draft(db, activity: Activity, data: ActivityDraft) -> Activity:
     if is_locked(db, row):
         raise DomainError("ACTIVITY_LOCKED", 409)
     row.draft = data.model_dump()
-    row.title = data.title
+    # Activity.title is what students see; a published activity's name only changes on
+    # publish or update_details, never by saving an unpublished draft.
+    if row.published_at is None:
+        row.title = data.title
     row.updated_at = time.time()
     return row
 
@@ -127,6 +138,7 @@ def publish(db, activity: Activity, at: float) -> ActivityRevision:
     db.add(revision)
     db.flush()
     row.current_revision_id = revision.id
+    row.title = draft["title"]
     row.published_at = at
     row.starts_at = starts_at
     row.ends_at = ends_at
@@ -134,16 +146,80 @@ def publish(db, activity: Activity, at: float) -> ActivityRevision:
     return revision
 
 
+def _lock_for(db, activity: Activity, action: TeacherAction, at: float) -> Activity:
+    """Lock the row and check the action again: the caller checked a row read before the
+    lock, and whoever held the lock may have started, ended or edited the activity."""
+    row = _lock_row(db, activity.id)
+    require_action(db, row, action, at)
+    return row
+
+
 def start_now(db, activity: Activity, at: float) -> Activity:
-    activity.starts_at = at
-    activity.updated_at = at
-    return activity
+    row = _lock_for(db, activity, "start_now", at)
+    # The draft follows the live window, or has_unpublished_changes would report a change.
+    row.starts_at = at
+    row.draft = {**row.draft, "starts_at": at}
+    row.updated_at = at
+    return row
 
 
 def end_now(db, activity: Activity, at: float) -> Activity:
-    activity.ends_at = at
-    activity.updated_at = at
-    return activity
+    row = _lock_for(db, activity, "end_now", at)
+    row.ends_at = at
+    row.draft = {**row.draft, "ends_at": at}
+    row.updated_at = at
+    return row
+
+
+def update_details(db, activity: Activity, data: ActivityDetailsUpdate, at: float) -> Activity:
+    """Rename or move the end time; allowed after locking because neither changes the questions."""
+    row = _lock_row(db, activity.id)
+    changes: dict = {}
+    if "ends_at" in data.model_fields_set:
+        ends_at = cast(float, data.ends_at)
+        if ends_at <= at or (row.starts_at is not None and ends_at <= row.starts_at):
+            raise DomainError("ACTIVITY_TIME_INVALID", 422)
+        changes["ends_at"] = ends_at
+    if "title" in data.model_fields_set:
+        changes["title"] = data.title
+    if "ends_at" in changes:
+        row.ends_at = changes["ends_at"]
+    if "title" in changes:
+        row.title = changes["title"]
+    # Reassign the whole dict: SQLAlchemy does not see in-place changes to a JSON column.
+    row.draft = {**row.draft, **changes}
+    row.updated_at = at
+    return row
+
+
+def delete(db, activity: Activity) -> None:
+    """Soft delete: hide the activity everywhere but keep it and its revisions.
+
+    M3 marks the activity's attempts and statistics deleted in this same transaction;
+    course_management does not import solo_dialogue.
+    """
+    row = _lock_row(db, activity.id)
+    row.deleted = True
+    row.updated_at = time.time()
+
+
+def has_unpublished_changes(db, activity: Activity) -> bool:
+    """Whether the teacher's draft differs from what students currently get.
+
+    Course intro/goals edited after publishing do not count: they belong to the course, and
+    the revision keeps the snapshot taken when it was published.
+    """
+    revision = current_revision(db, activity)
+    if revision is None:
+        return False
+    draft = activity.draft
+    starts_at = draft["starts_at"] if draft["starts_at"] is not None else activity.starts_at
+    live = (activity.title, activity.starts_at, activity.ends_at)
+    if (draft["title"], starts_at, draft["ends_at"]) != live:
+        return True
+    planned = {k: v for k, v in draft.items() if k not in _OPERATIONAL}
+    served = {k: v for k, v in revision.content.items() if k not in _OPERATIONAL + _COURSE_SNAPSHOT}
+    return _content_hash(planned) != _content_hash(served)
 
 
 def copy(db, activity: Activity) -> Activity:
@@ -179,6 +255,7 @@ def teacher_view(db, activity: Activity, at: float) -> dict:
         "course_id": activity.course_id,
         "status": _status(activity, at),
         "locked": revision is not None and revision.locked_at is not None,
+        "has_unpublished_changes": has_unpublished_changes(db, activity),
         "revision": revision.number if revision else None,
         "draft": activity.draft,
         "starts_at": activity.starts_at if published else activity.draft["starts_at"],
@@ -191,7 +268,7 @@ def _course_activities(db, course: Course) -> list[Activity]:
     return list(
         db.scalars(
             select(Activity)
-            .where(Activity.course_id == course.id)
+            .where(Activity.course_id == course.id, Activity.deleted.is_(False))
             .order_by(Activity.created_at, Activity.id)
         )
     )
@@ -204,8 +281,10 @@ def teacher_cards(db, course: Course, at: float) -> list[dict]:
         cards.append(
             {
                 "id": activity.id,
-                "title": activity.title,
+                "title": activity.draft["title"],
                 "status": view["status"],
+                "locked": view["locked"],
+                "has_unpublished_changes": view["has_unpublished_changes"],
                 "question_count": len(activity.draft["questions"]),
                 "starts_at": view["starts_at"],
                 "ends_at": view["ends_at"],
@@ -228,18 +307,75 @@ def student_cards(db, course: Course, at: float) -> list[dict]:
     for activity in _course_activities(db, course):
         if activity.published_at is None:
             continue
-        content = _published(db, activity).content
-        cards.append(
-            {
-                "id": activity.id,
-                "title": content["title"],
-                "status": _status(activity, at),
-                "question_count": len(content["questions"]),
-                "starts_at": activity.starts_at,
-                "ends_at": activity.ends_at,
-            }
-        )
+        cards.append(_student_card(activity, _published(db, activity), _status(activity, at)))
     return sorted(cards, key=lambda card: (card["starts_at"], card["id"]))
+
+
+def _student_card(activity: Activity, revision: ActivityRevision, current: ActivityStatus) -> dict:
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "status": current,
+        "question_count": len(revision.content["questions"]),
+        "starts_at": activity.starts_at,
+        "ends_at": activity.ends_at,
+    }
+
+
+def course_summaries(db, course_ids: list[str], at: float) -> dict[str, dict]:
+    """Home-card numbers for many courses at once: one activity query and one revision query.
+
+    The highlight is the open activity ending soonest, else the next scheduled one, else the
+    latest ended one; ties go to the smaller id. Drafts and deleted activities never count.
+    """
+    summaries: dict[str, dict] = {
+        course_id: {
+            "activity_count": 0,
+            "open_activity_count": 0,
+            "open_activity_title": None,
+            "highlight": None,
+        }
+        for course_id in course_ids
+    }
+    if not course_ids:
+        return summaries
+    rows = db.scalars(
+        select(Activity).where(Activity.course_id.in_(course_ids), Activity.deleted.is_(False))
+    ).all()
+    published: dict[str, list[tuple[ActivityStatus, Activity]]] = defaultdict(list)
+    for activity in rows:
+        summaries[activity.course_id]["activity_count"] += 1
+        if activity.published_at is not None and activity.current_revision_id is not None:
+            published[activity.course_id].append((_status(activity, at), activity))
+    picks: dict[str, tuple[ActivityStatus, Activity]] = {}
+    for course_id, items in published.items():
+        opened = sorted((a for s, a in items if s == "open"), key=lambda a: (a.ends_at, a.id))
+        scheduled = sorted(
+            (a for s, a in items if s == "scheduled"), key=lambda a: (a.starts_at, a.id)
+        )
+        ended = sorted(
+            (a for s, a in items if s == "ended"), key=lambda a: (-cast(float, a.ends_at), a.id)
+        )
+        summaries[course_id]["open_activity_count"] = len(opened)
+        if opened:
+            summaries[course_id]["open_activity_title"] = opened[0].title
+            picks[course_id] = ("open", opened[0])
+        elif scheduled:
+            picks[course_id] = ("scheduled", scheduled[0])
+        elif ended:
+            picks[course_id] = ("ended", ended[0])
+    if picks:
+        revision_ids = [activity.current_revision_id for _, activity in picks.values()]
+        revisions = {
+            revision.id: revision
+            for revision in db.scalars(
+                select(ActivityRevision).where(ActivityRevision.id.in_(revision_ids))
+            )
+        }
+        for course_id, (current, activity) in picks.items():
+            revision = revisions[cast(str, activity.current_revision_id)]
+            summaries[course_id]["highlight"] = _student_card(activity, revision, current)
+    return summaries
 
 
 def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
@@ -247,16 +383,25 @@ def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
     course = db.get(Course, activity.course_id)
     return {
         "activity_id": activity.id,
-        "title": content["title"],
+        "title": activity.title,
         "course_id": course.id,
         "course_name": course.name,
         "teacher_name": course.teacher_name,
         "question_count": len(content["questions"]),
+        "starts_at": activity.starts_at,
         "ends_at": activity.ends_at,
         "status": _status(activity, at),
         "already_enrolled": enrollment.existing(db, account, course) is not None,
         "default_display_name": account.username,
     }
+
+
+def public_course_name(db, activity_id: str) -> str:
+    """Course name behind a published activity link; drafts and deleted ones are not found."""
+    activity = get_activity(db, activity_id)
+    _published(db, activity)
+    course = db.get(Course, activity.course_id)
+    return course.name
 
 
 def join_by_activity(

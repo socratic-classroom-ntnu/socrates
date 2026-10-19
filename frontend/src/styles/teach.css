@@ -1,0 +1,85 @@
+@import './ui.css';
+
+/* 教師端：T1 抽屜、T2／T4 課程頁、T2b 邀請 */
+.teach-page {
+  box-sizing: border-box; min-height: 100%; padding: 28px 40px 40px; display: flex; flex-direction: column; gap: 20px;
+  color: #1F2421; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+.teach-page--message { align-items: flex-start; }
+.teach-page--message h1 { margin: 0; font-size: 24px; }
+.teach-page--message p { margin: 0; color: #5F6661; }
+.teach-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.teach-head__title { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.teach-head__crumb { font-size: 14px; color: #2E5045; text-decoration: none; }
+.teach-head__crumb:hover { text-decoration: underline; }
+.teach-head h1 { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.teach-head__meta { font-size: 14px; color: #5F6661; }
+.teach-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; border-bottom: 1px solid #E3E3DF; }
+.teach-tabs a {
+  position: relative; display: flex; align-items: center; min-height: 44px; padding: 0 2px; color: #5F6661; font-size: 16px; text-decoration: none;
+}
+.teach-tabs a[aria-current="page"] { color: #1F2421; font-weight: 700; }
+.teach-tabs a[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px; background: #2E5045; }
+.teach-tabs__count { margin-left: 4px; font-size: 13px; }
+.teach-tabs a:focus-visible, .teach-head a:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.teach-empty {
+  flex-grow: 1; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 40px 24px; border: 1px dashed #CFCFC9; border-radius: 12px; background: #FFFFFF; text-align: center;
+}
+.teach-empty__icon { width: 56px; height: 56px; border-radius: 50%; background: #E7EEEA; color: #2E5045; display: flex; align-items: center; justify-content: center; }
+.teach-empty h2 { margin: 0; font-size: 18px; }
+.teach-empty p { margin: 0 0 6px; max-width: 480px; color: #3F4642; font-size: 14px; line-height: 1.7; }
+.teach-activity-titles { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+/* T1 */
+.create-course { display: flex; flex-direction: column; gap: 16px; }
+.create-course__section { margin: 0; font-size: 14px; font-weight: 700; color: #2E5045; }
+.create-course__background {
+  margin-top: 4px; padding: 18px 18px 20px; border: 1px solid #E3E3DF; border-radius: 12px; background: #F7F6F2;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.create-course__background-head { display: flex; align-items: flex-start; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #E3E3DF; }
+.create-course__background-head h3 { margin: 0; font-size: 15px; }
+.create-course__background-head p { margin: 4px 0 0; font-size: 13px; line-height: 1.6; color: #5F6661; }
+.create-course__person { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #E7EEEA; color: #2E5045; display: flex; align-items: center; justify-content: center; }
+.drawer-footnote { margin-right: auto; font-size: 13px; color: #5F6661; }
+
+/* T2b */
+.invite { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.invite__qr { padding: 26px; border: 1px solid #E3E3DF; border-radius: 12px; background: #FFFFFF; }
+.invite__code { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }
+.invite__code-label { font-size: 14px; color: #3F4642; }
+.invite__code-value { font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 30px; font-weight: 700; letter-spacing: 0.12em; }
+.invite__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.invite__disabled { margin: 0; padding: 14px; border-radius: 8px; background: #FFF6E0; color: #6E5034; line-height: 1.7; }
+
+@media (max-width: 767px) {
+  .teach-page { padding: 20px 16px 32px; }
+  .teach-head h1 { font-size: 26px; }
+  .invite__code-value { font-size: 24px; }
+}
+
+/* T4 活動卡片 */
+.activity-cards { display: flex; flex-direction: column; gap: 16px; }
+.activity-cards__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.activity-cards__list { display: flex; flex-direction: column; gap: 12px; }
+.activity-card {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 18px 20px;
+  border: 1px solid #E3E3DF; border-radius: 12px; background: #FFFFFF;
+}
+.activity-card--open { border: 2px solid #2E5045; padding: 17px 19px; }
+.activity-card__main { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.activity-card__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.activity-card__head h3 { margin: 0; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.activity-card__link { color: #1F2421; text-decoration: none; }
+.activity-card__link::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
+.activity-card__link:focus-visible { outline: none; }
+.activity-card__link:focus-visible::after { outline: 2px solid #2E5045; outline-offset: 2px; }
+.activity-card:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06); }
+.activity-card__meta { font-size: 13px; color: #5F6661; }
+.activity-card__side { flex: 0 0 216px; font-size: 13px; color: #5F6661; }
+.activity-card__actions { position: relative; z-index: 1; flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.activity-card .status-pill { font-size: 12px; padding: 2px 9px; }
+/* 選單展開時蓋過下面卡片的按鈕 */
+.activity-card__actions:focus-within { z-index: 3; }
+.activity-cards__none { margin: 24px 0; text-align: center; color: #5F6661; }

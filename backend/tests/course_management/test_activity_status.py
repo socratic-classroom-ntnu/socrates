@@ -23,15 +23,21 @@ def test_status_boundaries(activity, now, expected):
     assert status(activity, now) == expected
 
 
-def test_teacher_actions_per_status():
-    assert teacher_actions("draft", locked=False) == ["update", "publish", "copy"]
-    assert teacher_actions("scheduled", locked=False) == [
-        "update",
-        "publish",
-        "start_now",
-        "end_now",
-        "copy",
-    ]
-    assert teacher_actions("open", locked=False) == ["update", "publish", "end_now", "copy"]
-    assert teacher_actions("open", locked=True) == ["end_now", "copy"]
-    assert teacher_actions("ended", locked=False) == ["copy"]
+@pytest.mark.parametrize(
+    ("current", "locked", "expected"),
+    [
+        ("draft", False, ["update", "publish", "copy", "delete"]),
+        (
+            "scheduled",
+            False,
+            ["update", "update_details", "publish", "start_now", "end_now", "copy", "delete"],
+        ),
+        ("scheduled", True, ["update_details", "start_now", "end_now", "copy", "delete"]),
+        ("open", False, ["update", "update_details", "publish", "end_now", "copy", "delete"]),
+        ("open", True, ["update_details", "end_now", "copy", "delete"]),
+        ("ended", False, ["copy", "delete"]),
+        ("ended", True, ["copy", "delete"]),
+    ],
+)
+def test_teacher_actions_per_status(current, locked, expected):
+    assert teacher_actions(current, locked=locked) == expected

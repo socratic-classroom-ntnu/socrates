@@ -42,3 +42,19 @@ test('recent API errors keep only the newest entries', () => {
     expect(recent[0]).toMatchObject({ method: 'GET', path: '/api/v2/x/24', code: 'CODE_24' });
     expect(recent[RECENT_API_ERROR_LIMIT - 1].code).toBe('CODE_5');
 });
+
+// Task 11：DELETE 回 204、沒有 body，是成功，不是「格式錯誤」
+test('204 resolves to null', async () => {
+    const before = recentApiErrors().length;
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, status: 204, headers: { get: () => null }, text: async () => '' });
+    await expect(api('/activities/a1', 'DELETE')).resolves.toBeNull();
+    expect(recentApiErrors().length).toBe(before);
+});
+test('an empty 200 body also resolves to null', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: (name: string) => (name.toLowerCase() === 'content-length' ? '0' : '') }, text: async () => '' });
+    await expect(api('/activities/a1', 'DELETE')).resolves.toBeNull();
+});
+test('non-JSON 200 still rejects', async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: (name: string) => (name.toLowerCase() === 'content-type' ? 'text/html' : null) }, text: async () => '<html>' });
+    await expect(api('/activities/a1')).rejects.toBeInstanceOf(ApiError);
+});

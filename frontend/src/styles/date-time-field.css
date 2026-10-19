@@ -1,0 +1,60 @@
+/* T3 開始／結束時間（Figma 113:6144、113:6236、113:6038） */
+.date-time-field {
+  display: flex; align-items: center; width: 100%; min-height: 46px; box-sizing: border-box; padding: 0 12px;
+  border: 1px solid #CFCFC9; border-radius: 8px; background: #FFFFFF; color: #1F2421; color-scheme: light;
+  font: inherit; font-size: 15px; text-align: left; cursor: pointer;
+}
+.date-time-field:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.date-time-field--invalid { border: 2px solid #B03A2E; }
+.date-time-field--readonly, .date-time-field:disabled { background: #F3F3F1; color: #3F4642; cursor: default; }
+.date-time-field__date { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.date-time-field__divider { align-self: stretch; width: 1px; margin: 10px 12px; background: #CFCFC9; }
+.date-time-field__time { flex: 0 0 auto; min-width: 7ch; font-variant-numeric: tabular-nums; }
+.date-time-field__placeholder { color: #8A908C; }
+
+/* 設計稿的選擇器是淺藍底、白色格子 */
+.dialog__panel:has(.date-time-picker) { width: 440px; background: #EEF4FA; }
+.date-time-picker { display: flex; flex-direction: column; gap: 12px; color-scheme: light; }
+.date-time-picker .form-error { margin: 0; }
+
+.calendar__head { display: flex; align-items: center; justify-content: space-between; }
+.calendar__month { margin: 0; font-size: 18px; font-weight: 700; }
+.calendar__nav { width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #1F2421; font-size: 20px; cursor: pointer; }
+.calendar__nav:disabled { color: #C9CCC9; cursor: default; }
+.calendar__nav:hover:not(:disabled) { background: #FFFFFF; }
+.calendar { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+.calendar th { height: 36px; border-radius: 6px; background: #FFFFFF; color: #5F6661; font-size: 14px; font-weight: 400; }
+.calendar td { padding: 0; text-align: center; }
+.calendar__day {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; max-width: 100%; height: 44px;
+  box-sizing: border-box; border: 1px solid transparent; border-radius: 6px; background: #FFFFFF; color: #1F2421; font: inherit; font-size: 16px;
+}
+button.calendar__day { cursor: pointer; }
+button.calendar__day:hover:not(:disabled) { background: #EEF2EF; }
+/* 不能選的日子和前後月份同樣灰底灰字（設計稿），不再套全域 disabled 的半透明 */
+.calendar__day--outside, .calendar__day:disabled { background: #F3F2EE; color: #B5B9B5; cursor: default; opacity: 1; }
+.calendar__day--today { border-color: #2E5045; }
+.calendar__day--picked, button.calendar__day--picked:hover:not(:disabled) { background: #2E5045; border-color: #2E5045; color: #FFFFFF; }
+
+.date-time-picker__back { align-self: flex-start; border: 0; background: transparent; color: #2E5045; font: inherit; font-size: 15px; cursor: pointer; padding: 4px 0; }
+.time-summary { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; background: #FFFFFF; }
+.time-summary div { display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: #3F4642; }
+.time-summary small { font-size: 12px; color: #8A908C; }
+.time-summary strong { font-size: 30px; font-weight: 700; color: #2E5045; font-variant-numeric: tabular-nums; }
+.time-columns { display: flex; align-items: center; gap: 12px; }
+.time-columns__colon { font-weight: 700; color: #3F4642; }
+.time-column { flex: 1 1 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.time-column__label { text-align: center; color: #5F6661; font-size: 14px; }
+.time-column__arrow { height: 28px; border: 0; background: transparent; color: #3F4642; font-size: 18px; line-height: 1; cursor: pointer; }
+.time-column__arrow:disabled { color: #C9CCC9; cursor: default; opacity: 1; }
+.time-column__list {
+  position: relative; height: 220px; margin: 0; padding: 0; list-style: none; overflow-y: auto; scrollbar-width: none;
+  display: flex; flex-direction: column; gap: 4px; border-radius: 8px;
+}
+.time-column__list:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.time-column__option {
+  flex: 0 0 40px; display: flex; align-items: center; justify-content: center; border-radius: 6px;
+  background: #FFFFFF; color: #1F2421; font-size: 17px; font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.time-column__option:hover { background: #EEF2EF; }
+.time-column__option[aria-selected="true"] { background: #2E5045; color: #FFFFFF; font-weight: 700; }

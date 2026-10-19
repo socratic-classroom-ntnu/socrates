@@ -1,0 +1,100 @@
+@import './ui.css';
+
+/* J0／J1／J2m：加入流程（全螢幕，不包外框） */
+.join-page {
+  position: relative; min-height: 100dvh; display: flex; flex-direction: column; background: #F3F3F1; color: #1F2421;
+  font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; overflow-x: hidden;
+}
+.join-page__header {
+  position: relative; z-index: 1; min-height: 60px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; background: #FFFFFF; border-bottom: 1px solid #E3E3DF;
+}
+.join-page__brand { display: flex; align-items: center; gap: 8px; color: #1F2421; font-weight: 700; font-size: 15px; text-decoration: none; }
+.join-page__mark { width: 28px; height: 28px; border-radius: 7px; background: #2E5045; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.join-page__user { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.join-page__user .app-shell__avatar { width: 32px; height: 32px; font-size: 14px; background: #C4501F; }
+.join-page__main { position: relative; z-index: 1; flex-grow: 1; width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box; padding: 26px 20px 24px; display: flex; flex-direction: column; }
+
+/* J1 電腦：教室走廊（牆、木頭護牆板、地板）與門 */
+.join-page--scene { background: #ECE4D3; color: #1E1C18; min-height: max(100dvh, 860px); }
+.join-page--scene .join-page__header { background: transparent; border-bottom: 0; min-height: 72px; padding: 16px 28px; }
+.join-page--scene .join-page__brand { font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 18px; }
+.join-page--scene .join-page__mark { width: 32px; height: 32px; background: #1E1C18; color: #ECE4D3; font-family: 'Noto Serif TC', serif; font-size: 17px; }
+.join-page--scene .join-page__main { max-width: 1180px; padding: 24px 40px 72px; flex-direction: row; align-items: flex-start; }
+.join-page__wainscot {
+  position: absolute; left: 0; right: 0; bottom: 64px; height: 230px; background: #7A5A3C; border-top: 12px solid #5E432B;
+  background-image: repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 2px), #6A4D33 calc(12.5% - 2px) 12.5%);
+}
+.join-page__floor { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #4A3A2C; }
+.join-door {
+  position: absolute; z-index: 0; right: 9%; bottom: 64px; width: 300px; height: 600px; box-sizing: border-box; padding: 34px 26px 26px;
+  background: #6E5034; border: 12px solid #4E3824; border-bottom: 0; display: flex; flex-direction: column; gap: 26px;
+}
+.join-door__window { flex-shrink: 0; height: 150px; border: 8px solid #5A4129; background: #2A2723; }
+.join-door__panel { flex-grow: 1; border: 2px solid #5A4129; }
+.join-door__handle { position: absolute; left: 16px; top: 290px; width: 16px; height: 56px; border-radius: 8px; background: #C9A24A; }
+.join-plaque {
+  position: relative; z-index: 1; flex: 0 1 480px; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px;
+  padding: 30px 32px 32px; border-radius: 6px; background: #E9E6DF; border: 1px solid #C9C4B8; box-shadow: 0 14px 30px rgba(40, 30, 20, 0.25);
+}
+.join-plaque__sign { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 18px 22px; border-radius: 4px; background: #1E1C18; color: #F3EEE3; }
+.join-plaque__sign h1 { margin: 0; font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 30px; overflow-wrap: anywhere; }
+.join-plaque__sign span { font-size: 13px; color: #C9C2B2; }
+.join-plaque__rows, .chalk-card__rows { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 16px; line-height: 1.6; }
+.join-plaque__rows div, .chalk-card__rows div { display: contents; }
+.join-plaque__rows dt { color: #57514A; }
+.join-plaque__rows dd, .chalk-card__rows dd { margin: 0; font-weight: 700; }
+.join-plaque__code, .chalk-card__code { display: flex; align-items: center; gap: 4px; font-family: 'Noto Sans Mono', ui-monospace, monospace; letter-spacing: 0.15em; }
+.join-plaque__live { margin: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 4px; background: #1E1C18; color: #F3EEE3; font-size: 14px; font-weight: 700; }
+.join-plaque__live::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #E8573A; }
+.join-plaque__submit { min-height: 54px; font-size: 17px; background: #1E1C18; }
+.join-plaque .form-field input { background: #F7F5F0; }
+
+/* J1m／J2m：黑板卡 */
+.join-sheet { display: flex; flex-direction: column; gap: 18px; flex-grow: 1; }
+.join-sheet h1 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.4; }
+.chalk-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 14px; background: #23332C; color: #EFEBE0; border: 8px solid #6E5034; }
+.chalk-card__eyebrow { margin: 0; font-size: 14px; color: #C9C2B2; }
+.chalk-card__title { margin: 0; font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 26px; line-height: 1.3; overflow-wrap: anywhere; }
+.chalk-card__rows { font-size: 15px; }
+.chalk-card__rows dt { color: #C9C2B2; }
+.chalk-card__rows dd { font-weight: 400; }
+.chalk-card__live, .chalk-card__soon { display: inline-flex; align-items: center; gap: 8px; }
+.chalk-card__live::before, .chalk-card__soon::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #7FCB9B; }
+.chalk-card__soon::before { background: #E8C46A; }
+.chalk-card__copy { border: 0; background: transparent; color: #EFEBE0; cursor: pointer; display: inline-flex; padding: 4px; }
+.join-note { margin: 0; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #E7EEEA; color: #1F3A31; font-size: 14px; line-height: 1.6; }
+.join-sheet .form-field input { min-height: 52px; border-radius: 10px; font-size: 17px; }
+.join-sheet__submit { margin-top: 8px; min-height: 56px; border-radius: 12px; font-size: 17px; }
+.join-link {
+  margin-top: auto; align-self: center; min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; border: 0; background: transparent;
+  color: #5F6661; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
+}
+.join-plaque .join-link { margin-top: 0; color: #3A362F; }
+.join-message { margin: auto 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px; border-radius: 14px; background: #FBE7E3; color: #8A2A1F; }
+.join-message h1 { margin: 0; font-size: 20px; }
+.join-message p { margin: 0; line-height: 1.7; }
+
+/* J0：掃描後登入 */
+.join-login { display: flex; flex-direction: column; gap: 20px; }
+.join-banner { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; background: #23332C; color: #EFEBE0; }
+.join-banner__check { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; background: #2C3F37; color: #E8C46A; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.join-banner__text { display: flex; flex-direction: column; gap: 2px; }
+.join-banner__text small { font-size: 13px; color: #C9C2B2; }
+.join-banner__text strong { font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 19px; }
+.join-login__card { display: flex; flex-direction: column; gap: 16px; padding: 24px 20px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E3E3DF; }
+.join-login__card h1 { margin: 0; font-size: 22px; }
+.join-login__card .auth-field label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
+.join-login__card .auth-field input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid #CFCFC9; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 16px; font-weight: 400; }
+.join-login__submit { min-height: 52px; border-radius: 10px; font-size: 16px; }
+.join-login__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.join-login__links .join-link { margin: 0; padding: 0; color: #2E5045; font-weight: 700; }
+.join-login__links .join-link--quiet { color: #5F6661; font-weight: 400; }
+.join-login__note { margin: 0; font-size: 13px; line-height: 1.7; color: #5F6661; text-align: center; }
+
+@media (max-width: 1023px) {
+  .join-door { display: none; }
+  .join-page--scene .join-page__main { justify-content: center; padding: 24px 20px 72px; }
+}
+@media (max-width: 767px) { .join-page__user span:last-child { display: none; } }
+.join-page { color-scheme: light; }

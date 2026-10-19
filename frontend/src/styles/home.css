@@ -1,0 +1,101 @@
+@import './ui.css';
+
+/* H1／H2 首頁（電腦）與 H1m／H2m（手機） */
+.home {
+  box-sizing: border-box; min-height: 100%; padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 24px;
+  color: #1F2421; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+.home__greeting { margin: 0; font-size: 30px; font-weight: 700; }
+.home__panel {
+  flex-grow: 1; display: flex; flex-direction: column; gap: 20px; padding: 20px 24px 24px;
+  border-radius: 16px; background: #FFFFFF; border: 1px solid #E3E3DF;
+}
+.home__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #ECECE8; }
+.home__tabs { display: flex; gap: 28px; }
+.home__tabs button {
+  position: relative; min-height: 44px; padding: 0 2px; border: 0; background: transparent; font: inherit; font-size: 17px;
+  color: #5F6661; font-weight: 500; cursor: pointer;
+}
+.home__tabs button[aria-selected="true"] { color: #1F2421; font-weight: 700; }
+.home__tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 25%; right: 25%; bottom: 2px; height: 3px; border-radius: 3px; background: #2E5045; }
+.home__tabs button:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.home__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.home__loading { min-height: 200px; }
+.home__empty { flex-grow: 1; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.home__empty h2 { margin: 12px 0 0; font-size: 18px; }
+.home__empty p { margin: 0; color: #5F6661; font-size: 14px; }
+.empty-classroom-illustration { max-width: 100%; height: auto; }
+.home__hint { margin: 0; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #F3F3F1; color: #3F4642; font-size: 14px; }
+
+/* 代碼表單 */
+.join-code { display: flex; flex-direction: column; gap: 10px; }
+.join-code__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.join-code__input {
+  width: 220px; min-height: 44px; box-sizing: border-box; padding: 0 14px; border: 1px solid #CFCFC9; border-radius: 8px;
+  background: #FFFFFF; color: #1F2421; font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 15px; letter-spacing: 0.08em;
+}
+.join-code__input:focus { outline: none; border: 2px solid #2E5045; padding: 0 13px; }
+.join-code__input[aria-invalid="true"] { border: 2px solid #B03A2E; padding: 0 13px; }
+.join-code .button { min-height: 44px; font-size: 15px; }
+.join-code__error {
+  display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 10px; background: #FBE7E3;
+  color: #8A2A1F; font-size: 13px; line-height: 1.6;
+}
+.join-code__error strong { font-size: 14px; }
+.join-code--inline .join-code__error { max-width: 360px; }
+
+/* 課程卡片 */
+.course-card {
+  display: flex; flex-direction: column; gap: 14px; padding: 20px 22px; border-radius: 12px; background: #FFFFFF;
+  border: 1px solid #E3E3DF; position: relative;
+}
+.course-card--active { border: 2px solid #2E5045; padding: 19px 21px; }
+.course-card__head { display: flex; align-items: center; gap: 10px; }
+.course-card__head h3 { flex-grow: 1; margin: 0; font-size: 18px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.course-card__head svg { flex-shrink: 0; color: #2E5045; }
+.course-card__title-link { color: #1F2421; }
+.course-card__stretch { color: #1F2421; text-decoration: none; }
+.course-card__stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
+.course-card__stretch:focus-visible { outline: none; }
+.course-card__stretch:focus-visible::after { outline: 2px solid #2E5045; outline-offset: 2px; }
+.course-card__content { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid #ECECE8; }
+.course-card__activity { font-size: 15px; font-weight: 700; }
+.course-card__meta { font-size: 14px; color: #5F6661; }
+.course-card__stats { display: flex; gap: 24px; padding-top: 12px; border-top: 1px solid #ECECE8; font-size: 14px; color: #3F4642; }
+.course-card__code { position: relative; z-index: 1; align-self: flex-end; display: flex; align-items: center; gap: 4px; font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 13px; color: #5F6661; }
+.course-card__actions { align-self: flex-end; }
+.course-card__actions .button { min-height: 44px; font-size: 15px; }
+
+/* 手機：整張卡片是一個連結 */
+.course-card--phone { padding: 0; gap: 0; }
+.course-card--phone.course-card--active { padding: 0; }
+.course-card__whole { display: flex; align-items: center; gap: 12px; padding: 16px 18px; color: #1F2421; text-decoration: none; border-radius: 12px; }
+.course-card__whole:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+.course-card__body { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.course-card--phone .course-card__head { padding-bottom: 10px; border-bottom: 1px solid #ECECE8; margin-bottom: 4px; }
+.course-card__name { flex-grow: 1; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.course-card--phone .course-card__activity { font-size: 14px; }
+.course-card--phone .course-card__meta { font-size: 13px; }
+.course-card__chevron { flex-shrink: 0; color: #3F4642; font-size: 22px; }
+
+@media (max-width: 1023px) { .home__cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 767px) {
+  .home { padding: 20px 16px 32px; gap: 16px; }
+  .home__greeting { font-size: 24px; }
+  .home__panel { padding: 0; border: 0; background: transparent; gap: 16px; }
+  .home__bar { padding-bottom: 0; }
+  .home__tabs { gap: 24px; }
+  .home__tabs button { font-size: 16px; }
+  .join-code--phone .join-code__row { flex-wrap: nowrap; }
+  .join-code--phone .join-code__input { width: auto; flex: 1 1 auto; min-width: 0; }
+  .join-code__scan { flex-shrink: 0; color: #E8C46A; }
+  .home__create-phone { width: 100%; min-height: 46px; font-size: 15px; }
+  .home__empty { min-height: 320px; }
+  .home__empty .empty-classroom-illustration { width: 160px; }
+}
+/* 錯誤卡出現時分頁不跟著往下移 */
+.home__bar { align-items: flex-start; }
+.join-code__input { text-transform: uppercase; }
+.join-code__input::placeholder { text-transform: none; }
+.join-code .button { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 767px) { .home__hint { background: #E9E9E4; } }

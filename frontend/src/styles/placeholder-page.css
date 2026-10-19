@@ -1,3 +1,4 @@
+/* 「功能開發中」與 404（畫布 S1／S1m） */
 .placeholder-page {
   min-height: 100vh;
   box-sizing: border-box;
@@ -6,12 +7,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   background: #F3F3F1;
   color: #1F2421;
   text-align: center;
 }
-.placeholder-page__icon { color: #2E5045; }
-.placeholder-page h1 { margin: 0; font-size: 24px; }
-.placeholder-page p { margin: 0; max-width: 36em; color: #5F6661; line-height: 1.7; }
-.placeholder-page a { color: #2E5045; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.app-shell .placeholder-page { min-height: calc(100dvh - 80px); margin: 28px 40px 40px; border: 1px dashed #CFCFC9; border-radius: 12px; background: #FFFFFF; }
+.placeholder-page--panel { min-height: 420px; padding: 40px 24px; border: 1px dashed #CFCFC9; border-radius: 12px; background: #FFFFFF; }
+.app-shell .placeholder-page--panel { min-height: 420px; margin: 0; }
+.construction-illustration { max-width: 100%; height: auto; }
+.placeholder-page h1, .placeholder-page h2 { margin: 0; font-size: 20px; font-weight: 700; }
+.placeholder-page p { margin: 0; max-width: 520px; color: #5F6661; font-size: 15px; line-height: 1.7; }
+.placeholder-page__back {
+  margin-top: 6px; min-height: 44px; box-sizing: border-box; padding: 0 18px; border: 1px solid #2E5045; border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 8px; color: #2E5045; font-size: 15px; font-weight: 700; text-decoration: none;
+}
+.placeholder-page__back:focus-visible { outline: 2px solid #2E5045; outline-offset: 2px; }
+@media (max-width: 767px) {
+  .app-shell .placeholder-page { margin: 16px; min-height: calc(100dvh - 100px); }
+}
+.desktop-only-illustration { max-width: 100%; height: auto; }
+.app-shell .placeholder-page--plain, .placeholder-page--plain { border: 0; background: transparent; }

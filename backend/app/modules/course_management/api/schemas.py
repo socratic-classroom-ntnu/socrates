@@ -62,20 +62,8 @@ class CourseStudentView(Strict):
     name: str
     teacher_name: str
     intro: str
+    code: str | None  # None while the teacher has the code disabled
     display_name: str
-
-
-class CourseCard(Strict):
-    id: str
-    name: str
-    teacher_name: str
-    role: Literal["teacher", "student"]
-    open_activity_count: int
-
-
-class CourseLists(Strict):
-    teaching: list[CourseCard]
-    learning: list[CourseCard]
 
 
 class CourseJoin(Strict):
@@ -89,6 +77,13 @@ class JoinPreview(Strict):
     teacher_name: str
     already_enrolled: bool
     default_display_name: str
+    open_activity_title: str | None
+
+
+class PublicJoinPreview(Strict):
+    """What an anonymous visitor may learn from a code or activity link: the course name only."""
+
+    course_name: str
 
 
 class ActivityOption(Strict):
@@ -127,11 +122,32 @@ class ActivityDraft(Strict):
         return self
 
 
+class ActivityDetailsUpdate(Strict):
+    """Operational fields a teacher may still change after the content locks."""
+
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    ends_at: float | None = None
+
+    @field_validator("title", "ends_at")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("field cannot be null")
+        return value
+
+    @model_validator(mode="after")
+    def at_least_one(self):
+        if not self.model_fields_set:
+            raise ValueError("nothing to update")
+        return self
+
+
 class ActivityTeacherView(Strict):
     id: str
     course_id: str
     status: ActivityStatus
     locked: bool
+    has_unpublished_changes: bool
     revision: int | None
     draft: ActivityDraft
     starts_at: float | None
@@ -143,6 +159,8 @@ class ActivityTeacherCard(Strict):
     id: str
     title: str
     status: ActivityStatus
+    locked: bool
+    has_unpublished_changes: bool
     question_count: int
     starts_at: float | None
     ends_at: float | None
@@ -175,6 +193,7 @@ class ActivityJoinPreview(Strict):
     course_name: str
     teacher_name: str
     question_count: int
+    starts_at: float
     ends_at: float
     status: Literal["scheduled", "open", "ended"]
     already_enrolled: bool
@@ -189,3 +208,27 @@ class ActivityJoinResult(Strict):
     course_id: str
     activity_id: str
     enrolled_now: bool
+
+
+class CourseTeachingCard(Strict):
+    id: str
+    name: str
+    teacher_name: str
+    code: str
+    code_enabled: bool
+    student_count: int
+    activity_count: int
+    open_activity_count: int
+
+
+class CourseLearningCard(Strict):
+    id: str
+    name: str
+    teacher_name: str
+    open_activity_count: int
+    highlight: ActivityStudentCard | None
+
+
+class CourseLists(Strict):
+    teaching: list[CourseTeachingCard]
+    learning: list[CourseLearningCard]

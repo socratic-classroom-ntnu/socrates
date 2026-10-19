@@ -26,3 +26,16 @@ export function safeNext(raw: string | null): string {
 export function loginPath(pathname: string, search = '', hash = ''): string {
   return '/login?next=' + encodeURIComponent(deepLink(pathname, search, hash))
 }
+
+export type JoinTarget = { kind: 'course'; code: string } | { kind: 'activity'; activityId: string }
+
+/** 課程邀請（/join?code=）或活動 QR（/activities/{id}/join）：登入頁據此換成 J0 版面。 */
+export function joinTarget(next: string): JoinTarget | null {
+  const url = new URL(next, 'http://local')
+  if (url.pathname === '/join') {
+    const code = url.searchParams.get('code')
+    return code ? { kind: 'course', code } : null
+  }
+  const activity = /^\/activities\/([^/]+)\/join\/?$/.exec(url.pathname)
+  return activity ? { kind: 'activity', activityId: decodeURIComponent(activity[1]) } : null
+}

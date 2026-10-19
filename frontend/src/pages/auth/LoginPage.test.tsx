@@ -224,3 +224,53 @@ describe.each<Locale>(['en', 'es'])('no Chinese leaks on the %s login page', loc
     noChinese()
   })
 })
+
+describe('J0: login reached from an invite or activity QR', () => {
+  test('join login shows course name from public preview', async () => {
+    anonymous(url => (url === '/course-join/public-preview?code=AB12' ? { course_name: '哲學導論' } : []))
+    openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
+    expect(await screen.findByText('哲學導論')).toBeInTheDocument()
+    expect(screen.getByText('登入後就會加入')).toBeInTheDocument()
+    expect(screen.queryByText(/掃描成功/)).toBeNull()
+    expect(screen.getByRole('button', { name: '登入並加入課程' })).toBeInTheDocument()
+    expect(screen.getByText('註冊完成後，也會自動回到這門課。')).toBeInTheDocument()
+  })
+
+  test('activity QR uses the activity preview and a neutral button', async () => {
+    anonymous(url => (url === '/activities/a-1/public-preview' ? { course_name: '哲學導論' } : []))
+    openApp('/login?next=' + encodeURIComponent('/activities/a-1/join?from=qr'))
+    expect(await screen.findByText('哲學導論')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '登入並繼續' })).toBeInTheDocument()
+  })
+
+  test('join login without course name still logs in', async () => {
+    anonymous(url => {
+      if (url === '/course-join/public-preview?code=AB12') throw new ApiError(404, 'ENROLL_CODE_NOT_FOUND')
+      if (url === '/auth/login') return account
+      if (url === '/course-join/preview?code=AB12') throw new ApiError(404, 'ENROLL_CODE_NOT_FOUND')
+      return []
+    })
+    openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
+    expect(await screen.findByText('登入後就會繼續加入')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('使用者名稱或 Email'), { target: { value: 'Fizzy' } })
+    fireEvent.change(screen.getByLabelText('密碼'), { target: { value: 'secret' } })
+    await submit('登入並加入課程')
+    await waitFor(() => expect(window.location.pathname + window.location.search).toBe('/join?code=AB12'))
+  })
+
+  test('register link keeps next and uses the normal register layout', async () => {
+    anonymous(url => (url === '/course-join/public-preview?code=AB12' ? { course_name: '哲學導論' } : []))
+    openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
+    fireEvent.click(await screen.findByRole('button', { name: '還沒有帳號？註冊' }))
+    expect(new URLSearchParams(window.location.search).get('mode')).toBe('register')
+    expect(new URLSearchParams(window.location.search).get('next')).toBe('/join?code=AB12')
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+  })
+
+  test('plain login keeps E1 layout', async () => {
+    anonymous()
+    openApp('/login?next=' + encodeURIComponent('/teacher/home'))
+    expect(await screen.findByRole('button', { name: '登入' })).toBeInTheDocument()
+    expect(screen.queryByText('登入後就會加入')).toBeNull()
+  })
+})

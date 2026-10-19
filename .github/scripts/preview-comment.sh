@@ -46,6 +46,8 @@ $marker
 
 **👉 ${URL}**
 
+📜 [看 log](https://logs.socrates.driseam.com/d/socrates-preview?var-namespace=socrates-pr-${PR})・🗄 [查資料庫](https://db-pr-${PR}.socrates.driseam.com)（這兩個要用組內共用帳號 \`socrates\` 登入，密碼問核心組）
+
 $status
 $running
 

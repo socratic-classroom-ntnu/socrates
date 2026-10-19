@@ -5,11 +5,10 @@ because solo_dialogue cannot import classroom_core; tests/solo_activity locks th
 The backend policy decides whether to confirm; the provider only observes.
 """
 
-from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.modules.llm_runtime.domain.tutor import Observations
+from app.modules.solo_dialogue.domain.solo_types import TutorMove
 
 
 class SoloSummary(BaseModel):
@@ -21,6 +20,7 @@ class SoloSummary(BaseModel):
     reason_summary: str = Field(min_length=1, max_length=4000)
     relevant_conditions: list[str] = Field(default_factory=list, max_length=12)
     unresolved_issue: str = Field(default="", max_length=2000)
+    principle_note: str = Field(default="", max_length=300)
 
 
 class SoloTutorTurn(BaseModel):
@@ -28,5 +28,5 @@ class SoloTutorTurn(BaseModel):
 
     reply_text: str = Field(min_length=1, max_length=16000)
     observations: Observations
-    move: Literal["probe", "clarify", "challenge", "reflect", "summarize"] = "probe"
+    move: TutorMove = "probe"
     summary: SoloSummary

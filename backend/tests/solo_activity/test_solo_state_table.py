@@ -120,6 +120,7 @@ def test_policy_decides_confirmation():
         "reason_summary": "不能把人當工具",
         "relevant_conditions": [],
         "unresolved_issue": "",
+        "principle_note": "",
     }
     assert current.summary_digest is not None and len(current.summary_digest) == 32
     assert current.principle_label == "義務論"

@@ -36,6 +36,38 @@ const attempt = {
   notice: null, available_actions: ['submit_stance'],
 }
 
+type FakeRecognition = {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+  onend: (() => void) | null
+  onerror: (() => void) | null
+  start(): void
+  stop(): void
+}
+
+let recognitionInstances: FakeRecognition[] = []
+
+function enableSpeechRecognition() {
+  class Recognition implements FakeRecognition {
+    lang = ''
+    continuous = false
+    interimResults = false
+    onresult: FakeRecognition['onresult'] = null
+    onend: FakeRecognition['onend'] = null
+    onerror: FakeRecognition['onerror'] = null
+    constructor() { recognitionInstances.push(this) }
+    start() {}
+    stop() { this.onend?.() }
+  }
+  Object.defineProperty(window, 'SpeechRecognition', { configurable: true, value: Recognition })
+}
+
+function deliverTranscript(recognition: FakeRecognition, transcript: string) {
+  recognition.onresult?.({ resultIndex: 0, results: [[{ transcript }]] })
+}
+
 function renderPage(routes: Record<string, unknown>, locale = 'zh-Hant') {
   mockApi({ 'GET /auth/me': { ...signedIn, locale }, ...routes })
   return render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
@@ -46,6 +78,9 @@ function renderPage(routes: Record<string, unknown>, locale = 'zh-Hant') {
 beforeEach(async () => {
   jest.useRealTimers()
   localStorage.clear()
+  recognitionInstances = []
+  Reflect.deleteProperty(window, 'SpeechRecognition')
+  Reflect.deleteProperty(window, 'webkitSpeechRecognition')
   await applyLocale('zh-Hant')
 })
 
@@ -66,7 +101,7 @@ test('every Socrates message carries the avatar, like the opening', async () => 
     'GET /solo/attempts/attempt-1': {
       ...attempt,
       state: 'in_dialogue',
-      questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', reason: '不能主動害人' } }],
+      questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', current_option_id: 'o-b', reason: '不能主動害人' } }],
       messages: [
         { id: 'm-1', question_index: 0, role: 'student', text: '不能主動害人', created_at: 1 },
         { id: 'm-2', question_index: 0, role: 'tutor', text: '「主動」指的是什麼？', created_at: 2 },
@@ -83,6 +118,26 @@ test('every Socrates message carries the avatar, like the opening', async () => 
   }
 })
 
+test('hypothetical move shows the scenario tag', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': { ...activity, attempt: { ...activity.attempt, state: 'in_dialogue' } },
+    'GET /solo/attempts/attempt-1': {
+      ...dialogueAttempt,
+      messages: [
+        ...dialogueAttempt.messages,
+        {
+          id: 'm-hypothetical', question_index: 0, role: 'tutor',
+          text: '延伸情境：如果另一條軌道上的人也已經身處危險呢？', created_at: 3,
+          move: 'hypothetical', revise_hint: null,
+        },
+      ],
+    },
+  })
+
+  const reply = await screen.findByText('延伸情境：如果另一條軌道上的人也已經身處危險呢？')
+  expect(reply.closest('article')).toHaveTextContent('換個情境想想 · 不改變原題')
+})
+
 test('composer uses the A1 copy', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
@@ -92,6 +147,101 @@ test('composer uses the A1 copy', async () => {
   expect(await screen.findByPlaceholderText('說說你的理由，或者你在猶豫什麼…')).toBeEnabled()
   expect(screen.getByText('不限回覆次數，慢慢想就好。訊息會先存下來，網路斷了也不會不見。')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '送出回答' })).toBeInTheDocument()
+})
+
+test('voice button is hidden when Web Speech is unsupported', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+
+  await screen.findByLabelText('回答蘇格拉底')
+  expect(screen.queryByRole('button', { name: '用說的' })).toBeNull()
+})
+
+test('voice transcript fills the composer without sending', async () => {
+  enableSpeechRecognition()
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  fireEvent.click(await screen.findByRole('button', { name: '用說的' }))
+  expect(recognitionInstances).toHaveLength(1)
+  expect(recognitionInstances[0].lang).toBe('zh-TW')
+  act(() => deliverTranscript(recognitionInstances[0], '這是我說的理由。'))
+
+  expect(screen.getByLabelText('回答蘇格拉底')).toHaveValue('這是我說的理由。')
+  expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
+})
+
+test('voice transcript fills the A0 reason without submitting', async () => {
+  enableSpeechRecognition()
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': attempt,
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  fireEvent.click(await screen.findByRole('button', { name: '用說的' }))
+  act(() => deliverTranscript(recognitionInstances[0], '我不想主動介入。'))
+
+  expect(screen.getByLabelText('為什麼？')).toHaveValue('我不想主動介入。')
+  expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
+})
+
+test.each([
+  ['zh-Hant', '用說的', 'zh-TW'],
+  ['zh-Hans', '用说的', 'zh-CN'],
+  ['en', 'Use voice', 'en-US'],
+  ['es', 'Usar la voz', 'es-ES'],
+] as const)('voice uses the %s interface language', async (locale, voiceLabel, expectedLanguage) => {
+  enableSpeechRecognition()
+  await applyLocale(locale)
+  const localized = {
+    ...dialogueAttempt,
+    activity_title: 'Debate de ética', course_name: 'Filosofía', display_name: 'Ana',
+    questions: [{
+      ...dialogueAttempt.questions[0], title: 'El desvío', scenario: 'Un tranvía se acerca a cinco personas.',
+      options: [{ id: 'o-a', text: 'Mover la palanca' }, { id: 'o-b', text: 'No moverla' }],
+    }],
+    messages: [],
+  }
+  renderPage({
+    'GET /solo/activities/a-1': { ...activity, title: 'Debate de ética', course_name: 'Filosofía' },
+    'GET /solo/attempts/attempt-1': localized,
+  }, locale)
+
+  fireEvent.click(await screen.findByRole('button', { name: voiceLabel }))
+  expect(recognitionInstances[0].lang).toBe(expectedLanguage)
+})
+
+test('voice button shows recording state, stops on a second press, and disables while waiting', async () => {
+  enableSpeechRecognition()
+  const page = renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+
+  fireEvent.click(await screen.findByRole('button', { name: '用說的' }))
+  const stop = screen.getByRole('button', { name: '停止錄音' })
+  expect(stop).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(stop)
+  expect(screen.getByRole('button', { name: '用說的' })).toHaveAttribute('aria-pressed', 'false')
+  page.unmount()
+
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': savedTurn,
+  })
+  expect(await screen.findByRole('button', { name: '用說的' })).toBeDisabled()
 })
 
 test('stances carry their letter colour: options, my choice', async () => {
@@ -113,6 +263,18 @@ test('stance buttons are tagged by letter for their colour', async () => {
 
   expect(await screen.findByRole('button', { name: /拉下拉桿/ })).toHaveAttribute('data-option', 'A')
   expect(screen.getByRole('button', { name: /不拉/ })).toHaveAttribute('data-option', 'B')
+})
+
+test('A0 reason uses the same inline input pattern as A1', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': attempt,
+  })
+
+  const input = await screen.findByLabelText('為什麼？')
+  const entry = input.closest('.solo-stance__entry')
+  expect(entry).not.toBeNull()
+  expect(within(entry as HTMLElement).getByRole('button', { name: '送出' })).toBeInTheDocument()
 })
 
 test('submit_stance posts option and reason', async () => {
@@ -192,8 +354,11 @@ test.each([
   expect(await screen.findByText(expectedMessage)).toBeInTheDocument()
 })
 
-test('es locale renders without Chinese', async () => {
-  await applyLocale('es')
+test.each([
+  ['en', 'Question 1 · The switch'],
+  ['es', 'Pregunta 1 · The switch'],
+] as const)('%s locale renders without Chinese', async (locale, heading) => {
+  await applyLocale(locale)
   const englishActivity = { ...activity, title: 'Ethics discussion', course_name: 'Philosophy' }
   const englishAttempt = {
     ...attempt, activity_title: 'Ethics discussion', course_name: 'Philosophy', display_name: 'Ana',
@@ -205,16 +370,16 @@ test('es locale renders without Chinese', async () => {
   renderPage({
     'GET /solo/activities/a-1': englishActivity,
     'GET /solo/attempts/attempt-1': englishAttempt,
-  }, 'es')
+  }, locale)
 
-  expect(await screen.findByRole('heading', { name: 'Pregunta 1 · The switch' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
   expect(readableText(document.body)).not.toMatch(/[\u3400-\u9fff\u3000-\u303f\u30fb\uff00-\uffef]/)
 })
 
 const dialogueAttempt = {
   ...attempt,
   state: 'in_dialogue',
-  questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', reason: '主動介入和不介入不一樣。' } }],
+  questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', current_option_id: 'o-b', reason: '主動介入和不介入不一樣。' } }],
   messages: [
     { id: 'm-1', question_index: 0, role: 'student', text: '主動介入和不介入不一樣。', created_at: 1 },
     { id: 'm-2', question_index: 0, role: 'tutor', text: '站在旁邊不行動，也是一種選擇嗎？', created_at: 2 },
@@ -279,7 +444,7 @@ test('submit stance shows the waiting state until the reply', async () => {
   await act(async () => {
     finish({
       ...dialogueAttempt,
-      questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', reason: '我不想主動改變事情。' } }],
+      questions: [{ ...attempt.questions[0], stance: { option_id: 'o-b', current_option_id: 'o-b', reason: '我不想主動改變事情。' } }],
       messages: [
         { id: 'm-1', question_index: 0, role: 'student', text: '我不想主動改變事情。', created_at: 1 },
         { id: 'm-2', question_index: 0, role: 'tutor', text: '不改變也是一種選擇嗎？', created_at: 2 },
@@ -628,6 +793,22 @@ test('confirming shows summary and both choices', async () => {
   expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeInTheDocument()
 })
 
+test('principle note is shown with the reference disclaimer when present', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...confirmingAttempt,
+      candidate_summary: {
+        ...confirmingAttempt.candidate_summary,
+        principle_note: '你在意行動本身是否把人當成手段，這接近康德式的義務論。',
+      },
+    },
+  })
+
+  expect(await screen.findByText('你在意行動本身是否把人當成手段，這接近康德式的義務論。')).toBeInTheDocument()
+  expect(screen.getByText('這只是參考，不是你的標籤。')).toBeInTheDocument()
+})
+
 test('confirming hides the follow-up of the turn that led to it', async () => {
   // Design A2: the student's last message is followed directly by the summary card. The
   // backend decided to confirm; a new question there would ask the student two things at once.
@@ -695,7 +876,7 @@ const revisingAttempt = {
   available_actions: ['send_message'],
 }
 
-test('revising shows rejected summary and quick options (X1)', async () => {
+test('revising shows rejected summary and structured quick options (X1)', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': revisingAttempt,
@@ -709,30 +890,40 @@ test('revising shows rejected summary and quick options (X1)', async () => {
   expect(within(timeline).getByText(/謝謝你說出來，是我沒抓準。是哪一部分不像你？/)).toBeInTheDocument()
   // The follow-up asked when the backend chose to confirm stays out while revising, too.
   expect(within(timeline).queryByText('那麼「選擇」對你來說是什麼？')).toBeNull()
-  for (const name of ['立場不太對', '理由不太對', '條件不太對']) {
+  for (const name of ['立場不太對', '理由不太對', '條件不太對', '我其實改變想法了']) {
     expect(screen.getByRole('button', { name })).toBeInTheDocument()
   }
-  expect(screen.queryByRole('button', { name: '我其實改變想法了' })).toBeNull()
   expect(screen.getByText('整理不對很正常')).toBeInTheDocument()
 })
 
-test('quick option prefills composer without sending', async () => {
+test('quick option is single-select, cancellable, and sends revise_hint', async () => {
   const calls = mockApi({
     'GET /auth/me': signedIn,
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': revisingAttempt,
+    'POST /solo/attempts/attempt-1/send_message': { ...revisingAttempt, revising: false, rejected_summary: null },
   })
   render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
     <AuthProvider><AppRoutes /></AuthProvider>
   </MemoryRouter>)
 
-  fireEvent.click(await screen.findByRole('button', { name: '理由不太對' }))
+  const reasonHint = await screen.findByRole('button', { name: '理由不太對' })
+  fireEvent.click(reasonHint)
   const input = screen.getByLabelText('說說哪裡不對') as HTMLTextAreaElement
-  expect(input.value).toBe('理由不太對。')
-  fireEvent.change(input, { target: { value: '理由不太對。我在意的是那個人是不是因為我才死的。' } })
-  fireEvent.click(screen.getByRole('button', { name: '條件不太對' }))
-  expect(input.value).toBe('條件不太對。我在意的是那個人是不是因為我才死的。')
-  expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
+  expect(reasonHint).toHaveAttribute('aria-pressed', 'true')
+  expect(input).toHaveValue('')
+  await waitFor(() => expect(document.activeElement).toBe(input))
+
+  fireEvent.click(reasonHint)
+  expect(reasonHint).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.click(reasonHint)
+  fireEvent.change(input, { target: { value: '我在意的是那個人是不是因為我才死的。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  await waitFor(() => expect(calls).toContainEqual({
+    key: 'POST /solo/attempts/attempt-1/send_message',
+    body: { text: '我在意的是那個人是不是因為我才死的。', revise_hint: 'reason' },
+  }))
 })
 
 test('quick option leaves the cursor at the end of the composer', async () => {
@@ -745,6 +936,50 @@ test('quick option leaves the cursor at the end of the composer', async () => {
   const input = screen.getByLabelText('說說哪裡不對') as HTMLTextAreaElement
   await waitFor(() => expect(document.activeElement).toBe(input))
   expect(input.selectionStart).toBe(input.value.length)
+})
+
+test('changed mind requires a new stance and sends new_option_id', async () => {
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': revisingAttempt,
+    'POST /solo/attempts/attempt-1/send_message': { ...revisingAttempt, revising: false, rejected_summary: null },
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  fireEvent.click(await screen.findByRole('button', { name: '我其實改變想法了' }))
+  const choices = screen.getByRole('group', { name: '改成哪個立場？' })
+  expect(within(choices).queryByRole('button', { name: 'B 不拉' })).toBeNull()
+
+  const input = screen.getByLabelText('說說哪裡不對')
+  fireEvent.change(input, { target: { value: '我發現不行動也是選擇。' } })
+  expect(screen.getByRole('button', { name: '送出回答' })).toBeDisabled()
+
+  fireEvent.click(within(choices).getByRole('button', { name: 'A 拉下拉桿' }))
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+  await waitFor(() => expect(calls).toContainEqual({
+    key: 'POST /solo/attempts/attempt-1/send_message',
+    body: { text: '我發現不行動也是選擇。', revise_hint: 'changed_mind', new_option_id: 'o-a' },
+  }))
+})
+
+test('stance card shows current option after a change', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...dialogueAttempt,
+      questions: [{
+        ...dialogueAttempt.questions[0],
+        stance: { ...dialogueAttempt.questions[0].stance, current_option_id: 'o-a' },
+      }],
+    },
+  })
+
+  const choice = await screen.findByRole('region', { name: '我的選擇' })
+  expect(choice.querySelector('[data-option="A"]')).toHaveTextContent('A拉下拉桿')
+  expect(choice.querySelector('[data-option="B"]')).toBeNull()
 })
 
 test('revising flag false hides x1 panel', async () => {
@@ -762,7 +997,7 @@ test('revising flag false hides x1 panel', async () => {
 
 const secondScenario = '同一輛電車駛向五名工人。\n你站在天橋上，身旁有一位陌生人。'
 const firstConfirmed = {
-  ...attempt.questions[0], status: 'goal_met', stance: { option_id: 'o-b', reason: '主動介入和不介入不一樣。' },
+  ...attempt.questions[0], status: 'goal_met', stance: { option_id: 'o-b', current_option_id: 'o-b', reason: '主動介入和不介入不一樣。' },
   confirmed_summary: confirmingAttempt.candidate_summary,
 }
 const betweenAttempt = {

@@ -50,7 +50,7 @@ export interface components { schemas: {
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
-  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string };
+  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean };
   "PublicJoinPreview": { "course_name": string };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
@@ -69,16 +69,16 @@ export interface components { schemas: {
   "ScriptDocument-Output": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
   "ScriptSave": { "document": components["schemas"]["ScriptDocument-Input"]; "expected_revision"?: (number | null) };
   "ScriptView": { "id": string; "revision": number; "document": Record<string, unknown> };
-  "SendMessageBody": { "text": string };
+  "SendMessageBody": { "text": string; "revise_hint"?: ("stance" | "reason" | "condition" | "changed_mind" | null); "new_option_id"?: (string | null) };
   "SettingsUpdate": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "budgets"?: Record<string, unknown>; "active_room_id"?: (string | null) };
   "SoloActivityView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "scheduled" | "open" | "ended"; "question_count": number; "ends_at": number; "attempt": (components["schemas"]["SoloAttemptBrief"] | null) };
   "SoloAttemptBrief": { "id": string; "state": "choosing_stance" | "awaiting_tutor" | "tutor_unavailable" | "in_dialogue" | "confirming" | "between_questions" | "reviewing" | "awaiting_reflection_prompt" | "reflecting" | "budget_exhausted" | "completed"; "question_index": number; "progress": Array<components["schemas"]["SoloQuestionProgressView"]>; "review_status": "not_started" | "in_progress"; "current_turn": number };
   "SoloAttemptView": { "id": string; "activity_id": string; "activity_title": string; "course_id": string; "course_name": string; "display_name": string; "state": "choosing_stance" | "awaiting_tutor" | "tutor_unavailable" | "in_dialogue" | "confirming" | "between_questions" | "reviewing" | "awaiting_reflection_prompt" | "reflecting" | "budget_exhausted" | "completed"; "question_index": number; "question_count": number; "questions": Array<components["schemas"]["SoloQuestionView"]>; "messages": Array<components["schemas"]["SoloMessageView"]>; "candidate_summary": (components["schemas"]["PersonalSummaryView"] | null); "summary_digest": (string | null); "principle_hint": ("後果主義" | "義務論" | "混合" | null); "revising": boolean; "rejected_summary": (components["schemas"]["PersonalSummaryView"] | null); "notice": ("tutor_unavailable" | "owner_provider_missing" | null); "available_actions": Array<"submit_stance" | "send_message" | "retry" | "confirm_viewpoint" | "revise_viewpoint" | "next_question" | "submit_review" | "retry_reflection_prompt" | "continue_reflection" | "submit_reflection" | "continue_without_tutor"> };
-  "SoloMessageView": { "id": string; "question_index": number; "role": "student" | "tutor"; "text": string; "created_at": number };
+  "SoloMessageView": { "id": string; "question_index": number; "role": "student" | "tutor"; "text": string; "created_at": number; "move": ("probe" | "clarify" | "challenge" | "reflect" | "summarize" | "hypothetical" | null); "revise_hint": ("stance" | "reason" | "condition" | "changed_mind" | null) };
   "SoloOptionView": { "id": string; "text": string };
   "SoloQuestionProgressView": { "index": number; "status": "not_started" | "in_dialogue" | "confirmed"; "title": (string | null); "option_label": (string | null) };
   "SoloQuestionView": { "index": number; "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["SoloOptionView"]>; "stance": (components["schemas"]["SoloStanceView"] | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
-  "SoloStanceView": { "option_id": string; "reason": string };
+  "SoloStanceView": { "option_id": string; "current_option_id": string; "reason": string };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
   "SubmitStanceBody": { "option_id": string; "reason": string };
   "TokenRequest": { "token": string };

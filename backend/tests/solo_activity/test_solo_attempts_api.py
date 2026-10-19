@@ -4,10 +4,8 @@ import asyncio
 import json
 import time
 
-import pytest
 from sqlalchemy import func, select
 
-from app.modules.llm_runtime.tutor import classroom_gateway
 from app.modules.llm_runtime.tutor.classroom_provider import ProviderWait
 from app.modules.platform.repositories import classroom_storage as storage
 from app.modules.solo_dialogue.api.solo_schemas import SubmitStanceBody
@@ -33,6 +31,7 @@ OPENING = {
         "reason_summary": "不能主動害人",
         "relevant_conditions": [],
         "unresolved_issue": "",
+        "principle_note": "",
     },
 }
 MET = {
@@ -43,28 +42,10 @@ MET = {
         "reason_summary": "主動造成傷害和任其發生不同",
         "relevant_conditions": ["工人不知情"],
         "unresolved_issue": "",
+        "principle_note": "",
     },
 }
 NOT_MET = {**OPENING, "observations": {**OPENING["observations"], "reason_tested": False}}
-
-
-@pytest.fixture
-def tutor(monkeypatch):
-    """A scripted provider: each call pops the next reply; an Exception entry is raised."""
-    calls: list[dict] = []
-    replies: list = []
-
-    async def generate(binding, messages, schema, on_delta):
-        calls.append({"binding": binding, "messages": messages, "schema": schema})
-        reply = replies.pop(0)
-        if isinstance(reply, Exception):
-            raise reply
-        if callable(reply):
-            reply = reply()
-        return json.loads(json.dumps(reply)), {"provider": binding["adapter"]}
-
-    monkeypatch.setattr(classroom_gateway, "generate", generate)
-    return calls, replies
 
 
 def configure_ai(client, model="tutor-model"):
@@ -270,7 +251,11 @@ def test_full_single_question_flow(client, tutor):
     replies.append(OPENING)
     view = stance(client, attempt["id"])
     assert view["state"] == "in_dialogue"
-    assert view["questions"][0]["stance"] == {"option_id": "o1", "reason": "不能主動害人"}
+    assert view["questions"][0]["stance"] == {
+        "option_id": "o1",
+        "current_option_id": "o1",
+        "reason": "不能主動害人",
+    }
     assert view["candidate_summary"] is None and view["summary_digest"] is None
     opening_context = json.loads(calls[0]["messages"][1]["content"])
     assert opening_context["turn_index"] == 0
@@ -296,8 +281,12 @@ def test_full_single_question_flow(client, tutor):
 
     view = ok(do(client, attempt["id"], "revise_viewpoint"))
     assert view["state"] == "in_dialogue" and view["candidate_summary"] is None
+    # The reply right after 不太對 never confirms (test_revise_settle_policy).
     replies.append(MET)
     view = ok(do(client, attempt["id"], "send_message", {"text": "就算工人不知情也一樣"}))
+    assert view["state"] == "in_dialogue"
+    replies.append(MET)
+    view = ok(do(client, attempt["id"], "send_message", {"text": "親手造成的就是不一樣"}))
     assert view["state"] == "confirming"
 
     view = ok(

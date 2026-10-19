@@ -26,11 +26,11 @@ export default {
   timeline: {
     label: '对话记录', socratesMark: '苏', socrates: '苏格拉底', me: '我', meFirst: '我・第一个回答',
     opening: '{{name}}，先读一读黑板上的情境。如果此刻做决定的人是你，你会怎么做？先选一个立场，再告诉我为什么。没有标准答案，我想听的是你真正的想法。',
-    saved: '已保存', thinking: '正在想你说的话…',
+    saved: '已保存', thinking: '正在想你说的话…', hypothetical: '换个情境想想 · 不改变原题',
   },
   composer: {
     label: '回答苏格拉底', placeholder: '说说你的理由，或者你在犹豫什么…', waitingPlaceholder: '苏格拉底回复后，就可以接着写', unavailablePlaceholder: '等苏格拉底回复后，就可以继续回答',
-    send: '发送回答', hint: '不限回复次数，慢慢想就好。消息会先存下来，网络断了也不会丢失。',
+    send: '发送回答', voice: '用说的', stopVoice: '停止录音', hint: '不限回复次数，慢慢想就好。消息会先存下来，网络断了也不会丢失。',
     sendingHint: '消息正在发送，请稍候。', savedHint: '你的消息已经保存。苏格拉底回复后，输入框会重新打开。',
   },
   unavailable: {
@@ -49,7 +49,11 @@ export default {
     echoTitle: '你觉得这段整理不太对',
     position: '立场：{{value}}', reason: '理由：{{value}}', conditions: '条件：{{value}}', separator: ' ／ ',
     ask: '谢谢你说出来，是我没抓准。是哪一部分不像你？立场、理由，还是条件？用你自己的话说就好。',
-    quickLabel: '哪里不太对', quickPosition: '立场不太对', quickReason: '理由不太对', quickConditions: '条件不太对',
+    quickLabel: '哪里不太对？（可选一项）', quickPrompt: '哪里不太对？',
+    quickPosition: '立场不太对', quickReason: '理由不太对', quickConditions: '条件不太对', quickChanged: '我其实改变想法了',
+    newStance: '改成哪个立场？', originalStance: '目前的立场不在下面的选项里。',
+    chooseNewHint: '选好新的立场才能发送。苏格拉底会先问你是什么让你改变，多谈一两轮后，才会重新整理给你确认。',
+    selectedHint: '已选“{{option}}”，再点一次可以取消。发送后，苏格拉底会针对这个部分至少再问你一句，然后重新整理给你确认。',
     label: '说说哪里不对', hint: '说完后，苏格拉底可能再问你一两句，然后重新整理给你确认。',
   },
   viewpoint: {

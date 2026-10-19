@@ -26,11 +26,11 @@ export default {
   timeline: {
     label: '對話紀錄', socratesMark: '蘇', socrates: '蘇格拉底', me: '我', meFirst: '我・第一個回答',
     opening: '{{name}}，先讀一讀黑板上的情境。如果此刻做決定的人是你，你會怎麼做？先選一個立場，再告訴我為什麼。沒有標準答案，我想聽的是你真正的想法。',
-    saved: '已保存', thinking: '正在想你說的話…',
+    saved: '已保存', thinking: '正在想你說的話…', hypothetical: '換個情境想想 · 不改變原題',
   },
   composer: {
     label: '回答蘇格拉底', placeholder: '說說你的理由，或者你在猶豫什麼…', waitingPlaceholder: '蘇格拉底回覆後，就可以接著寫', unavailablePlaceholder: '等蘇格拉底回應後，就可以繼續回答',
-    send: '送出回答', hint: '不限回覆次數，慢慢想就好。訊息會先存下來，網路斷了也不會不見。',
+    send: '送出回答', voice: '用說的', stopVoice: '停止錄音', hint: '不限回覆次數，慢慢想就好。訊息會先存下來，網路斷了也不會不見。',
     sendingHint: '訊息正在送出，請稍候。', savedHint: '你的訊息已經存好了。蘇格拉底回覆後，輸入框會重新打開。',
   },
   unavailable: {
@@ -49,7 +49,11 @@ export default {
     echoTitle: '你覺得這段整理不太對',
     position: '立場：{{value}}', reason: '理由：{{value}}', conditions: '條件：{{value}}', separator: ' ／ ',
     ask: '謝謝你說出來，是我沒抓準。是哪一部分不像你？立場、理由，還是條件？用你自己的話說就好。',
-    quickLabel: '哪裡不太對', quickPosition: '立場不太對', quickReason: '理由不太對', quickConditions: '條件不太對',
+    quickLabel: '哪裡不太對？（可選一項）', quickPrompt: '哪裡不太對？',
+    quickPosition: '立場不太對', quickReason: '理由不太對', quickConditions: '條件不太對', quickChanged: '我其實改變想法了',
+    newStance: '改成哪個立場？', originalStance: '目前的立場不在下面的選項裡。',
+    chooseNewHint: '選好新的立場才能送出。蘇格拉底會先問你是什麼讓你改變，多談一兩輪後，才會重新整理給你確認。',
+    selectedHint: '已選「{{option}}」，再點一次可以取消。送出後，蘇格拉底會針對這個部分至少再問你一句，然後重新整理給你確認。',
     label: '說說哪裡不對', hint: '說完後，蘇格拉底可能再問你一兩句，然後重新整理給你確認。',
   },
   viewpoint: {

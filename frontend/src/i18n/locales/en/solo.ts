@@ -26,11 +26,11 @@ export default {
   timeline: {
     label: 'Dialogue history', socratesMark: 'S', socrates: 'Socrates', me: 'Me', meFirst: 'Me · First answer',
     opening: '{{name}}, read the situation on the board first. If you had to decide right now, what would you do? Choose a position and tell me why. There is no standard answer; I want to hear what you really think.',
-    saved: 'Saved', thinking: 'Thinking about what you said…',
+    saved: 'Saved', thinking: 'Thinking about what you said…', hypothetical: 'Try another scenario · The original question stays the same',
   },
   composer: {
     label: 'Reply to Socrates', placeholder: 'Tell me your reasons, or what you are unsure about…', waitingPlaceholder: 'You can continue after Socrates replies', unavailablePlaceholder: 'You can keep answering once Socrates responds',
-    send: 'Send reply', hint: 'There is no reply limit, so take your time. Your message is stored first, so it will not be lost if the connection drops.',
+    send: 'Send reply', voice: 'Use voice', stopVoice: 'Stop recording', hint: 'There is no reply limit, so take your time. Your message is stored first, so it will not be lost if the connection drops.',
     sendingHint: 'Sending your message…', savedHint: 'Your message is saved. The input will reopen after Socrates replies.',
   },
   unavailable: {
@@ -49,7 +49,11 @@ export default {
     echoTitle: 'You felt this summary was not quite right',
     position: 'Position: {{value}}', reason: 'Reason: {{value}}', conditions: 'Conditions: {{value}}', separator: ' / ',
     ask: 'Thank you for saying so; I did not quite get it. Which part does not sound like you: the position, the reason, or the conditions? Say it in your own words.',
-    quickLabel: 'What is off', quickPosition: 'The position is off', quickReason: 'The reason is off', quickConditions: 'The conditions are off',
+    quickLabel: 'What is off? (Choose one)', quickPrompt: 'What is off?',
+    quickPosition: 'The position is off', quickReason: 'The reason is off', quickConditions: 'The conditions are off', quickChanged: 'I actually changed my mind',
+    newStance: 'What is your new position?', originalStance: 'Your current position is not listed below.',
+    chooseNewHint: 'Choose a new position before sending. Socrates will first ask what changed your mind, then summarize again after another round or two.',
+    selectedHint: '“{{option}}” is selected. Select it again to cancel. After you send, Socrates will ask at least one more question about that part before summarizing again.',
     label: 'Say what is off', hint: 'After you explain, Socrates may ask a question or two, then summarize again for you to confirm.',
   },
   viewpoint: {

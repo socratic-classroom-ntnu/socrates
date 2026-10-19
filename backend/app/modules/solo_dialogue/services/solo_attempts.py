@@ -114,11 +114,19 @@ def _state(row: SoloAttempt) -> AttemptState:
         state=cast(Any, row.state),
         question_index=row.question_index,
         question_count=len(row.progress),
-        progress=tuple(QuestionProgress(**entry) for entry in row.progress),
+        # Progress saved before current_option_id existed holds the first choice.
+        progress=tuple(
+            QuestionProgress(**{**entry, "current_option_id": _current_option(entry)})
+            for entry in row.progress
+        ),
         pending_key=row.pending_key,
         pending_since=row.pending_since,
         notice=cast(Any, row.notice),
     )
+
+
+def _current_option(entry: dict) -> str | None:
+    return entry.get("current_option_id") or entry.get("option_id")
 
 
 def _store(row: SoloAttempt, a: AttemptState) -> None:
@@ -132,7 +140,7 @@ def _store(row: SoloAttempt, a: AttemptState) -> None:
     row.updated_at = time.time()
 
 
-def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None) -> None:
+def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None, meta=None) -> None:
     """The attempt row is locked, so the next seq cannot race."""
     last = db.scalar(select(func.max(SoloMessage.seq)).where(SoloMessage.attempt_id == row.id))
     db.add(
@@ -143,6 +151,7 @@ def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None) 
             role=role,
             text=text,
             observations=observations,
+            meta=meta,
         )
     )
     db.flush()
@@ -180,7 +189,11 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "scenario": question["scenario"],
                 "options": [{"id": o["id"], "text": o["text"]} for o in question["options"]],
                 "stance": (
-                    {"option_id": progress.option_id, "reason": progress.reason}
+                    {
+                        "option_id": progress.option_id,
+                        "current_option_id": progress.current_option_id,
+                        "reason": progress.reason,
+                    }
                     if progress.option_id is not None
                     else None
                 ),
@@ -208,6 +221,8 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "role": m.role,
                 "text": m.text,
                 "created_at": m.created_at,
+                "move": (m.meta or {}).get("move") if m.role == "tutor" else None,
+                "revise_hint": (m.meta or {}).get("revise_hint") if m.role == "student" else None,
             }
             for m in _messages(db, row.id)
             if m.question_index <= a.question_index
@@ -323,20 +338,29 @@ def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.Pendi
     progress = a.progress[pending.question_index]
     options = {option["id"]: option["text"] for option in question["options"]}
     messages = [m for m in _messages(db, row.id) if m.question_index == pending.question_index]
-    return {
+    context = {
         "question": {
             "title": question["title"],
             "scenario": question["scenario"],
             "options": question["options"],
             "tutor_goal": question.get("follow_up_direction", "").strip() or DEFAULT_TUTOR_GOAL,
         },
-        "option_id": progress.option_id,
-        "option_text": options.get(cast(str, progress.option_id), ""),
+        # The option held now; a changed stance is told apart below.
+        "option_id": progress.current_option_id,
+        "option_text": options.get(cast(str, progress.current_option_id), ""),
         "argument": progress.reason,
         # The first student message is the stance's reason, already given as argument.
         "history": [{"role": m.role, "text": m.text} for m in messages[1:]],
         "turn_index": pending.turn_index,
     }
+    # Keys only when they apply: the prompt ignores a missing key, as in the group dialogue.
+    latest = next((m for m in reversed(messages) if m.role == "student"), None)
+    hint = (latest.meta or {}).get("revise_hint") if latest is not None else None
+    if hint is not None:
+        context["revise_hint"] = hint
+    if progress.current_option_id != progress.option_id:
+        context["stance_changed_from"] = options.get(cast(str, progress.option_id), "")
+    return context
 
 
 def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
@@ -351,8 +375,21 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         return new, pending
     if action == "send_message":
         limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
-        new, pending = machine.send_message(a, at)
-        _add_message(db, row, "student", cast("SendMessageBody", body).text)
+        message = cast("SendMessageBody", body)
+        question = revision.content["questions"][a.question_index]
+        new, pending = machine.send_message(
+            a,
+            at,
+            revise_hint=message.revise_hint,
+            new_option_id=message.new_option_id,
+            valid_option_ids=frozenset(option["id"] for option in question["options"]),
+        )
+        meta = (
+            {"revise_hint": message.revise_hint, "new_option_id": message.new_option_id}
+            if message.revise_hint is not None
+            else None
+        )
+        _add_message(db, row, "student", message.text, meta=meta)
         return new, pending
     if action == "retry":
         limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
@@ -454,7 +491,14 @@ async def finish_action(prepared: dict) -> dict:
         else:
             new = machine.apply_tutor_turn(a, key, turn)
             if new is not None:
-                _add_message(db, row, "tutor", turn.reply_text, turn.observations.model_dump())
+                _add_message(
+                    db,
+                    row,
+                    "tutor",
+                    turn.reply_text,
+                    turn.observations.model_dump(),
+                    meta={"move": turn.move},
+                )
         if new is not None:
             _store(row, new)
         return _attempt_view(db, row, now())

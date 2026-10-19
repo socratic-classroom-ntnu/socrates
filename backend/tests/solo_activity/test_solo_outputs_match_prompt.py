@@ -34,3 +34,36 @@ def test_solo_tutor_turn_matches_personal_tutor_schema():
     personal = SCHEMAS["PersonalTutorTurn"].model_json_schema()
     solo = SoloTutorTurn.model_json_schema()
     assert _shape(solo) == _shape(personal)
+
+
+def test_personal_tutor_schema_accepts_new_fields():
+    """hypothetical tags an extended scenario; principle_note defaults so older outputs still load."""
+    personal = SCHEMAS["PersonalTutorTurn"]
+    for model in (personal, SoloTutorTurn):
+        turn = model.model_validate(
+            {
+                "reply_text": "如果換成你認識的人呢？",
+                "observations": {
+                    "has_position": True,
+                    "has_reason": True,
+                    "reason_tested": False,
+                    "position_shifted": False,
+                    "principle_label": "義務論",
+                },
+                "move": "hypothetical",
+                "summary": {"current_position": "不拉", "reason_summary": "不能主動害人"},
+            }
+        )
+        assert turn.move == "hypothetical"
+        assert turn.summary.principle_note == ""
+
+
+def test_solo_move_values_match_personal_tutor():
+    """_shape compares field names only; the move values must not drift either."""
+
+    def moves(model) -> list[str]:
+        return sorted(model.model_json_schema()["properties"]["move"]["enum"])
+
+    assert moves(SoloTutorTurn) == moves(SCHEMAS["PersonalTutorTurn"])
+    # The focused tutor (group stage dialogue) keeps its own moves.
+    assert "hypothetical" not in moves(SCHEMAS["TutorTurn"])

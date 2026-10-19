@@ -268,6 +268,8 @@ class PersonalSummary(Strict):
     reason_summary: str = Field(min_length=1, max_length=4000)
     relevant_conditions: list[str] = Field(default_factory=list, max_length=12)
     unresolved_issue: str = Field(default="", max_length=2000)
+    # Why the reasons sit near observations.principle_label; empty when the label is 未明.
+    principle_note: str = Field(default="", max_length=300)
 
 
 class PersonalTutorTurn(Strict):
@@ -275,7 +277,8 @@ class PersonalTutorTurn(Strict):
 
     reply_text: str = Field(min_length=1, max_length=16000)
     observations: Observations
-    move: Literal["probe", "clarify", "challenge", "reflect", "summarize"] = "probe"
+    # hypothetical: the follow-up poses an extended scenario the original question does not have.
+    move: Literal["probe", "clarify", "challenge", "reflect", "summarize", "hypothetical"] = "probe"
     summary: PersonalSummary
 
 

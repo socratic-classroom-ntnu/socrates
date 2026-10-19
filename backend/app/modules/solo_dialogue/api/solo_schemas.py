@@ -8,9 +8,11 @@ from app.modules.platform.api.model_base import TrimmedModel
 from app.modules.solo_dialogue.domain.solo_types import (
     PrincipleHint,
     QuestionStatus,
+    ReviseHint,
     SoloAction,
     SoloNotice,
     SoloState,
+    TutorMove,
 )
 
 
@@ -52,6 +54,8 @@ class PersonalSummaryView(View):
     reason_summary: str
     relevant_conditions: list[str]
     unresolved_issue: str
+    # Why the reasons sit near principle_hint; empty when there is none (or stored before it).
+    principle_note: str = ""
 
 
 class SoloOptionView(View):
@@ -60,7 +64,8 @@ class SoloOptionView(View):
 
 
 class SoloStanceView(View):
-    option_id: str
+    option_id: str  # the first choice; never changes
+    current_option_id: str  # after 我其實改變想法了; what A2 and 我的選擇 show
     reason: str
 
 
@@ -81,6 +86,8 @@ class SoloMessageView(View):
     role: Literal["student", "tutor"]
     text: str
     created_at: float
+    move: TutorMove | None  # tutor messages only
+    revise_hint: ReviseHint | None  # student messages only
 
 
 class SoloAttemptView(View):
@@ -113,6 +120,9 @@ class SubmitStanceBody(TrimmedModel):
 
 class SendMessageBody(TrimmedModel):
     text: str = Field(min_length=1, max_length=4000)
+    # Only while revising; changed_mind requires new_option_id, other hints forbid it.
+    revise_hint: ReviseHint | None = None
+    new_option_id: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class ConfirmViewpointBody(TrimmedModel):

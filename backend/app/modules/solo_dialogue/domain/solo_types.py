@@ -35,3 +35,6 @@ SoloAction = Literal[
 SoloNotice = Literal["tutor_unavailable", "owner_provider_missing"]
 QuestionStatus = Literal["in_progress", "goal_met"]
 PrincipleHint = Literal["後果主義", "義務論", "混合"]
+TutorMove = Literal["probe", "clarify", "challenge", "reflect", "summarize", "hypothetical"]
+# Which part of a turned-down summary the student says is wrong; changed_mind picks a new option.
+ReviseHint = Literal["stance", "reason", "condition", "changed_mind"]

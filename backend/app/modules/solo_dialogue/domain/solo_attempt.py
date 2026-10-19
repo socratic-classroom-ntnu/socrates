@@ -20,6 +20,7 @@ from app.modules.platform.errors import DomainError
 from app.modules.solo_dialogue.domain.solo_outputs import SoloTutorTurn
 from app.modules.solo_dialogue.domain.solo_types import (
     QuestionStatus,
+    ReviseHint,
     SoloAction,
     SoloNotice,
     SoloState,
@@ -44,7 +45,10 @@ _ACTIONS: dict[str, list[SoloAction]] = {
 @dataclass(frozen=True)
 class QuestionProgress:
     question_id: str
+    # The first choice; never changes, so initial != final counts changed stances.
     option_id: str | None = None
+    # The option held now: option_id until 我其實改變想法了 picks another.
+    current_option_id: str | None = None
     reason: str | None = None
     turn_index: int = 0
     # How many times this turn's provider call has been retried; part of the pending key.
@@ -60,6 +64,8 @@ class QuestionProgress:
     # 不太對 until the next student message; rejected_summary is the summary turned down.
     revising: bool = False
     rejected_summary: dict[str, Any] | None = None
+    # The turn of the first student message after the latest 不太對; policy.py holds confirmation.
+    last_revise_turn: int | None = None
 
 
 @dataclass(frozen=True)
@@ -134,17 +140,43 @@ def submit_stance(
     _require(a, "submit_stance")
     if option_id not in valid_option_ids:
         raise DomainError("SOLO_OPTION_INVALID", 422)
-    progress = _with_current(a, option_id=option_id, reason=reason, turn_index=0, tries=0)
+    progress = _with_current(
+        a, option_id=option_id, current_option_id=option_id, reason=reason, turn_index=0, tries=0
+    )
     return _await(a, progress, now)
 
 
-def send_message(a: AttemptState, now: float) -> tuple[AttemptState, PendingTurn]:
+def send_message(
+    a: AttemptState,
+    now: float,
+    revise_hint: ReviseHint | None = None,
+    new_option_id: str | None = None,
+    valid_option_ids: frozenset[str] = frozenset(),
+) -> tuple[AttemptState, PendingTurn]:
+    """One student message. While revising it may say which part was wrong (revise_hint);
+    changed_mind must name a different option of this question, and only changed_mind may."""
     _require(a, "send_message")
+    current = a.current
+    if revise_hint is not None and not current.revising:
+        raise DomainError("SOLO_OPTION_INVALID", 422)
+    if (revise_hint == "changed_mind") != (new_option_id is not None):
+        raise DomainError("SOLO_OPTION_INVALID", 422)
+    if new_option_id is not None and (
+        new_option_id not in valid_option_ids or new_option_id == current.current_option_id
+    ):
+        raise DomainError("SOLO_OPTION_INVALID", 422)
     # The stance's reason plus one message per completed turn.
-    if a.current.turn_index + 1 >= MESSAGE_LIMIT:
+    if current.turn_index + 1 >= MESSAGE_LIMIT:
         raise DomainError("SOLO_MESSAGE_LIMIT", 409)
+    turn_index = current.turn_index + 1
     progress = _with_current(
-        a, turn_index=a.current.turn_index + 1, tries=0, revising=False, rejected_summary=None
+        a,
+        turn_index=turn_index,
+        tries=0,
+        revising=False,
+        rejected_summary=None,
+        current_option_id=new_option_id or current.current_option_id,
+        last_revise_turn=turn_index if current.revising else current.last_revise_turn,
     )
     return _await(a, progress, now)
 
@@ -177,6 +209,7 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: SoloTutorTurn) -> AttemptS
         return None
     turn_index = a.current.turn_index
     last_shift = turn_index if turn.observations.position_shifted else a.current.last_shift_turn
+    last_revise = a.current.last_revise_turn
     settled = replace(
         a,
         progress=_with_current(a, last_shift_turn=last_shift),
@@ -188,6 +221,7 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: SoloTutorTurn) -> AttemptS
         turn.observations,
         turn_count=turn_index,
         turns_since_shift=None if last_shift is None else turn_index - last_shift,
+        turns_since_revise=None if last_revise is None else turn_index - last_revise,
     )
     if not advance:
         progress = _with_current(settled, candidate_summary=None, summary_digest=None)
@@ -222,7 +256,7 @@ def confirm_viewpoint(a: AttemptState, digest: str) -> AttemptState:
         a,
         status="goal_met",
         confirmed_summary=current.candidate_summary,
-        final_option_id=current.option_id,
+        final_option_id=current.current_option_id,
         candidate_summary=None,
         summary_digest=None,
     )

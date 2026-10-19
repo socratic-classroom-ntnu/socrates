@@ -113,6 +113,7 @@
 /* 泡泡：蘇格拉底深綠底、Noto Serif；學生白底細框、霞鶩文楷（spec §4.9、設計稿 A1） */
 .solo-message > div { padding: 14px 18px; border-radius: 4px 16px 16px 16px; background: #23332c; color: #efebe0; }
 .solo-message strong { color: #e8c46a; font-size: 13px; }
+.solo-message__move { display: inline-flex; min-height: 22px; align-items: center; margin-left: 8px; padding: 0 8px; border-radius: 6px; background: #f3dfa8; color: #4a3a0e; font-size: 12px; font-weight: 700; }
 .solo-message p { margin: 6px 0 0; white-space: pre-wrap; font-family: 'Noto Serif TC', serif; font-size: 17px; font-weight: 600; line-height: 1.75; }
 .solo-message__avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #23332c; color: #e8c46a; font-family: 'Noto Serif TC', serif; font-size: 17px; font-weight: 900; }
 .solo-message--student { align-self: flex-end; flex-direction: column; align-items: flex-end; gap: 6px; }
@@ -130,6 +131,9 @@
 .solo-composer textarea:disabled { color: #77716a; }
 .solo-composer__send { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 12px; background: #23332c; color: #efebe0; cursor: pointer; }
 .solo-composer__send:disabled { opacity: .4; cursor: default; }
+.solo-composer__voice { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border: 1px solid #ddd5c6; border-radius: 12px; background: #f4f0e8; color: #23332c; cursor: pointer; }
+.solo-composer__voice[aria-pressed='true'] { border-color: #c4501f; background: #f6e3d8; color: #a83c15; box-shadow: 0 0 0 3px rgb(196 80 31 / 15%); }
+.solo-composer__voice:disabled { opacity: .4; cursor: default; }
 .solo-composer__hint { margin: 9px 0 0; color: #57514a; font-size: 13px; }
 /* X2：在對話紀錄裡的黃色列，重試在右邊 */
 .solo-unavailable { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 20px; border-radius: 14px; background: #F6E3A8; color: #4A3A0E; }
@@ -137,11 +141,17 @@
 .solo-unavailable strong { font-size: 15px; }
 .solo-unavailable p { margin: 4px 0 0; font-size: 14px; line-height: 1.6; }
 .solo-composer__paused { margin: 0; padding: 14px 18px; border: 2px dashed #A99E8A; border-radius: 14px; background: #ECE6DA; color: #57514A; font-size: 14px; }
-/* X1：被說「不太對」的整理回顯，以及只填開頭、不送出的快速選項 */
+/* X1：被說「不太對」的整理回顯，以及結構化的快速選項 */
 .solo-rejected > div { border: 1px dashed #a99e8a; background: #f4f0e8; }
 .solo-composer__quick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.solo-chip { min-height: 36px; padding: 0 14px; border: 1px solid #a99e8a; border-radius: 999px; background: #fffdf8; color: #2f4a3f; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.solo-composer__quick > strong { display: flex; align-items: center; color: #3a362f; font-size: 13px; }
+.solo-chip { display: inline-flex; min-height: 40px; align-items: center; gap: 6px; padding: 0 14px; border: 1px solid #a99e8a; border-radius: 999px; background: #fffdf8; color: #2f4a3f; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.solo-chip[aria-pressed='true'] { padding-left: 10px; border-color: #23332c; background: #23332c; color: #efebe0; }
+.solo-chip[aria-pressed='true'] > span { color: #e8c46a; }
 .solo-chip:disabled { opacity: .45; cursor: default; }
+.solo-composer__new-stance { display: flex; flex-direction: column; gap: 10px; margin: 0 0 12px; padding: 14px 16px; border: 1px dashed #a99e8a; border-radius: 12px; background: #fffdf8; }
+.solo-composer__new-stance legend { padding: 0 6px; color: #3a362f; font-size: 14px; font-weight: 700; }
+.solo-composer__new-stance p { margin: 0; color: #57514a; font-size: 13px; }
 /* A3：下一題的情境以老師原文逐字呈現；左欄的我的進度；下一題按鈕 */
 .solo-scenario { align-self: stretch; padding: 18px 22px; border: 10px solid #6e5034; border-radius: 6px; background: #2f4a3f; color: #efebe0; }
 .solo-scenario strong { display: block; color: #e8c46a; font-size: 14px; }
@@ -165,6 +175,7 @@
 .solo-viewpoint dd { margin: 0; line-height: 1.6; }
 .solo-viewpoint ul { margin: 0; padding-left: 20px; }
 .solo-viewpoint__principle { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 9px; background: #edf2ef; color: #2f4a3f; }
+.solo-viewpoint__principle p { margin: 2px 0; color: #3a4b43; line-height: 1.6; }
 .solo-viewpoint__principle small { color: #5e655f; }
 .solo-viewpoint__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .solo-secondary { min-height: 46px; padding: 10px 20px; border: 1px solid #8f8678; border-radius: 10px; background: #fffdf8; color: #3a362f; font-weight: 700; }
@@ -182,7 +193,7 @@
 .solo-review__start:disabled { opacity: .55; }
 .solo-review__action span { color: #e9e4da; font-size: 12px; }
 .solo-stance { padding: 22px 24px; border-top: 1px solid #ddd5c6; background: #fffdf8; }
-.solo-stance fieldset { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin: 0; padding: 0; border: 0; }
+.solo-stance fieldset { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; padding: 0; border: 0; }
 .solo-stance legend { margin-bottom: 10px; padding: 0; font-size: 17px; font-weight: 700; }
 .solo-stance__options { display: flex; grid-column: 1 / -1; gap: 10px; }
 .solo-stance__options > * { flex: 1 1 0; min-width: 0; }
@@ -191,7 +202,9 @@
 .solo-stance__option[aria-pressed='true'] { border-color: transparent; background: var(--stance, #2f4a3f); color: var(--stance-ink, #fffdf8); box-shadow: 0 4px 0 #23332c; }
 .solo-stance__option[aria-pressed='true'] span { color: inherit; opacity: .85; }
 .solo-stance label { grid-column: 1 / -1; font-weight: 700; }
-.solo-stance textarea { min-height: 74px; resize: vertical; padding: 14px 18px; border: 1px solid #a99e8a; border-radius: 10px; background: #fffdf8; color: #1e1c18; }
-.solo-stance .solo-primary { align-self: stretch; min-width: 92px; }
+.solo-stance__entry { display: flex; align-items: flex-end; gap: 10px; padding: 10px 10px 10px 18px; border: 2px solid #23332c; border-radius: 14px; background: #fffdf8; }
+.solo-stance textarea { min-height: 56px; flex: 1; min-width: 0; resize: none; padding: 4px 0; border: 0; outline: none; background: transparent; color: #1e1c18; font-family: 'LXGW WenKai TC', serif; font-size: 18px; line-height: 1.6; }
+.solo-stance__send { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 12px; background: #23332c; color: #efebe0; cursor: pointer; }
+.solo-stance__send:disabled { opacity: .4; cursor: default; }
 .solo-stance__hint { margin: 12px 0 0; color: #57514a; font-size: 13px; }
 .solo-action-error { margin: 12px 24px 0; color: #c4501f; }

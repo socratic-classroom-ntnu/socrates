@@ -11,7 +11,7 @@ import { SoloComposer } from './SoloComposer'
 import { SoloProgress } from './SoloProgress'
 import { SoloTimeline } from './SoloTimeline'
 import { StanceForm } from './StanceForm'
-import { can, type SoloAction, type SoloActivityView, type SoloAttemptView } from './soloView'
+import { can, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { ViewpointCard } from './ViewpointCard'
 
 const SAVE_CHECK_MS = 1000
@@ -101,8 +101,8 @@ export function SoloDialoguePage() {
     }
   }
 
-  async function sendMessage(text: string) {
-    return sendWithSaveCheck('send_message', { text }, { text, first: false })
+  async function sendMessage(body: SoloSendMessageBody) {
+    return sendWithSaveCheck('send_message', body, { text: body.text, first: false })
   }
 
   async function submitStance(optionId: string, reason: string) {

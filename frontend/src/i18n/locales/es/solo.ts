@@ -26,11 +26,11 @@ export default {
   timeline: {
     label: 'Historial del diálogo', socratesMark: 'S', socrates: 'Sócrates', me: 'Yo', meFirst: 'Yo · Primera respuesta',
     opening: '{{name}}, lee primero la situación de la pizarra. Si tuvieras que decidir ahora mismo, ¿qué harías? Elige una postura y dime por qué. No hay una respuesta estándar; quiero saber qué piensas de verdad.',
-    saved: 'Guardado', thinking: 'Estoy pensando en lo que dijiste…',
+    saved: 'Guardado', thinking: 'Estoy pensando en lo que dijiste…', hypothetical: 'Prueba otro escenario · La pregunta original no cambia',
   },
   composer: {
     label: 'Responder a Sócrates', placeholder: 'Cuéntame tus razones, o qué te hace dudar…', waitingPlaceholder: 'Podrás continuar cuando Sócrates responda', unavailablePlaceholder: 'Podrás seguir respondiendo cuando Sócrates responda',
-    send: 'Enviar respuesta', hint: 'No hay límite de respuestas; tómate tu tiempo. Tu mensaje se guarda primero, así que no se pierde si se corta la conexión.',
+    send: 'Enviar respuesta', voice: 'Usar la voz', stopVoice: 'Detener la grabación', hint: 'No hay límite de respuestas; tómate tu tiempo. Tu mensaje se guarda primero, así que no se pierde si se corta la conexión.',
     sendingHint: 'Enviando tu mensaje…', savedHint: 'Tu mensaje está guardado. El campo se abrirá de nuevo cuando Sócrates responda.',
   },
   unavailable: {
@@ -49,7 +49,11 @@ export default {
     echoTitle: 'Sentiste que este resumen no era del todo correcto',
     position: 'Postura: {{value}}', reason: 'Razón: {{value}}', conditions: 'Condiciones: {{value}}', separator: ' / ',
     ask: 'Gracias por decírmelo; no lo entendí bien. ¿Qué parte no se parece a ti: la postura, la razón o las condiciones? Dilo con tus propias palabras.',
-    quickLabel: 'Qué no encaja', quickPosition: 'La postura no encaja', quickReason: 'La razón no encaja', quickConditions: 'Las condiciones no encajan',
+    quickLabel: '¿Qué no encaja? (Elige una opción)', quickPrompt: '¿Qué no encaja?',
+    quickPosition: 'La postura no encaja', quickReason: 'La razón no encaja', quickConditions: 'Las condiciones no encajan', quickChanged: 'En realidad cambié de opinión',
+    newStance: '¿Cuál es tu nueva postura?', originalStance: 'Tu postura actual no aparece entre las opciones de abajo.',
+    chooseNewHint: 'Elige una nueva postura antes de enviar. Sócrates te preguntará primero qué te hizo cambiar y volverá a resumir después de una o dos rondas.',
+    selectedHint: 'Seleccionaste «{{option}}». Vuelve a pulsarla para cancelar. Al enviar, Sócrates hará al menos otra pregunta sobre esa parte antes de volver a resumir.',
     label: 'Di qué no encaja', hint: 'Después, Sócrates puede hacerte una o dos preguntas y luego volverá a resumirlo para que lo confirmes.',
   },
   viewpoint: {

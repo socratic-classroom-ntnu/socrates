@@ -84,7 +84,11 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
       if (message.role === 'student') studentIndex += 1
       if (message.role === 'tutor') return <article key={message.id} className="solo-message solo-message--tutor">
         <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
-        <div><strong>{t('timeline.socrates')}</strong><p>{message.text}</p></div>
+        <div>
+          <strong>{t('timeline.socrates')}</strong>
+          {message.move === 'hypothetical' && <span className="solo-message__move">{t('timeline.hypothetical')}</span>}
+          <p>{message.text}</p>
+        </div>
       </article>
       // Design A1: the student's label sits above the bubble, outside it.
       return <article key={message.id} className="solo-message solo-message--student">

@@ -5,6 +5,7 @@ export type SoloAttemptView = components['schemas']['SoloAttemptView']
 export type SoloQuestion = components['schemas']['SoloQuestionView']
 export type SoloMessage = components['schemas']['SoloMessageView']
 export type SoloSummary = components['schemas']['PersonalSummaryView']
+export type SoloSendMessageBody = components['schemas']['SendMessageBody']
 export type SoloAction = SoloAttemptView['available_actions'][number]
 
 export function can(view: Pick<SoloAttemptView, 'available_actions'>, action: SoloAction): boolean {
@@ -17,7 +18,7 @@ export function optionLetter(index: number): string {
 
 export function stanceLabel(question: SoloQuestion): string | null {
   if (!question.stance) return null
-  const index = question.options.findIndex(option => option.id === question.stance?.option_id)
+  const index = question.options.findIndex(option => option.id === question.stance?.current_option_id)
   if (index < 0) return null
   return `${optionLetter(index)} ${question.options[index].text}`
 }

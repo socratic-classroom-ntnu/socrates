@@ -45,4 +45,6 @@ class SoloMessage(Base):
     text: Mapped[str] = mapped_column(Text)
     # Only tutor messages carry observations; they never appear in the student's view.
     observations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Student: {revise_hint, new_option_id} after 不太對, kept for statistics. Tutor: {move}.
+    meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)

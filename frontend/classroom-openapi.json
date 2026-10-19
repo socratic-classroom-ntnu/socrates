@@ -2011,6 +2011,11 @@
             "title": "Current Position",
             "type": "string"
           },
+          "principle_note": {
+            "default": "",
+            "title": "Principle Note",
+            "type": "string"
+          },
           "reason_summary": {
             "title": "Reason Summary",
             "type": "string"
@@ -3041,6 +3046,36 @@
       "SendMessageBody": {
         "additionalProperties": false,
         "properties": {
+          "new_option_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Option Id"
+          },
+          "revise_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stance",
+                  "reason",
+                  "condition",
+                  "changed_mind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revise Hint"
+          },
           "text": {
             "maxLength": 4000,
             "minLength": 1,
@@ -3420,9 +3455,45 @@
             "title": "Id",
             "type": "string"
           },
+          "move": {
+            "anyOf": [
+              {
+                "enum": [
+                  "probe",
+                  "clarify",
+                  "challenge",
+                  "reflect",
+                  "summarize",
+                  "hypothetical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Move"
+          },
           "question_index": {
             "title": "Question Index",
             "type": "integer"
+          },
+          "revise_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stance",
+                  "reason",
+                  "condition",
+                  "changed_mind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revise Hint"
           },
           "role": {
             "enum": [
@@ -3442,7 +3513,9 @@
           "question_index",
           "role",
           "text",
-          "created_at"
+          "created_at",
+          "move",
+          "revise_hint"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -3585,6 +3658,10 @@
       "SoloStanceView": {
         "additionalProperties": false,
         "properties": {
+          "current_option_id": {
+            "title": "Current Option Id",
+            "type": "string"
+          },
           "option_id": {
             "title": "Option Id",
             "type": "string"
@@ -3596,6 +3673,7 @@
         },
         "required": [
           "option_id",
+          "current_option_id",
           "reason"
         ],
         "title": "SoloStanceView",

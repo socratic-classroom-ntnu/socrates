@@ -37,6 +37,7 @@ export function ViewpointCard({ view, question, pending, onConfirm, onRevise }: 
     </dl>
     {principle && <div className="solo-viewpoint__principle">
       <strong>{t('viewpoint.principle', { principle })}</strong>
+      {summary.principle_note && <p>{summary.principle_note}</p>}
       <small>{t('viewpoint.principleNote')}</small>
     </div>}
     <div className="solo-viewpoint__actions">

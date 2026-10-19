@@ -1,5 +1,5 @@
-/* 所有規則都掛在 .ans-room 底下：畫面實際放在 main.r2-classroom 裡，
-   `.r2-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉。
+/* 所有規則都掛在 .ans-room 底下：畫面實際放在 main.sc-classroom 裡，
+   `.sc-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉。
    前綴不用 ce-：對話室的 conversation-room/shell/room.css 已經用了 .ce-room，會一起載入而互相覆蓋 */
 /* ===== 作答畫面：Figma「3 問題作答」「4 選定並寫下想法」 =====
    桌機：1280×800 畫布照設計稿絕對定位，整張等比放大填滿螢幕（stage.ts useStageScale）。
@@ -9,7 +9,7 @@
 .ans-room {
   position: fixed;
   inset: 0;
-  z-index: 40; /* 蓋過教室頂列；低於 r2-toast（90），錯誤訊息仍看得到 */
+  z-index: 40; /* 蓋過教室頂列；低於 sc-toast（90），錯誤訊息仍看得到 */
   overflow: hidden;
   overflow: clip; /* hidden 仍會被 focus() 捲動，輸入框自動取得游標時整個畫面會跳；clip 不會 */
   background: #1A1713;
@@ -241,7 +241,7 @@
   font-size: 20px;
 }
 .ans-room .ans-option--dark .ans-option-letter, .ans-room .ans-option--dark .ans-selected-letter { background: rgba(0,0,0,.12); }
-/* 教室共用的 `.r2-classroom button:hover` 會把按鈕往上推 2px 並加亮，在作答畫面取消；卡片保留自己的旋轉 */
+/* 教室共用的 `.sc-classroom button:hover` 會把按鈕往上推 2px 並加亮，在作答畫面取消；卡片保留自己的旋轉 */
 .ans-room .ans-canvas button:hover { transform: none; filter: none; }
 /* 滑過／鍵盤選到時發亮：往上浮、變亮、外圍一圈卡片本身顏色的光暈（不用白邊） */
 .ans-room .ans-options .ans-option:hover,
@@ -402,7 +402,7 @@
   outline: none;
 }
 .ans-room .ans-notebook .socratic-composer-row textarea::placeholder { color: rgba(28,26,22,.45); }
-/* 共用輸入框的 padding: 0 和 `.r2-classroom button` 的 padding: 12px 20px 權重一樣、後者較晚載入而勝出，
+/* 共用輸入框的 padding: 0 和 `.sc-classroom button` 的 padding: 12px 20px 權重一樣、後者較晚載入而勝出，
    48px 的按鈕被塞進左右 20px 的內距，圖示就偏掉了；這裡明確歸零並置中 */
 .ans-room .ans-notebook .socratic-composer-row button {
   width: 48px;
@@ -429,7 +429,7 @@
 .ans-room .ans-notebook .socratic-enter { order: 3; border-radius: 12px; background: #1C1A16 !important; color: #FFFDF8 !important; }
 .ans-room .ans-notebook .socratic-composer button:focus-visible { outline: 2px solid #1C1A16; }
 .ans-room .ans-notebook .socratic-composer-caption { padding: 2px 0 0; font-size: 12px; color: #5E584C; opacity: 1; }
-.ans-room .ans-notebook .r88-ghost-accept {
+.ans-room .ans-notebook .ghost-accept {
   align-self: flex-start;
   border: 0;
   border-radius: 999px;
@@ -482,7 +482,7 @@
 }
 
 /* ----- 查資料側欄（其他組的功能）：作答畫面全螢幕時浮在右上角 ----- */
-.r73-answer-layout:has(.ans-room) .r73-research {
+.answer-layout:has(.ans-room) .research-panel {
   position: fixed;
   top: 14px;
   right: 16px;
@@ -490,7 +490,7 @@
   width: min(360px, calc(100vw - 32px));
   max-height: calc(100dvh - 28px);
 }
-.r73-answer-layout:has(.ans-room) .r73-research.is-closed {
+.answer-layout:has(.ans-room) .research-panel.is-closed {
   width: auto;
   padding: 0;
   border: 0;
@@ -498,7 +498,7 @@
   box-shadow: none;
   overflow: visible;
 }
-.r73-answer-layout:has(.ans-room) .r73-research.is-closed .r73-research-toggle {
+.answer-layout:has(.ans-room) .research-panel.is-closed .research-toggle {
   float: none;
   margin: 0;
   padding: 6px 14px;
@@ -588,7 +588,7 @@
 @keyframes ans-sink { to { opacity: 0; transform: translateY(40px); } }
 
 /* 查資料側欄在手機上移到右下角，避開計時器 */
-.r73-answer-layout:has(.ans-room--mobile) .r73-research { top: auto; bottom: 16px; max-height: 70dvh; }
+.answer-layout:has(.ans-room--mobile) .research-panel { top: auto; bottom: 16px; max-height: 70dvh; }
 
 @media (max-width: 600px) {
   .ans-room.ans-room--mobile .ans-option { min-height: 100px; font-size: 17px; }

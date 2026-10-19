@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { api } from '../../api/classroomClient';
+import { api } from '../../contract/classroomClient';
 import { forceLayout } from './graphLayout.mjs';
 const palette = ['#c7acff', '#80d8d2', '#f3cc95', '#ecaaca', '#93b8ef', '#bad797'];
 type GraphNode = { id: string; nickname: string; stage: string; text: string };
@@ -42,12 +42,12 @@ function ArgumentTree({ group, pick }) {
         const node = nodes.get(row.id);
         if (!node)
             return null;
-        return <details key={row.id} open={depth < 2} className="g70-tree-node"><summary><button className="quiet" onClick={event => { event.preventDefault(); pick(node); }}>{node.nickname} · {node.text.slice(0, 100)}</button></summary>
+        return <details key={row.id} open={depth < 2} className="group-tree-node"><summary><button className="quiet" onClick={event => { event.preventDefault(); pick(node); }}>{node.nickname} · {node.text.slice(0, 100)}</button></summary>
   {row.cross_references.map((edge, index) => <p key={index}><small>交叉引用 · {edge.type}</small><button className="quiet" onClick={() => { const source = nodes.get(edge.source); if (source)
             pick(source); }}>{nodes.get(edge.source)?.text.slice(0, 70) || edge.source}</button></p>)}
-  <div className="g70-tree-children">{render(row.id, depth + 1)}</div></details>;
+  <div className="group-tree-children">{render(row.id, depth + 1)}</div></details>;
     });
-    return <div className="g70-tree" aria-label="論點 DAG 的樹狀投影"><h4>{group.label} · 原話與論點脈絡</h4>{rows.length ? render(null) : <p>學生送出原話後，論點樹沿實際證據展開。</p>}</div>;
+    return <div className="group-tree" aria-label="論點 DAG 的樹狀投影"><h4>{group.label} · 原話與論點脈絡</h4>{rows.length ? render(null) : <p>學生送出原話後，論點樹沿實際證據展開。</p>}</div>;
 }
 export function GroupAnalytics({ id }) {
     const [data, setData] = useState(null), [error, setError] = useState(''), [groupId, setGroupId] = useState(''), [personId, setPersonId] = useState(''), [quote, setQuote] = useState(null), [graphMode, setGraphMode] = useState('tree');
@@ -60,10 +60,10 @@ export function GroupAnalytics({ id }) {
     const person = group?.persons.find(p => p.id === personId) || group?.persons[0];
     function select(g: string, p?: string) { setGroupId(g); setPersonId(p || ''); }
     function download() { const a = document.createElement('a'); const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); a.href = url; a.download = `socrates-${id}-pseudonymous-analysis.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
-    return <section className="g70-analytics"><div className="r2-row"><h2>觀點觀測室</h2><button onClick={download}>匯出假名化證據</button></div><p>Class → Group → Person。圖表保留學生原話與明示關係；每個點可回讀證據。原話內容由學生自行提供。</p>
- <div className="g70-chart-grid"><article className="r2-card"><h3>全班觀點日輪</h3><Sunburst groups={data.groups} select={select}/></article><article className="r2-card"><h3>組別階段流向</h3><Sankey groups={data.groups}/></article></div>
- <article className="r2-card"><h3>ACK / Completion Heatmap</h3><div className="g70-heatmap">{data.groups.map((g, gi) => <div key={g.id}><button className="quiet" onClick={() => select(g.id)}>{g.label}</button>{g.persons.map(p => <button key={p.id} title={p.nickname + ' · ' + (p.confirmed ? '已確認' : '思考中')} aria-label={p.nickname + ' · ' + (p.confirmed ? '已確認' : '思考中')} onClick={() => select(g.id, p.id)} style={{ background: p.confirmed ? palette[gi % palette.length] : '#484153', color: p.confirmed ? '#16131f' : '#fff' }}>{p.nickname.slice(0, 6)}{g.settlement.state === 'SETTLED' ? ' ✓' : ''}</button>)}</div>)}</div></article>
- {group && <><div className="r2-row"><label>組別<select value={group.id} onChange={e => select(e.target.value)}>{data.groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}</select></label><label>個人<select value={person?.id || ''} onChange={e => setPersonId(e.target.value)}>{group.persons.map(p => <option key={p.id} value={p.id}>{p.nickname}</option>)}</select></label></div>
- <div className="g70-chart-grid"><article className="r2-card"><h3>Argument Tree / Constellation</h3><div className="r2-row"><button className="quiet" aria-pressed={graphMode === 'tree'} onClick={() => setGraphMode('tree')}>論點樹</button><button className="quiet" aria-pressed={graphMode === 'graph'} onClick={() => setGraphMode('graph')}>力導向關係圖</button></div>{graphMode === 'tree' ? <ArgumentTree group={group} pick={setQuote}/> : <Graph group={group} pick={setQuote}/>}<p>supports · challenges · qualifies · revises</p>{quote && <blockquote><small>{quote.nickname} · {quote.stage}</small><p>{quote.text}</p><code>{quote.id}</code></blockquote>}</article><article className="r2-card"><h3>Personal Viewpoint Timeline</h3><div className="g70-timeline">{person?.timeline.map(n => <button key={n.id} className="g70-timeline-item" onClick={() => setQuote(n)}><small>{new Date(n.at * 1000).toLocaleTimeString()} · {n.stage} · {n.kind}</small><p>{n.text}</p></button>)}</div></article></div></>}
+    return <section className="group-analytics"><div className="sc-row"><h2>觀點觀測室</h2><button onClick={download}>匯出假名化證據</button></div><p>Class → Group → Person。圖表保留學生原話與明示關係；每個點可回讀證據。原話內容由學生自行提供。</p>
+ <div className="group-chart-grid"><article className="sc-card"><h3>全班觀點日輪</h3><Sunburst groups={data.groups} select={select}/></article><article className="sc-card"><h3>組別階段流向</h3><Sankey groups={data.groups}/></article></div>
+ <article className="sc-card"><h3>ACK / Completion Heatmap</h3><div className="group-heatmap">{data.groups.map((g, gi) => <div key={g.id}><button className="quiet" onClick={() => select(g.id)}>{g.label}</button>{g.persons.map(p => <button key={p.id} title={p.nickname + ' · ' + (p.confirmed ? '已確認' : '思考中')} aria-label={p.nickname + ' · ' + (p.confirmed ? '已確認' : '思考中')} onClick={() => select(g.id, p.id)} style={{ background: p.confirmed ? palette[gi % palette.length] : '#484153', color: p.confirmed ? '#16131f' : '#fff' }}>{p.nickname.slice(0, 6)}{g.settlement.state === 'SETTLED' ? ' ✓' : ''}</button>)}</div>)}</div></article>
+ {group && <><div className="sc-row"><label>組別<select value={group.id} onChange={e => select(e.target.value)}>{data.groups.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}</select></label><label>個人<select value={person?.id || ''} onChange={e => setPersonId(e.target.value)}>{group.persons.map(p => <option key={p.id} value={p.id}>{p.nickname}</option>)}</select></label></div>
+ <div className="group-chart-grid"><article className="sc-card"><h3>Argument Tree / Constellation</h3><div className="sc-row"><button className="quiet" aria-pressed={graphMode === 'tree'} onClick={() => setGraphMode('tree')}>論點樹</button><button className="quiet" aria-pressed={graphMode === 'graph'} onClick={() => setGraphMode('graph')}>力導向關係圖</button></div>{graphMode === 'tree' ? <ArgumentTree group={group} pick={setQuote}/> : <Graph group={group} pick={setQuote}/>}<p>supports · challenges · qualifies · revises</p>{quote && <blockquote><small>{quote.nickname} · {quote.stage}</small><p>{quote.text}</p><code>{quote.id}</code></blockquote>}</article><article className="sc-card"><h3>Personal Viewpoint Timeline</h3><div className="group-timeline">{person?.timeline.map(n => <button key={n.id} className="group-timeline-item" onClick={() => setQuote(n)}><small>{new Date(n.at * 1000).toLocaleTimeString()} · {n.stage} · {n.kind}</small><p>{n.text}</p></button>)}</div></article></div></>}
  </section>;
 }

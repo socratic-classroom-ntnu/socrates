@@ -2,12 +2,18 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GroupAvatar } from './GroupAvatar';
-// PORTAL-R73-SELECTED-STAGE
+// 選定發言者的舞台
 /** Shared seats/focus are projected from the server; camera is local to this tab. */
 export function Arena({ room }) {
     const host = useRef(null);
     const latest = useRef(room);
     latest.current = room;
+    const messages = room.focus?.messages ?? [];
+    const tutorIndex = messages.reduce((last, message, index) => message.role === 'tutor' ? index : last, -1);
+    const say = tutorIndex < 0 ? null : {
+        id: `${room.id}:${room.question_run_id}:${room.focus.id}:${tutorIndex}`,
+        text: messages[tutorIndex].text,
+    };
     useEffect(() => {
         if (!host.current)
             return;
@@ -134,5 +140,5 @@ export function Arena({ room }) {
             renderer.domElement.remove();
         };
     }, []);
-    return <div className="r2-arena" ref={host} aria-label="共享教室舞台"><div className="r73-native-avatar"><GroupAvatar roomId={room.id}/></div><div className="r2-stage-caption">SOCRATES · 共思劇場</div></div>;
+    return <div className="sc-arena" ref={host} aria-label="共享教室舞台"><div className="native-avatar"><GroupAvatar roomId={room.id} say={say}/></div><div className="sc-stage-caption">SOCRATES · 共思劇場</div></div>;
 }

@@ -1,0 +1,22 @@
+.tutor-avatar { position: relative; height: 100%; min-height: 300px; width: 100%; }
+.tutor-avatar-canvas { position: absolute; inset: 0 0 64px; max-width: 680px; margin: 0 auto; }
+.tutor-avatar-canvas canvas { display: block; width: 100% !important; height: 100% !important; outline: 0; }
+.tutor-avatar-message { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); margin: 0; color: #c0accd; font-size: 13px; text-align: center; }
+.tutor-avatar-message button { pointer-events: auto; }
+.tutor-avatar-caption { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; border: 1px solid #d2b4d630; border-radius: 100px; background: #19151fcc; backdrop-filter: blur(18px); padding: 9px 12px 9px 20px; box-shadow: 0 10px 35px #0003; white-space: nowrap; color: #f4ecf6; pointer-events: auto; }
+.tutor-avatar-caption strong { display: block; font-weight: 500; font-size: 14px; letter-spacing: .055em; }
+.tutor-avatar-caption span[aria-live] { display: block; color: #c0accd; font-size: 11px; margin-top: 4px; }
+.tutor-avatar-presence { height: 6px; width: 6px; display: block; flex-shrink: 0; border-radius: 50%; background: #a8c8b1; box-shadow: 0 0 0 4px #a8c8b114; }
+.tutor-avatar-presence.thinking { background: #d4b690; }
+.tutor-avatar-presence.listening { background: #a7c4df; }
+.tutor-avatar-presence.speaking { background: #e2a6c8; animation: tutor-avatar-pulse 1s ease-in-out infinite; }
+@keyframes tutor-avatar-pulse { 50% { box-shadow: 0 0 0 7px #e2a6c822; } }
+@media (prefers-reduced-motion: reduce) { .tutor-avatar-presence.speaking { animation: none; } }
+.tutor-avatar-voice { border: 1px solid #d2b4d650; border-radius: 100px; background: transparent; color: inherit; font-size: 12px; padding: 5px 11px; cursor: pointer; }
+.tutor-avatar-voice[aria-pressed="false"] { opacity: .65; }
+.tutor-avatar-license { position: absolute; right: 8px; bottom: 0; font-size: 10px; color: #9c8aa8; pointer-events: auto; }
+.tutor-avatar-lab { position: absolute; top: 6px; right: 6px; max-width: 260px; background: #19151fe6; color: #f4ecf6; border: 1px solid #d2b4d640; border-radius: 12px; padding: 6px 10px; font-size: 12px; pointer-events: auto; z-index: 2; }
+.tutor-avatar-lab label { display: grid; gap: 4px; margin: 6px 0; }
+.tutor-avatar-lab select { max-width: 100%; }
+.tutor-avatar-lab p { margin: 4px 0; overflow-wrap: anywhere; color: #c0accd; }
+.tutor-avatar-lab button { margin: 4px 6px 0 0; font-size: 12px; }

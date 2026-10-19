@@ -1,19 +1,10 @@
+import ClassroomApp from './ClassroomApp';
+import Round1App from './features/round1/Round1App';
+import { isRound1Path } from './features/round1/routes';
+import { DevConsole } from './features/dev-console/DevConsole';
 
-import ClassroomApp from './ClassroomApp'
-import Round1App from './Round1App'
-import QuestionBank from './pages/QuestionBank'
-import Danmaku from './pages/Danmaku'
-
+// Round1App owns its BrowserRouter; classroom and demo routes share ClassroomApp's auth boundary.
 export default function App() {
-  if (location.pathname === '/question-bank') {
-    return <QuestionBank />
-  }
-
-  if (location.pathname === '/danmaku') {
-    return <Danmaku />
-  }
-
-  return /^\/(round1|history|sessions)(\/|$)/.test(location.pathname)
-    ? <Round1App />
-    : <ClassroomApp />
+  const page = isRound1Path(location.pathname) ? <Round1App/> : <ClassroomApp/>;
+  return <>{page}<DevConsole/></>;
 }

@@ -25,3 +25,18 @@ test('keeps teacher pages across login and sends everything else home', () => {
   expect(pathAfterLogin('/')).toBe('/')
   expect(pathAfterLogin('/classrooms/r-1')).toBe('/')
 })
+
+// 未登入時打開 /teacher/home?view=bank 這類書籤，登入後要回到同一個分頁，不能只剩路徑
+test('keeps the query and hash of a teacher bookmark across login', () => {
+  expect(pathAfterLogin('/teacher/home', '?view=bank')).toBe('/teacher/home?view=bank')
+  expect(pathAfterLogin('/teacher/home', '?view=settings', '#teacher-content')).toBe('/teacher/home?view=settings#teacher-content')
+  expect(pathAfterLogin('/teacher/courses/c-1', '', '#lessons')).toBe('/teacher/courses/c-1#lessons')
+  expect(pathAfterLogin('/teacher/home', '?')).toBe('/teacher/home')
+})
+
+test('drops one-time tokens and non-teacher queries after login', () => {
+  expect(pathAfterLogin('/teacher/home', '?view=bank&verify_token=abc')).toBe('/teacher/home?view=bank')
+  expect(pathAfterLogin('/teacher/home', '?reset_token=xyz')).toBe('/teacher/home')
+  expect(pathAfterLogin('/', '?verify_token=abc', '#top')).toBe('/')
+  expect(pathAfterLogin('/classrooms/r-1', '?mode=student')).toBe('/')
+})

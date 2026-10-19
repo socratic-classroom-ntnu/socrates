@@ -1,0 +1,545 @@
+{
+  "schema": "portal/azure-viseme-events/v1",
+  "events": [
+    {
+      "index": 0,
+      "id": 0,
+      "audioOffsetTicks": 500000,
+      "audioOffsetMs": 50
+    },
+    {
+      "index": 1,
+      "id": 12,
+      "audioOffsetTicks": 1125000,
+      "audioOffsetMs": 112.5
+    },
+    {
+      "index": 2,
+      "id": 4,
+      "audioOffsetTicks": 1875000,
+      "audioOffsetMs": 187.5
+    },
+    {
+      "index": 3,
+      "id": 14,
+      "audioOffsetTicks": 2500000,
+      "audioOffsetMs": 250
+    },
+    {
+      "index": 4,
+      "id": 8,
+      "audioOffsetTicks": 3625000,
+      "audioOffsetMs": 362.5
+    },
+    {
+      "index": 5,
+      "id": 4,
+      "audioOffsetTicks": 5125000,
+      "audioOffsetMs": 512.5
+    },
+    {
+      "index": 6,
+      "id": 0,
+      "audioOffsetTicks": 6620000,
+      "audioOffsetMs": 662
+    },
+    {
+      "index": 7,
+      "id": 0,
+      "audioOffsetTicks": 14250000,
+      "audioOffsetMs": 1425
+    },
+    {
+      "index": 8,
+      "id": 7,
+      "audioOffsetTicks": 14875000,
+      "audioOffsetMs": 1487.5
+    },
+    {
+      "index": 9,
+      "id": 4,
+      "audioOffsetTicks": 16000000,
+      "audioOffsetMs": 1600
+    },
+    {
+      "index": 10,
+      "id": 14,
+      "audioOffsetTicks": 16625000,
+      "audioOffsetMs": 1662.5
+    },
+    {
+      "index": 11,
+      "id": 20,
+      "audioOffsetTicks": 17375000,
+      "audioOffsetMs": 1737.5
+    },
+    {
+      "index": 12,
+      "id": 1,
+      "audioOffsetTicks": 17750000,
+      "audioOffsetMs": 1775
+    },
+    {
+      "index": 13,
+      "id": 21,
+      "audioOffsetTicks": 18375000,
+      "audioOffsetMs": 1837.5
+    },
+    {
+      "index": 14,
+      "id": 19,
+      "audioOffsetTicks": 19250000,
+      "audioOffsetMs": 1925
+    },
+    {
+      "index": 15,
+      "id": 4,
+      "audioOffsetTicks": 19875000,
+      "audioOffsetMs": 1987.5
+    },
+    {
+      "index": 16,
+      "id": 9,
+      "audioOffsetTicks": 20750000,
+      "audioOffsetMs": 2075
+    },
+    {
+      "index": 17,
+      "id": 13,
+      "audioOffsetTicks": 21500000,
+      "audioOffsetMs": 2150
+    },
+    {
+      "index": 18,
+      "id": 20,
+      "audioOffsetTicks": 22375000,
+      "audioOffsetMs": 2237.5
+    },
+    {
+      "index": 19,
+      "id": 3,
+      "audioOffsetTicks": 23000000,
+      "audioOffsetMs": 2300
+    },
+    {
+      "index": 20,
+      "id": 18,
+      "audioOffsetTicks": 24125000,
+      "audioOffsetMs": 2412.5
+    },
+    {
+      "index": 21,
+      "id": 6,
+      "audioOffsetTicks": 24750000,
+      "audioOffsetMs": 2475
+    },
+    {
+      "index": 22,
+      "id": 16,
+      "audioOffsetTicks": 25625000,
+      "audioOffsetMs": 2562.5
+    },
+    {
+      "index": 23,
+      "id": 2,
+      "audioOffsetTicks": 27125000,
+      "audioOffsetMs": 2712.5
+    },
+    {
+      "index": 24,
+      "id": 21,
+      "audioOffsetTicks": 28625000,
+      "audioOffsetMs": 2862.5
+    },
+    {
+      "index": 25,
+      "id": 0,
+      "audioOffsetTicks": 29750000,
+      "audioOffsetMs": 2975
+    },
+    {
+      "index": 26,
+      "id": 0,
+      "audioOffsetTicks": 38000000,
+      "audioOffsetMs": 3800
+    },
+    {
+      "index": 27,
+      "id": 7,
+      "audioOffsetTicks": 38625000,
+      "audioOffsetMs": 3862.5
+    },
+    {
+      "index": 28,
+      "id": 2,
+      "audioOffsetTicks": 39500000,
+      "audioOffsetMs": 3950
+    },
+    {
+      "index": 29,
+      "id": 19,
+      "audioOffsetTicks": 40125000,
+      "audioOffsetMs": 4012.5
+    },
+    {
+      "index": 30,
+      "id": 20,
+      "audioOffsetTicks": 40750000,
+      "audioOffsetMs": 4075
+    },
+    {
+      "index": 31,
+      "id": 1,
+      "audioOffsetTicks": 41375000,
+      "audioOffsetMs": 4137.5
+    },
+    {
+      "index": 32,
+      "id": 19,
+      "audioOffsetTicks": 41750000,
+      "audioOffsetMs": 4175
+    },
+    {
+      "index": 33,
+      "id": 11,
+      "audioOffsetTicks": 42500000,
+      "audioOffsetMs": 4250
+    },
+    {
+      "index": 34,
+      "id": 20,
+      "audioOffsetTicks": 43375000,
+      "audioOffsetMs": 4337.5
+    },
+    {
+      "index": 35,
+      "id": 4,
+      "audioOffsetTicks": 44000000,
+      "audioOffsetMs": 4400
+    },
+    {
+      "index": 36,
+      "id": 19,
+      "audioOffsetTicks": 44500000,
+      "audioOffsetMs": 4450
+    },
+    {
+      "index": 37,
+      "id": 15,
+      "audioOffsetTicks": 45250000,
+      "audioOffsetMs": 4525
+    },
+    {
+      "index": 38,
+      "id": 19,
+      "audioOffsetTicks": 46000000,
+      "audioOffsetMs": 4600
+    },
+    {
+      "index": 39,
+      "id": 2,
+      "audioOffsetTicks": 46625000,
+      "audioOffsetMs": 4662.5
+    },
+    {
+      "index": 40,
+      "id": 13,
+      "audioOffsetTicks": 47250000,
+      "audioOffsetMs": 4725
+    },
+    {
+      "index": 41,
+      "id": 19,
+      "audioOffsetTicks": 47875000,
+      "audioOffsetMs": 4787.5
+    },
+    {
+      "index": 42,
+      "id": 6,
+      "audioOffsetTicks": 48375000,
+      "audioOffsetMs": 4837.5
+    },
+    {
+      "index": 43,
+      "id": 19,
+      "audioOffsetTicks": 48875000,
+      "audioOffsetMs": 4887.5
+    },
+    {
+      "index": 44,
+      "id": 18,
+      "audioOffsetTicks": 49625000,
+      "audioOffsetMs": 4962.5
+    },
+    {
+      "index": 45,
+      "id": 1,
+      "audioOffsetTicks": 50250000,
+      "audioOffsetMs": 5025
+    },
+    {
+      "index": 46,
+      "id": 13,
+      "audioOffsetTicks": 50875000,
+      "audioOffsetMs": 5087.5
+    },
+    {
+      "index": 47,
+      "id": 6,
+      "audioOffsetTicks": 51625000,
+      "audioOffsetMs": 5162.5
+    },
+    {
+      "index": 48,
+      "id": 7,
+      "audioOffsetTicks": 52125000,
+      "audioOffsetMs": 5212.5
+    },
+    {
+      "index": 49,
+      "id": 19,
+      "audioOffsetTicks": 53000000,
+      "audioOffsetMs": 5300
+    },
+    {
+      "index": 50,
+      "id": 4,
+      "audioOffsetTicks": 53625000,
+      "audioOffsetMs": 5362.5
+    },
+    {
+      "index": 51,
+      "id": 19,
+      "audioOffsetTicks": 54125000,
+      "audioOffsetMs": 5412.5
+    },
+    {
+      "index": 52,
+      "id": 4,
+      "audioOffsetTicks": 54750000,
+      "audioOffsetMs": 5475
+    },
+    {
+      "index": 53,
+      "id": 6,
+      "audioOffsetTicks": 55875000,
+      "audioOffsetMs": 5587.5
+    },
+    {
+      "index": 54,
+      "id": 0,
+      "audioOffsetTicks": 57000000,
+      "audioOffsetMs": 5700
+    },
+    {
+      "index": 55,
+      "id": 0,
+      "audioOffsetTicks": 65375000,
+      "audioOffsetMs": 6537.5
+    },
+    {
+      "index": 56,
+      "id": 2,
+      "audioOffsetTicks": 66000000,
+      "audioOffsetMs": 6600
+    },
+    {
+      "index": 57,
+      "id": 13,
+      "audioOffsetTicks": 67000000,
+      "audioOffsetMs": 6700
+    },
+    {
+      "index": 58,
+      "id": 6,
+      "audioOffsetTicks": 67875000,
+      "audioOffsetMs": 6787.5
+    },
+    {
+      "index": 59,
+      "id": 7,
+      "audioOffsetTicks": 68375000,
+      "audioOffsetMs": 6837.5
+    },
+    {
+      "index": 60,
+      "id": 6,
+      "audioOffsetTicks": 69250000,
+      "audioOffsetMs": 6925
+    },
+    {
+      "index": 61,
+      "id": 19,
+      "audioOffsetTicks": 69750000,
+      "audioOffsetMs": 6975
+    },
+    {
+      "index": 62,
+      "id": 17,
+      "audioOffsetTicks": 70250000,
+      "audioOffsetMs": 7025
+    },
+    {
+      "index": 63,
+      "id": 1,
+      "audioOffsetTicks": 70750000,
+      "audioOffsetMs": 7075
+    },
+    {
+      "index": 64,
+      "id": 21,
+      "audioOffsetTicks": 71250000,
+      "audioOffsetMs": 7125
+    },
+    {
+      "index": 65,
+      "id": 7,
+      "audioOffsetTicks": 71875000,
+      "audioOffsetMs": 7187.5
+    },
+    {
+      "index": 66,
+      "id": 19,
+      "audioOffsetTicks": 73125000,
+      "audioOffsetMs": 7312.5
+    },
+    {
+      "index": 67,
+      "id": 18,
+      "audioOffsetTicks": 73750000,
+      "audioOffsetMs": 7375
+    },
+    {
+      "index": 68,
+      "id": 1,
+      "audioOffsetTicks": 74250000,
+      "audioOffsetMs": 7425
+    },
+    {
+      "index": 69,
+      "id": 13,
+      "audioOffsetTicks": 74750000,
+      "audioOffsetMs": 7475
+    },
+    {
+      "index": 70,
+      "id": 20,
+      "audioOffsetTicks": 75500000,
+      "audioOffsetMs": 7550
+    },
+    {
+      "index": 71,
+      "id": 3,
+      "audioOffsetTicks": 76125000,
+      "audioOffsetMs": 7612.5
+    },
+    {
+      "index": 72,
+      "id": 18,
+      "audioOffsetTicks": 77625000,
+      "audioOffsetMs": 7762.5
+    },
+    {
+      "index": 73,
+      "id": 6,
+      "audioOffsetTicks": 78375000,
+      "audioOffsetMs": 7837.5
+    },
+    {
+      "index": 74,
+      "id": 0,
+      "audioOffsetTicks": 79745000,
+      "audioOffsetMs": 7974.5
+    },
+    {
+      "index": 75,
+      "id": 19,
+      "audioOffsetTicks": 81250000,
+      "audioOffsetMs": 8125
+    },
+    {
+      "index": 76,
+      "id": 6,
+      "audioOffsetTicks": 82125000,
+      "audioOffsetMs": 8212.5
+    },
+    {
+      "index": 77,
+      "id": 0,
+      "audioOffsetTicks": 84125000,
+      "audioOffsetMs": 8412.5
+    },
+    {
+      "index": 78,
+      "id": 3,
+      "audioOffsetTicks": 85750000,
+      "audioOffsetMs": 8575
+    },
+    {
+      "index": 79,
+      "id": 13,
+      "audioOffsetTicks": 86375000,
+      "audioOffsetMs": 8637.5
+    },
+    {
+      "index": 80,
+      "id": 15,
+      "audioOffsetTicks": 87250000,
+      "audioOffsetMs": 8725
+    },
+    {
+      "index": 81,
+      "id": 1,
+      "audioOffsetTicks": 88000000,
+      "audioOffsetMs": 8800
+    },
+    {
+      "index": 82,
+      "id": 21,
+      "audioOffsetTicks": 88625000,
+      "audioOffsetMs": 8862.5
+    },
+    {
+      "index": 83,
+      "id": 19,
+      "audioOffsetTicks": 89000000,
+      "audioOffsetMs": 8900
+    },
+    {
+      "index": 84,
+      "id": 6,
+      "audioOffsetTicks": 89500000,
+      "audioOffsetMs": 8950
+    },
+    {
+      "index": 85,
+      "id": 20,
+      "audioOffsetTicks": 90125000,
+      "audioOffsetMs": 9012.5
+    },
+    {
+      "index": 86,
+      "id": 4,
+      "audioOffsetTicks": 90875000,
+      "audioOffsetMs": 9087.5
+    },
+    {
+      "index": 87,
+      "id": 14,
+      "audioOffsetTicks": 91750000,
+      "audioOffsetMs": 9175
+    },
+    {
+      "index": 88,
+      "id": 15,
+      "audioOffsetTicks": 92750000,
+      "audioOffsetMs": 9275
+    },
+    {
+      "index": 89,
+      "id": 0,
+      "audioOffsetTicks": 94625000,
+      "audioOffsetMs": 9462.5
+    }
+  ]
+}

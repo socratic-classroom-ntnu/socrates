@@ -3,7 +3,13 @@
 from fastapi import APIRouter, Request
 from sqlalchemy import select
 
-from app.modules.classroom_core.contracts import LibraryClassroomView
+from app.modules.classroom_core.contracts import (
+    AttachedScriptView,
+    ClassroomAISettingsView,
+    ClassroomBatchView,
+    LibraryClassroomDetailView,
+    LibraryClassroomView,
+)
 from app.modules.classroom_core.service import (
     link_group_session as link_group_session,
     owned_classroom as owned,
@@ -44,35 +50,35 @@ def list_classrooms(request: Request):
         ]
 
 
-@router.post("/classrooms")
+@router.post("/classrooms", response_model=LibraryClassroomView)
 def create_classroom(body: CreateClassroom, request: Request):
     with transaction() as db:
         account = user(db, request, True)
         return create_library_classroom(db, account, body)
 
 
-@router.get("/classrooms/{cid}")
+@router.get("/classrooms/{cid}", response_model=LibraryClassroomDetailView)
 def classroom(cid: str, request: Request):
     with transaction() as db:
         account = user(db, request)
         return library_classroom_view(db, account, cid)
 
 
-@router.post("/classrooms/{cid}/scripts")
+@router.post("/classrooms/{cid}/scripts", response_model=AttachedScriptView)
 def attach_script(cid: str, body: AttachScript, request: Request):
     with transaction() as db:
         account = user(db, request, True)
         return attach_classroom_script(db, account, cid, body)
 
 
-@router.post("/classrooms/{cid}/batches")
+@router.post("/classrooms/{cid}/batches", response_model=ClassroomBatchView)
 def create_batch(cid: str, body: CreateBatch, request: Request):
     with transaction() as db:
         account = user(db, request, True)
         return create_classroom_batch(db, account, cid, body)
 
 
-@router.get("/classrooms/{cid}/ai-settings")
+@router.get("/classrooms/{cid}/ai-settings", response_model=ClassroomAISettingsView)
 def classroom_settings(cid: str, request: Request):
     with transaction() as db:
         account, _ = account_from_request(db, request)
@@ -80,7 +86,7 @@ def classroom_settings(cid: str, request: Request):
         return classroom_settings_view(classroom.assets.get("ai_settings"))
 
 
-@router.put("/classrooms/{cid}/ai-settings")
+@router.put("/classrooms/{cid}/ai-settings", response_model=ClassroomAISettingsView)
 def update_classroom_settings(cid: str, body: SettingsUpdate, request: Request):
     with transaction() as db:
         account, session = account_from_request(db, request, True)

@@ -1,15 +1,24 @@
 // Generated from FastAPI /api/v2. Regenerate with scripts/gen_classroom_types.py.
 export interface components { schemas: {
+  "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
   "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
+  "AddAIStudentsReceipt": { "status": string; "action_id": string; "seq": number; "created": Array<components["schemas"]["AIStudentCreatedView"]>; "roster_digest": string; "room_id": string };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
+  "AttachedScriptView": { "id": string; "revision": number; "document": Record<string, unknown>; "classroom_id": string };
   "BankImportResult": { "id": string; "revision": number; "question_id": string; "document": components["schemas"]["ScriptDocument"] };
   "BankMutation": { "action_id": string };
   "BankQuestionDetail": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null); "question": components["schemas"]["Question"] };
   "BankQuestionSummary": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null) };
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
+  "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision": number };
+  "ClassroomActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
+  "ClassroomBatchView": { "id": string; "classroom_id": string; "batch_id": string; "code": (string | null) };
+  "ClassroomEventPage": { "events": Array<components["schemas"]["ClassroomEventView"]>; "latest_seq": number; "more": boolean };
+  "ClassroomEventView": { "seq": number; "type": string; "payload": Record<string, unknown> };
   "ClearAIStudents": { "action_id": string };
+  "ClearAIStudentsReceipt": { "status": string; "action_id": string; "seq": number; "removed": number; "roster_digest": string; "room_id": string };
   "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "end" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
   "CreateBatch": { "action_id": string; "script_id": string };
@@ -17,16 +26,25 @@ export interface components { schemas: {
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
   "CreateRoom": { "script_id": string };
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
+  "GroupActionReceipt": { "status": string; "action_id": string; "seq": number };
+  "GroupCollectionView": { "kind": "GroupCollection"; "id": string; "role": "teacher" | "student"; "route"?: (Record<string, string> | null); "title"?: (string | null); "phase"?: (string | null); "code"?: (string | null); "asset_classroom_id"?: (string | null); "ai_settings"?: (components["schemas"]["ClassroomAISettingsView"] | null); "features"?: (Record<string, unknown> | null); "roster"?: Array<Record<string, unknown>>; "roster_digest"?: (string | null); "configuration"?: (Record<string, unknown> | null); "groups"?: Array<Record<string, unknown>>; "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string> };
   "GroupCommand": { "action_id": string; "kind": string; "data"?: Record<string, unknown> };
+  "GroupMemberIdentityView": { "username": string; "scope": "teacher_hover_only" };
+  "GroupMetaView": { "id": string; "number": number; "label": string };
+  "GroupRunView": { "kind": "GroupRun"; "id": string; "role": "teacher" | "student"; "seq": number; "title": string; "phase": string; "deadline_at": (number | null); "member_id": (string | null); "members": Array<Record<string, unknown>>; "runtime_mode": string; "session_batch_id": string; "group_label": string; "classroom_id": string; "question": (components["schemas"]["PublicQuestion"] | null); "transcript": Array<Record<string, unknown>>; "arguments": Array<Record<string, unknown>>; "edges": Array<Record<string, unknown>>; "settlement": Record<string, unknown>; "confirmed_members": Array<string>; "my_summary": (Record<string, unknown> | null); "avatar_pack_id": string; "source_mode": string; "focus_notice"?: unknown; "personal"?: (Record<string, unknown> | null); "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string>; "personal_progress"?: (Record<string, unknown> | null); "personal_overview"?: (Array<Record<string, unknown>> | null) };
+  "GroupStartReceipt": { "status": string; "action_id": string; "seq": number; "groups": Array<components["schemas"]["GroupMetaView"]>; "snapshot_id": string };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
+  "LegacyGroupView": { "kind": "Legacy"; "id": string };
+  "LibraryClassroomDetailView": { "id": string; "title": string; "revision": number; "assets": Record<string, unknown>; "scripts": Array<Record<string, unknown>>; "sessions": Array<Record<string, unknown>>; "lessons": Array<Record<string, unknown>> };
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "Login": { "login": string; "password": string };
   "MailRequest": { "email": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
+  "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
@@ -34,6 +52,7 @@ export interface components { schemas: {
   "Reaction": { "action_id": string; "kind": "heart" | "like" | "gift"; "focus_id": string; "turn_index": number };
   "Register": { "username": string; "email": string; "password": string };
   "ResetRequest": { "token": string; "password": string };
+  "RoomBudgetView": { "live_llm_call_budget": number; "used": number };
   "RoomSummary": { "id": string; "title": string; "phase": string; "teacher": boolean };
   "RoomView": { "id": string; "code": (string | null); "title": string; "role": "teacher" | "student"; "member_id": (string | null); "phase": string; "seq": number; "server_now": number; "deadline_at": (number | null); "question": (components["schemas"]["PublicQuestion"] | null); "question_index": number; "question_run_id": (string | null); "question_count": number; "members": Array<components["schemas"]["MemberView"]>; "my_draft": (Record<string, unknown> | null); "my_answer": (Record<string, unknown> | null); "distribution": Array<Record<string, unknown>>; "focus": (Record<string, unknown> | null); "transcript": Array<Record<string, unknown>>; "preview": (components["schemas"]["PublicQuestion"] | null); "summaries": Record<string, unknown>; "available_actions": Array<string>; "source_mode": string; "last_error": (string | null) };
   "SampleQuestionDraft": { "id": string; "title": string; "scenario": string; "options"?: Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
@@ -41,6 +60,7 @@ export interface components { schemas: {
   "ScenarioAI": { "provider_profile_id": string; "model": string };
   "ScriptAssistRequest": { "request": string; "document"?: Record<string, unknown>; "question_index"?: (number | null); "script_id"?: (string | null) };
   "ScriptDocument": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
+  "ScriptRevisionView": { "id": string; "revision": number };
   "ScriptSave": { "document": components["schemas"]["ScriptDocument"]; "expected_revision"?: (number | null) };
   "ScriptView": { "id": string; "revision": number; "document": Record<string, unknown> };
   "SettingsUpdate": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "budgets"?: Record<string, unknown>; "active_room_id"?: (string | null) };

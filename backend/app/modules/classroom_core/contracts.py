@@ -100,6 +100,68 @@ class LibraryClassroomView(Strict):
     revision: int
 
 
+class ScriptRevisionView(Strict):
+    id: str
+    revision: int
+
+
+class ClassroomActionReceipt(Strict):
+    status: str
+    action_id: str
+    seq: int
+    room_id: str | None = None
+
+
+class ClassroomEventView(Strict):
+    seq: int
+    type: str
+    payload: dict[str, Any]
+
+
+class ClassroomEventPage(Strict):
+    events: list[ClassroomEventView]
+    latest_seq: int
+    more: bool
+
+
+class RoomBudgetView(Strict):
+    live_llm_call_budget: int
+    used: int
+
+
+class LibraryClassroomDetailView(Strict):
+    id: str
+    title: str
+    revision: int
+    assets: dict[str, Any]
+    scripts: list[dict[str, Any]]
+    sessions: list[dict[str, Any]]
+    lessons: list[dict[str, Any]]
+
+
+class AttachedScriptView(Strict):
+    id: str
+    revision: int
+    document: dict[str, Any]
+    classroom_id: str
+
+
+class ClassroomBatchView(Strict):
+    id: str
+    classroom_id: str
+    batch_id: str
+    code: str | None
+
+
+class ClassroomAISettingsView(Strict):
+    default_profile_id: str | None = None
+    fallback_profile_id: str | None = None
+    model_matrix: dict[str, str] = Field(default_factory=dict)
+    scenario_overrides: dict[str, Any] = Field(default_factory=dict)
+    budgets: dict[str, Any] = Field(default_factory=dict)
+    revision: int = 0
+
+
 class Mutation(TrimmedModel):
     action_id: str = Field(min_length=8, max_length=100)
 

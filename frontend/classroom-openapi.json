@@ -1,6 +1,51 @@
 {
   "components": {
     "schemas": {
+      "AIStudentCreatedView": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "alias": {
+            "title": "Alias",
+            "type": "string"
+          },
+          "membership_id": {
+            "title": "Membership Id",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "persona_id": {
+            "title": "Persona Id",
+            "type": "string"
+          },
+          "provider_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Profile Id"
+          }
+        },
+        "required": [
+          "account_id",
+          "membership_id",
+          "alias",
+          "persona_id",
+          "model"
+        ],
+        "title": "AIStudentCreatedView",
+        "type": "object"
+      },
       "AccountView": {
         "additionalProperties": false,
         "properties": {
@@ -114,6 +159,48 @@
         "title": "AddAIStudents",
         "type": "object"
       },
+      "AddAIStudentsReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "created": {
+            "items": {
+              "$ref": "#/components/schemas/AIStudentCreatedView"
+            },
+            "title": "Created",
+            "type": "array"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "roster_digest": {
+            "title": "Roster Digest",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "created",
+          "roster_digest",
+          "room_id"
+        ],
+        "title": "AddAIStudentsReceipt",
+        "type": "object"
+      },
       "AttachScript": {
         "additionalProperties": false,
         "properties": {
@@ -150,6 +237,35 @@
           "action_id"
         ],
         "title": "AttachScript",
+        "type": "object"
+      },
+      "AttachedScriptView": {
+        "additionalProperties": false,
+        "properties": {
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "document",
+          "classroom_id"
+        ],
+        "title": "AttachedScriptView",
         "type": "object"
       },
       "BankImportResult": {
@@ -418,6 +534,177 @@
         "title": "BankUnpublishResult",
         "type": "object"
       },
+      "ClassroomAISettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "budgets": {
+            "title": "Budgets",
+            "type": "object"
+          },
+          "default_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Profile Id"
+          },
+          "fallback_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Profile Id"
+          },
+          "model_matrix": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Model Matrix",
+            "type": "object"
+          },
+          "revision": {
+            "default": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_overrides": {
+            "title": "Scenario Overrides",
+            "type": "object"
+          }
+        },
+        "title": "ClassroomAISettingsView",
+        "type": "object"
+      },
+      "ClassroomActionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq"
+        ],
+        "title": "ClassroomActionReceipt",
+        "type": "object"
+      },
+      "ClassroomBatchView": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "classroom_id",
+          "batch_id",
+          "code"
+        ],
+        "title": "ClassroomBatchView",
+        "type": "object"
+      },
+      "ClassroomEventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ClassroomEventView"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "latest_seq": {
+            "title": "Latest Seq",
+            "type": "integer"
+          },
+          "more": {
+            "title": "More",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "events",
+          "latest_seq",
+          "more"
+        ],
+        "title": "ClassroomEventPage",
+        "type": "object"
+      },
+      "ClassroomEventView": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "title": "Payload",
+            "type": "object"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "type",
+          "payload"
+        ],
+        "title": "ClassroomEventView",
+        "type": "object"
+      },
       "ClearAIStudents": {
         "additionalProperties": false,
         "properties": {
@@ -432,6 +719,45 @@
           "action_id"
         ],
         "title": "ClearAIStudents",
+        "type": "object"
+      },
+      "ClearAIStudentsReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "roster_digest": {
+            "title": "Roster Digest",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "removed",
+          "roster_digest",
+          "room_id"
+        ],
+        "title": "ClearAIStudentsReceipt",
         "type": "object"
       },
       "Command": {
@@ -696,6 +1022,188 @@
         "title": "CredentialUpdate",
         "type": "object"
       },
+      "GroupActionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq"
+        ],
+        "title": "GroupActionReceipt",
+        "type": "object"
+      },
+      "GroupCollectionView": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassroomAISettingsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_classroom_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Classroom Id"
+          },
+          "available_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration"
+          },
+          "features": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Features"
+          },
+          "groups": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "GroupCollection",
+            "title": "Kind",
+            "type": "string"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "role": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "roster": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Roster",
+            "type": "array"
+          },
+          "roster_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roster Digest"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "unavailable_actions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Unavailable Actions",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "role"
+        ],
+        "title": "GroupCollectionView",
+        "type": "object"
+      },
       "GroupCommand": {
         "additionalProperties": false,
         "properties": {
@@ -720,6 +1228,306 @@
           "kind"
         ],
         "title": "GroupCommand",
+        "type": "object"
+      },
+      "GroupMemberIdentityView": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "const": "teacher_hover_only",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "scope"
+        ],
+        "title": "GroupMemberIdentityView",
+        "type": "object"
+      },
+      "GroupMetaView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "label"
+        ],
+        "title": "GroupMetaView",
+        "type": "object"
+      },
+      "GroupRunView": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Arguments",
+            "type": "array"
+          },
+          "available_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "avatar_pack_id": {
+            "title": "Avatar Pack Id",
+            "type": "string"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "confirmed_members": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Confirmed Members",
+            "type": "array"
+          },
+          "deadline_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline At"
+          },
+          "edges": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "focus_notice": {
+            "title": "Focus Notice"
+          },
+          "group_label": {
+            "title": "Group Label",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "GroupRun",
+            "title": "Kind",
+            "type": "string"
+          },
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "members": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "my_summary": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Summary"
+          },
+          "personal": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal"
+          },
+          "personal_overview": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal Overview"
+          },
+          "personal_progress": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal Progress"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicQuestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "runtime_mode": {
+            "title": "Runtime Mode",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "session_batch_id": {
+            "title": "Session Batch Id",
+            "type": "string"
+          },
+          "settlement": {
+            "title": "Settlement",
+            "type": "object"
+          },
+          "source_mode": {
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "transcript": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Transcript",
+            "type": "array"
+          },
+          "unavailable_actions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Unavailable Actions",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "role",
+          "seq",
+          "title",
+          "phase",
+          "deadline_at",
+          "member_id",
+          "members",
+          "runtime_mode",
+          "session_batch_id",
+          "group_label",
+          "classroom_id",
+          "question",
+          "transcript",
+          "arguments",
+          "edges",
+          "settlement",
+          "confirmed_members",
+          "my_summary",
+          "avatar_pack_id",
+          "source_mode"
+        ],
+        "title": "GroupRunView",
+        "type": "object"
+      },
+      "GroupStartReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupMetaView"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "groups",
+          "snapshot_id"
+        ],
+        "title": "GroupStartReceipt",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -785,6 +1593,79 @@
           "alias"
         ],
         "title": "JoinRoom",
+        "type": "object"
+      },
+      "LegacyGroupView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "Legacy",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ],
+        "title": "LegacyGroupView",
+        "type": "object"
+      },
+      "LibraryClassroomDetailView": {
+        "additionalProperties": false,
+        "properties": {
+          "assets": {
+            "title": "Assets",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lessons": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Lessons",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scripts": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Scripts",
+            "type": "array"
+          },
+          "sessions": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Sessions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "revision",
+          "assets",
+          "scripts",
+          "sessions",
+          "lessons"
+        ],
+        "title": "LibraryClassroomDetailView",
         "type": "object"
       },
       "LibraryClassroomView": {
@@ -998,6 +1879,63 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "OtherSuggestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "classroom_owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classroom Owner Id"
+          },
+          "provider_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Profile Id"
+          },
+          "suggestion_id": {
+            "title": "Suggestion Id",
+            "type": "string"
+          },
+          "suggestion_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion Model"
+          },
+          "suggestion_provider": {
+            "title": "Suggestion Provider",
+            "type": "string"
+          },
+          "suggestion_text": {
+            "title": "Suggestion Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggestion_text",
+          "suggestion_id",
+          "suggestion_provider"
+        ],
+        "title": "OtherSuggestionView",
         "type": "object"
       },
       "PublicConfigView": {
@@ -1380,6 +2318,25 @@
           "password"
         ],
         "title": "ResetRequest",
+        "type": "object"
+      },
+      "RoomBudgetView": {
+        "additionalProperties": false,
+        "properties": {
+          "live_llm_call_budget": {
+            "title": "Live Llm Call Budget",
+            "type": "integer"
+          },
+          "used": {
+            "title": "Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "live_llm_call_budget",
+          "used"
+        ],
+        "title": "RoomBudgetView",
         "type": "object"
       },
       "RoomSummary": {
@@ -1867,6 +2824,25 @@
           "questions"
         ],
         "title": "ScriptDocument",
+        "type": "object"
+      },
+      "ScriptRevisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "title": "ScriptRevisionView",
         "type": "object"
       },
       "ScriptSave": {
@@ -2901,7 +3877,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBudgetView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2948,7 +3926,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2995,7 +3975,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomEventPage"
+                }
               }
             },
             "description": "Successful Response"
@@ -3042,7 +4024,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3079,7 +4063,20 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/GroupCollectionView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GroupRunView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LegacyGroupView"
+                    }
+                  ],
+                  "title": "Response View Api V2 Groups Classrooms  Rid  Get"
+                }
               }
             },
             "description": "Successful Response"
@@ -3126,7 +4123,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AddAIStudentsReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3173,7 +4172,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClearAIStudentsReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3257,7 +4258,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3304,7 +4307,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupStartReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3351,7 +4356,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -3397,7 +4404,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMemberIdentityView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3453,7 +4462,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryClassroomView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3490,7 +4501,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryClassroomDetailView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3527,7 +4540,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomAISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3572,7 +4587,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomAISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3619,7 +4636,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomBatchView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3666,7 +4685,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -4197,7 +5218,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptRevisionView"
+                }
               }
             },
             "description": "Successful Response"
@@ -4270,7 +5293,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/OtherSuggestionView"
+                }
               }
             },
             "description": "Successful Response"

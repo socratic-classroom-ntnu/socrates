@@ -14,6 +14,10 @@ from app.modules.classroom_core.contracts import (
     Reaction,
     RoomSummary,
     RoomView,
+    ScriptRevisionView,
+    ClassroomActionReceipt,
+    ClassroomEventPage,
+    RoomBudgetView,
 )
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.repositories import Event, Membership, Room
@@ -24,7 +28,9 @@ from app.modules.classroom_core.service import adopt_room_question, adjust_room_
 router = APIRouter(prefix="/api/v2")
 
 
-@router.post("/scripts/{script_id}/adopt-question/{room_id}/{index}")
+@router.post(
+    "/scripts/{script_id}/adopt-question/{room_id}/{index}", response_model=ScriptRevisionView
+)
 def adopt_question(script_id: str, room_id: str, index: int, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
@@ -70,21 +76,21 @@ def room_view(room_id: str, request: Request, mode: str = "student"):
         return service.view(db, r, a.id, mode)
 
 
-@router.post("/classrooms/{room_id}/commands")
+@router.post("/classrooms/{room_id}/commands", response_model=ClassroomActionReceipt)
 def command(room_id: str, body: Command, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
         return service.execute(db, a, room_id, body)
 
 
-@router.post("/classrooms/{room_id}/reactions")
+@router.post("/classrooms/{room_id}/reactions", response_model=ClassroomActionReceipt)
 def reaction(room_id: str, body: Reaction, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
         return service.react(db, a, room_id, body)
 
 
-@router.get("/classrooms/{room_id}/events")
+@router.get("/classrooms/{room_id}/events", response_model=ClassroomEventPage)
 def events(room_id: str, request: Request, after: int = 0):
     with transaction() as db:
         a, _ = account(db, request)
@@ -102,7 +108,7 @@ def events(room_id: str, request: Request, after: int = 0):
         }
 
 
-@router.post("/classrooms/{room_id}/budget")
+@router.post("/classrooms/{room_id}/budget", response_model=RoomBudgetView)
 def adjust_budget(room_id: str, request: Request, live_llm_call_budget: int):
     if live_llm_call_budget < 0 or live_llm_call_budget > 100000:
         raise DomainError("BUDGET_RANGE", 422)

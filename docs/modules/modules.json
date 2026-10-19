@@ -121,7 +121,7 @@
     {
       "id": "classroom-core",
       "name": "Classroom Core",
-      "status": "warn",
+      "status": "ok",
       "about": "課程（教室庫與課堂 AI 設定）、課堂狀態機、作答、討論、即時事件匯流排、available_actions（/classrooms/*、/library/*）。",
       "paths": [
         "backend/app/modules/classroom_core/"
@@ -133,14 +133,12 @@
         "llm-runtime",
         "content-authoring"
       ],
-      "todo": [
-        "11 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/scripts/{script_id}/adopt-question/{room_id}/{index}、POST /api/v2/classrooms/{room_id}/commands、POST /api/v2/classrooms/{room_id}/reactions、GET /api/v2/classrooms/{room_id}/events、POST /api/v2/classrooms/{room_id}/budget、POST /api/v2/library/classrooms、GET /api/v2/library/classrooms/{cid}、POST /api/v2/library/classrooms/{cid}/scripts、POST /api/v2/library/classrooms/{cid}/batches、GET /api/v2/library/classrooms/{cid}/ai-settings、PUT /api/v2/library/classrooms/{cid}/ai-settings"
-      ]
+      "todo": []
     },
     {
       "id": "group-dialogue",
       "name": "Group Dialogue",
-      "status": "warn",
+      "status": "ok",
       "about": "分組課：分組、個人追問、全組確認、AI 學生、分組立場分佈（教師用）。",
       "paths": [
         "backend/app/modules/group_dialogue/"
@@ -153,9 +151,7 @@
         "content-authoring",
         "classroom-core"
       ],
-      "todo": [
-        "8 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/groups/classrooms/{rid}/configure、POST /api/v2/groups/classrooms/{rid}/start、GET /api/v2/groups/classrooms/{rid}、POST /api/v2/groups/runs/{rid}/commands、GET /api/v2/groups/runs/{rid}/members/{mid}/identity、POST /api/v2/groups/classrooms/{rid}/ai-students、POST /api/v2/groups/classrooms/{rid}/ai-students/clear、POST /api/v2/suggestions/other"
-      ]
+      "todo": []
     },
     {
       "id": "analytics",
@@ -216,7 +212,7 @@
       "name": "分組課（/groups/*）",
       "backend": "group-dialogue",
       "source": "routes/groups.py",
-      "state": "缺 response_model，前端型別手寫（已寄契約請求）",
+      "state": "產生型別 ✅",
       "consumer": "分組課、教師分析畫面",
       "frontend": [
         "group-dialogue",
@@ -227,7 +223,7 @@
       "name": "AI 學生（/ai-students/*）",
       "backend": "group-dialogue",
       "source": "routes/ai_students.py",
-      "state": "部分手寫",
+      "state": "產生型別 ✅",
       "consumer": "分組課畫面",
       "frontend": [
         "group-dialogue"
@@ -468,8 +464,8 @@
       ],
       "figma": "Figma:Project/Socratic.Socratic · Frontend.02 Group Dialogue.模組卡",
       "todo": [
-        "GroupStance、PersonalDialogue 型別手寫（等後端分組 view 的 response_model）。",
-        "GroupClassroom.tsx 裡的流程邏輯：契約補上後只留畫面與接線。"
+        "後端 GroupClassroomView 已生成；前端元件的顯式型別採用由前端 owner 接續。",
+        "GroupClassroom.tsx 裡的流程邏輯：契約採用後只留畫面與接線。"
       ]
     },
     {

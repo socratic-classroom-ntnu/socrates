@@ -10,8 +10,11 @@ from app.modules.platform.storage import transaction
 from app.modules.platform.feature_flags import require_feature
 from app.modules.group_dialogue.contracts import (
     AddAIStudents,
+    AddAIStudentsReceipt,
     ClearAIStudents,
+    ClearAIStudentsReceipt,
     OtherSuggestionRequest,
+    OtherSuggestionView,
 )
 from app.modules.group_dialogue.service import add_ai_students_to_room, clear_ai_students_from_room
 from app.modules.group_dialogue.service import suggest_other_option
@@ -20,7 +23,7 @@ from app.modules.group_dialogue.service import suggest_other_option
 router = APIRouter()
 
 
-@router.post("/groups/classrooms/{rid}/ai-students")
+@router.post("/groups/classrooms/{rid}/ai-students", response_model=AddAIStudentsReceipt)
 def add_ai_students(rid: str, body: AddAIStudents, request: Request):
     from app.modules.group_dialogue.service import actor
 
@@ -30,7 +33,7 @@ def add_ai_students(rid: str, body: AddAIStudents, request: Request):
         return add_ai_students_to_room(db, teacher, rid, body)
 
 
-@router.post("/groups/classrooms/{rid}/ai-students/clear")
+@router.post("/groups/classrooms/{rid}/ai-students/clear", response_model=ClearAIStudentsReceipt)
 def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
     from app.modules.group_dialogue.service import actor
 
@@ -40,7 +43,7 @@ def clear_ai_students(rid: str, body: ClearAIStudents, request: Request):
         return clear_ai_students_from_room(db, teacher, rid, body)
 
 
-@router.post("/suggestions/other")
+@router.post("/suggestions/other", response_model=OtherSuggestionView)
 async def other_suggestion(body: OtherSuggestionRequest, request: Request):
     from app.modules.identity_access.service import account
 

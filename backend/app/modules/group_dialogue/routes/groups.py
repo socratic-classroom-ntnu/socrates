@@ -9,7 +9,15 @@ from app.modules.group_dialogue.group_run import (
     PERSONAL_COMMANDS,
 )
 from app.modules.classroom_core import service as service
-from app.modules.group_dialogue.contracts import Configure, GroupCommand, Start
+from app.modules.group_dialogue.contracts import (
+    Configure,
+    GroupActionReceipt,
+    GroupClassroomView,
+    GroupCommand,
+    GroupMemberIdentityView,
+    GroupStartReceipt,
+    Start,
+)
 from app.modules.group_dialogue.service import (
     configure_groups,
     start_groups,
@@ -21,21 +29,21 @@ from app.modules.group_dialogue.service import group_classroom_view
 router = APIRouter(prefix="/groups")
 
 
-@router.post("/classrooms/{rid}/configure")
+@router.post("/classrooms/{rid}/configure", response_model=GroupActionReceipt)
 def configure(rid: str, body: Configure, request: Request):
     with transaction() as db:
         a = actor(db, request, True)
         return configure_groups(db, a, rid, body)
 
 
-@router.post("/classrooms/{rid}/start")
+@router.post("/classrooms/{rid}/start", response_model=GroupStartReceipt)
 def start(rid: str, body: Start, request: Request):
     with transaction() as db:
         a = actor(db, request, True)
         return start_groups(db, a, rid, body)
 
 
-@router.get("/classrooms/{rid}")
+@router.get("/classrooms/{rid}", response_model=GroupClassroomView)
 def view(rid: str, request: Request):
     requested_mode = request.query_params.get("mode")
     with transaction() as db:
@@ -43,7 +51,7 @@ def view(rid: str, request: Request):
         return group_classroom_view(db, a, rid, requested_mode)
 
 
-@router.post("/runs/{rid}/commands")
+@router.post("/runs/{rid}/commands", response_model=GroupActionReceipt)
 def command(rid: str, body: GroupCommand, request: Request):
     if body.kind not in {"group_statement", "group_ack", "next", *PERSONAL_COMMANDS}:
         raise DomainError("GROUP_COMMAND_REQUIRED", 422)
@@ -52,7 +60,7 @@ def command(rid: str, body: GroupCommand, request: Request):
         return run_group_command(db, a, rid, body)
 
 
-@router.get("/runs/{rid}/members/{mid}/identity")
+@router.get("/runs/{rid}/members/{mid}/identity", response_model=GroupMemberIdentityView)
 def identity(rid: str, mid: str, request: Request):
     with transaction() as db:
         a = actor(db, request)

@@ -1,19 +1,18 @@
-"""R88 LLM Student actors, automatic all-AI games, and AI suggestion provenance."""
+"""LLM student actors, automatic all-AI games, and AI suggestion provenance."""
 
 from __future__ import annotations
 
-from copy import deepcopy
-import time
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
-
-from app.modules.platform.classroom_env import env_str
-from app.modules.platform.repositories.classroom_storage import (
-    Base,
+from app.modules.platform.env import env_str
+from app.modules.content_authoring.service import (
+    ensure_other_options as ensure_other_options,
+    ensure_other_question as ensure_other_question,
 )
+from app.modules.group_dialogue.repositories import AIStudentProfile as AIStudentProfile
+
 
 OTHER_ID = "__other__"
+
 PERSONAS = [
     {
         "id": "consequence",
@@ -58,42 +57,6 @@ PERSONAS = [
         "style": "先區分事實、推論與價值",
     },
 ]
-
-
-class AIStudentProfile(Base):
-    __tablename__ = "ai_students"
-
-    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
-    parent_room_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("classroom_runs.id"), index=True
-    )
-    persona: Mapped[dict] = mapped_column(JSON)
-    model: Mapped[str] = mapped_column(String(160), default="openrouter/free")
-    provider_profile_id: Mapped[str | None] = mapped_column(
-        String(36), ForeignKey("provider_profiles.id"), nullable=True
-    )
-    seed: Mapped[int] = mapped_column(Integer)
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[float] = mapped_column(Float, default=time.time)
-
-
-def ensure_other_options(document: dict) -> dict:
-    """Return a copy whose every question contains one canonical Other option."""
-    value = deepcopy(document)
-    for question in value.get("questions", []):
-        options = question.setdefault("options", [])
-        if any(
-            option.get("id") == OTHER_ID or str(option.get("text", "")).strip() == "其他"
-            for option in options
-        ):
-            continue
-        options.append({"id": OTHER_ID, "text": "其他"})
-    return value
-
-
-def ensure_other_question(question: dict) -> dict:
-    value = {"questions": [deepcopy(question)]}
-    return ensure_other_options(value)["questions"][0]
 
 
 def fallback_turn(context: dict) -> dict:
@@ -150,7 +113,6 @@ def extend(Native):
                 "countdown": 2.0,
                 "answering": 45.0,
                 "distribution": 2.0,
-                "focus": 30.0,
                 "focus_summary": 2.0,
                 "preview": 2.0,
                 "final_reflection": 45.0,
@@ -230,7 +192,7 @@ def extend(Native):
                         continue
                     summary = None
                     try:
-                        from app.modules.group_dialogue.domain.group_run import person_summary
+                        from app.modules.group_dialogue.group_run import person_summary
 
                         summary = person_summary(self.s, member_id)
                     except (KeyError, ValueError):
@@ -288,10 +250,10 @@ def extend(Native):
                 run = self.current()
                 if member_id in run["answers"]:
                     return
-                option_ids = {option["id"] for option in self.question()["options"]}
+                option_ids = [option["id"] for option in self.question()["options"]]
                 option_id = result.get("option_id")
                 if option_id not in option_ids:
-                    option_id = next(iter(option_ids))
+                    option_id = option_ids[0]
                 self.command(
                     "answer",
                     {
@@ -329,7 +291,7 @@ def extend(Native):
                     False,
                 )
                 if mode == "viewpoint" and result.get("should_confirm", True):
-                    from app.modules.group_dialogue.domain.group_run import person_summary
+                    from app.modules.group_dialogue.group_run import person_summary
 
                     summary = person_summary(self.s, member_id)
                     self.command(

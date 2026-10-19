@@ -4,6 +4,9 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from app.modules.course_management.api.routes.activities import router as activities_router
+from app.modules.course_management.api.routes.courses import preview_router as course_join_router
+from app.modules.course_management.api.routes.courses import router as courses_router
 from app.modules.llm_runtime.tutor import prompts
 from app.modules.classroom_core.api.routes.classroom import router
 from app.modules.classroom_core.api.routes.question_bank import router as question_bank_router
@@ -41,6 +44,9 @@ def create_app(legacy=False, background=True):
     app.include_router(router)
     app.include_router(question_bank_router, prefix="/api/v2")
     app.include_router(script_assist_router, prefix="/api/v2")
+    app.include_router(courses_router, prefix="/api/v2")
+    app.include_router(course_join_router, prefix="/api/v2")
+    app.include_router(activities_router, prefix="/api/v2")
 
     @app.get("/api/v2/readiness")
     def readiness():

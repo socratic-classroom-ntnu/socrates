@@ -10,6 +10,7 @@ from pydantic import (
     model_validator,
 )
 
+from app.modules.identity_access.api.locale import Locale
 from app.modules.platform.api.model_base import TrimmedModel
 
 
@@ -167,6 +168,11 @@ class AccountView(Strict):
     csrf_token: str
     points: int
     achievements: list[str]
+    locale: Locale | None = None
+
+
+class LocaleUpdate(Strict):
+    locale: Locale
 
 
 class ScriptSave(Strict):

@@ -40,6 +40,7 @@ class Account(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True)
     password_hash: Mapped[str] = mapped_column(Text)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    locale: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 

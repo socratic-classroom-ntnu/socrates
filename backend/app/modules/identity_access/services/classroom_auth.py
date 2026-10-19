@@ -17,7 +17,7 @@ from app.modules.identity_access.services.email_delivery import (
     mask_recipient,
     queue_delivery,
 )
-from app.modules.classroom_core.orchestrator.classroom import DomainError
+from app.modules.platform.errors import DomainError
 from app.modules.platform.repositories.classroom_storage import (
     Account,
     EmailToken,
@@ -62,7 +62,12 @@ def account_view(db, account, csrf=""):
         "csrf_token": csrf,
         "points": points,
         "achievements": sorted(achievements),
+        "locale": account.locale,
     }
+
+
+def set_locale(account, locale: str) -> None:
+    account.locale = locale
 
 
 def _new_session(db, account):

@@ -1,6 +1,17 @@
 // Generated from FastAPI /api/v2. Regenerate with scripts/gen_classroom_types.py.
 export interface components { schemas: {
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string> };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null) };
+  "ActivityDraft-Input": { "title": string; "topic_direction": string; "analysis_focus": string; "starts_at"?: (number | null); "ends_at": number; "questions": Array<components["schemas"]["QuestionDraft"]> };
+  "ActivityDraft-Output": { "title": string; "topic_direction": string; "analysis_focus": string; "starts_at"?: (number | null); "ends_at": number; "questions": Array<components["schemas"]["QuestionDraft"]> };
+  "ActivityJoin": { "display_name": string };
+  "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "question_count": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string };
+  "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };
+  "ActivityOption": { "id": string; "text": string };
+  "ActivityStudentCard": { "id": string; "title": string; "status": "scheduled" | "open" | "ended"; "question_count": number; "starts_at": number; "ends_at": number };
+  "ActivityStudentList": { "role": "student"; "items": Array<components["schemas"]["ActivityStudentCard"]> };
+  "ActivityTeacherCard": { "id": string; "title": string; "status": "draft" | "scheduled" | "open" | "ended"; "question_count": number; "starts_at": (number | null); "ends_at": (number | null); "available_actions": Array<"update" | "publish" | "start_now" | "end_now" | "copy"> };
+  "ActivityTeacherList": { "role": "teacher"; "items": Array<components["schemas"]["ActivityTeacherCard"]> };
+  "ActivityTeacherView": { "id": string; "course_id": string; "status": "draft" | "scheduled" | "open" | "ended"; "locked": boolean; "revision": (number | null); "draft": components["schemas"]["ActivityDraft-Output"]; "starts_at": (number | null); "ends_at": (number | null); "available_actions": Array<"update" | "publish" | "start_now" | "end_now" | "copy"> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
   "BankImportResult": { "id": string; "revision": number; "question_id": string; "document": components["schemas"]["ScriptDocument-Output"] };
@@ -12,6 +23,13 @@ export interface components { schemas: {
   "ClearAIStudents": { "action_id": string };
   "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "end" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
+  "CourseCard": { "id": string; "name": string; "teacher_name": string; "role": "teacher" | "student"; "open_activity_count": number };
+  "CourseCreate": { "name": string; "teacher_name": string; "intro": string; "goals": string };
+  "CourseJoin": { "code": string; "display_name": string };
+  "CourseLists": { "teaching": Array<components["schemas"]["CourseCard"]>; "learning": Array<components["schemas"]["CourseCard"]> };
+  "CourseStudentView": { "role": "student"; "id": string; "name": string; "teacher_name": string; "intro": string; "display_name": string };
+  "CourseTeacherView": { "role": "teacher"; "id": string; "name": string; "teacher_name": string; "intro": string; "goals": string; "code": string; "code_enabled": boolean; "student_count": number; "activity_count": number; "available_actions": Array<"update" | "rotate_code" | "disable_code" | "enable_code" | "create_activity"> };
+  "CourseUpdate": { "name"?: (string | null); "teacher_name"?: (string | null); "intro"?: (string | null); "goals"?: (string | null) };
   "CreateBatch": { "action_id": string; "script_id": string };
   "CreateClassroom": { "action_id": string; "title": string };
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
@@ -20,8 +38,10 @@ export interface components { schemas: {
   "GroupCommand": { "action_id": string; "kind": string; "data"?: Record<string, unknown> };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
+  "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
+  "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
   "MailRequest": { "email": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
@@ -31,6 +51,7 @@ export interface components { schemas: {
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
   "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number; "scenario_ai"?: (components["schemas"]["ScenarioAI"] | null) };
+  "QuestionDraft": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["ActivityOption"]>; "follow_up_direction": string };
   "Reaction": { "action_id": string; "kind": "heart" | "like" | "gift"; "focus_id": string; "turn_index": number };
   "Register": { "username": string; "email": string; "password": string };
   "ResetRequest": { "token": string; "password": string };

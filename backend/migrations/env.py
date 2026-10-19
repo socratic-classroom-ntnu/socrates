@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from app.modules.platform.db import Base
+from app.modules.course_management.repositories import models as course_models  # noqa: F401
 from app.modules.solo_dialogue import interaction_models, models  # noqa: F401  確保所有 model 被註冊
 from app.modules.platform.config import settings
 from app.modules.platform.repositories import classroom_storage as storage

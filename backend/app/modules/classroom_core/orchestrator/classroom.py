@@ -7,6 +7,7 @@ Provider work runs after that transaction. An accepted answer is immutable.
 from typing import Any
 from copy import deepcopy
 from uuid import uuid4
+
 from app.modules.classroom_core.api.classroom_schemas import (
     ScriptDocument,
     Question,
@@ -18,12 +19,7 @@ from app.modules.classroom_core.orchestrator.classroom_policy import (
     majority_context,
     stage_goal,
 )
-
-
-class DomainError(ValueError):
-    def __init__(self, code: str, status: int = 409):
-        self.code, self.status = code, status
-        super().__init__(code)
+from app.modules.platform.errors import DomainError as DomainError  # noqa: F401
 
 
 _BUDGET_REASONS = {

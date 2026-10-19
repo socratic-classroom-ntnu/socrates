@@ -53,6 +53,20 @@
       ]
     },
     {
+      "id": "course_management",
+      "name": "Course Management",
+      "status": "ok",
+      "about": "課程、選課、活動與活動版本：課程碼加入、活動發布與時間窗、題目鎖定。",
+      "paths": [
+        "backend/app/modules/course_management/"
+      ],
+      "uses": [
+        "platform",
+        "identity_access"
+      ],
+      "todo": []
+    },
+    {
       "id": "ai_providers",
       "name": "AI Providers",
       "status": "warn",

@@ -28,6 +28,7 @@ from app.modules.classroom_core.api.classroom_schemas import (
     ScriptSave,
     ScriptView,
     TokenRequest,
+    LocaleUpdate,
 )
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.classroom_core.services.scenario_ai import prune_scenario_ai, validate_scenario_ai
@@ -83,6 +84,14 @@ def login(body: Login, request: Request, response: Response):
 def me(request: Request):
     with transaction() as db:
         a, s = account(db, request, verified=False)
+        return auth.account_view(db, a, s.csrf_token)
+
+
+@router.put("/account/locale", response_model=AccountView)
+def update_locale(body: LocaleUpdate, request: Request):
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        auth.set_locale(a, body.locale)
         return auth.account_view(db, a, s.csrf_token)
 
 

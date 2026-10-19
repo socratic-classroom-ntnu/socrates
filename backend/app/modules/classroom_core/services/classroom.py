@@ -29,7 +29,6 @@ from app.modules.platform.repositories.classroom_storage import (
     ActionReceipt,
     Membership,
     PointEntry,
-    RateBucket,
     Room,
     Script,
     Snapshot,
@@ -38,24 +37,7 @@ from app.modules.platform.repositories.classroom_storage import (
     persist_machine,
     transaction,
 )
-
-
-def limit(db, key: str, maximum: int, seconds: int):
-    now = time.time()
-    bucket_key = f"{key}:{int(now)//seconds}"
-    # Room operations hold their aggregate lock; auth buckets use atomic upsert.
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
-    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-
-    ins = pg_insert if db.bind.dialect.name == "postgresql" else sqlite_insert
-    stmt = ins(RateBucket).values(id=bucket_key, count=1, expires_at=now + seconds)
-    value = db.scalar(
-        stmt.on_conflict_do_update(
-            index_elements=[RateBucket.id], set_={"count": RateBucket.count + 1}
-        ).returning(RateBucket.count)
-    )
-    if value > maximum:
-        raise DomainError("稍候即可再次送出。", 429)
+from app.modules.platform.services.rate_limit import limit as limit  # noqa: F401
 
 
 def load(db, room_id, account_id, locked=False):

@@ -29,6 +29,7 @@ from app.modules.classroom_core.api.classroom_schemas import (
     ScriptView,
     TokenRequest,
     LocaleUpdate,
+    VerificationStatusView,
 )
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.classroom_core.services.scenario_ai import prune_scenario_ai, validate_scenario_ai
@@ -130,7 +131,11 @@ def verification_email(body: MailRequest, request: Request):
     )
 
 
-@router.get("/auth/verification-status")
+@router.get(
+    "/auth/verification-status",
+    response_model=VerificationStatusView,
+    response_model_exclude_unset=True,
+)
 def verification_status(request: Request):
     with transaction() as db:
         current, _ = account(db, request, verified=False)

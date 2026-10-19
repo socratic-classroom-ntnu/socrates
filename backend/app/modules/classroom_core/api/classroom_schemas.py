@@ -157,6 +157,27 @@ class VerificationDelivery(Strict):
     expires_at: float
 
 
+class VerificationStatusDelivery(Strict):
+    state: str
+    provider: str | None = None
+    provider_message_id: str | None = None
+    provider_status: str | None = None
+    attempts: int | None = None
+    created_at: float | None = None
+    updated_at: float | None = None
+    sent_at: float | None = None
+    delivered_at: float | None = None
+    last_error: str | None = None
+    preview_url: str | None = None
+
+
+class VerificationStatusView(Strict):
+    verified: bool
+    email_masked: str
+    authority_state: Literal["EMAIL_VERIFICATION", "FULL_PRODUCT"]
+    delivery: VerificationStatusDelivery
+
+
 class AccountView(Strict):
     id: str
     username: str

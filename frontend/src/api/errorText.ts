@@ -2,6 +2,9 @@
 // 後端已是中文句子的 detail 原樣顯示；查不到的代碼顯示通用說明並附代碼，方便回報。
 
 const CODES: Record<string, string> = {
+  ACCOUNT_DATA_TAKEN: '帳號資料已經有人使用，請前往登入或重設密碼。',
+  AUTH_INVALID_CREDENTIALS: '請確認登入資料。',
+  AUTH_TOKEN_INVALID: '這個連結已經失效，請重新申請。',
   ACTION_ID_PAYLOAD_CONFLICT: '這個操作已經用不同內容送出過，請重新整理後再試。',
   ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
   ACTION_SCOPE_REQUIRED: '這個操作不適用於目前的對象。',

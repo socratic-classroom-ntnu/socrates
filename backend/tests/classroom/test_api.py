@@ -90,6 +90,13 @@ def test_registration_verification_reset_and_revocation(client):
     )
 
 
+def test_verification_status_has_an_explicit_response_schema(client):
+    operation = client.app.openapi()["paths"]["/api/v2/auth/verification-status"]["get"]
+    assert operation["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/VerificationStatusView"
+    }
+
+
 def test_teacher_student_dual_membership_and_start(client):
     user(client)
     r = create(client)
@@ -232,3 +239,39 @@ def test_teacher_with_a_long_username_can_open_a_classroom(client):
     with storage.transaction() as db:
         alias = db.scalars(select(storage.Membership.alias)).one()
     assert alias == long_name
+
+
+# 四語登入頁要能翻譯錯誤，所以帳密錯誤、失效連結、註冊撞號都回穩定代碼，不回中文句子
+def test_wrong_password_is_a_stable_code(client):
+    user(client, "learner")
+    r = client.post(
+        "/api/v2/auth/login", json={"login": "learner", "password": "wrong-password-123"}
+    )
+    assert (r.status_code, r.json()) == (401, {"detail": "AUTH_INVALID_CREDENTIALS"})
+    r = client.post(
+        "/api/v2/auth/login", json={"login": "nobody", "password": "wrong-password-123"}
+    )
+    assert (r.status_code, r.json()) == (401, {"detail": "AUTH_INVALID_CREDENTIALS"})
+
+
+def test_invalid_one_time_token_is_a_stable_code(client):
+    verify = client.post("/api/v2/auth/verify", json={"token": "not-a-real-token"})
+    reset = client.post(
+        "/api/v2/auth/reset-password",
+        json={"token": "not-a-real-token", "password": "New-password-123"},
+    )
+    assert (verify.status_code, verify.json()) == (400, {"detail": "AUTH_TOKEN_INVALID"})
+    assert (reset.status_code, reset.json()) == (400, {"detail": "AUTH_TOKEN_INVALID"})
+
+
+def test_register_race_on_unique_columns_is_a_stable_code(client, monkeypatch):
+    from app.modules.identity_access.services import classroom_auth
+
+    user(client, "learner")
+    # Simulate losing the race: the pre-check passes, then the unique constraint fires.
+    monkeypatch.setattr(classroom_auth, "_claim_identity", lambda *args: None)
+    r = client.post(
+        "/api/v2/auth/register",
+        json={"username": "learner", "email": "other@example.org", "password": "Socratic-123456"},
+    )
+    assert (r.status_code, r.json()) == (409, {"detail": "ACCOUNT_DATA_TAKEN"})

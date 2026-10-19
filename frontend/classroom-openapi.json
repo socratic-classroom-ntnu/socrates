@@ -3082,6 +3082,162 @@
         ],
         "title": "VerificationDelivery",
         "type": "object"
+      },
+      "VerificationStatusDelivery": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempts"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "provider_message_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Message Id"
+          },
+          "provider_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "VerificationStatusDelivery",
+        "type": "object"
+      },
+      "VerificationStatusView": {
+        "additionalProperties": false,
+        "properties": {
+          "authority_state": {
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/VerificationStatusDelivery"
+          },
+          "email_masked": {
+            "title": "Email Masked",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "email_masked",
+          "authority_state",
+          "delivery"
+        ],
+        "title": "VerificationStatusView",
+        "type": "object"
       }
     }
   },
@@ -3688,7 +3844,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationStatusView"
+                }
               }
             },
             "description": "Successful Response"

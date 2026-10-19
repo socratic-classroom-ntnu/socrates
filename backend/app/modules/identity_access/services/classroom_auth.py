@@ -254,10 +254,8 @@ def register(body):
             result["verification_delivery"] = queued
             return token, result
     except IntegrityError as exc:
-        raise DomainError(
-            "帳號資料已使用，請前往登入或重設密碼。",
-            409,
-        ) from exc
+        # Lost a race on the unique columns after _claim_identity passed.
+        raise DomainError("ACCOUNT_DATA_TAKEN", 409) from exc
 
 
 def login(body):
@@ -271,11 +269,11 @@ def login(body):
         # Equal-work password verification also applies to unknown accounts.
         if account is None:
             HASHER.hash(body.password)
-            raise DomainError("請確認登入資料。", 401)
+            raise DomainError("AUTH_INVALID_CREDENTIALS", 401)
         try:
             HASHER.verify(account.password_hash, body.password)
         except (VerifyMismatchError, InvalidHashError) as exc:
-            raise DomainError("請確認登入資料。", 401) from exc
+            raise DomainError("AUTH_INVALID_CREDENTIALS", 401) from exc
         return _new_session(db, account)
 
 
@@ -304,10 +302,7 @@ def use_token(token, purpose, password=None):
             .with_for_update()
         )
         if row is None or row.purpose != purpose or row.consumed or row.expires_at <= time.time():
-            raise DomainError(
-                "請重新申請有效驗證連結。",
-                400,
-            )
+            raise DomainError("AUTH_TOKEN_INVALID", 400)
         account = db.get(Account, row.account_id)
         if purpose == "verify":
             account.verified = True

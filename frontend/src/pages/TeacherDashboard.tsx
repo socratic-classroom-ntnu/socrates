@@ -5,6 +5,7 @@ import '../styles/teacher-dashboard.css'
 import { ClassroomLibrary } from './ClassroomLibrary'
 import { ProviderSettings } from './ProviderSettings'
 import { QuestionBank } from './QuestionBank'
+import { useInsideAppShell } from '../app/shellContext'
 
 // 一張課程卡需要的資料。/library/classrooms 目前只給 id 與 title；
 // 學生人數、主題數量、課程碼的資料來源還沒定案，拿不到時以 null 表示，卡片顯示「—」。
@@ -64,6 +65,10 @@ type NavKey = 'home' | 'bank' | 'store' | 'settings'
 // 教師端共用外框：左側導覽列＋右側內容。個人題庫、設定頁由其他任務實作，先保留入口但不可點。
 // 外框取代了舊首頁的頂端列，所以登出要放在這裡，否則從連結直接進來的老師沒辦法離開（共用電腦尤其要緊）。
 export function TeacherShell({ active, children }: { active: NavKey; children: ReactNode }) {
+  // 包在新外框（AppShell）裡時，側邊欄與登出由外框提供，這裡只留內容區。
+  if (useInsideAppShell()) {
+    return <div className="teacher-desk teacher-desk--embedded"><main className="teacher-main" id="teacher-content">{children}</main></div>
+  }
   const items: { key: NavKey; label: string; icon: ReactNode; href?: string }[] = [
     { key: 'home', label: '首頁', icon: Icon.home, href: '/teacher/home' },
     { key: 'bank', label: '個人題庫', icon: Icon.shelf, href: '/teacher/home?view=bank' },

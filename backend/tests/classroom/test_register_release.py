@@ -72,7 +72,7 @@ def test_stale_unverified_account_releases_username_and_email():
     # Logging in by the old name reaches the new account only; the released row cannot log in.
     assert code_of(
         lambda: auth.login(Login(login=f"released-{old['id']}", password="correct-horse-battery"))
-    ) == ("請確認登入資料。", 401)
+    ) == ("AUTH_INVALID_CREDENTIALS", 401)
     _, logged_in = auth.login(Login(login="arthur", password="another-horse-battery"))
     assert logged_in["id"] == new["id"]
 

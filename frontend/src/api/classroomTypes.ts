@@ -70,4 +70,6 @@ export interface components { schemas: {
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
   "VerificationDelivery": { "mail_id": string; "delivery_state": string; "expires_at": number };
+  "VerificationStatusDelivery": { "state": string; "provider"?: (string | null); "provider_message_id"?: (string | null); "provider_status"?: (string | null); "attempts"?: (number | null); "created_at"?: (number | null); "updated_at"?: (number | null); "sent_at"?: (number | null); "delivered_at"?: (number | null); "last_error"?: (string | null); "preview_url"?: (string | null) };
+  "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
 } }

@@ -1,16 +1,6 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Conversation from './pages/Conversation';
-import History from './pages/History';
-import Home from './pages/Home';
-import Summary from './pages/Summary';
+import { Outlet } from 'react-router-dom';
 import './round1.css';
-export default function App() {
-    return (<BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />}/><Route path="/round1" element={<Home />}/>
-        <Route path="/history" element={<History />}/>
-        <Route path="/sessions/:sessionId" element={<Conversation />}/>
-        <Route path="/sessions/:sessionId/summary" element={<Summary />}/>
-      </Routes>
-    </BrowserRouter>);
+// Round 1 的頁面掛在 src/app/routes.tsx 的單一路由器底下；這裡只負責載入 Round 1 自己的樣式。
+export default function Round1Layout() {
+    return <Outlet />;
 }

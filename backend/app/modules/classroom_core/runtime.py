@@ -3,66 +3,29 @@
 from copy import deepcopy
 import secrets
 import time
+from typing import Any, cast
 from uuid import uuid4
 from sqlalchemy import func, select
-from app.modules.classroom_core.api.classroom_schemas import MemberView, RoomView
-from app.modules.classroom_core.orchestrator.classroom import (
-    DomainError,
-    GameOrchestrator,
-    fresh_state,
-)
-from app.modules.classroom_core.orchestrator.classroom_policy import distribution
-from app.modules.platform.repositories.classroom_storage import (
+from app.modules.classroom_core.contracts import MemberView, RoomView
+from app.modules.content_authoring.contracts import PublicQuestion, public_question
+from app.modules.classroom_core.policy import baseline_answers, personal_records
+from app.modules.platform.errors import DomainError
+from app.modules.classroom_core.orchestrator import GameOrchestrator, fresh_state
+from app.modules.classroom_core.policy import distribution
+from app.modules.classroom_core.repositories import (
     ActionReceipt,
     Membership,
     PointEntry,
-    RateBucket,
     Room,
-    Script,
-    Snapshot,
     append_event,
-    digest,
     persist_machine,
-    transaction,
 )
+from app.modules.content_authoring.repositories import Script, Snapshot
+from app.modules.platform.storage import digest, transaction
 
 
-def limit(db, key: str, maximum: int, seconds: int):
-    now = time.time()
-    bucket_key = f"{key}:{int(now)//seconds}"
-    # Room operations hold their aggregate lock; auth buckets use atomic upsert.
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
-    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-
-    ins = pg_insert if db.bind.dialect.name == "postgresql" else sqlite_insert
-    stmt = ins(RateBucket).values(id=bucket_key, count=1, expires_at=now + seconds)
-    value = db.scalar(
-        stmt.on_conflict_do_update(
-            index_elements=[RateBucket.id], set_={"count": RateBucket.count + 1}
-        ).returning(RateBucket.count)
-    )
-    if value > maximum:
-        raise DomainError("稍候即可再次送出。", 429)
-
-
-def load(db, room_id, account_id, locked=False):
-    query = select(Room).where(Room.id == room_id)
-    if locked:
-        query = query.with_for_update()
-    room = db.scalar(query)
-    if room is None:
-        raise DomainError("CLASSROOM_REQUIRED", 404)
-    member = db.scalar(
-        select(Membership).where(
-            Membership.room_id == room_id,
-            Membership.account_id == account_id,
-            Membership.role == "student",
-        )
-    )
-    teacher = room.creator_id == account_id
-    if not teacher and member is None:
-        raise DomainError("CLASSROOM_MEMBERSHIP_REQUIRED", 403)
-    return room, member, teacher
+from app.modules.platform.rate_limit import enforce_rate_limit as limit
+from sqlalchemy.orm import Session
 
 
 def hydrate(db, room):
@@ -75,6 +38,54 @@ def hydrate(db, room):
     return s
 
 
+def focus_projection(value: dict | None, as_teacher: bool) -> dict | None:
+    """Keep tutor policy evidence server-side for student projections."""
+    if value is None:
+        return None
+    projected = deepcopy(value)
+    if as_teacher:
+        return projected
+    projected.pop("last_observations", None)
+    projected["messages"] = [
+        {"role": message["role"], "text": message["text"]}
+        for message in projected.get("messages", [])
+    ]
+    return projected
+
+
+def room_available_actions(
+    state: dict,
+    active: dict | None,
+    member_id: str | None,
+    focus: dict | None,
+    as_teacher: bool,
+) -> list[str]:
+    """Backend authority for the native classroom controls shown to one viewer."""
+    phase = state["phase"]
+    actions: list[str] = []
+    if as_teacher:
+        if phase == "lobby":
+            return ["start"]
+        if phase == "preview":
+            return ["approve_question", "regenerate_question", "next"]
+        if phase in {"answering", "personal", "distribution", "focus", "focus_summary"}:
+            return ["next"]
+        return actions
+    if member_id is None:
+        return actions
+    if phase == "answering" and active and member_id not in active["answers"]:
+        actions = ["draft", "answer"]
+    if phase in {"focus", "focus_summary"}:
+        actions.append("barrage")
+    if phase == "focus":
+        actions.append("reaction")
+    if focus and focus["member_id"] == member_id and focus["status"] == "AWAITING_STUDENT":
+        actions.append("focus_message")
+    if phase == "summary":
+        actions.append("personal_summary")
+    return actions
+
+
 def view(db, room, account_id, mode="student") -> dict:
     _, member, teacher = load(db, room.id, account_id)
     as_teacher = teacher and mode == "teacher"
@@ -82,7 +93,8 @@ def view(db, room, account_id, mode="student") -> dict:
     now = time.time()
     qi = s["question_index"]
     active = s["runs"][qi] if 0 <= qi < len(s["runs"]) else None
-    q = s["questions"][qi] if active else None
+    # scenario_ai is teacher-only routing; no room projection carries it.
+    q = public_question(s["questions"][qi]) if active else None
     focus = next((f for f in active["focuses"] if f["id"] == s["focus"]), None) if active else None
     members = [
         MemberView(
@@ -113,37 +125,39 @@ def view(db, room, account_id, mode="student") -> dict:
         {
             "index": i,
             "title": s["questions"][i]["title"],
-            "distribution": distribution(s["questions"][i], r["answers"], s["members"], False),
+            # Group runs count confirmed personal baselines only, like their live distribution.
+            "distribution": distribution(
+                s["questions"][i],
+                baseline_answers(r)
+                if r.get("distribution_basis") == "personal_baseline"
+                else r["answers"],
+                s["members"],
+                False,
+            ),
         }
         for i, r in enumerate(s["runs"])
         if r["phase"] == "complete"
     ]
     if as_teacher:
-        summaries["records"] = s["runs"]
+        # Teachers read personal summaries and baselines, not the private dialogue itself.
+        summaries["records"] = personal_records(s["runs"])
     elif s["phase"] == "summary":
         # Class summaries are prompted with pseudonymous content only.
         summaries["records"] = []
-    actions = []
-    if as_teacher:
-        if s["phase"] == "lobby":
-            actions = ["start"]
-        elif s["phase"] == "preview":
-            actions = ["approve_question", "regenerate_question", "next"]
-        elif s["phase"] in {"answering", "distribution", "focus", "focus_summary"}:
-            actions = ["next"]
-    if member and not as_teacher:
-        if s["phase"] == "answering" and active and member.id not in active["answers"]:
-            actions = ["draft", "answer"]
-        if s["phase"] in {"focus", "focus_summary", "arena"}:
-            actions += ["barrage", "reaction"]
-        if focus and focus["member_id"] == member.id and focus["status"] == "AWAITING_STUDENT":
-            actions += ["focus_message"]
-        if s["phase"] == "summary":
-            actions += ["personal_summary"]
+    actions = room_available_actions(
+        s,
+        active,
+        member.id if member else None,
+        focus,
+        as_teacher,
+    )
     # No next-question details in a student response; preview belongs to creator control.
-    exposed_focus = deepcopy(focus)
-    if exposed_focus:
-        exposed_focus.pop("last_observations", None)
+    exposed_focus = focus_projection(focus, as_teacher)
+    transcript: list[dict[str, Any]] = (
+        [cast(dict[str, Any], focus_projection(item, as_teacher)) for item in active["focuses"]]
+        if active
+        else []
+    )
     return RoomView(
         id=room.id,
         code=room.code if s["phase"] == "lobby" else None,
@@ -154,7 +168,7 @@ def view(db, room, account_id, mode="student") -> dict:
         seq=room.seq,
         server_now=now,
         deadline_at=s["deadline_at"],
-        question=q,
+        question=PublicQuestion.model_validate(q) if q else None,
         question_index=qi,
         question_run_id=active["id"] if active else None,
         question_count=(
@@ -169,7 +183,7 @@ def view(db, room, account_id, mode="student") -> dict:
         if active and s["phase"] not in {"answering", "countdown"}
         else [],
         focus=exposed_focus,
-        transcript=active["focuses"] if active else [],
+        transcript=transcript,
         preview=s.get("preview") if as_teacher else None,
         summaries=summaries,
         available_actions=actions,
@@ -206,9 +220,12 @@ def create_room(db, a, script_id):
 
 
 def join(db, a, body):
-    room = db.scalar(select(Room).where(Room.code == body.code.strip().upper()).with_for_update())
+    code = body.code.strip().upper()
+    if not code:
+        raise DomainError("COURSE_CODE_REQUIRED", 422)
+    room = db.scalar(select(Room).where(Room.code == code).with_for_update())
     if room is None:
-        raise DomainError("COURSE_CODE_REQUIRED", 404)
+        raise DomainError("COURSE_CODE_NOT_FOUND", 404)
     prior = db.scalar(
         select(Membership).where(
             Membership.room_id == room.id,
@@ -273,7 +290,7 @@ def execute(db, a, room_id, cmd):
     data = deepcopy(cmd.data)
     if cmd.kind == "start":
         script = db.get(Script, room.script_id)
-        from app.modules.group_dialogue.services.ai_students import ensure_other_options
+        from app.modules.content_authoring.service import ensure_other_options
 
         document = ensure_other_options(script.document)
         snapshot = Snapshot(
@@ -407,3 +424,25 @@ def tick_due(limit_count=20):
             machine = GameOrchestrator(hydrate(db, room), now)
             machine.tick()
             persist_machine(db, room, machine)
+
+
+def load(
+    db: Session, room_id: str, account_id: str, locked: bool = False
+) -> tuple[Room, Membership | None, bool]:
+    query = select(Room).where(Room.id == room_id)
+    if locked:
+        query = query.with_for_update()
+    room = db.scalar(query)
+    if room is None:
+        raise DomainError("CLASSROOM_REQUIRED", 404)
+    member = db.scalar(
+        select(Membership).where(
+            Membership.room_id == room_id,
+            Membership.account_id == account_id,
+            Membership.role == "student",
+        )
+    )
+    teacher = room.creator_id == account_id
+    if not teacher and member is None:
+        raise DomainError("CLASSROOM_MEMBERSHIP_REQUIRED", 403)
+    return room, member, teacher

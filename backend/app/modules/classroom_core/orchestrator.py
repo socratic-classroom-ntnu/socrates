@@ -4,22 +4,18 @@ Return events and job intents; the service commits state+events+jobs together.
 Provider work runs after that transaction. An accepted answer is immutable.
 """
 
-from typing import Any
+from typing import Any, Callable
 from copy import deepcopy
 from uuid import uuid4
-from app.modules.classroom_core.api.classroom_schemas import ScriptDocument, Question
-from app.modules.classroom_core.orchestrator.classroom_policy import (
+from app.modules.content_authoring.contracts import Question, ScriptDocument, public_question
+from app.modules.platform.errors import DomainError
+from app.modules.classroom_core.notices import tutor_unavailable_notice as tutor_unavailable_notice
+from app.modules.classroom_core.policy import (
     choose_representative,
     distribution,
     majority_context,
     stage_goal,
 )
-
-
-class DomainError(ValueError):
-    def __init__(self, code: str, status: int = 409):
-        self.code, self.status = code, status
-        super().__init__(code)
 
 
 _BUDGET_REASONS = {
@@ -30,15 +26,6 @@ _BUDGET_REASONS = {
 }
 
 
-def tutor_unavailable_notice(reason: str) -> str:
-    """Classroom-visible reason for a paused tutor; the teacher's 下一步 resumes the class."""
-    if reason in _BUDGET_REASONS:
-        return "導師暫停回應：本教室的 LLM 額度已達上限。老師可調整額度後按「下一步」繼續。"
-    if reason == "OWNER_PROVIDER_PROFILE_REQUIRED":
-        return "導師暫停回應：教室擁有者尚未設定 LLM。老師可設定後按「下一步」繼續。"
-    return "導師暫停回應：LLM 暫時無法連線。老師可按「下一步」繼續。"
-
-
 def focus_notice(state: dict) -> str | None:
     """The paused-tutor notice for views that do not expose focus status (group runs)."""
     for run in state.get("runs", []):
@@ -46,6 +33,25 @@ def focus_notice(state: dict) -> str | None:
             if f["id"] == state.get("focus") and f.get("status") == "TUTOR_UNAVAILABLE":
                 return state.get("last_error")
     return None
+
+
+# Jobs that belong to one question and so follow that question's scenario_ai override.
+SCENARIO_AI_JOB_KINDS = frozenset({"focused_tutor", "personal_tutor", "question_summary"})
+
+
+def scoped_job_context(kind: str, context: dict) -> dict:
+    """Keep teacher-only routing out of the prompt payload and lift it to the job context.
+
+    resolve_provider_chain reads context["scenario_ai"]; the question the LLM sees never
+    carries provider ids. Jobs outside SCENARIO_AI_JOB_KINDS keep the classroom/role default.
+    """
+    question = context.get("question")
+    if not isinstance(question, dict) or "scenario_ai" not in question:
+        return context
+    context = {**context, "question": public_question(question)}
+    if kind in SCENARIO_AI_JOB_KINDS and question.get("scenario_ai"):
+        context["scenario_ai"] = deepcopy(question["scenario_ai"])
+    return context
 
 
 def fresh_state(title: str) -> dict:
@@ -66,7 +72,7 @@ def fresh_state(title: str) -> dict:
     }
 
 
-class GameOrchestrator:
+class CoreOrchestrator:
     def __init__(self, state: dict, now: float):
         self.s, self.now = deepcopy(state), now
         self.events: list[dict[str, Any]] = []
@@ -82,7 +88,7 @@ class GameOrchestrator:
         self.emit("phase.changed", phase=name, deadline_at=self.s["deadline_at"])
 
     def job(self, kind: str, key: str, context: dict):
-        self.jobs.append({"key": key, "kind": kind, "context": context})
+        self.jobs.append({"key": key, "kind": kind, "context": scoped_job_context(kind, context)})
 
     def current(self):
         return self.s["runs"][self.s["question_index"]]
@@ -116,6 +122,11 @@ class GameOrchestrator:
         self.s["due_at"] = self.s["deadline_at"] + 0.1
 
     def finalize(self):
+        self.accept_drafts()
+        self.open_distribution()
+
+    def accept_drafts(self):
+        """At the answering deadline, valid drafts become answers (via server-finalize)."""
         r, q = self.current(), self.question()
         for m, d in r["drafts"].items():
             if m in r["answers"]:
@@ -134,19 +145,27 @@ class GameOrchestrator:
                     "suggestion": deepcopy(d.get("suggestion")),
                 }
                 self.award(m, "first_answer")
+
+    def open_distribution(self):
+        r, q = self.current(), self.question()
         r["phase"] = "distribution"
-        r["distribution"] = distribution(q, r["answers"], self.s["members"])
+        r["distribution"] = distribution(q, self.representative_answers(), self.s["members"])
         self.phase("distribution", 5)
+
+    def representative_answers(self) -> dict:
+        """Answers that count for the distribution and representative choice of this question."""
+        return self.current()["answers"]
 
     def next_focus(self):
         r, q = self.current(), self.question()
         self.s["focus"] = None
         r["phase"] = "arena"
+        pool = self.representative_answers()
         for o in q["options"]:
             if o["id"] in r["covered_options"]:
                 continue
             chosen = choose_representative(
-                o["id"], r["answers"], self.s["members"], set(r["excluded"]), self.now
+                o["id"], pool, self.s["members"], set(r["excluded"]), self.now
             )
             r["covered_options"].append(o["id"])
             if chosen is None:
@@ -155,7 +174,7 @@ class GameOrchestrator:
                 "id": str(uuid4()),
                 "member_id": chosen,
                 "option_id": o["id"],
-                "argument": r["answers"][chosen]["argument"],
+                "argument": pool[chosen]["argument"],
                 "messages": [],
                 "turn_index": 0,
                 "completed_turns": 0,
@@ -351,7 +370,7 @@ class GameOrchestrator:
                 self.emit("answer.recorded", member_id=member_id)
             return
         if kind == "barrage":
-            if s["phase"] not in {"focus", "focus_summary", "arena"}:
+            if s["phase"] not in {"focus", "focus_summary"}:
                 raise DomainError("ARENA_REQUIRED")
             text = str(data.get("text", "")).strip()
             if not 1 <= len(text) <= 500:
@@ -396,7 +415,7 @@ class GameOrchestrator:
         raise DomainError("KNOWN_ACTION_REQUIRED", 422)
 
     def accept_preview(self):
-        from app.modules.group_dialogue.services.ai_students import ensure_other_question
+        from app.modules.content_authoring.service import ensure_other_question
 
         q = Question.model_validate(ensure_other_question(self.s.pop("preview"))).model_dump()
         # Generated questions are run-owned; copying into a teacher draft is an explicit endpoint.
@@ -462,7 +481,7 @@ class GameOrchestrator:
                 self.close_focus("reselect_after_argument_comment")
             elif f["advance_requested"]:
                 self.close_focus("teacher_next")
-            # Goal before cap, as in Round 1 (app/modules/solo_dialogue/orchestrator/orchestrator.py): a goal met on the
+            # Goal before cap, as in solo dialogue (app/modules/solo_dialogue/orchestrator.py): a goal met on the
             # cap turn is goal_met; a cap without the goal is capped, never goal_met.
             elif stage_goal(result["observations"], f["completed_turns"]):
                 self.close_focus("goal_met")
@@ -475,7 +494,7 @@ class GameOrchestrator:
         elif kind == "dynamic_question":
             if key != s.get("pending_generation"):
                 return
-            from app.modules.group_dialogue.services.ai_students import ensure_other_question
+            from app.modules.content_authoring.service import ensure_other_question
 
             s["preview"] = Question.model_validate(
                 ensure_other_question(result["question"])
@@ -498,12 +517,30 @@ class GameOrchestrator:
             self.emit("summary.ready", kind=kind)
 
 
-# PORTAL-R70-GROUP-EXTENSION
-from app.modules.group_dialogue.domain.group_run import extend as _extend_group_run  # noqa: E402
+# Group runs and AI students add behaviour by subclassing the core state machine. They live in
+# modules above Classroom Core, so they register here (the app shell wires them, in order) and every
+# caller builds machines through GameOrchestrator(), which composes the registered extensions once.
+OrchestratorExtension = Callable[[type], type]
+_EXTENSIONS: list[OrchestratorExtension] = []
+_composed: type | None = None
 
-GameOrchestrator = _extend_group_run(GameOrchestrator)  # type: ignore[misc]
 
-# PORTAL-R88-AI-STUDENT-EXTENSION
-from app.modules.group_dialogue.services.ai_students import extend as _extend_ai_students  # noqa: E402
+def register_orchestrator_extension(extension: OrchestratorExtension) -> None:
+    global _composed
+    if extension not in _EXTENSIONS:
+        _EXTENSIONS.append(extension)
+        _composed = None
 
-GameOrchestrator = _extend_ai_students(GameOrchestrator)  # type: ignore[misc]
+
+def orchestrator_class() -> type:
+    global _composed
+    if _composed is None:
+        machine: type = CoreOrchestrator
+        for extension in _EXTENSIONS:
+            machine = extension(machine)
+        _composed = machine
+    return _composed
+
+
+def GameOrchestrator(state: dict, now: float) -> Any:  # noqa: N802 — callers construct machines by this name
+    return orchestrator_class()(state, now)

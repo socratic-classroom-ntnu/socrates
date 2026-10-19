@@ -2,20 +2,18 @@
 
 import random
 
-from app.modules.llm_runtime.domain.tutor import Observations as DomainObservations
-from app.modules.solo_dialogue.orchestrator import policy as round1
-
-from app.modules.classroom_core.api.classroom_schemas import Observations
+from app.modules.llm_runtime.contracts import Observations
+from app.modules.llm_runtime import service as advance_policy
 
 
 def stage_goal(observations: dict, completed_turns: int) -> bool:
-    """Advance criteria live once, in Round 1's policy (AGENTS.md non-negotiable).
+    """Advance criteria live once, in app/modules/llm_runtime/policy.py (AGENTS.md non-negotiable).
 
-    Round 1's turn_count (exchanges completed before this one) and Run 2's completed_turns
-    (index of the exchange just answered) have the same value at the same moment.
+    Solo dialogue's turn_count (exchanges completed before this one) and the classroom's
+    completed_turns (index of the exchange just answered) have the same value at the same moment.
     """
     o = Observations.model_validate(observations)
-    return round1.should_advance(DomainObservations.model_validate(o.model_dump()), completed_turns)
+    return advance_policy.should_advance(o, completed_turns)
 
 
 def choose_representative(
@@ -80,3 +78,37 @@ def majority_context(question: dict, answers: dict, focuses: list[dict]) -> dict
             if f["option_id"] in majority
         ],
     }
+
+
+def personal_records(runs):
+    """Run records for teacher projections without the private personal messages."""
+    result = []
+    for run in runs:
+        if "personal" not in run:
+            result.append(run)
+            continue
+        result.append(
+            {
+                **run,
+                "personal": {
+                    m: {k: v for k, v in e.items() if k not in {"messages", "last_observations"}}
+                    for m, e in run["personal"].items()
+                },
+            }
+        )
+    return result
+
+
+def baseline_answers(run):
+    """Confirmed baselines as answers: the only input to distribution and representatives."""
+    result = {}
+    for member_id, entry in run.get("personal", {}).items():
+        baseline = entry.get("baseline")
+        if not baseline:
+            continue
+        answer = run["answers"].get(member_id, {})
+        result[member_id] = {
+            "option_id": baseline["option_id"],
+            "argument": baseline.get("reason_summary") or answer.get("argument", ""),
+        }
+    return result

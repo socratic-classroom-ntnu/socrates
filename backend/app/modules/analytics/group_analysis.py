@@ -3,6 +3,8 @@
 from hashlib import sha256
 from copy import deepcopy
 
+from app.modules.group_dialogue.service import stance_distribution
+
 
 def pseudonym(classroom_id, member_id):
     return "p-" + sha256((classroom_id + ":" + member_id).encode()).hexdigest()[:12]
@@ -65,6 +67,7 @@ def analysis(classroom_id, title, rooms):
                 "edges": edges,
                 "tree_projection": projection,
                 "roots": sorted(roots),
+                "stances": stance_distribution(s),
             }
         )
     return {

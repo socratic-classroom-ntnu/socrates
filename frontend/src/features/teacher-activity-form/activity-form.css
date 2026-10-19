@@ -1,0 +1,293 @@
+/* 教師出題表單（ActivityFormModal）。對應 Figma「教師端・新增活動開啟」。 */
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+.activity-form-backdrop{
+  --form-bg:#eef7ff;--form-ink:#202d29;--form-green:#315d50;--form-muted:#77817b;--form-line:#dce2dc;
+  --form-blue-line:#b8d6ec;--form-thumb:#729eb7;--form-error:#b85b4b;
+  /* 尺寸：大螢幕接近設計稿，螢幕矮或窄時（下方 @media）整組換成緊湊版 */
+  --form-max:760px;--form-pad:28px;--form-gap:24px;--form-field-gap:16px;--form-title:22px;
+  --form-label:15px;--form-text:14px;--form-input-h:44px;--form-btn-h:44px;--form-card-pad:22px;
+  --form-topic-h:128px;--form-analysis-h:80px;--form-content-h:76px;
+  --pk-max:360px;--pk-pad:20px;--pk-cell:40px;--pk-gap:6px;--pk-day:18px;--pk-weekday:16px;
+  --pk-option-h:40px;--pk-option:20px;--pk-summary-h:60px;--pk-summary:28px;--pk-btn-h:42px;
+  position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:flex-start;
+  padding:clamp(12px,4vh,32px) 16px;background:rgba(21,36,31,.27);color-scheme:light;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif
+}
+/* 彈窗高度不超過視窗，標題與底部按鈕固定，中間內容自己捲動（捲動區之後加） */
+.activity-form{
+  box-sizing:border-box;display:flex;flex-direction:column;width:100%;max-width:var(--form-max);max-height:100%;
+  overflow:hidden;gap:var(--form-gap);padding:var(--form-pad);border-radius:12px;
+  background:var(--form-bg);color:var(--form-ink);box-shadow:0 12px 36px rgba(26,48,34,.1)
+}
+.activity-form :focus-visible{outline:2px solid var(--form-green);outline-offset:2px}
+
+.activity-form-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+/* 標題比設計稿（26px）小，和上緣、下面內容都靠近一點，讓表單本身多一點空間 */
+.activity-form-heading{margin:-6px 0 -6px}
+.activity-form-heading h2{margin:0;font-size:var(--form-title);font-weight:700;line-height:1.5}
+/* 圖示 20×20，點擊範圍放大到 32×32，用負 margin 讓圖示留在設計稿的位置 */
+.activity-form-close{display:grid;place-items:center;width:32px;height:32px;margin:-6px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--form-green);cursor:pointer}
+.activity-form-close:hover{background:rgba(49,93,80,.08)}
+.activity-form-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+
+/* 中間捲動區：內容寬度不變，捲軸放在內容右邊 18px 的位置（設計稿 3px 寬的藍色細條）。
+   四周多留 4px 再用負 margin 抵銷，輸入框的焦點外框才不會被捲動區切掉 */
+.activity-form-body{
+  flex:1;min-height:0;overflow-y:auto;margin:-4px -21px -4px -4px;padding:4px 18px 4px 4px;
+  display:grid;align-content:start;gap:var(--form-gap)
+}
+.activity-form-body::-webkit-scrollbar{width:3px}
+.activity-form-body::-webkit-scrollbar-track{border-radius:3px;background:var(--form-blue-line)}
+.activity-form-body::-webkit-scrollbar-thumb{border-radius:3px;background:var(--form-thumb)}
+@supports (-moz-appearance:none){
+  .activity-form-body{scrollbar-width:thin;scrollbar-color:var(--form-thumb) var(--form-blue-line)}
+}
+
+.activity-form-section{display:flex;flex-direction:column;gap:var(--form-field-gap)}
+.activity-form-section h3{margin:0;color:var(--form-green);font-size:var(--form-label);font-weight:700;line-height:1.5}
+.activity-form-field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.activity-form-label{font-size:var(--form-label);font-weight:500;line-height:1.5}
+.activity-form-input{
+  box-sizing:border-box;width:100%;height:var(--form-input-h);margin:0;padding:0 12px;border:1px solid var(--form-line);border-radius:6px;
+  background:#fff;color:var(--form-ink);font:inherit;font-size:var(--form-text);line-height:1.5;text-align:left
+}
+.activity-form-input::placeholder,.activity-form-placeholder{color:var(--form-muted);opacity:1}
+.activity-form-picker{display:flex;align-items:center;cursor:pointer}
+/* 選好之後：日期｜時間，中間一條細線（設計稿「答案類型選單開啟」的開始／結束時間） */
+.activity-form-picker>span:first-child:not(.activity-form-placeholder){flex:1}
+.activity-form-picker>span:last-child:not(.activity-form-placeholder){flex:1;padding-left:12px}
+.activity-form-picker-divider{flex:none;width:1px;height:18px;background:var(--form-line)}
+/* 多行輸入：高度照設計稿，老師可以往下拉長，但不能比設計稿短 */
+textarea.activity-form-input{display:block;padding:10px 12px;resize:vertical}
+.activity-form-topic{height:var(--form-topic-h);min-height:var(--form-topic-h)}
+.activity-form-analysis{height:var(--form-analysis-h);min-height:var(--form-analysis-h)}
+.activity-form-content{height:var(--form-content-h);min-height:var(--form-content-h)}
+.activity-form-questions{gap:calc(var(--form-field-gap) + 2px)}
+.activity-form-question{
+  display:flex;flex-direction:column;gap:var(--form-field-gap);padding:var(--form-card-pad);border:1px solid var(--form-blue-line);border-radius:12px;
+  background:rgba(255,255,255,.52)
+}
+/* 兩題以上時，題目卡上方的「第 N 題」與刪除鈕；✕ 共用選項的刪除鈕樣式，只是不浮在輸入框裡 */
+.activity-form-question-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:-4px}
+.activity-form-question-head span{color:var(--form-green);font-size:var(--form-label);font-weight:700;line-height:1.5}
+.activity-form-question-head .activity-form-option-remove{position:static;margin:-4px;transform:none}
+.activity-form-button{
+  box-sizing:border-box;height:var(--form-btn-h);margin:0;padding:0 20px;border:1px solid var(--form-line);border-radius:6px;
+  background:#fff;color:var(--form-green);font:inherit;font-size:var(--form-label);font-weight:700;line-height:1.5;cursor:pointer
+}
+.activity-form-button:hover{background:#f4f8f6}
+.activity-form-button-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-color:var(--form-green);background:var(--form-green);color:#fff}
+.activity-form-button-primary:hover{background:#294f44}
+.activity-form-button-primary svg{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.activity-form-notice{margin:0;color:var(--form-muted);font-size:13px;line-height:1.6}
+/* 底部按鈕固定在捲動區下面，靠右、間距 12 */
+.activity-form-footer{display:flex;justify-content:flex-end;gap:12px}
+/* 錯誤：只有按過「確認」才顯示，顏色沿用設計稿「已結束」標籤的紅色 */
+.activity-form-error{margin:0;color:var(--form-error);font-size:13px;line-height:1.6}
+.activity-form-input[aria-invalid=true],.activity-form-button[aria-invalid=true]{border-color:var(--form-error)}
+/* 答案類型：左邊標題，右邊兩段切換；選中的那一段有一塊深綠色底，離外框上下 4、左右 10（扣掉 1px 框線，所以 inset 是 3px 9px） */
+.activity-form-answer-type{display:flex;flex-direction:column;gap:10px}
+.activity-form-answer-row{display:flex;align-items:center;gap:8px}
+.activity-form-answer-row .activity-form-label{flex:none}
+.activity-form-segmented{
+  display:flex;flex:1;min-width:0;overflow:hidden;border:1px solid var(--form-line);border-radius:6px;background:#fff
+}
+.activity-form-segmented button{
+  position:relative;isolation:isolate;flex:1;min-width:0;min-height:calc(var(--form-btn-h) - 2px);margin:0;padding:6px 14px;border:0;background:transparent;
+  color:var(--form-muted);font:inherit;font-size:var(--form-label);font-weight:700;line-height:1.5;cursor:pointer
+}
+.activity-form-segmented button+button{border-left:1px solid var(--form-line)}
+.activity-form-segmented button[aria-checked=true]{color:#fff}
+.activity-form-segmented button[aria-checked=true]::before{
+  content:"";position:absolute;inset:3px 9px;z-index:-1;border-radius:6px;background:var(--form-green)
+}
+.activity-form-segmented button:focus-visible{outline-offset:-4px}
+.activity-form-helper{margin:0;font-size:13px;line-height:1.6}
+
+/* 選擇題：每列「編號 + 輸入框」，列距 10；最後一列「其他」固定不能改 */
+.activity-form-options{display:flex;flex-direction:column;gap:10px}
+.activity-form-option{display:flex;align-items:center;gap:12px}
+.activity-form-option-number{flex:none;min-width:8px;font-size:14px;line-height:1.5}
+.activity-form-option-box{position:relative;flex:1;min-width:0}
+.activity-form-option .activity-form-input{height:calc(var(--form-input-h) - 4px);padding:0 10px}
+.activity-form-option-box .activity-form-input:not(:only-child){padding-right:40px}
+.activity-form-option-fixed{display:flex;align-items:center;flex:1;min-width:0}
+.activity-form-option-remove{
+  position:absolute;top:50%;right:6px;display:grid;place-items:center;width:28px;height:28px;margin:0;padding:0;
+  border:0;border-radius:6px;background:transparent;color:var(--form-muted);cursor:pointer;transform:translateY(-50%)
+}
+.activity-form-option-remove:hover{background:rgba(49,93,80,.08);color:var(--form-green)}
+.activity-form-option-remove svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.activity-form-add-option{width:100%}
+.activity-form-button:disabled{color:var(--form-muted);background:#fff;cursor:not-allowed}
+
+/* 字數限制：標題和輸入框同一列，間距 16 */
+.activity-form-limit{display:flex;align-items:center;gap:16px}
+.activity-form-limit .activity-form-label{flex:none}
+.activity-form-limit .activity-form-input{width:104px;height:var(--form-btn-h);padding:0 10px;font-size:var(--form-label)}
+/* 每一區的標題列（基礎資訊、給 AI 的內容、題目資訊）：黏在捲動區頂端，捲到下面一樣看得到是哪一區、按得到工具 */
+.activity-form-section-head{
+  position:sticky;top:-4px;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:32px;margin:-6px 0;padding:6px 0;background:var(--form-bg)
+}
+.activity-form-tools{display:flex;align-items:center;gap:4px;margin-right:-8px}
+.activity-form-text-button{
+  display:inline-flex;align-items:center;gap:6px;height:32px;margin:0;padding:0 8px;border:0;border-radius:6px;
+  background:transparent;color:var(--form-green);font:inherit;font-size:14px;font-weight:700;cursor:pointer
+}
+.activity-form-text-button:hover{background:rgba(49,93,80,.08)}
+.activity-form-text-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* 「新增題目」：題目卡正下方一整條虛線框，看起來就是「在這裡再加一題」 */
+.activity-form-add-question{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:var(--form-btn-h);margin:0;
+  border:1.5px dashed var(--form-blue-line);border-radius:12px;background:rgba(255,255,255,.52);
+  color:var(--form-green);font:inherit;font-size:var(--form-label);font-weight:700;cursor:pointer
+}
+.activity-form-add-question:hover{border-color:var(--form-thumb);background:#fff}
+.activity-form-add-question svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+/* 底部：上面一條細線和內容分開，取消／確認靠右 */
+.activity-form-footer{margin-top:calc(var(--form-gap) * -1 + 12px);padding-top:16px;border-top:1px solid var(--form-line)}
+.activity-form-divider{width:100%;height:1px;margin:0;border:0;background:var(--form-blue-line)}
+.activity-form-schedule{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+
+/* ----- 題目順序面板（QuestionOrderPanel），對應 Figma「題目順序彈出面板」 ----- */
+.order-backdrop{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:center;padding:16px}
+.order-panel{
+  box-sizing:border-box;display:flex;flex-direction:column;gap:16px;width:100%;max-width:480px;max-height:100%;padding:24px;
+  border:1px solid var(--form-blue-line);border-radius:12px;background:var(--form-bg);box-shadow:0 12px 36px rgba(26,48,34,.1)
+}
+.order-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.order-heading h2{margin:0;font-size:20px;font-weight:700;line-height:1.5}
+.order-close{display:grid;place-items:center;width:28px;height:32px;margin:0;padding:0;border:0;border-radius:6px;background:transparent;color:var(--form-green);cursor:pointer}
+.order-close:hover{background:rgba(49,93,80,.08)}
+.order-close svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.order-hint{display:flex;align-items:center;gap:8px;margin:0;color:#60736b;font-size:13px;line-height:20px}
+.order-grip{flex:none;width:16px;height:20px;fill:none;stroke:#77817b;stroke-width:1.6;stroke-linecap:round}
+.order-grip-small{width:14px;height:16px;stroke:#60736b;stroke-width:1.5}
+.order-list{position:relative;display:flex;flex-direction:column;gap:8px;min-height:0;margin:-3px;padding:3px;overflow-y:auto;list-style:none}
+.order-row{
+  box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin:0;padding:0 12px;
+  border:1px solid var(--form-line);border-radius:6px;background:#fff;color:var(--form-ink);font:inherit;text-align:left;
+  cursor:grab;touch-action:none;user-select:none
+}
+.order-row[data-dragging]{position:relative;z-index:1;cursor:grabbing;box-shadow:0 6px 16px rgba(26,48,34,.12)}
+.order-number{
+  display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:4px;background:#eaf2ed;
+  color:var(--form-green);font-size:15px;font-weight:700;line-height:1.2
+}
+.order-title{flex:1;min-width:0;overflow:hidden;font-size:15px;line-height:1.6;white-space:nowrap;text-overflow:ellipsis}
+.order-untitled{color:var(--form-muted)}
+.order-check{flex:none;width:18px;height:18px;fill:none;stroke:var(--form-green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* 選中的那列：深綠色 1.5px 框（用 inset 陰影補上多出來的 0.5px，避免列高跳動）、編號反白、題目加粗 */
+.order-row[aria-current=true]{border-color:var(--form-green);box-shadow:inset 0 0 0 .5px var(--form-green)}
+.order-row[aria-current=true][data-dragging]{box-shadow:inset 0 0 0 .5px var(--form-green),0 6px 16px rgba(26,48,34,.12)}
+.order-row[aria-current=true] .order-number{background:var(--form-green);color:#fff}
+.order-row[aria-current=true] .order-title{color:var(--form-green);font-weight:700}
+.order-row:focus-visible{outline:2px solid var(--form-green);outline-offset:2px}
+
+/* ----- 進場／退場動畫：題目順序面板、日期時間選擇器 ----- */
+@keyframes form-pop-in{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes form-pop-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.97)}}
+.order-panel,.picker-panel{animation:form-pop-in 180ms cubic-bezier(.2,.8,.2,1)}
+[data-closing] .order-panel,[data-closing] .picker-panel{animation:form-pop-out 140ms ease-in forwards}
+@media (prefers-reduced-motion:reduce){
+  .order-panel,.picker-panel,[data-closing] .order-panel,[data-closing] .picker-panel{animation:none}
+}
+
+/* ----- 日期／時間選擇器（DateTimePicker），對應 Figma「日期選擇器」「時間選擇器」 ----- */
+.picker-backdrop{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:center;padding:16px}
+.picker-panel{
+  box-sizing:border-box;display:flex;flex-direction:column;width:100%;max-width:var(--pk-max);max-height:100%;overflow-y:auto;
+  padding:14px var(--pk-pad) var(--pk-pad);border:1px solid var(--form-blue-line);border-radius:12px;background:var(--form-bg);
+  box-shadow:0 12px 36px rgba(26,48,34,.1)
+}
+/* 貼著欄位出現：位置由程式算好（top/left），背景不變暗、點外面就關閉 */
+.picker-backdrop[data-anchored]{display:block;padding:0}
+.picker-backdrop[data-anchored] .picker-panel{position:fixed;max-height:calc(100vh - 16px);transform-origin:top left}
+.picker-backdrop[data-anchored] .picker-panel[data-above]{transform-origin:bottom left}
+.picker-panel h2{margin:0;font-size:18px;font-weight:700;line-height:1.2;text-align:center}
+.picker-panel :focus-visible{outline:2px solid var(--form-green);outline-offset:2px}
+.picker-icon-button{
+  display:grid;place-items:center;flex:none;width:32px;height:32px;margin:0;padding:0;border:0;border-radius:6px;
+  background:transparent;color:var(--form-green);cursor:pointer
+}
+.picker-icon-button:hover{background:rgba(49,93,80,.08)}
+.picker-icon-button:disabled{color:#d5dadd;background:transparent;cursor:not-allowed}
+.picker-icon-button svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* 日期：年月列，左右箭頭；星期和日期都是正方形格子（設計稿 44×44、間距 7，這裡縮小一點） */
+.picker-month{display:flex;align-items:center;justify-content:space-between;height:var(--pk-cell);margin:-6px 0 4px}
+.picker-grid{display:grid;grid-template-columns:repeat(7,minmax(0,var(--pk-cell)));justify-content:space-between;gap:var(--pk-gap)}
+.picker-grid+.picker-grid{margin-top:var(--pk-gap)}
+.picker-weekday{display:grid;place-items:center;height:calc(var(--pk-cell) - 8px);border-radius:6px;background:rgba(255,255,255,.52);color:var(--form-muted);font-size:var(--pk-weekday)}
+.picker-day{
+  height:var(--pk-cell);margin:0;padding:0;border:0;border-radius:4px;background:#fff;color:var(--form-ink);
+  font:400 var(--pk-day)/1 Arimo,"Noto Sans TC",sans-serif;cursor:pointer
+}
+.picker-day:hover:not(:disabled){background:#eaf2ed}
+.picker-day[data-today]{box-shadow:inset 0 0 0 1.5px var(--form-green);color:var(--form-green)}
+.picker-day[aria-pressed=true]{background:var(--form-green);box-shadow:none;color:#fff}
+.picker-day:disabled{background:#f5f6f3;box-shadow:none;color:#d5dadd;cursor:default}
+
+/* 時間：標題列（返回、選擇時間、關閉）→ 已選時間卡 → 時、分兩欄 → 取消／確認 */
+.picker-time-heading{display:flex;align-items:center;justify-content:space-between;margin:0 -9px}
+.picker-summary{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;height:var(--pk-summary-h);margin-top:10px;padding:0 14px;
+  border-radius:6px;background:rgba(255,255,255,.52)
+}
+.picker-summary div{display:flex;flex-direction:column;gap:4px}
+.picker-summary span{font-size:14px;line-height:20px}
+.picker-summary small{color:var(--form-muted);font-size:12px;line-height:18px}
+.picker-summary strong{color:var(--form-green);font:700 var(--pk-summary)/1.2 Arimo,"Noto Sans TC",sans-serif}
+.picker-columns{display:flex;align-items:center;gap:12px;margin-top:10px}
+.picker-colon{color:var(--form-green);font-size:24px;line-height:1.2}
+.picker-column{display:flex;flex:1;flex-direction:column;align-items:stretch;gap:var(--pk-gap);min-width:0}
+.picker-unit{color:var(--form-muted);font-size:14px;line-height:20px;text-align:center}
+.picker-chevron{
+  display:grid;place-items:center;height:24px;margin:0;padding:0;border:0;border-radius:4px;background:transparent;
+  color:var(--form-green);cursor:pointer
+}
+.picker-chevron:hover{background:rgba(49,93,80,.08)}
+.picker-chevron svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.picker-options{display:flex;flex-direction:column;gap:var(--pk-gap)}
+.picker-option{
+  height:var(--pk-option-h);margin:0;padding:0;border:0;border-radius:4px;background:#fff;color:var(--form-ink);
+  font:400 var(--pk-option)/1 Arimo,"Noto Sans TC",sans-serif;cursor:pointer;transition:background-color 120ms,color 120ms
+}
+.picker-option[data-distance="2"]{background:rgba(255,255,255,.52);color:var(--form-muted)}
+.picker-option[aria-pressed=true]{background:var(--form-green);color:#fff;font-weight:700;box-shadow:0 4px 8px rgba(0,0,0,.1)}
+.picker-option:hover:not([aria-pressed=true]){background:#eaf2ed}
+.picker-actions{display:flex;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid #d3e4ed}
+.picker-cancel,.picker-confirm{
+  flex:1;height:var(--pk-btn-h);margin:0;border-radius:6px;font:inherit;font-size:15px;font-weight:500;cursor:pointer
+}
+.picker-cancel{border:1px solid var(--form-blue-line);background:#fff;color:var(--form-green)}
+.picker-confirm{border:1px solid var(--form-green);background:var(--form-green);color:#fff}
+
+/* 螢幕比較矮（筆電、縮小的視窗）或比較窄時，整組尺寸換成緊湊版 */
+@media (max-height:860px),(max-width:1100px){
+  .activity-form-backdrop{
+    --form-max:700px;--form-pad:22px;--form-gap:20px;--form-field-gap:14px;--form-title:20px;
+    --form-label:14px;--form-text:14px;--form-input-h:40px;--form-btn-h:42px;--form-card-pad:18px;
+    --form-topic-h:104px;--form-analysis-h:68px;--form-content-h:64px;
+    --pk-max:330px;--pk-pad:16px;--pk-cell:36px;--pk-gap:5px;--pk-day:16px;--pk-weekday:14px;
+    --pk-option-h:34px;--pk-option:18px;--pk-summary-h:52px;--pk-summary:24px;--pk-btn-h:38px
+  }
+}
+@media (max-height:860px),(max-width:1100px){
+  .order-panel{max-width:440px;gap:12px;padding:20px}
+  .order-row{min-height:48px}
+}
+@media (max-height:680px){
+  .activity-form-backdrop{--form-gap:16px;--form-field-gap:12px;--pk-option-h:30px;--pk-summary-h:46px;--pk-cell:34px}
+}
+
+@media (max-width:600px){
+  .activity-form-body{margin-right:-12px;padding-right:9px}
+  .activity-form-footer{justify-content:stretch}
+  .activity-form-footer .activity-form-button{flex:1}
+  .activity-form-schedule{grid-template-columns:minmax(0,1fr);gap:18px}
+  .activity-form-answer-row{flex-direction:column;align-items:stretch}
+  .activity-form-segmented button{padding:8px 12px}
+  .activity-form-backdrop{padding:12px;--form-pad:18px;--form-card-pad:14px}
+}

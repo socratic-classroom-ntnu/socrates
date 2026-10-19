@@ -194,9 +194,9 @@
           "status",
           "action_id",
           "seq",
+          "room_id",
           "created",
-          "roster_digest",
-          "room_id"
+          "roster_digest"
         ],
         "title": "AddAIStudentsReceipt",
         "type": "object"
@@ -753,9 +753,9 @@
           "status",
           "action_id",
           "seq",
+          "room_id",
           "removed",
-          "roster_digest",
-          "room_id"
+          "roster_digest"
         ],
         "title": "ClearAIStudentsReceipt",
         "type": "object"
@@ -1028,6 +1028,17 @@
           "action_id": {
             "title": "Action Id",
             "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
           },
           "seq": {
             "title": "Seq",
@@ -1506,6 +1517,17 @@
             },
             "title": "Groups",
             "type": "array"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
           },
           "seq": {
             "title": "Seq",

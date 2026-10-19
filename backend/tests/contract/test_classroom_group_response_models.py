@@ -42,3 +42,11 @@ def test_group_view_schema_is_generated_into_openapi():
     schemas = create_app(background=False).openapi()["components"]["schemas"]
     for name in ["GroupCollectionView", "GroupRunView", "LegacyGroupView"]:
         assert name in schemas
+
+
+def test_group_run_command_receipt_accepts_runtime_execute_shape():
+    # POST /groups/runs/{rid}/commands 回傳 classroom_core.runtime.execute 的回條（含 room_id）
+    from app.modules.group_dialogue.contracts import GroupActionReceipt
+
+    receipt = {"status": "accepted", "action_id": "a1", "seq": 3, "room_id": "r1"}
+    assert GroupActionReceipt.model_validate(receipt).room_id == "r1"

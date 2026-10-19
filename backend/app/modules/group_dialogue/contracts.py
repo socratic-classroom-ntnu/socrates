@@ -58,6 +58,8 @@ class GroupActionReceipt(Strict):
     status: str
     action_id: str
     seq: int
+    # 分組回合指令沿用教室 runtime.execute 的回條，會帶 room_id
+    room_id: str | None = None
 
 
 class GroupMetaView(Strict):

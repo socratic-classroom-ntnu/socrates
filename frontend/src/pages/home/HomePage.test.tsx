@@ -176,6 +176,16 @@ test('teaching card hides disabled code', async () => {
   expect(card).not.toHaveTextContent('上課中')
 })
 
+test('desktop learning card is a whole-card link and keeps the start button', async () => {
+  open({ learning: [learning()] })
+  const card = await screen.findByRole('link', { name: '哲學導論' })
+  expect(card).toHaveAttribute('href', '/learn/courses/c-1')
+  // The course name stretches over the whole card (CSS ::after); 開始 stays on top of it.
+  expect(card).toHaveClass('course-card__stretch')
+  const article = card.closest('article') as HTMLElement
+  expect(within(article).getByRole('link', { name: /開始/ })).toHaveAttribute('href', expect.stringMatching(/^\/learn\/activities\//))
+})
+
 test('learning card shows highlight by status', async () => {
   open({ learning: [
     learning(),

@@ -33,6 +33,14 @@ jest.mock('../pages/learn/StudentCoursePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { StudentCoursePage: () => { const { courseId } = useParams(); return <p>student-course-page:{courseId}</p> } }
 })
+jest.mock('../pages/learn/solo/SoloActivityPage', () => {
+  const { useParams } = jest.requireActual('react-router-dom')
+  return { SoloActivityPage: () => { const { activityId } = useParams(); return <p>solo-activity-page:{activityId}</p> } }
+})
+jest.mock('../pages/learn/solo/SoloDialoguePage', () => {
+  const { useParams } = jest.requireActual('react-router-dom')
+  return { SoloDialoguePage: () => { const { activityId } = useParams(); return <p>solo-dialogue-page:{activityId}</p> } }
+})
 jest.mock('../pages/teach/editor/ActivityEditorPage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { ActivityEditorPage: () => <p>editor-page:{loc().pathname}</p> }
@@ -102,7 +110,8 @@ test.each([
   ['/', 'home-page:'],
   ['/join?code=AB12', 'join-course-page:?code=AB12'],
   ['/learn/courses/c1', 'student-course-page:c1'],
-  ['/learn/activities/a1', '功能開發中'],
+  ['/learn/activities/a1', 'solo-activity-page:a1'],
+  ['/learn/activities/a1/dialogue', 'solo-dialogue-page:a1'],
   ['/teach/courses/c1', 'teacher-course-page:/teach/courses/c1'],
   ['/teach/courses/c1/students', 'teacher-course-page:/teach/courses/c1/students'],
   ['/teach/courses/c1/settings', 'teacher-course-page:/teach/courses/c1/settings'],

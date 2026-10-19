@@ -37,7 +37,7 @@ export function TeachingCard({ course, phone }: { course: Teaching; phone: boole
   </article>
 }
 
-/** H1 我學的課: computers get a 「開始」 button for an open activity; phones make the whole card a link. */
+/** H1 我學的課: the whole card opens the course; computers also get a 「開始」 button for an open activity, phones none. */
 export function LearningCard({ course, phone }: { course: Learning; phone: boolean }) {
   const { t, locale } = useT('home')
   const h = course.highlight
@@ -77,7 +77,7 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
 
   return <article className={'course-card' + (h?.status === 'open' ? ' course-card--active' : '')}>
     <div className="course-card__head">
-      <h3><Link className="course-card__title-link" to={`/learn/courses/${course.id}`}>{course.name}</Link></h3>
+      <h3><Link className="course-card__stretch" to={`/learn/courses/${course.id}`}>{course.name}</Link></h3>
       {pill}
     </div>
     <div className="course-card__content">{body}</div>

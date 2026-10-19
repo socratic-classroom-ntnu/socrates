@@ -58,8 +58,9 @@ export function StudentCoursePage() {
         <span className="learn-card__chevron" aria-hidden="true">›</span>
       </Link>
     </article>
+    // The title link stretches over the whole card; the start button sits above it.
     return <article key={card.id} className="learn-card learn-card--open">
-      <h3 className="learn-card__title">{card.title}</h3>
+      <h3 className="learn-card__title"><Link className="learn-card__stretch" to={`/learn/activities/${card.id}`}>{card.title}</Link></h3>
       <div className="learn-card__content">
         <span className="learn-card__strong">{questions}</span>
         <span className="learn-card__meta">{t('openUntil', { end: date(card.ends_at, 'weekdayDateTime') })}</span>
@@ -71,7 +72,9 @@ export function StudentCoursePage() {
   return <main className="learn-page">
     <header className="learn-head">
       <div className="learn-head__title">
-        {!phone && <Link className="learn-head__crumb" to="/?tab=learn">{t('breadcrumb')}</Link>}
+        {!phone && <nav className="learn-head__crumb" aria-label={t('breadcrumbLabel')}>
+          <Link to="/?tab=learn">{t('breadcrumb')}</Link> <span aria-hidden="true">/</span>
+        </nav>}
         <h1>{data.name}</h1>
         <span className="learn-head__meta">{t('teacher', { name: data.teacher_name })}</span>
       </div>

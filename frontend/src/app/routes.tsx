@@ -14,6 +14,8 @@ import { HomePage } from '../pages/home/HomePage'
 import { JoinActivityPage } from '../pages/join/JoinActivityPage'
 import { JoinCoursePage } from '../pages/join/JoinCoursePage'
 import { StudentCoursePage } from '../pages/learn/StudentCoursePage'
+import { SoloActivityPage } from '../pages/learn/solo/SoloActivityPage'
+import { SoloDialoguePage } from '../pages/learn/solo/SoloDialoguePage'
 import { TeacherCoursePage } from '../pages/teach/TeacherCoursePage'
 import { ActivityEditorPage } from '../pages/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../pages/teach/TeacherDesktopOnly'
@@ -85,6 +87,7 @@ export function AppRoutes() {
       {/* 加入流程與投影是全螢幕，不包外框 */}
       <Route path="/join" element={<JoinCoursePage />} />
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
+      <Route path="/learn/activities/:activityId/dialogue" element={<SoloDialoguePage />} />
       <Route element={<TeacherDesktopOnly />}>
         <Route path="/teach/courses/:courseId/projector" element={<TeachPlaceholder kind="projector" />} />
         <Route path="/teach/activities/:activityId/projector" element={<TeachPlaceholder kind="projector" />} />
@@ -92,7 +95,7 @@ export function AppRoutes() {
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
-        <Route path="/learn/activities/:activityId" element={<Placeholder kind="activity" />} />
+        <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}
         <Route element={<TeacherDesktopOnly />}>
           <Route path="/teach/create-course" element={<CreateCourseRedirect />} />

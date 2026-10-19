@@ -1,5 +1,5 @@
 export default {
-  breadcrumb: '我學的課',
+  breadcrumb: '課程', breadcrumbLabel: '課程路徑',
   teacher: '{{name}} 老師',
   code: '課程代碼',
   copyCode: '複製課程代碼',

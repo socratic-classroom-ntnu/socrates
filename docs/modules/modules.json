@@ -177,6 +177,9 @@
       ],
       "uses": [
         "platform",
+        "identity_access",
+        "course_management",
+        "ai_providers",
         "llm_runtime",
         "content_authoring"
       ],

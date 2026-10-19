@@ -2,7 +2,7 @@ import type zhHant from '../zh-Hant/common';
 import type { Shape } from '../../shape';
 
 const common: Shape<typeof zhHant> = {
-  brand: '苏格拉底课堂',
+  brand: 'Socrates Classroom',
   loading: '加载中…',
   close: '关闭',
   copied: '已复制',
@@ -20,6 +20,7 @@ const common: Shape<typeof zhHant> = {
     EMAIL_TAKEN: '这个 Email 已经注册过了，请直接登录；忘记密码可以重置。',
     ACCOUNT_PENDING_VERIFICATION: '这个用户名或 Email 已注册，正在等待 Email 验证。如果是你的账号，请直接登录并重新发送验证邮件；如果不是，等验证链接过期（最后一次发送后 24 小时）就会释放，届时可以再注册。',
     LOGIN_REQUIRED: '请先登录。',
+    SESSION_CSRF_REQUIRED: '登录状态已过期，请刷新页面。',
     RATE_LIMITED: '操作太频繁，请稍后再试。',
     invalidInput: '有字段内容不符合格式，请检查后再试。',
     server: '服务器暂时无法处理，请稍后再试。',

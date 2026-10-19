@@ -20,6 +20,7 @@ const common: Shape<typeof zhHant> = {
     EMAIL_TAKEN: 'That email is already registered. Log in instead, or reset your password if you forgot it.',
     ACCOUNT_PENDING_VERIFICATION: 'That username or email is registered and waiting for email verification. If it is yours, log in and resend the verification email. If not, it is released once the link expires (24 hours after the last email), and you can sign up then.',
     LOGIN_REQUIRED: 'Please log in first.',
+    SESSION_CSRF_REQUIRED: 'Your session has expired. Please reload the page.',
     RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
     invalidInput: 'Some fields are not in the right format. Please check and try again.',
     server: 'The server cannot handle this right now. Please try again later.',

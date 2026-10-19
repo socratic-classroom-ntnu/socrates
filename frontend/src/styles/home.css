@@ -53,7 +53,6 @@
 .course-card__head { display: flex; align-items: center; gap: 10px; }
 .course-card__head h3 { flex-grow: 1; margin: 0; font-size: 18px; font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
 .course-card__head svg { flex-shrink: 0; color: #2E5045; }
-.course-card__title-link { color: #1F2421; }
 .course-card__stretch { color: #1F2421; text-decoration: none; }
 .course-card__stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
 .course-card__stretch:focus-visible { outline: none; }
@@ -63,7 +62,7 @@
 .course-card__meta { font-size: 14px; color: #5F6661; }
 .course-card__stats { display: flex; gap: 24px; padding-top: 12px; border-top: 1px solid #ECECE8; font-size: 14px; color: #3F4642; }
 .course-card__code { position: relative; z-index: 1; align-self: flex-end; display: flex; align-items: center; gap: 4px; font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 13px; color: #5F6661; }
-.course-card__actions { align-self: flex-end; }
+.course-card__actions { position: relative; z-index: 1; align-self: flex-end; }
 .course-card__actions .button { min-height: 44px; font-size: 15px; }
 
 /* 手機：整張卡片是一個連結 */

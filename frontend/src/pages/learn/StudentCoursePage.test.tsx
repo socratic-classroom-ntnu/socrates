@@ -46,7 +46,10 @@ test('groups activities into sections in order', async () => {
   open()
   expect(await screen.findByRole('heading', { level: 1, name: '哲學導論' })).toBeInTheDocument()
   expect(screen.getByText('王思齊 老師')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '我學的課' })).toHaveAttribute('href', '/?tab=learn')
+  // 「課程 / 課程名」：「課程」回首頁的我學的課
+  const path = screen.getByRole('navigation', { name: '課程路徑' })
+  expect(within(path).getByRole('link', { name: '課程' })).toHaveAttribute('href', '/?tab=learn')
+  expect(path).toHaveTextContent(/^課程\s*\/$/)
   const headings = screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent)
   expect(headings).toEqual(['進行中', '即將開始', '已結束'])
   expect(within(section('進行中')).getByText('第三週倫理討論')).toBeInTheDocument()
@@ -61,12 +64,16 @@ test('empty sections are hidden and no activities says so', async () => {
   expect(screen.queryByRole('heading', { level: 2 })).toBeNull()
 })
 
-test('desktop open card has a start button and is not itself a link', async () => {
+test('desktop open card is a whole-card link and keeps the start button', async () => {
   open()
   const start = (await within(await screen.findByRole('region', { name: '進行中' })).findAllByRole('link', { name: /開始/ }))[0]
   expect(start).toHaveAttribute('href', '/learn/activities/o1')
   const article = start.closest('article') as HTMLElement
-  expect(within(article).getAllByRole('link')).toHaveLength(1)
+  // The title link stretches over the whole card (CSS ::after); the button stays on top of it.
+  const card = within(article).getByRole('link', { name: '第三週倫理討論' })
+  expect(card).toHaveAttribute('href', '/learn/activities/o1')
+  expect(card).toHaveClass('learn-card__stretch')
+  expect(within(article).getAllByRole('link')).toHaveLength(2)
   expect(article).toHaveTextContent('2 題')
   expect(article).toHaveTextContent('開放到')
 })

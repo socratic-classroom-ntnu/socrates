@@ -1091,6 +1091,22 @@
         "title": "Configure",
         "type": "object"
       },
+      "ConfirmViewpointBody": {
+        "additionalProperties": false,
+        "properties": {
+          "summary_digest": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Summary Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary_digest"
+        ],
+        "title": "ConfirmViewpointBody",
+        "type": "object"
+      },
       "CourseCreate": {
         "additionalProperties": false,
         "properties": {
@@ -1986,6 +2002,38 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "PersonalSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "current_position": {
+            "title": "Current Position",
+            "type": "string"
+          },
+          "reason_summary": {
+            "title": "Reason Summary",
+            "type": "string"
+          },
+          "relevant_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Relevant Conditions",
+            "type": "array"
+          },
+          "unresolved_issue": {
+            "title": "Unresolved Issue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_position",
+          "reason_summary",
+          "relevant_conditions",
+          "unresolved_issue"
+        ],
+        "title": "PersonalSummaryView",
         "type": "object"
       },
       "PublicConfigView": {
@@ -2990,6 +3038,22 @@
         "title": "ScriptView",
         "type": "object"
       },
+      "SendMessageBody": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SendMessageBody",
+        "type": "object"
+      },
       "SettingsUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -3050,6 +3114,493 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SoloActivityView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloAttemptBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "attempt"
+        ],
+        "title": "SoloActivityView",
+        "type": "object"
+      },
+      "SoloAttemptBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "current_turn": {
+            "title": "Current Turn",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/SoloQuestionProgressView"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "review_status": {
+            "enum": [
+              "not_started",
+              "in_progress"
+            ],
+            "title": "Review Status",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "choosing_stance",
+              "awaiting_tutor",
+              "tutor_unavailable",
+              "in_dialogue",
+              "confirming",
+              "between_questions",
+              "reviewing",
+              "awaiting_reflection_prompt",
+              "reflecting",
+              "budget_exhausted",
+              "completed"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "question_index",
+          "progress",
+          "review_status",
+          "current_turn"
+        ],
+        "title": "SoloAttemptBrief",
+        "type": "object"
+      },
+      "SoloAttemptView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "activity_title": {
+            "title": "Activity Title",
+            "type": "string"
+          },
+          "available_actions": {
+            "items": {
+              "enum": [
+                "submit_stance",
+                "send_message",
+                "retry",
+                "confirm_viewpoint",
+                "revise_viewpoint",
+                "next_question",
+                "submit_review",
+                "retry_reflection_prompt",
+                "continue_reflection",
+                "submit_reflection",
+                "continue_without_tutor"
+              ],
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "candidate_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/SoloMessageView"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tutor_unavailable",
+                  "owner_provider_missing"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice"
+          },
+          "principle_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "後果主義",
+                  "義務論",
+                  "混合"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principle Hint"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "rejected_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revising": {
+            "title": "Revising",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "choosing_stance",
+              "awaiting_tutor",
+              "tutor_unavailable",
+              "in_dialogue",
+              "confirming",
+              "between_questions",
+              "reviewing",
+              "awaiting_reflection_prompt",
+              "reflecting",
+              "budget_exhausted",
+              "completed"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "summary_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Digest"
+          }
+        },
+        "required": [
+          "id",
+          "activity_id",
+          "activity_title",
+          "course_id",
+          "course_name",
+          "display_name",
+          "state",
+          "question_index",
+          "question_count",
+          "questions",
+          "messages",
+          "candidate_summary",
+          "summary_digest",
+          "principle_hint",
+          "revising",
+          "rejected_summary",
+          "notice",
+          "available_actions"
+        ],
+        "title": "SoloAttemptView",
+        "type": "object"
+      },
+      "SoloMessageView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "student",
+              "tutor"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "question_index",
+          "role",
+          "text",
+          "created_at"
+        ],
+        "title": "SoloMessageView",
+        "type": "object"
+      },
+      "SoloOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "SoloOptionView",
+        "type": "object"
+      },
+      "SoloQuestionProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "option_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Label"
+          },
+          "status": {
+            "enum": [
+              "not_started",
+              "in_dialogue",
+              "confirmed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "index",
+          "status",
+          "title",
+          "option_label"
+        ],
+        "title": "SoloQuestionProgressView",
+        "type": "object"
+      },
+      "SoloQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmed_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SoloOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloStanceView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "goal_met"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "id",
+          "title",
+          "scenario",
+          "options",
+          "stance",
+          "status",
+          "confirmed_summary"
+        ],
+        "title": "SoloQuestionView",
+        "type": "object"
+      },
+      "SoloStanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "reason"
+        ],
+        "title": "SoloStanceView",
+        "type": "object"
+      },
       "Start": {
         "additionalProperties": false,
         "properties": {
@@ -3075,6 +3626,29 @@
           "expected_roster_digest"
         ],
         "title": "Start",
+        "type": "object"
+      },
+      "SubmitStanceBody": {
+        "additionalProperties": false,
+        "properties": {
+          "option_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Option Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "reason"
+        ],
+        "title": "SubmitStanceBody",
         "type": "object"
       },
       "TokenRequest": {
@@ -6403,6 +6977,219 @@
           }
         },
         "summary": "Export Yaml"
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}": {
+      "get": {
+        "operationId": "get_solo_activity_api_v2_solo_activities__activity_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Solo Activity",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/attempt": {
+      "post": {
+        "operationId": "start_attempt_api_v2_solo_activities__activity_id__attempt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/attempts/{attempt_id}": {
+      "get": {
+        "operationId": "get_attempt_api_v2_solo_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/attempts/{attempt_id}/{action}": {
+      "post": {
+        "operationId": "act_on_attempt_api_v2_solo_attempts__attempt_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "submit_stance",
+                "send_message",
+                "retry",
+                "confirm_viewpoint",
+                "revise_viewpoint",
+                "next_question",
+                "submit_review",
+                "retry_reflection_prompt",
+                "continue_reflection",
+                "submit_reflection",
+                "continue_without_tutor"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SubmitStanceBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SendMessageBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ConfirmViewpointBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Act On Attempt",
+        "tags": [
+          "solo"
+        ]
       }
     },
     "/api/v2/suggestions/other": {

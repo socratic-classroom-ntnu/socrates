@@ -1,0 +1,197 @@
+@import './ui.css';
+
+.solo-activity,
+.solo-dialogue {
+  color-scheme: light;
+  color: #1e1c18;
+  font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+
+.solo-activity { min-height: 100%; padding: 28px 40px 48px; background: #f3f3f1; }
+.solo-activity--message { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.solo-activity--message h1 { margin: 0; font-size: 24px; }
+.solo-activity:not(.solo-activity--message) { display: flex; flex-direction: column; gap: 20px; }
+.solo-activity__head { display: flex; flex-direction: column; gap: 14px; }
+.solo-activity__crumb { display: flex; flex-wrap: wrap; align-items: center; min-height: 44px; }
+.solo-activity__crumb a { color: #1f2421; font-size: 28px; font-weight: 700; text-decoration: none; }
+.solo-activity__crumb a:first-child { color: #5f6661; }
+.solo-activity__crumb a:hover { text-decoration: underline; }
+.solo-activity__crumb span { margin: 0 10px; color: #a3a8a4; font-size: 24px; }
+.solo-activity__title { display: flex; align-items: center; gap: 6px; }
+.solo-activity__title h1 { margin: 0; font-size: 24px; }
+.solo-activity__back { display: flex; flex-shrink: 0; width: 40px; height: 40px; margin-left: -8px; align-items: center; justify-content: center; border-radius: 8px; color: #1f2421; }
+.solo-activity__back:hover { background: #e7eeea; }
+.solo-activity__panel { display: flex; flex-grow: 1; flex-wrap: wrap; align-content: flex-start; align-items: flex-start; gap: 20px; padding: 24px 24px 28px; border: 1px solid #e3e3df; border-radius: 16px; background: #fff; }
+.solo-activity__main { display: flex; flex: 3 1 480px; min-width: 0; flex-direction: column; gap: 16px; }
+.solo-activity__facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.solo-activity__facts div { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid #ecece8; border-radius: 10px; background: #f7f7f5; }
+.solo-activity__facts dt { color: #5f6661; font-size: 13px; }
+.solo-activity__facts dd { margin: 0; color: #1f2421; font-size: 16px; font-weight: 700; }
+.solo-activity__status { display: inline-flex; align-items: center; gap: 6px; color: #5f6661; }
+.solo-activity__status::before { width: 8px; height: 8px; border-radius: 50%; background: #a3a8a4; content: ''; }
+.solo-activity__status--open { color: #2e5045; }
+.solo-activity__status--open::before { background: #2e8b57; }
+.solo-activity__progress { display: flex; flex-direction: column; padding: 20px 24px 6px; border: 1px solid #e3e3df; border-radius: 12px; background: #fff; }
+.solo-activity__progress h2 { margin: 0 0 8px; font-size: 17px; }
+.solo-activity__progress ol { margin: 0; padding: 0; list-style: none; }
+.solo-activity__step { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-top: 1px solid #ecece8; }
+.solo-activity__number { display: flex; flex-shrink: 0; width: 30px; height: 30px; align-items: center; justify-content: center; border-radius: 50%; background: #ecece8; color: #5f6661; font-size: 14px; font-weight: 700; }
+.solo-activity__step-label { flex-grow: 1; min-width: 0; font-size: 16px; }
+.solo-activity__step-note { flex-shrink: 0; color: #5f6661; font-size: 14px; }
+.solo-activity__step--in_dialogue .solo-activity__number { background: #e8c46a; color: #1e1c18; }
+.solo-activity__step--in_dialogue .solo-activity__step-note { color: #6b4e0e; }
+.solo-activity__step--confirmed .solo-activity__number { background: #e7eeea; color: #2e5045; }
+.solo-activity__step--confirmed .solo-activity__step-note { color: #2e5045; }
+.solo-activity__step--in_dialogue .solo-activity__step-label,
+.solo-activity__step--confirmed .solo-activity__step-label { font-weight: 700; }
+.solo-activity__hint { margin: 0; color: #5f6661; font-size: 13px; line-height: 1.6; }
+.solo-activity__card { position: sticky; top: 28px; display: flex; flex: 1 1 260px; min-width: 240px; flex-direction: column; gap: 12px; padding: 22px; border: 2px solid #2e5045; border-radius: 12px; background: #fff; }
+.solo-activity__card-label { color: #5f6661; font-size: 14px; }
+.solo-activity__card b { font-size: 17px; }
+.solo-activity__card p { margin: 0; color: #3f4642; font-size: 14px; line-height: 1.6; }
+.solo-activity__card small { color: #5f6661; font-size: 13px; line-height: 1.6; }
+.solo-activity__cta { display: flex; height: 52px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 10px; background: #2e5045; color: #fff; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+.solo-activity__cta:hover { background: #1f3a31; }
+.solo-activity__cta:disabled { opacity: .45; cursor: default; }
+.solo-activity__card .solo-activity__closed { padding: 12px 14px; border-radius: 8px; background: #f7f7f5; }
+.solo-progress { padding: 22px; border: 1px solid #e3e3df; border-radius: 12px; background: #fff; }
+.solo-progress h2 { margin: 0 0 14px; font-size: 17px; }
+.solo-progress ol { margin: 0; padding: 0; list-style: none; }
+.solo-progress li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #ecece8; }
+.solo-progress li:first-child { border-top: 0; }
+.solo-progress li > span:last-child { color: #5f6661; font-size: 14px; }
+.solo-progress__number { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #e7eeea; color: #2e5045; font-weight: 700; }
+.solo-progress > p { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid #ecece8; color: #5f6661; font-size: 14px; line-height: 1.65; }
+.solo-start-card { display: flex; flex-direction: column; gap: 14px; padding: 24px; border: 1px solid #e3e3df; border-radius: 16px; background: #fff; box-shadow: 0 12px 30px rgb(31 36 33 / 8%); }
+.solo-start-card__status { align-self: flex-start; padding: 5px 10px; border-radius: 999px; background: #e7eeea; color: #2e5045; font-size: 13px; font-weight: 700; }
+.solo-start-card h2 { margin: 0; font-size: 19px; }
+.solo-start-card p { margin: 0; color: #3f4642; line-height: 1.65; }
+.solo-start-card small { color: #5f6661; line-height: 1.55; }
+.solo-start-card__closed { padding: 12px 14px; border-radius: 8px; background: #f7f7f5; }
+.solo-primary { min-height: 46px; padding: 10px 20px; border: 0; border-radius: 10px; background: #2e5045; color: #fffdf8; font-weight: 700; box-shadow: 0 3px 0 #23332c; }
+.solo-primary:disabled { box-shadow: none; opacity: .45; }
+
+.solo-dialogue { min-height: 100vh; background: #f4f0e8; }
+.solo-dialogue--message { display: grid; place-items: center; }
+.solo-dialogue__topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 16px; min-height: 72px; padding: 10px 28px; border-bottom: 1px solid #ddd5c6; background: #fffdf8; }
+.solo-dialogue__brand { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: #2f4a3f; color: #fffdf8; font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 800; text-decoration: none; }
+.solo-dialogue__course { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.solo-dialogue__course strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.solo-dialogue__course span { color: #6e5034; font-family: 'Noto Serif TC', serif; font-size: 13px; }
+.solo-dialogue__count { padding: 7px 12px; border-radius: 999px; background: #efebe0; color: #57514a; font-size: 14px; font-weight: 700; }
+.solo-dialogue__person { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #e8c46a; font-weight: 800; }
+.solo-dialogue__columns { display: grid; grid-template-columns: minmax(360px, 42%) minmax(0, 1fr); min-height: calc(100vh - 72px); }
+/* 左欄和對話一樣限制在一個畫面高，內容多（我的進度）時自己捲動，整頁不被撐高 */
+.solo-question { display: flex; min-width: 0; max-height: calc(100vh - 72px); box-sizing: border-box; flex-direction: column; gap: 18px; overflow-y: auto; padding: 28px 26px; border-right: 1px solid #ddd5c6; background: #ece6da; }
+/* 黑板：木框、金色題號、霞鶩文楷的情境原文（spec §4.9、設計稿 A0／A1） */
+.solo-question__board { padding: 22px 24px; border: 10px solid #6e5034; border-radius: 6px; background: #23332c; color: #efebe0; }
+.solo-question__board h1 { margin: 0 0 10px; color: #e8c46a; font-size: 14px; font-weight: 400; }
+.solo-question__scenario { margin: 0; white-space: pre-wrap; font-family: 'LXGW WenKai TC', 'Noto Serif TC', serif; font-size: 19px; line-height: 1.7; }
+.solo-question__source { display: flex; align-items: center; gap: 6px; margin: -8px 0 0; color: #57514a; font-size: 13px; }
+.solo-choice,
+.solo-explainer { padding: 18px 20px; border-radius: 12px; background: #fffdf8; }
+.solo-choice--empty { border: 1px dashed #a99e8a; background: transparent; }
+.solo-choice h2,
+.solo-explainer h2 { margin: 0 0 10px; font-size: 15px; }
+.solo-choice p,
+.solo-explainer p { margin: 6px 0 0; color: #57514a; font-size: 14px; line-height: 1.65; }
+.solo-choice__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.solo-choice__head h2 { margin: 0; }
+.solo-choice .solo-choice__reason { margin-top: 10px; color: #3a362f; font-family: 'LXGW WenKai TC', serif; font-size: 16px; line-height: 1.7; }
+/* 立場顏色：A 橘、B 藍、C 黃、D 綠（spec §4.9） */
+.solo-stance-chip { display: inline-flex; min-height: 30px; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; background: #3a362f; color: #fffdf8; font-size: 14px; font-weight: 700; }
+.solo-stance-chip > span { font-size: 12px; opacity: .85; }
+[data-option='A'] { --stance: #c4501f; --stance-ink: #fffdf8; }
+[data-option='B'] { --stance: #2d4b8e; --stance-ink: #fffdf8; }
+[data-option='C'] { --stance: #d9a22e; --stance-ink: #1e1c18; }
+[data-option='D'] { --stance: #1e6b60; --stance-ink: #fffdf8; }
+.solo-stance-chip[data-option] { background: var(--stance); color: var(--stance-ink); }
+.solo-explainer { margin-top: auto; background: transparent; }
+.solo-conversation { display: flex; min-width: 0; max-height: calc(100vh - 72px); flex-direction: column; padding: 28px 36px 24px; }
+.solo-timeline { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 18px; overflow-y: auto; padding: 0 14px 22px; }
+.solo-message { display: flex; max-width: 82%; gap: 10px; }
+/* 泡泡：蘇格拉底深綠底、Noto Serif；學生白底細框、霞鶩文楷（spec §4.9、設計稿 A1） */
+.solo-message > div { padding: 14px 18px; border-radius: 4px 16px 16px 16px; background: #23332c; color: #efebe0; }
+.solo-message strong { color: #e8c46a; font-size: 13px; }
+.solo-message p { margin: 6px 0 0; white-space: pre-wrap; font-family: 'Noto Serif TC', serif; font-size: 17px; font-weight: 600; line-height: 1.75; }
+.solo-message__avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #23332c; color: #e8c46a; font-family: 'Noto Serif TC', serif; font-size: 17px; font-weight: 900; }
+.solo-message--student { align-self: flex-end; flex-direction: column; align-items: flex-end; gap: 6px; }
+.solo-message--student > div { border: 1px solid #ddd5c6; border-radius: 16px 4px 16px 16px; background: #fffdf8; color: #1e1c18; }
+.solo-message--student p { margin: 0; font-family: 'LXGW WenKai TC', serif; font-size: 18px; font-weight: 400; line-height: 1.65; }
+.solo-message--student > .solo-message__label { color: #57514a; font-size: 12px; font-weight: 400; }
+.solo-message--student > div strong { color: #6e5034; }
+.solo-message small { display: block; margin-top: 8px; color: #2f4a3f; font-size: 12px; font-weight: 700; }
+/* 輸入區：直接放在頁面底色上，2px 深色框，送出鈕在框內（設計稿 A1） */
+.solo-composer { padding: 14px 14px 18px; }
+.solo-composer > label { display: block; margin-bottom: 9px; font-size: 14px; font-weight: 700; }
+.solo-composer__entry { display: flex; align-items: flex-end; gap: 10px; padding: 10px 10px 10px 18px; border: 2px solid #23332c; border-radius: 14px; background: #fffdf8; }
+.solo-composer__entry:has(textarea:disabled) { border-color: #a99e8a; background: #efede7; }
+.solo-composer textarea { min-height: 56px; flex: 1; min-width: 0; resize: none; padding: 4px 0; border: 0; outline: none; background: transparent; color: #1e1c18; font-family: 'LXGW WenKai TC', serif; font-size: 18px; line-height: 1.6; }
+.solo-composer textarea:disabled { color: #77716a; }
+.solo-composer__send { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 12px; background: #23332c; color: #efebe0; cursor: pointer; }
+.solo-composer__send:disabled { opacity: .4; cursor: default; }
+.solo-composer__hint { margin: 9px 0 0; color: #57514a; font-size: 13px; }
+/* X2：在對話紀錄裡的黃色列，重試在右邊 */
+.solo-unavailable { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 20px; border-radius: 14px; background: #F6E3A8; color: #4A3A0E; }
+.solo-unavailable > div { flex: 1 1 320px; min-width: 0; }
+.solo-unavailable strong { font-size: 15px; }
+.solo-unavailable p { margin: 4px 0 0; font-size: 14px; line-height: 1.6; }
+.solo-composer__paused { margin: 0; padding: 14px 18px; border: 2px dashed #A99E8A; border-radius: 14px; background: #ECE6DA; color: #57514A; font-size: 14px; }
+/* X1：被說「不太對」的整理回顯，以及只填開頭、不送出的快速選項 */
+.solo-rejected > div { border: 1px dashed #a99e8a; background: #f4f0e8; }
+.solo-composer__quick { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.solo-chip { min-height: 36px; padding: 0 14px; border: 1px solid #a99e8a; border-radius: 999px; background: #fffdf8; color: #2f4a3f; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.solo-chip:disabled { opacity: .45; cursor: default; }
+/* A3：下一題的情境以老師原文逐字呈現；左欄的我的進度；下一題按鈕 */
+.solo-scenario { align-self: stretch; padding: 18px 22px; border: 10px solid #6e5034; border-radius: 6px; background: #2f4a3f; color: #efebe0; }
+.solo-scenario strong { display: block; color: #e8c46a; font-size: 14px; }
+.solo-scenario span { display: block; margin-top: 4px; color: #c9c2b1; font-size: 12px; }
+.solo-scenario p { margin: 10px 0 0; white-space: pre-wrap; font-family: 'Noto Serif TC', serif; font-size: 17px; line-height: 1.7; }
+.solo-progress-list h2 { margin: 0 0 10px; font-size: 15px; }
+.solo-progress-list ol { margin: 0; padding: 0; list-style: none; }
+.solo-progress-list li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid #ddd5c6; }
+.solo-progress-list li:first-child { border-top: 0; }
+.solo-progress-list li[aria-current] strong { color: #2f4a3f; }
+.solo-progress-list span { color: #6c665f; font-size: 13px; }
+.solo-next { display: flex; justify-content: flex-end; padding: 18px 24px 20px; border-top: 1px solid #ddd5c6; background: #fffdf8; }
+.solo-action-status { margin: 10px 24px 0; color: #2f4a3f; font-size: 13px; font-weight: 700; }
+.solo-viewpoint { margin: 0 14px 4px; padding: 22px 24px; border: 1px solid #d2c8b8; border-radius: 16px; background: #fffdf8; box-shadow: 0 10px 26px rgb(55 45 32 / 10%); }
+.solo-viewpoint > header { display: flex; align-items: flex-start; gap: 12px; }
+.solo-viewpoint h2 { margin: 0; font-family: 'Noto Serif TC', serif; font-size: 20px; }
+.solo-viewpoint header p { margin: 4px 0 0; color: #6c665f; font-size: 13px; }
+.solo-viewpoint dl { margin: 20px 0 0; }
+.solo-viewpoint dl > div { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid #ece6dc; }
+.solo-viewpoint dt { color: #6e5034; font-weight: 700; }
+.solo-viewpoint dd { margin: 0; line-height: 1.6; }
+.solo-viewpoint ul { margin: 0; padding-left: 20px; }
+.solo-viewpoint__principle { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 9px; background: #edf2ef; color: #2f4a3f; }
+.solo-viewpoint__principle small { color: #5e655f; }
+.solo-viewpoint__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.solo-secondary { min-height: 46px; padding: 10px 20px; border: 1px solid #8f8678; border-radius: 10px; background: #fffdf8; color: #3a362f; font-weight: 700; }
+.solo-secondary:disabled { opacity: .45; }
+/* A3／A3b：題目確認後，對話紀錄裡的觀點卡 */
+.solo-confirmed { align-self: stretch; padding: 16px 20px; border: 1px solid #ddd5c6; border-radius: 14px; background: #fffdf8; }
+.solo-confirmed strong { color: #2f4a3f; font-size: 15px; }
+.solo-confirmed p { margin: 6px 0 0; color: #3a362f; line-height: 1.65; }
+/* A3b：輸入區的位置換成深綠橫條 */
+.solo-review { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 0 14px 18px; padding: 20px 24px; border-radius: 14px; background: #2f4a3f; color: #fffdf8; }
+.solo-review h2 { margin: 0; color: #e8c46a; font-size: 13px; font-weight: 700; }
+.solo-review p { margin: 4px 0 0; font-family: 'Noto Serif TC', serif; font-size: 22px; }
+.solo-review__action { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.solo-review__start { min-height: 44px; padding: 0 20px; border: 0; border-radius: 10px; background: #e8c46a; color: #23332c; font: inherit; font-weight: 700; }
+.solo-review__start:disabled { opacity: .55; }
+.solo-review__action span { color: #e9e4da; font-size: 12px; }
+.solo-stance { padding: 22px 24px; border-top: 1px solid #ddd5c6; background: #fffdf8; }
+.solo-stance fieldset { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin: 0; padding: 0; border: 0; }
+.solo-stance legend { margin-bottom: 10px; padding: 0; font-size: 17px; font-weight: 700; }
+.solo-stance__options { display: flex; grid-column: 1 / -1; gap: 10px; }
+.solo-stance__options > * { flex: 1 1 0; min-width: 0; }
+.solo-stance__option { display: flex; min-height: 52px; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; border: 1px solid #a99e8a; border-radius: 12px; background: #fffdf8; color: #3a362f; font-weight: 700; }
+.solo-stance__option span { color: var(--stance, #c4501f); }
+.solo-stance__option[aria-pressed='true'] { border-color: transparent; background: var(--stance, #2f4a3f); color: var(--stance-ink, #fffdf8); box-shadow: 0 4px 0 #23332c; }
+.solo-stance__option[aria-pressed='true'] span { color: inherit; opacity: .85; }
+.solo-stance label { grid-column: 1 / -1; font-weight: 700; }
+.solo-stance textarea { min-height: 74px; resize: vertical; padding: 14px 18px; border: 1px solid #a99e8a; border-radius: 10px; background: #fffdf8; color: #1e1c18; }
+.solo-stance .solo-primary { align-self: stretch; min-width: 92px; }
+.solo-stance__hint { margin: 12px 0 0; color: #57514a; font-size: 13px; }
+.solo-action-error { margin: 12px 24px 0; color: #c4501f; }

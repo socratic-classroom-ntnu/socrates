@@ -22,6 +22,7 @@ from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, text
 
 from app.modules.course_management.repositories import models as course_models  # noqa: F401
+from app.modules.solo_dialogue.repositories import solo_models  # noqa: F401
 from app.modules.solo_dialogue import interaction_models, models  # noqa: F401
 from app.modules.platform.db import Base as RoundOneBase
 from app.modules.platform.repositories import classroom_storage as storage

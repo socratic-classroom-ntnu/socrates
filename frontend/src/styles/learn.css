@@ -10,7 +10,8 @@
 .learn-page--message p { margin: 0; color: #5F6661; }
 .learn-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .learn-head__title { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.learn-head__crumb { font-size: 14px; color: #2E5045; text-decoration: none; }
+.learn-head__crumb { font-size: 14px; color: #5F6661; }
+.learn-head__crumb a { color: #2E5045; text-decoration: none; }
 .learn-head h1 { margin: 0; font-size: 30px; line-height: 1.3; overflow-wrap: anywhere; }
 .learn-head__meta { font-size: 14px; color: #5F6661; }
 .learn-head__code {
@@ -32,7 +33,11 @@
 .learn-card__content { display: flex; flex-direction: column; gap: 4px; }
 .learn-card__strong { font-size: 15px; font-weight: 700; }
 .learn-card__meta { font-size: 14px; color: #5F6661; }
-.learn-card__start { align-self: flex-end; min-height: 44px; font-size: 15px; }
+.learn-card__stretch { color: #1F2421; text-decoration: none; }
+.learn-card__stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
+.learn-card__stretch:focus-visible { outline: none; }
+.learn-card__stretch:focus-visible::after { outline: 2px solid #2E5045; outline-offset: 2px; }
+.learn-card__start { position: relative; z-index: 1; align-self: flex-end; min-height: 44px; font-size: 15px; }
 .learn-card--scheduled { border: 1px dashed #CFCFC9; background: #F9F9F7; gap: 6px; padding: 16px 20px; }
 .learn-card--scheduled .learn-card__title { color: #3F4642; }
 .learn-ended { margin: 0; padding: 0; list-style: none; border: 1px solid #E3E3DF; border-radius: 12px; background: #FFFFFF; }

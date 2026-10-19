@@ -20,6 +20,7 @@ const common: Shape<typeof zhHant> = {
     EMAIL_TAKEN: 'Ese correo ya está registrado. Inicia sesión o restablece la contraseña si la olvidaste.',
     ACCOUNT_PENDING_VERIFICATION: 'Ese nombre de usuario o correo ya está registrado y espera la verificación. Si es tu cuenta, inicia sesión y reenvía el correo de verificación. Si no, quedará libre cuando caduque el enlace (24 horas después del último envío) y podrás registrarte.',
     LOGIN_REQUIRED: 'Primero inicia sesión.',
+    SESSION_CSRF_REQUIRED: 'Tu sesión ha caducado. Vuelve a cargar la página.',
     RATE_LIMITED: 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
     invalidInput: 'Algunos campos no tienen el formato correcto. Revísalos e inténtalo de nuevo.',
     server: 'El servidor no puede procesar esto ahora. Inténtalo más tarde.',

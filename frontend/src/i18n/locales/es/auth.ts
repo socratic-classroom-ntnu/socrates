@@ -3,7 +3,7 @@ import type { Shape } from '../../shape';
 
 const auth: Shape<typeof zhHant> = {
   hero: {
-    eyebrow: 'SOCRATES · SOCRATES CLASSROOM',
+    eyebrow: 'SOCRATES CLASSROOM',
     tagline: 'Pregunta a pregunta, descubre los principios que sostienes.',
     sub: 'Expresar, repreguntar, encontrarse. Cada punto de vista tiene su lugar.',
   },

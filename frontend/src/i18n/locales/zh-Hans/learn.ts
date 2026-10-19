@@ -2,7 +2,7 @@ import type zhHant from '../zh-Hant/learn';
 import type { Shape } from '../../shape';
 
 const learn: Shape<typeof zhHant> = {
-  breadcrumb: '我学的课',
+  breadcrumb: '课程', breadcrumbLabel: '课程路径',
   teacher: '{{name}} 老师',
   code: '课程代码',
   copyCode: '复制课程代码',

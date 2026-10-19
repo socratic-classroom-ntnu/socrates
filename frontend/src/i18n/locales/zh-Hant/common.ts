@@ -1,5 +1,5 @@
 export default {
-  brand: '蘇格拉底課堂',
+  brand: 'Socrates Classroom',
   loading: '載入中…',
   close: '關閉',
   copied: '已複製',
@@ -17,6 +17,7 @@ export default {
     EMAIL_TAKEN: '這個 Email 已經註冊過了，請直接登入；忘記密碼可以重設。',
     ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
     LOGIN_REQUIRED: '請先登入。',
+    SESSION_CSRF_REQUIRED: '登入狀態已過期，請重新整理頁面。',
     RATE_LIMITED: '操作太頻繁，請稍候再試。',
     invalidInput: '有欄位內容不符合格式，請檢查後再試。',
     server: '伺服器暫時無法處理，請稍後再試。',

@@ -1,6 +1,6 @@
 export default {
   hero: {
-    eyebrow: 'SOCRATES · 蘇格拉底課堂',
+    eyebrow: 'SOCRATES CLASSROOM',
     tagline: '從一個問題，\n看見自己的原則。',
     sub: '表達、追問、相遇。每個觀點都有自己的位置。',
   },

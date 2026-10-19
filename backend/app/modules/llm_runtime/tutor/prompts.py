@@ -33,7 +33,9 @@ JOB_KINDS = (
     "llm_student_turn",
 )
 # Request-time programs (no classroom job); same file, same validation.
-REQUEST_PROGRAMS = ("ai_script_authoring",)
+# solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
+# activity the backend alone decides when the student confirms.
+REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor")
 
 
 def validate_programs() -> None:

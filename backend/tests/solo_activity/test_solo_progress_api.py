@@ -112,13 +112,13 @@ def test_no_message_text_or_summary_leaks(client, tutor):
 
 
 CELL_CASES = [
-    ("choosing_stance", 0, 0, [("in_dialogue", 0), ("not_started", None)], "in_progress"),
+    ("choosing_stance", 0, 0, [("choosing_stance", None), ("not_started", None)], "in_progress"),
     ("awaiting_tutor", 0, 2, [("in_dialogue", 2), ("not_started", None)], "in_progress"),
     ("tutor_unavailable", 0, 1, [("in_dialogue", 1), ("not_started", None)], "in_progress"),
     ("in_dialogue", 0, 3, [("in_dialogue", 3), ("not_started", None)], "in_progress"),
     ("confirming", 0, 2, [("confirming", None), ("not_started", None)], "in_progress"),
     ("between_questions", 0, 2, [("confirmed", None), ("not_started", None)], "in_progress"),
-    ("choosing_stance", 1, 0, [("confirmed", None), ("in_dialogue", 0)], "in_progress"),
+    ("choosing_stance", 1, 0, [("confirmed", None), ("choosing_stance", None)], "in_progress"),
     ("in_dialogue", 1, 4, [("confirmed", None), ("in_dialogue", 4)], "in_progress"),
     ("confirming", 1, 2, [("confirmed", None), ("confirming", None)], "in_progress"),
     ("reviewing", 1, 2, [("confirmed", None), ("confirmed", None)], "done"),

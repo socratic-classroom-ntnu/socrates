@@ -35,6 +35,7 @@ const common: Shape<typeof zhHant> = {
     activity: 'The activity page is still being built. Your conversation with Socrates will start here.',
     live: 'Live progress will live here: where each student is on each question.',
     analysis: 'Class analysis will live here: stance distribution, completions, and how many changed their stance.',
+    aiAnalysis: 'AI analysis is still being built. It will later organize class-level patterns from confirmed viewpoints.',
     toCourse: 'Back to the course',
     projector: 'Full-screen projection is still being built. For now, use the QR code in the invite window.',
   },

@@ -17,6 +17,7 @@ import { StudentCoursePage } from '../pages/learn/StudentCoursePage'
 import { SoloActivityPage } from '../pages/learn/solo/SoloActivityPage'
 import { SoloDialoguePage } from '../pages/learn/solo/SoloDialoguePage'
 import { TeacherCoursePage } from '../pages/teach/TeacherCoursePage'
+import { TeacherAnalysisPage } from '../pages/teach/TeacherAnalysisPage'
 import { TeacherLivePage } from '../pages/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../pages/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../pages/teach/TeacherDesktopOnly'
@@ -41,7 +42,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'projector'
+type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
 
 // 這一批不做的入口（spec §4.7）：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -106,7 +107,8 @@ export function AppRoutes() {
           <Route path="/teach/courses/:courseId/activities/new" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId/edit" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId" element={<TeacherLivePage />} />
-          <Route path="/teach/activities/:activityId/analysis" element={<TeachPlaceholder kind="analysis" />} />
+          <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
+          <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>
         <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
         <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />

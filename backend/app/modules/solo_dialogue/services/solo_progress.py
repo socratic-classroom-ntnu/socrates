@@ -41,6 +41,8 @@ def _cells(row: SoloAttempt | None, question_count: int) -> list[dict]:
             cells.append({"status": "confirmed", "turns": None})
         elif row.state == "confirming":
             cells.append({"status": "confirming", "turns": None})
+        elif row.state == "choosing_stance":
+            cells.append({"status": "choosing_stance", "turns": None})
         else:
             turns = row.progress[index].get("turn_index", 0) if index < len(row.progress) else 0
             cells.append({"status": "in_dialogue", "turns": turns})

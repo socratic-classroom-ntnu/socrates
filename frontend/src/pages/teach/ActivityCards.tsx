@@ -8,6 +8,7 @@ import { Menu, type MenuItem } from '../../components/Menu'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { formatDateTime } from '../../i18n/format'
 import { useT } from '../../i18n/useT'
+import { ActivityCardStats } from './ActivityCardStats'
 import { DeleteActivityDialog } from './DeleteActivityDialog'
 import { InviteDialog } from './InviteDialog'
 
@@ -141,8 +142,7 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
           <span className="activity-card__meta">{meta(card)}</span>
         </div>
         <div className="activity-card__side">
-          {card.status === 'draft' && t('cards.hidden')}
-          {card.status === 'scheduled' && t('cards.notYetOpen')}
+          <ActivityCardStats activityId={card.id} status={card.status} />
         </div>
         <div className="activity-card__actions">
           {card.status === 'scheduled' && card.available_actions.includes('start_now') &&

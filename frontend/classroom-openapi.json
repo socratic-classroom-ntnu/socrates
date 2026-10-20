@@ -3149,6 +3149,92 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SoloActivityAnalysisView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "revision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision Id"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloAnalysisSummaryView"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "generated_at",
+          "revision_id",
+          "summary",
+          "questions"
+        ],
+        "title": "SoloActivityAnalysisView",
+        "type": "object"
+      },
       "SoloActivityProgressView": {
         "additionalProperties": false,
         "properties": {
@@ -3289,6 +3375,163 @@
           "attempt"
         ],
         "title": "SoloActivityView",
+        "type": "object"
+      },
+      "SoloAnalysisOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "text",
+          "count",
+          "students"
+        ],
+        "title": "SoloAnalysisOptionView",
+        "type": "object"
+      },
+      "SoloAnalysisQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "integer"
+          },
+          "comparable": {
+            "title": "Comparable",
+            "type": "integer"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "integer"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unconfirmed": {
+            "title": "Unconfirmed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "index",
+          "question_id",
+          "title",
+          "confirmed",
+          "unconfirmed",
+          "changed",
+          "comparable",
+          "options"
+        ],
+        "title": "SoloAnalysisQuestionView",
+        "type": "object"
+      },
+      "SoloAnalysisStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "changed_from_option_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed From Option Id"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "reason_summary": {
+            "title": "Reason Summary",
+            "type": "string"
+          },
+          "relevant_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Relevant Conditions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "changed_from_option_id",
+          "reason_summary",
+          "relevant_conditions"
+        ],
+        "title": "SoloAnalysisStudentView",
+        "type": "object"
+      },
+      "SoloAnalysisSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "enrolled": {
+            "title": "Enrolled",
+            "type": "integer"
+          },
+          "in_progress": {
+            "title": "In Progress",
+            "type": "integer"
+          },
+          "started": {
+            "title": "Started",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enrolled",
+          "started",
+          "done",
+          "in_progress"
+        ],
+        "title": "SoloAnalysisSummaryView",
         "type": "object"
       },
       "SoloAttemptBrief": {
@@ -3627,6 +3870,7 @@
           "status": {
             "enum": [
               "not_started",
+              "choosing_stance",
               "in_dialogue",
               "confirming",
               "confirmed"
@@ -7327,6 +7571,48 @@
           }
         },
         "summary": "Get Solo Activity",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/analysis": {
+      "get": {
+        "operationId": "get_activity_analysis_api_v2_solo_activities__activity_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityAnalysisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Analysis",
         "tags": [
           "solo"
         ]

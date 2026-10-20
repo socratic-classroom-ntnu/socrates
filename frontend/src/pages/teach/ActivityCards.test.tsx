@@ -206,6 +206,49 @@ test('scheduled, open and ended cards describe their window', async () => {
   expect(await text('活動ended')).toContain(`${at(e.ends_at, 'weekdayDate')} 結束`)
 })
 
+test('open card shows started and done from progress', async () => {
+  open([card('a', 'open')], {
+    'GET /solo/activities/a/progress': {
+      summary: { enrolled: 35, started: 18, done: 9, unconfirmed_by_question: [4, 8], attention: 2 },
+    },
+  })
+
+  const article = (await screen.findByText('活動a')).closest('article') as HTMLElement
+  expect(await within(article).findByText('已開始 18／35')).toBeInTheDocument()
+  expect(within(article).getByText('完成 9／35')).toBeInTheDocument()
+})
+
+test('ended card shows done only', async () => {
+  open([card('a', 'ended')], {
+    'GET /solo/activities/a/progress': {
+      summary: { enrolled: 35, started: 35, done: 32, unconfirmed_by_question: [0, 0], attention: 0 },
+    },
+  })
+
+  const article = (await screen.findByText('活動a')).closest('article') as HTMLElement
+  expect(await within(article).findByText('完成 32／35')).toBeInTheDocument()
+  expect(within(article).queryByText(/已開始/)).toBeNull()
+  expect(within(article).queryByText(/改變立場/)).toBeNull()
+})
+
+test('scheduled and draft cards do not fetch progress', async () => {
+  const calls = open([card('scheduled', 'scheduled'), card('draft', 'draft')])
+
+  expect(await screen.findByText('還沒開放')).toBeInTheDocument()
+  expect(screen.getByText('學生看不到')).toBeInTheDocument()
+  expect(calls.some(call => call.key.endsWith('/progress'))).toBe(false)
+})
+
+test('progress failure leaves the card usable', async () => {
+  open([card('a', 'open')], {
+    'GET /solo/activities/a/progress': () => { throw new ApiError(500, 'SERVER_ERROR') },
+  })
+
+  expect(await screen.findByRole('link', { name: '活動a' })).toHaveAttribute('href', '/teach/activities/a')
+  expect(screen.getByRole('button', { name: '「活動a」的更多動作' })).toBeEnabled()
+  expect(screen.queryByRole('alert')).toBeNull()
+})
+
 test('open activity card uses the muted green border', async () => {
   const stylesheet = document.createElement('style')
   stylesheet.textContent = readFileSync(`${process.cwd()}/src/styles/teach.css`, 'utf8')

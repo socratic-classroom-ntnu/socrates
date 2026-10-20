@@ -157,7 +157,7 @@ class SoloProgressSummaryView(View):
 
 
 class SoloProgressCellView(View):
-    status: Literal["not_started", "in_dialogue", "confirming", "confirmed"]
+    status: Literal["not_started", "choosing_stance", "in_dialogue", "confirming", "confirmed"]
     turns: int | None  # in_dialogue only
 
 
@@ -184,3 +184,53 @@ class SoloActivityProgressView(View):
     questions: list[SoloProgressQuestionView]
     summary: SoloProgressSummaryView
     students: list[SoloStudentProgressView]
+
+
+# ---- T6: the teacher's statistics (confirmed stances and two summary fields; nothing else written)
+
+
+class SoloAnalysisSummaryView(View):
+    enrolled: int
+    started: int
+    done: int  # reached the review step, the same definition as T5
+    in_progress: int  # started - done
+
+
+class SoloAnalysisStudentView(View):
+    enrollment_id: str
+    display_name: str
+    changed_from_option_id: str | None  # the initial option when it differs from the final one
+    reason_summary: str  # from the confirmed summary
+    relevant_conditions: list[str]  # from the confirmed summary
+
+
+class SoloAnalysisOptionView(View):
+    option_id: str
+    text: str
+    count: int  # final_option_id == this option; unconfirmed students are in no option
+    students: list[SoloAnalysisStudentView]
+
+
+class SoloAnalysisQuestionView(View):
+    index: int
+    question_id: str
+    title: str  # the teacher's own question
+    confirmed: int
+    unconfirmed: int  # started - confirmed, including students not at this question yet
+    changed: int  # initial and final both set and different
+    comparable: int  # initial and final both set
+    options: list[SoloAnalysisOptionView]  # in the question's order, empty options included
+
+
+class SoloActivityAnalysisView(View):
+    activity_id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["draft", "scheduled", "open", "ended"]
+    question_count: int
+    ends_at: float | None
+    generated_at: float
+    revision_id: str | None  # the ActivityRevision these numbers belong to; None for a draft
+    summary: SoloAnalysisSummaryView
+    questions: list[SoloAnalysisQuestionView]

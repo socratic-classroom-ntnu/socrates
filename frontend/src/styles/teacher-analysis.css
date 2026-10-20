@@ -1,0 +1,41 @@
+.teacher-analysis { gap: 18px; }
+.analysis-demo-banner { margin: 0; padding: 12px 16px; border: 1px solid #D5A64C; border-radius: 8px; background: #FFF6E0; color: #684B20; font-size: 14px; font-weight: 700; }
+.analysis-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.analysis-overview__card { display: flex; flex-direction: column; gap: 5px; padding: 16px 18px; border: 1px solid #E3E3DF; border-radius: 12px; background: #FFF; }
+.analysis-overview__card--done { border: 2px solid #2E5045; padding: 15px 17px; }
+.analysis-overview__card strong { font-size: 24px; line-height: 1.35; }
+.analysis-overview__card span { color: #5F6661; font-size: 13px; line-height: 1.5; }
+.analysis-question-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.analysis-question-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.analysis-question-tabs button { min-height: 36px; padding: 0 14px; border: 1px solid #CFCFC9; border-radius: 999px; background: #FFF; color: #3F4642; font: inherit; font-size: 14px; cursor: pointer; }
+.analysis-question-tabs button[aria-selected="true"] { border-color: #23332C; background: #23332C; color: #FFF; font-weight: 700; }
+.analysis-ai-link { min-height: 34px; padding: 0 12px; display: inline-flex; align-items: center; border: 1px dashed #A9B5AE; border-radius: 8px; background: #F7F6F2; color: #5F6661; font-size: 14px; font-weight: 700; text-decoration: none; }
+.analysis-distribution { display: flex; flex-direction: column; gap: 14px; }
+.analysis-distribution__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px; }
+.analysis-distribution__head h2 { margin: 0; font-size: 18px; }
+.analysis-distribution__head span { color: #5F6661; font-size: 13px; }
+.analysis-changed { margin: 0; padding: 10px 14px; border-radius: 8px; background: #FAFAF8; font-size: 14px; font-weight: 700; }
+.analysis-options { display: flex; flex-direction: column; gap: 10px; }
+.analysis-option { overflow: hidden; border: 1px solid #E3E3DF; border-radius: 12px; background: #FFF; }
+.analysis-option__button { width: 100%; padding: 14px 16px; display: grid; grid-template-columns: 32px minmax(160px, 1fr) minmax(120px, 2fr) auto auto 20px; align-items: center; gap: 12px; border: 0; background: transparent; color: #1F2421; font: inherit; text-align: left; cursor: pointer; }
+.analysis-option__letter { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px; background: #DCE9E2; color: #24493C; font-weight: 800; }
+.analysis-option--a .analysis-option__letter { background: #F3D4AD; color: #6E4520; }
+.analysis-option--b .analysis-option__letter { background: #D8E7F1; color: #31526B; }
+.analysis-option--c .analysis-option__letter { background: #F5E7A8; color: #675A1D; }
+.analysis-option--d .analysis-option__letter { background: #DCE9E2; color: #24493C; }
+.analysis-option__text { font-weight: 700; }
+.analysis-option__track { height: 8px; overflow: hidden; border-radius: 4px; background: #ECECE8; }
+.analysis-option__track > span { display: block; height: 100%; border-radius: inherit; background: #2E5045; }
+.analysis-option__chevron { transition: transform .15s ease; }
+.analysis-option__button[aria-expanded="true"] .analysis-option__chevron { transform: rotate(180deg); }
+.analysis-students { padding: 0 16px 16px; display: flex; flex-direction: column; border-top: 1px solid #DDE6E1; }
+.analysis-students > header { padding: 12px 0; display: flex; justify-content: space-between; gap: 10px; color: #5F6661; font-size: 13px; }
+.analysis-students > header strong { color: #1F2421; font-size: 14px; }
+.analysis-student { padding: 13px 0; border-top: 1px solid #ECECE8; }
+.analysis-student__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.analysis-student__tag { padding: 2px 8px; border-radius: 999px; background: #E4EFF6; color: #31526B; font-size: 12px; font-weight: 700; }
+.analysis-student p { margin: 6px 0 0; color: #3F4642; font-size: 14px; line-height: 1.6; }
+.analysis-student .analysis-student__conditions { color: #5F6661; font-size: 13px; }
+.analysis-students__empty { margin: 12px 0 0; color: #5F6661; font-size: 14px; }
+.analysis-show-all { align-self: flex-start; margin-top: 8px; padding: 6px 0; border: 0; background: transparent; color: #2E5045; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+@media (max-width: 900px) { .analysis-overview { grid-template-columns: 1fr; } .analysis-option__button { grid-template-columns: 32px 1fr auto auto 20px; } .analysis-option__track { display: none; } }

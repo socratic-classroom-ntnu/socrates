@@ -89,6 +89,18 @@ test('renders the live header, question summaries, progress table, timestamps an
   expect(within(page).getByText('看不到對話內容；學生確認過的想法在『統計分析』')).toBeInTheDocument()
 })
 
+test.each([
+  ['zh-Hant' as const, '選擇立場中'],
+  ['en' as const, 'Choosing a stance'],
+  ['es' as const, 'Eligiendo postura'],
+])('%s: a student still choosing a stance is not shown as in dialogue', async (locale, label) => {
+  const choosing = { ...progress.students[0], cells: [{ status: 'confirmed', turns: null }, { status: 'choosing_stance', turns: null }] } as Progress['students'][number]
+  open({ locale, view: { ...progress, students: [choosing] } })
+  const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+  expect(within(table).getByText(label)).toHaveClass('live-cell--choosing_stance')
+  expect(within(table).queryByText(/0 (輪|turns?|turnos?)/)).toBeNull()
+})
+
 test('filters students and shows a count on every filter', async () => {
   open()
   const page = await screen.findByTestId('teacher-live-page')

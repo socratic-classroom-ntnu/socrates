@@ -1,3 +1,4 @@
+import { copyText } from '../../shared/clipboard'
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, api } from '../../contract/classroomClient';
 import { GroupAnalytics } from '../group-analytics/GroupAnalytics';
@@ -277,7 +278,7 @@ function GroupCollection({ view, refresh }) {
     }
     return <main className="sc-home group-room" data-group-collection><header className="sc-top"><a href="/" className="sc-wordmark">Socrates<span>共思教室</span></a><span>{view.title}</span><a href="/teacher/home">返回我的課程</a></header>
     <section className="sc-home-hero"><small>教師端 · 課堂準備</small><h1>{view.title}</h1><p>分享加入代碼，確認名單與分組，接著開始課堂。</p></section>
-    {view.phase === 'lobby' ? <section className="sc-glass"><div className="sc-row"><div className="sc-code-display">{view.code}</div><button className="quiet" onClick={() => void navigator.clipboard.writeText(view.code).then(() => setBatchNote('加入代碼已複製')).catch(() => setBatchNote('請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
+    {view.phase === 'lobby' ? <section className="sc-glass"><div className="sc-row"><div className="sc-code-display">{view.code}</div><button className="quiet" onClick={() => void copyText(view.code).then(ok => setBatchNote(ok ? '加入代碼已複製' : '無法存取剪貼簿，請選取上方代碼並複製。'))}>複製加入代碼</button></div><p role="status">{batchNote}</p><p>{view.roster?.length || 0} 位學生已入座</p>
       <div className="sc-grid"><label>組數<input type="number" min={1} max={40} value={count} onChange={e => setCount(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       <label>每組人數<input type="number" min={1} max={40} value={size} onChange={e => setSize(Math.max(1, Math.min(40, +e.target.value)))}/></label>
       </div><p role="status" aria-live="polite">目前 {fit.people} 人（含 AI）／容量 {count}×{size}＝{fit.capacity} 人</p>

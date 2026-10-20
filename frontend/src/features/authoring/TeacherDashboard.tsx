@@ -1,3 +1,4 @@
+import { copyText } from '../../shared/clipboard'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, api } from '../../contract/classroomClient'
 import type { components } from '../../contract/classroomTypes'
@@ -107,12 +108,8 @@ export function TeacherShell({ active, children }: { active: NavKey; children: R
 function CourseTile({ course, onCopied }: { course: CourseCard; onCopied: (text: string) => void }) {
   const stat = (value: number | null) => (value === null ? '—' : value)
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(course.code)
-      onCopied(`已複製「${course.title}」的課程碼`)
-    } catch {
-      onCopied('無法存取剪貼簿，請手動選取課程碼')
-    }
+    const ok = await copyText(course.code)
+    onCopied(ok ? `已複製「${course.title}」的課程碼` : '無法存取剪貼簿，請手動選取課程碼')
   }
   return (
     <article className="course-tile">

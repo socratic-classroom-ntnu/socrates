@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
 import { ApiError } from '../../api/classroomClient'
 import { applyLocale } from '../../i18n'
 import { formatDateTime } from '../../i18n/format'
@@ -203,6 +204,17 @@ test('scheduled, open and ended cards describe their window', async () => {
   expect(await text('活動sched')).toContain(`${at(s.starts_at, 'weekdayDateTime')} 自動開放 ・ 到 ${at(s.ends_at, 'dateTime')}`)
   expect(await text('活動sched')).toContain('還沒開放')
   expect(await text('活動ended')).toContain(`${at(e.ends_at, 'weekdayDate')} 結束`)
+})
+
+test('open activity card uses the muted green border', async () => {
+  const stylesheet = document.createElement('style')
+  stylesheet.textContent = readFileSync(`${process.cwd()}/src/styles/teach.css`, 'utf8')
+  document.head.append(stylesheet)
+  open([card('a', 'open')])
+
+  const article = (await screen.findByText('活動a')).closest('article') as HTMLElement
+  expect(getComputedStyle(article).borderTopColor).toBe('#b7cbc1')
+  stylesheet.remove()
 })
 
 test('no activities shows the T2 empty state', async () => {

@@ -53,6 +53,10 @@ jest.mock('../pages/teach/TeacherCoursePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { TeacherCoursePage: () => <p>teacher-course-page:{loc().pathname}</p> }
 })
+jest.mock('../pages/teach/TeacherLivePage', () => {
+  const { useParams } = jest.requireActual('react-router-dom')
+  return { TeacherLivePage: () => { const { activityId } = useParams(); return <p>{`teacher-live-page:${activityId}`}</p> } }
+})
 jest.mock('../pages/History', () => () => <p>round1-history</p>)
 jest.mock('../pages/Conversation', () => () => <p>round1-conversation</p>)
 jest.mock('../pages/Summary', () => () => <p>round1-summary</p>)
@@ -117,7 +121,7 @@ test.each([
   ['/teach/courses/c1/settings', 'teacher-course-page:/teach/courses/c1/settings'],
   ['/teach/courses/c1/activities/new', 'editor-page:/teach/courses/c1/activities/new'],
   ['/teach/activities/a1/edit', 'editor-page:/teach/activities/a1/edit'],
-  ['/teach/activities/a1', '功能開發中'],
+  ['/teach/activities/a1', 'teacher-live-page:a1'],
   ['/teach/activities/a1/analysis', '功能開發中'],
   ['/teach/courses/c1/projector', '功能開發中'],
   ['/teach/activities/a1/projector', '功能開發中'],
@@ -268,7 +272,7 @@ describe('teacher placeholders go back to their course', () => {
     })
   }
 
-  test.each(['/teach/activities/a1', '/teach/activities/a1/analysis', '/teach/activities/a1/projector'])('%s', async (url) => {
+  test.each(['/teach/activities/a1/analysis', '/teach/activities/a1/projector'])('%s', async (url) => {
     withActivity()
     open(url)
     expect(await screen.findByText('功能開發中')).toBeInTheDocument()
@@ -287,7 +291,7 @@ describe('teacher placeholders go back to their course', () => {
       if (url === '/activities/a1') throw new ApiError(404, 'ACTIVITY_NOT_FOUND')
       return []
     })
-    open('/teach/activities/a1')
+    open('/teach/activities/a1/analysis')
     expect(await screen.findByRole('link', { name: /回到課程/ })).toHaveAttribute('href', '/?tab=teach')
   })
 })

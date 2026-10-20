@@ -14,6 +14,7 @@ from app.modules.classroom_core.api.routes.script_assist import router as script
 from app.modules.classroom_core.orchestrator.classroom import DomainError
 from app.modules.platform.realtime import BUS
 from app.modules.solo_dialogue.api.routes.solo_attempts import router as solo_router
+from app.modules.solo_dialogue.api.routes.solo_progress import router as solo_progress_router
 from app.modules.platform.repositories.classroom_storage import engine
 from app.modules.llm_runtime.services.llm_workers import clock_loop, llm_loop, mail_loop
 from app.modules.platform.classroom_env import env_int
@@ -49,6 +50,7 @@ def create_app(legacy=False, background=True):
     app.include_router(course_join_router, prefix="/api/v2")
     app.include_router(activities_router, prefix="/api/v2")
     app.include_router(solo_router, prefix="/api/v2")
+    app.include_router(solo_progress_router, prefix="/api/v2")
 
     @app.get("/api/v2/readiness")
     def readiness():

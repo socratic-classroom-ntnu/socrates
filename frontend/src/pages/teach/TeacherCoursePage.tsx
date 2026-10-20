@@ -49,7 +49,9 @@ export function TeacherCoursePage() {
   return <main className="teach-page">
     <header className="teach-head">
       <div className="teach-head__title">
-        <Link className="teach-head__crumb" to="/?tab=teach">{t('course.breadcrumb')}</Link>
+        <nav className="teach-head__crumb" aria-label={t('course.breadcrumbLabel')}>
+          <Link to="/?tab=teach">{t('course.breadcrumb')}</Link> <span aria-hidden="true">/</span>
+        </nav>
         <h1>{data.name}</h1>
         <span className="teach-head__meta">{t('course.meta', { teacher: data.teacher_name, count: data.student_count })}</span>
       </div>

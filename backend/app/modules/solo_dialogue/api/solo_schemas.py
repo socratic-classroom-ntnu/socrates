@@ -137,3 +137,50 @@ ACTION_BODIES: dict[str, type[TrimmedModel]] = {
     "send_message": SendMessageBody,
     "confirm_viewpoint": ConfirmViewpointBody,
 }
+
+
+# ---- T5: the teacher's live progress (statuses, turn counts and times; never what was written)
+
+
+class SoloProgressQuestionView(View):
+    index: int
+    title: str  # the teacher's own question
+
+
+class SoloProgressSummaryView(View):
+    enrolled: int
+    started: int
+    done: int  # reached the review step
+    # Per question: started but not confirmed yet, including those who have not reached it.
+    unconfirmed_by_question: list[int]
+    attention: int
+
+
+class SoloProgressCellView(View):
+    status: Literal["not_started", "in_dialogue", "confirming", "confirmed"]
+    turns: int | None  # in_dialogue only
+
+
+class SoloStudentProgressView(View):
+    enrollment_id: str
+    display_name: str
+    overall: Literal["not_started", "in_progress", "done"]
+    cells: list[SoloProgressCellView]  # one per question
+    review_status: Literal["not_started", "in_progress"]
+    # The later of the last message and the attempt's last update; None before starting.
+    last_activity_at: float | None
+    attention: bool  # in progress and idle for over ATTENTION_SECONDS
+
+
+class SoloActivityProgressView(View):
+    activity_id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["draft", "scheduled", "open", "ended"]
+    question_count: int
+    ends_at: float | None
+    generated_at: float
+    questions: list[SoloProgressQuestionView]
+    summary: SoloProgressSummaryView
+    students: list[SoloStudentProgressView]

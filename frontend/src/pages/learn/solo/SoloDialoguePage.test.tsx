@@ -277,6 +277,23 @@ test('A0 reason uses the same inline input pattern as A1', async () => {
   expect(within(entry as HTMLElement).getByRole('button', { name: '送出' })).toBeInTheDocument()
 })
 
+test('A0 and A1 submit buttons use the upward arrow', async () => {
+  const first = renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': attempt,
+  })
+  const stanceSend = await screen.findByRole('button', { name: '送出' })
+  expect(stanceSend.querySelector('path')).toHaveAttribute('d', 'M12 19V5M6 11l6-6 6 6')
+  first.unmount()
+
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+  const replySend = await screen.findByRole('button', { name: '送出回答' })
+  expect(replySend.querySelector('path')).toHaveAttribute('d', 'M12 19V5M6 11l6-6 6 6')
+})
+
 test('submit_stance posts option and reason', async () => {
   const calls = mockApi({
     'GET /auth/me': signedIn,

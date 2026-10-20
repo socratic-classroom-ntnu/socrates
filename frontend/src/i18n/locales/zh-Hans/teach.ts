@@ -3,7 +3,8 @@ import type { Shape } from '../../shape';
 
 const teach: Shape<typeof zhHant> = {
   course: {
-    breadcrumb: '我教的课',
+    breadcrumb: '课程',
+    breadcrumbLabel: '课程路径',
     meta: '{{teacher}} ・ {{count}} 位学生',
     invite: '邀请学生',
     tabsLabel: '课程内容',
@@ -121,6 +122,33 @@ const teach: Shape<typeof zhHant> = {
     },
     cancel: '取消',
     noMatch: '没有符合的活动',
+  },
+  live: {
+    breadcrumbLabel: '活动路径',
+    questions: '{{count}} 题',
+    meta: '{{questions}} · 开放到 {{end}} · 实时更新',
+    metaNoEnd: '{{questions}} · 实时更新',
+    tabsLabel: '活动内容',
+    tabs: { live: '实时状况', analysis: '统计分析' },
+    qr: '投影活动二维码',
+    endEarly: '提前结束',
+    questionSummary: '还没确认 {{unconfirmed}} 人 · 共 {{started}} 人开始',
+    attentionSummary: '需要留意 {{count}} 人（超过 5 分钟没有动作）',
+    filterLabel: '筛选学生',
+    filters: { all: '全部', inProgress: '对话中', attention: '需要留意', done: '已完成', notStarted: '还没开始' },
+    table: { student: '学生', review: '回顾与反思', lastActivity: '最后动作' },
+    cells: { confirmed: '已确认', inDialogue: '对话中 · {{count}} 轮', confirming: '确认观点中', notStarted: '未开始' },
+    review: { notStarted: '未开始', inProgress: '进行中' },
+    time: { now: '刚刚', minutes: '{{count}} 分钟前', none: '—', attention: '⏸ {{count}} 分钟没有动作' },
+    empty: '目前没有学生',
+    updating: '每 10 秒自动更新',
+    privacy: '看不到对话内容；学生确认过的想法在“统计分析”',
+    endDialog: {
+      title: '提前结束活动',
+      body: '确定要提前结束「{{title}}」吗？结束后学生不能再开始。',
+      confirm: '确认结束',
+      cancel: '取消',
+    },
   },
 };
 export default teach;

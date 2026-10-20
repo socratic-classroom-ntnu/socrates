@@ -37,10 +37,19 @@ test('header shows teacher name and student count', async () => {
   open()
   expect(await screen.findByRole('heading', { level: 1, name: '科技倫理' })).toBeInTheDocument()
   expect(screen.getByText('Fizzy ・ 35 位學生')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '我教的課' })).toHaveAttribute('href', '/?tab=teach')
+  expect(screen.getByRole('link', { name: '課程' })).toHaveAttribute('href', '/?tab=teach')
   const tabs = screen.getByRole('navigation', { name: '課程內容' })
   expect(within(tabs).getByRole('link', { name: '活動' })).toHaveAttribute('aria-current', 'page')
   expect(within(tabs).getByRole('link', { name: '學生 35' })).toHaveAttribute('href', '/teach/courses/c-1/students')
+})
+
+test('header shows the course name under a course breadcrumb', async () => {
+  open()
+
+  const path = await screen.findByRole('navigation', { name: '課程路徑' })
+  expect(within(path).getByRole('link', { name: '課程' })).toHaveAttribute('href', '/?tab=teach')
+  expect(path).toHaveTextContent('課程 /')
+  expect(screen.getByRole('heading', { level: 1, name: '科技倫理' })).toBeInTheDocument()
 })
 
 test('students and settings tabs show coming soon inside the page', async () => {

@@ -17,6 +17,7 @@ import { StudentCoursePage } from '../pages/learn/StudentCoursePage'
 import { SoloActivityPage } from '../pages/learn/solo/SoloActivityPage'
 import { SoloDialoguePage } from '../pages/learn/solo/SoloDialoguePage'
 import { TeacherCoursePage } from '../pages/teach/TeacherCoursePage'
+import { TeacherLivePage } from '../pages/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../pages/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../pages/teach/TeacherDesktopOnly'
 import History from '../pages/History'
@@ -104,7 +105,7 @@ export function AppRoutes() {
           <Route path="/teach/courses/:courseId/settings" element={<TeacherCoursePage />} />
           <Route path="/teach/courses/:courseId/activities/new" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId/edit" element={<ActivityEditorPage />} />
-          <Route path="/teach/activities/:activityId" element={<TeachPlaceholder kind="live" />} />
+          <Route path="/teach/activities/:activityId" element={<TeacherLivePage />} />
           <Route path="/teach/activities/:activityId/analysis" element={<TeachPlaceholder kind="analysis" />} />
         </Route>
         <Route path="/teacher/home" element={<LegacyTeacherRoute />} />

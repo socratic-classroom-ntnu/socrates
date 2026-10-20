@@ -10,8 +10,9 @@
 .teach-page--message p { margin: 0; color: #5F6661; }
 .teach-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .teach-head__title { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.teach-head__crumb { font-size: 14px; color: #2E5045; text-decoration: none; }
-.teach-head__crumb:hover { text-decoration: underline; }
+.teach-head__crumb { font-size: 14px; color: #5F6661; }
+.teach-head__crumb a { color: #2E5045; text-decoration: none; }
+.teach-head__crumb a:hover { text-decoration: underline; }
 .teach-head h1 { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
 .teach-head__meta { font-size: 14px; color: #5F6661; }
 .teach-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; border-bottom: 1px solid #E3E3DF; }
@@ -67,7 +68,7 @@
   position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 18px 20px;
   border: 1px solid #E3E3DF; border-radius: 12px; background: #FFFFFF;
 }
-.activity-card--open { border: 2px solid #2E5045; padding: 17px 19px; }
+.activity-card--open { border: 2px solid #B7CBC1; padding: 17px 19px; }
 .activity-card__main { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .activity-card__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .activity-card__head h3 { margin: 0; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }

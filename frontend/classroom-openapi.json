@@ -3149,6 +3149,88 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SoloActivityProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloProgressQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloStudentProgressView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloProgressSummaryView"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "generated_at",
+          "questions",
+          "summary",
+          "students"
+        ],
+        "title": "SoloActivityProgressView",
+        "type": "object"
+      },
       "SoloActivityView": {
         "additionalProperties": false,
         "properties": {
@@ -3539,6 +3621,94 @@
         "title": "SoloOptionView",
         "type": "object"
       },
+      "SoloProgressCellView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "in_dialogue",
+              "confirming",
+              "confirmed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns"
+          }
+        },
+        "required": [
+          "status",
+          "turns"
+        ],
+        "title": "SoloProgressCellView",
+        "type": "object"
+      },
+      "SoloProgressQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "title"
+        ],
+        "title": "SoloProgressQuestionView",
+        "type": "object"
+      },
+      "SoloProgressSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention": {
+            "title": "Attention",
+            "type": "integer"
+          },
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "enrolled": {
+            "title": "Enrolled",
+            "type": "integer"
+          },
+          "started": {
+            "title": "Started",
+            "type": "integer"
+          },
+          "unconfirmed_by_question": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unconfirmed By Question",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enrolled",
+          "started",
+          "done",
+          "unconfirmed_by_question",
+          "attention"
+        ],
+        "title": "SoloProgressSummaryView",
+        "type": "object"
+      },
       "SoloQuestionProgressView": {
         "additionalProperties": false,
         "properties": {
@@ -3677,6 +3847,69 @@
           "reason"
         ],
         "title": "SoloStanceView",
+        "type": "object"
+      },
+      "SoloStudentProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention": {
+            "title": "Attention",
+            "type": "boolean"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/SoloProgressCellView"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          },
+          "overall": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "title": "Overall",
+            "type": "string"
+          },
+          "review_status": {
+            "enum": [
+              "not_started",
+              "in_progress"
+            ],
+            "title": "Review Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "overall",
+          "cells",
+          "review_status",
+          "last_activity_at",
+          "attention"
+        ],
+        "title": "SoloStudentProgressView",
         "type": "object"
       },
       "Start": {
@@ -7136,6 +7369,48 @@
           }
         },
         "summary": "Start Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/progress": {
+      "get": {
+        "operationId": "get_activity_progress_api_v2_solo_activities__activity_id__progress_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityProgressView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Progress",
         "tags": [
           "solo"
         ]

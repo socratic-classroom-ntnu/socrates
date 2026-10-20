@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.platform.errors import DomainError
-from app.modules.classroom_core.repositories import Membership
+from app.modules.classroom_core.repositories import Membership, next_seat
 from app.modules.group_dialogue.repositories import AIStudentProfile
 from app.modules.platform.storage import digest
 from app.modules.classroom_core.service import load as load_classroom
@@ -706,7 +706,7 @@ def add_ai_students_to_room(db, teacher, rid: str, body: AddAIStudents):
             db.add(profile)
         member = db.get(Membership, membership_id)
         if member is None:
-            seat = len(state["members"])
+            seat = next_seat(db, rid, state["members"])
             member = Membership(
                 id=membership_id,
                 room_id=rid,

@@ -7,6 +7,7 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    func,
     select,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -46,6 +47,19 @@ class Membership(Base):
     avatar: Mapped[str] = mapped_column(String(64))
     seat: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_seen: Mapped[float] = mapped_column(Float, default=time.time)
+
+
+def next_seat(db: Any, room_id: str, members: dict[str, Any]) -> int:
+    """下一個空座位：取資料庫與 room.state 兩邊已用座位的最大值加一。
+
+    座位有 (room_id, seat) 唯一約束；成員被移除（例如清除 AI 學生）後人數會變少，
+    用「目前人數」當座位號會撞到還在的成員，所以一律取最大值加一。
+    """
+    used = [m.get("seat") for m in members.values() if isinstance(m.get("seat"), int)]
+    stored = db.scalar(select(func.max(Membership.seat)).where(Membership.room_id == room_id))
+    if isinstance(stored, int):
+        used.append(stored)
+    return max(used, default=-1) + 1
 
 
 class Event(Base):

@@ -13,6 +13,7 @@ from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.orchestrator import GameOrchestrator, fresh_state
 from app.modules.classroom_core.policy import distribution
 from app.modules.classroom_core.repositories import (
+    next_seat,
     ActionReceipt,
     Membership,
     PointEntry,
@@ -237,7 +238,7 @@ def join(db, a, body):
         return view(db, room, a.id)
     if room.state["phase"] != "lobby":
         raise DomainError("下次開課時可加入；既有成員可直接續接。", 409)
-    seat = len(room.state["members"])
+    seat = next_seat(db, room.id, room.state["members"])
     m = Membership(
         id=str(uuid4()),
         room_id=room.id,

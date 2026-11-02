@@ -172,6 +172,37 @@
       ]
     },
     {
+      "id": "course-management",
+      "name": "Course Management（課程與活動）",
+      "status": "ok",
+      "about": "課程 → 活動 → 題目：開課、選課（課程代碼）、活動編輯與開放時間。",
+      "paths": [
+        "backend/app/modules/course_management/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access"
+      ],
+      "todo": []
+    },
+    {
+      "id": "solo-activity",
+      "name": "Solo Activity（單人活動）",
+      "status": "ok",
+      "about": "學生在課程活動裡一對一跟蘇格拉底逐題對話：確認、不太對、改變立場、進度與教師統計。",
+      "paths": [
+        "backend/app/modules/solo_activity/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access",
+        "course-management",
+        "ai-providers",
+        "llm-runtime"
+      ],
+      "todo": []
+    },
+    {
       "id": "solo-dialogue",
       "name": "Solo Dialogue（單人對話）",
       "status": "ok",

@@ -39,3 +39,20 @@ def test_endpoints_without_response_model_only_shrink():
     missing = set(routes_without_response_model(classroom_app()))
     assert missing <= set(RESPONSE_MODEL_PENDING), sorted(missing - set(RESPONSE_MODEL_PENDING))
     assert set(RESPONSE_MODEL_PENDING) <= missing, sorted(set(RESPONSE_MODEL_PENDING) - missing)
+
+
+def test_a_no_content_route_needs_no_response_model():
+    """204 has no body by definition, so there is nothing to type; FastAPI forbids a model there."""
+    from fastapi import FastAPI, Response
+
+    app = FastAPI()
+
+    @app.delete("/gone", status_code=204, response_class=Response)
+    def gone() -> Response:
+        return Response(status_code=204)
+
+    @app.get("/untyped")
+    def untyped():
+        return {}
+
+    assert routes_without_response_model(app) == ["GET /untyped"]

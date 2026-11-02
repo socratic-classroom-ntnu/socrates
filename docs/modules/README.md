@@ -35,6 +35,8 @@
 | [Classroom Core](./backend/classroom-core.md) | ⚠️ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
 | [Group Dialogue](./backend/group-dialogue.md) | ⚠️ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
+| [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
+| [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
 | [Solo Dialogue（單人對話）](./backend/solo-dialogue.md) | ✅ | `backend/app/modules/solo_dialogue/` | platform、llm-runtime、content-authoring | 0 |
 
 **前端模組**（default owner：前端開發團隊）

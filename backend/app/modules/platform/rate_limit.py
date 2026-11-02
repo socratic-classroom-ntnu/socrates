@@ -10,7 +10,14 @@ from app.modules.platform.errors import DomainError
 from app.modules.platform.repositories import RateBucket
 
 
-def enforce_rate_limit(db: Session, key: str, maximum: int, seconds: int) -> None:
+def enforce_rate_limit(
+    db: Session,
+    key: str,
+    maximum: int,
+    seconds: int,
+    *,
+    error_code: str = "稍候即可再次送出。",
+) -> None:
     now = time.time()
     bucket_key = f"{key}:{int(now) // seconds}"
     ins = (
@@ -23,4 +30,4 @@ def enforce_rate_limit(db: Session, key: str, maximum: int, seconds: int) -> Non
         ).returning(RateBucket.count)
     )
     if value is not None and value > maximum:
-        raise DomainError("稍候即可再次送出。", 429)
+        raise DomainError(error_code, 429)

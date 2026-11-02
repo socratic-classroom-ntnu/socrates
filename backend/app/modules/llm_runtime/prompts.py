@@ -35,7 +35,9 @@ JOB_KINDS = (
     "llm_student_turn",
 )
 # Request-time programs (no classroom job); same file, same validation.
-REQUEST_PROGRAMS = ("ai_script_authoring",)
+# solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
+# activity the backend alone decides when the student confirms.
+REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor")
 # L0 路由；compile_program 依角色載入 L1＋L2（app/modules/llm_runtime/iron_rules.py）。
 IRON_RULES_SKILL = "iron-rules/ROUTER.json"
 

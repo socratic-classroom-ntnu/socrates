@@ -34,7 +34,8 @@ def routes_without_response_model(app: FastAPI) -> list[str]:
     return [
         f"{sorted(route.methods)[0]} {route.path}"
         for route in app.routes
-        if isinstance(route, APIRoute) and route.response_model is None
+        # 204 has no body by definition, so there is nothing to type (FastAPI forbids a model).
+        if isinstance(route, APIRoute) and route.response_model is None and route.status_code != 204
     ]
 
 

@@ -7,9 +7,11 @@ from app.modules.analytics import routes as analytics
 from app.modules.classroom_core import library_routes as classroom_library
 from app.modules.classroom_core import routes as classroom
 from app.modules.content_authoring.routes import question_bank, script_assist, scripts
+from app.modules.course_management import routes as course_management
 from app.modules.group_dialogue.routes import ai_students, groups
 from app.modules.identity_access import routes as identity
 from app.modules.platform import routes as platform
+from app.modules.solo_activity import routes as solo_activity
 
 # Mounted under /api/v2, in this order (FastAPI matches the first route that fits).
 CLASSROOM_ROUTERS = (
@@ -23,6 +25,10 @@ CLASSROOM_ROUTERS = (
     ai_providers.router,
     question_bank.router,
     script_assist.router,
+    course_management.router,
+    course_management.preview_router,
+    course_management.activities_router,
+    solo_activity.router,
 )
 
 

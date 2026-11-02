@@ -44,6 +44,8 @@
 
 `ai_script_authoring`（AI 協助出題）不經工作佇列：`POST /scripts/assist` 在請求內直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型是下方的 `ScriptAssistResult`，後端再組成完整題目放進教師尚未存檔的草稿。
 
+`solo_tutor`（課程活動的單人對話）也不經工作佇列：單人活動在請求內經 `guarded_generate` 直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型與 `personal_tutor` 相同，是 `PersonalTutorTurn`。
+
 ### 個人對話的 `PersonalSummary` 與 `personal_summary` 工作不同
 
 `PersonalSummary` 是 `personal_tutor` 每一輪附帶的候選立場摘要（學生可確認成基準）；`personal_summary`
@@ -118,7 +120,7 @@
 |---|---|---|---|---|---|
 | `reply_text` | `string` | 是 | — | `min_length=1`、`max_length=16000` | 導師對這位學生說的話；附在個人對話的 `messages`。 |
 | `observations` | `Observations` | 是 | — | — | 本輪觀察；存進該則訊息與 `last_observations`，交給 `stage_goal` 判斷能否進入待確認。 |
-| `move` | `enum(probe, clarify, challenge, reflect, summarize)` | 否 | `"probe"` | — | 這則回覆的追問方式，只記錄在訊息上。 |
+| `move` | `enum(probe, clarify, challenge, reflect, summarize, hypothetical)` | 否 | `"probe"` | — | 這則回覆的追問方式，只記錄在訊息上。`hypothetical` 表示追問提出了原題沒有的延伸情境（單人活動的 `solo_tutor` 使用；`personal_tutor` 的 prompt 不要求）。 |
 | `summary` | `PersonalSummary` | 是 | — | — | 依目前對話整理的候選摘要；每輪覆寫 `summary`。進入 `awaiting_confirm` 時連同 `summary_digest` 給學生確認，確認後成為基準（`baseline`）。 |
 | `guard` | `enum(on_topic, off_topic, instruction_override)` | 否 | `"on_topic"` | — | 鐵則的守題判定（docs/IRON-RULES.md）：這一則輸入與本題相關／無關／要求改寫規則。不是 `on_topic` 時，送出前檢查要求回應帶一個與本題有關的提問；不合格重新產生一次，仍不合格換成固定拉回句。 |
 
@@ -153,6 +155,7 @@
 | `reason_summary` | `string` | 是 | — | `min_length=1`、`max_length=4000` | 主要理由；確認後成為 `baseline.reason_summary`，也是之後代表討論時採用的論點。 |
 | `relevant_conditions` | `array<string>` | 否 | `[]` | `max_length=12` | 學生提到會影響判斷的條件；確認後成為 `baseline.conditions`。 |
 | `unresolved_issue` | `string` | 否 | `""` | `max_length=2000` | 尚未釐清之處；只顯示給學生與教師，不進基準。 |
+| `principle_note` | `string` | 否 | `""` | `max_length=300` | 理由為什麼接近 `observations.principle_label`；標籤是「未明」時留空。單人活動的 `solo_tutor` 使用；`personal_tutor` 的 prompt 不要求。 |
 
 基準的 `option_id` 一律取學生原本作答的選項，**不由模型決定**；模型無法改變學生在分布中的位置。
 

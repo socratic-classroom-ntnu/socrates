@@ -12,11 +12,13 @@ from app.modules.identity_access.service import (
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.identity_access.contracts import (
     AccountView,
+    LocaleUpdate,
     Login,
     MailRequest,
     Register,
     ResetRequest,
     TokenRequest,
+    VerificationStatusView,
 )
 from app.modules.platform.storage import transaction
 
@@ -43,6 +45,14 @@ def login(body: Login, request: Request, response: Response):
 def me(request: Request):
     with transaction() as db:
         a, s = account(db, request, verified=False)
+        return auth.account_view(db, a, s.csrf_token)
+
+
+@router.put("/account/locale", response_model=AccountView)
+def update_locale(body: LocaleUpdate, request: Request):
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        auth.set_locale(a, body.locale)
         return auth.account_view(db, a, s.csrf_token)
 
 
@@ -81,7 +91,11 @@ def verification_email(body: MailRequest, request: Request):
     )
 
 
-@router.get("/auth/verification-status")
+@router.get(
+    "/auth/verification-status",
+    response_model=VerificationStatusView,
+    response_model_exclude_unset=True,
+)
 def verification_status(request: Request):
     with transaction() as db:
         current, _ = account(db, request, verified=False)

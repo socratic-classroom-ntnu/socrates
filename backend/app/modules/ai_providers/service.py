@@ -397,6 +397,68 @@ def merged_ai_settings(db, owner_id: str, classroom_ai: dict) -> tuple[dict, str
     return merged, account_settings.session_token_hash
 
 
+def _owner_bindings(
+    db,
+    owner_id: str,
+    candidates: list[tuple[str, str | None]],
+    session_hash: str | None,
+    role: str,
+) -> list[dict]:
+    """Bindings for (profile_id, model) pairs the owner can use; disabled or keyless ones drop."""
+    bindings = []
+    for profile_id, model in candidates:
+        profile = db.scalar(
+            select(ProviderProfile).where(
+                ProviderProfile.id == profile_id,
+                ProviderProfile.owner_id == owner_id,
+                ProviderProfile.enabled.is_(True),
+            )
+        )
+        if profile is None:
+            continue
+        secret = profile_secret(db, profile, session_token_hash=session_hash)
+        if not secret:
+            continue
+        bindings.append(
+            binding_from_profile(
+                profile,
+                secret=secret,
+                model=model or profile.default_model,
+                role=role,
+                owner_id=owner_id,
+            )
+        )
+    return bindings
+
+
+def resolve_owner_chain(db, owner_id: str, role: str) -> tuple[list[dict], dict]:
+    """An owner's default then fallback profile with the role's model, outside any room.
+
+    Used where the owner is not the requester (a course's teacher routes a student's solo
+    dialogue), so SESSION secrets come from the session that last saved the settings, as in
+    a room.
+    """
+    account_settings = db.get(AccountAISettings, owner_id)
+    settings = settings_view(account_settings)
+    session_hash = account_settings.session_token_hash if account_settings else None
+    model = settings["model_matrix"].get(role)
+    profile_ids: list[str] = []
+    for candidate in (settings["default_profile_id"], settings["fallback_profile_id"]):
+        if candidate and candidate not in profile_ids:
+            profile_ids.append(candidate)
+    bindings = _owner_bindings(
+        db, owner_id, [(pid, model) for pid in profile_ids], session_hash, role
+    )
+    return bindings, {
+        "owner_id": owner_id,
+        "role": role,
+        "budgets": validate_budget(settings.get("budgets", {})),
+        "selected_profile_id": settings["default_profile_id"],
+        "fallback_profile_id": settings["fallback_profile_id"],
+        "requested_model": model,
+    }
+
+
 def resolve_provider_chain(
     db,
     owner_id: str,
@@ -428,30 +490,16 @@ def resolve_provider_chain(
         if candidate and candidate not in profile_ids:
             profile_ids.append(candidate)
 
-    bindings = []
-    for candidate in profile_ids:
-        profile = db.scalar(
-            select(ProviderProfile).where(
-                ProviderProfile.id == candidate,
-                ProviderProfile.owner_id == owner_id,
-                ProviderProfile.enabled.is_(True),
-            )
-        )
-        if profile is None:
-            continue
-        secret = profile_secret(db, profile, session_token_hash=session_hash)
-        if not secret:
-            continue
-        bindings.append(
-            binding_from_profile(
-                profile,
-                secret=secret,
-                model=(model if candidate == profile_id else fallback_model)
-                or profile.default_model,
-                role=role,
-                owner_id=owner_id,
-            )
-        )
+    bindings = _owner_bindings(
+        db,
+        owner_id,
+        [
+            (candidate, model if candidate == profile_id else fallback_model)
+            for candidate in profile_ids
+        ],
+        session_hash,
+        role,
+    )
     budgets = validate_budget(settings.get("budgets", {}))
     return bindings, {
         "owner_id": owner_id,

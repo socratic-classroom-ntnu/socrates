@@ -6,6 +6,9 @@ from pydantic import Field, field_validator
 from pydantic_core import PydanticCustomError
 from app.modules.platform.contracts import Strict
 
+# Interface languages an account can choose; the frontend owns the translations.
+Locale = Literal["zh-Hant", "zh-Hans", "en", "es"]
+
 USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
 
 PASSWORD_SPECIALS = "!@#$%^&*_-+=.?~"
@@ -82,6 +85,27 @@ class VerificationDelivery(Strict):
     expires_at: float
 
 
+class VerificationStatusDelivery(Strict):
+    state: str
+    provider: str | None = None
+    provider_message_id: str | None = None
+    provider_status: str | None = None
+    attempts: int | None = None
+    created_at: float | None = None
+    updated_at: float | None = None
+    sent_at: float | None = None
+    delivered_at: float | None = None
+    last_error: str | None = None
+    preview_url: str | None = None
+
+
+class VerificationStatusView(Strict):
+    verified: bool
+    email_masked: str
+    authority_state: Literal["EMAIL_VERIFICATION", "FULL_PRODUCT"]
+    delivery: VerificationStatusDelivery
+
+
 class AccountView(Strict):
     id: str
     username: str
@@ -93,3 +117,8 @@ class AccountView(Strict):
     csrf_token: str
     points: int
     achievements: list[str]
+    locale: Locale | None = None
+
+
+class LocaleUpdate(Strict):
+    locale: Locale

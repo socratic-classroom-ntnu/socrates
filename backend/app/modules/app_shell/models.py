@@ -11,6 +11,8 @@ MODEL_MODULES = (
     "app.modules.identity_access.repositories",
     "app.modules.ai_providers.repositories",
     "app.modules.content_authoring.repositories",
+    "app.modules.course_management.repositories",
+    "app.modules.solo_activity.repositories",
     "app.modules.llm_runtime.repositories",
     "app.modules.classroom_core.repositories",
     "app.modules.group_dialogue.repositories",

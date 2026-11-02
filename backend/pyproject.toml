@@ -55,6 +55,17 @@ module = [
     "app.modules.content_authoring.routes.scripts",
     "app.modules.content_authoring.service",
     "app.modules.group_dialogue.service",
+    "app.modules.course_management.activities",
+    "app.modules.course_management.contracts",
+    "app.modules.course_management.courses",
+    "app.modules.course_management.enrollment",
+    "app.modules.course_management.repositories",
+    "app.modules.course_management.routes",
+    "app.modules.solo_activity.analysis",
+    "app.modules.solo_activity.progress",
+    "app.modules.solo_activity.repositories",
+    "app.modules.solo_activity.routes",
+    "app.modules.solo_activity.service",
     "app.classroom_server",
 ]
 follow_imports = "skip"

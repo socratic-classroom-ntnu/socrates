@@ -4,7 +4,16 @@ test('known backend codes read as Chinese sentences', () => {
   expect(errorText('GROUP_CAPACITY_REQUIRED', 409)).toContain('分組容量不夠')
   expect(errorText('ORIGIN_BINDING_REQUIRED', 403)).toBe('請從正式網址開啟本網站後再試。')
   expect(errorText('API_ROUTE_JSON_REQUIRED', 500)).toBe('伺服器暫時無法處理這個請求，請稍後再試。')
-  expect(errorText('COURSE_CODE_NOT_FOUND', 404)).toBe('找不到這個課程代碼，請確認後再輸入。')
+  expect(errorText('COURSE_CODE_NOT_FOUND', 404)).toBe('找不到這個教室代碼，請確認後再輸入。')
+})
+
+// 分組課的代碼叫「教室代碼」；「課程代碼」只留給課程（COURSE_CODE_EXHAUSTED、ENROLL_CODE_NOT_FOUND）
+test('group-class codes read as classroom codes, course codes stay course codes', () => {
+  expect(errorText('CLASSROOM_MEMBERSHIP_REQUIRED', 403)).toBe('你還不是這個課堂的成員，請先輸入教室代碼加入。')
+  expect(errorText('COURSE_CODE_NOT_FOUND', 404)).toBe('找不到這個教室代碼，請確認後再輸入。')
+  expect(errorText('COURSE_CODE_REQUIRED', 422)).toBe('請輸入教室代碼。')
+  expect(errorText('COURSE_CODE_EXHAUSTED', 503)).toContain('課程代碼')
+  expect(errorText('ENROLL_CODE_NOT_FOUND', 404)).toBe('找不到這個課程代碼，請確認後再輸入。')
 })
 
 test('sentences from the server pass through; unknown codes keep the code for reporting', () => {

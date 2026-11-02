@@ -2,7 +2,7 @@ import { CSSProperties, MutableRefObject, ReactNode, useEffect, useRef, useState
 import { useCountdown, useFitOneLine, useFitText, useIsMobile, useStageScale } from './stage';
 import './answerStage.css';
 
-// Figma「3 問題作答」→「4 選定並寫下想法」。資料與送出邏輯留在 ClassroomApp 的 AnswerPanel，這裡只負責畫面與轉場。
+// Figma「3 問題作答」→「4 選定並寫下想法」。資料與送出邏輯留在 student-classroom/Classroom.tsx 的 AnswerPanel，這裡只負責畫面與轉場。
 
 // OptionCard 的四個顏色與旋轉角度，選項超過四個時循環使用
 const COLORS = ['#C8431A', '#27408B', '#E3A72F', '#0F6B5F'];

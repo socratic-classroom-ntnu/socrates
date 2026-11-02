@@ -1,10 +1,15 @@
-import ClassroomApp from './ClassroomApp';
-import Round1App from './features/round1/Round1App';
-import { isRound1Path } from './features/round1/routes';
-import { DevConsole } from './features/dev-console/DevConsole';
+import { BrowserRouter } from 'react-router-dom'
+import { AppRoutes } from './app/routes'
+import { DevConsole } from './features/dev-console/DevConsole'
+import { AuthProvider } from './features/auth/AuthContext'
 
-// Round1App owns its BrowserRouter; classroom and demo routes share ClassroomApp's auth boundary.
+// 整個前端只有這一個路由器：課程頁、分組課、示範頁與舊單人對話都掛在 src/app/routes.tsx。
+// DevConsole 只在後端 debug_mode 為 true 時出現。
 export default function App() {
-  const page = isRound1Path(location.pathname) ? <Round1App/> : <ClassroomApp/>;
-  return <>{page}<DevConsole/></>;
+  return <BrowserRouter>
+    <AuthProvider>
+      <AppRoutes />
+      <DevConsole />
+    </AuthProvider>
+  </BrowserRouter>
 }

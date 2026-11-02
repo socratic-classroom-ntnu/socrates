@@ -1,7 +1,9 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { TeacherDashboard, greeting } from './TeacherDashboard'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { CourseTile, TeacherDashboard, greeting } from './TeacherDashboard'
+import { copyText } from '../../shared/clipboard'
 import { ApiError, api } from '../../contract/classroomClient'
 
+jest.mock('../../shared/clipboard', () => ({ copyText: jest.fn() }))
 jest.mock('../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../contract/classroomClient')>('../../contract/classroomClient')
   return { ApiError: actual.ApiError, api: jest.fn() }
@@ -50,8 +52,8 @@ test('shows a dash for stats and no copy button when the course has no code yet'
 
   const card = (await screen.findByRole('link', { name: '科技倫理' })).closest('article')
   expect(within(card).getByText('學生人數').nextSibling).toHaveTextContent('—')
-  expect(within(card).getByText('尚無課程碼')).toBeInTheDocument()
-  expect(within(card).queryByRole('button', { name: /複製課程碼/ })).toBeNull()
+  expect(within(card).getByText('尚無教室代碼')).toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: /複製教室代碼/ })).toBeNull()
 })
 
 test('creating a course retries with the same action id and refreshes the list', async () => {
@@ -145,4 +147,18 @@ test('the teacher sidebar can sign out', async () => {
   await screen.findByText(/還沒有課程/)
   fireEvent.click(screen.getByRole('button', { name: '登出' }))
   expect(api).toHaveBeenCalledWith('/auth/logout', 'POST')
+})
+
+// 分組課的代碼一律叫「教室代碼」
+test('a card with a code copies it as a classroom code', async () => {
+  const course = { id: 'c-1', title: '科技倫理', studentCount: null, topicCount: null, code: 'AB12CD34' }
+  const onCopied = jest.fn()
+  jest.mocked(copyText).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+  render(<CourseTile course={course} onCopied={onCopied} />)
+  const button = screen.getByRole('button', { name: /複製教室代碼/ })
+  fireEvent.click(button)
+  await waitFor(() => expect(onCopied).toHaveBeenCalledWith('已複製「科技倫理」的教室代碼'))
+  fireEvent.click(button)
+  await waitFor(() => expect(onCopied).toHaveBeenCalledWith('無法存取剪貼簿，請手動選取教室代碼'))
+  expect(copyText).toHaveBeenCalledWith('AB12CD34')
 })

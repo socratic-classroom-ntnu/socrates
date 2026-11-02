@@ -38,8 +38,15 @@ export function SoloDialoguePage() {
   }, [attempt, pendingAction, view])
 
   if (activity.loading && !activity.data) return <main className="solo-dialogue" aria-busy="true" />
-  if (activity.data && !activity.data.attempt) return <Navigate to={`/learn/activities/${activityId}`} replace />
-  if (!activity.data || (attempt.loading && !view)) return <main className="solo-dialogue" aria-busy="true" />
+  if (!activity.data) {
+    const notFound = activity.error instanceof ApiError && activity.error.status === 404
+    return <main className="solo-dialogue solo-dialogue--message">
+      <h1>{notFound ? t('activity.notFound') : errorMessage(t, activity.error)}</h1>
+      <Link className="button button--outline" to="/">{t('activity.home')}</Link>
+    </main>
+  }
+  if (!activity.data.attempt) return <Navigate to={`/learn/activities/${activityId}`} replace />
+  if (attempt.loading && !view) return <main className="solo-dialogue" aria-busy="true" />
   if (!view) return <main className="solo-dialogue solo-dialogue--message"><p>{errorMessage(t, attempt.error, 'solo')}</p></main>
 
   const question = view.questions.find(item => item.index === view.question_index)

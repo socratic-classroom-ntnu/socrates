@@ -350,6 +350,20 @@ test('no attempt redirects to the activity page', async () => {
   await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/learn\/activities\/a-1$/))
 })
 
+test('unknown activity shows not found with a way home', async () => {
+  renderPage({ 'GET /solo/activities/a-1': () => { throw new ApiError(404, 'ACTIVITY_NOT_FOUND') } })
+
+  expect(await screen.findByRole('heading', { name: '找不到這個活動' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
+})
+
+test('activity that fails to load shows the error instead of loading forever', async () => {
+  renderPage({ 'GET /solo/activities/a-1': () => { throw new ApiError(429, 'RATE_LIMITED') } })
+
+  expect(await screen.findByRole('heading', { name: '操作太頻繁，請稍候再試。' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
+})
+
 test('missing attempt shows the localized solo error', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
@@ -980,6 +994,43 @@ test('changed mind requires a new stance and sends new_option_id', async () => {
     key: 'POST /solo/attempts/attempt-1/send_message',
     body: { text: '我發現不行動也是選擇。', revise_hint: 'changed_mind', new_option_id: 'o-a' },
   }))
+})
+
+test('a later revision starts with no quick option and no new stance carried over', async () => {
+  const changedStance = { ...revisingAttempt.questions[0].stance, current_option_id: 'o-a' }
+  const changed = { ...revisingAttempt, questions: [{ ...revisingAttempt.questions[0], stance: changedStance }] }
+  const sends: unknown[] = []
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': revisingAttempt,
+    'POST /solo/attempts/attempt-1/send_message': (body: unknown) => {
+      sends.push(body)
+      return sends.length === 1
+        ? { ...confirmingAttempt, questions: changed.questions }
+        : { ...changed, revising: false, rejected_summary: null }
+    },
+    'POST /solo/attempts/attempt-1/revise_viewpoint': changed,
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  fireEvent.click(await screen.findByRole('button', { name: '我其實改變想法了' }))
+  fireEvent.click(within(screen.getByRole('group', { name: '改成哪個立場？' })).getByRole('button', { name: 'A 拉下拉桿' }))
+  fireEvent.change(screen.getByLabelText('說說哪裡不對'), { target: { value: '我發現不行動也是選擇。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+  fireEvent.click(await screen.findByRole('button', { name: '不太對，我想再說清楚' }))
+
+  const changedMind = await screen.findByRole('button', { name: '我其實改變想法了' })
+  expect(changedMind).toHaveAttribute('aria-pressed', 'false')
+  fireEvent.change(screen.getByLabelText('說說哪裡不對'), { target: { value: '其實是條件不對。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+  await waitFor(() => expect(sends).toHaveLength(2))
+  expect(calls.filter(call => call.key === 'POST /solo/attempts/attempt-1/send_message').map(call => call.body)).toEqual([
+    { text: '我發現不行動也是選擇。', revise_hint: 'changed_mind', new_option_id: 'o-a' },
+    { text: '其實是條件不對。' },
+  ])
 })
 
 test('stance card shows current option after a change', async () => {

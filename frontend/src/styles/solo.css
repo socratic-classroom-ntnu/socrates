@@ -72,7 +72,8 @@
 .solo-primary:disabled { box-shadow: none; opacity: .45; }
 
 .solo-dialogue { min-height: 100vh; background: #f4f0e8; }
-.solo-dialogue--message { display: grid; place-items: center; }
+.solo-dialogue--message { display: grid; place-items: center; align-content: center; gap: 16px; }
+.solo-dialogue--message h1 { margin: 0; font-size: 24px; }
 .solo-dialogue__topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 16px; min-height: 72px; padding: 10px 28px; border-bottom: 1px solid #ddd5c6; background: #fffdf8; }
 .solo-dialogue__brand { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: #2f4a3f; color: #fffdf8; font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 800; text-decoration: none; }
 .solo-dialogue__course { display: flex; min-width: 0; flex-direction: column; gap: 2px; }

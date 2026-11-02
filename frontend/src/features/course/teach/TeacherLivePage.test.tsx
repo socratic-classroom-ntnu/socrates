@@ -39,15 +39,25 @@ function open(options: { actions?: Activity['available_actions']; locale?: 'zh-H
   const calls = mockApi({
     'GET /auth/me': { ...signedIn, locale: options.locale ?? 'zh-Hant' },
     'GET /solo/activities/a-1/progress': options.view ?? progress,
-    'GET /activities/a-1': activity(options.actions),
+    'GET /activities/a-1': () => { activityAnswered = true; return activity(options.actions) },
     'POST /activities/a-1/end_now': {},
   })
   renderAt('/teach/activities/a-1', '/teach/activities/:activityId', <TeacherLivePage />)
   return calls
 }
 
+let activityAnswered = false
+
+// 「提早結束」只看 header 自己另外拿的 GET /activities/a-1，那支請求在頁面出現之後才發出，
+// 所以要等它回來再斷言按鈕；CI 比較慢時，直接斷言會在回應前就看畫面。
+async function activityLoaded() {
+  await waitFor(() => expect(activityAnswered).toBe(true))
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+}
+
 beforeEach(() => {
   jest.mocked(api).mockReset()
+  activityAnswered = false
 })
 
 afterEach(() => {
@@ -134,12 +144,14 @@ test.each([
 ])('shows end early only when available_actions allows it: %p', async (actions, visible) => {
   open({ actions })
   const page = await screen.findByTestId('teacher-live-page')
+  await activityLoaded()
   expect(within(page).queryByRole('button', { name: '提早結束' }) !== null).toBe(visible)
 })
 
 test('confirms before ending and posts the state-machine action', async () => {
   const calls = open()
   const page = await screen.findByTestId('teacher-live-page')
+  await activityLoaded()
   fireEvent.click(within(page).getByRole('button', { name: '提早結束' }))
   const dialog = screen.getByRole('dialog', { name: '提早結束活動' })
   expect(calls.some(call => call.key === 'POST /activities/a-1/end_now')).toBe(false)

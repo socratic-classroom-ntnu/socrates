@@ -46,6 +46,9 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
     if (sent) {
       clearSoloDraft(draftKey)
       setText('')
+      // The composer outlives the confirmation that follows; a later 不太對 starts fresh.
+      setReviseHint(null)
+      setNewOptionId(null)
     }
   }
 

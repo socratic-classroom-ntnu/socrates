@@ -10,4 +10,17 @@ export default tseslint.config(
   { languageOptions: { globals: { ...globals.browser, ...globals.jest } } },
   // Declaration shims for the untyped .mjs avatar runtime describe foreign objects.
   { files: ['**/*.d.mts'], rules: { '@typescript-eslint/no-explicit-any': 'off' } },
+  // Components read translations only through src/i18n/useT, so locale handling stays in one place.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/i18n/**'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          { name: 'i18next', message: 'Use useT() / applyLocale() from src/i18n instead.' },
+          { name: 'react-i18next', message: 'Use useT() from src/i18n instead.' },
+        ],
+      }],
+    },
+  },
 )

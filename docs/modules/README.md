@@ -43,17 +43,19 @@
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
-| [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/ClassroomApp.tsx`<br>`frontend/src/teacherRoute.ts` | 全部（組裝層） | 0 |
+| [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/app/`<br>`frontend/src/testing/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./frontend/contract.md) | ✅ | `frontend/src/contract/` | — | 0 |
-| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
+| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
 | [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
-| [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/`<br>`frontend/src/entryRole.ts` | platform、contract | 0 |
+| [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/` | platform、contract | 0 |
 | [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform、contract | 0 |
 | [Teacher Analytics](./frontend/teacher-analytics.md) | ⚠️ | `frontend/src/features/group-analytics/`<br>`frontend/src/features/teacher-records/` | platform、contract | 0 |
 | [Authoring](./frontend/authoring.md) | ✅ | `frontend/src/features/authoring/`<br>`frontend/src/features/script-builder/`<br>`frontend/src/features/question-bank/` | platform、ai-settings、teacher-analytics、contract | 0 |
 | [Group Dialogue](./frontend/group-dialogue.md) | ⚠️ | `frontend/src/features/group-dialogue/`<br>`frontend/src/features/personal-dialogue/`<br>`frontend/src/features/classroom-stage/` | platform、media、ai-settings、teacher-analytics、contract | 0 |
 | [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/`<br>`frontend/src/features/classroom-answer/`<br>`frontend/src/features/danmaku/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics、contract | 0 |
 | [單人對話](./frontend/solo-dialogue.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media、contract | 0 |
+| [課程](./frontend/course.md) | ✅ | `frontend/src/features/course/` | platform、contract、auth、solo-activity | 0 |
+| [單人活動](./frontend/solo-activity.md) | ✅ | `frontend/src/features/solo-activity/` | platform、contract | 0 |
 
 **契約（兩端唯一的接縫）**
 
@@ -70,6 +72,8 @@
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |
 | TTS（文字→音訊＋字時間點） | llm-runtime | media | 待定 | 等契約 |
 | 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
+| 課程與活動（/courses/*、/course-join/*、/activities/*） | course-management | course | backend/app/modules/course_management/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
+| 單人活動（/solo/*） | solo-activity | solo-activity、course | backend/app/modules/solo_activity/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 
 <!-- module-map:end -->
 

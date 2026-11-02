@@ -12,7 +12,6 @@
 檔案範圍：
 - `frontend/src/features/auth/`
 - `frontend/src/features/entrance/`
-- `frontend/src/entryRole.ts`
 
 契約：
 - 帳號（/auth/*）（產生型別 ✅；端點在 routes/classroom.py）

@@ -1,11 +1,8 @@
 import { formatDateTime, greetingKey } from './format'
 
-const originalTZ = process.env.TZ
-beforeAll(() => { process.env.TZ = 'Asia/Taipei' })
-afterAll(() => { process.env.TZ = originalTZ })
-
-// 2026-10-24 23:59 in Taipei (UTC+8), a Saturday.
-const seconds = Date.UTC(2026, 9, 24, 15, 59) / 1000
+// 2026-10-24 23:59 in the machine's own time zone, a Saturday. Built from local
+// parts because jest ignores process.env.TZ set inside a test, and CI runs in UTC.
+const seconds = new Date(2026, 9, 24, 23, 59).getTime() / 1000
 
 test('zh-Hant weekday date time', () => {
   const text = formatDateTime(seconds, 'zh-Hant', 'weekdayDateTime')

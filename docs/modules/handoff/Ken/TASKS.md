@@ -8,7 +8,7 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 |---|---|---|---|---|---|
 | 1 | course-management | 敘述型活動 | 上面的第一個 PR | Courecta 的 ActivityExpansion | 發布後改敘述，不影響已開始的作答 |
 | 2 | solo-activity | 敘述型活動、多語 | 拿掉選項流程，改成自由文字表態，再用 stance_classify 歸類；「我其實改變想法了」＝重新歸類，舊立場留在紀錄；每則訊息存 locale | Courecta 的 StanceClassification、SoloTutorTurn | 學生用英文作答時，逐字稿保留原文 |
-| 3 | course-management | 免註冊加入 | 課程設定加「允許免註冊」；QR 連結；訪客可以選課；`GET /course-join/{code}` 回 `allow_guest`；沒開時回 `GUEST_JOIN_DISABLED` | Courecta 的訪客帳號 migration | 訪客從掃碼到開始對話不需要 email |
+| 3 | course-management | 免註冊加入 | 課程設定加「允許免註冊」；QR 連結；訪客可以選課；`GET /course-join/{code}` 回 `allow_guest`；沒開時回 `GUEST_JOIN_DISABLED`（這個 code 在同一個 PR 加進 `REASON_CODES` 與前端文字，`EXPANSION_LOCKED`、`RADAR_NOT_READY` 也照這樣在第 1、6 項的 PR 加） | Courecta 的訪客帳號 migration | 訪客從掃碼到開始對話不需要 email |
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | Courecta 的 flags | 危險傾向或惡意離題＝1 時，教師 progress 回該學生的標記；學生端回應裡沒有 flags |
 | 5 | solo-activity | 統整引用 | 存放引用（新表 summary_sources），view 回傳 message id 與 quote 的起訖位置 | Courecta 的引用驗證；Amethus 的引用型別 | 每個 quote 都是該學生原句的子字串 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |

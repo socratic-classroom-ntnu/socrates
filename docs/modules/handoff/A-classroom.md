@@ -20,7 +20,7 @@ A 包是全班課堂與分組課。這一輪的六項新功能主要落在單人
   - `POST /api/v2/classrooms/{room_id}/budget`
   - `GET /api/v2/classrooms/{room_id}/events`
   - `POST /api/v2/scripts/{script_id}/adopt-question/{room_id}/{index}`
-- 注意：刪除舊的單人對話（solo-dialogue）時，會一併移除 classroom-core 對 solo-dialogue 的依賴。接手時先跑一次 `python scripts/check_modules.py`，確認違規數是 0。
+- 注意：舊的單人對話（solo-dialogue）已經刪除，classroom-core 對它的依賴也一起拿掉了。接手時先跑一次 `python scripts/check_modules.py`，確認違規數是 0。
 
 ### Group Dialogue（`group-dialogue`）
 - 做什麼：分組課的分組、個人追問、全組確認、AI 學生，以及給教師看的分組立場分佈。

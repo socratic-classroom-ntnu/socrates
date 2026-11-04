@@ -11,12 +11,12 @@
 
 ## 後端開發流程
 1. Arthur 收到需求，拆成各模組的改動，分給各包。
-2. 各包在自己的分支 `backend/<名字>` 上開發。分支已經建好，內容是 #69 的版本加上這份交接文件。
-3. 做完一段，就從自己的分支 PR 到 `backend/main`。
-4. Arthur 審完後合併，再推到 `develop`。
+2. 各包在自己的分支 `backend/<名字>` 上開發。分支已經建好，內容是 `backend/main` 加上你自己的交接包（`docs/modules/handoff/start/<名字>.md`）。
+3. 做完一個功能（或功能裡可以獨立合入的一段），就從自己的分支 PR 到 `backend/main`。
+4. Arthur 審完後合進 `backend/main`。`backend/main` 的改動再以功能為單位重新打包，每個功能一個 PR 給 `develop`；功能做完整就進，不累積。
 5. 改動 demo 過之後，PR 到 `stage`。
 
-`backend/main` 有新東西時（例如刪除舊的單人對話、其他包合進來的契約），請 merge 進自己的分支再繼續做。
+`backend/main` 有新東西時（例如其他包合進來的契約），請 merge 進自己的分支再繼續做。
 
 ## 第一次拿到這份文件：照這個順序
 1. **認識產品**：讀 repo 根目錄 `README.md`，從開頭讀到「接下來讀什麼」。
@@ -32,7 +32,7 @@
 6. **讀自己這包的交接文件**（上表）：照「新功能工作」一節排出自己的第一個 PR，在團隊 Discord 認領。
 
 ## 這一版和上一版的差別
-- 舊的單人 ladder 對話會刪除，solo-dialogue 模組也一起拿掉；單人對話改由 solo-activity 承接。刪除的 commit 進 `backend/main` 後，請 merge 進自己的分支。
+- 舊的單人 ladder 對話已經刪除，solo-dialogue 模組也一起拿掉；單人對話改由 solo-activity 承接（不變條款測試的處理記在 issue #71）。
 - course-management、solo-activity 併進 B 包。
 - 每包新增「新功能工作」一節：改什麼、依賴誰、接哪些 API、怎麼驗收。
 

@@ -28,7 +28,7 @@
 - 做完一個功能（或功能裡可以獨立合入的一段），就從 `backend/Courecta/` 底下的分支開 PR 到 `backend/main`。沒有特別允許的話，PR 只開到 `backend/main`。
 - Arthur 審完後合進 `backend/main`，再以功能為單位打包成 PR 給 `develop`。
 - `backend/main` 有新東西時（例如別人的契約合進來了），先 merge 進 `backend/Courecta/main` 再繼續做。
-- 這個資料夾 `docs/modules/handoff/Courecta/` 只在你的分支上。PR 到 `backend/main` 時不要帶這個資料夾的改動。
+- 這個資料夾 `docs/modules/handoff/Courecta/` 在 `backend/main` 上，每人一個；要改內容請另外和 Arthur 說，不要混在功能 PR 裡。
 
 ## 你和誰有接縫
 | 對象 | 你給對方／對方給你 | 什麼時候 |

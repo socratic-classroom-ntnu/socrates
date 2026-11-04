@@ -53,7 +53,7 @@ def view(rid: str, request: Request):
 
 @router.post("/runs/{rid}/commands", response_model=GroupActionReceipt)
 def command(rid: str, body: GroupCommand, request: Request):
-    if body.kind not in {"group_statement", "group_ack", "next", *PERSONAL_COMMANDS}:
+    if body.kind not in {"group_statement", "group_ack", "next", "end", *PERSONAL_COMMANDS}:
         raise DomainError("GROUP_COMMAND_REQUIRED", 422)
     with transaction() as db:
         a = actor(db, request, True)

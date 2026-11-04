@@ -1,11 +1,11 @@
 # D 包：對接
 
-模組：contract（後端）。負責人：Ken
+模組：contract（後端）。負責人：Amethus
 
 D 包負責前後端之間唯一的接縫，讓前端只需要用產生出來的型別，不用自己手寫。這一輪 B、C 包會新增十幾個端點，每一個都要經過你這包。
 
 ## 起點
-- 分支：`backend/Ken`（已經建好，內容＝#69 的版本加上這份交接文件）。開發都在這條分支上，做完一段就 PR 到 `backend/main`。
+- 分支：`backend/Amethus`（已經建好，內含你的交接包 `docs/modules/handoff/start/Amethus.md`）。做完一個功能就 PR 到 `backend/main`。
 - 先讀：
   - [README.md](README.md) 的「第一次拿到這份文件」
   - `docs/modules/backend/contract.md`、`docs/modules/frontend/contract.md`

@@ -5,9 +5,9 @@
 | 包 | 名稱 | 模組 | 負責人 | 分支 | 文件 |
 |---|---|---|---|---|---|
 | A | 課堂 | classroom-core、group-dialogue、analytics | Hsy | `backend/Hsy` | [A-classroom.md](A-classroom.md) |
-| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Arthur | — | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
+| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Ken | `backend/Ken` | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
 | C | 帳號與 AI | identity-access、ai-providers、llm-runtime | Courecta | `backend/Courecta` | [C-account-ai.md](C-account-ai.md) |
-| D | 對接 | contract | Ken | `backend/Ken` | [D-contract.md](D-contract.md) |
+| D | 對接 | contract | Amethus | `backend/Amethus` | [D-contract.md](D-contract.md) |
 
 ## 後端開發流程
 1. Arthur 收到需求，拆成各模組的改動，分給各包。

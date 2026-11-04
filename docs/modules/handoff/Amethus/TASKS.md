@@ -1,15 +1,17 @@
 # Amethus 的工作清單（D 包：對接）
 
 ## 你的第一個 PR
-在 `app/modules/contract/` 建立「新端點檢查表」，並在 reason code 目錄加入 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`，每個都附前端要顯示的文字。
+在 `app/modules/contract/` 建立「新端點檢查表」。表上寫明：每個新端點要有 response_model、重產型別後沒有 diff；新 reason code 跟 raise 它的程式在同一個 PR 加進 `REASON_CODES` 與 `errorText.ts`。
+
+`GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY` 這四個 code 不在你的第一個 PR 預先加：contract gate 要求目錄和程式裡實際 raise 的 code 完全一致，預先加會讓測試失敗。它們由 Ken、Courecta 第一次 raise 的 PR 帶進來，你負責審。
 
 ## 全部工作（照順序做；「—」是不綁新功能的現有待辦，有空檔就做）
 | 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
 |---|---|---|---|---|---|
 | 1 | contract | 全部 | 上面的第一個 PR；之後 Ken、Courecta 每開一個新端點，你審 response_model、reason code、重產型別後沒有 diff 三件事 | — | 檢查表合進 `backend/main` |
-| 2 | contract | 免註冊加入、敘述型活動 | 4 個新 reason code 與前端顯示文字的對照 | Courecta 的訪客帳號、Ken 的敘述活動 PR | 每個 reason code 都有對照 |
+| 2 | contract | 免註冊加入、敘述型活動、雷達 | 審 4 個新 code：`GUEST_JOIN_DISABLED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`（Ken）、`GUEST_EXPIRED`（Courecta），目錄、前端文字與 raise 的位置三者一致 | 他們第一次 raise 的 PR | contract gate 測試通過 |
 | 3 | contract | 雷達圖 | 雷達契約：dimensions［name、low_pole、high_pole、source＝embedding｜llm］＋每位學生每維的分數＋引用 | Ken 做雷達之前先定 | 前端只接這一份 |
-| 4 | contract | 統整引用 | 引用型別：points［text、sources［message_id、quote、起訖位置］］，統整、最終統整、雷達三處共用 | 和 Courecta 定 schema 時一起 | 三處用同一個型別 |
+| 4 | contract | 統整引用 | 對外引用型別：points［text、sources［message_id、quote、起訖位置］］，統整、最終統整、雷達三處共用。LLM 輸出的 `message_ref`（例如 m3）只在 llm-runtime 內部，Courecta 驗證後換成 `message_id`；起訖位置的單位（字元或 UTF-16）由你寫明，前端要用它標出原句 | 和 Courecta 定 schema 時一起 | 三處用同一個型別 |
 | 5 | contract | 語音 | TTS 契約（文字→音訊＋字時間點） | Courecta 做語音時 | 前端 media 能接 |
 | 6 | contract | 全部 | 更新 `docs/modules/README.md` 的「契約」表：刪掉舊單人對話那一列，新增課程、單人活動、雷達、TTS 四列 | 每一項落地時同步 | 表和程式一致 |
 | — | contract | 現有待辦 | 型別產生器為每個端點產出 request／response 型別；前端 client 依 path＋method 帶型別；錯誤碼產成 TS 型別 | — | — |

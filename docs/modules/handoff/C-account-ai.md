@@ -5,7 +5,7 @@
 C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding 都從這包出來，B 包的呼叫端會等你的契約。建議第一個 PR 先合「型別與函式簽名」，實作再跟上。
 
 ## 起點
-- 分支：`backend/Courecta/main`（已經建好，內含你的交接包 `docs/modules/handoff/start/Courecta.md`）。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Courecta/main`（已經建好，內含為你訂製的交接包 `docs/modules/handoff/Courecta/`：README 與 TASKS）。做完一個功能就 PR 到 `backend/main`。
 - 一個 PR 只動一個模組，送出前先跑下方的檢查。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/NEW-FEATURES.md`、`docs/classroom/PROMPT-DESIGN.md`、`docs/classroom/LLM-OUTPUT-SCHEMA.md`。
 
@@ -46,7 +46,7 @@ C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding �
 
 ## 和其他包的接縫
 - **給 B**：第 1 項的型別、第 4 項的帳號 `kind`、第 6 項的 `embed()`。建議各開一個先合的小 PR，只放契約。
-- **給 D**：每個新端點的 response_model，以及新的 reason code（例如 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`）。
+- **給 D**：每個新端點的 response_model，以及新的 reason code（例如 `GUEST_EXPIRED`）。新 code 在第一次 raise 它的 PR 裡一起加進 `REASON_CODES` 與前端文字。
 - **引用關係**：本包不 import B、A 的模組；B 呼叫你，不是你呼叫 B。
 
 ## 驗收（測試要涵蓋）

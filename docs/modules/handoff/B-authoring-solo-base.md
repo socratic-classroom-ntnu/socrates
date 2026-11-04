@@ -3,7 +3,7 @@
 模組：course-management、solo-activity、content-authoring、platform、app-shell（後端）。負責人：Ken
 
 ## 起點
-- 分支：`backend/Ken/main`（已經建好，內含你的交接包 `docs/modules/handoff/start/Ken.md`）。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Ken/main`（已經建好，內含為你訂製的交接包 `docs/modules/handoff/Ken/`：README 與 TASKS）。做完一個功能就 PR 到 `backend/main`。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/NEW-FEATURES.md`、`docs/classroom/PROMPT-DESIGN.md`。
 
 ## 範圍與現有待辦
@@ -45,6 +45,7 @@
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | C 包的 flags |
 | 5 | solo-activity | 統整引用 | 存放引用，view 回傳 message id 與 quote 的起訖位置 | C 包的引用驗證 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈：取代 submit_review，連續兩次「不太對」就標記「未確認」並結束；PCA、百分位、`GET /solo/activities/{id}/radar` | C 包的 `embed()`、final_summary、radar_* |
+| 7 | app-shell | 免註冊加入 | 註冊 identity-access 提供的到期訪客去識別化排程工作，每日跑一次 | C 包的排程工作 |
 
 ## 規則與檢查
 和 A、C、D 包相同，見各包文件的「規則」與「送 PR 前的檢查」兩節。

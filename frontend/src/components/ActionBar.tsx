@@ -1,4 +1,6 @@
-import type { Action } from '../contract/client'
+// 舊的單人對話（/api/sessions）的動作名稱。那組 API 與產生的型別已經移除；這個元件與它的
+// 不變式測試（src/invariants/actionBar.test.tsx）由前端開發團隊決定改接或移除，在那之前先寫在這裡。
+export type Action = 'send_message' | 'advance' | 'end' | 'retry'
 
 const LABELS: Record<Action, string> = {
     send_message: '送出',

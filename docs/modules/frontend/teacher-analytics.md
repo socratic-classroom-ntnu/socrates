@@ -14,7 +14,7 @@
 - `frontend/src/features/teacher-records/`
 
 契約：
-- 分組課（/groups/*）（缺 response_model，前端型別手寫（已寄契約請求））
+- 分組課（/groups/*）（產生型別 ✅）
 - 雷達圖（等契約（設計稿））
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）

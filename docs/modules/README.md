@@ -32,8 +32,8 @@
 | [AI Providers](./backend/ai-providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity-access | 0 |
 | [LLM Runtime](./backend/llm-runtime.md) | ✅ | `backend/app/modules/llm_runtime/` | platform、ai-providers | 0 |
 | [Content Authoring](./backend/content-authoring.md) | ⚠️ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
-| [Classroom Core](./backend/classroom-core.md) | ⚠️ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
-| [Group Dialogue](./backend/group-dialogue.md) | ⚠️ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
+| [Classroom Core](./backend/classroom-core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
+| [Group Dialogue](./backend/group-dialogue.md) | ✅ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
@@ -53,7 +53,6 @@
 | [Authoring](./frontend/authoring.md) | ✅ | `frontend/src/features/authoring/`<br>`frontend/src/features/script-builder/`<br>`frontend/src/features/question-bank/` | platform、ai-settings、teacher-analytics、contract | 0 |
 | [Group Dialogue](./frontend/group-dialogue.md) | ⚠️ | `frontend/src/features/group-dialogue/`<br>`frontend/src/features/personal-dialogue/`<br>`frontend/src/features/classroom-stage/` | platform、media、ai-settings、teacher-analytics、contract | 0 |
 | [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/`<br>`frontend/src/features/classroom-answer/`<br>`frontend/src/features/danmaku/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics、contract | 0 |
-| [單人對話](./frontend/solo-dialogue.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media、contract | 0 |
 | [課程](./frontend/course.md) | ✅ | `frontend/src/features/course/` | platform、contract、auth、solo-activity | 0 |
 | [單人活動](./frontend/solo-activity.md) | ✅ | `frontend/src/features/solo-activity/` | platform、contract | 0 |
 
@@ -63,8 +62,8 @@
 |---|---|---|---|---|
 | 帳號（/auth/*） | identity-access | auth | classroom_schemas.py（Register、Login、ResetRequest…）→ api/types.ts | 產生型別 ✅；端點在 routes/classroom.py |
 | 教室房間（/classrooms/*） | classroom-core | student-classroom | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
-| 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 缺 response_model，前端型別手寫（已寄契約請求） |
-| AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 部分手寫 |
+| 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 產生型別 ✅ |
+| AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 產生型別 ✅ |
 | 雷達圖 | analytics | teacher-analytics | 待定 | 等契約（設計稿） |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |

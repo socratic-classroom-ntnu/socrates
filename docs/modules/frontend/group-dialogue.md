@@ -15,8 +15,8 @@
 - `frontend/src/features/classroom-stage/`
 
 契約：
-- 分組課（/groups/*）（缺 response_model，前端型別手寫（已寄契約請求））
-- AI 學生（/ai-students/*）（部分手寫）
+- 分組課（/groups/*）（產生型別 ✅）
+- AI 學生（/ai-students/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
@@ -24,6 +24,6 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- GroupStance、PersonalDialogue 型別手寫（等後端分組 view 的 response_model）。
-- GroupClassroom.tsx 裡的流程邏輯：契約補上後只留畫面與接線。
+- 後端 GroupClassroomView 已生成；前端元件的顯式型別採用由前端 owner 接續。
+- GroupClassroom.tsx 裡的流程邏輯：契約採用後只留畫面與接線。
 <!-- module-map:end -->

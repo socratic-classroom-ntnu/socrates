@@ -1,6 +1,6 @@
 # 刪除舊單人對話之後的六項新功能：模組改動表
 
-狀態：設計已定案。各包在自己的分支 `backend/<名字>` 上開發，PR 到 `backend/main`（流程見 `docs/modules/handoff/README.md`）。
+狀態：設計已定案。各包從自己的分支 `backend/<名字>/main` 開始開發（`backend/<名字>/` 底下可以再開分支），做完一個功能就 PR 到 `backend/main`（流程見 `docs/modules/handoff/README.md`）。
 各包的工作清單在 `docs/modules/handoff/<包>.md`。本檔是跨包總表，規定每個模組改什麼、模組之間怎麼引用、怎麼互動、接哪些 API。
 LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-DESIGN.md)。
 
@@ -23,13 +23,14 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 
 | 端 | 包 | 模組 | 功能 | 改動 |
 |---|---|---|---|---|
-| 後端 | C | identity-access | 1、3 | 帳號加 `kind`（guest／registered）與 `guest_expires_at`；email、password_hash 可為空（migration）；訪客 session；註冊時原地升級；找回提示只存雜湊；訪客加入時選語言 |
+| 後端 | C | identity-access | 1、3 | 帳號加 `kind`（guest／registered）與 `guest_expires_at`；email、password_hash 可為空（migration）；訪客 session；註冊時原地升級；找回提示只存雜湊；訪客加入時選語言；提供到期訪客去識別化的排程工作 |
 | 後端 | C | ai-providers | 4 | 本地 embedding provider（預設 multilingual-e5-small，CPU 執行） |
 | 後端 | C | llm-runtime | 2–6 | 新增或改寫 7 個 program 與對應 schema；鐵則 L1 加「回覆語言」、新增 6 份 L2；語言檢查與引用驗證接進 `guarded_generate` 的重試；30 則固定題組與三家模型評測；TTS 契約 |
 | 後端 | B | course-management | 1、3 | 課程設定「允許免註冊」；QR 連結；訪客選課；活動內容改為「敘述＋立場空間」；發布時呼叫 activity_expansion，老師修改後鎖進 ActivityRevision；migration 把舊選項轉成立場空間 |
 | 後端 | B | solo-activity | 3–6 | 拿掉選項流程，改成自由文字表態＋stance_classify；每則訊息存 locale 與 flags；指標純函式；最終統整與確認迴圈（取代現在回 501 的 submit_review）；引用存放；PCA、百分位與雷達彙總 |
-| 後端 | B | platform | 1 | 每日排程：到期訪客去識別化 |
+| 後端 | B | app-shell | 1 | 註冊 identity-access 提供的到期訪客排程工作（每日一次） |
 | 後端 | A | group-dialogue | 5（第二版） | 分組課個人追問套用同一組旗標 |
+| 後端 | A | analytics | 4、5（第二版） | 分組課的教師分析帶出同一組指標與標記（重用 solo-activity 的指標純函式）；沿用單人活動的雷達契約 |
 | 後端 | D | contract | 1、3–6 | 新端點的 response_model 與型別重產；新 reason code；雷達契約 |
 | 部署 | — | backend 映像 | 4 | 映像內附 embedding 模型檔（主機負責人已同意；單 pod CPU 實測 1.2 GB 記憶體） |
 | 前端 | — | auth | 1 | 掃碼加入頁、暱稱、找回提示、「註冊以保留紀錄」提示 |

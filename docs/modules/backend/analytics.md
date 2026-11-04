@@ -9,7 +9,7 @@
 - stance distribution
 - radar axes and source provenance
 - teacher records
-- group analysis projection（雷達圖、立場分布）；單人對話的 history、summary 屬 solo-dialogue
+- group analysis projection（雷達圖、立場分布）
 
 ## Toy page
 

@@ -29,9 +29,9 @@ D 包負責前後端之間唯一的接縫，讓前端只需要用產生出來的
 | 順序 | 做什麼 | 什麼時候做 |
 |---|---|---|
 | 1 | 建立「新端點檢查表」：B、C 包每個新端點的 PR，都要附上 response_model、reason code，並重產型別。你負責審這三項 | 開工當週 |
-| 2 | reason code 目錄新增 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`，每個都要有前端顯示文字的對照 | C 包的訪客帳號、B 包的敘述活動送 PR 時 |
+| 2 | 審 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY` 四個新 code：每個新 code 由第一次 raise 它的 PR 一起加進 `REASON_CODES` 與 `frontend/src/contract/errorText.ts`（contract gate 要求目錄和程式裡實際 raise 的 code 完全一致，不預先登記）。你審目錄、前端文字與 raise 的位置三者一致 | B、C 包第一次 raise 它們的 PR |
 | 3 | 雷達契約（模組地圖上目前寫「待定」）：dimensions［name、low_pole、high_pole、source］＋每位學生每維的分數＋引用 | B 包做雷達之前先定，前端接這一份 |
-| 4 | 統整引用的型別：points［text、sources［message_id、quote、起訖位置］］，統整、最終統整、雷達三處共用 | C 包定 schema 時一起 |
+| 4 | 統整引用的對外型別：points［text、sources［message_id、quote、起訖位置］］，統整、最終統整、雷達三處共用。LLM 端的 `message_ref` 由 C 包在驗證時換成 `message_id`；起訖位置的單位（字元或 UTF-16）由你在契約裡寫明 | C 包定 schema 時一起 |
 | 5 | TTS 契約（文字→音訊＋字時間點） | C 包做語音時 |
 | 6 | 更新 `docs/modules/README.md` 的「契約」表：刪掉舊單人對話（solo-dialogue）那一列，新增課程、單人活動、雷達、TTS 四列 | 每一項落地時同步更新 |
 

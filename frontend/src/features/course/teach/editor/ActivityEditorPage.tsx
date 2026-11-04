@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../../../../contract/classroomClient'
 import type { components } from '../../../../contract/classroomTypes'
@@ -75,6 +75,8 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
   const contentLocked = mode === 'locked' || mode === 'readonly'
   const [form, setForm] = useState<ActivityForm>(() => view ? fromDraft(view.draft) : emptyForm())
   const [dirty, setDirty] = useState(false)
+  // 每次改表單加一：存檔回來時，送出後又改過的內容不算已存，草稿與未存狀態要留著
+  const edits = useRef(0)
   const [selected, setSelected] = useState(form.questions[0]?.id ?? '')
   const [baseline] = useState(form)
   // 前端 validate 找到的問題，打字時補好就拿掉；後端回的問題留到下一次送出
@@ -96,7 +98,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
 
   const draftKey = mode === 'readonly' || !account ? null
     : activityDraftKey(account.id, view ? { kind: 'activity', activityId: view.id } : { kind: 'new', courseId: course.id })
-  const recovery = useActivityDraftRecovery({ key: draftKey, form, setForm: restored => { setForm(restored); setDirty(true) }, dirty, baseline, ignoreIds: !view })
+  const recovery = useActivityDraftRecovery({ key: draftKey, form, setForm: restored => { edits.current += 1; setForm(restored); setDirty(true) }, dirty, baseline, ignoreIds: !view })
 
   useEffect(() => {
     if (!focusField) return
@@ -105,6 +107,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
   }, [focusField])
 
   function change(next: ActivityForm, select?: string) {
+    edits.current += 1
     setForm(next)
     setDirty(true)
     if (select) setSelected(select)
@@ -175,12 +178,20 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     try { await work() } catch (error) { await rejected(error) } finally { setBusy(false) }
   }
 
+  /** The server has what was sent; only clear the local draft when nothing changed since. */
+  async function saved(sent: number): Promise<boolean> {
+    if (edits.current !== sent) return false
+    await recovery.clear()
+    setDirty(false)
+    return true
+  }
+
   async function saveNew(publish: boolean) {
     if (!check()) return
     await run(async () => {
+      const sent = edits.current
       const created: View = await api(`/courses/${course.id}/activities`, 'POST', draftBody())
-      await recovery.clear()
-      setDirty(false)
+      await saved(sent)
       if (!publish) return navigate(`/teach/activities/${created.id}/edit`, { replace: true, state: { notice: 'savedToList' } })
       try {
         await api(`/activities/${created.id}/publish`, 'POST')
@@ -194,10 +205,10 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
   async function saveExisting(publish: boolean) {
     if (!view || !check()) return
     await run(async () => {
+      const sent = edits.current
       await api(`/activities/${view.id}`, 'PUT', draftBody())
-      await recovery.clear()
-      setDirty(false)
-      if (!publish) {
+      const current = await saved(sent)
+      if (!publish || !current) {
         setNotice(t('notices.saved'))
         return
       }
@@ -224,9 +235,9 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     // 沒有改任何東西：和成功一樣回課程頁，不送 PATCH
     if (Object.keys(body).length === 0) return navigate(coursePath)
     await run(async () => {
+      const sent = edits.current
       await api(`/activities/${view.id}`, 'PATCH', body)
-      await recovery.clear()
-      setDirty(false)
+      if (!(await saved(sent))) return setNotice(t('notices.saved'))
       navigate(coursePath)
     })
   }

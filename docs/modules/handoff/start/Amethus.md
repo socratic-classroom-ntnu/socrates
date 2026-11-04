@@ -9,7 +9,9 @@
 4. 在團隊 Discord 回報你的第一個 PR 要做什麼。
 
 ## 你的第一個 PR
-在 `app/modules/contract/` 建立「新端點檢查表」，並在 reason code 目錄加入 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`，每個都附前端要顯示的文字。之後 B、C 包每開一個新端點，你審三件事：response_model、reason code、型別重產後沒有 diff。
+在 `backend/app/modules/contract/` 建立「新端點檢查表」。之後 B、C 包每開一個新端點，你審三件事：response_model、reason code、型別重產後沒有 diff。
+
+`GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY` 不預先登記；每個 code 由第一次 raise 它的 B、C 包 PR 同時加入 `REASON_CODES` 與 `frontend/src/contract/errorText.ts`，你負責審目錄、前端文字與 raise 位置三者一致。
 
 ## 你這包的工作（細節見 D-contract.md）
 - 型別產生器為每個端點產出 request／response 型別；前端 client 依 path＋method 帶型別；錯誤碼產成 TS 型別。

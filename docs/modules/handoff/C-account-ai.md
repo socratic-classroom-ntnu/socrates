@@ -5,7 +5,7 @@
 C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding 都從這包出來，B 包的呼叫端會等你的契約。建議第一個 PR 先合「型別與函式簽名」，實作再跟上。
 
 ## 起點
-- 分支：`backend/Courecta/main`（已經建好，內含為你訂製的交接包 `docs/modules/handoff/Courecta/`：README 與 TASKS）。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Courecta/main`（已經建好）。為你訂製的交接包在 `docs/modules/handoff/Courecta/`：README 與 TASKS。做完一個功能就 PR 到 `backend/main`。
 - 一個 PR 只動一個模組，送出前先跑下方的檢查。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/NEW-FEATURES.md`、`docs/classroom/PROMPT-DESIGN.md`、`docs/classroom/LLM-OUTPUT-SCHEMA.md`。
 

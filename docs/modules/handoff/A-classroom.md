@@ -1,11 +1,11 @@
 # A 包：課堂
 
-模組：classroom-core、group-dialogue、analytics（後端）。負責人：待定
+模組：classroom-core、group-dialogue、analytics（後端）。負責人：Hsy
 
 A 包是全班課堂與分組課。這一輪的六項新功能主要落在單人活動（B、C 包）。A 包先把現有待辦清完，等單人活動的旗標上線後，再把同一套旗標接到分組課。
 
 ## 起點
-- 分支：負責人確定後，從 `backend/main` 開 `backend/<名字>`，做完一段就 PR 到 `backend/main`。
+- 分支：`backend/Hsy`（已經建好，內含這份交接文件）。開發都在這條分支上，做完一段就 PR 到 `backend/main`。
 - 一個 PR 只動一個模組，送出前先跑下方的檢查。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/STATE-MACHINE.md`、`docs/classroom/LLM-OUTPUT-SCHEMA.md`、`docs/classroom/NEW-FEATURES.md`。
 
@@ -32,7 +32,6 @@ A 包是全班課堂與分組課。這一輪的六項新功能主要落在單人
     - `POST /api/v2/groups/classrooms/{rid}/ai-students`
     - `POST /api/v2/groups/classrooms/{rid}/ai-students/clear`
     - `POST /api/v2/suggestions/other`
-  - 教師按「結束本組課堂」要能結束分組課：命令路由的允許清單需要包含 `end`（`group_run` 已經有結束的邏輯；回歸測試 `tests/classroom/test_group_end_regression.py`）。若 #68 合入時已修好，這一項刪掉。
 
 ### Analytics（`analytics`）
 - 做什麼：教師分析，即分組課的證據投影（`/groups/classrooms/{id}/analysis`）。

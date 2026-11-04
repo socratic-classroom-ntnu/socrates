@@ -4,8 +4,8 @@
 
 | 包 | 名稱 | 模組 | 負責人 | 分支 | 文件 |
 |---|---|---|---|---|---|
-| A | 課堂 | classroom-core、group-dialogue、analytics | 待定 | — | [A-classroom.md](A-classroom.md) |
-| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Hsy | `backend/Hsy` | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
+| A | 課堂 | classroom-core、group-dialogue、analytics | Hsy | `backend/Hsy` | [A-classroom.md](A-classroom.md) |
+| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Arthur | — | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
 | C | 帳號與 AI | identity-access、ai-providers、llm-runtime | Courecta | `backend/Courecta` | [C-account-ai.md](C-account-ai.md) |
 | D | 對接 | contract | Ken | `backend/Ken` | [D-contract.md](D-contract.md) |
 

@@ -1,9 +1,9 @@
 # B 包：課程、單人活動與底層
 
-模組：course-management、solo-activity、content-authoring、platform、app-shell（後端）。負責人：Hsy
+模組：course-management、solo-activity、content-authoring、platform、app-shell（後端）。負責人：Arthur
 
 ## 起點
-- 分支：`backend/Hsy`（已經建好，內容＝#69 的版本加上這份交接文件）。開發都在這條分支上，做完一段就 PR 到 `backend/main`。
+- 分支：從 `backend/main` 開，做完一段就 PR 到 `backend/main`。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/NEW-FEATURES.md`、`docs/classroom/PROMPT-DESIGN.md`。
 
 ## 範圍與現有待辦
@@ -17,7 +17,7 @@
 - 做什麼：學生在課程活動裡和蘇格拉底導師一對一對話，包含確認統整、改變立場、進度，以及給教師的統計。
 - 可寫的檔案：`backend/app/modules/solo_activity/`
 - 依賴：platform、identity-access、course-management、ai-providers、llm-runtime
-- 現有待辦：學生確認最後一題後只能送出回顧，但 `submit_review` 目前回 501（回歸測試 `tests/solo_activity/test_review_completion_regression.py`）。這一輪由「最終統整」取代。
+- 現況：學生確認最後一題後按「送出回顧」，作答直接進入 `completed`（過渡做法）。這一輪由「最終統整」取代。
 
 ### Content Authoring（`content-authoring`）
 - 做什麼：劇本與題目（`/scripts`）、題庫、AI 協助出題。

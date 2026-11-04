@@ -4,14 +4,14 @@
 
 | 包 | 名稱 | 模組 | 負責人 | 分支 | 文件 |
 |---|---|---|---|---|---|
-| A | 課堂 | classroom-core、group-dialogue、analytics | Hsy | `backend/Hsy` | [A-classroom.md](A-classroom.md) |
-| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Ken | `backend/Ken` | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
-| C | 帳號與 AI | identity-access、ai-providers、llm-runtime | Courecta | `backend/Courecta` | [C-account-ai.md](C-account-ai.md) |
-| D | 對接 | contract | Amethus | `backend/Amethus` | [D-contract.md](D-contract.md) |
+| A | 課堂 | classroom-core、group-dialogue、analytics | Hsy | `backend/Hsy/main` | [A-classroom.md](A-classroom.md) |
+| B | 課程、單人活動與底層 | course-management、solo-activity、content-authoring、platform、app-shell | Ken | `backend/Ken/main` | [B-authoring-solo-base.md](B-authoring-solo-base.md) |
+| C | 帳號與 AI | identity-access、ai-providers、llm-runtime | Courecta | `backend/Courecta/main` | [C-account-ai.md](C-account-ai.md) |
+| D | 對接 | contract | Amethus | `backend/Amethus/main` | [D-contract.md](D-contract.md) |
 
 ## 後端開發流程
 1. Arthur 收到需求，拆成各模組的改動，分給各包。
-2. 各包在自己的分支 `backend/<名字>` 上開發。分支已經建好，內容是 `backend/main` 加上你自己的交接包（`docs/modules/handoff/start/<名字>.md`）。
+2. 各包從自己的分支 `backend/<名字>/main` 開始。分支已經建好，內容是 `backend/main` 加上你自己的交接包（`docs/modules/handoff/start/<名字>.md`）。`backend/<名字>/` 底下是你自己的空間，可以自由開分支（例如 `backend/<名字>/<主題>`），把 `backend/<名字>/main` 當成根；沒有特別允許的話，對外只 PR 到 `backend/main`。
 3. 做完一個功能（或功能裡可以獨立合入的一段），就從自己的分支 PR 到 `backend/main`。
 4. Arthur 審完後合進 `backend/main`。`backend/main` 的改動再以功能為單位重新打包，每個功能一個 PR 給 `develop`；功能做完整就進，不累積。
 5. 改動 demo 過之後，PR 到 `stage`。

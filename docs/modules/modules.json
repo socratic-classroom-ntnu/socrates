@@ -328,6 +328,27 @@
       "frontend": [
         "media"
       ]
+    },
+    {
+      "name": "課程與活動（/courses/*、/course-join/*、/activities/*）",
+      "backend": "course-management",
+      "source": "backend/app/modules/course_management/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "課程首頁、選課、活動編輯與管理",
+      "frontend": [
+        "course"
+      ]
+    },
+    {
+      "name": "單人活動（/solo/*）",
+      "backend": "solo-activity",
+      "source": "backend/app/modules/solo_activity/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "學生單人活動",
+      "frontend": [
+        "solo-activity",
+        "course"
+      ]
     }
   ],
   "frontend": [
@@ -339,8 +360,8 @@
       "paths": [
         "frontend/src/App.tsx",
         "frontend/src/main.tsx",
-        "frontend/src/ClassroomApp.tsx",
-        "frontend/src/teacherRoute.ts"
+        "frontend/src/app/",
+        "frontend/src/testing/"
       ],
       "uses": [
         "*"
@@ -370,6 +391,10 @@
         "frontend/src/shared/personalStatus.ts",
         "frontend/src/shared/clipboard.test.ts",
         "frontend/src/shared/clipboard.ts",
+        "frontend/src/shared/shellContext.ts",
+        "frontend/src/shared/useIsPhone.ts",
+        "frontend/src/shared/next.ts",
+        "frontend/src/i18n/",
         "frontend/src/features/dev-console/",
         "frontend/src/testkit.ts",
         "frontend/src/setupTests.ts",
@@ -416,8 +441,7 @@
       "about": "登入、註冊、Email 驗證、重設密碼畫面。",
       "paths": [
         "frontend/src/features/auth/",
-        "frontend/src/features/entrance/",
-        "frontend/src/entryRole.ts"
+        "frontend/src/features/entrance/"
       ],
       "uses": [
         "platform",
@@ -541,6 +565,36 @@
         "contract"
       ],
       "figma": "Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡",
+      "todo": []
+    },
+    {
+      "id": "course",
+      "name": "課程",
+      "status": "ok",
+      "about": "課程：首頁課程卡片、輸入課程代碼選課、學生課程頁、老師的課程頁、活動編輯器、即時進度與分析。",
+      "paths": [
+        "frontend/src/features/course/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth",
+        "solo-activity"
+      ],
+      "todo": []
+    },
+    {
+      "id": "solo-activity",
+      "name": "單人活動",
+      "status": "ok",
+      "about": "學生在課程活動裡逐題跟 AI 導師一對一對話：選立場、對話、確認卡、進度。",
+      "paths": [
+        "frontend/src/features/solo-activity/"
+      ],
+      "uses": [
+        "platform",
+        "contract"
+      ],
       "todo": []
     }
   ]

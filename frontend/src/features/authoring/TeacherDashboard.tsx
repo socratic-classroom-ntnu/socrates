@@ -6,9 +6,10 @@ import '../../styles/teacher-dashboard.css'
 import { ClassroomLibrary } from './ClassroomLibrary'
 import { ProviderSettings } from '../ai-settings/ProviderSettings'
 import { QuestionBank } from './QuestionBank'
+import { useInsideAppShell } from '../../shared/shellContext'
 
 // 一張課程卡需要的資料。/library/classrooms 目前只給 id 與 title；
-// 學生人數、主題數量、課程碼的資料來源還沒定案，拿不到時以 null 表示，卡片顯示「—」。
+// 學生人數、主題數量、教室代碼的資料來源還沒定案，拿不到時以 null 表示，卡片顯示「—」。
 export type CourseCard = {
   id: string
   title: string
@@ -65,6 +66,10 @@ type NavKey = 'home' | 'bank' | 'store' | 'settings'
 // 教師端共用外框：左側導覽列＋右側內容。個人題庫、設定頁由其他任務實作，先保留入口但不可點。
 // 外框取代了舊首頁的頂端列，所以登出要放在這裡，否則從連結直接進來的老師沒辦法離開（共用電腦尤其要緊）。
 export function TeacherShell({ active, children }: { active: NavKey; children: ReactNode }) {
+  // 包在新外框（AppShell）裡時，側邊欄與登出由外框提供，這裡只留內容區。
+  if (useInsideAppShell()) {
+    return <div className="teacher-desk teacher-desk--embedded"><main className="teacher-main" id="teacher-content">{children}</main></div>
+  }
   const items: { key: NavKey; label: string; icon: ReactNode; href?: string }[] = [
     { key: 'home', label: '首頁', icon: Icon.home, href: '/teacher/home' },
     { key: 'bank', label: '個人題庫', icon: Icon.shelf, href: '/teacher/home?view=bank' },
@@ -105,11 +110,11 @@ export function TeacherShell({ active, children }: { active: NavKey; children: R
   )
 }
 
-function CourseTile({ course, onCopied }: { course: CourseCard; onCopied: (text: string) => void }) {
+export function CourseTile({ course, onCopied }: { course: CourseCard; onCopied: (text: string) => void }) {
   const stat = (value: number | null) => (value === null ? '—' : value)
   async function copy() {
     const ok = await copyText(course.code)
-    onCopied(ok ? `已複製「${course.title}」的課程碼` : '無法存取剪貼簿，請手動選取課程碼')
+    onCopied(ok ? `已複製「${course.title}」的教室代碼` : '無法存取剪貼簿，請手動選取教室代碼')
   }
   return (
     <article className="course-tile">
@@ -132,12 +137,12 @@ function CourseTile({ course, onCopied }: { course: CourseCard; onCopied: (text:
         {course.code ? (
           <>
             <code>#{course.code}</code>
-            <button type="button" className="course-copy" aria-label={`複製課程碼 ${course.code}`} onClick={() => void copy()}>
+            <button type="button" className="course-copy" aria-label={`複製教室代碼 ${course.code}`} onClick={() => void copy()}>
               {Icon.copy}
             </button>
           </>
         ) : (
-          <span className="course-nocode">尚無課程碼<span> · 開課時產生</span></span>
+          <span className="course-nocode">尚無教室代碼<span> · 開課時產生</span></span>
         )}
       </footer>
     </article>

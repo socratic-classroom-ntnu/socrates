@@ -1,4 +1,4 @@
-/* 教室門口場景：身份選擇（RoleSelect）、登入頁（Auth，學生／老師兩種外觀）與輸入課程碼頁（JoinDoor）共用。 */
+/* 教室門口場景：輸入教室代碼頁（JoinDoor）。 */
 .entrance{
   --door-wall-top:#e8e0d2;--door-wall-bottom:#d4c8b5;
   --door-wainscot:#7b5b3f;--door-wainscot-line:#6a4c33;--door-rail:#5e432d;--door-floor:#3d3128;

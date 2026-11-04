@@ -13,6 +13,12 @@
 - `frontend/src/components/`
 - `frontend/src/shared/phaseLabels.ts`
 - `frontend/src/shared/personalStatus.ts`
+- `frontend/src/shared/clipboard.test.ts`
+- `frontend/src/shared/clipboard.ts`
+- `frontend/src/shared/shellContext.ts`
+- `frontend/src/shared/useIsPhone.ts`
+- `frontend/src/shared/next.ts`
+- `frontend/src/i18n/`
 - `frontend/src/features/dev-console/`
 - `frontend/src/testkit.ts`
 - `frontend/src/setupTests.ts`

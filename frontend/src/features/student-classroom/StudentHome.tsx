@@ -4,8 +4,11 @@ import { errorMessage } from '../../contract/errorText';
 import { ProviderSettings } from '../ai-settings/ProviderSettings';
 import { VerificationGate } from '../auth/VerificationGate';
 import { JoinDoor } from '../entrance/JoinDoor';
+import { useInsideAppShell } from '../../shared/shellContext';
 
 export function Home({ user }) {
+  // 包在側欄外框裡時，帳號與導覽由外框提供，AI 連線設定不再畫自己的頂端列
+  const insideShell = useInsideAppShell();
   const [mode, setMode] = useState(new URLSearchParams(location.search).get('view') === 'providers' ? 'providers' : 'student');
   const [rooms, setRooms] = useState([]), [note, setNote] = useState('');
   const refresh = useCallback(async () => {
@@ -14,7 +17,7 @@ export function Home({ user }) {
   }, []);
   useEffect(() => { if (user.verified) void refresh(); }, [refresh, user.verified]);
   if (!user.verified) return <VerificationGate user={user} onVerified={() => location.reload()}/>;
-  if (mode === 'providers') return <main className="sc-home"><header className="sc-top"><a href="/" className="sc-wordmark">Socrates<span>共思教室</span></a><span>{user.username}</span><button className="quiet" onClick={() => setMode('student')}>加入與近期課堂</button></header><ProviderSettings/></main>;
+  if (mode === 'providers') return <main className="sc-home">{!insideShell && <header className="sc-top"><a href="/" className="sc-wordmark">Socrates<span>共思教室</span></a><span>{user.username}</span><button className="quiet" onClick={() => setMode('student')}>加入與近期課堂</button></header>}<ProviderSettings/></main>;
   return <JoinDoor user={user} rooms={rooms} note={note} onMode={next => {
     if (next === 'teacher') location.href = '/teacher/home';
     else setMode('providers');

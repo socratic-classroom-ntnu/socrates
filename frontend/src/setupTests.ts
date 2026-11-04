@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { TextDecoder, TextEncoder } from 'node:util';
 import { vi } from './testkit';
+import { applyLocale } from './i18n';
 Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
 Object.defineProperty(globalThis, 'TextDecoder', { configurable: true, value: TextDecoder });
 const stored = new Map();
@@ -15,5 +16,6 @@ Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query)
         addEventListener() { }, removeEventListener() { }, dispatchEvent() { return true; },
     }) });
 Element.prototype.scrollIntoView = jest.fn();
-beforeEach(() => { localStorage.clear(); });
+// Tests read zh-Hant text unless they switch language themselves; jsdom reports en-US.
+beforeEach(async () => { localStorage.clear(); await applyLocale('zh-Hant'); localStorage.clear(); });
 afterEach(() => { cleanup(); jest.restoreAllMocks(); });

@@ -12,8 +12,8 @@
 檔案範圍：
 - `frontend/src/App.tsx`
 - `frontend/src/main.tsx`
-- `frontend/src/ClassroomApp.tsx`
-- `frontend/src/teacherRoute.ts`
+- `frontend/src/app/`
+- `frontend/src/testing/`
 
 契約：
 - —

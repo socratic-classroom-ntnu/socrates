@@ -22,6 +22,10 @@ function fetchAdapter(credentials: RequestCredentials) {
 
     const response = await fetch(axios.getUri(config), init)
     const contentType = response.headers?.get?.('content-type') || ''
+    // 成功而且沒有 body（DELETE 的 204）：回傳 null，不當成格式錯誤
+    if (response.ok && (response.status === 204 || response.headers?.get?.('content-length') === '0')) {
+      return { data: null, status: response.status, statusText: response.statusText || '', headers: { 'content-type': contentType }, config, request: null }
+    }
     let data = null
     if (config.responseType === 'text' && typeof response.text === 'function') {
       data = await response.text()

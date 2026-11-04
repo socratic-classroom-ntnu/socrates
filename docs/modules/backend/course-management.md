@@ -12,7 +12,7 @@
 - `backend/app/modules/course_management/`
 
 契約：
-- —
+- 課程與活動（/courses/*、/course-join/*、/activities/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

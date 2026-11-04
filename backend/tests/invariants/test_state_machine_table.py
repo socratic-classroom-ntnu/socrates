@@ -1,6 +1,6 @@
 import pytest
 
-from app.modules.solo_dialogue.orchestrator.orchestrator import ConversationEnded, Orchestrator
+from app.modules.solo_dialogue.orchestrator import ConversationEnded, Orchestrator
 from tests.orchestrator.conftest import FakeGateway, make_ladder, obs, speak
 
 XFAIL_LINE_A = pytest.mark.xfail(strict=True, reason="線 A 實作：路口與硬上限")

@@ -3,9 +3,9 @@ import subprocess
 import sys
 
 PROVIDER_MODULES = (
-    "app.modules.llm_runtime.tutor.classroom_provider",
-    "app.modules.llm_runtime.tutor.classroom_gateway",
-    "app.modules.ai_providers.api.routes.provider_profiles",
+    "app.modules.ai_providers.classroom_provider",
+    "app.modules.ai_providers.classroom_gateway",
+    "app.modules.ai_providers.routes",
 )
 
 
@@ -16,15 +16,24 @@ def run(code: str) -> str:
 
 def test_classroom_orchestrator_imports_no_provider_module():
     code = (
-        "import sys, app.modules.classroom_core.orchestrator.classroom; "
+        "import sys, app.modules.classroom_core.orchestrator; "
         f"print([m for m in {PROVIDER_MODULES!r} if m in sys.modules])"
     )
     assert run(code) == "[]"
 
 
-def test_fresh_sqlite_schema_from_storage_alone_has_every_table():
+def test_platform_storage_loads_no_business_module():
     code = (
-        "from sqlalchemy import inspect; from app.modules.platform.repositories import classroom_storage as storage; "
+        "import sys, app.modules.platform.storage; "
+        "print(sorted(m for m in sys.modules if m.startswith('app.modules.') and not m.startswith('app.modules.platform')))"
+    )
+    assert run(code) == "[]"
+
+
+def test_fresh_sqlite_schema_from_the_app_shell_model_registry_has_every_table():
+    code = (
+        "from sqlalchemy import inspect; from app.modules.platform import storage as storage; "
+        "import app.modules.app_shell.models; "
         "e = storage.configure('sqlite+pysqlite:///:memory:', create=True); "
         "print(sorted(inspect(e).get_table_names()))"
     )
@@ -34,6 +43,9 @@ def test_fresh_sqlite_schema_from_storage_alone_has_every_table():
         "session_provider_secrets",
         "account_ai_settings",
         "ai_students",
+        "accounts",
+        "classroom_runs",
+        "llm_jobs",
         "classroom_assets",
         "classroom_sessions",
         "library_receipts",

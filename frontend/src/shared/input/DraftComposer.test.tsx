@@ -60,3 +60,44 @@ test('麥克風逐字輸入最後停回文字框', async () => {
     expect(screen.getByRole('textbox')).toHaveValue('原始內容 因為值得');
     Object.defineProperty(window, 'SpeechRecognition', { configurable: true, writable: true, value: undefined });
 });
+describe('語音辨識失敗時說清楚原因', () => {
+    let current;
+    function register(r) { current = r; }
+    class SpeechMock {
+        lang = '';
+        continuous = false;
+        interimResults = false;
+        onresult = undefined;
+        onend = undefined;
+        onerror = undefined;
+        start() { register(this); }
+        stop() { }
+        abort() { }
+    }
+    beforeEach(() => { Object.defineProperty(window, 'SpeechRecognition', { configurable: true, writable: true, value: SpeechMock }); });
+    afterEach(() => { Object.defineProperty(window, 'SpeechRecognition', { configurable: true, writable: true, value: undefined }); });
+    test.each([
+        ['network', /連不到語音辨識服務/],
+        ['not-allowed', /麥克風沒有被允許/],
+        ['audio-capture', /找不到可用的麥克風/],
+        ['no-speech', /沒有聽到聲音/],
+    ])('%s', async (code, text) => {
+        render(<Harness />);
+        fireEvent.click(screen.getByRole('button', { name: '開始語音輸入' }));
+        await act(async () => { current.onerror({ error: code }); current.onend?.(); });
+        expect(screen.getByText(text)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '開始語音輸入' })).toBeInTheDocument();
+    });
+    test('沒有任何結果就結束時提示再試', async () => {
+        render(<Harness />);
+        fireEvent.click(screen.getByRole('button', { name: '開始語音輸入' }));
+        await act(async () => { current.onend(); });
+        expect(screen.getByText(/沒有辨識到語音/)).toBeInTheDocument();
+    });
+});
+test('輸入框帶長度上限：預設 12000，呼叫端可改（彈幕 500）', () => {
+    const { rerender } = render(<DraftComposer value="" onChange={() => undefined} onSend={() => undefined}/>);
+    expect(screen.getByRole('textbox')).toHaveAttribute('maxLength', '12000');
+    rerender(<DraftComposer value="" onChange={() => undefined} onSend={() => undefined} maxLength={500}/>);
+    expect(screen.getByRole('textbox')).toHaveAttribute('maxLength', '500');
+});

@@ -32,9 +32,29 @@ export type DraftComposerProps = {
   onTranscript?: (text: string, meta: { adapter: string; locale: string; confidence?: number; final: boolean }) => void
   ghostText?: string
   onGhostAccepted?: (text: string) => void
+  /** 與後端欄位上限一致（作答／導師回覆 12000、彈幕 500）。 */
+  maxLength?: number
 }
 
-export function DraftComposer({ value, onChange, onSend, enabled = true, busy = false, canSend, label = '文字輸入', placeholder = '輸入文字或使用語音…', autoFocus = false, onListening, onTranscript, ghostText = '', onGhostAccepted }: DraftComposerProps) {
+/** Web Speech 錯誤碼 → 使用者看得懂、做得到的說明。 */
+export function speechErrorNote(code) {
+    switch (code) {
+        case 'not-allowed':
+        case 'service-not-allowed':
+            return '麥克風沒有被允許：請在網址列左側的網站設定允許麥克風，再按麥克風。';
+        case 'network':
+            return '這個瀏覽器連不到語音辨識服務（Helium、Brave 等去除 Google 服務的瀏覽器沒有內建語音辨識）；請改用 Chrome 或 Edge，或直接打字。';
+        case 'audio-capture':
+            return '找不到可用的麥克風，請確認麥克風已接上且沒有被其他程式占用。';
+        case 'no-speech':
+            return '沒有聽到聲音，請靠近麥克風再按一次。';
+        case 'language-not-supported':
+            return '這個瀏覽器的語音辨識不支援繁體中文，請改用 Chrome 或 Edge。';
+        default:
+            return `語音辨識中斷（${code || '未知原因'}）；目前文字已保留，可以再按一次或直接打字。`;
+    }
+}
+export function DraftComposer({ value, onChange, onSend, enabled = true, busy = false, canSend, label = '文字輸入', placeholder = '輸入文字或使用語音…', autoFocus = false, onListening, onTranscript, ghostText = '', onGhostAccepted, maxLength = 12000 }: DraftComposerProps) {
     const id = useId(), [active, setActive] = useState(false), [sending, setSending] = useState(false), [note, setNote] = useState('');
     const recognition = useRef(null), lock = useRef(false), latest = useRef(value);
     const callbacks = useRef({ onChange, onSend, onListening, onTranscript });
@@ -91,20 +111,23 @@ export function DraftComposer({ value, onChange, onSend, enabled = true, busy = 
             return;
         }
         const r = new Ctor(), base = latest.current;
+        let heard = false, failed = false;
         recognition.current = r;
         r.lang = 'zh-TW';
         r.continuous = false;
         r.interimResults = true;
         r.onresult = e => { if (recognition.current !== r)
-            return; const result = transcriptText(base, e); latest.current = result.text; callbacks.current.onChange(result.text); callbacks.current.onTranscript?.(result.text, { adapter: 'browser-speech', locale: 'zh-TW', confidence: result.confidence, final: result.final }); };
+            return; heard = true; const result = transcriptText(base, e); latest.current = result.text; callbacks.current.onChange(result.text); callbacks.current.onTranscript?.(result.text, { adapter: 'browser-speech', locale: 'zh-TW', confidence: result.confidence, final: result.final }); };
         r.onend = () => { if (recognition.current === r) {
             recognition.current = null;
             end();
+            if (!heard && !failed)
+                setNote('沒有辨識到語音，請靠近麥克風再按一次；也可以直接打字。');
         } };
-        r.onerror = e => { if (recognition.current === r) {
+        r.onerror = e => { failed = true; if (recognition.current === r) {
             recognition.current = null;
             end();
-            setNote(e.error === 'not-allowed' ? '請在瀏覽器網站設定允許麥克風，再按左側麥克風。' : '請確認麥克風與語音服務連線；目前文字已保留。');
+            setNote(speechErrorNote(e.error));
         } };
         try {
             r.start();
@@ -133,14 +156,14 @@ export function DraftComposer({ value, onChange, onSend, enabled = true, busy = 
     <div className="socratic-composer-row">
       <button className={'socratic-mic ' + (active ? 'listening' : '')} type="button" aria-label={active ? '停止語音輸入' : '開始語音輸入'} aria-pressed={active} disabled={!enabled || busy} title={supported ? '語音輸入' : '文字輸入可用；語音請使用支援的瀏覽器'} onClick={toggle}><MicIcon active={active}/></button>
       <label className="socratic-visually-hidden" htmlFor={id}>{label}</label>
-      <textarea id={id} autoFocus={autoFocus} value={value} placeholder={ghostText && !value ? ghostText : placeholder} disabled={!enabled || busy} onChange={e => { if (active)
+      <textarea id={id} maxLength={maxLength} autoFocus={autoFocus} value={value} placeholder={ghostText && !value ? ghostText : placeholder} disabled={!enabled || busy} onChange={e => { if (active)
         stop(true); latest.current = e.target.value; onChange(e.target.value); }} onKeyDown={e => { if (e.key === 'Tab' && ghostText && !value) { e.preventDefault(); latest.current = ghostText; onChange(ghostText); onGhostAccepted?.(ghostText); return; } if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
         e.preventDefault();
         void send();
     } }}/>
-      <button className="socratic-enter" type="button" aria-label="傳送" title="Enter 傳送；Shift＋Enter 換行" disabled={!enabled || busy || sending || (canSend === undefined ? !value.trim() : !canSend)} onClick={() => void send()}><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 4v8a3 3 0 0 1-3 3H5m5-5-5 5 5 5"/></svg></button>
+      <button className="socratic-enter" type="button" aria-label="傳送" title="Enter 傳送；Shift＋Enter 換行" disabled={!enabled || busy || sending || (canSend === undefined ? !value.trim() : !canSend)} onClick={() => void send()}><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 4v8a3 3 0 0 1-3 3H5m5-5-5 5 5 5"/></svg><span>{sending || busy ? '送出中' : '送出'}</span></button>
     </div>
-    {ghostText && !value && <button type="button" className="r88-ghost-accept" onClick={() => { latest.current = ghostText; onChange(ghostText); onGhostAccepted?.(ghostText); }}>採用 AI 奇思妙想</button>}
+    {ghostText && !value && <button type="button" className="ghost-accept" onClick={() => { latest.current = ghostText; onChange(ghostText); onGhostAccepted?.(ghostText); }}>採用 AI 奇思妙想</button>}
     <div className="socratic-composer-caption"><span role="status" aria-live="polite">{active ? '正在聆聽…' : note || '文字／語音輸入'}</span><span>Enter 傳送 · Shift＋Enter 換行</span></div>
   </div>;
 }

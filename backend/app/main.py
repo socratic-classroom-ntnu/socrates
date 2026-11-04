@@ -4,7 +4,7 @@ import subprocess
 
 from fastapi import FastAPI
 
-from app.modules.solo_dialogue.api.routes import (
+from app.modules.solo_dialogue.routes import (
     history,
     messages,
     room,
@@ -12,11 +12,8 @@ from app.modules.solo_dialogue.api.routes import (
     summaries,
     transcripts,
 )
-from app.modules.solo_dialogue.api.schemas import ReleaseView
-from app.modules.platform.config import settings
-from app.modules.content_authoring.ladders.repository import LadderRepository
-
-ladder_repository = LadderRepository.load(settings.ladder_path)
+from app.modules.solo_dialogue.schemas import ReleaseView
+from app.modules.solo_dialogue.deps import ladder_repository as ladder_repository
 
 app = FastAPI(title="Socrates API", version="0.2.0")
 

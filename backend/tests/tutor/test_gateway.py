@@ -1,6 +1,6 @@
-from app.modules.content_authoring.domain.ladder import Stage
-from app.modules.llm_runtime.domain.tutor import ProviderRequest, ProviderResponse
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.content_authoring.ladder import Stage
+from app.modules.solo_dialogue.tutor_contracts import ProviderRequest, ProviderResponse
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
 
 STAGE = Stage(
     key="s1",
@@ -45,4 +45,61 @@ def test_retries_once_then_succeeds():
     gateway = TutorGateway(provider)
     turn = gateway.respond(STAGE, [], turn_index=0)
     assert turn.reply_text == "為什麼？"
+    assert provider.calls == 2
+
+
+def test_summary_retries_and_rejects_out_of_scope_stances():
+    import pytest
+
+    from app.modules.solo_dialogue.tutor_gateway import TutorUnavailable
+
+    provider = FakeProvider(
+        [
+            {
+                "core_principle": "fixture",
+                "tension": "",
+                "stance_by_stage": [
+                    {"stage_key": "unreached", "label": "未明", "note": "future fixture"}
+                ],
+                "shifted": False,
+            }
+        ]
+    )
+    with pytest.raises(TutorUnavailable, match="outside the reached scope"):
+        TutorGateway(provider).summarize([], ("s1",))
+    assert provider.calls == 2
+
+
+def test_summary_rejects_rule_leaks_after_both_attempts():
+    import pytest
+
+    from app.modules.llm_runtime import iron_rules
+    from app.modules.solo_dialogue.tutor_gateway import TutorUnavailable
+
+    leaked = {
+        "core_principle": iron_rules.rules_for("solo_summary"),
+        "tension": "",
+        "stance_by_stage": [{"stage_key": "s1", "label": "未明", "note": "fixture"}],
+        "shifted": False,
+    }
+    assert iron_rules.check("solo_summary", leaked) == "LEAKED_RULES"
+    provider = FakeProvider([leaked])
+    with pytest.raises(TutorUnavailable, match="LEAKED_RULES"):
+        TutorGateway(provider).summarize([], ("s1",))
+    assert provider.calls == 2
+
+
+def test_summary_recovers_with_a_safe_second_attempt():
+    from app.modules.llm_runtime import iron_rules
+
+    safe = {
+        "core_principle": "學生以自己的理由說明選擇",
+        "tension": "",
+        "stance_by_stage": [{"stage_key": "s1", "label": "未明", "note": "fixture"}],
+        "shifted": False,
+    }
+    leaked = {**safe, "core_principle": iron_rules.rules_for("solo_summary")}
+    provider = FakeProvider([leaked, safe])
+    summary = TutorGateway(provider).summarize([], ("s1",))
+    assert summary.model_dump() == safe
     assert provider.calls == 2

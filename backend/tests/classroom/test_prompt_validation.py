@@ -1,11 +1,13 @@
 import json
+import shutil
 
 import pytest
 
-from app.modules.llm_runtime.tutor import prompts
+from app.modules.llm_runtime import prompts
 
 JOB_KINDS = [
     "focused_tutor",
+    "personal_tutor",
     "dynamic_question",
     "question_summary",
     "class_summary",
@@ -17,10 +19,9 @@ ROOT_KEYS = ["version", "skill_set_version", "skills", "programs"]
 
 def broken_root(tmp_path, mutate):
     (tmp_path / "prompts/classroom").mkdir(parents=True)
-    (tmp_path / "skills/classroom").mkdir(parents=True)
+    # 技能檔（含鐵則的 L0／L1／L2）照原樣複製；要測的壞法只動 programs.json。
+    shutil.copytree(prompts.ROOT / "skills/classroom", tmp_path / "skills/classroom")
     spec = json.loads((prompts.ROOT / "prompts/classroom/programs.json").read_text())
-    for name in spec["skills"]:
-        (tmp_path / "skills/classroom" / name).write_text("x")
     mutate(spec)
     (tmp_path / "prompts/classroom/programs.json").write_text(json.dumps(spec))
     return tmp_path

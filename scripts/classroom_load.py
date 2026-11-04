@@ -19,10 +19,15 @@ sys.path.insert(0,str(ROOT/'backend'))
 import httpx
 import websockets
 from sqlalchemy import select
-from app.modules.identity_access.services.classroom_auth import COOKIE, HASHER
-from app.modules.classroom_core.api.classroom_schemas import Command, JoinRoom, ScriptDocument
-from app.modules.classroom_core.services import classroom as service
-from app.modules.platform.repositories import classroom_storage as storage
+from app.modules.identity_access.auth import COOKIE, HASHER
+from app.modules.classroom_core.contracts import Command, JoinRoom
+from app.modules.content_authoring.contracts import ScriptDocument
+from app.modules.classroom_core import runtime as service
+from app.modules.platform import storage as storage
+from app.modules.app_shell import models as _models  # noqa: F401
+from app.modules.identity_access.repositories import Account, LoginSession
+from app.modules.content_authoring.repositories import Script
+from app.modules.classroom_core.repositories import Answer
 
 DOC=ScriptDocument.model_validate({'title':'教室 2×60 同步驗收','questions':[{'id':'q1','title':'共同抉擇','scenario':'你會優先保護哪一種價值？','duration_seconds':60,'max_focus_turns':1,'focus_response_seconds':5,'options':[{'id':'a','text':'結果'},{'id':'b','text':'責任'},{'id':'c','text':'關係'}]}],'live_llm_call_budget':0}).model_dump()
 
@@ -35,18 +40,18 @@ def fixtures():
     pw=HASHER.hash('Fixture-password-2026')
     with storage.transaction() as db:
         for ri in range(2):
-            a=storage.Account(id=str(uuid4()),username=f'load-teacher-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True)
+            a=Account(id=str(uuid4()),username=f'load-teacher-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True)
             db.add(a);db.flush()
-            s=storage.Script(id=str(uuid4()),owner_id=a.id,document=DOC,revision=1);db.add(s);db.flush()
+            s=Script(id=str(uuid4()),owner_id=a.id,document=DOC,revision=1);db.add(s);db.flush()
             room=service.create_room(db,a,s.id);room_ids.append(room['id'])
             token=str(uuid4());csrf=str(uuid4())
-            db.add(storage.LoginSession(token_hash=storage.digest(token),account_id=a.id,csrf_token=csrf,expires_at=time.time()+3600))
+            db.add(LoginSession(token_hash=storage.digest(token),account_id=a.id,csrf_token=csrf,expires_at=time.time()+3600))
             identities.append({'room':room['id'],'account':a.id,'member':None,'role':'teacher','token':token,'csrf':csrf})
             for n in range(60):
-                a=storage.Account(id=str(uuid4()),username=f'load-student-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True);db.add(a);db.flush()
+                a=Account(id=str(uuid4()),username=f'load-student-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True);db.add(a);db.flush()
                 joined=service.join(db,a,JoinRoom(code=room['code'],alias=f'同學{n+1}'))
                 token=str(uuid4());csrf=str(uuid4())
-                db.add(storage.LoginSession(token_hash=storage.digest(token),account_id=a.id,csrf_token=csrf,expires_at=time.time()+3600))
+                db.add(LoginSession(token_hash=storage.digest(token),account_id=a.id,csrf_token=csrf,expires_at=time.time()+3600))
                 identities.append({'room':room['id'],'account':a.id,'member':joined['member_id'],'role':'student','token':token,'csrf':csrf,'option':['a','b','c'][n%3]})
     return identities,room_ids
 
@@ -87,7 +92,7 @@ async def workload(items,room_ids):
         await asyncio.gather(*(submit(i,c) for i,c in clients))
         with storage.transaction() as db:
             for room_id in room_ids:
-                rows=db.scalars(select(storage.Answer).where(storage.Answer.room_id==room_id)).all()
+                rows=db.scalars(select(Answer).where(Answer.room_id==room_id)).all()
                 assert len(rows)==60;assert len({(x.question_run_id,x.membership_id) for x in rows})==60
                 stats['answers']+=len(rows)
         stats['idempotent_replays']=120

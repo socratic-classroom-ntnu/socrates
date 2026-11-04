@@ -811,6 +811,7 @@
         "properties": {
           "ladder_id": {
             "type": "string",
+            "maxLength": 64,
             "title": "Ladder Id"
           },
           "restart_existing": {
@@ -818,6 +819,7 @@
             "title": "Restart Existing"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "ladder_id"
@@ -964,6 +966,7 @@
             "title": "Text"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "text"
@@ -1468,6 +1471,7 @@
             "title": "Confidence"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "text"

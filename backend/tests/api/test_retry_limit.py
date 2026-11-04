@@ -1,9 +1,9 @@
-import app.main as main
-from app.modules.solo_dialogue.api.deps import get_service
+from app.modules.solo_dialogue import deps
+from app.modules.solo_dialogue.deps import get_service
 from app.modules.platform.db import SessionLocal
 from app.main import app
-from app.modules.solo_dialogue.services.conversation import ConversationService
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.solo_dialogue.conversation import ConversationService
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
 
 
 def test_retry_limit_preserves_student_message(client, learner_id, exploding_service):
@@ -44,7 +44,7 @@ def test_fourth_retry_does_not_call_provider(client, learner_id):
 
     def override():
         with SessionLocal() as service_db:
-            yield ConversationService(service_db, main.ladder_repository, TutorGateway(provider))
+            yield ConversationService(service_db, deps.ladder_repository, TutorGateway(provider))
 
     app.dependency_overrides[get_service] = override
     try:

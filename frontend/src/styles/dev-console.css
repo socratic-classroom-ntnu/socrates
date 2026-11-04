@@ -1,0 +1,39 @@
+/* 開發控制台（DevConsole）：只在 debug_mode 時出現的開發者工具。
+   自帶一組深色 token（對齊 --sc-* 深色主題），不受教師端淺色外框影響；資料一律等寬字。 */
+.dev-console-toggle,.dev-console{
+  --devc-bg:#15121b;--devc-panel:#1d1924;--devc-line:#ffffff1f;--devc-ink:#f4eee7;--devc-muted:#a99db4;
+  --devc-accent:#e8c79a;--devc-error:#ff9f8a;--devc-radius:8px;
+  --devc-mono:ui-monospace,SFMono-Regular,"JetBrains Mono",Menlo,Consolas,"Noto Sans Mono CJK TC",monospace;
+}
+.dev-console-toggle{position:fixed;left:12px;bottom:12px;z-index:1000;min-height:0;padding:5px 10px;border:1px solid var(--devc-line);border-radius:999px;background:#15121bcc;color:var(--devc-muted);font:600 12px/1.4 var(--devc-mono);letter-spacing:.02em;opacity:.7;cursor:pointer;backdrop-filter:blur(6px);transition:opacity .15s,color .15s,border-color .15s}
+.dev-console-toggle:hover,.dev-console-toggle[aria-expanded=true]{opacity:1;color:var(--devc-accent);border-color:var(--devc-accent)}
+.dev-console-toggle:focus-visible,.dev-console :focus-visible{outline:2px solid var(--devc-accent);outline-offset:2px}
+.dev-console-backdrop{position:fixed;inset:0;z-index:1001;background:#0b0910a6}
+.dev-console-panel{position:fixed;top:0;bottom:0;left:0;z-index:1002;display:grid;grid-template-rows:auto 1fr auto;width:min(480px,calc(100vw - 24px));background:var(--devc-bg);color:var(--devc-ink);border-right:1px solid var(--devc-line);box-shadow:12px 0 40px #00000066;font:13px/1.55 system-ui,"Noto Sans TC",sans-serif;color-scheme:dark}
+.dev-console-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--devc-line)}
+.dev-console-head h2{margin:0;font-size:14px;font-weight:600;color:var(--devc-ink)}
+.dev-console .dev-console-close{min-height:0;padding:3px 9px;border:1px solid var(--devc-line);border-radius:var(--devc-radius);background:transparent;color:var(--devc-muted);font:12px/1.4 var(--devc-mono);cursor:pointer}
+.dev-console .dev-console-close:hover{color:var(--devc-ink);border-color:var(--devc-muted)}
+.dev-console-body{overflow:auto;padding:4px 16px 16px}
+.dev-console-body section{padding:12px 0;border-bottom:1px solid var(--devc-line)}
+.dev-console-body section:last-child{border-bottom:0}
+.dev-console-body h3{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--devc-accent)}
+.dev-console-body h3 small{font:11px var(--devc-mono);color:var(--devc-muted);letter-spacing:0}
+.dev-console-muted{margin:0;color:var(--devc-muted)}
+.dev-console-error{margin:0;color:var(--devc-error)}
+.dev-console-kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 12px;margin:0;font:12px/1.55 var(--devc-mono)}
+.dev-console-kv>div{display:contents}
+.dev-console-kv dt{color:var(--devc-muted)}
+.dev-console-kv dd{margin:0;overflow-wrap:anywhere}
+.dev-console-errors{display:grid;gap:6px;margin:0;padding:0;list-style:none;font:12px/1.5 var(--devc-mono)}
+.dev-console-errors li{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);gap:2px 10px;padding:6px 8px;border:1px solid var(--devc-line);border-radius:var(--devc-radius);background:var(--devc-panel)}
+.dev-console-errors time{color:var(--devc-muted)}
+.dev-console-status{color:var(--devc-error);font-weight:700}
+.dev-console-request{overflow-wrap:anywhere}
+.dev-console-errors code{grid-column:1/-1;color:var(--devc-accent);overflow-wrap:anywhere}
+.dev-console-body details{margin:6px 0;border:1px solid var(--devc-line);border-radius:var(--devc-radius);background:var(--devc-panel)}
+.dev-console-body summary{padding:6px 10px;font:12px/1.5 var(--devc-mono);color:var(--devc-ink);cursor:pointer}
+.dev-console-body pre{max-height:50vh;margin:0;padding:10px;overflow:auto;border-top:1px solid var(--devc-line);font:11.5px/1.5 var(--devc-mono);color:var(--devc-ink);white-space:pre}
+.dev-console-foot{padding:8px 16px;border-top:1px solid var(--devc-line);color:var(--devc-muted);font:11px/1.4 var(--devc-mono)}
+@media(max-width:640px){.dev-console-panel{width:100vw;border-right:0}}
+@media(prefers-reduced-motion:reduce){.dev-console-toggle{transition:none}}

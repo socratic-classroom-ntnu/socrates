@@ -39,6 +39,18 @@ image 裡沒有 seed 腳本，網站照樣會起來，但**沒有測試帳號**�
 用帳號名稱或 `<帳號>@preview.invalid` 都能登入。這份腳本只在
 `SOCRATES_ENVIRONMENT` **明確設定**為 `preview` 或 `local-dev` 時才會執行（沒設也會拒絕），不會在 QA 或正式環境建出這些帳號。
 
+## 看 log、查資料庫
+
+PR 留言裡有兩個連結，用**組內共用帳號** `socrates` 登入（瀏覽器會跳出帳密框；密碼問核心組）：
+
+- 📜 **log**：`https://logs.socrates.driseam.com`，dashboard「socrates PR 預覽 log」，
+  上方可以選環境（`socrates-pr-<編號>`）、元件（backend／frontend／postgres）、輸入 regex 搜尋。
+  保留 7 天，pod 重啟之後也查得到之前的 log。
+- 🗄 **資料庫**：`https://db-pr-<編號>.socrates.driseam.com`（pgweb），可以瀏覽資料表、跑 SQL、匯出 CSV。
+  連的是**這個預覽環境自己的資料庫**，可讀可寫（都是測試資料），沒辦法切到別的資料庫。
+
+叢集那一側怎麼運作，寫在 flux-k8s 的 `docs/socrates-preview.md`。
+
 ## 不能寄信，也不能用 LLM（除非申請）
 
 預覽環境預設**拿不到任何密鑰**：

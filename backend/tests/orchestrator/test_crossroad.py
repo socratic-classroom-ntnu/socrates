@@ -1,10 +1,6 @@
 import pytest
 
-from app.modules.solo_dialogue.orchestrator.orchestrator import (
-    ConversationEnded,
-    InvalidAction,
-    Orchestrator,
-)
+from app.modules.solo_dialogue.orchestrator import ConversationEnded, InvalidAction, Orchestrator
 from tests.orchestrator.conftest import FakeGateway, make_ladder, obs, speak
 
 

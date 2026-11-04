@@ -1,6 +1,6 @@
 import uuid
 
-from app.modules.solo_dialogue.models import Learner, Session, StageProgress
+from app.modules.solo_dialogue.repositories import Learner, Session, StageProgress
 
 
 def test_session_persists_with_stage_progress(db):

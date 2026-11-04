@@ -2,7 +2,7 @@
 ## 伺服器組員：從這裡架設 Stage
 
 部署分支為 `stage`。完整步驟請讀 [Stage 部署指南](deploy/stage/README.md)。
-Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architecture/REPORT-BRIEF.zh-TW.md)；教室（多人課堂）架構見 [CLASSROOM-ARCHITECTURE](docs/CLASSROOM-ARCHITECTURE.md)。
+單人對話的展示架構與講稿（2026-09-24）：[報告速記](docs/architecture/REPORT-BRIEF.zh-TW.md)；教室（多人課堂）架構見 [CLASSROOM-ARCHITECTURE](docs/CLASSROOM-ARCHITECTURE.md)。
 
 # 蘇格拉底式對話機器人
 
@@ -59,8 +59,12 @@ Round 1 的展示架構與講稿（2026-09-24）：[報告速記](docs/architect
   可選 `dynamic` 模式由模型產生後續題目，也可加入 AI 學生
 - 導師由教室擁有者在「LLM 設定」建立的 provider profile 驅動；沒有可用的 LLM 或額度用完時，
   改用固定內容完成
+- 教室角色是選用設定；模型清單暫時無法讀取時，提示只留在角色設定內，不擋後端已授權的開課，
+  也可原樣重新保存既有角色。容量、名單變更與後端操作權限仍須通過。
+- `stickman` 固定使用內建 SVG 教室角色，不讀取模型清單或瀏覽器記住的其他角色；
+  其他角色無法載入時也顯示內建角色，對話可繼續。
 
-**Round 1：單人三階情境（`/round1`，目前擱置不開發）**
+**單人對話：三階情境（`/round1`，目前擱置不開發）**
 
 - 電車難題三階情境、路口推進、達上限、總結與歷史紀錄都可以走完
 - **教授的回覆是固定腳本**。你打什麼內容，回應都一樣——這是為了讓驗收可重現
@@ -73,7 +77,7 @@ docker compose up -d
 ```
 
 開 <http://localhost:5173> 是教室的登入頁；本機不會真的寄信，註冊後驗證頁會直接顯示驗證連結。
-Round 1 的單人流程在 <http://localhost:5173/round1>。三個服務：前端 5173、後端 8000、PostgreSQL 5432。
+單人對話在 <http://localhost:5173/round1>。三個服務：前端 5173、後端 8000、PostgreSQL 5432。
 
 ```bash
 docker compose exec backend python -m pytest tests -q   # 後端測試
@@ -94,7 +98,7 @@ push 前 backend 容器要是開著的（`docker compose up -d`），`pre-push` 
 | 要動手改程式 | [`AGENTS.md`](AGENTS.md)——不可妥協條款與範本索引，動手前必讀 |
 | 新加入團隊 | [`docs/onboarding.md`](docs/onboarding.md)——六站閱讀路徑，順序是刻意排的 |
 | 想理解產品 | [`docs/product/product-overview.md`](docs/product/product-overview.md) |
-| 要驗收 Round 1 三階腳本 | [`docs/testing/trolley-round1-acceptance.md`](docs/testing/trolley-round1-acceptance.md) |
+| 要驗收單人對話三階腳本 | [`docs/testing/trolley-solo-dialogue-acceptance.md`](docs/testing/trolley-solo-dialogue-acceptance.md) |
 | 想理解教室（多人課堂） | [`docs/CLASSROOM-ARCHITECTURE.md`](docs/CLASSROOM-ARCHITECTURE.md) |
 | 想理解實作 | [`docs/superpowers/specs/2026-09-19-socratic-tutor-design.md`](docs/superpowers/specs/2026-09-19-socratic-tutor-design.md) |
 

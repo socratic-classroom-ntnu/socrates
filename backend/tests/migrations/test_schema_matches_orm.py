@@ -21,9 +21,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, text
 
-from app.modules.solo_dialogue import interaction_models, models  # noqa: F401
+from app.modules.solo_dialogue import interaction_repositories, repositories  # noqa: F401
 from app.modules.platform.db import Base as RoundOneBase
-from app.modules.platform.repositories import classroom_storage as storage
+from app.modules.platform import storage as storage
+from app.modules.app_shell.models import register_models
 
 BACKEND = Path(__file__).resolve().parents[2]
 
@@ -55,7 +56,7 @@ def test_a_fresh_database_matches_the_orm(fresh_database_url):
     )
     assert result.returncode == 0, result.stderr
 
-    storage.register_models()
+    register_models()
     engine = create_engine(fresh_database_url)
     try:
         with engine.connect() as conn:

@@ -5,11 +5,11 @@
 1. 讀 `docs/product/product-overview.md` 的 §2「照見，不是問倒」，**只讀這一節**
    不先懂這句，後面所有取捨都會看起來像多餘的龜毛。
 2. `docker compose up`，實際走一次對話，有問題先問AI讓它帶你跑一次
-   手感優先於閱讀。http://localhost:5173/round1 是 Round 1 的單人三階情境（目前擱置不開發，
+   手感優先於閱讀。http://localhost:5173/round1 是單人對話的三階情境（目前擱置不開發，
    但最能體會「照見」的流程）；http://localhost:5173 是教室（多人課堂），註冊後驗證頁會顯示本機驗證連結。
 3. 讀 `backend/tests/invariants/`
    測試是規格的可執行版，比實作短，而且不會過期。
-4. 讀 `backend/app/modules/solo_dialogue/orchestrator/orchestrator.py` 與 `policy.py`
+4. 讀 `backend/app/modules/solo_dialogue/orchestrator.py` 與 `policy.py`
    系統的心臟。讀完就懂流程怎麼推進。
 5. 讀自己那條線對應的範本檔案（見 `AGENTS.md` 的範本索引）
 6. 讀設計規格的相關章節
@@ -25,9 +25,9 @@
 刻意挑「照著範本做一次」的小工作。第一個 PR 的目的不是產出，
 是走完一次分支 → PR → CI → review → merge。
 
-## 兩件會讓你以為是 bug 的事（Round 1，`/round1`）
+## 兩件會讓你以為是 bug 的事（單人對話，`/round1`）
 
-- **清掉瀏覽器資料或換一台電腦，歷史就沒了。** 這是 local 身分的固有性質，第一輪接受
+- **清掉瀏覽器資料或換一台電腦，歷史就沒了。** 這是 local 身分的固有性質，單人對話版接受
 - **腳本 provider 不看你打了什麼。** 你輸入任何內容，教授的回應都一樣。
   這是為了讓驗收可重現，不是壞掉
 

@@ -43,10 +43,11 @@ jobs:
         run: python -m ruff check backend
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
-      - name: Backend module map
+      - name: Naming and backend module map
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
+          bash scripts/check_naming.sh
           python -m pytest scripts/test_check_modules.py -q
           if [ -n "$BASE_REF" ]; then
             git fetch --depth=1 origin "$BASE_REF"
@@ -54,11 +55,10 @@ jobs:
           else
             python scripts/check_modules.py
           fi
-      - name: Strict Round1 types and classroom contracts
+      - name: Strict core types and classroom contracts
         run: |
           cd backend
-          python -m mypy app --exclude 'app/modules/classroom_core/api/routes/classroom\.py|app/modules/group_dialogue/api/routes/groups\.py|app/modules/group_dialogue/api/routes/ai_students\.py|app/modules/platform/api/routes/public_config\.py|app/modules/ai_providers/api/routes/provider_profiles\.py|app/modules/content_authoring/api/routes/classroom_library\.py|app/modules/classroom_core/api/classroom_schemas\.py|app/modules/classroom_core/orchestrator/classroom\.py|app/modules/classroom_core/orchestrator/classroom_policy\.py|app/modules/group_dialogue/domain/group_run\.py|app/modules/analytics/domain/group_analysis\.py|app/modules/content_authoring/domain/library_decisions\.py|app/modules/platform/repositories/classroom_storage\.py|app/modules/classroom_core/services/classroom\.py|app/modules/llm_runtime/services/llm_workers\.py|app/modules/identity_access/services/email_delivery\.py|app/modules/group_dialogue/services/ai_students\.py|app/modules/identity_access/services/classroom_auth\.py|app/modules/llm_runtime/tutor/classroom_provider\.py|app/modules/llm_runtime/tutor/classroom_gateway\.py|app/modules/llm_runtime/tutor/prompts\.py|app/classroom_app\.py|app/modules/platform/realtime\.py|app/classroom_server\.py'
-          python -m mypy --config-file mypy-classroom.ini app/modules/classroom_core/api/routes/classroom.py app/modules/group_dialogue/api/routes/groups.py app/modules/group_dialogue/api/routes/ai_students.py app/modules/platform/api/routes/public_config.py app/modules/ai_providers/api/routes/provider_profiles.py app/modules/content_authoring/api/routes/classroom_library.py app/modules/classroom_core/api/classroom_schemas.py app/modules/classroom_core/orchestrator/classroom.py app/modules/classroom_core/orchestrator/classroom_policy.py app/modules/group_dialogue/domain/group_run.py app/modules/analytics/domain/group_analysis.py app/modules/content_authoring/domain/library_decisions.py app/modules/platform/repositories/classroom_storage.py app/modules/classroom_core/services/classroom.py app/modules/llm_runtime/services/llm_workers.py app/modules/identity_access/services/email_delivery.py app/modules/group_dialogue/services/ai_students.py app/modules/identity_access/services/classroom_auth.py app/modules/llm_runtime/tutor/classroom_provider.py app/modules/llm_runtime/tutor/classroom_gateway.py app/modules/llm_runtime/tutor/prompts.py app/classroom_app.py app/modules/platform/realtime.py app/classroom_server.py
+          python tools/mypy_check.py
       - name: Database migration and domain/API regression
         run: |
           cd backend
@@ -113,11 +113,8 @@ jobs:
         working-directory: frontend
       - run: ./scripts/gen_types.sh
       - run: python scripts/gen_classroom_types.py
-      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
-  # contract 對不上時，把重新產生的契約檔推回 PR 分支（只限本 repo 的分支；fork 沒有寫入權限）。
-  # 用 GITHUB_TOKEN 推的 commit 不會自動跑 CI（run 會停在 action_required，要人手動核准），
-  # 所以推之前先跑前端 typecheck，確認新型別不會讓前端壞掉。
-  # 只修個人開發分支：develop、stage、master、backend/* 這類共用或部署分支不能收到沒跑過 CI 的 commit。
+      - run: git diff --exit-code -- frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
+  # 契約檔落後時，只修同 repo 的個人開發分支；共用與部署分支維持人工審查。
   contract-fix:
     needs: [contract]
     if: >-
@@ -133,7 +130,7 @@ jobs:
       HEAD_REF: ${{ github.head_ref }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GH_TOKEN: ${{ github.token }}
-      CONTRACTS: frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
+      CONTRACTS: frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
     steps:
       - uses: actions/checkout@v4
         with: {ref: '${{ github.head_ref }}'}
@@ -149,7 +146,7 @@ jobs:
       - id: diff
         run: |
           if git diff --quiet -- $CONTRACTS; then
-            echo "分支上的契約檔已經是最新的；不一致只出現在與 base 合併後的結果，請先 rebase 或 merge base 分支。"
+            echo "分支契約已是最新；請先 rebase 或 merge base 分支。"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -164,8 +161,8 @@ jobs:
           git add -- $CONTRACTS
           git commit -m "chore(contracts): regenerate OpenAPI contracts"
           git push origin "HEAD:refs/heads/$HEAD_REF"
-          gh pr comment "$PR_NUMBER" --body "🤖 OpenAPI 契約檔跟程式碼對不上，已自動重新產生並推上 \`$(git rev-parse --short HEAD)\`（前端 typecheck 已通過）。這個 commit 的 CI 不會自動跑（停在等待核准），下次 push 時會一併檢查；要馬上檢查的話，到 Actions 頁面核准，或先 \`git pull\` 再推一個 commit。"
-  round1-e2e:
+          gh pr comment "$PR_NUMBER" --body "OpenAPI 契約已重新產生並推回個人開發分支。"
+  solo-dialogue-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -178,12 +175,12 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/api/health
-      - run: python scripts/round1_smoke.py http://127.0.0.1:8000/api
+      - run: python scripts/solo_dialogue_smoke.py http://127.0.0.1:8000/api
       - if: always()
-        run: docker compose logs --no-color > round1-compose.log
+        run: docker compose logs --no-color > solo-dialogue-compose.log
       - if: always()
         uses: actions/upload-artifact@v4
-        with: {name: round1-evidence, path: round1-compose.log, retention-days: 7}
+        with: {name: solo-dialogue-evidence, path: solo-dialogue-compose.log, retention-days: 7}
       - if: always()
         run: docker compose down
   classroom-load:
@@ -220,7 +217,7 @@ jobs:
   ci-required:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, frontend, contract, round1-e2e, classroom-load]
+    needs: [backend, frontend, contract, solo-dialogue-e2e, classroom-load]
     steps:
       - env:
           RESULTS: ${{ toJSON(needs) }}

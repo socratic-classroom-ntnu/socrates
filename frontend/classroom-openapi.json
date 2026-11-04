@@ -1,6 +1,51 @@
 {
   "components": {
     "schemas": {
+      "AIStudentCreatedView": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "alias": {
+            "title": "Alias",
+            "type": "string"
+          },
+          "membership_id": {
+            "title": "Membership Id",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "persona_id": {
+            "title": "Persona Id",
+            "type": "string"
+          },
+          "provider_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Profile Id"
+          }
+        },
+        "required": [
+          "account_id",
+          "membership_id",
+          "alias",
+          "persona_id",
+          "model"
+        ],
+        "title": "AIStudentCreatedView",
+        "type": "object"
+      },
       "AccountView": {
         "additionalProperties": false,
         "properties": {
@@ -37,6 +82,23 @@
             "title": "Id",
             "type": "string"
           },
+          "locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "zh-Hant",
+                  "zh-Hans",
+                  "en",
+                  "es"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "points": {
             "title": "Points",
             "type": "integer"
@@ -72,7 +134,501 @@
         "title": "AccountView",
         "type": "object"
       },
+      "ActivityDetailsUpdate": {
+        "additionalProperties": false,
+        "description": "Operational fields a teacher may still change after the content locks.",
+        "properties": {
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ActivityDetailsUpdate",
+        "type": "object"
+      },
+      "ActivityDraft": {
+        "additionalProperties": false,
+        "description": "Complete but unpublished content; incomplete drafts are rejected, never stored.",
+        "properties": {
+          "analysis_focus": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Analysis Focus",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "number"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionDraft"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Questions",
+            "type": "array"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "topic_direction": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Topic Direction",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "topic_direction",
+          "ends_at",
+          "questions"
+        ],
+        "title": "ActivityDraft",
+        "type": "object"
+      },
+      "ActivityJoin": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name"
+        ],
+        "title": "ActivityJoin",
+        "type": "object"
+      },
+      "ActivityJoinPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "already_enrolled": {
+            "title": "Already Enrolled",
+            "type": "boolean"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "default_display_name": {
+            "title": "Default Display Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "teacher_name",
+          "question_count",
+          "starts_at",
+          "ends_at",
+          "status",
+          "already_enrolled",
+          "default_display_name"
+        ],
+        "title": "ActivityJoinPreview",
+        "type": "object"
+      },
+      "ActivityJoinResult": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "enrolled_now": {
+            "title": "Enrolled Now",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "course_id",
+          "activity_id",
+          "enrolled_now"
+        ],
+        "title": "ActivityJoinResult",
+        "type": "object"
+      },
+      "ActivityOption": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "ActivityOption",
+        "type": "object"
+      },
+      "ActivityStudentCard": {
+        "additionalProperties": false,
+        "properties": {
+          "ends_at": {
+            "title": "Ends At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "starts_at": {
+            "title": "Starts At",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "question_count",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "ActivityStudentCard",
+        "type": "object"
+      },
+      "ActivityStudentList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityStudentCard"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "role": {
+            "const": "student",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "items"
+        ],
+        "title": "ActivityStudentList",
+        "type": "object"
+      },
+      "ActivityTeacherCard": {
+        "additionalProperties": false,
+        "properties": {
+          "available_actions": {
+            "items": {
+              "enum": [
+                "update",
+                "update_details",
+                "publish",
+                "start_now",
+                "end_now",
+                "copy",
+                "delete"
+              ],
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "has_unpublished_changes": {
+            "title": "Has Unpublished Changes",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "locked",
+          "has_unpublished_changes",
+          "question_count",
+          "starts_at",
+          "ends_at",
+          "available_actions"
+        ],
+        "title": "ActivityTeacherCard",
+        "type": "object"
+      },
+      "ActivityTeacherList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityTeacherCard"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "role": {
+            "const": "teacher",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "items"
+        ],
+        "title": "ActivityTeacherList",
+        "type": "object"
+      },
+      "ActivityTeacherView": {
+        "additionalProperties": false,
+        "properties": {
+          "available_actions": {
+            "items": {
+              "enum": [
+                "update",
+                "update_details",
+                "publish",
+                "start_now",
+                "end_now",
+                "copy",
+                "delete"
+              ],
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/ActivityDraft"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "has_unpublished_changes": {
+            "title": "Has Unpublished Changes",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "locked": {
+            "title": "Locked",
+            "type": "boolean"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "course_id",
+          "status",
+          "locked",
+          "has_unpublished_changes",
+          "revision",
+          "draft",
+          "starts_at",
+          "ends_at",
+          "available_actions"
+        ],
+        "title": "ActivityTeacherView",
+        "type": "object"
+      },
       "AddAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -96,6 +652,7 @@
           "provider_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -112,7 +669,50 @@
         "title": "AddAIStudents",
         "type": "object"
       },
+      "AddAIStudentsReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "created": {
+            "items": {
+              "$ref": "#/components/schemas/AIStudentCreatedView"
+            },
+            "title": "Created",
+            "type": "array"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "roster_digest": {
+            "title": "Roster Digest",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "room_id",
+          "created",
+          "roster_digest"
+        ],
+        "title": "AddAIStudentsReceipt",
+        "type": "object"
+      },
       "AttachScript": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -149,7 +749,474 @@
         "title": "AttachScript",
         "type": "object"
       },
+      "AttachedScriptView": {
+        "additionalProperties": false,
+        "properties": {
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "document",
+          "classroom_id"
+        ],
+        "title": "AttachedScriptView",
+        "type": "object"
+      },
+      "BankImportResult": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/ScriptDocument"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "question_id",
+          "document"
+        ],
+        "title": "BankImportResult",
+        "type": "object"
+      },
+      "BankMutation": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "BankMutation",
+        "type": "object"
+      },
+      "BankQuestionDetail": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision",
+          "question"
+        ],
+        "title": "BankQuestionDetail",
+        "type": "object"
+      },
+      "BankQuestionSummary": {
+        "properties": {
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mine": {
+            "title": "Mine",
+            "type": "boolean"
+          },
+          "option_count": {
+            "title": "Option Count",
+            "type": "integer"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_excerpt": {
+            "title": "Scenario Excerpt",
+            "type": "string"
+          },
+          "source_question_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Question Id"
+          },
+          "source_script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Script Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "tags",
+          "scenario_excerpt",
+          "option_count",
+          "author",
+          "mine",
+          "published_at",
+          "revision"
+        ],
+        "title": "BankQuestionSummary",
+        "type": "object"
+      },
+      "BankSearchResult": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BankQuestionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "BankSearchResult",
+        "type": "object"
+      },
+      "BankUnpublishResult": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "title": "BankUnpublishResult",
+        "type": "object"
+      },
+      "ClassroomAISettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "budgets": {
+            "title": "Budgets",
+            "type": "object"
+          },
+          "default_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Profile Id"
+          },
+          "fallback_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Profile Id"
+          },
+          "model_matrix": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Model Matrix",
+            "type": "object"
+          },
+          "revision": {
+            "default": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_overrides": {
+            "title": "Scenario Overrides",
+            "type": "object"
+          }
+        },
+        "title": "ClassroomAISettingsView",
+        "type": "object"
+      },
+      "ClassroomActionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq"
+        ],
+        "title": "ClassroomActionReceipt",
+        "type": "object"
+      },
+      "ClassroomBatchView": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "classroom_id",
+          "batch_id",
+          "code"
+        ],
+        "title": "ClassroomBatchView",
+        "type": "object"
+      },
+      "ClassroomEventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ClassroomEventView"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "latest_seq": {
+            "title": "Latest Seq",
+            "type": "integer"
+          },
+          "more": {
+            "title": "More",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "events",
+          "latest_seq",
+          "more"
+        ],
+        "title": "ClassroomEventPage",
+        "type": "object"
+      },
+      "ClassroomEventView": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "title": "Payload",
+            "type": "object"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "type",
+          "payload"
+        ],
+        "title": "ClassroomEventView",
+        "type": "object"
+      },
       "ClearAIStudents": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -162,6 +1229,45 @@
           "action_id"
         ],
         "title": "ClearAIStudents",
+        "type": "object"
+      },
+      "ClearAIStudentsReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "removed": {
+            "title": "Removed",
+            "type": "integer"
+          },
+          "room_id": {
+            "title": "Room Id",
+            "type": "string"
+          },
+          "roster_digest": {
+            "title": "Roster Digest",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "room_id",
+          "removed",
+          "roster_digest"
+        ],
+        "title": "ClearAIStudentsReceipt",
         "type": "object"
       },
       "Command": {
@@ -185,6 +1291,7 @@
               "barrage",
               "focus_message",
               "next",
+              "end",
               "approve_question",
               "regenerate_question",
               "personal_summary"
@@ -201,6 +1308,7 @@
         "type": "object"
       },
       "Configure": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -211,6 +1319,10 @@
           "assignments": {
             "additionalProperties": {
               "type": "integer"
+            },
+            "maxProperties": 1600,
+            "propertyNames": {
+              "maxLength": 64
             },
             "title": "Assignments",
             "type": "object"
@@ -223,6 +1335,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           },
@@ -248,7 +1361,380 @@
         "title": "Configure",
         "type": "object"
       },
+      "ConfirmViewpointBody": {
+        "additionalProperties": false,
+        "properties": {
+          "summary_digest": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Summary Digest",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary_digest"
+        ],
+        "title": "ConfirmViewpointBody",
+        "type": "object"
+      },
+      "CourseCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "goals": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Goals",
+            "type": "string"
+          },
+          "intro": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Intro",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "teacher_name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "teacher_name"
+        ],
+        "title": "CourseCreate",
+        "type": "object"
+      },
+      "CourseJoin": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "display_name"
+        ],
+        "title": "CourseJoin",
+        "type": "object"
+      },
+      "CourseLearningCard": {
+        "additionalProperties": false,
+        "properties": {
+          "highlight": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityStudentCard"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_activity_count": {
+            "title": "Open Activity Count",
+            "type": "integer"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "teacher_name",
+          "open_activity_count",
+          "highlight"
+        ],
+        "title": "CourseLearningCard",
+        "type": "object"
+      },
+      "CourseLists": {
+        "additionalProperties": false,
+        "properties": {
+          "learning": {
+            "items": {
+              "$ref": "#/components/schemas/CourseLearningCard"
+            },
+            "title": "Learning",
+            "type": "array"
+          },
+          "teaching": {
+            "items": {
+              "$ref": "#/components/schemas/CourseTeachingCard"
+            },
+            "title": "Teaching",
+            "type": "array"
+          }
+        },
+        "required": [
+          "teaching",
+          "learning"
+        ],
+        "title": "CourseLists",
+        "type": "object"
+      },
+      "CourseStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intro": {
+            "title": "Intro",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "const": "student",
+            "title": "Role",
+            "type": "string"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "id",
+          "name",
+          "teacher_name",
+          "intro",
+          "code",
+          "display_name"
+        ],
+        "title": "CourseStudentView",
+        "type": "object"
+      },
+      "CourseTeacherView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_count": {
+            "title": "Activity Count",
+            "type": "integer"
+          },
+          "available_actions": {
+            "items": {
+              "enum": [
+                "update",
+                "rotate_code",
+                "disable_code",
+                "enable_code",
+                "create_activity"
+              ],
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "code_enabled": {
+            "title": "Code Enabled",
+            "type": "boolean"
+          },
+          "goals": {
+            "title": "Goals",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "intro": {
+            "title": "Intro",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "const": "teacher",
+            "title": "Role",
+            "type": "string"
+          },
+          "student_count": {
+            "title": "Student Count",
+            "type": "integer"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "id",
+          "name",
+          "teacher_name",
+          "intro",
+          "goals",
+          "code",
+          "code_enabled",
+          "student_count",
+          "activity_count",
+          "available_actions"
+        ],
+        "title": "CourseTeacherView",
+        "type": "object"
+      },
+      "CourseTeachingCard": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_count": {
+            "title": "Activity Count",
+            "type": "integer"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "code_enabled": {
+            "title": "Code Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_activity_count": {
+            "title": "Open Activity Count",
+            "type": "integer"
+          },
+          "student_count": {
+            "title": "Student Count",
+            "type": "integer"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "teacher_name",
+          "code",
+          "code_enabled",
+          "student_count",
+          "activity_count",
+          "open_activity_count"
+        ],
+        "title": "CourseTeachingCard",
+        "type": "object"
+      },
+      "CourseUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "goals": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goals"
+          },
+          "intro": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intro"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "teacher_name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Teacher Name"
+          }
+        },
+        "title": "CourseUpdate",
+        "type": "object"
+      },
       "CreateBatch": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -269,6 +1755,7 @@
         "type": "object"
       },
       "CreateClassroom": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -291,8 +1778,10 @@
         "type": "object"
       },
       "CreateProfile": {
+        "additionalProperties": false,
         "properties": {
           "adapter": {
+            "maxLength": 40,
             "title": "Adapter",
             "type": "string"
           },
@@ -379,6 +1868,7 @@
         "additionalProperties": false,
         "properties": {
           "script_id": {
+            "maxLength": 36,
             "title": "Script Id",
             "type": "string"
           }
@@ -390,6 +1880,7 @@
         "type": "object"
       },
       "CredentialUpdate": {
+        "additionalProperties": false,
         "properties": {
           "credential": {
             "maxLength": 20000,
@@ -413,7 +1904,201 @@
         "title": "CredentialUpdate",
         "type": "object"
       },
+      "GroupActionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq"
+        ],
+        "title": "GroupActionReceipt",
+        "type": "object"
+      },
+      "GroupCollectionView": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassroomAISettingsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "asset_classroom_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Classroom Id"
+          },
+          "available_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration"
+          },
+          "features": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Features"
+          },
+          "groups": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "GroupCollection",
+            "title": "Kind",
+            "type": "string"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "role": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "roster": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Roster",
+            "type": "array"
+          },
+          "roster_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roster Digest"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "unavailable_actions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Unavailable Actions",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "role"
+        ],
+        "title": "GroupCollectionView",
+        "type": "object"
+      },
       "GroupCommand": {
+        "additionalProperties": false,
         "properties": {
           "action_id": {
             "maxLength": 100,
@@ -426,6 +2111,7 @@
             "type": "object"
           },
           "kind": {
+            "maxLength": 40,
             "title": "Kind",
             "type": "string"
           }
@@ -435,6 +2121,317 @@
           "kind"
         ],
         "title": "GroupCommand",
+        "type": "object"
+      },
+      "GroupMemberIdentityView": {
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "const": "teacher_hover_only",
+            "title": "Scope",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "scope"
+        ],
+        "title": "GroupMemberIdentityView",
+        "type": "object"
+      },
+      "GroupMetaView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "label"
+        ],
+        "title": "GroupMetaView",
+        "type": "object"
+      },
+      "GroupRunView": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Arguments",
+            "type": "array"
+          },
+          "available_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "avatar_pack_id": {
+            "title": "Avatar Pack Id",
+            "type": "string"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "confirmed_members": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Confirmed Members",
+            "type": "array"
+          },
+          "deadline_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline At"
+          },
+          "edges": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "focus_notice": {
+            "title": "Focus Notice"
+          },
+          "group_label": {
+            "title": "Group Label",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "GroupRun",
+            "title": "Kind",
+            "type": "string"
+          },
+          "member_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Id"
+          },
+          "members": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "my_summary": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Summary"
+          },
+          "personal": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal"
+          },
+          "personal_overview": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal Overview"
+          },
+          "personal_progress": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personal Progress"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "question": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicQuestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "runtime_mode": {
+            "title": "Runtime Mode",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "session_batch_id": {
+            "title": "Session Batch Id",
+            "type": "string"
+          },
+          "settlement": {
+            "title": "Settlement",
+            "type": "object"
+          },
+          "source_mode": {
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "transcript": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Transcript",
+            "type": "array"
+          },
+          "unavailable_actions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Unavailable Actions",
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "role",
+          "seq",
+          "title",
+          "phase",
+          "deadline_at",
+          "member_id",
+          "members",
+          "runtime_mode",
+          "session_batch_id",
+          "group_label",
+          "classroom_id",
+          "question",
+          "transcript",
+          "arguments",
+          "edges",
+          "settlement",
+          "confirmed_members",
+          "my_summary",
+          "avatar_pack_id",
+          "source_mode"
+        ],
+        "title": "GroupRunView",
+        "type": "object"
+      },
+      "GroupStartReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupMetaView"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "room_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room Id"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "action_id",
+          "seq",
+          "groups",
+          "snapshot_id"
+        ],
+        "title": "GroupStartReceipt",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -450,6 +2447,75 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "ImportQuestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id"
+        ],
+        "title": "ImportQuestion",
+        "type": "object"
+      },
+      "JoinPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "already_enrolled": {
+            "title": "Already Enrolled",
+            "type": "boolean"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "default_display_name": {
+            "title": "Default Display Name",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_activity_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Activity Title"
+          },
+          "teacher_name": {
+            "title": "Teacher Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_id",
+          "name",
+          "teacher_name",
+          "already_enrolled",
+          "default_display_name",
+          "open_activity_title"
+        ],
+        "title": "JoinPreview",
+        "type": "object"
+      },
       "JoinRoom": {
         "additionalProperties": false,
         "properties": {
@@ -461,10 +2527,13 @@
           },
           "avatar": {
             "default": "scholar",
+            "maxLength": 120,
             "title": "Avatar",
             "type": "string"
           },
           "code": {
+            "maxLength": 32,
+            "minLength": 1,
             "title": "Code",
             "type": "string"
           }
@@ -476,14 +2545,134 @@
         "title": "JoinRoom",
         "type": "object"
       },
+      "LegacyGroupView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "const": "Legacy",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ],
+        "title": "LegacyGroupView",
+        "type": "object"
+      },
+      "LibraryClassroomDetailView": {
+        "additionalProperties": false,
+        "properties": {
+          "assets": {
+            "title": "Assets",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lessons": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Lessons",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scripts": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Scripts",
+            "type": "array"
+          },
+          "sessions": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Sessions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "revision",
+          "assets",
+          "scripts",
+          "sessions",
+          "lessons"
+        ],
+        "title": "LibraryClassroomDetailView",
+        "type": "object"
+      },
+      "LibraryClassroomView": {
+        "additionalProperties": false,
+        "description": "One row of GET /library/classrooms: a teacher's long-lived Classroom asset.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "revision"
+        ],
+        "title": "LibraryClassroomView",
+        "type": "object"
+      },
+      "LocaleUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "locale"
+        ],
+        "title": "LocaleUpdate",
+        "type": "object"
+      },
       "Login": {
         "additionalProperties": false,
         "properties": {
           "login": {
+            "maxLength": 254,
             "title": "Login",
             "type": "string"
           },
           "password": {
+            "maxLength": 256,
             "title": "Password",
             "type": "string"
           }
@@ -499,6 +2688,7 @@
         "additionalProperties": false,
         "properties": {
           "email": {
+            "maxLength": 254,
             "title": "Email",
             "type": "string"
           }
@@ -611,9 +2801,11 @@
         "type": "object"
       },
       "OtherSuggestionRequest": {
+        "additionalProperties": false,
         "properties": {
           "existing_options": {
             "items": {
+              "maxLength": 2000,
               "type": "string"
             },
             "maxItems": 20,
@@ -629,6 +2821,7 @@
           "room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -656,6 +2849,295 @@
           "scenario"
         ],
         "title": "OtherSuggestionRequest",
+        "type": "object"
+      },
+      "OtherSuggestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "classroom_owner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classroom Owner Id"
+          },
+          "provider_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Profile Id"
+          },
+          "suggestion_id": {
+            "title": "Suggestion Id",
+            "type": "string"
+          },
+          "suggestion_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggestion Model"
+          },
+          "suggestion_provider": {
+            "title": "Suggestion Provider",
+            "type": "string"
+          },
+          "suggestion_text": {
+            "title": "Suggestion Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "suggestion_text",
+          "suggestion_id",
+          "suggestion_provider"
+        ],
+        "title": "OtherSuggestionView",
+        "type": "object"
+      },
+      "PersonalSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "current_position": {
+            "title": "Current Position",
+            "type": "string"
+          },
+          "principle_note": {
+            "default": "",
+            "title": "Principle Note",
+            "type": "string"
+          },
+          "reason_summary": {
+            "title": "Reason Summary",
+            "type": "string"
+          },
+          "relevant_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Relevant Conditions",
+            "type": "array"
+          },
+          "unresolved_issue": {
+            "title": "Unresolved Issue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_position",
+          "reason_summary",
+          "relevant_conditions",
+          "unresolved_issue"
+        ],
+        "title": "PersonalSummaryView",
+        "type": "object"
+      },
+      "PublicConfigView": {
+        "properties": {
+          "debug_mode": {
+            "title": "Debug Mode",
+            "type": "boolean"
+          },
+          "google_cse_id": {
+            "title": "Google Cse Id",
+            "type": "string"
+          },
+          "search_scope": {
+            "title": "Search Scope",
+            "type": "string"
+          },
+          "search_state": {
+            "title": "Search State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "google_cse_id",
+          "search_scope",
+          "search_state",
+          "debug_mode"
+        ],
+        "title": "PublicConfigView",
+        "type": "object"
+      },
+      "PublicJoinPreview": {
+        "additionalProperties": false,
+        "description": "What an anonymous visitor may learn from a code or activity link: the course name only.",
+        "properties": {
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_name"
+        ],
+        "title": "PublicJoinPreview",
+        "type": "object"
+      },
+      "PublicQuestion": {
+        "additionalProperties": false,
+        "description": "A question as students and the LLM see it: no teacher-only routing fields.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario",
+          "options"
+        ],
+        "title": "PublicQuestion",
+        "type": "object"
+      },
+      "Publish": {
+        "additionalProperties": false,
+        "properties": {
+          "action_id": {
+            "maxLength": 100,
+            "minLength": 8,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "question_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Question Id",
+            "type": "string"
+          },
+          "script_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Script Id",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Tags",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "action_id",
+          "script_id",
+          "question_id"
+        ],
+        "title": "Publish",
         "type": "object"
       },
       "Question": {
@@ -690,6 +3172,13 @@
             "title": "Max Focus Turns",
             "type": "integer"
           },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
           "options": {
             "items": {
               "$ref": "#/components/schemas/Option"
@@ -698,10 +3187,17 @@
             "title": "Options",
             "type": "array"
           },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
           "probe_hints": {
             "items": {
               "type": "string"
             },
+            "maxItems": 20,
             "title": "Probe Hints",
             "type": "array"
           },
@@ -717,6 +3213,16 @@
             "title": "Scenario",
             "type": "string"
           },
+          "scenario_ai": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScenarioAI"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sender_point_cap": {
             "default": 5,
             "minimum": 0.0,
@@ -731,6 +3237,7 @@
           },
           "tutor_goal": {
             "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
             "title": "Tutor Goal",
             "type": "string"
           }
@@ -744,6 +3251,52 @@
         "title": "Question",
         "type": "object"
       },
+      "QuestionDraft": {
+        "additionalProperties": false,
+        "properties": {
+          "follow_up_direction": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Follow Up Direction",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityOption"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario",
+          "options"
+        ],
+        "title": "QuestionDraft",
+        "type": "object"
+      },
       "Reaction": {
         "additionalProperties": false,
         "properties": {
@@ -754,6 +3307,7 @@
             "type": "string"
           },
           "focus_id": {
+            "maxLength": 64,
             "title": "Focus Id",
             "type": "string"
           },
@@ -791,15 +3345,15 @@
             "type": "string"
           },
           "password": {
-            "maxLength": 256,
-            "minLength": 12,
+            "maxLength": 32,
+            "minLength": 8,
             "title": "Password",
             "type": "string"
           },
           "username": {
-            "maxLength": 64,
+            "maxLength": 32,
             "minLength": 3,
-            "pattern": "^[\\w.-]+$",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$",
             "title": "Username",
             "type": "string"
           }
@@ -816,12 +3370,13 @@
         "additionalProperties": false,
         "properties": {
           "password": {
-            "maxLength": 256,
-            "minLength": 12,
+            "maxLength": 32,
+            "minLength": 8,
             "title": "Password",
             "type": "string"
           },
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -831,6 +3386,55 @@
           "password"
         ],
         "title": "ResetRequest",
+        "type": "object"
+      },
+      "RoomBudgetView": {
+        "additionalProperties": false,
+        "properties": {
+          "live_llm_call_budget": {
+            "title": "Live Llm Call Budget",
+            "type": "integer"
+          },
+          "used": {
+            "title": "Used",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "live_llm_call_budget",
+          "used"
+        ],
+        "title": "RoomBudgetView",
+        "type": "object"
+      },
+      "RoomSummary": {
+        "additionalProperties": false,
+        "description": "`GET /classrooms` 的一筆：帳號建立或加入過的教室。",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "teacher": {
+            "title": "Teacher",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "phase",
+          "teacher"
+        ],
+        "title": "RoomSummary",
         "type": "object"
       },
       "RoomView": {
@@ -945,7 +3549,7 @@
           "preview": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -955,7 +3559,7 @@
           "question": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Question"
+                "$ref": "#/components/schemas/PublicQuestion"
               },
               {
                 "type": "null"
@@ -1046,6 +3650,197 @@
         "title": "RoomView",
         "type": "object"
       },
+      "SampleQuestionDraft": {
+        "additionalProperties": false,
+        "description": "A repository sample before teacher-authored options make it a valid saved Question.",
+        "properties": {
+          "argument_required": {
+            "default": true,
+            "title": "Argument Required",
+            "type": "boolean"
+          },
+          "duration_seconds": {
+            "default": 90,
+            "minimum": 1.0,
+            "title": "Duration Seconds",
+            "type": "integer"
+          },
+          "focus_response_seconds": {
+            "default": 90,
+            "minimum": 5.0,
+            "title": "Focus Response Seconds",
+            "type": "integer"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "max_focus_turns": {
+            "default": 3,
+            "minimum": 1.0,
+            "title": "Max Focus Turns",
+            "type": "integer"
+          },
+          "max_personal_turns": {
+            "default": 6,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Personal Turns",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/Option"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "personal_seconds": {
+            "default": 600,
+            "minimum": 30.0,
+            "title": "Personal Seconds",
+            "type": "integer"
+          },
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "receiver_point_cap": {
+            "default": 25,
+            "minimum": 0.0,
+            "title": "Receiver Point Cap",
+            "type": "integer"
+          },
+          "scenario": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
+          },
+          "sender_point_cap": {
+            "default": 5,
+            "minimum": 0.0,
+            "title": "Sender Point Cap",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tutor_goal": {
+            "default": "協助學生照見自己的立場與理由。",
+            "maxLength": 2000,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "scenario"
+        ],
+        "title": "SampleQuestionDraft",
+        "type": "object"
+      },
+      "SampleQuestionSet": {
+        "additionalProperties": false,
+        "properties": {
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SampleQuestionDraft"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "questions"
+        ],
+        "title": "SampleQuestionSet",
+        "type": "object"
+      },
+      "ScenarioAI": {
+        "additionalProperties": false,
+        "description": "Teacher-only routing for one question's LLM jobs; owner scope is checked against the DB.",
+        "properties": {
+          "model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider_profile_id": {
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Provider Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_profile_id",
+          "model"
+        ],
+        "title": "ScenarioAI",
+        "type": "object"
+      },
+      "ScriptAssistRequest": {
+        "additionalProperties": false,
+        "description": "Teacher's AI-assisted design request against the draft currently in the editor.",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "question_index": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Index"
+          },
+          "request": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Request",
+            "type": "string"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "title": "ScriptAssistRequest",
+        "type": "object"
+      },
       "ScriptDocument": {
         "additionalProperties": false,
         "properties": {
@@ -1099,6 +3894,25 @@
         "title": "ScriptDocument",
         "type": "object"
       },
+      "ScriptRevisionView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision"
+        ],
+        "title": "ScriptRevisionView",
+        "type": "object"
+      },
       "ScriptSave": {
         "additionalProperties": false,
         "properties": {
@@ -1123,11 +3937,84 @@
         "title": "ScriptSave",
         "type": "object"
       },
+      "ScriptView": {
+        "additionalProperties": false,
+        "description": "GET /scripts 的一列：劇本本體照存檔原樣回傳（舊版劇本不因新欄位驗證而讀不到）。",
+        "properties": {
+          "document": {
+            "title": "Document",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "document"
+        ],
+        "title": "ScriptView",
+        "type": "object"
+      },
+      "SendMessageBody": {
+        "additionalProperties": false,
+        "properties": {
+          "new_option_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Option Id"
+          },
+          "revise_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stance",
+                  "reason",
+                  "condition",
+                  "changed_mind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revise Hint"
+          },
+          "text": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SendMessageBody",
+        "type": "object"
+      },
       "SettingsUpdate": {
+        "additionalProperties": false,
         "properties": {
           "active_room_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1137,12 +4024,14 @@
             "title": "Active Room Id"
           },
           "budgets": {
+            "maxProperties": 32,
             "title": "Budgets",
             "type": "object"
           },
           "default_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1154,6 +4043,7 @@
           "fallback_profile_id": {
             "anyOf": [
               {
+                "maxLength": 36,
                 "type": "string"
               },
               {
@@ -1164,7 +4054,12 @@
           },
           "model_matrix": {
             "additionalProperties": {
+              "maxLength": 200,
               "type": "string"
+            },
+            "maxProperties": 32,
+            "propertyNames": {
+              "maxLength": 64
             },
             "title": "Model Matrix",
             "type": "object"
@@ -1173,7 +4068,1015 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SoloActivityAnalysisView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "revision_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision Id"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloAnalysisSummaryView"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "generated_at",
+          "revision_id",
+          "summary",
+          "questions"
+        ],
+        "title": "SoloActivityAnalysisView",
+        "type": "object"
+      },
+      "SoloActivityProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloProgressQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloStudentProgressView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloProgressSummaryView"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "generated_at",
+          "questions",
+          "summary",
+          "students"
+        ],
+        "title": "SoloActivityProgressView",
+        "type": "object"
+      },
+      "SoloActivityView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloAttemptBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "ends_at": {
+            "title": "Ends At",
+            "type": "number"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "title",
+          "course_id",
+          "course_name",
+          "status",
+          "question_count",
+          "ends_at",
+          "attempt"
+        ],
+        "title": "SoloActivityView",
+        "type": "object"
+      },
+      "SoloAnalysisOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "text",
+          "count",
+          "students"
+        ],
+        "title": "SoloAnalysisOptionView",
+        "type": "object"
+      },
+      "SoloAnalysisQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "integer"
+          },
+          "comparable": {
+            "title": "Comparable",
+            "type": "integer"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "integer"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "unconfirmed": {
+            "title": "Unconfirmed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "index",
+          "question_id",
+          "title",
+          "confirmed",
+          "unconfirmed",
+          "changed",
+          "comparable",
+          "options"
+        ],
+        "title": "SoloAnalysisQuestionView",
+        "type": "object"
+      },
+      "SoloAnalysisStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "changed_from_option_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed From Option Id"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "reason_summary": {
+            "title": "Reason Summary",
+            "type": "string"
+          },
+          "relevant_conditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Relevant Conditions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "changed_from_option_id",
+          "reason_summary",
+          "relevant_conditions"
+        ],
+        "title": "SoloAnalysisStudentView",
+        "type": "object"
+      },
+      "SoloAnalysisSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "enrolled": {
+            "title": "Enrolled",
+            "type": "integer"
+          },
+          "in_progress": {
+            "title": "In Progress",
+            "type": "integer"
+          },
+          "started": {
+            "title": "Started",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enrolled",
+          "started",
+          "done",
+          "in_progress"
+        ],
+        "title": "SoloAnalysisSummaryView",
+        "type": "object"
+      },
+      "SoloAttemptBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "current_turn": {
+            "title": "Current Turn",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "progress": {
+            "items": {
+              "$ref": "#/components/schemas/SoloQuestionProgressView"
+            },
+            "title": "Progress",
+            "type": "array"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "review_status": {
+            "enum": [
+              "not_started",
+              "in_progress"
+            ],
+            "title": "Review Status",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "choosing_stance",
+              "awaiting_tutor",
+              "tutor_unavailable",
+              "in_dialogue",
+              "confirming",
+              "between_questions",
+              "reviewing",
+              "awaiting_reflection_prompt",
+              "reflecting",
+              "budget_exhausted",
+              "completed"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "question_index",
+          "progress",
+          "review_status",
+          "current_turn"
+        ],
+        "title": "SoloAttemptBrief",
+        "type": "object"
+      },
+      "SoloAttemptView": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "activity_title": {
+            "title": "Activity Title",
+            "type": "string"
+          },
+          "available_actions": {
+            "items": {
+              "enum": [
+                "submit_stance",
+                "send_message",
+                "retry",
+                "confirm_viewpoint",
+                "revise_viewpoint",
+                "next_question",
+                "submit_review",
+                "retry_reflection_prompt",
+                "continue_reflection",
+                "submit_reflection",
+                "continue_without_tutor"
+              ],
+              "type": "string"
+            },
+            "title": "Available Actions",
+            "type": "array"
+          },
+          "candidate_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/SoloMessageView"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "notice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tutor_unavailable",
+                  "owner_provider_missing"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice"
+          },
+          "principle_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "後果主義",
+                  "義務論",
+                  "混合"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Principle Hint"
+          },
+          "question_count": {
+            "title": "Question Count",
+            "type": "integer"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SoloQuestionView"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "rejected_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "revising": {
+            "title": "Revising",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "choosing_stance",
+              "awaiting_tutor",
+              "tutor_unavailable",
+              "in_dialogue",
+              "confirming",
+              "between_questions",
+              "reviewing",
+              "awaiting_reflection_prompt",
+              "reflecting",
+              "budget_exhausted",
+              "completed"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "summary_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Digest"
+          }
+        },
+        "required": [
+          "id",
+          "activity_id",
+          "activity_title",
+          "course_id",
+          "course_name",
+          "display_name",
+          "state",
+          "question_index",
+          "question_count",
+          "questions",
+          "messages",
+          "candidate_summary",
+          "summary_digest",
+          "principle_hint",
+          "revising",
+          "rejected_summary",
+          "notice",
+          "available_actions"
+        ],
+        "title": "SoloAttemptView",
+        "type": "object"
+      },
+      "SoloMessageView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "move": {
+            "anyOf": [
+              {
+                "enum": [
+                  "probe",
+                  "clarify",
+                  "challenge",
+                  "reflect",
+                  "summarize",
+                  "hypothetical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Move"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "revise_hint": {
+            "anyOf": [
+              {
+                "enum": [
+                  "stance",
+                  "reason",
+                  "condition",
+                  "changed_mind"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revise Hint"
+          },
+          "role": {
+            "enum": [
+              "student",
+              "tutor"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "question_index",
+          "role",
+          "text",
+          "created_at",
+          "move",
+          "revise_hint"
+        ],
+        "title": "SoloMessageView",
+        "type": "object"
+      },
+      "SoloOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ],
+        "title": "SoloOptionView",
+        "type": "object"
+      },
+      "SoloProgressCellView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "not_started",
+              "choosing_stance",
+              "in_dialogue",
+              "confirming",
+              "confirmed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns"
+          }
+        },
+        "required": [
+          "status",
+          "turns"
+        ],
+        "title": "SoloProgressCellView",
+        "type": "object"
+      },
+      "SoloProgressQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "title"
+        ],
+        "title": "SoloProgressQuestionView",
+        "type": "object"
+      },
+      "SoloProgressSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention": {
+            "title": "Attention",
+            "type": "integer"
+          },
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "enrolled": {
+            "title": "Enrolled",
+            "type": "integer"
+          },
+          "started": {
+            "title": "Started",
+            "type": "integer"
+          },
+          "unconfirmed_by_question": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Unconfirmed By Question",
+            "type": "array"
+          }
+        },
+        "required": [
+          "enrolled",
+          "started",
+          "done",
+          "unconfirmed_by_question",
+          "attention"
+        ],
+        "title": "SoloProgressSummaryView",
+        "type": "object"
+      },
+      "SoloQuestionProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "option_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Option Label"
+          },
+          "status": {
+            "enum": [
+              "not_started",
+              "in_dialogue",
+              "confirmed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "index",
+          "status",
+          "title",
+          "option_label"
+        ],
+        "title": "SoloQuestionProgressView",
+        "type": "object"
+      },
+      "SoloQuestionView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmed_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "index": {
+            "title": "Index",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SoloOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloStanceView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "goal_met"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "id",
+          "title",
+          "scenario",
+          "options",
+          "stance",
+          "status",
+          "confirmed_summary"
+        ],
+        "title": "SoloQuestionView",
+        "type": "object"
+      },
+      "SoloStanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "current_option_id": {
+            "title": "Current Option Id",
+            "type": "string"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "current_option_id",
+          "reason"
+        ],
+        "title": "SoloStanceView",
+        "type": "object"
+      },
+      "SoloStudentProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "attention": {
+            "title": "Attention",
+            "type": "boolean"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/SoloProgressCellView"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          },
+          "overall": {
+            "enum": [
+              "not_started",
+              "in_progress",
+              "done"
+            ],
+            "title": "Overall",
+            "type": "string"
+          },
+          "review_status": {
+            "enum": [
+              "not_started",
+              "in_progress"
+            ],
+            "title": "Review Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "overall",
+          "cells",
+          "review_status",
+          "last_activity_at",
+          "attention"
+        ],
+        "title": "SoloStudentProgressView",
+        "type": "object"
+      },
       "Start": {
+        "additionalProperties": false,
         "properties": {
           "accept_temporary_aliases": {
             "default": false,
@@ -1187,6 +5090,7 @@
             "type": "string"
           },
           "expected_roster_digest": {
+            "maxLength": 128,
             "title": "Expected Roster Digest",
             "type": "string"
           }
@@ -1198,10 +5102,34 @@
         "title": "Start",
         "type": "object"
       },
+      "SubmitStanceBody": {
+        "additionalProperties": false,
+        "properties": {
+          "option_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Option Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "reason"
+        ],
+        "title": "SubmitStanceBody",
+        "type": "object"
+      },
       "TokenRequest": {
         "additionalProperties": false,
         "properties": {
           "token": {
+            "maxLength": 512,
             "title": "Token",
             "type": "string"
           }
@@ -1213,6 +5141,7 @@
         "type": "object"
       },
       "UpdateProfile": {
+        "additionalProperties": false,
         "properties": {
           "base_url": {
             "anyOf": [
@@ -1347,6 +5276,162 @@
         ],
         "title": "VerificationDelivery",
         "type": "object"
+      },
+      "VerificationStatusDelivery": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempts"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "delivered_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivered At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "provider_message_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Message Id"
+          },
+          "provider_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "VerificationStatusDelivery",
+        "type": "object"
+      },
+      "VerificationStatusView": {
+        "additionalProperties": false,
+        "properties": {
+          "authority_state": {
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/VerificationStatusDelivery"
+          },
+          "email_masked": {
+            "title": "Email Masked",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified",
+          "email_masked",
+          "authority_state",
+          "delivery"
+        ],
+        "title": "VerificationStatusView",
+        "type": "object"
       }
     }
   },
@@ -1356,6 +5441,453 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v2/account/locale": {
+      "put": {
+        "operationId": "update_locale_api_v2_account_locale_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocaleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Locale"
+      }
+    },
+    "/api/v2/activities/{activity_id}": {
+      "delete": {
+        "operationId": "delete_activity_api_v2_activities__activity_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Activity",
+        "tags": [
+          "activities"
+        ]
+      },
+      "get": {
+        "operationId": "get_activity_api_v2_activities__activity_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity",
+        "tags": [
+          "activities"
+        ]
+      },
+      "patch": {
+        "operationId": "update_activity_details_api_v2_activities__activity_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityDetailsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Activity Details",
+        "tags": [
+          "activities"
+        ]
+      },
+      "put": {
+        "operationId": "update_activity_api_v2_activities__activity_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityDraft"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/copy": {
+      "post": {
+        "operationId": "copy_activity_api_v2_activities__activity_id__copy_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Copy Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/join": {
+      "post": {
+        "operationId": "join_activity_api_v2_activities__activity_id__join_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Join Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/join-preview": {
+      "get": {
+        "operationId": "activity_join_preview_api_v2_activities__activity_id__join_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityJoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity Join Preview",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/public-preview": {
+      "get": {
+        "operationId": "activity_public_preview_api_v2_activities__activity_id__public_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicJoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity Public Preview",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/{action}": {
+      "post": {
+        "operationId": "transition_activity_api_v2_activities__activity_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "publish",
+                "start_now",
+                "end_now"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/api/v2/ai-settings/account": {
       "get": {
         "operationId": "account_settings_api_v2_ai_settings_account_get",
@@ -1631,7 +6163,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationStatusView"
+                }
               }
             },
             "description": "Successful Response"
@@ -1676,6 +6210,250 @@
         "summary": "Verify"
       }
     },
+    "/api/v2/bank/questions": {
+      "get": {
+        "operationId": "search_api_v2_bank_questions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "maxLength": 200,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankSearchResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search"
+      },
+      "post": {
+        "operationId": "publish_api_v2_bank_questions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Publish"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}": {
+      "get": {
+        "operationId": "detail_api_v2_bank_questions__bank_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankQuestionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/import": {
+      "post": {
+        "operationId": "import_question_api_v2_bank_questions__bank_id__import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportQuestion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankImportResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Question"
+      }
+    },
+    "/api/v2/bank/questions/{bank_id}/unpublish": {
+      "post": {
+        "operationId": "unpublish_api_v2_bank_questions__bank_id__unpublish_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bank_id",
+            "required": true,
+            "schema": {
+              "title": "Bank Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BankMutation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankUnpublishResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unpublish"
+      }
+    },
     "/api/v2/classrooms": {
       "get": {
         "operationId": "rooms_api_v2_classrooms_get",
@@ -1683,7 +6461,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoomSummary"
+                  },
+                  "title": "Response Rooms Api V2 Classrooms Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -1842,7 +6626,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RoomBudgetView"
+                }
               }
             },
             "description": "Successful Response"
@@ -1889,7 +6675,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -1936,7 +6724,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomEventPage"
+                }
               }
             },
             "description": "Successful Response"
@@ -1983,7 +6773,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2000,6 +6792,487 @@
           }
         },
         "summary": "Reaction"
+      }
+    },
+    "/api/v2/course-join/preview": {
+      "get": {
+        "operationId": "preview_join_api_v2_course_join_preview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Join",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/course-join/public-preview": {
+      "get": {
+        "operationId": "public_preview_join_api_v2_course_join_public_preview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicJoinPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Public Preview Join",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses": {
+      "get": {
+        "operationId": "course_lists_api_v2_courses_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseLists"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Course Lists",
+        "tags": [
+          "courses"
+        ]
+      },
+      "post": {
+        "operationId": "create_course_api_v2_courses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Course",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/join": {
+      "post": {
+        "operationId": "join_course_api_v2_courses_join_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseStudentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Join Course",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/{course_id}": {
+      "get": {
+        "operationId": "get_course_api_v2_courses__course_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "teacher",
+                    "student"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/CourseTeacherView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CourseStudentView"
+                    }
+                  ],
+                  "title": "Response Get Course Api V2 Courses  Course Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Course",
+        "tags": [
+          "courses"
+        ]
+      },
+      "patch": {
+        "operationId": "update_course_api_v2_courses__course_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Course",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/{course_id}/activities": {
+      "get": {
+        "operationId": "list_activities_api_v2_courses__course_id__activities_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "teacher",
+                    "student"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ActivityTeacherList"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ActivityStudentList"
+                    }
+                  ],
+                  "title": "Response List Activities Api V2 Courses  Course Id  Activities Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Activities",
+        "tags": [
+          "courses"
+        ]
+      },
+      "post": {
+        "operationId": "create_activity_api_v2_courses__course_id__activities_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityDraft"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Activity",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/{course_id}/{action}": {
+      "post": {
+        "operationId": "transition_course_api_v2_courses__course_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "rotate_code",
+                "disable_code",
+                "enable_code"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition Course",
+        "tags": [
+          "courses"
+        ]
       }
     },
     "/api/v2/groups/classrooms/{rid}": {
@@ -2020,7 +7293,20 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/GroupCollectionView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/GroupRunView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LegacyGroupView"
+                    }
+                  ],
+                  "title": "Response View Api V2 Groups Classrooms  Rid  Get"
+                }
               }
             },
             "description": "Successful Response"
@@ -2067,7 +7353,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AddAIStudentsReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2114,7 +7402,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClearAIStudentsReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2198,7 +7488,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2245,7 +7537,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupStartReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2292,7 +7586,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupActionReceipt"
+                }
               }
             },
             "description": "Successful Response"
@@ -2338,7 +7634,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMemberIdentityView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2364,7 +7662,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LibraryClassroomView"
+                  },
+                  "title": "Response List Classrooms Api V2 Library Classrooms Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2388,7 +7692,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryClassroomView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2425,7 +7731,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryClassroomDetailView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2462,7 +7770,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomAISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2507,7 +7817,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomAISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2554,7 +7866,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomBatchView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2601,7 +7915,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AttachedScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2896,7 +8212,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigView"
+                }
               }
             },
             "description": "Successful Response"
@@ -2928,7 +8246,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScriptView"
+                  },
+                  "title": "Response Scripts Api V2 Scripts Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -2971,6 +8295,42 @@
         "summary": "Create Script"
       }
     },
+    "/api/v2/scripts/assist": {
+      "post": {
+        "operationId": "script_assist_api_v2_scripts_assist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Script Assist"
+      }
+    },
     "/api/v2/scripts/import": {
       "post": {
         "operationId": "import_script_api_v2_scripts_import_post",
@@ -2985,6 +8345,24 @@
           }
         },
         "summary": "Import Script"
+      }
+    },
+    "/api/v2/scripts/samples": {
+      "get": {
+        "operationId": "script_samples_api_v2_scripts_samples_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SampleQuestionSet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Script Samples"
       }
     },
     "/api/v2/scripts/{script_id}": {
@@ -3070,7 +8448,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptRevisionView"
+                }
               }
             },
             "description": "Successful Response"
@@ -3126,6 +8506,303 @@
         "summary": "Export Yaml"
       }
     },
+    "/api/v2/solo/activities/{activity_id}": {
+      "get": {
+        "operationId": "get_solo_activity_api_v2_solo_activities__activity_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Solo Activity",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/analysis": {
+      "get": {
+        "operationId": "get_activity_analysis_api_v2_solo_activities__activity_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityAnalysisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Analysis",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/attempt": {
+      "post": {
+        "operationId": "start_attempt_api_v2_solo_activities__activity_id__attempt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/progress": {
+      "get": {
+        "operationId": "get_activity_progress_api_v2_solo_activities__activity_id__progress_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloActivityProgressView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Progress",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/attempts/{attempt_id}": {
+      "get": {
+        "operationId": "get_attempt_api_v2_solo_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/attempts/{attempt_id}/{action}": {
+      "post": {
+        "operationId": "act_on_attempt_api_v2_solo_attempts__attempt_id___action__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attempt_id",
+            "required": true,
+            "schema": {
+              "title": "Attempt Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "enum": [
+                "submit_stance",
+                "send_message",
+                "retry",
+                "confirm_viewpoint",
+                "revise_viewpoint",
+                "next_question",
+                "submit_review",
+                "retry_reflection_prompt",
+                "continue_reflection",
+                "submit_reflection",
+                "continue_without_tutor"
+              ],
+              "title": "Action",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/SubmitStanceBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SendMessageBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ConfirmViewpointBody"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloAttemptView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Act On Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
     "/api/v2/suggestions/other": {
       "post": {
         "operationId": "other_suggestion_api_v2_suggestions_other_post",
@@ -3143,7 +8820,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/OtherSuggestionView"
+                }
               }
             },
             "description": "Successful Response"

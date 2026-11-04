@@ -28,10 +28,15 @@ for candidate in (Path(__file__).resolve().parents[1] / "backend", Path("/app"))
 
 from sqlalchemy import select  # noqa: E402
 
-from app.modules.classroom_core.api.classroom_schemas import JoinRoom, ScriptDocument  # noqa: E402
-from app.modules.platform.repositories import classroom_storage as storage  # noqa: E402
-from app.modules.classroom_core.services import classroom as service  # noqa: E402
-from app.modules.identity_access.services.classroom_auth import HASHER  # noqa: E402
+from app.modules.classroom_core.contracts import JoinRoom  # noqa: E402
+from app.modules.content_authoring.contracts import ScriptDocument  # noqa: E402
+from app.modules.platform import storage as storage  # noqa: E402
+from app.modules.app_shell import models as _models  # noqa: E402,F401
+from app.modules.classroom_core import runtime as service  # noqa: E402
+from app.modules.identity_access.auth import HASHER  # noqa: E402
+from app.modules.identity_access.repositories import Account
+from app.modules.content_authoring.repositories import Script
+from app.modules.classroom_core.repositories import Room
 
 ALLOWED_ENVIRONMENTS = {"preview", "local-dev"}
 PREVIEW_PASSWORD = "preview-password"
@@ -76,7 +81,7 @@ DOCUMENT = ScriptDocument.model_validate(
 
 
 def account(db, username):
-    row = storage.Account(
+    row = Account(
         username=username,
         email=f"{username}@preview.invalid",
         password_hash=HASHER.hash(PREVIEW_PASSWORD),
@@ -94,18 +99,18 @@ def seed():
         raise SystemExit(f"seed_preview: refusing to seed SOCRATES_ENVIRONMENT={environment!r}")
     storage.configure()
     with storage.transaction() as db:
-        if db.scalar(select(storage.Account).where(storage.Account.username == "teacher001")):
+        if db.scalar(select(Account).where(Account.username == "teacher001")):
             print("seed_preview: already seeded")
             return
         codes = []
         for n in range(1, TEACHERS + 1):
             teacher = account(db, f"teacher{n:03d}")
-            script = storage.Script(owner_id=teacher.id, document=DOCUMENT, revision=1)
+            script = Script(owner_id=teacher.id, document=DOCUMENT, revision=1)
             db.add(script)
             db.flush()
             room = service.create_room(db, teacher, script.id)
             code = f"PREVIEW{n}"
-            db.get(storage.Room, room["id"]).code = code
+            db.get(Room, room["id"]).code = code
             db.flush()
             codes.append(code)
         for n in range(1, STUDENTS + 1):

@@ -1,0 +1,38 @@
+.teacher-live { gap: 18px; }
+.teacher-live__head { align-items: center; }
+.teacher-live__title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.teacher-live__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+.live-summaries { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.live-summary-card {
+  min-width: 0; padding: 16px 18px; border: 1px solid #DDE4E0; border-radius: 12px; background: #FFFFFF;
+}
+.live-summary-card h2 { margin: 0 0 8px; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.live-summary-card p { margin: 0; color: #5F6661; font-size: 13px; line-height: 1.5; }
+.live-summary-card--attention { display: flex; align-items: center; gap: 12px; border-color: #E8D5A9; background: #FFF9E9; }
+.live-summary-card--attention > span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #F1DDA9; color: #6E5034; font-weight: 800; }
+.live-summary-card--attention p { color: #5A432D; font-weight: 700; }
+
+.live-roster { display: flex; flex-direction: column; gap: 14px; }
+.live-roster__filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.live-table-wrap { overflow-x: auto; border: 1px solid #E3E3DF; border-radius: 12px; background: #FFFFFF; }
+.live-table { width: 100%; min-width: 780px; border-collapse: collapse; font-size: 14px; }
+.live-table th, .live-table td { padding: 14px 16px; border-bottom: 1px solid #ECECE8; text-align: left; vertical-align: top; }
+.live-table thead th { background: #F7F6F2; color: #3F4642; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.live-table tbody th { color: #1F2421; font-weight: 700; white-space: nowrap; }
+.live-table tbody tr:last-child > * { border-bottom: 0; }
+.live-table__attention { background: #FFFCF3; }
+.live-table__empty { padding: 36px 16px !important; color: #5F6661; text-align: center !important; }
+.live-cell { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 9px; border-radius: 999px; background: #F0F1EF; color: #4B514D; font-size: 12px; white-space: nowrap; }
+.live-cell--confirmed { background: #E5F0EA; color: #285344; }
+.live-cell--in_dialogue { background: #EAF0F5; color: #31526B; }
+.live-cell--confirming { background: #FFF1CF; color: #6E5034; }
+.live-cell--review { background: #F4F0E9; color: #594C3B; }
+.live-time { display: flex; flex-direction: column; gap: 4px; color: #5F6661; white-space: nowrap; }
+.live-time__attention { color: #8A572E; font-size: 12px; font-weight: 700; }
+.teacher-live__footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding-top: 2px; color: #6A706C; font-size: 12px; }
+
+@media (max-width: 900px) {
+  .teacher-live__head { align-items: flex-start; }
+  .teacher-live__actions { width: 100%; }
+}

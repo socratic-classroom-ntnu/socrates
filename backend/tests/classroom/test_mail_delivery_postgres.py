@@ -9,12 +9,9 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
-from app.modules.platform.repositories import classroom_storage as storage
-from app.modules.identity_access.services.email_delivery import (
-    MailDelivery,
-    _claim_mail,
-    send_mail_once,
-)
+from app.modules.platform import storage as storage
+from app.modules.identity_access.email_delivery import MailDelivery, _claim_mail, send_mail_once
+from app.modules.identity_access.repositories import Mail
 
 
 @pytest.fixture
@@ -41,12 +38,12 @@ def mail_database(monkeypatch):
 
 def queue_mail(state="PENDING", *, receipt=True):
     with storage.transaction() as db:
-        mail = storage.Mail(
+        mail = Mail(
             recipient="mail-worker@example.test",
             subject="Verification regression",
             body="Test message",
             state=state,
-            next_at=time.time() - 1,
+            next_at=time.time() - 3600,
         )
         db.add(mail)
         db.flush()
@@ -62,7 +59,7 @@ def test_delivery_claims_pending_legacy_and_expired_mail(mail_database, state, r
     mail_id = queue_mail(state, receipt=receipt)
     assert send_mail_once() is True
     with storage.transaction() as db:
-        mail = db.get(storage.Mail, mail_id)
+        mail = db.get(Mail, mail_id)
         delivery = db.get(MailDelivery, mail_id)
         assert mail.state == "SENT"
         assert mail.attempts == 1
@@ -74,9 +71,7 @@ def test_delivery_claims_pending_legacy_and_expired_mail(mail_database, state, r
 def test_claim_skips_mail_locked_by_another_worker(mail_database):
     locked_id = queue_mail()
     with storage.transaction() as other_worker:
-        other_worker.scalar(
-            select(storage.Mail).where(storage.Mail.id == locked_id).with_for_update()
-        )
+        other_worker.scalar(select(Mail).where(Mail.id == locked_id).with_for_update())
         assert _claim_mail() is None
         available_id = queue_mail()
         claim = _claim_mail()

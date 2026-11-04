@@ -11,10 +11,10 @@ if [[ -z "$PYTHON_BIN" ]]; then
   fi
 fi
 
-mkdir -p "$ROOT/frontend/src/api"
+mkdir -p "$ROOT/frontend/src/contract"
 cd "$ROOT/backend"
-"$PYTHON_BIN" -c 'import json; from app.main import app; print(json.dumps(app.openapi(), ensure_ascii=False, indent=2))' \
+"$PYTHON_BIN" -c 'import json; from app.modules.contract.service import solo_openapi; print(json.dumps(solo_openapi(), ensure_ascii=False, indent=2))' \
   > "$ROOT/frontend/openapi.json"
 
 cd "$ROOT/frontend"
-npx --no-install openapi-typescript openapi.json -o src/api/types.ts
+npx --no-install openapi-typescript openapi.json -o src/contract/types.ts

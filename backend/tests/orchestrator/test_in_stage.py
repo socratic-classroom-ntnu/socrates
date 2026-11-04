@@ -1,5 +1,5 @@
-from app.modules.solo_dialogue.domain.session_state import actions_for
-from app.modules.solo_dialogue.orchestrator.orchestrator import Orchestrator
+from app.modules.solo_dialogue.session_state import actions_for
+from app.modules.solo_dialogue.orchestrator import Orchestrator
 from tests.orchestrator.conftest import FakeGateway, make_ladder, obs, speak
 
 

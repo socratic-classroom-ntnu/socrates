@@ -2,25 +2,20 @@ import time
 
 import pytest
 
-from app.modules.llm_runtime.tutor.classroom_gateway import validate_base_url
-from app.modules.ai_providers.api.routes.provider_profiles import (
-    AccountAISettings,
-    ProviderProfile,
-    SessionProviderSecret,
+from app.modules.ai_providers.classroom_gateway import validate_base_url
+from app.modules.ai_providers.routes import AccountAISettings, SessionProviderSecret
+from app.modules.ai_providers.service import ProviderProfile
+from app.modules.ai_providers.service import (
     _open,
-    _profile_view,
+    profile_view,
     _seal,
     profile_secret,
-    resolve_provider_chain,
 )
-from app.modules.platform.repositories.classroom_storage import (
-    Account,
-    LoginSession,
-    Room,
-    Script,
-    configure,
-    transaction,
-)
+from app.modules.identity_access.repositories import Account, LoginSession
+from app.modules.classroom_core.repositories import Room
+from app.modules.content_authoring.repositories import Script
+from app.modules.classroom_core.service import room_provider_chain
+from app.modules.platform.storage import configure, transaction
 
 
 @pytest.fixture(autouse=True)
@@ -42,7 +37,7 @@ def seed():
         script = Script(
             id="10000000-0000-4000-8000-000000000097",
             owner_id=account.id,
-            document={"title": "R97", "questions": []},
+            document={"title": "AI 連線測試", "questions": []},
             revision=1,
         )
         room = Room(
@@ -67,19 +62,19 @@ def seed():
 
 def test_encryption_round_trip_and_masked_view():
     encrypted, version = _seal(
-        "sk-r97-example",
+        "sk-test-example",
         profile_id="profile-1",
         owner_id="owner-1",
     )
     assert version == "derived-v1"
-    assert "sk-r97-example" not in encrypted
+    assert "sk-test-example" not in encrypted
     assert (
         _open(
             encrypted,
             profile_id="profile-1",
             owner_id="owner-1",
         )
-        == "sk-r97-example"
+        == "sk-test-example"
     )
     profile = ProviderProfile(
         id="profile-1",
@@ -90,7 +85,7 @@ def test_encryption_round_trip_and_masked_view():
         encrypted_secret=encrypted,
         secret_last4="mple",
     )
-    projection = _profile_view(profile)
+    projection = profile_view(profile)
     assert "encrypted_secret" not in projection
     assert projection["secret_last4"] == "mple"
 
@@ -169,7 +164,7 @@ def test_classroom_owner_profile_and_model_precedence():
         db.add_all([profile, settings])
     with transaction() as db:
         room = db.get(Room, room_id)
-        bindings, routing = resolve_provider_chain(
+        bindings, routing = room_provider_chain(
             db,
             room,
             "focused_tutor",
@@ -206,7 +201,7 @@ def test_local_allowlist_accepts_local_openai_compatible(monkeypatch):
 
 
 def test_derived_key_roundtrip_without_master_key():
-    from app.modules.ai_providers.api.routes.provider_profiles import DERIVED_VERSION, _open, _seal
+    from app.modules.ai_providers.service import DERIVED_VERSION, _open, _seal
 
     payload, version = _seal("sk-test", profile_id="p1", owner_id="o1")
     assert version == DERIVED_VERSION

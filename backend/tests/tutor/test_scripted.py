@@ -3,16 +3,20 @@ from pathlib import Path
 import pytest
 
 from app.modules.platform.config import settings
-from app.modules.llm_runtime.domain.tutor import ProviderRequest
-from app.modules.content_authoring.ladders.repository import LadderRepository
-from app.modules.solo_dialogue.orchestrator.policy import should_advance
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
-from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
+from app.modules.solo_dialogue.tutor_contracts import ProviderRequest
+from app.modules.content_authoring.ladder_repository import LadderRepository
+from app.modules.llm_runtime.policy import should_advance
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
+from app.modules.solo_dialogue.scripted import ScriptedProvider
 
 
 def _request(turn_index: int) -> ProviderRequest:
     return ProviderRequest(
-        kind="respond", stage_key="trolley_basic", turn_index=turn_index, messages=[]
+        kind="respond",
+        stage_key="trolley_basic",
+        turn_index=turn_index,
+        messages=[],
+        reached_stage_keys=(),
     )
 
 
@@ -40,7 +44,13 @@ def test_clamps_to_last_turn_when_index_overflows():
 def test_summarize_returns_structured_draft():
     provider = ScriptedProvider.load(settings.script_path)
     draft = provider.generate(
-        ProviderRequest(kind="summarize", stage_key=None, turn_index=0, messages=[])
+        ProviderRequest(
+            kind="summarize",
+            stage_key=None,
+            turn_index=0,
+            messages=[],
+            reached_stage_keys=("trolley_basic", "footbridge", "transplant"),
+        )
     )
     assert draft["core_principle"]
     assert draft["tension"]
@@ -74,7 +84,7 @@ def test_normal_script_reaches_goal_only_after_student_replies_to_challenge():
 def test_normal_script_summary_tracks_the_three_sample_stances():
     gateway = TutorGateway(ScriptedProvider.load(settings.script_path))
 
-    draft = gateway.summarize([])
+    draft = gateway.summarize([], ("trolley_basic", "footbridge", "transplant"))
 
     assert [(entry.stage_key, entry.label) for entry in draft.stance_by_stage] == [
         ("trolley_basic", "後果主義"),
@@ -105,7 +115,7 @@ def test_capped_script_never_reports_the_first_stage_goal_as_met():
     assert all(
         not should_advance(turn.observations, turn_count=index) for index, turn in enumerate(turns)
     )
-    assert gateway.summarize([]).stance_by_stage[0].label == "未明"
+    assert gateway.summarize([], ("trolley_basic",)).stance_by_stage[0].label == "未明"
 
 
 def test_shifted_script_asks_for_one_more_turn_before_stage_completion():
@@ -120,3 +130,40 @@ def test_shifted_script_asks_for_one_more_turn_before_stage_completion():
     assert [
         should_advance(turn.observations, turn_count=index) for index, turn in enumerate(turns)
     ] == [False, False, False, True]
+
+
+@pytest.mark.parametrize(
+    ("reached", "expected_points"),
+    [
+        (("trolley_basic",), ["選擇轉向以減少死亡人數"]),
+        (
+            ("trolley_basic", "footbridge"),
+            ["選擇轉向以減少死亡人數", "拒絕把旁觀者當成擋車工具"],
+        ),
+    ],
+)
+def test_partial_summary_uses_only_stage_scoped_script_content(reached, expected_points):
+    provider = ScriptedProvider.load(settings.script_path)
+    draft = provider.generate(
+        ProviderRequest(
+            kind="summarize",
+            stage_key=None,
+            turn_index=0,
+            messages=[],
+            reached_stage_keys=reached,
+        )
+    )
+    assert [entry["stage_key"] for entry in draft["stance_by_stage"]] == list(reached)
+    assert draft["core_principle"] == "；".join(expected_points)
+    assert draft["tension"] == ""
+
+
+def test_summary_requires_explicit_nonempty_reached_scope():
+    with pytest.raises(ValueError, match="summary requires"):
+        ProviderRequest(
+            kind="summarize",
+            stage_key=None,
+            turn_index=0,
+            messages=[],
+            reached_stage_keys=(),
+        )

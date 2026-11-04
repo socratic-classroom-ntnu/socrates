@@ -1,7 +1,8 @@
-from app.modules.solo_dialogue.api.deps import get_service
+from app.modules.solo_dialogue import deps
+from app.modules.solo_dialogue.deps import get_service
 from app.main import app
-from app.modules.solo_dialogue.services.conversation import ConversationService
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
+from app.modules.solo_dialogue.conversation import ConversationService
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
 
 
 def _create(client, learner_id):
@@ -66,7 +67,6 @@ def test_end_makes_no_provider_calls(client, learner_id, db):
     service override，所以 0 是對整個 CountingProvider 生命週期而言的真值，
     不是相減出來的。
     """
-    import app.main as main
 
     session_id = _create(client, learner_id)
     message = client.post(
@@ -78,7 +78,7 @@ def test_end_makes_no_provider_calls(client, learner_id, db):
 
     provider = CountingProvider()
     app.dependency_overrides[get_service] = lambda: ConversationService(
-        db, main.ladder_repository, TutorGateway(provider)
+        db, deps.ladder_repository, TutorGateway(provider)
     )
     try:
         response = client.post(
@@ -131,12 +131,12 @@ def test_active_session_cannot_generate_summary(client, learner_id):
 
 def test_wrap_up_cap_ends_as_completed(client, learner_id, monkeypatch):
     """單階案例第三輪達成；再講三輪達到 ladder 的追加上限。"""
-    import app.main as main
-    from app.modules.content_authoring.ladders.repository import LadderRepository
+    from app.modules.content_authoring.ladder_repository import LadderRepository
+    from app.modules.solo_dialogue import deps
 
-    ladder = main.ladder_repository.get()
+    ladder = deps.ladder_repository.get()
     monkeypatch.setattr(
-        main,
+        deps,
         "ladder_repository",
         LadderRepository(ladder.model_copy(update={"stages": [ladder.stages[0]]})),
     )
@@ -199,3 +199,57 @@ def test_ended_session_rejects_further_messages(client, learner_id):
         headers={"X-Learner-Id": learner_id},
     )
     assert response.status_code == 409
+
+
+def test_summary_key_points_come_from_reached_stages_only(client, learner_id, db):
+    """重點來自學生走到的那幾階（立場＋說明）；沒走到的階的內容不能出現在總結裡。"""
+    session_id = _create(client, learner_id)
+    client.post(
+        f"/api/sessions/{session_id}/messages",
+        json={"text": "我會轉向，因為救下的人比較多"},
+        headers={"X-Learner-Id": learner_id},
+    )
+    client.post(f"/api/sessions/{session_id}/end", headers={"X-Learner-Id": learner_id})
+
+    summary = client.post(
+        f"/api/sessions/{session_id}/summary", headers={"X-Learner-Id": learner_id}
+    ).json()
+    assert summary["key_points"] == ["後果主義：選擇轉向以減少死亡人數"]
+    assert "器官" not in str(summary["key_points"]) and "殺害" not in str(summary["key_points"])
+    assert summary["core_principle"] == "選擇轉向以減少死亡人數"
+    assert summary["tension"] == ""
+    assert all(outcome["title"] is None for outcome in summary["stage_outcomes"][1:])
+
+    import uuid
+
+    from app.modules.solo_dialogue.repositories import Summary
+
+    stored = db.get(Summary, uuid.UUID(session_id))
+    assert stored.raw["reached_stage_keys"] == ["trolley_basic"]
+    assert [entry["stage_key"] for entry in stored.stance_by_stage] == ["trolley_basic"]
+    assert stored.core_principle == summary["core_principle"]
+
+
+def test_existing_summary_readback_preserves_the_accepted_record(client, learner_id, db):
+    import uuid
+
+    from app.modules.solo_dialogue.repositories import Summary
+
+    session_id = _create(client, learner_id)
+    client.post(f"/api/sessions/{session_id}/end", headers={"X-Learner-Id": learner_id})
+    row = Summary(
+        session_id=uuid.UUID(session_id),
+        core_principle="既有摘要原文",
+        tension="既有紀錄",
+        stance_by_stage=[],
+        shifted=False,
+        raw={"legacy_fixture": True},
+    )
+    db.add(row)
+    db.flush()
+    response = client.get(
+        f"/api/sessions/{session_id}/summary", headers={"X-Learner-Id": learner_id}
+    )
+    assert response.status_code == 200
+    assert response.json()["core_principle"] == "既有摘要原文"
+    assert row.raw == {"legacy_fixture": True}

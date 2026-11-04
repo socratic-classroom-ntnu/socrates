@@ -1,16 +1,18 @@
-"""Application composition. Legacy Round1 routers remain available alongside /api/v2."""
+"""Application composition. The solo-dialogue routers stay mounted alongside /api/v2."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.modules.llm_runtime.tutor import prompts
-from app.modules.classroom_core.api.routes.classroom import router
-from app.modules.classroom_core.orchestrator.classroom import DomainError
-from app.modules.platform.realtime import BUS
-from app.modules.platform.repositories.classroom_storage import engine
-from app.modules.llm_runtime.services.llm_workers import clock_loop, llm_loop, mail_loop
-from app.modules.platform.classroom_env import env_int
+from app.modules.llm_runtime import prompts
+from app.modules.app_shell import models as _models  # noqa: F401  註冊所有模組的 ORM
+from app.modules.app_shell import wiring as _wiring  # noqa: F401  接上跨模組的 hook
+from app.modules.app_shell.routes import include_classroom_routers
+from app.modules.platform.errors import DomainError
+from app.modules.classroom_core.realtime import BUS
+from app.modules.platform.storage import engine
+from app.modules.app_shell.llm_workers import clock_loop, llm_loop, mail_loop
+from app.modules.platform.env import env_int
 
 
 @asynccontextmanager
@@ -31,12 +33,17 @@ async def lifespan(app):
 
 def create_app(legacy=False, background=True):
     prompts.validate_programs()
-    app = FastAPI(title="Socrates API", version="0.3.0", lifespan=lifespan if background else None)
+    app = FastAPI(
+        title="Socrates API",
+        version="0.3.0",
+        lifespan=lifespan if background else None,
+        separate_input_output_schemas=False,
+    )
     if legacy:
         from app.main import app as first_run
 
         app.router.routes.extend(first_run.router.routes)
-    app.include_router(router)
+    include_classroom_routers(app)
 
     @app.get("/api/v2/readiness")
     def readiness():

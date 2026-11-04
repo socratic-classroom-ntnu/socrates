@@ -1,4 +1,4 @@
-import type { Action } from '../api/client'
+import type { Action } from '../contract/client'
 
 const LABELS: Record<Action, string> = {
     send_message: '送出',

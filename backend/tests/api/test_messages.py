@@ -76,8 +76,8 @@ def _hijack_lock(monkeypatch, inject):
     用注入取代真的開執行緒：結果確定、不會偶發，而這段邏輯正是整份計畫裡
     最容易寫錯的地方，不能只靠人眼 review。
     """
-    from app.modules.solo_dialogue.domain.session_state import OutgoingMessage
-    from app.modules.solo_dialogue.services import conversation
+    from app.modules.solo_dialogue.session_state import OutgoingMessage
+    from app.modules.solo_dialogue import conversation
 
     original = conversation.ConversationService._lock
     fired = {"done": False}
@@ -169,7 +169,7 @@ def test_session_message_cap_is_the_last_safety_net(client, learner_id, monkeypa
 
     擋的不是正常使用，是失控的迴圈與濫用。
     """
-    from app.modules.solo_dialogue.services import conversation
+    from app.modules.solo_dialogue import conversation
 
     monkeypatch.setattr(conversation, "MAX_MESSAGES_PER_SESSION", 4)
     session_id = _create(client, learner_id)
@@ -209,7 +209,7 @@ def test_send_response_is_snapshot_before_rival_end(client, db, learner_id, monk
     """A later end must not mix ended status with the previous turn's actions."""
     import uuid
 
-    from app.modules.solo_dialogue.api.deps import get_service
+    from app.modules.solo_dialogue.deps import get_service
 
     session_id = _create(client, learner_id)
     _interleave_after_turn_commit(
@@ -240,7 +240,7 @@ def test_send_response_does_not_return_rival_messages(client, db, learner_id, mo
     """A later send must not replace the first POST's appended messages."""
     import uuid
 
-    from app.modules.solo_dialogue.api.deps import get_service
+    from app.modules.solo_dialogue.deps import get_service
 
     session_id = _create(client, learner_id)
     _interleave_after_turn_commit(

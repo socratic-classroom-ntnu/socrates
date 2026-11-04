@@ -6,14 +6,14 @@ import pytest
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-import app.main as main
+from app.modules.solo_dialogue import deps
 from app.modules.platform.config import settings
 from app.modules.platform.db import SessionLocal
-from app.modules.solo_dialogue.models import Session
-from app.modules.solo_dialogue.repositories.session_repository import SessionRepository
-from app.modules.solo_dialogue.services.conversation import ConversationService
-from app.modules.llm_runtime.tutor.gateway import TutorGateway
-from app.modules.llm_runtime.tutor.scripted import ScriptedProvider
+from app.modules.solo_dialogue.repositories import Session
+from app.modules.solo_dialogue.session_repository import SessionRepository
+from app.modules.solo_dialogue.conversation import ConversationService
+from app.modules.solo_dialogue.tutor_gateway import TutorGateway
+from app.modules.solo_dialogue.scripted import ScriptedProvider
 
 
 def test_restart_requires_explicit_choice_and_preserves_history(client, db, learner_id):
@@ -58,7 +58,7 @@ def test_restart_requires_explicit_choice_and_preserves_history(client, db, lear
 
 
 def test_concurrent_start_creates_one_active_session():
-    from app.modules.solo_dialogue.services.conversation import ActiveSessionExists
+    from app.modules.solo_dialogue.conversation import ActiveSessionExists
 
     learner = uuid.uuid4()
     gate = threading.Barrier(2)
@@ -67,7 +67,7 @@ def test_concurrent_start_creates_one_active_session():
         with SessionLocal() as db:
             service = ConversationService(
                 db,
-                main.ladder_repository,
+                deps.ladder_repository,
                 TutorGateway(ScriptedProvider.load(settings.script_path)),
             )
             gate.wait(timeout=5)
@@ -93,7 +93,7 @@ def test_database_rejects_second_active_session_for_learner():
     learner = uuid.uuid4()
     with SessionLocal() as db:
         ConversationService(
-            db, main.ladder_repository, TutorGateway(ScriptedProvider.load(settings.script_path))
+            db, deps.ladder_repository, TutorGateway(ScriptedProvider.load(settings.script_path))
         ).start(learner)
     with SessionLocal() as db:
         db.add(
@@ -119,7 +119,7 @@ def test_restart_read_waits_for_inflight_session_command():
         session_id = (
             ConversationService(
                 db,
-                main.ladder_repository,
+                deps.ladder_repository,
                 TutorGateway(ScriptedProvider.load(settings.script_path)),
             )
             .start(learner)

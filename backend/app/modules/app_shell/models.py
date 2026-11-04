@@ -16,8 +16,7 @@ MODEL_MODULES = (
     "app.modules.llm_runtime.repositories",
     "app.modules.classroom_core.repositories",
     "app.modules.group_dialogue.repositories",
-    "app.modules.solo_dialogue.repositories",
-    "app.modules.solo_dialogue.interaction_repositories",
+    "app.modules.app_shell.legacy_tables",
 )
 
 

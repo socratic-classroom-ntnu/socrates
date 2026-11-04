@@ -9,8 +9,8 @@ from app.modules.llm_runtime import service as advance_policy
 def stage_goal(observations: dict, completed_turns: int) -> bool:
     """Advance criteria live once, in app/modules/llm_runtime/policy.py (AGENTS.md non-negotiable).
 
-    Solo dialogue's turn_count (exchanges completed before this one) and the classroom's
-    completed_turns (index of the exchange just answered) have the same value at the same moment.
+    The classroom's completed_turns (index of the exchange just answered) is should_advance's
+    turn_count (exchanges completed before this one): the two have the same value.
     """
     o = Observations.model_validate(observations)
     return advance_policy.should_advance(o, completed_turns)

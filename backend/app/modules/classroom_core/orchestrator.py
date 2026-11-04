@@ -481,8 +481,8 @@ class CoreOrchestrator:
                 self.close_focus("reselect_after_argument_comment")
             elif f["advance_requested"]:
                 self.close_focus("teacher_next")
-            # Goal before cap, as in solo dialogue (app/modules/solo_dialogue/orchestrator.py): a goal met on the
-            # cap turn is goal_met; a cap without the goal is capped, never goal_met.
+            # Goal before cap: a goal met on the cap turn is goal_met; a cap without the goal is
+            # capped, never goal_met (AGENTS.md: 上限到了未達成標 capped 不標 goal_met).
             elif stage_goal(result["observations"], f["completed_turns"]):
                 self.close_focus("goal_met")
             elif f["completed_turns"] >= self.question()["max_focus_turns"]:

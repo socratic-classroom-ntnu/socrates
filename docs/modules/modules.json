@@ -393,7 +393,6 @@
       "about": "導師人像（Socratic 與 CE 共用）、語音輸出、語音輸入元件。",
       "paths": [
         "frontend/src/features/avatar/",
-        "frontend/src/features/conversation-room/avatar/",
         "frontend/src/features/conversation-room/voice/",
         "frontend/src/shared/input/",
         "frontend/src/types/speech-recognition.d.ts",

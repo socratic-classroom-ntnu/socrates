@@ -77,7 +77,6 @@ Avatar、STT、TTS、viseme、音訊時間點與媒體授權 metadata。
 
 檔案範圍：
 - `frontend/src/features/avatar/`
-- `frontend/src/features/conversation-room/avatar/`
 - `frontend/src/features/conversation-room/voice/`
 - `frontend/src/shared/input/`
 - `frontend/src/types/speech-recognition.d.ts`

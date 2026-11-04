@@ -92,6 +92,7 @@ flags 只評**學生最新的那一則**，每個值都是 0 或 1。prompt 裡�
 {"points": [{"text": "…", "sources": [{"message_ref": "m3", "quote": "學生原文中的一段"}]}]}
 ```
 - 後端驗證兩件事：message_ref 屬於這位學生、這次作答；quote 必須是原文的子字串。不合格的引用丟掉；整份統整沒有任何有效引用時，重新產生一次。
+- 上面是 LLM 輸出的格式。後端驗證通過後，把 `message_ref` 換成資料庫的 `message_id`，並算出 quote 在原文裡的起訖位置；對外 API 與共用型別用 `message_id`＋quote＋起訖位置（見 NEW-FEATURES 第 4 節）。
 - final_summary 另外帶：`trajectory`（各階段的立場、轉折原因、引用）、`final_position`、`reasoning_style`、`open_question`、`normalized_text`（轉成平台基準語言的統整全文，給 embedding 用）。
 
 ## 6. 雷達

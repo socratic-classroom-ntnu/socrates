@@ -8,7 +8,7 @@
 |---|---|---|---|---|---|
 | 1 | llm-runtime | prompt 設計 | 上面的第一個 PR，接著在 programs.json 新增或改寫對應的 program | — | Ken 可以 import 型別；schema 單元測試通過 |
 | 2 | llm-runtime | prompt 設計、多語 | 鐵則 L1 加「回覆語言＝output_locale」；新增 6 份 L2；solo_tutor 的 L2 加 flags 定義、拉回規則、不提 flag | — | 鐵則測試涵蓋每一條 |
-| 3 | llm-runtime | 多語、統整引用 | 語言檢查與引用驗證（message_ref 屬於該學生、quote 是原文子字串）接進 `guarded_generate`，不合格就重試一次 | — | 第二次仍不合格回 typed error |
+| 3 | llm-runtime | 多語、統整引用 | 語言檢查與引用驗證（message_ref 屬於該學生、quote 是原文子字串）接進 `guarded_generate`，不合格就重試一次；驗證通過後把 `message_ref` 換成 `message_id` 並算出起訖位置，交給 Ken 存放（對外型別由 Amethus 定） | — | 第二次仍不合格回 typed error |
 | 4 | identity-access | 免註冊加入 | migration：帳號加 `kind`、`guest_expires_at`、`recovery_hint_hash`，email／password_hash 可為空；`POST /auth/guest`、`POST /auth/guest/upgrade`；`GET /auth/me` 加 `kind`；訪客加入時選語言 | Amethus 審 | 7 天內註冊的訪客，帳號 id 不變、紀錄都在 |
 | 5 | identity-access | 免註冊加入 | 提供到期訪客去識別化的排程工作（Ken 在 app-shell 註冊；platform 不能依賴業務模組） | — | 第 8 天訪客的暱稱與找回提示被清掉，作答還在 |
 | 6 | ai-providers | 雷達 | 本地 embedding provider：`embed(texts) -> list[list[float]]`，預設 multilingual-e5-small、CPU 執行，模型檔隨 backend 映像附上 | — | 單 pod 實測延遲與記憶體寫進模組文件（參考：1 核 p50 約 279 ms、4 核約 101 ms，約 1.2 GB） |

@@ -35,7 +35,7 @@
 |---|---|---|
 | Ken（B 包） | 你給對方：第 1 項的型別、第 4 項的帳號 `kind`、第 5 項的排程工作、第 6 項的 `embed()` | 各先開一個只放契約的小 PR |
 | Ken（B 包） | 對方給你審：`modules.json` 裡 course-management 新增的兩條依賴 | Ken 的第一個 PR |
-| Amethus（D 包） | 審你每個新端點的 response_model 與 reason code（`GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`）；和你一起定統整引用型別與 TTS 契約 | 每個新端點；第 1、8 項 |
+| Amethus（D 包） | 審你每個新端點的 response_model 與 reason code（`GUEST_EXPIRED`，在第一次 raise 它的 PR 裡加進 `REASON_CODES` 與前端文字）；和你一起定統整引用型別與 TTS 契約 | 每個新端點；第 1、8 項 |
 | Hsy（A 包） | 你給對方：PersonalTutorTurn 加上 flags | Hsy 的第二版 |
 
 ## 交接完成的定義

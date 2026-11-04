@@ -174,7 +174,7 @@ def violations(spec: dict) -> tuple[list[str], dict[str, list[str]]]:
                             found[side].append(f"route-imports-route  {path} → {target}")
                 if not assembly and tree is not None and calls_import_module(tree):
                     found[side].append(f"dynamic-import  {path}")
-                if "/repositories/" not in path and not path.endswith("/repositories.py") and not path.endswith("/interaction_repositories.py") and tree is not None and defines_table(tree):
+                if not assembly and "/repositories/" not in path and not path.endswith("/repositories.py") and tree is not None and defines_table(tree):
                     found[side].append(f"orm-outside-repositories  {path}")
             elif not path.startswith("frontend/src/contract/"):
                 if re.search(r"(?<![\w.])fetch\(", text):

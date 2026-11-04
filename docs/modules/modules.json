@@ -201,21 +201,6 @@
         "llm-runtime"
       ],
       "todo": []
-    },
-    {
-      "id": "solo-dialogue",
-      "name": "Solo Dialogue（單人對話）",
-      "status": "ok",
-      "about": "一對一 ladder 對話與對話室 view（/api/sessions/*；規格擱置：維持可跑、不加功能）。",
-      "paths": [
-        "backend/app/modules/solo_dialogue/"
-      ],
-      "uses": [
-        "platform",
-        "llm-runtime",
-        "content-authoring"
-      ],
-      "todo": []
     }
   ],
   "contracts": [
@@ -290,14 +275,6 @@
       "frontend": [
         "authoring"
       ]
-    },
-    {
-      "name": "單人對話（/api/sessions/*）",
-      "backend": "solo-dialogue",
-      "source": "api/schemas.py、transcript_schemas.py → api/types.ts",
-      "state": "產生型別 ✅",
-      "frontend": [],
-      "frontend_note": "單人對話畫面"
     },
     {
       "name": "公開設定（/public-config）",

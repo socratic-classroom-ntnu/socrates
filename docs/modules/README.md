@@ -37,7 +37,6 @@
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
-| [Solo Dialogue（單人對話）](./backend/solo-dialogue.md) | ✅ | `backend/app/modules/solo_dialogue/` | platform、llm-runtime、content-authoring | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 
@@ -67,7 +66,6 @@
 | 雷達圖 | analytics | teacher-analytics | 待定 | 等契約（設計稿） |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
-| 單人對話（/api/sessions/*） | solo-dialogue |  | api/schemas.py、transcript_schemas.py → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |
 | TTS（文字→音訊＋字時間點） | llm-runtime | media | 待定 | 等契約 |
 | 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
@@ -117,5 +115,4 @@
 6. analytics
 7. ai-providers
 8. platform
-9. solo-dialogue
-10. app-shell（組裝層，最後收斂）
+9. app-shell（組裝層，最後收斂）

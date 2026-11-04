@@ -24,7 +24,7 @@ def classroom_openapi() -> dict[str, Any]:
 
 
 def solo_openapi() -> dict[str, Any]:
-    """/api (single dialogue): source of frontend/openapi.json and src/contract/types.ts."""
+    """/api (health and release): source of frontend/openapi.json and src/contract/types.ts."""
     from app.main import app
 
     return app.openapi()

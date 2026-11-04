@@ -9,7 +9,7 @@ from app.modules.content_authoring.contracts import PublicQuestion
 from app.modules.group_dialogue.contracts import AddAIStudents, OtherSuggestionRequest
 from app.modules.group_dialogue.contracts import Configure, GroupCommand, Start
 from app.modules.ai_providers.contracts import CreateProfile, SettingsUpdate
-from app.modules.solo_dialogue.schemas import CreateSessionRequest
+from app.modules.solo_activity.contracts import SendMessageBody, SubmitStanceBody
 
 LONG = "x" * 5000
 ACTION = "action-0001"
@@ -64,7 +64,8 @@ CASES = [
         {"question_id": "q", "title": "t", "scenario": "s", "existing_options": [LONG]},
     ),
     (OtherSuggestionRequest, {"question_id": "q", "title": "t", "scenario": "s", "room_id": LONG}),
-    (CreateSessionRequest, {"ladder_id": LONG}),
+    (SubmitStanceBody, {"option_id": "o1", "reason": LONG}),
+    (SendMessageBody, {"text": LONG}),
 ]
 
 

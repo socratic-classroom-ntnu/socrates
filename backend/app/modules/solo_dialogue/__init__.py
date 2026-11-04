@@ -1,1 +1,0 @@
-"""Solo Dialogue module boundary."""

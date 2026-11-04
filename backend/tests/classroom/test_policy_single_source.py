@@ -1,7 +1,7 @@
 import itertools
 
 import app.modules.llm_runtime.policy as advance_policy
-from app.modules.solo_dialogue.tutor_contracts import Observations
+from app.modules.llm_runtime.contracts import Observations
 from app.modules.classroom_core import policy as classroom
 
 FIELDS = ("has_position", "has_reason", "reason_tested", "position_shifted")

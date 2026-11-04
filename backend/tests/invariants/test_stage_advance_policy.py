@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 
-from app.modules.solo_dialogue.tutor_contracts import Observations
+from app.modules.llm_runtime.contracts import Observations
 from app.modules.llm_runtime.policy import should_advance, stage_goal_met
 
 

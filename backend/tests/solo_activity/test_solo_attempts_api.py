@@ -299,8 +299,9 @@ def test_full_single_question_flow(client, tutor):
     assert view["questions"][0]["confirmed_summary"] == MET["summary"]
     assert view["candidate_summary"] is None
 
-    review = do(client, attempt["id"], "submit_review")
-    assert (review.status_code, review.json()) == (501, {"detail": "SOLO_STEP_NOT_READY"})
+    view = ok(do(client, attempt["id"], "submit_review"))
+    assert view["state"] == "completed"
+    assert view["available_actions"] == []
 
     # Reloading continues from the same place.
     assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}")) == view

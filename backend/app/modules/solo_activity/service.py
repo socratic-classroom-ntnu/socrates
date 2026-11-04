@@ -53,7 +53,7 @@ PROVIDER_TIMEOUT_SECONDS = 130
 DEFAULT_TUTOR_GOAL = "協助學生照見自己的立場與理由。"
 PRINCIPLE_HINTS = frozenset({"後果主義", "義務論", "混合"})
 # Actions in the spec's table whose transition is not built yet: offered, but answered 501.
-NOT_READY = frozenset({"submit_review"})
+NOT_READY: frozenset[str] = frozenset()
 # States after every question is confirmed: the review step (R1) has begun.
 REVIEW_STATES = frozenset({"reviewing", "awaiting_reflection_prompt", "reflecting", "completed"})
 
@@ -401,6 +401,8 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         return machine.revise_viewpoint(a), None
     if action == "next_question":
         return machine.next_question(a), None
+    if action == "submit_review":
+        return machine.submit_review(a), None
     if action in NOT_READY and action in machine.actions_for(a, at):
         raise DomainError("SOLO_STEP_NOT_READY", 501)
     raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)

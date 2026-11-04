@@ -292,3 +292,9 @@ def next_question(a: AttemptState) -> AttemptState:
     """The next question's dialogue starts from nothing: its own stance, turns and shift."""
     _require(a, "next_question")
     return replace(a, state="choosing_stance", question_index=a.question_index + 1)
+
+
+def submit_review(a: AttemptState) -> AttemptState:
+    """After the last confirmed question the review is sent and the attempt is completed."""
+    _require(a, "submit_review")
+    return replace(a, state="completed")

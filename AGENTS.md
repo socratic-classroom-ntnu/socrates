@@ -31,7 +31,7 @@
 | 新增 API 端點 | `backend/app/modules/solo_activity/routes.py` 的 `act_on_attempt`（交易與 provider 呼叫在 `service.py` 的 `begin_action`／`finish_action`） |
 | 新增讀取查詢 | `backend/app/modules/solo_activity/routes.py` 的 `get_attempt`（查詢本身是 `service.py` 的 `attempt_view`） |
 | 改狀態機 | `backend/app/modules/solo_activity/attempt_machine.py`，先改 `backend/tests/solo_activity/test_solo_state_table.py` |
-| 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
+| 新增前端按鈕 | 照 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`：只依後端的 `available_actions` 顯示——**不要在頁面裡自己判斷**（`frontend/src/invariants/soloActions.test.tsx` 會擋） |
 | 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/solo-activity/SoloDialoguePage.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
 | 呼叫 API | 只在 `frontend/src/contract/`（例：`classroomClient.ts`），型別一律從產生的 `classroomTypes.ts`／`types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 contract/ 以外的 fetch 與 WebSocket |
 | 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |

@@ -39,7 +39,7 @@
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
 
 <!-- module-map:begin -->
-## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 端：後端；default owner：後端開發團隊
 - 可依賴的模組：platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core
@@ -48,8 +48,8 @@
 - `backend/app/modules/group_dialogue/`
 
 契約：
-- 分組課（/groups/*）（缺 response_model，前端型別手寫（已寄契約請求））
-- AI 學生（/ai-students/*）（部分手寫）
+- 分組課（/groups/*）（產生型別 ✅）
+- AI 學生（/ai-students/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
@@ -57,5 +57,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 8 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/groups/classrooms/{rid}/configure、POST /api/v2/groups/classrooms/{rid}/start、GET /api/v2/groups/classrooms/{rid}、POST /api/v2/groups/runs/{rid}/commands、GET /api/v2/groups/runs/{rid}/members/{mid}/identity、POST /api/v2/groups/classrooms/{rid}/ai-students、POST /api/v2/groups/classrooms/{rid}/ai-students/clear、POST /api/v2/suggestions/other
+- 無
 <!-- module-map:end -->

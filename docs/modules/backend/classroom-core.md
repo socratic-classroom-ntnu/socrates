@@ -39,7 +39,7 @@
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
 
 <!-- module-map:begin -->
-## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 端：後端；default owner：後端開發團隊
 - 可依賴的模組：platform、identity-access、ai-providers、llm-runtime、content-authoring
@@ -56,5 +56,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 11 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/scripts/{script_id}/adopt-question/{room_id}/{index}、POST /api/v2/classrooms/{room_id}/commands、POST /api/v2/classrooms/{room_id}/reactions、GET /api/v2/classrooms/{room_id}/events、POST /api/v2/classrooms/{room_id}/budget、POST /api/v2/library/classrooms、GET /api/v2/library/classrooms/{cid}、POST /api/v2/library/classrooms/{cid}/scripts、POST /api/v2/library/classrooms/{cid}/batches、GET /api/v2/library/classrooms/{cid}/ai-settings、PUT /api/v2/library/classrooms/{cid}/ai-settings
+- 無
 <!-- module-map:end -->

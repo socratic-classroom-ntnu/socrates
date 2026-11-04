@@ -551,23 +551,6 @@
       ]
     },
     {
-      "id": "solo-dialogue",
-      "name": "單人對話",
-      "status": "ok",
-      "about": "一對一對話室（規格擱置：維持可跑、不加功能）。",
-      "paths": [
-        "frontend/src/features/round1/",
-        "frontend/src/features/conversation-room/"
-      ],
-      "uses": [
-        "platform",
-        "media",
-        "contract"
-      ],
-      "figma": "Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡",
-      "todo": []
-    },
-    {
       "id": "course",
       "name": "課程",
       "status": "ok",

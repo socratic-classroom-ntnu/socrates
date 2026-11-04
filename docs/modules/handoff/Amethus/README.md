@@ -11,6 +11,7 @@
 5. [六項新功能與 API 關係](../../../classroom/NEW-FEATURES.md)
 
 具體順序與進度見 [TASKS.md](TASKS.md)。
+審新端點時使用 [新端點契約檢查表](../../../../backend/app/modules/contract/NEW_ENDPOINT_CHECKLIST.md)。
 
 ## 責任範圍
 

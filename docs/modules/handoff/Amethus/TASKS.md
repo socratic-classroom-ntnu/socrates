@@ -4,10 +4,10 @@
 
 ## 現在：第一個 PR
 
-- [ ] 在 `backend/app/modules/contract/` 建立「新端點檢查表」。
-- [ ] 檢查表要覆蓋 `response_model`、reason code／前端文字、契約型別重產與無 diff。
-- [ ] 檢查表要分開端點作者與 D 包審查者的責任。
-- [ ] 不預先登記尚未被 raise 的 reason code。
+- [x] 在 `backend/app/modules/contract/` 建立[新端點契約檢查表](../../../../backend/app/modules/contract/NEW_ENDPOINT_CHECKLIST.md)。
+- [x] 檢查表要覆蓋 `response_model`、reason code／前端文字、契約型別重產與無 diff。
+- [x] 檢查表要分開端點作者與 D 包審查者的責任。
+- [x] 不預先登記尚未被 raise 的 reason code。
 - [ ] 送 PR 前完成 D-contract 列出的檢查。
 
 ## 持續審查：B、C 包新端點
@@ -38,7 +38,7 @@
 - [ ] 前端 client 依 path＋method 限制 request 與 response。
 - [ ] Reason code 目錄產成 TypeScript 型別。
 
-### 現有契約收旂
+### 現有契約收斂
 
 - [ ] 和 A、B、C 包合作把 `RESPONSE_MODEL_PENDING` 清到 0。
 - [ ] 各模組負責定義業務 response model；D 包審契約與產生物。

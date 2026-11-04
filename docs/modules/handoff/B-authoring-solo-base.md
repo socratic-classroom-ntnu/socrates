@@ -45,6 +45,7 @@
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | C 包的 flags |
 | 5 | solo-activity | 統整引用 | 存放引用，view 回傳 message id 與 quote 的起訖位置 | C 包的引用驗證 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈：取代 submit_review，連續兩次「不太對」就標記「未確認」並結束；PCA、百分位、`GET /solo/activities/{id}/radar` | C 包的 `embed()`、final_summary、radar_* |
+| 7 | app-shell | 免註冊加入 | 註冊 identity-access 提供的到期訪客去識別化排程工作，每日跑一次 | C 包的排程工作 |
 
 ## 規則與檢查
 和 A、C、D 包相同，見各包文件的「規則」與「送 PR 前的檢查」兩節。

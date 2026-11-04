@@ -2,7 +2,6 @@
 
 import re
 
-from app.modules.app_shell import legacy_tables  # noqa: F401
 from app.modules.platform.db import Base as LegacyBase
 from app.modules.platform import storage as storage
 from app.modules.app_shell.models import register_models

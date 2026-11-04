@@ -5,7 +5,7 @@
 A 包是全班課堂與分組課。這一輪的六項新功能主要落在單人活動（B、C 包）。A 包先把現有待辦清完，等單人活動的旗標上線後，再把同一套旗標接到分組課。
 
 ## 起點
-- 分支：`backend/Hsy/main`（已經建好，內含你的交接包 `docs/modules/handoff/start/Hsy.md`）。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Hsy/main`（已經建好，內含為你訂製的交接包 `docs/modules/handoff/Hsy/`：README 與 TASKS）。做完一個功能就 PR 到 `backend/main`。
 - 一個 PR 只動一個模組，送出前先跑下方的檢查。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/STATE-MACHINE.md`、`docs/classroom/LLM-OUTPUT-SCHEMA.md`、`docs/classroom/NEW-FEATURES.md`。
 

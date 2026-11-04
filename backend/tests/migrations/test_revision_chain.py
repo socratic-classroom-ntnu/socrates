@@ -30,7 +30,7 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     assert script.get_revision("0015").down_revision == "0014"
     # 單人訊息的 meta（不太對的提示、改變後的立場）只加一個欄位。
     assert script.get_revision("0016").down_revision == "0015"
-    # 舊單人對話的資料表在程式移除後由 migration 拿掉（issue #71）。
+    # 舊單人對話的資料表在程式移除後搬進 legacy_solo_dialogue schema 保存（issue #71）。
     assert script.get_revision("0017").down_revision == "0016"
 
 

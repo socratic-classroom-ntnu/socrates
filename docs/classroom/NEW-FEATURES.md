@@ -114,7 +114,9 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 | `PATCH /solo/activities/{id}/radar/dimensions/{index}` | solo-activity | 前端 course | 新增 | 老師改軸名 |
 | `POST /speech/tts` | llm-runtime | 前端 media | 新增 | 文字→音訊＋字時間點（模組地圖上原本列為「等契約」） |
 
-每個新端點都要有 response_model，並同時更新 `app/modules/contract/contracts.py` 與重產型別。新的錯誤一律走 stable reason code，例如 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`。
+每個新端點都要有 response_model，並同時更新 `app/modules/contract/contracts.py` 與重產型別。新的錯誤一律走 stable reason code，例如 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`。每個新 code 由第一次 raise 它的 PR 一起加進 `REASON_CODES` 與 `frontend/src/contract/errorText.ts`（contract gate 要求目錄和程式裡實際 raise 的 code 完全一致，不預先登記）：`GUEST_JOIN_DISABLED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY` 在 B 包的 PR，`GUEST_EXPIRED` 在 C 包的 PR。
+
+引用分兩層：LLM 輸出用 `message_ref`（逐字稿裡的訊息代號，例如 m3）＋ quote；後端驗證通過後換成資料庫的 `message_id`，並算出 quote 在原文裡的起訖位置。對外 API 與共用型別一律用 `message_id`＋quote＋起訖位置（LLM 端的格式見 PROMPT-DESIGN 第 5 節）。
 
 ## 5. 資料與 migration
 

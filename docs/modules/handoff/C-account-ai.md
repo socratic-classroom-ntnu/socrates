@@ -46,7 +46,7 @@ C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding �
 
 ## 和其他包的接縫
 - **給 B**：第 1 項的型別、第 4 項的帳號 `kind`、第 6 項的 `embed()`。建議各開一個先合的小 PR，只放契約。
-- **給 D**：每個新端點的 response_model，以及新的 reason code（例如 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`）。
+- **給 D**：每個新端點的 response_model，以及新的 reason code（例如 `GUEST_EXPIRED`）。新 code 在第一次 raise 它的 PR 裡一起加進 `REASON_CODES` 與前端文字。
 - **引用關係**：本包不 import B、A 的模組；B 呼叫你，不是你呼叫 B。
 
 ## 驗收（測試要涵蓋）

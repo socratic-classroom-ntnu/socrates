@@ -3,7 +3,7 @@
 模組：course-management、solo-activity、content-authoring、platform、app-shell（後端）。負責人：Ken
 
 ## 起點
-- 分支：`backend/Ken/main`（已經建好，內含你的交接包 `docs/modules/handoff/start/Ken.md`）。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Ken/main`（已經建好，內含為你訂製的交接包 `docs/modules/handoff/Ken/`：README 與 TASKS）。做完一個功能就 PR 到 `backend/main`。
 - 先讀：[README.md](README.md) 的「第一次拿到這份文件」；本包每個模組的 `docs/modules/backend/<模組>.md`；`docs/classroom/NEW-FEATURES.md`、`docs/classroom/PROMPT-DESIGN.md`。
 
 ## 範圍與現有待辦

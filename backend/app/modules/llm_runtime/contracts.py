@@ -271,6 +271,13 @@ class RadarDimensions(Strict):
 
     dimensions: list[RadarDimension] = Field(min_length=4, max_length=6)
 
+    @model_validator(mode="after")
+    def distinct(self) -> "RadarDimensions":
+        # A repeated dimension would be scored as two axes and skew the chart.
+        if len({d.name.casefold() for d in self.dimensions}) != len(self.dimensions):
+            raise ValueError("維度名稱不可重複")
+        return self
+
 
 class RadarScore(Strict):
     dimension_index: int = Field(ge=0, le=5)

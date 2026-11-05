@@ -38,8 +38,9 @@ C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding �
 | 1 | llm-runtime | prompt 設計 | 在 `contracts.py` 定 7 個新 schema：SoloTutorTurn（含 10 個 flags）、ActivityExpansion、StanceClassification、FinalSummary、RadarAxisNames、RadarDimensions、RadarScores；在 programs.json 新增或改寫對應的 program | B 包可以 import 型別；schema 單元測試通過 |
 | 2 | llm-runtime | prompt 設計、多語 | 鐵則 L1 加「回覆語言＝output_locale」；6 份新的 L2；solo_tutor 的 L2 加 flags 定義、拉回規則、不提 flag | 鐵則測試涵蓋每一條 |
 | 3 | llm-runtime | 多語、引用 | 語言檢查與引用驗證（message_ref 屬於該學生、quote 是原文子字串）接進 `guarded_generate`，不合格就重試一次 | 不合格的輸出會重試，第二次仍不合格回 typed error |
-| 4 | identity-access | 免註冊加入 | migration：帳號加 `kind`、`guest_expires_at`、`recovery_hint_hash`，email／password_hash 可為空；`POST /auth/guest`、`POST /auth/guest/upgrade`；`GET /auth/me` 加 `kind`；訪客加入時選語言 | 驗收見下方 |
-| 5 | identity-access | 免註冊加入 | 到期訪客去識別化的排程工作（由本模組提供，app-shell 註冊；platform 不能依賴業務模組） | 第 8 天訪客的暱稱與找回提示被清掉，作答還在 |
+| 4 | identity-access | 免註冊加入 | migration：帳號加 `kind`、`guest_expires_at`，email／password_hash 可為空；`POST /auth/guest`、`POST /auth/guest/upgrade`；`GET /auth/me` 加 `kind`；訪客只靠裝置上的 session cookie 定位，每次有動作就把 `guest_expires_at` 延到 7 天後；訪客加入時選語言 | 驗收見下方 |
+| 5 | identity-access | 免註冊加入 | 訪客紀錄 hook 的契約（`reassign`、`delete`）與刪除閒置訪客的排程工作（由本模組提供，app-shell 註冊；platform 不能依賴業務模組） | 閒置第 8 天的訪客帳號與紀錄都刪掉 |
+| 5a | identity-access | 免註冊加入 | 登入時併入訪客紀錄（裝置上有訪客 cookie 就呼叫各模組 `reassign`；同一課／同一活動以帳號那份為準） | 帶訪客 cookie 登入後，紀錄都在帳號下 |
 | 6 | ai-providers | 雷達 | 本地 embedding provider：`embed(texts) -> list[list[float]]`，預設 multilingual-e5-small、CPU 執行，模型檔隨 backend 映像附上 | 單 pod 實測延遲與記憶體寫進模組文件（參考：1 核 p50 約 279 ms、4 核約 101 ms，約 1.2 GB） |
 | 7 | llm-runtime | 評測 | `tests/evals/`：30 則固定題組（每則標好期望的 flags 與 move），可以手動對 OpenAI、Anthropic、Gemini 各跑一次並出報表 | 報表含 schema 合格率、flag 一致率、拉回遵守率、語言正確率、引用有效率；不擋合併 |
 | 8 | llm-runtime | 語音 | `POST /speech/tts`：文字→音訊＋字時間點（地圖上原本列為「等契約」） | 前端 media 能播放；老師講話時用 VAD 偵測到學生開口，就停掉 TTS 並接著聽 |
@@ -52,7 +53,8 @@ C 包是這輪新功能的上游：LLM 的 schema、訪客帳號與 embedding �
 ## 驗收（測試要涵蓋）
 - 訪客從掃碼到開始對話都不需要 email。
 - 7 天內註冊的訪客，帳號 id 不變、紀錄都在。
-- 第 8 天的訪客已去識別化，作答與統計還在。
+- 閒置第 8 天的訪客帳號與紀錄都刪掉；期間註冊的帳號不受影響。
+- 帶訪客 cookie 登入後，訪客的紀錄併進帳號；同一課／同一活動以帳號那份為準。
 - 每個 schema 都有一個合格與一個不合格的測試樣本。
 - 學生端的任何回應裡都沒有 flags。
 

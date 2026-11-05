@@ -38,7 +38,8 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | Courecta 的 flags | 危險傾向或惡意離題＝1 時，教師 progress 回該學生的標記；學生端回應裡沒有 flags |
 | 5 | solo-activity | 統整引用 | 存放引用（新表 summary_sources），view 回傳 message id 與 quote 的起訖位置 | Courecta 的引用驗證；Amethus 的引用型別 | 每個 quote 都是該學生原句的子字串 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |
-| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的到期訪客去識別化排程工作，每日跑一次 | Courecta 的排程工作 | 第 8 天訪客已去識別化，作答還在 |
+| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的閒置訪客刪除排程（每日一次），並把各模組的訪客紀錄 hook註冊進去 | Courecta 5 | 少註冊一個 hook 時啟動就報錯；閒置第 8 天的訪客已刪除 |
+| 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`、`delete`；同一課／同一活動兩邊都有時以帳號那份為準 | Courecta 5 | 每個衝突情境各一條測試 |
 | — | content-authoring | 現有待辦 | 5 個端點補 response_model（清單在 `RESPONSE_MODEL_PENDING`） | Amethus 審 | 重產型別後沒有 diff |
 | — | platform | 現有待辦 | 相容帳冊（`COMPATIBILITY-LEDGER.md`）裡的舊環境變數別名 | — | — |
 | — | app-shell | 現有待辦 | `GET /api/v2/readiness` 補 response_model | Amethus 審 | 重產型別後沒有 diff |

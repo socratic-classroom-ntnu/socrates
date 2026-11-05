@@ -1,6 +1,6 @@
 # 刪除舊單人對話之後的六項新功能：模組改動表
 
-狀態：設計已定案。各包從自己的分支 `backend/<名字>/main` 開始開發（`backend/<名字>/` 底下可以再開分支），做完一個功能就 PR 到 `backend/main`（流程見 `docs/modules/handoff/README.md`）。
+狀態：設計已定案。各包從自己的分支 `backend/<名字>/main` 開始開發（`backend/<名字>/` 底下可以再開分支），做完 TASKS 裡的一項就 PR 到 `backend/main`（流程見 `docs/modules/handoff/README.md`）。
 各包的工作清單在 `docs/modules/handoff/<包>.md`。本檔是跨包總表，規定每個模組改什麼、模組之間怎麼引用、怎麼互動、接哪些 API。
 LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-DESIGN.md)。
 

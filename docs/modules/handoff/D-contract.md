@@ -5,7 +5,7 @@
 D 包負責前後端之間唯一的接縫，讓前端只需要用產生出來的型別，不用自己手寫。這一輪 B、C 包會新增十幾個端點，每一個都要經過你這包。
 
 ## 起點
-- 分支：`backend/Amethus/main`（已經建好）。為你訂製的交接包在 `docs/modules/handoff/Amethus/`：README 與 TASKS。做完一個功能就 PR 到 `backend/main`。
+- 分支：`backend/Amethus/main`（已經建好）。為你訂製的交接包在 `docs/modules/handoff/Amethus/`：README 與 TASKS。做完 TASKS 裡的一項就 PR 到 `backend/main`。
 - 先讀：
   - [README.md](README.md) 的「第一次拿到這份文件」
   - `docs/modules/backend/contract.md`、`docs/modules/frontend/contract.md`

@@ -12,7 +12,7 @@
 ## 後端開發流程
 1. Arthur 收到需求，拆成各模組的改動，分給各包。
 2. 各包從自己的分支 `backend/<名字>/main` 開始。分支已經建好，內容和 `backend/main` 相同。為你訂製的交接包在 `docs/modules/handoff/<名字>/`（README 與 TASKS），每人一個資料夾。`backend/<名字>/` 底下是你自己的空間，可以自由開分支（例如 `backend/<名字>/<主題>`），把 `backend/<名字>/main` 當成根；沒有特別允許的話，對外只 PR 到 `backend/main`。
-3. 做完一個功能（或功能裡可以獨立合入的一段），就從自己的分支 PR 到 `backend/main`。
+3. 做完 TASKS 裡的一項，就從自己的分支 PR 到 `backend/main`。一個 PR 對應一項 task。
 4. Arthur 審完後合進 `backend/main`。`backend/main` 的改動再以功能為單位重新打包，每個功能一個 PR 給 `develop`；功能做完整就進，不累積。
 5. 改動 demo 過之後，PR 到 `stage`。
 

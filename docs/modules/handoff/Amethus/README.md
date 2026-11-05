@@ -25,6 +25,7 @@
 ## 分支與 PR
 - 你的根分支是 `backend/Amethus/main`，已經建好。`backend/Amethus/` 底下可以自由開分支，例如 `backend/Amethus/<主題>`。
 - 做完 [TASKS.md](TASKS.md) 裡的一項，就從 `backend/Amethus/` 底下的分支開 PR 到 `backend/main`。一個 PR 對應一項 task。沒有特別允許的話，PR 只開到 `backend/main`。
+- PR 有新增或修改端點時，送出前照[新端點契約檢查表](../../../../backend/app/modules/contract/NEW_ENDPOINT_CHECKLIST.md)「端點作者：提交前」逐項做，PR 說明附上它要的驗證證據。
 - Arthur 審完後合進 `backend/main`，再以功能為單位打包成 PR 給 `develop`。
 - `backend/main` 有新東西時（例如別人的契約合進來了），先 merge 進 `backend/Amethus/main` 再繼續做。
 - 這個資料夾 `docs/modules/handoff/Amethus/` 在 `backend/main` 上，每人一個；要改內容請另外和 Arthur 說，不要混在功能 PR 裡。

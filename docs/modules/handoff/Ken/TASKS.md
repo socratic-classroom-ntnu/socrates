@@ -20,9 +20,13 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | O6 | solo-activity | 最終確認：以各階段確認為材料，整理整個思路與脈絡 | Courecta 的 final_summary | 連續兩次「不太對」就標記「未確認」並結束 |
 | O7 | solo-activity | 訊息上限：到上限就用目前的整理進確認，情境標成 capped；不會只剩一個必定失敗的動作 | Amethus（capped 的顯示文字） | 新測試先紅再綠 |
 | O8 | solo-activity | 教師「即時狀況」「統計分析」的 view：已確認幾個情境、目前第幾個、目前狀態；analysis 多送 current_position | Amethus 審契約 | 重產型別後沒有 diff |
+| F1 | 前端 authoring（`frontend/src/features/authoring/activity-form/`） | 出題表單只剩一個輸入框；拿掉選項與多題的欄位（含題目排序面板） | O1 | 表單送出的 body 沒有 options 與多題欄位，測試先紅再綠 |
+| F2 | 前端 solo-activity（`frontend/src/features/solo-activity/`） | 學生對話頁拿掉選立場流程，改成自由回答（打字或語音沿用 `useSoloSpeechInput`）；時間軸顯示情境序列；階段確認、最終確認、capped 的畫面；按鈕只依後端的 `available_actions` 顯示 | O2、O3、O5、O6、O7 | 從第一個情境走到最終確認的頁面測試先紅再綠 |
+| F3 | 前端 course（`frontend/src/features/course/teach/TeacherLivePage.tsx`） | 教師「即時狀況」顯示每位學生已確認幾個情境、目前第幾個、目前狀態 | O8 | 頁面測試用產生的型別，沒有手寫型別 |
+| F4 | 前端 course（`frontend/src/features/course/teach/TeacherAnalysisPage.tsx`） | 教師「統計分析」顯示 current_position 與各情境的確認結果 | O8 | 頁面測試用產生的型別，沒有手寫型別 |
 
 - 單人 prompt 只由 Courecta 改：你把需要的改動（拿掉選項、「表態」改成說出能被辨認的主張、延伸情境的規則）寫給他，由他合進去。
-- 前端（出題表單、學生對話頁、教師兩頁）由前端組做；你負責 view 與契約，11/7 的 draft PR 讓他們開始接。
+- 前端（出題表單、學生對話頁、教師兩頁）也由你做（Fizzy 11-05 的要求），就是上表 F1–F4；一樣是一項一個 PR 到 `backend/main`。畫面照現有元件與樣式延伸，新的視覺有疑問再問視覺設計團隊。
 - 分組課這一輪不動、仍有選項：共用的 Observations、should_advance 的意思不變，分組課的測試要列入回歸。
 
 ## 全部工作（照順序做；「—」是不綁新功能的現有待辦，有空檔就做）

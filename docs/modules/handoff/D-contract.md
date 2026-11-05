@@ -50,6 +50,8 @@ cd .. && python scripts/check_modules.py && bash scripts/check_naming.sh
 python scripts/gen_classroom_types.py && git diff --exit-code frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
 ```
 
+有新增或修改端點時，另照[新端點契約檢查表](../../../backend/app/modules/contract/NEW_ENDPOINT_CHECKLIST.md)「端點作者：提交前」逐項做。
+
 ## 交接完成的定義
 - 能在本機跑起後端，並通過上面全部的檢查。
 - 讀完契約相關文件與 NEW-FEATURES 第 4 節，列出自己的第一個 PR，並在團隊 Discord 認領。

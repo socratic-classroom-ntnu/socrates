@@ -96,7 +96,9 @@ VALID: dict[type[BaseModel], dict] = {
         "normalized_text": "學生從拉桿轉為不拉，關鍵在於親手造成死亡。",
     },
     RadarAxisNames: {"axes": [{**DIMENSION, "axis_index": 0}]},
-    RadarDimensions: {"dimensions": [DIMENSION] * 4},
+    RadarDimensions: {
+        "dimensions": [{**DIMENSION, "name": n} for n in ("責任", "後果", "意圖", "公平")]
+    },
     RadarScores: {
         "scores": [
             {
@@ -121,6 +123,7 @@ INVALID = [
     (FinalSummary, "trajectory 至少一步", lambda s: s.update(trajectory=[])),
     (RadarAxisNames, "同一軸不能命名兩次", lambda s: s["axes"].append(s["axes"][0])),
     (RadarDimensions, "維度至少 4 個", lambda s: s["dimensions"].pop()),
+    (RadarDimensions, "維度名稱不可重複", lambda s: s["dimensions"][1].update(name="責任")),
     (RadarScores, "分數範圍 0–4", lambda s: s["scores"][0].update(score=5)),
 ]
 

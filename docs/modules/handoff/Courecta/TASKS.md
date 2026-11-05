@@ -3,6 +3,13 @@
 ## 你的第一個 PR
 在 `llm_runtime/contracts.py` 定義 7 個新 schema 的型別：SoloTutorTurn（含 10 個 flags）、ActivityExpansion、StanceClassification、FinalSummary、RadarAxisNames、RadarDimensions、RadarScores。每個 schema 附一個合格、一個不合格的測試樣本。這個 PR 只放型別，不放 prompt；Ken 會等這份型別才開始接，請最先做。
 
+## 優先：開放式對話（配合 Ken，11/7 契約、11/13 完成）
+| 順序 | 模組 | 做什麼 | 完成的樣子 |
+|---|---|---|---|
+| O1 | llm-runtime | 兩個新角色的 schema 與 program：情境生成（老師的題目 → 起始情境與開場問句）、情境延伸（依學生到目前為止的立場與理由，只改一個條件並明講改了哪裡）；都走 `guarded_generate`，加進鐵則路由 ROUTER.json 與 test_iron_rules 的呼叫點 | Ken 可以 import 型別；鐵則測試全綠 |
+| O2 | llm-runtime | 單人 prompt 你是唯一修改者：把 Ken 交來的改動合進去（拿掉選項、「表態」＝說出能被辨認的主張、延伸規則）；final_summary 改成以各階段確認為材料 | test_solo_outputs_match_prompt、test_solo_tutor_program 全綠 |
+| O3 | llm-runtime | 審 Ken 送來的 `policy.py` should_conclude PR：輸入是結構化觀察值與計數，地板與上限是可調參數 | 真值表測試先紅再綠 |
+
 ## 全部工作（照順序做；「—」是不綁新功能的現有待辦，有空檔就做）
 | 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
 |---|---|---|---|---|---|

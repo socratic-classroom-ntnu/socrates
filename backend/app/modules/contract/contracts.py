@@ -159,7 +159,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "PUT /api/v2/scripts/{script_id}",
     "POST /api/v2/scripts/import",
     "GET /api/v2/scripts/{script_id}/yaml",
-    "GET /api/v2/groups/classrooms/{rid}/analysis",
     "GET /api/v2/meta/revision",
     "GET /api/v2/provider-profiles",
     "POST /api/v2/provider-profiles",

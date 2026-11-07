@@ -7,11 +7,12 @@ from app.modules.classroom_core.repositories import (
 from app.modules.platform.storage import transaction
 from app.modules.group_dialogue.service import actor, teacher_room
 from app.modules.analytics.group_analysis import analysis as project_analysis
+from app.modules.analytics.contracts import GroupAnalysisView
 
 router = APIRouter(prefix="/groups")
 
 
-@router.get("/classrooms/{rid}/analysis")
+@router.get("/classrooms/{rid}/analysis", response_model=GroupAnalysisView)
 def analysis(rid: str, request: Request):
     with transaction() as db:
         a = actor(db, request)

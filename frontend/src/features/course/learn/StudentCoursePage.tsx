@@ -50,11 +50,10 @@ export function StudentCoursePage() {
     .filter(([, cards]) => cards.length > 0)
 
   function openCard(card: Card) {
-    const questions = t('questions', { count: card.question_count })
     if (phone) return <article key={card.id} className="learn-card learn-card--open">
       <Link className="learn-card__whole" to={`/learn/activities/${card.id}`}>
         <span className="learn-card__body"><span className="learn-card__title">{card.title}</span>
-          <span className="learn-card__meta">{t('phoneOpen', { questions, end: date(card.ends_at, 'date') })}</span></span>
+          <span className="learn-card__meta">{t('phoneOpen', { end: date(card.ends_at, 'date') })}</span></span>
         <span className="learn-card__chevron" aria-hidden="true">›</span>
       </Link>
     </article>
@@ -62,7 +61,6 @@ export function StudentCoursePage() {
     return <article key={card.id} className="learn-card learn-card--open">
       <h3 className="learn-card__title"><Link className="learn-card__stretch" to={`/learn/activities/${card.id}`}>{card.title}</Link></h3>
       <div className="learn-card__content">
-        <span className="learn-card__strong">{questions}</span>
         <span className="learn-card__meta">{t('openUntil', { end: date(card.ends_at, 'weekdayDateTime') })}</span>
       </div>
       <Link className="button button--outline learn-card__start" to={`/learn/activities/${card.id}`}>{t('start')}<span aria-hidden="true">→</span></Link>

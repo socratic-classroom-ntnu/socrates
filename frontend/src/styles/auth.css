@@ -3,7 +3,7 @@
   --auth-wall: #ECE4D3;
   --auth-ink: #1E1C18;
   --auth-muted: #57514A;
-  --auth-board: #23332C;
+  --auth-board: var(--ui-color-dark);
   --auth-board-frame: #6E5034;
   --auth-chalk: #EFEBE0;
   --auth-chalk-muted: #D9D3C6;
@@ -13,7 +13,7 @@
   --auth-field: #F8F6F1;
   --auth-field-edge: #B8B2A5;
   --auth-quiet-edge: #8C8578;
-  --auth-error: #8A2A1F;
+  --auth-error: var(--ui-color-error-ink);
   position: relative;
   min-height: 100vh;
   display: flex;

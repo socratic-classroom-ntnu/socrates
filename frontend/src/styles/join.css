@@ -2,15 +2,15 @@
 
 /* J0／J1／J2m：加入流程（全螢幕，不包外框） */
 .join-page {
-  position: relative; min-height: 100dvh; display: flex; flex-direction: column; background: #F3F3F1; color: #1F2421;
+  position: relative; min-height: 100dvh; display: flex; flex-direction: column; background: var(--ui-color-bg); color: var(--ui-color-ink);
   font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; overflow-x: hidden;
 }
 .join-page__header {
   position: relative; z-index: 1; min-height: 60px; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; background: #FFFFFF; border-bottom: 1px solid #E3E3DF;
+  gap: 12px; background: var(--ui-color-panel); border-bottom: 1px solid var(--ui-color-line);
 }
-.join-page__brand { display: flex; align-items: center; gap: 8px; color: #1F2421; font-weight: 700; font-size: 15px; text-decoration: none; }
-.join-page__mark { width: 28px; height: 28px; border-radius: 7px; background: #2E5045; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.join-page__brand { display: flex; align-items: center; gap: 8px; color: var(--ui-color-ink); font-weight: 700; font-size: 15px; text-decoration: none; }
+.join-page__mark { width: 28px; height: 28px; border-radius: 7px; background: var(--ui-color-primary); color: var(--ui-color-panel); display: flex; align-items: center; justify-content: center; font-size: 14px; }
 .join-page__user { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .join-page__user .app-shell__avatar { width: 32px; height: 32px; font-size: 14px; background: #C4501F; }
 .join-page__main { position: relative; z-index: 1; flex-grow: 1; width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box; padding: 26px 20px 24px; display: flex; flex-direction: column; }
@@ -53,7 +53,7 @@
 /* J1m／J2m：黑板卡 */
 .join-sheet { display: flex; flex-direction: column; gap: 18px; flex-grow: 1; }
 .join-sheet h1 { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.4; }
-.chalk-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 14px; background: #23332C; color: #EFEBE0; border: 8px solid #6E5034; }
+.chalk-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 14px; background: var(--ui-color-dark); color: #EFEBE0; border: 8px solid #6E5034; }
 .chalk-card__eyebrow { margin: 0; font-size: 14px; color: #C9C2B2; }
 .chalk-card__title { margin: 0; font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 26px; line-height: 1.3; overflow-wrap: anywhere; }
 .chalk-card__rows { font-size: 15px; }
@@ -63,34 +63,34 @@
 .chalk-card__live::before, .chalk-card__soon::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #7FCB9B; }
 .chalk-card__soon::before { background: #E8C46A; }
 .chalk-card__copy { border: 0; background: transparent; color: #EFEBE0; cursor: pointer; display: inline-flex; padding: 4px; }
-.join-note { margin: 0; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #E7EEEA; color: #1F3A31; font-size: 14px; line-height: 1.6; }
+.join-note { margin: 0; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--ui-color-primary-soft); color: #1F3A31; font-size: 14px; line-height: 1.6; }
 .join-sheet .form-field input { min-height: 52px; border-radius: 10px; font-size: 17px; }
 .join-sheet__submit { margin-top: 8px; min-height: 56px; border-radius: 12px; font-size: 17px; }
 .join-link {
   margin-top: auto; align-self: center; min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; border: 0; background: transparent;
-  color: #5F6661; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
+  color: var(--ui-color-muted); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
 }
 .join-plaque .join-link { margin-top: 0; color: #3A362F; }
-.join-message { margin: auto 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px; border-radius: 14px; background: #FBE7E3; color: #8A2A1F; }
+.join-message { margin: auto 0; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px; border-radius: 14px; background: var(--ui-color-danger-soft); color: var(--ui-color-error-ink); }
 .join-message h1 { margin: 0; font-size: 20px; }
 .join-message p { margin: 0; line-height: 1.7; }
 
 /* J0：掃描後登入 */
 .join-login { display: flex; flex-direction: column; gap: 20px; }
-.join-banner { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; background: #23332C; color: #EFEBE0; }
+.join-banner { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; background: var(--ui-color-dark); color: #EFEBE0; }
 .join-banner__check { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; background: #2C3F37; color: #E8C46A; display: flex; align-items: center; justify-content: center; font-size: 20px; }
 .join-banner__text { display: flex; flex-direction: column; gap: 2px; }
 .join-banner__text small { font-size: 13px; color: #C9C2B2; }
 .join-banner__text strong { font-family: 'Noto Serif TC', 'Noto Serif SC', serif; font-weight: 900; font-size: 19px; }
-.join-login__card { display: flex; flex-direction: column; gap: 16px; padding: 24px 20px; border-radius: 14px; background: #FFFFFF; border: 1px solid #E3E3DF; }
+.join-login__card { display: flex; flex-direction: column; gap: 16px; padding: 24px 20px; border-radius: 14px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line); }
 .join-login__card h1 { margin: 0; font-size: 22px; }
 .join-login__card .auth-field label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
-.join-login__card .auth-field input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid #CFCFC9; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 16px; font-weight: 400; }
+.join-login__card .auth-field input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--ui-color-border); border-radius: 10px; background: var(--ui-color-panel); font: inherit; font-size: 16px; font-weight: 400; }
 .join-login__submit { min-height: 52px; border-radius: 10px; font-size: 16px; }
 .join-login__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
-.join-login__links .join-link { margin: 0; padding: 0; color: #2E5045; font-weight: 700; }
-.join-login__links .join-link--quiet { color: #5F6661; font-weight: 400; }
-.join-login__note { margin: 0; font-size: 13px; line-height: 1.7; color: #5F6661; text-align: center; }
+.join-login__links .join-link { margin: 0; padding: 0; color: var(--ui-color-primary); font-weight: 700; }
+.join-login__links .join-link--quiet { color: var(--ui-color-muted); font-weight: 400; }
+.join-login__note { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ui-color-muted); text-align: center; }
 
 @media (max-width: 1023px) {
   .join-door { display: none; }

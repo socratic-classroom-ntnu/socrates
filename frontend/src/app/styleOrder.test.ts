@@ -106,6 +106,14 @@ test('global stylesheets load last', () => {
   expect(order.slice(-2)).toEqual(['styles/dev-console.css', 'styles.css'])
 })
 
+// 元件庫的樣式：token 先於一切（Task 7 加 ui/base.css、Task 8 加 ui/layers.css）
+const UI = ['ui/tokens.css']
+
+// --ui-* 只是自訂屬性，放哪裡都不會蓋到別人；放第一個是為了讓「token 先於一切」好懂
+test('tokens load first', () => {
+  expect(order[0]).toBe('ui/tokens.css')
+})
+
 function allStylesheets(dir = SRC): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(dir, entry.name)
@@ -114,19 +122,19 @@ function allStylesheets(dir = SRC): string[] {
   })
 }
 
-// 這三組是棘輪：新的全域樣式表會讓這條紅。優先改用 CSS Modules；確定要全域，就登記到所屬的組，review 時看得到
+// 這四組是棘輪：新的全域樣式表會讓這條紅。優先改用 CSS Modules；確定要全域，就登記到所屬的組，review 時看得到
 test('every stylesheet belongs to exactly one group', () => {
-  const groups = [...GROUP_CLASS, ...COURSE, ...GLOBAL]
+  const groups = [...UI, ...GROUP_CLASS, ...COURSE, ...GLOBAL]
   expect(new Set(groups).size).toBe(groups.length)
   const sheets = allStylesheets().filter(sheet => !sheet.endsWith('.module.css'))
   withHint('新增或刪除了全域樣式表。新的樣式優先寫成 *.module.css（不受這條限制）；確定要全域樣式表，就把它加進所屬的組'
-    + '（GROUP_CLASS、COURSE、GLOBAL），位置照 main.tsx 的載入順序。刪掉的檔也從組裡拿掉。',
+    + '（UI、GROUP_CLASS、COURSE、GLOBAL），位置照 main.tsx 的載入順序。刪掉的檔也從組裡拿掉。',
   () => expect(sheets.sort()).toEqual([...groups].sort()))
 })
 
-test('global stylesheets share no class names with the course ones', () => {
+test('ui and global stylesheets share no class names with the course ones', () => {
   const course = new Set(COURSE.flatMap(sheet => [...classNames(sheet)]))
-  const shared = GLOBAL.flatMap(sheet => [...classNames(sheet)].filter(name => course.has(name)).map(name => `${sheet}: .${name}`))
+  const shared = [...UI, ...GLOBAL].flatMap(sheet => [...classNames(sheet)].filter(name => course.has(name)).map(name => `${sheet}: .${name}`))
   expect(shared).toEqual([])
 })
 
@@ -222,6 +230,7 @@ const GLOBAL_SELECTORS: Record<string, string[]> = {
   'styles/responsive.css': [':root', '*', '*::before', '*::after', 'textarea::placeholder'],
   'styles/solo.css': ["[data-option='A']", "[data-option='B']", "[data-option='C']", "[data-option='D']"],
   'styles/style.css': [':root', 'body', '[class^=sc-]', '[class*=" sc-"]', '*', '*::before', '*::after', '*', '*::before', '*::after'],
+  'ui/tokens.css': [':root'],
 }
 
 test('global selectors only shrink', () => {
@@ -235,4 +244,47 @@ test('global selectors only shrink', () => {
 test('--ui-* custom properties are defined only in src/ui/tokens.css', () => {
   const definers = allStylesheets().filter(sheet => /--ui-[\w-]+\s*:/.test(stripped(sheet)))
   expect(definers.filter(sheet => sheet !== 'ui/tokens.css')).toEqual([])
+})
+
+// 課程檔的色碼（D9：只管 COURSE）。先去掉註解與 url(…) 再算（D11）；#abc 視同 #AABBCC，大小寫不分
+const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})\b/gi
+const normalizeHex = (hex: string) => (hex.length === 4 ? `#${[...hex.slice(1)].map(digit => digit + digit).join('')}` : hex).toUpperCase()
+// 只看宣告的值：先拿掉每個 { 前面的選擇器與 at-rule 條件（CSS nesting 的外層宣告也保留），再拿掉字串。
+// 選擇器裡的 #fff、[href="#fff"] 不是顏色
+const hexesIn = (sheet: string) => [...stripped(sheet).replace(/[^{};]*\{/g, '{').replace(/(['"])(?:(?!\1).)*\1/g, '""').matchAll(HEX)]
+  .map(([hex]) => hex)
+
+// tokens.css 已有的顏色就不該再寫死：一個色碼只對一個 token，換成 var(--ui-color-*) 不改外觀
+test('course sheets: palette colors are referenced through tokens', () => {
+  const palette = new Set([...source('ui/tokens.css').matchAll(/--ui-color-[\w-]+\s*:\s*(#[0-9a-f]+)/gi)].map(([, hex]) => normalizeHex(hex)))
+  const literal = COURSE.flatMap(sheet => hexesIn(sheet).filter(hex => palette.has(normalizeHex(hex))).map(hex => `${sheet}: ${hex}`))
+  withHint('tokens.css 已經有這個顏色，請改用對應的 var(--ui-color-*)；要用新的顏色，先在 src/ui/tokens.css 加 token。',
+    () => expect(literal).toEqual([]))
+})
+
+// 棘輪：課程檔寫死的色碼只能變少。數量變少時把常數改成新的數字；某個顏色整個不見了，也從清單拿掉。
+// 只看數量擋不住「刪一個舊色、加一個新色」，所以另外列出現有的顏色：清單外的新顏色要先加進 tokens.css
+const COURSE_RAW_HEX = 284
+const COURSE_RAW_COLORS = [
+  '#1E1C18', '#1E6B60', '#1F3A31', '#24493C', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B',
+  '#3A362F', '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129',
+  '#5A432D', '#5E432B', '#5E655F', '#675A1D', '#684B20', '#6A4D33', '#6A706C', '#6B4E0E', '#6C665F', '#6E4520',
+  '#6E5034', '#77716A', '#7A5A1E', '#7A5A3C', '#7FCB9B', '#8A572E', '#8A8F8B', '#8A908C', '#8C8578', '#8F8678',
+  '#9A958B', '#A3322C', '#A3A8A4', '#A83C15', '#A99E8A', '#A9B5AE', '#B5B9B5', '#B7CBC1', '#B8B2A5', '#B8BBB8',
+  '#C4501F', '#C9A24A', '#C9C2B1', '#C9C2B2', '#C9C4B8', '#C9CCC9', '#CFE0D6', '#D2C8B8', '#D5A64C', '#D8E7F1',
+  '#D9A22E', '#D9D3C6', '#DCE9E2', '#DDD5C6', '#DDE4E0', '#DDE6E1', '#E4EFF6', '#E5F0EA', '#E8573A', '#E8C46A',
+  '#E8D5A9', '#E9B7AC', '#E9E4DA', '#E9E6DF', '#E9E9E4', '#EAF0F5', '#ECE4D3', '#ECE6DA', '#ECE6DC', '#ECECE8',
+  '#EDF2EF', '#EEF2EF', '#EEF4FA', '#EFEBE0', '#EFEDE7', '#F0F0EC', '#F0F1EF', '#F1DDA9', '#F3D4AD', '#F3DFA8',
+  '#F3EEE3', '#F3F2EE', '#F4F0E8', '#F4F0E9', '#F5E7A8', '#F6E3A8', '#F6E3D8', '#F7F5F0', '#F7F6F2', '#F8F6F1',
+  '#F9F9F7', '#FAFAF8', '#FFF1CF', '#FFF6E0', '#FFF9E9', '#FFF9EC', '#FFFCF3', '#FFFDF8',
+]
+test('course sheets: raw hex count only shrinks', () => {
+  const found = COURSE.flatMap(hexesIn)
+  const colors = [...new Set(found.map(normalizeHex))].sort()
+  withHint('課程檔出現清單外的新顏色，或某個顏色已經不再使用。新顏色請先加進 src/ui/tokens.css 再引用；'
+    + '不再使用的顏色，從 COURSE_RAW_COLORS 拿掉。',
+  () => expect(colors).toEqual(COURSE_RAW_COLORS))
+  withHint(`課程檔寫死的色碼現在有 ${found.length} 個，棘輪是 ${COURSE_RAW_HEX}。新顏色請先加進 src/ui/tokens.css 再引用；`
+    + '數量變少了，就把 COURSE_RAW_HEX 改成新的數字。',
+  () => expect(found.length).toBe(COURSE_RAW_HEX))
 })

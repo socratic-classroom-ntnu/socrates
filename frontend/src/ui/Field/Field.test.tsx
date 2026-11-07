@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { Field, FieldError, FieldHint, RequiredMark } from '..'
+import { describedBy, Field, FieldError, FieldHint, RequiredMark } from '..'
 
 test('Field wires the label to the control and marks the error state', () => {
   render(<Field id="course-name" label="課程名稱" invalid>
@@ -23,4 +23,10 @@ test('required Field shows the star but keeps the accessible name clean', () => 
 test('RequiredMark can sit in a legend', () => {
   render(<fieldset><legend>結束時間<RequiredMark /></legend></fieldset>)
   expect(screen.getByRole('group', { name: '結束時間' })).toBeInTheDocument()
+})
+
+test('describedBy joins only the ids that are shown', () => {
+  expect(describedBy('title-error', 'title-hint')).toBe('title-error title-hint')
+  expect(describedBy(false, null, undefined, 'title-hint')).toBe('title-hint')
+  expect(describedBy(false, '')).toBeUndefined()
 })

@@ -86,8 +86,7 @@ export default {
     scenario: '請寫下情境敘述',
     option: '選項不能空白；不需要的選項可以按 ✕ 移除，但至少要留 2 個',
     optionsMin: '至少要 2 個選項',
-    summaryTitle: '還有 {{count}} 個地方要補完，才能儲存',
-    summaryBody: '草稿也要完整才能存。點一下會跳到那個欄位：',
+    summary: '部分欄位尚未填寫',
     missing: '還沒填',
     empty: '是空的',
     emptyOption: '是空的（至少要 2 個選項）',
@@ -95,7 +94,6 @@ export default {
     past: '已經過了',
     questionLabel: '題目 {{n}}',
     questionLabelNamed: '題目 {{n}}「{{title}}」',
-    summaryItem: '{{where}}：{{field}}',
   },
   panel: {
     tabsLabel: '題目工具',

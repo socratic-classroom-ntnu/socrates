@@ -29,7 +29,7 @@ keywords: [Button, ButtonLink, IconButton, Field, FormError, StatusPill, Chip, C
 ## 什麼情境用哪個
 
 - 導頁用 `ButtonLink`，不要寫 `<Button onClick={() => navigate(…)}>`。
-- 欄位一律包 `Field`。說明和錯誤用 `FieldHint`、`FieldError` 放進 children，先後照該頁的設計；`aria-describedby` 由頁面接到控制項上。
+- 欄位一律包 `Field`。說明和錯誤用 `FieldHint`、`FieldError` 放進 children，先後照該頁的設計，各給一個 id；控制項寫 `aria-describedby={describedBy(error && '<id>-error', '<id>-hint')}`，只接畫面上有出現的，順序跟畫面一樣。例：`frontend/src/features/course/teach/editor/QuestionForm.tsx` 的情境敘述。
 - 狀態轉換按鈕（開始、結束、刪除…）仍然只依後端的 `available_actions` 顯示，見 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`；這些元件只管外觀。
 - 只收 class 字串的舊元件（例如 `Menu` 的 `triggerClassName`）用 `iconButtonClass()`，不要寫死 class 名稱。
 

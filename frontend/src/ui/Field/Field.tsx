@@ -20,6 +20,12 @@ export function Field({ id, label, required, requiredText, invalid, className, c
   </div>
 }
 
+/** 控制項的 aria-describedby：只接畫面上真的出現的錯誤與說明 id，照傳入順序；一個都沒有就不設 */
+export function describedBy(...ids: Array<string | false | null | undefined>): string | undefined {
+  const shown = ids.filter(Boolean)
+  return shown.length ? shown.join(' ') : undefined
+}
+
 export function FieldHint({ className, ...rest }: HTMLAttributes<HTMLParagraphElement>) {
   return <p className={classNames(styles.hint, className)} {...rest} />
 }

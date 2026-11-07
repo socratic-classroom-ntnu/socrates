@@ -281,7 +281,7 @@ test('course sheets: palette colors are referenced through tokens', () => {
 
 // 棘輪：課程檔寫死的色碼只能變少。數量變少時把常數改成新的數字；某個顏色整個不見了，也從清單拿掉。
 // 只看數量擋不住「刪一個舊色、加一個新色」，所以另外列出現有的顏色：清單外的新顏色要先加進 tokens.css
-const COURSE_RAW_HEX = 283
+const COURSE_RAW_HEX = 282
 const COURSE_RAW_COLORS = [
   '#1E1C18', '#1E6B60', '#1F3A31', '#24493C', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B',
   '#3A362F', '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129',

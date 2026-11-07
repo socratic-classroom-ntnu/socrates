@@ -9,7 +9,7 @@ import { Dialog } from '../../../../components/Dialog'
 import { errorCode, errorMessage } from '../../../../i18n/errors'
 import { formatDateTime } from '../../../../i18n/format'
 import { useT } from '../../../../i18n/useT'
-import { Button, ButtonLink, Field, FieldError, FieldHint, FormError, RequiredMark, StatusPill } from '../../../../ui'
+import { Button, ButtonLink, describedBy, Field, FieldError, FieldHint, FormError, RequiredMark, StatusPill } from '../../../../ui'
 import { ComingSoonPage } from '../../../../components/ComingSoonPage'
 import { DeleteActivityDialog } from '../DeleteActivityDialog'
 import { activityDraftKey } from './draftStorage'
@@ -125,7 +125,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     setFocusField(problem.field === 'end' || problem.field === 'start' ? problem.field : problem.field)
   }
 
-  // 有錯的區塊展開，捲回頂部讓錯誤摘要看得到
+  // 有錯的區塊都展開，再跳到第一個錯的欄位（頂端摘要只有一句，不再逐條列出）
   function reveal(found: Problem[]) {
     if (!found.length) return
     setClosed(current => {
@@ -136,7 +136,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
       }
       return open
     })
-    window.scrollTo?.({ top: 0 })
+    jump(found[0])
   }
 
   function check(fields?: string[]): boolean {
@@ -325,7 +325,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     {publishFailed && <p className="editor-banner editor-banner--warn" role="status">{t('notices.publishFailed')}</p>}
     {!publishFailed && mode === 'published' && view?.has_unpublished_changes && <p className="editor-banner editor-banner--warn">{t('notices.pending')}</p>}
     {banner}
-    {problems.length > 0 && <ErrorSummary problems={problems} form={form} onJump={jump} />}
+    {problems.length > 0 && <ErrorSummary />}
     {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
     {gone && <FormError role="alert">{t('notices.notFound')} <Link to={coursePath}>{t('actions.toCourse')}</Link></FormError>}
 
@@ -336,7 +336,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
           {!closed.basics && <div className="editor-card__body">
             <EditorField id="title" label={t('fields.title')} required error={fieldError('title')} t={t}>
               <input id="title" value={form.title} maxLength={LIMITS.title} readOnly={readonlyAll}
-                aria-invalid={fieldError('title') ? true : undefined} onChange={event => change({ ...form, title: event.target.value })} />
+                aria-invalid={fieldError('title') ? true : undefined} aria-describedby={describedBy(fieldError('title') && 'title-error')} onChange={event => change({ ...form, title: event.target.value })} />
             </EditorField>
             <div className="editor-window">
               <fieldset className="editor-window__start">
@@ -347,19 +347,21 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
                     <button type="button" role="radio" aria-checked={form.start.mode === 'at'} onClick={() => change({ ...form, start: form.start.mode === 'at' ? form.start : { mode: 'at', date: '', time: '' } })}>{t('fields.startAt')}</button>
                   </div>
                   {form.start.mode === 'at' && <DateTimeField id="start" label={t('fields.start')} value={form.start} invalid={Boolean(fieldError('start'))}
+                    describedBy={describedBy(fieldError('start') && 'start-error', !readonlyAll && 'editor-window-hint')}
                     onChange={value => change({ ...form, start: { mode: 'at', ...value } })} />}
-                  {fieldError('start') && <FieldError>{fieldError('start')}</FieldError>}
+                  {fieldError('start') && <FieldError id="start-error">{fieldError('start')}</FieldError>}
                 </> : <p className="editor-window__fixed">{view?.starts_at ? t('fields.opened', { time: formatDateTime(view.starts_at, locale, 'weekdayDateTime') }) : '—'}</p>}
               </fieldset>
               <fieldset className="editor-window__end">
                 <legend>{t('fields.end')}<RequiredMark /></legend>
                 <DateTimeField id="end" label={t('fields.end')} value={form.end} readOnly={readonlyAll} invalid={Boolean(fieldError('end'))}
+                  describedBy={describedBy(fieldError('end') && 'end-error', !readonlyAll && 'editor-window-hint')}
                   min={form.start.mode === 'at' && form.start.date && form.start.time ? form.start : undefined}
                   onChange={value => change({ ...form, end: value })} />
-                {fieldError('end') && <FieldError>{fieldError('end')}</FieldError>}
+                {fieldError('end') && <FieldError id="end-error">{fieldError('end')}</FieldError>}
               </fieldset>
             </div>
-            {!readonlyAll && <FieldHint>{contentLocked ? t('fields.lockedWindowHint') : t('fields.windowHint')}</FieldHint>}
+            {!readonlyAll && <FieldHint id="editor-window-hint">{contentLocked ? t('fields.lockedWindowHint') : t('fields.windowHint')}</FieldHint>}
           </div>}
         </section>
 
@@ -371,10 +373,10 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
           {!closed.direction && <div className="editor-card__body">
             <EditorField id="topic_direction" label={t('fields.topic')} required error={fieldError('topic_direction')} t={t}>
               <textarea id="topic_direction" rows={3} value={form.topic_direction} maxLength={LIMITS.topic} readOnly={contentLocked}
-                aria-invalid={fieldError('topic_direction') ? true : undefined} onChange={event => change({ ...form, topic_direction: event.target.value })} />
+                aria-invalid={fieldError('topic_direction') ? true : undefined} aria-describedby={describedBy(fieldError('topic_direction') && 'topic_direction-error')} onChange={event => change({ ...form, topic_direction: event.target.value })} />
             </EditorField>
             <EditorField id="analysis_focus" label={t('fields.analysis')} hint={t('fields.analysisHint')} t={t}>
-              <textarea id="analysis_focus" rows={3} value={form.analysis_focus} maxLength={LIMITS.analysis} readOnly={contentLocked}
+              <textarea id="analysis_focus" rows={3} value={form.analysis_focus} maxLength={LIMITS.analysis} readOnly={contentLocked} aria-describedby="analysis_focus-hint"
                 onChange={event => change({ ...form, analysis_focus: event.target.value })} />
             </EditorField>
           </div>}
@@ -428,7 +430,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string
 function EditorField({ id, label, required, hint, error, children, t }: { id: string; label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode; t: Translate }) {
   return <Field id={id} label={label} required={required} requiredText={t('fields.required')} invalid={Boolean(error)}>
     {children}
-    {error && <FieldError>{error}</FieldError>}
-    {hint && <FieldHint>{hint}</FieldHint>}
+    {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
+    {hint && <FieldHint id={`${id}-hint`}>{hint}</FieldHint>}
   </Field>
 }

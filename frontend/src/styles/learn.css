@@ -56,6 +56,6 @@
   .learn-card { padding: 16px 18px; }
   .learn-card--open { border: 2px solid var(--ui-color-primary); padding: 15px 17px; }
   .learn-card--open .learn-card__title { padding-bottom: 0; border-bottom: 0; }
-  .chips { overflow-x: auto; }
-  .chip { flex-shrink: 0; }
+  .learn-chips { overflow-x: auto; }
+  .learn-chip { flex-shrink: 0; }
 }

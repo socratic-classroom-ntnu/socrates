@@ -46,7 +46,7 @@
 .join-plaque__live { margin: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 4px; background: #1E1C18; color: #F3EEE3; font-size: 14px; font-weight: 700; }
 .join-plaque__live::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #E8573A; }
 .join-plaque__submit { min-height: 54px; font-size: 17px; background: #1E1C18; }
-.join-plaque .form-field input { background: #F7F5F0; }
+.join-plaque .join-field input { background: #F7F5F0; }
 
 /* J1m／J2m：黑板卡 */
 .join-sheet { display: flex; flex-direction: column; gap: 18px; flex-grow: 1; }
@@ -62,7 +62,7 @@
 .chalk-card__soon::before { background: #E8C46A; }
 .chalk-card__copy { border: 0; background: transparent; color: #EFEBE0; cursor: pointer; display: inline-flex; padding: 4px; }
 .join-note { margin: 0; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--ui-color-primary-soft); color: #1F3A31; font-size: 14px; line-height: 1.6; }
-.join-sheet .form-field input { min-height: 52px; border-radius: 10px; font-size: 17px; }
+.join-sheet .join-field input { min-height: 52px; border-radius: 10px; font-size: 17px; }
 .join-sheet__submit { margin-top: 8px; }
 .join-link {
   margin-top: auto; align-self: center; min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; border: 0; background: transparent;

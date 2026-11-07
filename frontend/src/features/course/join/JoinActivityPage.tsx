@@ -6,6 +6,7 @@ import { useResource } from '../../../contract/useResource'
 import { errorCode, errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { Button, ButtonLink, Field, FormError } from '../../../ui'
 import { ChalkCard, JoinLayout } from '../../auth/JoinLayout'
 
 type Preview = components['schemas']['ActivityJoinPreview']
@@ -28,7 +29,7 @@ export function JoinActivityPage() {
     return <JoinLayout><section className="join-message">
       <h1>{notFound ? t('activity.notFoundTitle') : errorMessage(t, preview.error)}</h1>
       {notFound && <p>{t('activity.notFoundBody')}</p>}
-      <Link className="button button--outline" to="/">{t('activity.home')}</Link>
+      <ButtonLink variant="outline" to="/">{t('activity.home')}</ButtonLink>
     </section></JoinLayout>
   }
 
@@ -73,18 +74,17 @@ export function JoinActivityPage() {
         rows={[{ label: t('activity.questions'), value: t('activity.questionCount', { count: data.question_count }) }, windowRow]}
       />
       {note && <p className="join-note"><span aria-hidden="true">ⓘ</span>{note}</p>}
-      {canJoin && !enrolled && <div className="form-field">
-        <label htmlFor="join-activity-name">{t('activity.name')}</label>
+      {canJoin && !enrolled && <Field id="join-activity-name" label={t('activity.name')} className="join-field">
         <input id="join-activity-name" value={displayName} maxLength={40} onChange={event => setName(event.target.value)} />
-      </div>}
+      </Field>}
       {canJoin
-        ? <button type="submit" className="button button--primary join-sheet__submit" disabled={busy || !displayName.trim()}>
+        ? <Button type="submit" variant="primary" className="join-sheet__submit" disabled={busy || !displayName.trim()}>
             {status === 'open' ? (enrolled ? t('activity.start') : t('activity.joinAndStart')) : t('activity.joinCourse')}<span aria-hidden="true">→</span>
-          </button>
-        : <Link className="button button--primary join-sheet__submit" to={enrolled ? `/learn/courses/${data.course_id}` : '/'}>
+          </Button>
+        : <ButtonLink variant="primary" className="join-sheet__submit" to={enrolled ? `/learn/courses/${data.course_id}` : '/'}>
             {enrolled ? t('activity.toCourse') : t('activity.home')}
-          </Link>}
-      {failure && <p role="alert" className="form-error">{errorMessage(t, failure)}</p>}
+          </ButtonLink>}
+      {failure && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
       {canJoin && <Link className="join-link" to="/">{t('activity.notThis')}</Link>}
     </form>
   </JoinLayout>

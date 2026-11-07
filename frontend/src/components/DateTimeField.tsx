@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react'
 import { useT } from '../i18n/useT'
+import { Button, FormError } from '../ui'
 import { Dialog } from './Dialog'
 import '../styles/date-time-field.css'
 
@@ -220,12 +221,12 @@ function Picker({ label, value, min, dateText, onClose, onConfirm }: {
     title={step === 'date' ? t('dateTime.chooseDate') : t('dateTime.chooseTime')}
     onClose={onClose}
     footer={step === 'time' ? <>
-      <button type="button" className="button button--outline" onClick={onClose}>{t('dateTime.cancel')}</button>
-      <button type="button" className="button button--primary" onClick={confirm}>{t('dateTime.confirm')}</button>
+      <Button variant="outline" onClick={onClose}>{t('dateTime.cancel')}</Button>
+      <Button variant="primary" onClick={confirm}>{t('dateTime.confirm')}</Button>
     </> : undefined}
   >
     <div className="date-time-picker">
-      {passed && <p role="alert" className="form-error">{t('dateTime.passed')}</p>}
+      {passed && <FormError role="alert" className="date-time-picker__error">{t('dateTime.passed')}</FormError>}
       {step === 'date' ? <>
         <div className="calendar__head">
           <button type="button" className="calendar__nav" aria-label={t('dateTime.previousMonth')} disabled={previous < floor.date.slice(0, 7)} onClick={() => setMonth(previous)}>←</button>

@@ -11,6 +11,7 @@
 
 檔案範圍：
 - `frontend/src/components/`
+- `frontend/src/ui/`
 - `frontend/src/shared/phaseLabels.ts`
 - `frontend/src/shared/personalStatus.ts`
 - `frontend/src/shared/clipboard.test.ts`

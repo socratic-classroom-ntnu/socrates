@@ -3,8 +3,9 @@ import path from 'node:path'
 
 // CSS 照載入順序疊：同一個選擇器、同樣的權重，後載入的贏。jsdom 不套用 CSS，所以這裡照 ESM 的求值順序
 // （深度優先、依 import 的先後）從 main.tsx 走一遍 import，算出瀏覽器實際載入樣式表的順序。
+// export … from 也算（src/ui/index.ts 用它把元件連同樣式一起帶進來）
 const SRC = path.resolve(__dirname, '..')
-const IMPORT = /^\s*import\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm
+const IMPORT = /^\s*(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm
 
 function resolve(from: string, spec: string): string | null {
   const base = path.resolve(path.dirname(from), spec)
@@ -48,7 +49,7 @@ const GROUP_CLASS = [
 // 順帶在 join.css 前載入了 menu.css；Avatar 抽到 components/ 之後它排到 solo.css 後面。menu.css 只有 .menu*，
 // 跟 join、learn、solo 沒有共用的 class，先後不影響畫面。
 const COURSE = [
-  'styles/placeholder-page.css', 'styles/ui.css', 'styles/dialog.css', 'styles/teach.css', 'styles/home.css',
+  'styles/placeholder-page.css', 'styles/dialog.css', 'styles/teach.css', 'styles/home.css',
   'styles/join.css', 'styles/learn.css', 'styles/solo.css', 'styles/menu.css', 'styles/teacher-live.css', 'styles/teacher-analysis.css',
   'styles/date-time-field.css', 'styles/editor.css', 'styles/auth.css', 'styles/app-shell.css',
 ]
@@ -65,6 +66,16 @@ function withHint(hint: string, assertion: () => void): void {
 
 const order = stylesheetOrder('main.tsx')
 const among = (list: string[]) => order.filter(sheet => list.includes(sheet))
+
+// jest 把 .css 換成 mock，import 了已刪除的樣式表也照樣綠，要等 build 才爆。
+// 掃所有原始碼（不只 main.tsx 走得到的），動態 import('./x.css') 也算
+test('every imported stylesheet exists', () => {
+  const missing = sourceFiles(SRC, /\.(tsx?|mjs)$/).flatMap(file => [...fs.readFileSync(path.join(SRC, file), 'utf8')
+    .matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.{1,2}\/[^'"]+\.css)['"]/g)]
+    .map(([, spec]) => path.relative(SRC, path.resolve(path.dirname(path.join(SRC, file)), spec)))
+    .filter(sheet => !fs.existsSync(path.join(SRC, sheet))).map(sheet => `${file} -> ${sheet}`))
+  expect(missing).toEqual([])
+})
 
 test('group-class stylesheets keep the order they had before the merge', () => {
   expect(among(GROUP_CLASS)).toEqual(GROUP_CLASS)
@@ -91,16 +102,6 @@ function classNames(sheet: string): Set<string> {
   return names
 }
 
-// ui.css 只放共用控制項；某一個元件（例如對話框）的樣式放它自己的樣式表，之後搬進 src/ui 時才拆得乾淨。
-// 用 id 指定某一頁的元素也不行（沒有 class 的元素選擇器由 global selectors only shrink 擋）
-const UI_CONTROL_BLOCKS = ['button', 'chip', 'chips', 'copy-button', 'form-error', 'form-field', 'icon-button', 'qr-code', 'status-pill']
-test('ui.css only holds shared control classes', () => {
-  const strays = [...classNames('styles/ui.css')].filter(name => !UI_CONTROL_BLOCKS.includes(name.replace(/(__|--).*$/, '')))
-  const selectors = [...source('styles/ui.css').matchAll(/([^{}]+)\{/g)].map(([, selector]) => selector).filter(selector => !selector.trim().startsWith('@'))
-  const ids = selectors.flatMap(selector => [...selector.replace(/(['"]).*?\1/g, '').matchAll(/#([A-Za-z_][\w-]*)/g)].map(([, name]) => `#${name}`))
-  expect([...strays, ...ids].sort()).toEqual([])
-})
-
 // 兩邊的樣式表都是全域的：同名的 class 會互相蓋掉（例如分組課出題表單與活動編輯器的題目順序面板）
 test('course stylesheets share no class names with the group-class ones', () => {
   const course = new Set(COURSE.flatMap(sheet => [...classNames(sheet)]))
@@ -122,6 +123,18 @@ const UI = ['ui/tokens.css']
 // --ui-* 只是自訂屬性，放哪裡都不會蓋到別人；放第一個是為了讓「token 先於一切」好懂
 test('tokens load first', () => {
   expect(order[0]).toBe('ui/tokens.css')
+})
+
+// 元件的 CSS Modules 還沒放進 @layer（D20，等 PR D）：class 跟頁面覆寫一樣是 (0,1,0)，誰贏看載入順序。
+// 所以元件要排在分組課之後、所有課程頁之前（跟 PR C 之後的 ui.css 同一個位置），頁面傳進來的 className 才蓋得過
+const uiModules = (sheets: string[]) => sheets.filter(sheet => sheet.startsWith('ui/') && sheet.endsWith('.module.css'))
+test('src/ui module stylesheets load after the group-class ones and before the course ones', () => {
+  expect(uiModules(order).sort()).toEqual(uiModules(allStylesheets()).sort())
+  expect(uiModules(order).length).toBeGreaterThan(0)
+  const lastGroup = Math.max(...GROUP_CLASS.map(sheet => order.indexOf(sheet)))
+  const firstCourse = Math.min(...COURSE.map(sheet => order.indexOf(sheet)))
+  withHint('src/ui 的元件樣式要在 routes.tsx 裡、所有課程頁的 import 之前，用 import \'../ui\' 一次載入。',
+    () => expect(uiModules(order).filter(sheet => order.indexOf(sheet) < lastGroup || order.indexOf(sheet) > firstCourse)).toEqual([]))
 })
 
 function allStylesheets(dir = SRC): string[] {
@@ -291,4 +304,56 @@ test('course sheets: raw hex count only shrinks', () => {
   withHint(`課程檔寫死的色碼現在有 ${found.length} 個，棘輪是 ${COURSE_RAW_HEX}。新顏色請先加進 src/ui/tokens.css 再引用；`
     + '數量變少了，就把 COURSE_RAW_HEX 改成新的數字。',
   () => expect(found.length).toBe(COURSE_RAW_HEX))
+})
+
+
+// 原始碼檔（不含測試）。function 宣告會提升，前面的測試也用得到
+function sourceFiles(dir = SRC, pattern = /\.tsx$/): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) return sourceFiles(full, pattern)
+    return pattern.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path.relative(SRC, full)] : []
+  })
+}
+
+// 共用控制項已經搬進 src/ui（PR E）：TSX 不再寫 ui.css 時代的全域 class，改用元件。
+// 名稱夠特別的（button--…、form-field…、status-pill…）在任何字串裡出現都算，抽成變數也擋得到；
+// button、chip、chips 太常見（type="button"），只看 className／*ClassName 的值，值可以跨行
+const RETIRED_DISTINCT = /^(button--[\w-]+|icon-button(--[\w-]+)?|form-field(__[\w-]+|--[\w-]+)?|form-error|status-pill(--[\w-]*)?|copy-button(__[\w-]+)?|qr-code(--[\w-]+)?)$/
+const RETIRED_COMMON = /^(button|chips?)$/
+const STRING_LITERAL = /(['"`])((?:\\.|(?!\1)[^\n\\])*)\1/g
+
+function classNameValues(text: string): Array<{ index: number; value: string }> {
+  return [...text.matchAll(/[cC]lassName=/g)].map(({ index }) => {
+    const at = index + 'className='.length
+    const rest = text.slice(at)
+    if (rest[0] !== '{') return { index: at, value: rest.match(/^(['"])((?:(?!\1).)*)\1/)?.[0] ?? '' }
+    let depth = 0, end = 0
+    for (; end < rest.length; end++) {
+      if (rest[end] === '{') depth++
+      if (rest[end] === '}' && --depth === 0) break
+    }
+    return { index: at, value: rest.slice(0, end + 1) }
+  })
+}
+
+const tokensOf = (literal: string) => literal.split(/\s+|\$\{[^}]*\}/)
+
+function retiredClasses(file: string): string[] {
+  // 行尾註解拿掉（// 前面是空白或行首；'https://…' 不算），註解裡的撇號才不會跟後面的引號配成一對
+  const text = fs.readFileSync(path.join(SRC, file), 'utf8').replace(/(^|\s)\/\/.*$/gm, '$1')
+  const line = (index: number) => text.slice(0, index).split('\n').length
+  const distinct = [...text.matchAll(STRING_LITERAL)].flatMap(match => tokensOf(match[2])
+    .filter(token => RETIRED_DISTINCT.test(token)).map(token => `${file}:${line(match.index)} ${token}`))
+  const common = classNameValues(text).flatMap(({ index, value }) => [...value.matchAll(STRING_LITERAL)]
+    .flatMap(match => tokensOf(match[2]).filter(token => RETIRED_COMMON.test(token))
+      .map(token => `${file}:${line(index + match.index)} ${token}`)))
+  return [...distinct, ...common]
+}
+
+test('no global ui.css classes in TSX', () => {
+  const found = sourceFiles().flatMap(retiredClasses)
+  withHint('這些 class 已經改成 src/ui 的元件（Button、ButtonLink、IconButton、Field、FormError、StatusPill、Chip、ChipGroup、CopyButton、QrCode）。'
+    + '請從 src/ui import 元件；要改外觀，傳頁面自己的 className。',
+  () => expect(found).toEqual([]))
 })

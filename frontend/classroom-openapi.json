@@ -711,12 +711,51 @@
         "title": "AddAIStudentsReceipt",
         "type": "object"
       },
+      "AnalysisEdgeView": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "enum": [
+              "student_selected_relation",
+              "confirmation_snapshot"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "supports",
+              "challenges",
+              "qualifies",
+              "revises"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "type",
+          "provenance"
+        ],
+        "title": "AnalysisEdgeView",
+        "type": "object"
+      },
       "AnalysisGroupView": {
         "additionalProperties": false,
         "properties": {
           "edges": {
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/AnalysisEdgeView"
             },
             "title": "Edges",
             "type": "array"
@@ -731,7 +770,7 @@
           },
           "nodes": {
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/AnalysisNodeView"
             },
             "title": "Nodes",
             "type": "array"
@@ -755,8 +794,7 @@
             "type": "array"
           },
           "settlement": {
-            "title": "Settlement",
-            "type": "object"
+            "$ref": "#/components/schemas/SettlementView"
           },
           "snapshot_id": {
             "title": "Snapshot Id",
@@ -793,6 +831,102 @@
         "title": "AnalysisGroupView",
         "type": "object"
       },
+      "AnalysisNodeView": {
+        "additionalProperties": false,
+        "description": "One attributed original quote (a group argument) with its author pseudonymised.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "statement",
+              "post_ack_observation",
+              "confirmed_viewpoint"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "nickname": {
+            "title": "Nickname",
+            "type": "string"
+          },
+          "person_id": {
+            "title": "Person Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "student_original_quote",
+              "student_explicit_confirmation"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "summary_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Digest"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "enum": [
+                  "personal",
+                  "stage",
+                  "group_shared"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "nickname",
+          "text",
+          "at",
+          "sequence",
+          "stage",
+          "question_index",
+          "kind",
+          "provenance"
+        ],
+        "title": "AnalysisNodeView",
+        "type": "object"
+      },
       "AnalysisPersonView": {
         "additionalProperties": false,
         "properties": {
@@ -821,7 +955,7 @@
           },
           "timeline": {
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/AnalysisNodeView"
             },
             "title": "Timeline",
             "type": "array"
@@ -842,7 +976,7 @@
         "properties": {
           "cross_references": {
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/AnalysisEdgeView"
             },
             "title": "Cross References",
             "type": "array"
@@ -4386,6 +4520,144 @@
           }
         },
         "title": "SettingsUpdate",
+        "type": "object"
+      },
+      "SettlementView": {
+        "additionalProperties": false,
+        "description": "The group's settlement latch; later states add their fields to the earlier ones.",
+        "properties": {
+          "end_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "final_stage_complete",
+                  "teacher_force_end"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "ended_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "system",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended By"
+          },
+          "final_stage_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Stage Count"
+          },
+          "incomplete_members": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incomplete Members"
+          },
+          "latched_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latched At"
+          },
+          "latched_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latched Phase"
+          },
+          "member_status": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "enum": [
+                    "confirmed",
+                    "incomplete"
+                  ],
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Status"
+          },
+          "settled_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "enum": [
+              "EXPLORING",
+              "CURRENT_PHASE_FINISHING",
+              "FINAL_STAGE",
+              "SETTLED"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "SettlementView",
         "type": "object"
       },
       "SoloActivityAnalysisView": {

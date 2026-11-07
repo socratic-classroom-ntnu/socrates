@@ -51,8 +51,36 @@ def test_analysis_wire_json_matches_the_projection(classroom):  # noqa: F811
         "但晚到的人不是故意的",
         "平均分配才不偏袒",
     ]
-    reply = group["nodes"][-2]["id"]
-    assert (opening, reply) in {(e["source"], e["target"]) for e in group["edges"]}
+    # 逐欄寫死前端依賴的形狀，不只和 projection 比：projection 改了欄位這裡會紅
+    node = group["nodes"][-2]
+    reply = node["id"]
+    assert set(node) == {
+        "id",
+        "person_id",
+        "nickname",
+        "text",
+        "at",
+        "sequence",
+        "stage",
+        "question_index",
+        "kind",
+        "provenance",
+        "visibility",
+    }
+    assert (node["kind"], node["provenance"], node["visibility"]) == (
+        "statement",
+        "student_original_quote",
+        "personal",
+    )
+    assert node["person_id"] == group["persons"][0]["id"] and isinstance(node["at"], float)
+    assert {
+        "source": opening,
+        "target": reply,
+        "type": "challenges",
+        "provenance": "student_selected_relation",
+    } in group["edges"]
+    assert group["settlement"] == {"state": "EXPLORING"}
+    assert group["persons"][0]["timeline"][-2:] == group["nodes"][-3:-1]
     assert opening in group["roots"] and other in group["roots"]
     assert reply not in group["roots"]
     tree = {t["id"]: t["parent"] for t in group["tree_projection"]}
@@ -62,6 +90,35 @@ def test_analysis_wire_json_matches_the_projection(classroom):  # noqa: F811
     assert [s["confirmed"] for s in group["stances"]] == [2]
 
 
+def test_analysis_of_a_teacher_ended_group_carries_the_settlement(classroom):  # noqa: F811
+    result, _ = start(classroom, count=1, capacity=3)
+    rid, _, _ = classroom
+    gid = result["groups"][0]["id"]
+    with storage.transaction() as db:
+        row = db.get(Room, gid)
+        machine = GameOrchestrator(row.state, time.time())
+        machine.command("end", {}, None, True)
+        persist_machine(db, row, machine)
+        members = row.state["group"]["member_snapshot"]
+    r = get_analysis(rid)
+    assert r.status_code == 200
+    settlement = r.json()["groups"][0]["settlement"]
+    assert set(settlement) == {
+        "state",
+        "settled_at",
+        "ended_by",
+        "end_reason",
+        "incomplete_members",
+        "member_status",
+    }
+    assert (settlement["state"], settlement["ended_by"], settlement["end_reason"]) == (
+        "SETTLED",
+        "teacher",
+        "teacher_force_end",
+    )
+    assert settlement["member_status"] == {m: "incomplete" for m in members}
+
+
 def test_analysis_publishes_its_response_schema(classroom):  # noqa: F811
     app = create_app(background=False)
     operation = app.openapi()["paths"]["/api/v2/groups/classrooms/{rid}/analysis"]["get"]
@@ -69,6 +126,41 @@ def test_analysis_publishes_its_response_schema(classroom):  # noqa: F811
     assert schema == {"$ref": "#/components/schemas/GroupAnalysisView"}
     properties = app.openapi()["components"]["schemas"]["GroupAnalysisView"]["properties"]
     assert "schema" in properties and "schema_" not in properties
+    # 公開契約裡不留未定型的欄位（Any 或 dict[str, Any]），前端拿到的每個欄位都有型別
+    schemas = app.openapi()["components"]["schemas"]
+    seen = untyped_fields(schemas, "GroupAnalysisView")
+    assert {"AnalysisNodeView", "AnalysisEdgeView", "SettlementView"} <= seen
+
+
+def untyped_fields(schemas, root):
+    """Walk every schema reachable from root; fail on an untyped field. Returns the names seen."""
+    seen, pending = set(), [root]
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+
+        def walk(node, where):
+            if isinstance(node, dict):
+                # Any 產生 {}；dict[str, Any] 產生沒有 properties、也沒有值型別的 object
+                assert node != {}, where
+                assert node.get("additionalProperties") is not True, where
+                if node.get("type") == "object":
+                    assert "properties" in node or isinstance(
+                        node.get("additionalProperties"), dict
+                    ), where
+                if "$ref" in node:
+                    pending.append(node["$ref"].rsplit("/", 1)[1])
+                for key, value in node.items():
+                    if key not in {"default", "const", "enum", "examples"}:
+                        walk(value, f"{where}.{key}")
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value, where)
+
+        walk(schemas[name].get("properties", {}), name)
+    return seen
 
 
 def test_analysis_projection_of_a_group_without_statements(classroom):  # noqa: F811

@@ -12,7 +12,12 @@ from app.modules.analytics.contracts import GroupAnalysisView
 router = APIRouter(prefix="/groups")
 
 
-@router.get("/classrooms/{rid}/analysis", response_model=GroupAnalysisView)
+# exclude_unset keeps fields that only some nodes or settlement states carry absent, as before.
+@router.get(
+    "/classrooms/{rid}/analysis",
+    response_model=GroupAnalysisView,
+    response_model_exclude_unset=True,
+)
 def analysis(rid: str, request: Request):
     with transaction() as db:
         a = actor(db, request)

@@ -12,6 +12,7 @@ from sqlalchemy import func, select
 from app.modules.course_management.repositories import Activity, Course, Enrollment
 from app.modules.identity_access.auth import HASHER
 from app.modules.identity_access.repositories import Account
+from app.modules.platform import storage
 
 
 def _load_seed():
@@ -27,6 +28,16 @@ def _load_seed():
 
 
 seed_preview = _load_seed()
+
+
+@pytest.fixture
+def db():
+    # 帳號、課程在 storage.Base（教室那一側），conftest 的 db 只建舊的 platform.db.Base 表；
+    # 照其他教室測試的做法用一個乾淨的記憶體資料庫
+    storage.configure("sqlite+pysqlite:///:memory:", create=True)
+    with storage.transaction() as session:
+        yield session
+    storage.engine().dispose()
 
 
 def _account(db, username):

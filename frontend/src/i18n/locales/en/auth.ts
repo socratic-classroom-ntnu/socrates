@@ -77,5 +77,7 @@ const auth: Shape<typeof zhHant> = {
     loginToResend: 'Log in to resend the verification email',
     logout: 'Log out',
   },
+  // 只在有測試帳號的環境出現（後端 /public-config 的 demo_login）
+  demo: { title: 'Test accounts', teacher: 'Teacher', student: 'Student' },
 };
 export default auth;

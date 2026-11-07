@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../contract/classroomClient'
+import type { components } from '../../contract/classroomTypes'
 import { useAuth } from './AuthContext'
 import { joinTarget, safeNext } from '../../shared/next'
 import { JoinLayout } from './JoinLayout'
@@ -15,6 +16,7 @@ type Mode = 'login' | 'register' | 'forgot' | 'reset'
 type Note = { key: string } | { error: unknown } | null
 // 欄位錯誤存「描述」而不是句子：切換語言時會用新語言重新顯示
 type FieldIssue = Problem | { field: Field; code: string }
+type DemoLogin = components['schemas']['DemoLoginView']
 
 const TAKEN: Record<string, Field> = { USERNAME_TAKEN: 'username', EMAIL_TAKEN: 'email' }
 const LINKS: Record<Mode, Mode[]> = {
@@ -45,6 +47,7 @@ export function LoginPage() {
   // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
   const join = mode === 'login' ? joinTarget(next) : null
   const courseName = usePublicCourseName(join)
+  const demo = useDemoLogin()
 
   // 登入或註冊成功後 account 出現：已驗證回原網址，未驗證先到驗證頁（驗證完再回原網址）
   if (account && mode !== 'reset') {
@@ -146,6 +149,26 @@ export function LoginPage() {
     </>,
   } : undefined
 
+  function fillDemo(username: string) {
+    if (!demo) return
+    setName(username)
+    setPassword(demo.password)
+    setIssues({})
+    setNote(null)
+  }
+
+  // 測試帳號：只有後端說這個環境有（preview／QA／dev／本機）才出現，而且只填入、不送出
+  const demoButtons = (rowClass: string, buttonClass: string) => mode === 'login' && demo && demo.accounts.length > 0
+    ? <div role="group" aria-label={t('demo.title')}>
+      <p className="auth-card__hint">{t('demo.title')}</p>
+      <div className={rowClass}>
+        {demo.accounts.map(item => <button key={item.username} type="button" className={buttonClass} onClick={() => fillDemo(item.username)}>
+          {t(`demo.${item.role}`)} {item.username}
+        </button>)}
+      </div>
+    </div>
+    : null
+
   const noteText = note === null ? '' : 'key' in note ? t(note.key) : errorMessage(t, note.error)
   const hint = mode === 'register' ? t('register.hint') : mode === 'forgot' ? t('forgot.hint') : ''
 
@@ -190,6 +213,7 @@ export function LoginPage() {
           <button type="button" className="join-link" onClick={() => switchMode('register')}>{t('join:login.register')}</button>
           <button type="button" className="join-link join-link--quiet" onClick={() => switchMode('forgot')}>{t('join:login.forgot')}</button>
         </div>
+        {demoButtons('join-login__links', 'join-link')}
         <p role="status" className="auth-card__note">{noteText}</p>
       </form>
       <p className="join-login__note">{t('join:login.registerNote')}</p>
@@ -214,8 +238,22 @@ export function LoginPage() {
         <div className="auth-card__links">
           {LINKS[mode].map(target => <button key={target} type="button" className="auth-button auth-button--quiet" onClick={() => switchMode(target)}>{t(`links.${target}`)}</button>)}
         </div>
+        {demoButtons('auth-card__links', 'auth-button auth-button--quiet')}
         <p role="status" className="auth-card__note">{noteText}</p>
       </form>
     </main>
   </AuthLayout>
+}
+
+/** 後端 /public-config 的 demo_login；沒有或讀不到都當作沒有。 */
+function useDemoLogin(): DemoLogin | null {
+  const [demo, setDemo] = useState<DemoLogin | null>(null)
+  useEffect(() => {
+    let live = true
+    Promise.resolve(api('/public-config'))
+      .then((config: { demo_login?: DemoLogin | null } | undefined) => { if (live) setDemo(config?.demo_login ?? null) })
+      .catch(() => {})
+    return () => { live = false }
+  }, [])
+  return demo
 }

@@ -26,6 +26,7 @@
 .live-cell { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 9px; border-radius: 999px; background: #F0F1EF; color: #4B514D; font-size: 12px; white-space: nowrap; }
 .live-cell--confirmed { background: #E5F0EA; color: #285344; }
 .live-cell--in_dialogue { background: #EAF0F5; color: #31526B; }
+.live-cell--answering { background: #F4F0E9; color: #594C3B; }
 .live-cell--confirming { background: #FFF1CF; color: #6E5034; }
 .live-cell--review { background: #F4F0E9; color: #594C3B; }
 .live-time { display: flex; flex-direction: column; gap: 4px; color: #5F6661; white-space: nowrap; }

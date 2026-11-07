@@ -15,7 +15,7 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     script = _script()
 
     # 單一 head：分岔會讓 `alembic upgrade head` 在部署時失敗。
-    assert script.get_heads() == ["0017"]
+    assert script.get_heads() == ["0019"]
     # 教室的 schema 接在單人對話的最後一支上，而不是另起一條鏈。
     assert script.get_revision("0010").down_revision == "9a0c1d2e3f42"
     # 題庫商店（issue #17）接在教室 schema 之後。
@@ -32,6 +32,8 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     assert script.get_revision("0016").down_revision == "0015"
     # 舊單人對話的資料表在程式移除後搬進 legacy_solo_dialogue schema 保存（issue #71）。
     assert script.get_revision("0017").down_revision == "0016"
+    # 活動只留單一輸入：拿掉選項、多題與附屬欄位。
+    assert script.get_revision("0019").down_revision == "0018"
 
 
 @pytest.mark.parametrize("revision", SQUASHED)

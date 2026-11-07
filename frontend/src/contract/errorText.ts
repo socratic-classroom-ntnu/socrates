@@ -115,7 +115,7 @@ const CODES: Record<string, string> = {
   SOLO_ACTION_UNAVAILABLE: '狀態已更新，請依目前畫面繼續。',
   SOLO_ATTEMPT_NOT_FOUND: '找不到這段對話。',
   SOLO_MESSAGE_LIMIT: '這一題的訊息已達上限。',
-  SOLO_OPTION_INVALID: '這個選項已經不能使用。',
+  SOLO_REVISE_HINT_INVALID: '現在不能補充這個提示。',
   SOLO_STEP_NOT_READY: '這個步驟仍在開發中。',
   SOLO_SUMMARY_STALE: '整理內容已更新，請重新確認。',
   STARTED_CLASSROOM_REQUIRED: '課堂還沒開始。',

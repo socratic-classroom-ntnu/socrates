@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useT } from '../../i18n/useT'
-import { can, stanceLabel, type SoloAttemptView, type SoloQuestion } from './soloView'
+import { can, currentScenario, type SoloAttemptView, type SoloScenario } from './soloView'
 
 const FOLLOW_LATEST_THRESHOLD = 96
 
@@ -17,7 +17,7 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   const timelineRef = useRef<HTMLElement>(null)
   const followLatest = useRef(true)
   const messages = withoutConfirmingFollowUp(view)
-  const question = view.questions.find(item => item.index === view.question_index)
+  const scenario = currentScenario(view)
   const contentKey = `${messages.map(message => message.id).join(':')}|${pendingStudent?.text ?? ''}|${waiting}`
   // Instant, not smooth: a smooth scroll is dropped when the layout changes mid-animation.
   function showLatest() {
@@ -52,24 +52,24 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   // X2, or a reply that never came (stale wait): retry in the conversation instead of thinking.
   const offerRetry = can(view, 'retry') && !retrying
   let studentIndex = 0
-  // Earlier questions stay in the same conversation, collapsed to their confirmed viewpoint.
-  const earlier = view.questions.filter(item => item.index < view.question_index)
-  function confirmedCard(item: SoloQuestion) {
+  // Earlier scenarios stay in the same conversation, collapsed to their confirmed viewpoint.
+  const earlier = view.scenarios.filter(item => item.index < view.scenario_index)
+  function confirmedCard(item: SoloScenario) {
     if (!item.confirmed_summary) return null
     return <article key={`confirmed-${item.id}`} className="solo-confirmed">
-      <strong><span aria-hidden="true">✓ </span>{t('review.confirmedCard', { number: item.index + 1, option: stanceLabel(item) ?? t('review.confirmedFallback') })}</strong>
+      <strong><span aria-hidden="true">✓ </span>{t('review.confirmedCard', { number: item.index + 1 })}</strong>
       <p>{item.confirmed_summary.reason_summary}</p>
     </article>
   }
 
   return <section ref={timelineRef} className="solo-timeline" aria-label={t('timeline.label')} onScroll={trackScroll}>
     {earlier.map(confirmedCard)}
-    {question && question.index > 0
+    {scenario && scenario.index > 0
       ? <>
         <article className="solo-scenario">
-          <strong>{t('questionTitle', { number: question.index + 1, title: question.title })}</strong>
-          <span>{t('next.teacherScenario')}</span>
-          <p>{question.scenario}</p>
+          <strong>{t('scenarioTitle', { number: scenario.index + 1 })}</strong>
+          <span>{t('next.scenarioLabel')}</span>
+          <p>{scenario.text}</p>
         </article>
         <article className="solo-message solo-message--tutor">
           <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
@@ -104,11 +104,11 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
       <div><p>{pendingStudent.text}</p></div>
     </article>}
     {/* X1: the summary the student called off, then Socrates asks which part (fixed copy). */}
-    {view.revising && view.rejected_summary && question && <>
+    {view.revising && view.rejected_summary && <>
       <article className="solo-message solo-message--student solo-rejected">
         <div>
           <strong>{t('revise.echoTitle')}</strong>
-          <p>{rejectedText(view.rejected_summary, stanceLabel(question), t)}</p>
+          <p>{rejectedText(view.rejected_summary, t)}</p>
         </div>
       </article>
       <article className="solo-message solo-message--tutor">
@@ -116,8 +116,8 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
         <div><strong>{t('timeline.socrates')}</strong><p>{t('revise.ask')}</p></div>
       </article>
     </>}
-    {/* The confirmed viewpoint closes this question's part of the conversation. */}
-    {question && confirmedCard(question)}
+    {/* The confirmed viewpoint closes this scenario's part of the conversation. */}
+    {scenario && confirmedCard(scenario)}
     {view.state === 'reviewing' && <article className="solo-message solo-message--tutor">
       <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
       <div><strong>{t('timeline.socrates')}</strong><p>{t('review.closing', { name: view.display_name })}</p></div>
@@ -137,13 +137,13 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   </section>
 }
 
-const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_questions', 'reviewing']
+const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', 'reviewing']
 
-/** This question's messages. Once the backend decides to confirm (and after it, between questions and in review),
+/** This scenario's messages. Once the backend decides to confirm (and after it, between scenarios and in review),
  * the tutor's reply to that turn is left out: its new question would ask the student two
  * things at once (the designs put the summary right after the student's last message). */
 function withoutConfirmingFollowUp(view: SoloAttemptView) {
-  const messages = view.messages.filter(message => message.question_index === view.question_index)
+  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index)
   const last = messages[messages.length - 1]
   if ((SETTLED.includes(view.state) || view.revising) && last?.role === 'tutor') return messages.slice(0, -1)
   return messages
@@ -151,9 +151,8 @@ function withoutConfirmingFollowUp(view: SoloAttemptView) {
 
 type Summary = NonNullable<SoloAttemptView['rejected_summary']>
 
-function rejectedText(summary: Summary, position: string | null, t: (key: string, options?: Record<string, unknown>) => string) {
+function rejectedText(summary: Summary, t: (key: string, options?: Record<string, unknown>) => string) {
   const parts = [
-    position && t('revise.position', { value: position }),
     t('revise.reason', { value: summary.reason_summary }),
     summary.relevant_conditions.length > 0 && t('revise.conditions', { value: summary.relevant_conditions.join('；') }),
   ]

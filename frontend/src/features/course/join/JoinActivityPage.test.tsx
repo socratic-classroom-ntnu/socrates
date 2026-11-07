@@ -12,7 +12,7 @@ jest.mock('../../../contract/classroomClient', () => {
 const now = Math.floor(Date.now() / 1000)
 const base = {
   activity_id: 'a-1', title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論', teacher_name: '王思齊',
-  question_count: 2, starts_at: now - 60, ends_at: now + 3600, status: 'open', already_enrolled: false, default_display_name: 'Fizzy',
+  starts_at: now - 60, ends_at: now + 3600, status: 'open', already_enrolled: false, default_display_name: 'Fizzy',
 }
 const where = () => screen.getByTestId('where').textContent
 const previewKey = 'GET /activities/a-1/join-preview'

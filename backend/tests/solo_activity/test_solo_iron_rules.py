@@ -9,7 +9,7 @@ from app.modules.llm_runtime import iron_rules
 from app.modules.llm_runtime.prompts import ROOT
 from app.modules.platform import storage
 from app.modules.solo_activity.repositories import SoloMessage
-from tests.solo_activity.test_solo_attempts_api import MET, OPENING, do, ok, setup, stance, start
+from tests.solo_activity.test_solo_attempts_api import MET, OPENING, answer, do, ok, setup, start
 
 
 def template_text() -> str:
@@ -31,7 +31,7 @@ def test_a_leaking_reply_is_generated_once_more(client, tutor):
     attempt = ok(start(client, s["activity_id"]))
     replies.extend([leaking(), OPENING])
 
-    view = stance(client, attempt["id"])
+    view = answer(client, attempt["id"])
 
     assert len(calls) == 2
     assert last_tutor_text(view) == OPENING["reply_text"]
@@ -43,7 +43,7 @@ def test_a_reply_that_leaks_twice_becomes_the_pull_back_sentence(client, tutor):
     attempt = ok(start(client, s["activity_id"]))
     replies.extend([leaking(), leaking()])
 
-    view = stance(client, attempt["id"])
+    view = answer(client, attempt["id"])
 
     assert len(calls) == 2
     assert last_tutor_text(view) == iron_rules.fallback_text("solo_tutor")
@@ -56,7 +56,7 @@ def test_a_summary_that_leaks_twice_never_reaches_the_student(client, tutor):
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     leaked = {**MET, "summary": {**MET["summary"], "reason_summary": template_text()}}
     replies.extend([leaked, leaked])
 

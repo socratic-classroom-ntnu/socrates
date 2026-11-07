@@ -13,7 +13,7 @@ jest.mock('../../../contract/classroomClient', () => {
 const now = Math.floor(Date.now() / 1000)
 const course = { role: 'student', id: 'c-1', name: '哲學導論', teacher_name: '王思齊', intro: '', code: '3CKTGE7Q', display_name: '小美' }
 const card = (id: string, status: 'open' | 'scheduled' | 'ended', title: string) => ({
-  id, title, status, question_count: 2,
+  id, title, status, 
   starts_at: status === 'scheduled' ? now + 3600 : now - 7200,
   ends_at: status === 'ended' ? now - 60 : now + 86400,
 })
@@ -74,7 +74,6 @@ test('desktop open card is a whole-card link and keeps the start button', async 
   expect(card).toHaveAttribute('href', '/learn/activities/o1')
   expect(card).toHaveClass('learn-card__stretch')
   expect(within(article).getAllByRole('link')).toHaveLength(2)
-  expect(article).toHaveTextContent('2 題')
   expect(article).toHaveTextContent('開放到')
 })
 
@@ -83,7 +82,7 @@ test('phone open card is a whole-card link without buttons', async () => {
   open()
   const link = await screen.findByRole('link', { name: /第三週倫理討論/ })
   expect(link).toHaveAttribute('href', '/learn/activities/o1')
-  expect(link).toHaveTextContent('2 題 ・ 開放到')
+  expect(link).toHaveTextContent('開放到')
   expect(screen.queryByRole('link', { name: /^開始/ })).toBeNull()
   expect(screen.queryAllByRole('button').filter(button => button.closest('article'))).toHaveLength(0)
 })

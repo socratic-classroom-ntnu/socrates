@@ -1,6 +1,6 @@
-"""T5 live progress: each enrolled student's status per question, for the course owner.
+"""T5 live progress: each enrolled student's status per scenario, for the course owner.
 
-Statuses, turn counts and times only. Message text, observations, stances and summaries never
+Statuses, turn counts and times only. Message text, observations, answers and summaries never
 leave this module: the teacher sees confirmed viewpoints in statistics, not here.
 """
 
@@ -19,8 +19,8 @@ from app.modules.solo_activity.service import REVIEW_STATES
 
 # In progress and idle longer than this: the teacher may want to look over.
 ATTENTION_SECONDS = 300
-# The current question is settled in these states; every other state is still talking it over.
-SETTLED_STATES = frozenset({"between_questions"}) | REVIEW_STATES
+# The current scenario is settled in these states; every other state is still talking it over.
+SETTLED_STATES = frozenset({"between_scenarios"}) | REVIEW_STATES
 
 
 def now() -> float:
@@ -28,24 +28,24 @@ def now() -> float:
     return time.time()
 
 
-def _cells(row: SoloAttempt | None, question_count: int) -> list[dict]:
+def _cells(row: SoloAttempt | None) -> list[dict]:
+    """One cell per scenario of the student's sequence so far; none before starting."""
     if row is None:
-        return [{"status": "not_started", "turns": None}] * question_count
+        return []
     cells: list[dict] = []
-    for index in range(question_count):
-        if index < row.question_index:
+    for index, entry in enumerate(row.progress):
+        if index < row.scenario_index:
             cells.append({"status": "confirmed", "turns": None})
-        elif index > row.question_index:
-            cells.append({"status": "not_started", "turns": None})
+        elif index > row.scenario_index:
+            continue
         elif row.state in SETTLED_STATES:
             cells.append({"status": "confirmed", "turns": None})
         elif row.state == "confirming":
             cells.append({"status": "confirming", "turns": None})
-        elif row.state == "choosing_stance":
-            cells.append({"status": "choosing_stance", "turns": None})
+        elif row.state == "answering":
+            cells.append({"status": "answering", "turns": None})
         else:
-            turns = row.progress[index].get("turn_index", 0) if index < len(row.progress) else 0
-            cells.append({"status": "in_dialogue", "turns": turns})
+            cells.append({"status": "in_dialogue", "turns": entry.get("turn_index", 0)})
     return cells
 
 
@@ -55,10 +55,6 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
     # Students, other teachers and strangers alike: the activity does not exist for them.
     if course is None or course.owner_id != account.id:
         raise DomainError("ACTIVITY_NOT_FOUND", 404)
-    revision = activities.current_revision(db, activity)
-    content = revision.content if revision is not None else activity.draft
-    questions = content.get("questions", [])
-    question_count = len(questions)
 
     enrolled = list(
         db.scalars(
@@ -81,18 +77,14 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
     )
 
     students = []
-    unconfirmed = [0] * question_count
     for enrollment in enrolled:
         row = attempts.get(enrollment.account_id)
-        cells = _cells(row, question_count)
+        cells = _cells(row)
         if row is None:
             overall, last_at = "not_started", None
         else:
             overall = "done" if row.state in REVIEW_STATES else "in_progress"
             last_at = max(row.updated_at, last_message.get(row.id) or row.updated_at)
-            for index, cell in enumerate(cells):
-                if cell["status"] != "confirmed":
-                    unconfirmed[index] += 1
         students.append(
             {
                 "enrollment_id": enrollment.id,
@@ -119,17 +111,12 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         "course_id": course.id,
         "course_name": course.name,
         "status": status(cast(ActivityTimes, activity), at),
-        "question_count": question_count,
         "ends_at": activity.ends_at,
         "generated_at": at,
-        "questions": [
-            {"index": index, "title": question["title"]} for index, question in enumerate(questions)
-        ],
         "summary": {
             "enrolled": len(enrolled),
             "started": sum(1 for s in students if s["overall"] != "not_started"),
             "done": sum(1 for s in students if s["overall"] == "done"),
-            "unconfirmed_by_question": unconfirmed,
             "attention": sum(1 for s in students if s["attention"]),
         },
         "students": students,

@@ -1,7 +1,7 @@
 import { useT } from '../../i18n/useT'
 import { can, type SoloAttemptView } from './soloView'
 
-/** Bottom bar in review, where the composer was: every question is confirmed; the review is
+/** Bottom bar in review, where the composer was: every scenario is confirmed; the review is
  * not built yet, so 開始回顧 stays disabled and never posts submit_review. */
 export function ReviewPlaceholder({ view }: { view: SoloAttemptView }) {
   const { t } = useT('solo')

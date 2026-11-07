@@ -213,19 +213,7 @@ def test_owner_can_enroll_as_student(client):
 def test_join_preview_open_activity_title(client):
     user(client, "owner")
     course = create_course(client)
-    draft_payload = {
-        "title": "第三週倫理討論",
-        "topic_direction": "主動與不作為",
-        "ends_at": time.time() + 3600,
-        "questions": [
-            {
-                "id": "q1",
-                "title": "岔道",
-                "scenario": "電車",
-                "options": [{"id": "a", "text": "拉"}, {"id": "b", "text": "不拉"}],
-            }
-        ],
-    }
+    draft_payload = {"title": "第三週倫理討論", "ends_at": time.time() + 3600}
     user(client, "student")
     preview = client.get("/api/v2/course-join/preview", params={"code": course["code"]})
     assert preview.json()["open_activity_title"] is None

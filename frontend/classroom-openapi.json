@@ -711,6 +711,166 @@
         "title": "AddAIStudentsReceipt",
         "type": "object"
       },
+      "AnalysisGroupView": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "persons": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisPersonView"
+            },
+            "title": "Persons",
+            "type": "array"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "roots": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roots",
+            "type": "array"
+          },
+          "settlement": {
+            "title": "Settlement",
+            "type": "object"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/GroupStanceView"
+            },
+            "title": "Stances",
+            "type": "array"
+          },
+          "tree_projection": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisTreeNodeView"
+            },
+            "title": "Tree Projection",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "phase",
+          "snapshot_id",
+          "settlement",
+          "persons",
+          "nodes",
+          "edges",
+          "tree_projection",
+          "roots",
+          "stances"
+        ],
+        "title": "AnalysisGroupView",
+        "type": "object"
+      },
+      "AnalysisPersonView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmation_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation Digest"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "nickname": {
+            "title": "Nickname",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "nickname",
+          "confirmed",
+          "confirmation_digest",
+          "timeline"
+        ],
+        "title": "AnalysisPersonView",
+        "type": "object"
+      },
+      "AnalysisTreeNodeView": {
+        "additionalProperties": false,
+        "properties": {
+          "cross_references": {
+            "items": {
+              "type": "object"
+            },
+            "title": "Cross References",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          }
+        },
+        "required": [
+          "id",
+          "parent",
+          "cross_references"
+        ],
+        "title": "AnalysisTreeNodeView",
+        "type": "object"
+      },
       "AttachScript": {
         "additionalProperties": false,
         "properties": {
@@ -1042,6 +1202,40 @@
           "status"
         ],
         "title": "BankUnpublishResult",
+        "type": "object"
+      },
+      "ChartSemanticsView": {
+        "additionalProperties": false,
+        "properties": {
+          "graph": {
+            "title": "Graph",
+            "type": "string"
+          },
+          "heatmap": {
+            "title": "Heatmap",
+            "type": "string"
+          },
+          "sankey": {
+            "title": "Sankey",
+            "type": "string"
+          },
+          "sunburst": {
+            "title": "Sunburst",
+            "type": "string"
+          },
+          "timeline": {
+            "title": "Timeline",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sunburst",
+          "sankey",
+          "graph",
+          "heatmap",
+          "timeline"
+        ],
+        "title": "ChartSemanticsView",
         "type": "object"
       },
       "ClassroomAISettingsView": {
@@ -1939,6 +2133,55 @@
         "title": "GroupActionReceipt",
         "type": "object"
       },
+      "GroupAnalysisView": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "const": "attributed_original_quotes",
+            "title": "Basis",
+            "type": "string"
+          },
+          "chart_semantics": {
+            "$ref": "#/components/schemas/ChartSemanticsView"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisGroupView"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "identity": {
+            "const": "nickname_and_classroom_scoped_pseudonym",
+            "title": "Identity",
+            "type": "string"
+          },
+          "schema": {
+            "const": "socrates/group-analysis/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "classroom_id",
+          "title",
+          "groups",
+          "basis",
+          "identity",
+          "chart_semantics"
+        ],
+        "title": "GroupAnalysisView",
+        "type": "object"
+      },
       "GroupCollectionView": {
         "additionalProperties": false,
         "properties": {
@@ -2384,6 +2627,83 @@
           "source_mode"
         ],
         "title": "GroupRunView",
+        "type": "object"
+      },
+      "GroupStanceView": {
+        "additionalProperties": false,
+        "description": "One question run's stance distribution in a group; counts only, no identities.",
+        "properties": {
+          "basis": {
+            "const": "personal_baseline",
+            "title": "Basis",
+            "type": "string"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "integer"
+          },
+          "differing": {
+            "title": "Differing",
+            "type": "boolean"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/StanceOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "question_title": {
+            "title": "Question Title",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_phase": {
+            "title": "Run Phase",
+            "type": "string"
+          },
+          "unconfirmed": {
+            "title": "Unconfirmed",
+            "type": "integer"
+          },
+          "unconfirmed_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Unconfirmed By Status",
+            "type": "object"
+          }
+        },
+        "required": [
+          "question_index",
+          "question_id",
+          "question_title",
+          "run_id",
+          "run_phase",
+          "basis",
+          "members",
+          "confirmed",
+          "unconfirmed",
+          "unconfirmed_by_status",
+          "options",
+          "differing"
+        ],
+        "title": "GroupStanceView",
         "type": "object"
       },
       "GroupStartReceipt": {
@@ -5075,6 +5395,35 @@
         "title": "SoloStudentProgressView",
         "type": "object"
       },
+      "StanceOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "number"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "text",
+          "count",
+          "percent"
+        ],
+        "title": "StanceOptionView",
+        "type": "object"
+      },
       "Start": {
         "additionalProperties": false,
         "properties": {
@@ -7441,7 +7790,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupAnalysisView"
+                }
               }
             },
             "description": "Successful Response"

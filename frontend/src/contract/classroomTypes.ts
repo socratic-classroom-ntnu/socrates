@@ -15,6 +15,9 @@ export interface components { schemas: {
   "ActivityTeacherView": { "id": string; "course_id": string; "status": "draft" | "scheduled" | "open" | "ended"; "locked": boolean; "has_unpublished_changes": boolean; "revision": (number | null); "draft": components["schemas"]["ActivityDraft"]; "starts_at": (number | null); "ends_at": (number | null); "available_actions": Array<"update" | "update_details" | "publish" | "start_now" | "end_now" | "copy" | "delete"> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AddAIStudentsReceipt": { "status": string; "action_id": string; "seq": number; "room_id": string; "created": Array<components["schemas"]["AIStudentCreatedView"]>; "roster_digest": string };
+  "AnalysisGroupView": { "id": string; "label": string; "phase": string; "snapshot_id": string; "settlement": Record<string, unknown>; "persons": Array<components["schemas"]["AnalysisPersonView"]>; "nodes": Array<Record<string, unknown>>; "edges": Array<Record<string, unknown>>; "tree_projection": Array<components["schemas"]["AnalysisTreeNodeView"]>; "roots": Array<string>; "stances": Array<components["schemas"]["GroupStanceView"]> };
+  "AnalysisPersonView": { "id": string; "nickname": string; "confirmed": boolean; "confirmation_digest": (string | null); "timeline": Array<Record<string, unknown>> };
+  "AnalysisTreeNodeView": { "id": string; "parent": (string | null); "cross_references": Array<Record<string, unknown>> };
   "AttachScript": { "action_id": string; "script_id"?: (string | null); "document"?: (Record<string, unknown> | null) };
   "AttachedScriptView": { "id": string; "revision": number; "document": Record<string, unknown>; "classroom_id": string };
   "BankImportResult": { "id": string; "revision": number; "question_id": string; "document": components["schemas"]["ScriptDocument"] };
@@ -23,6 +26,7 @@ export interface components { schemas: {
   "BankQuestionSummary": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null) };
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
+  "ChartSemanticsView": { "sunburst": string; "sankey": string; "graph": string; "heatmap": string; "timeline": string };
   "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision": number };
   "ClassroomActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
   "ClassroomBatchView": { "id": string; "classroom_id": string; "batch_id": string; "code": (string | null) };
@@ -47,11 +51,13 @@ export interface components { schemas: {
   "CreateRoom": { "script_id": string };
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
   "GroupActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
+  "GroupAnalysisView": { "schema": "socrates/group-analysis/v1"; "classroom_id": string; "title": string; "groups": Array<components["schemas"]["AnalysisGroupView"]>; "basis": "attributed_original_quotes"; "identity": "nickname_and_classroom_scoped_pseudonym"; "chart_semantics": components["schemas"]["ChartSemanticsView"] };
   "GroupCollectionView": { "kind": "GroupCollection"; "id": string; "role": "teacher" | "student"; "route"?: (Record<string, string> | null); "title"?: (string | null); "phase"?: (string | null); "code"?: (string | null); "asset_classroom_id"?: (string | null); "ai_settings"?: (components["schemas"]["ClassroomAISettingsView"] | null); "features"?: (Record<string, unknown> | null); "roster"?: Array<Record<string, unknown>>; "roster_digest"?: (string | null); "configuration"?: (Record<string, unknown> | null); "groups"?: Array<Record<string, unknown>>; "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string> };
   "GroupCommand": { "action_id": string; "kind": string; "data"?: Record<string, unknown> };
   "GroupMemberIdentityView": { "username": string; "scope": "teacher_hover_only" };
   "GroupMetaView": { "id": string; "number": number; "label": string };
   "GroupRunView": { "kind": "GroupRun"; "id": string; "role": "teacher" | "student"; "seq": number; "title": string; "phase": string; "deadline_at": (number | null); "member_id": (string | null); "members": Array<Record<string, unknown>>; "runtime_mode": string; "session_batch_id": string; "group_label": string; "classroom_id": string; "question": (components["schemas"]["PublicQuestion"] | null); "transcript": Array<Record<string, unknown>>; "arguments": Array<Record<string, unknown>>; "edges": Array<Record<string, unknown>>; "settlement": Record<string, unknown>; "confirmed_members": Array<string>; "my_summary": (Record<string, unknown> | null); "avatar_pack_id": string; "source_mode": string; "focus_notice"?: unknown; "personal"?: (Record<string, unknown> | null); "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string>; "personal_progress"?: (Record<string, unknown> | null); "personal_overview"?: (Array<Record<string, unknown>> | null) };
+  "GroupStanceView": { "question_index": number; "question_id": string; "question_title": string; "run_id": string; "run_phase": string; "basis": "personal_baseline"; "members": number; "confirmed": number; "unconfirmed": number; "unconfirmed_by_status": Record<string, number>; "options": Array<components["schemas"]["StanceOptionView"]>; "differing": boolean };
   "GroupStartReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null); "groups": Array<components["schemas"]["GroupMetaView"]>; "snapshot_id": string };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
@@ -108,6 +114,7 @@ export interface components { schemas: {
   "SoloQuestionView": { "index": number; "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["SoloOptionView"]>; "stance": (components["schemas"]["SoloStanceView"] | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
   "SoloStanceView": { "option_id": string; "current_option_id": string; "reason": string };
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "overall": "not_started" | "in_progress" | "done"; "cells": Array<components["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress"; "last_activity_at": (number | null); "attention": boolean };
+  "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
   "SubmitStanceBody": { "option_id": string; "reason": string };
   "TokenRequest": { "token": string };

@@ -15,7 +15,6 @@ import { WaitingRoom } from '../features/student-classroom/WaitingRoom'
 import type { components } from '../contract/classroomTypes'
 import { useResource } from '../contract/useResource'
 import { useT } from '../i18n/useT'
-import Conversation from '../features/round1/Conversation'
 import { ComingSoonPage, NotFoundPage } from '../components/ComingSoonPage'
 import { GroupsPage } from '../features/student-classroom/GroupsPage'
 import { HomePage } from '../features/course/home/HomePage'
@@ -29,12 +28,8 @@ import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPag
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
-import History from '../features/round1/History'
-import SoloDialogueHome from '../features/round1/Home'
-import Summary from '../features/round1/Summary'
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
-import LegacySoloDialogueLayout from '../features/round1/Round1App'
 import { AppShell } from './AppShell'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
@@ -79,12 +74,6 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
-    <Route element={<LegacySoloDialogueLayout />}>
-      <Route path="/round1" element={<SoloDialogueHome />} />
-      <Route path="/history" element={<History />} />
-      <Route path="/sessions/:sessionId" element={<Conversation />} />
-      <Route path="/sessions/:sessionId/summary" element={<Summary />} />
-    </Route>
     <Route element={<RequireAuth />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />

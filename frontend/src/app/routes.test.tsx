@@ -1,17 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { ApiError, api } from '../contract/classroomClient'
-import { listSessions } from '../contract/client'
 import { AuthProvider } from '../features/auth/AuthContext'
 import { AppRoutes } from './routes'
 
 jest.mock('../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../contract/classroomClient')>('../contract/classroomClient')
   return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn() }
-})
-jest.mock('../contract/client', () => {
-  const actual = jest.requireActual<typeof import('../contract/client')>('../contract/client')
-  return { ...actual, listSessions: jest.fn(), createSession: jest.fn() }
 })
 
 // 舊頁換成標記：這裡只驗證網址對到哪一頁、登入守門與返回，不測舊頁本身。
@@ -66,9 +61,6 @@ jest.mock('../features/course/teach/TeacherAnalysisPage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { TeacherAnalysisPage: () => { const { activityId } = useParams(); return <p>{`teacher-analysis-page:${activityId}`}</p> } }
 })
-jest.mock('../features/round1/History', () => () => <p>solo-dialogue-history</p>)
-jest.mock('../features/round1/Conversation', () => () => <p>solo-dialogue-conversation</p>)
-jest.mock('../features/round1/Summary', () => () => <p>solo-dialogue-summary</p>)
 // 3D 舞台、分組課堂與 AI 設定和路由無關，jsdom 也載不了它們用到的 ESM（three、.mjs），換成空元件
 jest.mock('../features/classroom-stage/Arena', () => ({ Arena: () => null }))
 jest.mock('../features/group-dialogue/GroupClassroom', () => ({ GroupClassroomGate: () => null }))
@@ -109,7 +101,6 @@ async function login(button = '登入') {
 
 beforeEach(() => {
   jest.mocked(api).mockReset()
-  jest.mocked(listSessions).mockResolvedValue({ items: [], next_cursor: null })
 })
 
 test.each([
@@ -280,23 +271,14 @@ test('demo pages stay behind the login boundary', async () => {
   expect(screen.queryByText('科技系統與社會發展 A')).toBeNull()
 })
 
-test('legacy solo-dialogue URL still opens', async () => {
-  mockSession(null)
-  open('/round1')
-  expect(await screen.findByRole('heading', { name: '照見你的立場' })).toBeInTheDocument()
-  expect(where()).toBe('/round1')
-})
-
-test.each([
-  ['/history', 'solo-dialogue-history'],
-  ['/sessions/s1', 'solo-dialogue-conversation'],
-  ['/sessions/s1/summary', 'solo-dialogue-summary'],
-])('solo-dialogue routes need no login: %s', async (url, marker) => {
-  mockSession(null)
-  open(url)
-  expect(await screen.findByText(marker)).toBeInTheDocument()
-  expect(where()).toBe(url)
-})
+test.each(['/history', '/sessions/s1', '/sessions/s1/summary'])(
+  'the removed legacy solo dialogue URLs are not found: %s',
+  async (url) => {
+    mockSession(null)
+    open(url)
+    expect(await screen.findByRole('heading', { name: '找不到這個頁面' })).toBeInTheDocument()
+  },
+)
 
 test('classroom deep link reaches the classroom adapter', async () => {
   mockSession(verified)

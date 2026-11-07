@@ -32,12 +32,11 @@
 | [AI Providers](./backend/ai-providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity-access | 0 |
 | [LLM Runtime](./backend/llm-runtime.md) | ✅ | `backend/app/modules/llm_runtime/` | platform、ai-providers | 0 |
 | [Content Authoring](./backend/content-authoring.md) | ⚠️ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
-| [Classroom Core](./backend/classroom-core.md) | ⚠️ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
-| [Group Dialogue](./backend/group-dialogue.md) | ⚠️ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
+| [Classroom Core](./backend/classroom-core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
+| [Group Dialogue](./backend/group-dialogue.md) | ✅ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
-| [Solo Dialogue（單人對話）](./backend/solo-dialogue.md) | ✅ | `backend/app/modules/solo_dialogue/` | platform、llm-runtime、content-authoring | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 
@@ -46,14 +45,13 @@
 | [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/app/`<br>`frontend/src/testing/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./frontend/contract.md) | ✅ | `frontend/src/contract/` | — | 0 |
 | [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
-| [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
+| [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
 | [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/` | platform、contract | 0 |
 | [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform、contract | 0 |
 | [Teacher Analytics](./frontend/teacher-analytics.md) | ⚠️ | `frontend/src/features/group-analytics/`<br>`frontend/src/features/teacher-records/` | platform、contract | 0 |
 | [Authoring](./frontend/authoring.md) | ✅ | `frontend/src/features/authoring/`<br>`frontend/src/features/script-builder/`<br>`frontend/src/features/question-bank/` | platform、ai-settings、teacher-analytics、contract | 0 |
 | [Group Dialogue](./frontend/group-dialogue.md) | ⚠️ | `frontend/src/features/group-dialogue/`<br>`frontend/src/features/personal-dialogue/`<br>`frontend/src/features/classroom-stage/` | platform、media、ai-settings、teacher-analytics、contract | 0 |
 | [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/`<br>`frontend/src/features/classroom-answer/`<br>`frontend/src/features/danmaku/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics、contract | 0 |
-| [單人對話](./frontend/solo-dialogue.md) | ✅ | `frontend/src/features/round1/`<br>`frontend/src/features/conversation-room/` | platform、media、contract | 0 |
 | [課程](./frontend/course.md) | ✅ | `frontend/src/features/course/` | platform、contract、auth、solo-activity | 0 |
 | [單人活動](./frontend/solo-activity.md) | ✅ | `frontend/src/features/solo-activity/` | platform、contract | 0 |
 
@@ -63,12 +61,11 @@
 |---|---|---|---|---|
 | 帳號（/auth/*） | identity-access | auth | classroom_schemas.py（Register、Login、ResetRequest…）→ api/types.ts | 產生型別 ✅；端點在 routes/classroom.py |
 | 教室房間（/classrooms/*） | classroom-core | student-classroom | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
-| 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 缺 response_model，前端型別手寫（已寄契約請求） |
-| AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 部分手寫 |
+| 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 產生型別 ✅ |
+| AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 產生型別 ✅ |
 | 雷達圖 | analytics | teacher-analytics | 待定 | 等契約（設計稿） |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
-| 單人對話（/api/sessions/*） | solo-dialogue |  | api/schemas.py、transcript_schemas.py → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |
 | TTS（文字→音訊＋字時間點） | llm-runtime | media | 待定 | 等契約 |
 | 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
@@ -118,5 +115,4 @@
 6. analytics
 7. ai-providers
 8. platform
-9. solo-dialogue
-10. app-shell（組裝層，最後收斂）
+9. app-shell（組裝層，最後收斂）

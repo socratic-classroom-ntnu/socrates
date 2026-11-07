@@ -4,7 +4,7 @@
 - L1 共通（L1-general.md）：所有角色都有的限制。
 - L2 角色（L2/<role>.md）：該角色自己的限制。
 
-每次呼叫都重新讀取這三層（改檔不必重啟）。所有 LLM 呼叫都走 guarded_generate 或 TutorGateway：
+每次呼叫都重新讀取這三層（改檔不必重啟）。所有 LLM 呼叫都走 guarded_generate：
 - 前處理（screen_input）：用規則式偵測學生輸入裡要求換角色、忽略規則或索取設定的句子，
   命中時在 system prompt 加提醒（不多打一次 LLM）。
 - 送出前檢查（no_leak、pull_back）：不合格重新產生一次，仍不合格換成路由指定的拉回句；
@@ -29,8 +29,8 @@ ROOT = Path(__file__).resolve().parents[3]
 RULES_DIR = Path("skills/classroom/iron-rules")
 ROUTER = RULES_DIR / "ROUTER.json"
 PROGRAMS_PATH = Path("prompts/classroom/programs.json")
-# 不經過 programs.json 的呼叫點（單人對話、其他觀點建議）也要有路由。
-DIRECT_ROLES = ("other_suggestion", "solo_tutor", "solo_summary")
+# 不經過 programs.json 的呼叫點（其他觀點建議）也要有路由。
+DIRECT_ROLES = ("other_suggestion",)
 KNOWN_CHECKS = frozenset({"screen_input", "no_leak", "pull_back"})
 VISIBLE_FIELDS = ("reply_text", "text", "suggestion_text")
 # 老師提供的內容（題目、情境、劇本、出題需求）不屬於學生輸入，不做指令覆寫偵測。

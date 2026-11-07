@@ -8,8 +8,7 @@ from app.modules.group_dialogue.contracts import AddAIStudents, OtherSuggestionR
 from app.modules.classroom_core.contracts import CreateClassroom
 from app.modules.group_dialogue.contracts import GroupCommand
 from app.modules.ai_providers.contracts import CreateProfile
-from app.modules.solo_dialogue.schemas import CreateSessionRequest
-from app.modules.solo_dialogue.transcript_schemas import TranscriptDraftCreate
+from app.modules.solo_activity.contracts import SendMessageBody, SubmitStanceBody
 
 
 def test_classroom_contracts_trim_before_length_validation():
@@ -36,7 +35,7 @@ def test_route_local_mutations_share_trimmed_contract():
     )
 
 
-def test_provider_and_legacy_inputs_trim_consistently():
+def test_provider_and_solo_inputs_trim_consistently():
     profile = CreateProfile(
         name="  local  ",
         adapter="  openai  ",
@@ -48,8 +47,11 @@ def test_provider_and_legacy_inputs_trim_consistently():
         "openai",
         "gpt-test",
     )
-    assert TranscriptDraftCreate(text="  speech  ").text == "speech"
-    assert CreateSessionRequest(ladder_id="  trolley  ").ladder_id == "trolley"
+    assert SendMessageBody(text="  speech  ").text == "speech"
+    assert SubmitStanceBody(option_id="  o1  ", reason="  理由  ").model_dump() == {
+        "option_id": "o1",
+        "reason": "理由",
+    }
 
 
 def test_whitespace_only_values_fail_min_length_after_trim():
@@ -57,9 +59,9 @@ def test_whitespace_only_values_fail_min_length_after_trim():
         Option(id="   ", text="內容")
     assert option_error.value.errors()[0]["loc"] == ("id",)
 
-    with pytest.raises(ValidationError) as transcript_error:
-        TranscriptDraftCreate(text="   ")
-    assert transcript_error.value.errors()[0]["loc"] == ("text",)
+    with pytest.raises(ValidationError) as message_error:
+        SendMessageBody(text="   ")
+    assert message_error.value.errors()[0]["loc"] == ("text",)
 
 
 def test_account_text_fields_follow_same_order():

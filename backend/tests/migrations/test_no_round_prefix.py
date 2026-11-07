@@ -2,8 +2,7 @@
 
 import re
 
-from app.modules.solo_dialogue import interaction_repositories, repositories  # noqa: F401
-from app.modules.platform.db import Base as RoundOneBase
+from app.modules.platform.db import Base as LegacyBase
 from app.modules.platform import storage as storage
 from app.modules.app_shell.models import register_models
 
@@ -13,7 +12,7 @@ ROUND_PREFIX = re.compile(r"(^|_)r[0-9]+_")
 
 def _schema_names():
     register_models()
-    for metadata in (RoundOneBase.metadata, storage.Base.metadata):
+    for metadata in (LegacyBase.metadata, storage.Base.metadata):
         for table in metadata.tables.values():
             yield table.name
             yield from (index.name for index in table.indexes if index.name)

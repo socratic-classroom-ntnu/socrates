@@ -19,7 +19,7 @@
 | `focused_tutor`、`personal_tutor`、`llm_student_turn`、`dynamic_question`、`question_summary`、`class_summary`、`personal_summary` | 課堂工作（`app/modules/app_shell/llm_workers.py`） |
 | `ai_script_authoring` | 教師出題助手（`app/modules/content_authoring/routes/script_assist.py`） |
 | `other_suggestion` | 其他觀點建議（`app/modules/group_dialogue/routes/ai_students.py`） |
-| `solo_tutor`、`solo_summary` | 單人對話（`app/modules/solo_dialogue/tutor_gateway.py` 的 TutorGateway） |
+| `solo_tutor` | 單人活動的導師（`app/modules/solo_activity/service.py`） |
 
 ## 每次呼叫做什麼
 

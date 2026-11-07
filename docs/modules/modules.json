@@ -201,21 +201,6 @@
         "llm-runtime"
       ],
       "todo": []
-    },
-    {
-      "id": "solo-dialogue",
-      "name": "Solo Dialogue（單人對話）",
-      "status": "ok",
-      "about": "一對一 ladder 對話與對話室 view（/api/sessions/*；規格擱置：維持可跑、不加功能）。",
-      "paths": [
-        "backend/app/modules/solo_dialogue/"
-      ],
-      "uses": [
-        "platform",
-        "llm-runtime",
-        "content-authoring"
-      ],
-      "todo": []
     }
   ],
   "contracts": [
@@ -290,14 +275,6 @@
       "frontend": [
         "authoring"
       ]
-    },
-    {
-      "name": "單人對話（/api/sessions/*）",
-      "backend": "solo-dialogue",
-      "source": "api/schemas.py、transcript_schemas.py → api/types.ts",
-      "state": "產生型別 ✅",
-      "frontend": [],
-      "frontend_note": "單人對話畫面"
     },
     {
       "name": "公開設定（/public-config）",
@@ -416,7 +393,6 @@
       "about": "導師人像（Socratic 與 CE 共用）、語音輸出、語音輸入元件。",
       "paths": [
         "frontend/src/features/avatar/",
-        "frontend/src/features/conversation-room/avatar/",
         "frontend/src/features/conversation-room/voice/",
         "frontend/src/shared/input/",
         "frontend/src/types/speech-recognition.d.ts",
@@ -549,23 +525,6 @@
       "todo": [
         "查資料側欄：框選文字後出現 Google 搜尋（Arthur G3）。"
       ]
-    },
-    {
-      "id": "solo-dialogue",
-      "name": "單人對話",
-      "status": "ok",
-      "about": "一對一對話室（規格擱置：維持可跑、不加功能）。",
-      "paths": [
-        "frontend/src/features/round1/",
-        "frontend/src/features/conversation-room/"
-      ],
-      "uses": [
-        "platform",
-        "media",
-        "contract"
-      ],
-      "figma": "Figma:Project/Socratic.Socratic · Frontend.01 Classroom Lifecycle.模組卡",
-      "todo": []
     },
     {
       "id": "course",

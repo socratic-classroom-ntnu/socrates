@@ -23,7 +23,7 @@ export function JoinDoor({ user, rooms, note: pageNote, onMode }: JoinDoorProps)
   const [code, setCode] = useState(''), [alias, setAlias] = useState('');
   const [joinError, setJoinError] = useState(''), [busy, setBusy] = useState(false);
   const joining = useRef(false);
-  // 包在側欄外框裡時，帳號、點數、登出由外框提供；單人練習是要拆掉的舊入口，也不放
+  // 包在側欄外框裡時，帳號、點數、登出由外框提供
   const insideShell = useInsideAppShell();
   async function join() {
     if (joining.current) return;
@@ -63,7 +63,6 @@ export function JoinDoor({ user, rooms, note: pageNote, onMode }: JoinDoorProps)
       {shown && <p role={joinError ? 'alert' : 'status'} className="entrance-note error">{shown}</p>}
       <button className="entrance-primary" disabled={busy || !code.trim()}>{busy ? '正在加入…' : '加入課堂 →'}</button>
       {rooms.length > 0 && <details className="entrance-recent"><summary>近期教室（{rooms.length}）</summary><ul>{rooms.map(room => <li key={room.id}><button type="button" onClick={() => enter(room.id, recentRoomRole(room))}><strong>{room.title}</strong><span>{room.phase}</span></button></li>)}</ul></details>}
-      {!insideShell && <nav className="entrance-links" aria-label="其他模式"><a href="/round1">單人練習</a></nav>}
     </form></div>
   </main>;
 }

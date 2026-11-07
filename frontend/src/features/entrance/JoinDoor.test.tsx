@@ -56,7 +56,7 @@ test('the other entrances remain reachable', () => {
   expect(onMode).toHaveBeenCalledWith('providers')
   expect(screen.getByText('siqi · 3 點')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /正義論/ })).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: /單人練習/ })).toHaveAttribute('href', '/round1')
+  expect(screen.queryByRole('link', { name: /單人練習/ })).toBeNull()
 })
 
 test('logout calls the API', async () => {

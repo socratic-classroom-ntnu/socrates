@@ -1,4 +1,4 @@
-"""Application composition. The solo-dialogue routers stay mounted alongside /api/v2."""
+"""Application composition: /api/v2, plus /api/health and /api/release from app/main.py."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress

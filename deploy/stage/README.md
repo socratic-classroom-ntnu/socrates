@@ -108,9 +108,8 @@ bash deploy/stage/up.sh
 Backend 啟動時執行 Alembic 升版，再啟動2個 Uvicorn workers；frontend 使用 Nginx，
 `/api/*` 及 WebSocket upgrade 轉交 `backend:8000`。
 
-每個 worker 有兩個資料庫連線池：教室模組的引擎（`pool_size=5`＋`max_overflow=5`）與單人對話路由
-使用的引擎（SQLAlchemy 預設 5＋10，有流量才連線），另有一條專用 LISTEN 連線。
-最壞情況約每 worker 26 條、預設 2 個 worker 共約 52 條；請依同機其他服務預留資料庫 connection budget。
+每個 worker 有一個資料庫連線池：教室模組的引擎（`pool_size=5`＋`max_overflow=5`），另有一條專用 LISTEN 連線。
+最壞情況約每 worker 11 條、預設 2 個 worker 共約 22 條；請依同機其他服務預留資料庫 connection budget。
 
 預期：`/api/v2/readiness` 回傳 `status=ready,database=connected`，兩個服務為 running。
 
@@ -168,7 +167,7 @@ curl -fsS https://socrates.driseam.com/api/release
 
 ## 5. CI／Release
 
-stage push 走 CI。CI的backend、frontend、contract、單人對話 e2e、教室負載（`classroom-load`）皆成功後，
+stage push 走 CI。CI的backend、frontend、contract、教室負載（`classroom-load`）皆成功後，
 呼叫同一revision的Stage Release。Release.json以image digest固定來源與相依lock，
 image 以 `sha-<source sha>` 與 `stage-<時間戳>-<source sha>` 標記。Flux 追 `stage-*` tag 自動部署
 （見最上方〈目前的部署方式〉）。

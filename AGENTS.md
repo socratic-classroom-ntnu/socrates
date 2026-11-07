@@ -28,12 +28,12 @@
 
 | 要做什麼 | 照這個檔案寫 |
 |---|---|
-| 新增 API 端點 | `backend/app/modules/solo_dialogue/routes/messages.py` |
-| 新增讀取查詢 | `backend/app/modules/solo_dialogue/routes/sessions.py` 的 `get_session` |
-| 改狀態機 | `backend/app/modules/solo_dialogue/orchestrator.py`，先改 `backend/tests/invariants/test_state_machine_table.py` |
-| 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
-| 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/round1/Conversation.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
-| 呼叫 API | 只在 `frontend/src/contract/`（例：`client.ts`、`classroomClient.ts`），型別一律從 `types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 contract/ 以外的 fetch 與 WebSocket |
+| 新增 API 端點 | `backend/app/modules/solo_activity/routes.py` 的 `act_on_attempt`（交易與 provider 呼叫在 `service.py` 的 `begin_action`／`finish_action`） |
+| 新增讀取查詢 | `backend/app/modules/solo_activity/routes.py` 的 `get_attempt`（查詢本身是 `service.py` 的 `attempt_view`） |
+| 改狀態機 | `backend/app/modules/solo_activity/attempt_machine.py`，先改 `backend/tests/solo_activity/test_solo_state_table.py` |
+| 新增前端按鈕 | 照 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`：只依後端的 `available_actions` 顯示——**不要在頁面裡自己判斷**（`frontend/src/invariants/soloActions.test.tsx` 會擋） |
+| 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/solo-activity/SoloDialoguePage.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
+| 呼叫 API | 只在 `frontend/src/contract/`（例：`classroomClient.ts`），型別一律從產生的 `classroomTypes.ts`／`types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 contract/ 以外的 fetch 與 WebSocket |
 | 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |
 
 ## API 慣例：兩條並列的規則
@@ -41,9 +41,9 @@
 1. 資源的 CRUD 用 REST
 2. **狀態機轉換用 `POST /{resource}/{id}/{action}`**，且 action 名稱必須出現在該資源 `available_actions` 的 Literal union 裡
 
-子資源自己的生命週期動作（例如逐字稿草稿的 `POST .../transcript-drafts/{draft_id}/confirm`）不屬於 session 狀態機，不列入 `available_actions`。
+子資源自己的生命週期動作不屬於上層資源的狀態機，不列入它的 `available_actions`。
 
-`/advance`、`/end`、`/retry` 屬規則 2，**不要把它們重構成 `PATCH`**——
+`/submit_stance`、`/send_message`、`/retry` 這類動作屬規則 2，**不要把它們重構成 `PATCH`**——
 它們與後端回傳的 `available_actions` 是 1:1 對應，改掉前後端契約當場斷掉。
 
 ## 明文禁止
@@ -58,7 +58,7 @@
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
 - 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
-- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人對話」，名稱說明它是什麼、做什麼（`scripts/check_naming.sh` 會擋）
+- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人活動」，名稱說明它是什麼、做什麼（`scripts/check_naming.sh` 會擋）
 
 ## 分支流程
 
@@ -92,7 +92,7 @@ bash scripts/check_naming.sh && python3 scripts/check_modules.py   # 命名與�
 cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
 
-./scripts/gen_types.sh                                # 單人對話（/api）schema 改了就跑這個
+./scripts/gen_types.sh                                # /api（health、release）schema 改了就跑這個
 python scripts/gen_classroom_types.py                 # 教室（/api/v2）schema 改了就跑這個
 ```
 
@@ -130,8 +130,7 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 2026-10-05 起 stage 專屬的 `0006`–`0104` 已合併成 `0010`；本機資料庫若還停在舊 revision，
 `alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
-**hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`solo-dialogue-e2e`（`docker compose up --build` 加 `scripts/solo_dialogue_smoke.py`）、`classroom-load`，
+**hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、`classroom-load`，
 以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
@@ -144,13 +143,13 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
 **push 前、以及 commit 有改到 `backend/` 時，backend 容器都要是開著的**（先跑 `docker compose up -d`）：hook 用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
-PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`solo-dialogue-e2e`、`classroom-load`。
+PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`classroom-load`。
 
 Commit 訊息用 conventional commits：`type(scope): description`。
 因為 repo 只開放 squash merge，**這條規範實際落在 PR 標題上**。
 描述寫「為什麼」，不要複述 diff。
 
-PR 描述固定三行：**改了什麼／碰到哪些共用點（資料模型？`SessionView`？狀態機？）／怎麼驗證的**。
+PR 描述固定三行：**改了什麼／碰到哪些共用點（資料模型？ViewModel？狀態機？）／怎麼驗證的**。
 
 ### 查搬移前的歷史
 

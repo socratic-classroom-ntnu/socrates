@@ -30,7 +30,6 @@ jobs:
       DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       CLASSROOM_TEST_DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -101,7 +100,6 @@ jobs:
     timeout-minutes: 15
     env:
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -126,7 +124,6 @@ jobs:
     permissions: {contents: write, pull-requests: write}
     env:
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
       HEAD_REF: ${{ github.head_ref }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       GH_TOKEN: ${{ github.token }}
@@ -162,7 +159,7 @@ jobs:
           git commit -m "chore(contracts): regenerate OpenAPI contracts"
           git push origin "HEAD:refs/heads/$HEAD_REF"
           gh pr comment "$PR_NUMBER" --body "OpenAPI 契約已重新產生並推回個人開發分支。"
-  solo-dialogue-e2e:
+  compose-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -175,12 +172,12 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/api/health
-      - run: python scripts/solo_dialogue_smoke.py http://127.0.0.1:8000/api
+          curl -fsS http://127.0.0.1:8000/api/v2/readiness
       - if: always()
-        run: docker compose logs --no-color > solo-dialogue-compose.log
+        run: docker compose logs --no-color > compose-smoke.log
       - if: always()
         uses: actions/upload-artifact@v4
-        with: {name: solo-dialogue-evidence, path: solo-dialogue-compose.log, retention-days: 7}
+        with: {name: compose-smoke-evidence, path: compose-smoke.log, retention-days: 7}
       - if: always()
         run: docker compose down
   classroom-load:
@@ -217,7 +214,7 @@ jobs:
   ci-required:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, frontend, contract, solo-dialogue-e2e, classroom-load]
+    needs: [backend, frontend, contract, compose-smoke, classroom-load]
     steps:
       - env:
           RESULTS: ${{ toJSON(needs) }}

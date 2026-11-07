@@ -1,6 +1,5 @@
 /* 所有規則都掛在 .ans-room 底下：畫面實際放在 main.sc-classroom 裡，
-   `.sc-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉。
-   前綴不用 ce-：對話室的 conversation-room/shell/room.css 已經用了 .ce-room，會一起載入而互相覆蓋 */
+   `.sc-classroom button／h1／textarea` 的權重比單一 class 高，不加前綴會被蓋掉。 */
 /* ===== 作答畫面：Figma「3 問題作答」「4 選定並寫下想法」 =====
    桌機：1280×800 畫布照設計稿絕對定位，整張等比放大填滿螢幕（stage.ts useStageScale）。
    900px 以下（ans-room--mobile）：改成直向排列，背景固定在後面。 */

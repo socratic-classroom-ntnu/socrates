@@ -91,6 +91,16 @@ function classNames(sheet: string): Set<string> {
   return names
 }
 
+// ui.css 只放共用控制項；某一個元件（例如對話框）的樣式放它自己的樣式表，之後搬進 src/ui 時才拆得乾淨。
+// 用 id 指定某一頁的元素也不行（沒有 class 的元素選擇器由 global selectors only shrink 擋）
+const UI_CONTROL_BLOCKS = ['button', 'chip', 'chips', 'copy-button', 'form-error', 'form-field', 'icon-button', 'qr-code', 'status-pill']
+test('ui.css only holds shared control classes', () => {
+  const strays = [...classNames('styles/ui.css')].filter(name => !UI_CONTROL_BLOCKS.includes(name.replace(/(__|--).*$/, '')))
+  const selectors = [...source('styles/ui.css').matchAll(/([^{}]+)\{/g)].map(([, selector]) => selector).filter(selector => !selector.trim().startsWith('@'))
+  const ids = selectors.flatMap(selector => [...selector.replace(/(['"]).*?\1/g, '').matchAll(/#([A-Za-z_][\w-]*)/g)].map(([, name]) => `#${name}`))
+  expect([...strays, ...ids].sort()).toEqual([])
+})
+
 // 兩邊的樣式表都是全域的：同名的 class 會互相蓋掉（例如分組課出題表單與活動編輯器的題目順序面板）
 test('course stylesheets share no class names with the group-class ones', () => {
   const course = new Set(COURSE.flatMap(sheet => [...classNames(sheet)]))
@@ -161,12 +171,6 @@ test('local @import only where allowed', () => {
     + '請改在 JS 裡 import。確定要用，就加進這條的清單。',
   () => expect(imports.sort()).toEqual([
     'styles.css -> styles/responsive.css',
-    'styles/editor.css -> styles/ui.css',
-    'styles/home.css -> styles/ui.css',
-    'styles/join.css -> styles/ui.css',
-    'styles/learn.css -> styles/ui.css',
-    'styles/solo.css -> styles/ui.css',
-    'styles/teach.css -> styles/ui.css',
   ]))
 })
 
@@ -264,7 +268,7 @@ test('course sheets: palette colors are referenced through tokens', () => {
 
 // 棘輪：課程檔寫死的色碼只能變少。數量變少時把常數改成新的數字；某個顏色整個不見了，也從清單拿掉。
 // 只看數量擋不住「刪一個舊色、加一個新色」，所以另外列出現有的顏色：清單外的新顏色要先加進 tokens.css
-const COURSE_RAW_HEX = 284
+const COURSE_RAW_HEX = 283
 const COURSE_RAW_COLORS = [
   '#1E1C18', '#1E6B60', '#1F3A31', '#24493C', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B',
   '#3A362F', '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129',

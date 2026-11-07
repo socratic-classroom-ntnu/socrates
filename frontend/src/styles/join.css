@@ -1,5 +1,3 @@
-@import './ui.css';
-
 /* J0／J1／J2m：加入流程（全螢幕，不包外框） */
 .join-page {
   position: relative; min-height: 100dvh; display: flex; flex-direction: column; background: var(--ui-color-bg); color: var(--ui-color-ink);
@@ -65,7 +63,7 @@
 .chalk-card__copy { border: 0; background: transparent; color: #EFEBE0; cursor: pointer; display: inline-flex; padding: 4px; }
 .join-note { margin: 0; display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--ui-color-primary-soft); color: #1F3A31; font-size: 14px; line-height: 1.6; }
 .join-sheet .form-field input { min-height: 52px; border-radius: 10px; font-size: 17px; }
-.join-sheet__submit { margin-top: 8px; min-height: 56px; border-radius: 12px; font-size: 17px; }
+.join-sheet__submit { margin-top: 8px; }
 .join-link {
   margin-top: auto; align-self: center; min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; border: 0; background: transparent;
   color: var(--ui-color-muted); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer;
@@ -86,7 +84,6 @@
 .join-login__card h1 { margin: 0; font-size: 22px; }
 .join-login__card .auth-field label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
 .join-login__card .auth-field input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--ui-color-border); border-radius: 10px; background: var(--ui-color-panel); font: inherit; font-size: 16px; font-weight: 400; }
-.join-login__submit { min-height: 52px; border-radius: 10px; font-size: 16px; }
 .join-login__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
 .join-login__links .join-link { margin: 0; padding: 0; color: var(--ui-color-primary); font-weight: 700; }
 .join-login__links .join-link--quiet { color: var(--ui-color-muted); font-weight: 400; }

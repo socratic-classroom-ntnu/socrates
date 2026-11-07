@@ -37,3 +37,6 @@
   .dialog__header, .dialog__description, .dialog__body, .dialog__footer { padding-left: 20px; padding-right: 20px; }
 }
 .dialog { color-scheme: light; }
+/* 對話框內文：確認問句與說明文字 */
+.dialog__question { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
+.dialog__text { margin: 0; color: var(--ui-color-ink-soft); font-size: 14px; line-height: 1.7; }

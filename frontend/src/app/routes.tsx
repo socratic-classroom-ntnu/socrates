@@ -16,6 +16,8 @@ import type { components } from '../contract/classroomTypes'
 import { useResource } from '../contract/useResource'
 import { useT } from '../i18n/useT'
 import { ComingSoonPage, NotFoundPage } from '../components/ComingSoonPage'
+// 共用控制項的樣式在所有課程頁樣式之前載入一次（不靠 Dialog 帶進來，也不在各頁 @import），頁面的覆寫才蓋得過；順序由 styleOrder.test.ts 守住
+import '../styles/ui.css'
 import { GroupsPage } from '../features/student-classroom/GroupsPage'
 import { HomePage } from '../features/course/home/HomePage'
 import { JoinActivityPage } from '../features/course/join/JoinActivityPage'

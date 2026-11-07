@@ -57,5 +57,3 @@
 .chip:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
 .icon-button--quiet { background: transparent; color: var(--ui-color-ink-soft); }
 .icon-button--quiet:hover, .icon-button--quiet[aria-expanded="true"] { background: var(--ui-color-bg); }
-.dialog__question { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
-.dialog__text { margin: 0; color: var(--ui-color-ink-soft); font-size: 14px; line-height: 1.7; }

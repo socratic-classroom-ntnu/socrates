@@ -15,31 +15,35 @@
 | 未進入的階段不回傳 `title` | 學生若知道下一題是什麼，答第一題時就會自我保護，鏡子照不到真實直覺 |
 | 情境開場白逐字輸出、不經 LLM | 經典難題的效力在於敘述的精確，換句話說會稀釋掉它 |
 | 學生訊息先落地才呼叫 provider | 學生想很久寫的一段話因模型超時而消失，是最不能發生的事 |
-| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `backend/app/orchestrator/policy.py`（`should_advance`／`stage_goal_met`，測試 `backend/tests/invariants/test_stage_advance_policy.py`） | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
+| 推進判準（地板 + 三條件 + 未改變立場）**全部**住在 `backend/app/modules/llm_runtime/policy.py`（`should_advance`／`stage_goal_met`，測試 `backend/tests/invariants/test_stage_advance_policy.py`） | 讓模型自己說「達成了」等於把規則藏進模型，換家模型就變；規則散到 Orchestrator，讀 policy.py 的人就會以為看到了全部 |
 | 上限到了未達成標 `capped` 不標 `goal_met` | 照見包含照見自己的模糊 |
 | `available_actions` 由後端決定 | 前端一旦自己推導，狀態機就被實作兩次，然後兩邊走鐘 |
 | `ended` 之後任何動作一律拒絕 | — |
 | 壞掉的 ladder yaml 要讓服務啟動失敗 | 不能等學生跑到第三階才爆 |
 | Orchestrator 不得 import 任何 provider | 這條線是腳本驗收與真 API 共用流程的原因 |
+| 前後端各自模組化，兩端只透過契約接：跨模組 import 只走 `docs/modules/modules.json` 的 uses；後端 route 不互相 import、ORM 只在 repositories | 一個模組交給一個人時，他只改得到自己的檔；`scripts/check_modules.py` 擋新違規，`docs/modules/violations.json` 只能變短 |
+| 每個 LLM 呼叫都經過鐵則：`backend/app/modules/llm_runtime/iron_rules.py` 依 L0 路由（`backend/skills/classroom/iron-rules/ROUTER.json`）載入 L1 共通＋該角色的 L2；LLM 功能不得削弱 `docs/IRON-RULES.md` | 學生端的 AI 被帶離題或被改寫角色，課堂就不再是照見自己立場的地方；`backend/tests/classroom/test_iron_rules.py` 列舉所有呼叫點，新呼叫點沒接鐵則會擋 |
 
 ## 範本索引
 
 | 要做什麼 | 照這個檔案寫 |
 |---|---|
-| 新增 API 端點 | `backend/app/api/routes/messages.py` |
-| 新增讀取查詢 | `backend/app/api/routes/sessions.py` 的 `get_session` |
-| 改狀態機 | `backend/app/orchestrator/orchestrator.py`，先改 `backend/tests/invariants/test_state_machine_table.py` |
-| 新增前端按鈕 | `frontend/src/components/ActionBar.tsx`——**不要在頁面裡自己判斷** |
-| 新增前端畫面 | `frontend/src/pages/Conversation.tsx` |
-| 呼叫 API | `frontend/src/api/client.ts`，型別一律從 `types.ts` 取，不要手寫 |
+| 新增 API 端點 | `backend/app/modules/solo_activity/routes.py` 的 `act_on_attempt`（交易與 provider 呼叫在 `service.py` 的 `begin_action`／`finish_action`） |
+| 新增讀取查詢 | `backend/app/modules/solo_activity/routes.py` 的 `get_attempt`（查詢本身是 `service.py` 的 `attempt_view`） |
+| 改狀態機 | `backend/app/modules/solo_activity/attempt_machine.py`，先改 `backend/tests/solo_activity/test_solo_state_table.py` |
+| 新增前端按鈕 | 照 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`：只依後端的 `available_actions` 顯示——**不要在頁面裡自己判斷**（`frontend/src/invariants/soloActions.test.tsx` 會擋） |
+| 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/solo-activity/SoloDialoguePage.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
+| 呼叫 API | 只在 `frontend/src/contract/`（例：`classroomClient.ts`），型別一律從產生的 `classroomTypes.ts`／`types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 contract/ 以外的 fetch 與 WebSocket |
 | 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |
 
 ## API 慣例：兩條並列的規則
 
 1. 資源的 CRUD 用 REST
-2. **狀態機轉換用 `POST /{resource}/{id}/{action}`**，且 action 名稱必須出現在 `Action` Literal union 裡
+2. **狀態機轉換用 `POST /{resource}/{id}/{action}`**，且 action 名稱必須出現在該資源 `available_actions` 的 Literal union 裡
 
-`/advance`、`/end`、`/retry` 屬規則 2，**不要把它們重構成 `PATCH`**——
+子資源自己的生命週期動作不屬於上層資源的狀態機，不列入它的 `available_actions`。
+
+`/submit_stance`、`/send_message`、`/retry` 這類動作屬規則 2，**不要把它們重構成 `PATCH`**——
 它們與後端回傳的 `available_actions` 是 1:1 對應，改掉前後端契約當場斷掉。
 
 ## 明文禁止
@@ -49,11 +53,12 @@
 - 讓 LLM 改寫情境開場白
 - `git commit --no-verify`
 - 未經使用者明確要求，由 AI 執行 `git add`／`git commit`／`git push`／`git fetch`／`git pull`
-- 手寫 `frontend/src/api/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/api/classroomTypes.ts`、`frontend/classroom-openapi.json`（產生物，跑 `python scripts/gen_classroom_types.py`）
+- 手寫 `frontend/src/contract/types.ts`、`frontend/openapi.json`（產生物，跑 `./scripts/gen_types.sh`）或 `frontend/src/contract/classroomTypes.ts`、`frontend/classroom-openapi.json`（產生物，跑 `python scripts/gen_classroom_types.py`）
 - 在 `frontend/src/` 新增 `.js`／`.jsx`／`.cjs`。前端以 TypeScript 為準（`frontend/STACK-CONTRACT.json`），`src/stack.test.ts` 會擋；`.mjs`（avatar runtime 與 `features/group-analytics/graphLayout.mjs`）目前不擋
 - 在 migration 裡 import `app.*`（`tests/migrations/test_migration_hygiene.py` 會擋）；不 import `app` 就拿不到 ORM 的 model，`create_all()` 也就只能建 migration 自己宣告的表
 - 為 migration 寫共用的 helper 函式
 - 在資料庫物件名稱裡加開發回合編號（`r2_`、`r104_`……）；名稱說明它裝什麼（`tests/migrations/test_no_round_prefix.py` 會擋）
+- 在檔名、識別字、註解與文件裡用開發回合編號（`r70-`、`g12_`、`r70:`）、舊代號（`run2`、`Run 2`、`Round 1`、`round1`）或開發工具的內部名稱；產品詞用「教室」（多人課堂）與「單人活動」，名稱說明它是什麼、做什麼（`scripts/check_naming.sh` 會擋）
 
 ## 分支流程
 
@@ -62,6 +67,7 @@
 | **`main`** | 穩定分支。**只能透過 PR 進入**，CI 三個檢查必須綠燈 |
 | **`develop`** | 整合分支。**可以直接推**，但 CI 一樣會跑 |
 | `feature/*` | 較大的改動從 `develop` 開，PR 回 `develop` |
+| `backend/arthur/**` | Arthur 的後端分支，檢查在本機跑（pre-push hook＋本機 CI）。push 與以它為 base 的疊層 PR 不跑 GitHub CI、不建預覽環境；PR 進 `develop` 時照常跑完整 CI |
 | **`develop`／`master`** 的部署 | push 後 CI 綠燈會推 `develop-*`／`master-*` image，Flux 自動部署到 `socrates-dev`／`socrates`（正式）網域。**`master` push 就是上正式**，與 `stage` 一樣要先跟主機擁有者協調資料庫相關的變更 |
 | **`stage`** | **push 就是部署**：CI 的 `release / build` 推出 `stage-*` image 後，k8s 上的 Flux 會自動換上。需要配合資料庫一起動的版本，push 前先跟主機擁有者協調（`deploy/stage/README.md`〈目前的部署方式〉） |
 
@@ -80,12 +86,13 @@ docker compose up -d                                  # 起全棧（db / backend
 docker compose exec backend python -m pytest tests -q # 後端測試
 docker compose exec backend ruff check .          # 後端 lint
 docker compose exec backend ruff format --check . # 後端格式
-# 型別：兩條 mypy（Round 1 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
+bash scripts/check_naming.sh && python3 scripts/check_modules.py   # 命名與後端模組地圖
+# 型別：兩條 mypy（核心模組 strict、教室模組走 mypy-classroom.ini），完整參數見 .husky/pre-push（與 CI 逐字相同）
 
 cd frontend && npm test -- --runInBand                # 前端測試
 cd frontend && npm run lint && npm run typecheck && npm run build
 
-./scripts/gen_types.sh                                # Round 1 schema 改了就跑這個
+./scripts/gen_types.sh                                # /api（health、release）schema 改了就跑這個
 python scripts/gen_classroom_types.py                 # 教室（/api/v2）schema 改了就跑這個
 ```
 
@@ -97,6 +104,9 @@ python scripts/gen_classroom_types.py                 # 教室（/api/v2）schem
 會自動用 `backend/.venv`，也可以用 `PYTHON_BIN` 指定；`gen_classroom_types.py` 請用
 `backend/.venv/bin/python scripts/gen_classroom_types.py` 執行），前端也要先 `npm ci`。
 CI 的必要檢查 `contract` 會重跑這兩支並比對產物，沒有重新產生就會紅燈。
+通常不用手動跑：裝了 husky（根目錄 `npm install`）且 backend 容器有在跑時，每次 commit 都會自動重新產生
+這四個檔案並加入 commit（OpenAPI JSON 由容器印出，主機只負責寫檔與產生 TS，不需要主機的後端依賴）。
+漏掉的話，`feature/`、`fix/`、`frontend/` 分支的 PR 在 `contract` 失敗時，`contract-fix` 會把重新產生的檔案推回 PR 分支（那個 commit 的 CI 要在 Actions 頁面手動核准才會跑）。
 
 **後端測試會自己連到 `socrates_test`，不會動到開發資料庫。** `conftest.py` 會把任何
 `DATABASE_URL` 自動改寫成 `<原名>_test`，不需要、也不要為了跑測試手動改 `DATABASE_URL`。
@@ -120,12 +130,11 @@ pytest（fixture 一律 `create=True`）全綠，而全新資料庫的 `alembic 
 2026-10-05 起 stage 專屬的 `0006`–`0104` 已合併成 `0010`；本機資料庫若還停在舊 revision，
 `alembic upgrade` 會報 `Can't locate revision`，刪掉重建即可。
 
-**hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、
-`round1-e2e`（`docker compose up --build` 加 `scripts/round1_smoke.py`）、`classroom-load`，
+**hook 仍未涵蓋 CI 的其他部分**：必要檢查 `contract`（重跑兩支型別產生器並比對產物）、`classroom-load`，
 以及 `frontend` job 前的 `scripts/fetch_avatar.py`。改了 schema 就自己跑型別產生器，其餘看 CI 結果。
 
 **hook 的指令必須與 `.github/workflows/ci.yml` 的 `backend`／`frontend` job 逐條對應。** 型別檢查是兩條而不是一條：
-Round 1 走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（兩者都逐檔列出教室模組，新增教室模組時兩邊都要加）。lint 的範圍是 `backend`，
+核心模組走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（兩者都逐檔列出教室模組，新增教室模組時兩邊都要加）。lint 的範圍是 `backend`，
 不含 `scripts/`；`backend/pyproject.toml` 已用 `extend-exclude` 排除，因為 root compose 把 `./scripts`
 掛進了 `/app/scripts`。**CI 改了就要同時改 hook**，反之亦然——2026-09 曾經因為 CI 隨
 教室模組／Jest 遷移更新、hook 沒跟上，導致 hook 拿 Vitest 時代的 `--run` 餵給 Jest
@@ -134,13 +143,13 @@ Round 1 走 `strict`，教室模組走較寬的 `backend/mypy-classroom.ini`（�
 **第一次 clone／pull 到這個設定後，要在 repo 根目錄跑一次 `npm install`**，`core.hooksPath` 才會在本機生效——這是本機 git config，不會隨 commit 自動套用到別人機器上。
 **push 前、以及 commit 有改到 `backend/` 時，backend 容器都要是開著的**（先跑 `docker compose up -d`）：hook 用 `docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
-PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`round1-e2e`、`classroom-load`。
+PR 送出前請把上面那一整組跑過一次；CI 除了這組，還會跑上面列的 `contract`、`classroom-load`。
 
 Commit 訊息用 conventional commits：`type(scope): description`。
 因為 repo 只開放 squash merge，**這條規範實際落在 PR 標題上**。
 描述寫「為什麼」，不要複述 diff。
 
-PR 描述固定三行：**改了什麼／碰到哪些共用點（資料模型？`SessionView`？狀態機？）／怎麼驗證的**。
+PR 描述固定三行：**改了什麼／碰到哪些共用點（資料模型？ViewModel？狀態機？）／怎麼驗證的**。
 
 ### 查搬移前的歷史
 

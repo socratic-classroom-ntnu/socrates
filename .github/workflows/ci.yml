@@ -1,8 +1,11 @@
 name: CI
 on:
+  # backend/arthur/** 由本機 CI 檢查：以它為 base 的疊層 PR 與它的 push 都不跑；
+  # PR 進 develop 時照常跑完整 CI（pull_request 的 branches 比對的是 base 分支）。
   pull_request:
+    branches-ignore: ['backend/arthur/**']
   push:
-    branches: [master, develop, stage, 'backend/**']
+    branches: [master, develop, stage, 'backend/**', '!backend/arthur/**']
 permissions:
   contents: read
 concurrency:
@@ -27,7 +30,6 @@ jobs:
       DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       CLASSROOM_TEST_DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,11 +42,22 @@ jobs:
         run: python -m ruff check backend
       - name: Ruff format, complete backend
         run: python -m ruff format --check backend
-      - name: Strict Round1 types and classroom contracts
+      - name: Naming and backend module map
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          bash scripts/check_naming.sh
+          python -m pytest scripts/test_check_modules.py -q
+          if [ -n "$BASE_REF" ]; then
+            git fetch --depth=1 origin "$BASE_REF"
+            python scripts/check_modules.py --baseline-ref "origin/$BASE_REF"
+          else
+            python scripts/check_modules.py
+          fi
+      - name: Strict core types and classroom contracts
         run: |
           cd backend
-          python -m mypy app --exclude 'app/api/routes/(classroom|groups|ai_students|public_config|provider_profiles|classroom_library)\.py|app/api/classroom_schemas\.py|app/orchestrator/classroom(_policy)?\.py|app/domain/(group_run|group_analysis|library_decisions)\.py|app/repositories/classroom_storage\.py|app/services/(classroom|llm_workers|email_delivery|ai_students|classroom_auth)\.py|app/tutor/(classroom_provider|classroom_gateway|prompts)\.py|app/(classroom_app|classroom_server|realtime)\.py'
-          python -m mypy --config-file mypy-classroom.ini app/api/routes/classroom.py app/api/routes/groups.py app/api/routes/ai_students.py app/api/routes/public_config.py app/api/routes/provider_profiles.py app/api/routes/classroom_library.py app/api/classroom_schemas.py app/orchestrator/classroom.py app/orchestrator/classroom_policy.py app/domain/group_run.py app/domain/group_analysis.py app/domain/library_decisions.py app/repositories/classroom_storage.py app/services/classroom.py app/services/llm_workers.py app/services/email_delivery.py app/services/ai_students.py app/services/classroom_auth.py app/tutor/classroom_provider.py app/tutor/classroom_gateway.py app/tutor/prompts.py app/classroom_app.py app/realtime.py app/classroom_server.py
+          python tools/mypy_check.py
       - name: Database migration and domain/API regression
         run: |
           cd backend
@@ -87,7 +100,6 @@ jobs:
     timeout-minutes: 15
     env:
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -99,8 +111,55 @@ jobs:
         working-directory: frontend
       - run: ./scripts/gen_types.sh
       - run: python scripts/gen_classroom_types.py
-      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts frontend/classroom-openapi.json frontend/src/api/classroomTypes.ts
-  round1-e2e:
+      - run: git diff --exit-code -- frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
+  # 契約檔落後時，只修同 repo 的個人開發分支；共用與部署分支維持人工審查。
+  contract-fix:
+    needs: [contract]
+    if: >-
+      failure() && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (startsWith(github.head_ref, 'feature/') || startsWith(github.head_ref, 'fix/') || startsWith(github.head_ref, 'frontend/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: write, pull-requests: write}
+    env:
+      LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
+      HEAD_REF: ${{ github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+      CONTRACTS: frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.head_ref }}'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install -r backend/requirements.txt
+      - run: npm ci --no-audit --no-fund
+        working-directory: frontend
+      - run: ./scripts/gen_types.sh
+      - run: python scripts/gen_classroom_types.py
+      - id: diff
+        run: |
+          if git diff --quiet -- $CONTRACTS; then
+            echo "分支契約已是最新；請先 rebase 或 merge base 分支。"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.diff.outputs.changed == 'true'
+        run: npm run typecheck
+        working-directory: frontend
+      - if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $CONTRACTS
+          git commit -m "chore(contracts): regenerate OpenAPI contracts"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          gh pr comment "$PR_NUMBER" --body "OpenAPI 契約已重新產生並推回個人開發分支。"
+  compose-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -113,12 +172,12 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/api/health
-      - run: python scripts/round1_smoke.py http://127.0.0.1:8000/api
+          curl -fsS http://127.0.0.1:8000/api/v2/readiness
       - if: always()
-        run: docker compose logs --no-color > round1-compose.log
+        run: docker compose logs --no-color > compose-smoke.log
       - if: always()
         uses: actions/upload-artifact@v4
-        with: {name: round1-evidence, path: round1-compose.log, retention-days: 7}
+        with: {name: compose-smoke-evidence, path: compose-smoke.log, retention-days: 7}
       - if: always()
         run: docker compose down
   classroom-load:
@@ -155,7 +214,7 @@ jobs:
   ci-required:
     if: always()
     runs-on: ubuntu-latest
-    needs: [backend, frontend, contract, round1-e2e, classroom-load]
+    needs: [backend, frontend, contract, compose-smoke, classroom-load]
     steps:
       - env:
           RESULTS: ${{ toJSON(needs) }}

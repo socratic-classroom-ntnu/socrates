@@ -11,13 +11,27 @@ def _script() -> ScriptDirectory:
     return ScriptDirectory.from_config(Config("alembic.ini"))
 
 
-def test_classroom_migration_extends_the_round1_head() -> None:
+def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     script = _script()
 
     # 單一 head：分岔會讓 `alembic upgrade head` 在部署時失敗。
-    assert script.get_heads() == ["0010"]
-    # 教室的 schema 接在 Round 1 的最後一支上，而不是另起一條鏈。
+    assert script.get_heads() == ["0017"]
+    # 教室的 schema 接在單人對話的最後一支上，而不是另起一條鏈。
     assert script.get_revision("0010").down_revision == "9a0c1d2e3f42"
+    # 題庫商店（issue #17）接在教室 schema 之後。
+    assert script.get_revision("0011").down_revision == "0010"
+    # 互動式 LLM 呼叫沿用同一張 audit 表，允許沒有 classroom Job 的紀錄。
+    assert script.get_revision("0012").down_revision == "0011"
+    # 長期課程、選課與活動版本沿用同一條 migration 鏈。
+    assert script.get_revision("0013").down_revision == "0012"
+    # 活動軟刪除只加一個欄位。
+    assert script.get_revision("0014").down_revision == "0013"
+    # 單人活動的 attempt 與訊息。
+    assert script.get_revision("0015").down_revision == "0014"
+    # 單人訊息的 meta（不太對的提示、改變後的立場）只加一個欄位。
+    assert script.get_revision("0016").down_revision == "0015"
+    # 舊單人對話的資料表在程式移除後搬進 legacy_solo_dialogue schema 保存（issue #71）。
+    assert script.get_revision("0017").down_revision == "0016"
 
 
 @pytest.mark.parametrize("revision", SQUASHED)

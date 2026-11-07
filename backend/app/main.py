@@ -4,21 +4,15 @@ import subprocess
 
 from fastapi import FastAPI
 
-from app.api.routes import history, messages, room, sessions, summaries, transcripts
-from app.api.schemas import ReleaseView
-from app.config import settings
-from app.ladders.repository import LadderRepository
+from app.modules.app_shell.contracts import ReleaseView
+from app.modules.content_authoring.service import LadderRepository
+from app.modules.platform.config import settings
 
+# A broken ladder file must stop the service from starting (AGENTS.md); script_assist reads its
+# stages as sample questions.
 ladder_repository = LadderRepository.load(settings.ladder_path)
 
 app = FastAPI(title="Socrates API", version="0.2.0")
-
-app.include_router(sessions.router)
-app.include_router(messages.router)
-app.include_router(summaries.router)
-app.include_router(history.router)
-app.include_router(room.router)
-app.include_router(transcripts.router)
 
 
 @app.get("/api/health")

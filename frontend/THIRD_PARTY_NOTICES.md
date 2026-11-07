@@ -16,4 +16,4 @@
 - Source commit is pinned. `public/avatars/ce-brunette/SOURCE.json` records the source URL, commit, Git blob ID, size and license; the build-time fetchers (`tools/fetch-avatar.mjs`, `scripts/fetch_avatar.py`) verify the Git blob ID and the glTF header.
 
 ## CE reference status
-The current UI implements Arthur's supplied concept drawing and explicit layout direction. The private CE source attempts and their HTTP status are preserved in the Loom evidence. The public model is an attributed upstream presentation asset, with CE exact asset adoption delegated to Portal-Goose.
+The current UI implements Arthur's supplied concept drawing and explicit layout direction. The private CE source attempts and their HTTP status are preserved in the release evidence. The public model is an attributed upstream presentation asset, and the exact CE asset is adopted separately.

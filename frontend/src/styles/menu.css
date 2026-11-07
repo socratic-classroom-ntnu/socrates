@@ -1,0 +1,30 @@
+/* 共用下拉選單（S2 帳號選單、T4 的「⋯」）。 */
+.menu { position: relative; display: inline-flex; }
+.menu__panel {
+  position: absolute; z-index: 30; min-width: 220px; box-sizing: border-box;
+  border: 1px solid var(--ui-color-line); border-radius: 14px; background: var(--ui-color-panel);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16); overflow: visible;
+}
+.menu--below > .menu__panel { top: calc(100% + 6px); }
+.menu--above > .menu__panel { bottom: calc(100% + 6px); }
+.menu--start > .menu__panel { left: 0; }
+.menu--end > .menu__panel { right: 0; }
+.menu__list { margin: 0; padding: 6px; list-style: none; }
+.menu__panel--sub { top: auto; bottom: 0; left: calc(100% + 8px); min-width: 176px; margin: 0; padding: 6px; list-style: none; border-radius: 12px; }
+.menu__item {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; box-sizing: border-box;
+  padding: 8px 14px; border: 0; border-radius: 8px; background: transparent;
+  color: var(--ui-color-ink); font: inherit; font-size: 15px; line-height: 1.35; text-align: left; cursor: pointer;
+}
+.menu__item:hover, .menu__item:focus-visible { background: var(--ui-color-bg); outline: none; }
+.menu__item:focus-visible { box-shadow: inset 0 0 0 2px var(--ui-color-primary); }
+.menu__item--checked { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); font-weight: 700; }
+.menu__item--danger { color: var(--ui-color-ended-ink); }
+.menu__label { flex-grow: 1; min-width: 0; overflow-wrap: anywhere; }
+.menu__chevron, .menu__check { flex-shrink: 0; color: var(--ui-color-muted); }
+.menu__item--checked .menu__check { color: var(--ui-color-primary); }
+.menu__divider { height: 1px; margin: 6px 4px; background: #ECECE8; }
+
+@media (max-width: 767px) {
+  .menu__panel--sub { left: 8px; right: 8px; bottom: auto; top: 100%; }
+}

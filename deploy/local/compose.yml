@@ -32,7 +32,6 @@ services:
       RESEND_FROM: Socratic Classroom <verify@mail.socrates.driseam.com>
       CLASSROOM_LLM_DAILY_BUDGET: ${CLASSROOM_LLM_DAILY_BUDGET:-${RUN2_LLM_DAILY_BUDGET:-1000000}}
       LADDER_PATH: /data/ladders/trolley.yaml
-      SCRIPT_PATH: /data/scripts/trolley.script.yaml
     volumes:
       - ../../backend:/app
       - ../../ladders:/data/ladders:ro

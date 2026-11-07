@@ -2,17 +2,17 @@
 
 import re
 
-from app import interaction_models, models  # noqa: F401
-from app.db import Base as RoundOneBase
-from app.repositories import classroom_storage as storage
+from app.modules.platform.db import Base as LegacyBase
+from app.modules.platform import storage as storage
+from app.modules.app_shell.models import register_models
 
 # Matches r2_accounts, ix_r104_mail_delivery_purpose and fk_r88_ai_student_provider_profile alike.
 ROUND_PREFIX = re.compile(r"(^|_)r[0-9]+_")
 
 
 def _schema_names():
-    storage.register_models()
-    for metadata in (RoundOneBase.metadata, storage.Base.metadata):
+    register_models()
+    for metadata in (LegacyBase.metadata, storage.Base.metadata):
         for table in metadata.tables.values():
             yield table.name
             yield from (index.name for index in table.indexes if index.name)

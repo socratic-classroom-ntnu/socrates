@@ -20,11 +20,15 @@ services:
       SOCRATES_PUBLIC_ORIGIN: http://localhost:5173
       SOCRATES_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       LADDER_PATH: /app/ladders/trolley.yaml
-      SCRIPT_PATH: ${SCRIPT_PATH:-/app/scripts/trolley.script.yaml}
     volumes:
       - ./backend:/app
       - ./ladders:/app/ladders
       - ./scripts:/app/scripts
+      # 後端測試會讀 repo 根目錄的這三處（contract gate 讀 frontend 的錯誤文案、schema 文件、stage 設定）；
+      # 容器內 /app 的上一層是 /，所以掛在根目錄，pre-push 才跟 CI 的 host checkout 一樣不跳過、不誤紅。
+      - ./frontend:/frontend:ro
+      - ./docs:/docs:ro
+      - ./deploy:/deploy:ro
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }

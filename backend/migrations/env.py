@@ -5,12 +5,12 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.db import Base
-from app import interaction_models, models  # noqa: F401  確保所有 model 被註冊
-from app.config import settings
-from app.repositories import classroom_storage as storage
+from app.modules.platform.db import Base
+from app.modules.app_shell.models import register_models
+from app.modules.platform.config import settings
+from app.modules.platform import storage as storage
 
-storage.register_models()
+register_models()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

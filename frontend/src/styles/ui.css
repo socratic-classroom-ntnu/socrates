@@ -1,0 +1,61 @@
+/* 課程頁面共用的按鈕、表單欄位與狀態標籤（配色：#F3F3F1 #FFFFFF #2E5045 #E3E3DF） */
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; box-sizing: border-box;
+  padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 700;
+  line-height: 1.3; text-align: center; text-decoration: none; cursor: pointer;
+}
+.button:disabled { opacity: 0.55; cursor: not-allowed; }
+.button--primary { background: var(--ui-color-primary); color: var(--ui-color-panel); }
+.button--primary:hover:not(:disabled) { background: var(--ui-color-primary-hover); }
+.button--dark { background: var(--ui-color-dark); color: var(--ui-color-panel); }
+.button--outline { background: var(--ui-color-panel); border-color: var(--ui-color-border); color: var(--ui-color-primary); }
+.button--outline:hover:not(:disabled) { background: var(--ui-color-panel-hover); }
+.button--quiet { background: var(--ui-color-panel); border-color: var(--ui-color-border); color: var(--ui-color-ink); font-weight: 400; }
+.button--danger { background: var(--ui-color-danger); color: var(--ui-color-panel); }
+.icon-button {
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 8px;
+  background: var(--ui-color-bg); color: var(--ui-color-primary); cursor: pointer;
+}
+.button:focus-visible, .icon-button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.copy-button { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.copy-button__status { font-size: 12px; color: var(--ui-color-primary); white-space: nowrap; }
+
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-field > label { font-size: 15px; font-weight: 700; }
+.form-field__star { color: var(--ui-color-danger); }
+.form-field input, .form-field textarea, .form-field select {
+  box-sizing: border-box; width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid var(--ui-color-border); border-radius: 8px;
+  background: var(--ui-color-panel); color: var(--ui-color-ink); font: inherit; font-size: 16px; line-height: 1.5;
+}
+.form-field textarea { resize: vertical; }
+.form-field input:focus, .form-field textarea:focus { outline: none; border: 2px solid var(--ui-color-primary); padding: 9px 13px; }
+.form-field--error input, .form-field--error textarea { border: 2px solid var(--ui-color-danger); padding: 9px 13px; }
+.form-field__hint { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ui-color-muted); }
+.form-field__error { margin: 0; font-size: 13px; font-weight: 700; color: var(--ui-color-danger); }
+.form-error { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--ui-color-danger-soft); color: var(--ui-color-error-ink); font-size: 14px; }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.status-pill--open { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.status-pill--open::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--ui-color-success); }
+.status-pill--scheduled { background: var(--ui-color-info-soft); color: var(--ui-color-info); }
+.status-pill--draft { background: var(--ui-color-neutral-soft); color: var(--ui-color-muted); }
+.status-pill--ended { background: var(--ui-color-danger-soft); color: var(--ui-color-ended-ink); }
+.status-pill--quiet { background: var(--ui-color-bg); color: var(--ui-color-muted); font-weight: 400; }
+
+.qr-code { display: block; border-radius: 6px; image-rendering: pixelated; }
+.qr-code--loading { background: var(--ui-color-bg); }
+
+/* 篩選 chip（老師與學生的課程頁） */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 34px; padding: 4px 14px; border: 1px solid var(--ui-color-border); border-radius: 999px; background: var(--ui-color-panel);
+  color: var(--ui-color-ink-soft); font: inherit; font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--ui-color-dark); background: var(--ui-color-dark); color: var(--ui-color-panel); font-weight: 700; }
+.chip:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.icon-button--quiet { background: transparent; color: var(--ui-color-ink-soft); }
+.icon-button--quiet:hover, .icon-button--quiet[aria-expanded="true"] { background: var(--ui-color-bg); }
+.dialog__question { margin: 0 0 8px; font-weight: 700; font-size: 16px; }
+.dialog__text { margin: 0; color: var(--ui-color-ink-soft); font-size: 14px; line-height: 1.7; }

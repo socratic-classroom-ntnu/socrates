@@ -21,9 +21,9 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import create_engine, text
 
-from app import interaction_models, models  # noqa: F401
-from app.db import Base as RoundOneBase
-from app.repositories import classroom_storage as storage
+from app.modules.platform.db import Base as LegacyBase
+from app.modules.platform import storage as storage
+from app.modules.app_shell.models import register_models
 
 BACKEND = Path(__file__).resolve().parents[2]
 
@@ -55,14 +55,14 @@ def test_a_fresh_database_matches_the_orm(fresh_database_url):
     )
     assert result.returncode == 0, result.stderr
 
-    storage.register_models()
+    register_models()
     engine = create_engine(fresh_database_url)
     try:
         with engine.connect() as conn:
             context = MigrationContext.configure(
                 conn, opts={"compare_type": True, "compare_server_default": True}
             )
-            diff = compare_metadata(context, [RoundOneBase.metadata, storage.Base.metadata])
+            diff = compare_metadata(context, [LegacyBase.metadata, storage.Base.metadata])
     finally:
         engine.dispose()
     assert diff == []

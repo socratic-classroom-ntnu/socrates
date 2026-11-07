@@ -1,7 +1,7 @@
 import pytest
-from app.tutor.classroom_provider import partial_reply
-from app.realtime import RealtimeBus
-from app.api.classroom_schemas import SummaryResult
+from app.modules.ai_providers.classroom_provider import partial_reply
+from app.modules.classroom_core.realtime import RealtimeBus
+from app.modules.llm_runtime.contracts import SummaryResult
 
 
 @pytest.mark.parametrize(

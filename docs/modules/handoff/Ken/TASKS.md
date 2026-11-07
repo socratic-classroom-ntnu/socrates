@@ -20,9 +20,13 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | O6 | solo-activity | 最終確認：以各階段確認為材料，整理整個思路與脈絡 | Courecta 的 final_summary | 連續兩次「不太對」就標記「未確認」並結束 |
 | O7 | solo-activity | 訊息上限：到上限就用目前的整理進確認，情境標成 capped；不會只剩一個必定失敗的動作 | Amethus（capped 的顯示文字） | 新測試先紅再綠 |
 | O8 | solo-activity | 教師「即時狀況」「統計分析」的 view：已確認幾個情境、目前第幾個、目前狀態；analysis 多送 current_position | Amethus 審契約 | 重產型別後沒有 diff |
+| F1 | 前端 authoring（`frontend/src/features/authoring/activity-form/`） | 出題表單只剩一個輸入框；拿掉選項與多題的欄位（含題目排序面板） | O1 | 表單送出的 body 沒有 options 與多題欄位，測試先紅再綠 |
+| F2 | 前端 solo-activity（`frontend/src/features/solo-activity/`） | 學生對話頁拿掉選立場流程，改成自由回答（打字或語音沿用 `useSoloSpeechInput`）；時間軸顯示情境序列；階段確認、最終確認、capped 的畫面；按鈕只依後端的 `available_actions` 顯示 | O2、O3、O5、O6、O7 | 從第一個情境走到最終確認的頁面測試先紅再綠 |
+| F3 | 前端 course（`frontend/src/features/course/teach/TeacherLivePage.tsx`） | 教師「即時狀況」顯示每位學生已確認幾個情境、目前第幾個、目前狀態 | O8 | 頁面測試用產生的型別，沒有手寫型別 |
+| F4 | 前端 course（`frontend/src/features/course/teach/TeacherAnalysisPage.tsx`） | 教師「統計分析」顯示 current_position 與各情境的確認結果 | O8 | 頁面測試用產生的型別，沒有手寫型別 |
 
 - 單人 prompt 只由 Courecta 改：你把需要的改動（拿掉選項、「表態」改成說出能被辨認的主張、延伸情境的規則）寫給他，由他合進去。
-- 前端（出題表單、學生對話頁、教師兩頁）由前端組做；你負責 view 與契約，11/7 的 draft PR 讓他們開始接。
+- 前端（出題表單、學生對話頁、教師兩頁）也由你做（Fizzy 11-05 的要求），就是上表 F1–F4；一樣是一項一個 PR 到 `backend/main`。畫面照現有元件與樣式延伸，新的視覺有疑問再問視覺設計團隊。
 - 分組課這一輪不動、仍有選項：共用的 Observations、should_advance 的意思不變，分組課的測試要列入回歸。
 
 ## 全部工作（照順序做；「—」是不綁新功能的現有待辦，有空檔就做）
@@ -34,7 +38,8 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | Courecta 的 flags | 危險傾向或惡意離題＝1 時，教師 progress 回該學生的標記；學生端回應裡沒有 flags |
 | 5 | solo-activity | 統整引用 | 存放引用（新表 summary_sources），view 回傳 message id 與 quote 的起訖位置 | Courecta 的引用驗證；Amethus 的引用型別 | 每個 quote 都是該學生原句的子字串 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |
-| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的到期訪客去識別化排程工作，每日跑一次 | Courecta 的排程工作 | 第 8 天訪客已去識別化，作答還在 |
+| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的閒置訪客刪除排程（每日一次），並把各模組的訪客紀錄 hook註冊進去 | Courecta 5 | 少註冊一個 hook 時啟動就報錯；閒置第 8 天的訪客已刪除 |
+| 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`、`delete`；同一課／同一活動兩邊都有時以帳號那份為準 | Courecta 5 | 每個衝突情境各一條測試 |
 | — | content-authoring | 現有待辦 | 5 個端點補 response_model（清單在 `RESPONSE_MODEL_PENDING`） | Amethus 審 | 重產型別後沒有 diff |
 | — | platform | 現有待辦 | 相容帳冊（`COMPATIBILITY-LEDGER.md`）裡的舊環境變數別名 | — | — |
 | — | app-shell | 現有待辦 | `GET /api/v2/readiness` 補 response_model | Amethus 審 | 重產型別後沒有 diff |

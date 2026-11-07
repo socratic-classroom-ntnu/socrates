@@ -16,8 +16,9 @@
 | 1 | llm-runtime | prompt 設計 | 上面的第一個 PR，接著在 programs.json 新增或改寫對應的 program | — | Ken 可以 import 型別；schema 單元測試通過 |
 | 2 | llm-runtime | prompt 設計、多語 | 鐵則 L1 加「回覆語言＝output_locale」；新增 6 份 L2；solo_tutor 的 L2 加 flags 定義、拉回規則、不提 flag | — | 鐵則測試涵蓋每一條 |
 | 3 | llm-runtime | 多語、統整引用 | 語言檢查與引用驗證（message_ref 屬於該學生、quote 是原文子字串）接進 `guarded_generate`，不合格就重試一次；驗證通過後把 `message_ref` 換成 `message_id` 並算出起訖位置，交給 Ken 存放（對外型別由 Amethus 定） | — | 第二次仍不合格回 typed error |
-| 4 | identity-access | 免註冊加入 | migration：帳號加 `kind`、`guest_expires_at`、`recovery_hint_hash`，email／password_hash 可為空；`POST /auth/guest`、`POST /auth/guest/upgrade`；`GET /auth/me` 加 `kind`；訪客加入時選語言 | Amethus 審 | 7 天內註冊的訪客，帳號 id 不變、紀錄都在 |
-| 5 | identity-access | 免註冊加入 | 提供到期訪客去識別化的排程工作（Ken 在 app-shell 註冊；platform 不能依賴業務模組） | — | 第 8 天訪客的暱稱與找回提示被清掉，作答還在 |
+| 4 | identity-access | 免註冊加入 | migration：帳號加 `kind`、`guest_expires_at`，email／password_hash 可為空；`POST /auth/guest`、`POST /auth/guest/upgrade`；`GET /auth/me` 加 `kind`；訪客只靠裝置上的 session cookie 定位，每次有動作就把 `guest_expires_at` 延到 7 天後；訪客加入時選語言 | Amethus 審 | 7 天內註冊的訪客，帳號 id 不變、紀錄都在 |
+| 5 | identity-access | 免註冊加入 | 訪客紀錄 hook 的契約：每個存學生紀錄的模組提供 `reassign(guest_id, account_id)` 與 `delete(guest_id)`；`reassign` 遇到同一課／同一活動兩邊都有時，以帳號那份為準、訪客那份留在訪客帳號。再提供刪除閒置訪客的排程工作：`guest_expires_at` 已過的訪客，先呼叫各模組 `delete` 再刪帳號（Ken 在 app-shell 註冊；platform 不能依賴業務模組） | — | 閒置第 8 天的訪客帳號與紀錄都刪掉；期間註冊的帳號不受影響 |
+| 5a | identity-access | 免註冊加入 | 登入時併入訪客紀錄：登入當下裝置上有訪客 cookie，就呼叫各模組的 `reassign`，之後 session 換成登入的帳號；訪客帳號留著，閒置到期時連同衝突的那份一起刪。註冊升級沿用同一個 id，不走這條 | Ken 7a、Hsy 7 的 訪客紀錄 hook | 帶訪客 cookie 登入後，訪客的選課、單人作答與分組紀錄都出現在帳號下 |
 | 6 | ai-providers | 雷達 | 本地 embedding provider：`embed(texts) -> list[list[float]]`，預設 multilingual-e5-small、CPU 執行，模型檔隨 backend 映像附上 | — | 單 pod 實測延遲與記憶體寫進模組文件（參考：1 核 p50 約 279 ms、4 核約 101 ms，約 1.2 GB） |
 | 7 | llm-runtime | 評測 | `tests/evals/`：30 則固定題組（每則標好期望的 flags 與 move），可以手動對 OpenAI、Anthropic、Gemini 各跑一次並出報表 | — | 報表含 schema 合格率、flag 一致率、拉回遵守率、語言正確率、引用有效率；不擋合併 |
 | 8 | llm-runtime | 語音 | `POST /speech/tts`：文字→音訊＋字時間點 | Amethus 的 TTS 契約 | 前端 media 能播放；老師講話時用 VAD 偵測到學生開口就停掉 TTS |

@@ -1,11 +1,13 @@
 """analytics 的分組分析端點：掛上 response_model 後，HTTP 回應仍與 projection 逐欄相同。"""
 
+import json
 import time
 from fastapi.testclient import TestClient
 from app.classroom_app import create_app
 from app.modules.platform import storage as storage
 from app.modules.classroom_core.orchestrator import GameOrchestrator
-from app.modules.classroom_core.repositories import Room, persist_machine
+from sqlalchemy import select
+from app.modules.classroom_core.repositories import Membership, Room, persist_machine
 from app.modules.analytics.group_analysis import analysis as project_analysis
 from app.modules.analytics.routes import analysis
 from tests.classroom.test_group_stance import drive_to_confirmed
@@ -15,6 +17,15 @@ from tests.classroom.test_groups import classroom, start  # noqa: F401
 def get_analysis(rid):
     with TestClient(create_app(background=False)) as client:
         return client.get(f"/api/v2/groups/classrooms/{rid}/analysis")
+
+
+def assert_no_raw_member_ids(body, member_ids):
+    text = json.dumps(body, ensure_ascii=False)
+    assert member_ids and not [m for m in member_ids if m in text]
+
+
+def snapshot_ids(db, groups):
+    return [m for g in groups for m in db.get(Room, g["id"]).state["group"]["member_snapshot"]]
 
 
 def test_analysis_wire_json_matches_the_projection(classroom):  # noqa: F811
@@ -37,6 +48,7 @@ def test_analysis_wire_json_matches_the_projection(classroom):  # noqa: F811
         machine.command("group_statement", {"text": "平均分配才不偏袒"}, members[1], False)
         other = machine.s["group"]["arguments"][2]["id"]
         persist_machine(db, row, machine)
+        member_ids = snapshot_ids(db, result["groups"])
 
     r = get_analysis(rid)
     assert r.status_code == 200
@@ -88,6 +100,7 @@ def test_analysis_wire_json_matches_the_projection(classroom):  # noqa: F811
     assert all("member_id" not in n for n in group["nodes"])
     assert all(p["id"].startswith("p-") for p in group["persons"])
     assert [s["confirmed"] for s in group["stances"]] == [2]
+    assert_no_raw_member_ids(body, member_ids)
 
 
 def test_analysis_of_a_teacher_ended_group_carries_the_settlement(classroom):  # noqa: F811
@@ -116,7 +129,22 @@ def test_analysis_of_a_teacher_ended_group_carries_the_settlement(classroom):  #
         "teacher",
         "teacher_force_end",
     )
-    assert settlement["member_status"] == {m: "incomplete" for m in members}
+    persons = sorted(p["id"] for p in r.json()["groups"][0]["persons"])
+    assert sorted(settlement["incomplete_members"]) == persons
+    assert settlement["member_status"] == {p: "incomplete" for p in persons}
+    assert_no_raw_member_ids(r.json(), members)
+
+
+def test_analysis_is_teacher_only_over_http(classroom):  # noqa: F811
+    start(classroom, count=1, capacity=3)
+    rid, selected, _ = classroom
+    with storage.transaction() as db:
+        row = db.scalar(
+            select(Membership).where(Membership.room_id == rid, Membership.role == "student")
+        )
+        selected["id"] = row.account_id
+    r = get_analysis(rid)
+    assert (r.status_code, r.json()) == (403, {"detail": "TEACHER_MEMBERSHIP_REQUIRED"})
 
 
 def test_analysis_publishes_its_response_schema(classroom):  # noqa: F811
@@ -169,5 +197,7 @@ def test_analysis_projection_of_a_group_without_statements(classroom):  # noqa: 
     with storage.transaction() as db:
         rooms = [db.get(Room, g["id"]) for g in result["groups"]]
         expected = project_analysis(rid, rooms[0].state["title"], rooms)
+        member_ids = snapshot_ids(db, result["groups"])
     r = get_analysis(rid)
     assert (r.status_code, r.json()["groups"]) == (200, expected["groups"])
+    assert_no_raw_member_ids(r.json(), member_ids)

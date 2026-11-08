@@ -171,10 +171,10 @@
     "DraftStudentsTable.dc.html": {
       "code": "T4s",
       "figmaPage": "教師端",
-      "nodeId": "466:29217",
+      "nodeId": "491:3162",
       "canvasSha": "89f68e3cdcba4bbf33e1c065b0792ad303833f11f883cf1b3df0d79ecc2200fa",
-      "figmaFingerprint": "56e6d01ffc95963899a50e3631e6767d22c387c9fe6af904408f5a329ff94225",
-      "syncedAt": "2026-11-07",
+      "figmaFingerprint": "24a49297be1abb253a2f2893a59fff9a71e116194bd262d274880cb2f2e2d131",
+      "syncedAt": "2026-11-08",
       "status": "synced",
       "adjustNote": "這輪不做"
     },
@@ -651,10 +651,10 @@
     "TeacherLive.dc.html": {
       "code": "T5",
       "figmaPage": "教師端",
-      "nodeId": "466:34517",
+      "nodeId": "491:3478",
       "canvasSha": "850b19072eb45ad5f82472b3700f103b59c3cabf3af067a663873dd3e5ee87ef",
-      "figmaFingerprint": "38f0d69fa0d2edab67ed61fbade99c30bb3ad9e2695f5dc3157fb9ff4269b5aa",
-      "syncedAt": "2026-11-07",
+      "figmaFingerprint": "b01d81cdde6fbc963349c2304076c4740f969ebe055bb54472a0823b89bb1320",
+      "syncedAt": "2026-11-08",
       "status": "synced",
       "adjustNote": "每列顯示已確認情境數、目前情境、狀態，加一顆「查看對話」圖示按鈕"
     },

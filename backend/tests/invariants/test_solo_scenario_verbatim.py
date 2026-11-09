@@ -2,13 +2,22 @@
 
 經典難題的效力在於敘述的精確——哪些細節給了、哪些刻意沒給都是設計。讓模型「用自己的話說一遍」
 會稀釋掉它，也破壞可重現性。單人活動裡，情境（scenario）在任何 provider 呼叫之前就已經顯示，
-之後無論導師回了什麼，畫面上的情境都是老師寫的那一段；導師拿到的也是同一段原文。
+之後無論導師回了什麼，畫面上的情境都是存下來的那一段；導師拿到的也是同一段原文。
+第一個情境就是老師唯一的輸入框所寫的文字。
 """
 
 import json
 
-from tests.course_management.test_activities_api import question
-from tests.solo_activity.test_solo_attempts_api import MET, OPENING, do, ok, setup, stance, start
+from tests.solo_activity.test_solo_attempts_api import (
+    MET,
+    OPENING,
+    add_scenario,
+    answer,
+    do,
+    ok,
+    setup,
+    start,
+)
 
 FIRST = (
     "一輛失控的電車正駛向五名工人。\n你站在拉桿旁：拉下它，電車會轉向另一條軌道，那裡有一名工人。"
@@ -19,29 +28,23 @@ RESTATED = "簡單說，就是犧牲一個人救五個人的情況。你會怎�
 
 def test_the_scenario_is_the_teachers_text_before_any_provider_call(client, tutor):
     calls, _ = tutor
-    s = setup(client, questions=[{**question("q1", "岔道"), "scenario": FIRST}])
+    s = setup(client, scenario=FIRST)
     attempt = ok(start(client, s["activity_id"]))
     assert calls == []
-    assert attempt["questions"][0]["scenario"] == FIRST
-    assert (
-        ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))["questions"][0]["scenario"]
-        == FIRST
-    )
+    assert attempt["scenarios"][0]["text"] == FIRST
+    assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))["scenarios"][0]["text"] == FIRST
 
 
 def test_a_tutor_reply_never_replaces_the_scenario(client, tutor):
     calls, replies = tutor
-    questions = [
-        {**question("q1", "岔道"), "scenario": FIRST},
-        {**question("q2", "天橋"), "scenario": SECOND},
-    ]
-    attempt = ok(start(client, setup(client, questions=questions)["activity_id"]))
+    attempt = ok(start(client, setup(client, scenario=FIRST)["activity_id"]))
+    add_scenario(attempt["id"], SECOND)
 
     replies.append({**OPENING, "reply_text": RESTATED})
-    view = stance(client, attempt["id"])
-    assert view["questions"][0]["scenario"] == FIRST
+    view = answer(client, attempt["id"])
+    assert view["scenarios"][0]["text"] == FIRST
     # The tutor is given the original, and its restatement stays a tutor message.
-    assert json.loads(calls[-1]["messages"][1]["content"])["question"]["scenario"] == FIRST
+    assert json.loads(calls[-1]["messages"][1]["content"])["scenario"] == FIRST
     assert [m["text"] for m in view["messages"] if m["role"] == "tutor"] == [RESTATED]
 
     replies.append({**MET, "reply_text": RESTATED})
@@ -49,8 +52,8 @@ def test_a_tutor_reply_never_replaces_the_scenario(client, tutor):
     view = ok(
         do(client, attempt["id"], "confirm_viewpoint", {"summary_digest": view["summary_digest"]})
     )
-    view = ok(do(client, attempt["id"], "next_question"))
+    view = ok(do(client, attempt["id"], "next_scenario"))
 
-    # The next question opens with its own scenario, verbatim, before the tutor speaks again.
-    assert [q["scenario"] for q in view["questions"]] == [FIRST, SECOND]
+    # The next scenario opens with its own text, verbatim, before the tutor speaks again.
+    assert [x["text"] for x in view["scenarios"]] == [FIRST, SECOND]
     assert len(calls) == 2

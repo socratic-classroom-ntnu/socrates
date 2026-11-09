@@ -38,8 +38,6 @@ export default {
     notFoundTitle: '找不到這個活動',
     notFoundBody: '連結可能已經失效，或老師已經刪除這個活動。',
     byline: '{{course}} ・ {{teacher}} 老師',
-    questions: '題目',
-    questionCount: '{{count}} 題',
     openUntil: '開放到',
     opens: '開放',
     opensAt: '{{start}} 起',

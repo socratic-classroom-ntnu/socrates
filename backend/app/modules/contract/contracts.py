@@ -114,7 +114,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "SOLO_ACTION_UNAVAILABLE": ("solo_activity",),
     "SOLO_ATTEMPT_NOT_FOUND": ("solo_activity",),
     "SOLO_MESSAGE_LIMIT": ("solo_activity",),
-    "SOLO_OPTION_INVALID": ("solo_activity",),
+    "SOLO_REVISE_HINT_INVALID": ("solo_activity",),
     "SOLO_STEP_NOT_READY": ("solo_activity",),
     "SOLO_SUMMARY_STALE": ("solo_activity",),
     "STARTED_CLASSROOM_REQUIRED": ("classroom_core",),

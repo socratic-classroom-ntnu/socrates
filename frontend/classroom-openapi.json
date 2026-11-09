@@ -168,26 +168,11 @@
       },
       "ActivityDraft": {
         "additionalProperties": false,
-        "description": "Complete but unpublished content; incomplete drafts are rejected, never stored.",
+        "description": "The teacher's single input: one text that is both the activity name and the material the\nfirst scenario is written from. Incomplete drafts are rejected, never stored.",
         "properties": {
-          "analysis_focus": {
-            "default": "",
-            "maxLength": 4000,
-            "title": "Analysis Focus",
-            "type": "string"
-          },
           "ends_at": {
             "title": "Ends At",
             "type": "number"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionDraft"
-            },
-            "maxItems": 30,
-            "minItems": 1,
-            "title": "Questions",
-            "type": "array"
           },
           "starts_at": {
             "anyOf": [
@@ -205,19 +190,11 @@
             "minLength": 1,
             "title": "Title",
             "type": "string"
-          },
-          "topic_direction": {
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Topic Direction",
-            "type": "string"
           }
         },
         "required": [
           "title",
-          "topic_direction",
-          "ends_at",
-          "questions"
+          "ends_at"
         ],
         "title": "ActivityDraft",
         "type": "object"
@@ -265,10 +242,6 @@
             "title": "Ends At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "starts_at": {
             "title": "Starts At",
             "type": "number"
@@ -297,7 +270,6 @@
           "course_id",
           "course_name",
           "teacher_name",
-          "question_count",
           "starts_at",
           "ends_at",
           "status",
@@ -331,29 +303,6 @@
         "title": "ActivityJoinResult",
         "type": "object"
       },
-      "ActivityOption": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Id",
-            "type": "string"
-          },
-          "text": {
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "text"
-        ],
-        "title": "ActivityOption",
-        "type": "object"
-      },
       "ActivityStudentCard": {
         "additionalProperties": false,
         "properties": {
@@ -364,10 +313,6 @@
           "id": {
             "title": "Id",
             "type": "string"
-          },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
           },
           "starts_at": {
             "title": "Starts At",
@@ -391,7 +336,6 @@
           "id",
           "title",
           "status",
-          "question_count",
           "starts_at",
           "ends_at"
         ],
@@ -463,10 +407,6 @@
             "title": "Locked",
             "type": "boolean"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "starts_at": {
             "anyOf": [
               {
@@ -499,7 +439,6 @@
           "status",
           "locked",
           "has_unpublished_changes",
-          "question_count",
           "starts_at",
           "ends_at",
           "available_actions"
@@ -3251,52 +3190,6 @@
         "title": "Question",
         "type": "object"
       },
-      "QuestionDraft": {
-        "additionalProperties": false,
-        "properties": {
-          "follow_up_direction": {
-            "default": "",
-            "maxLength": 2000,
-            "title": "Follow Up Direction",
-            "type": "string"
-          },
-          "id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Id",
-            "type": "string"
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/ActivityOption"
-            },
-            "maxItems": 4,
-            "minItems": 2,
-            "title": "Options",
-            "type": "array"
-          },
-          "scenario": {
-            "maxLength": 12000,
-            "minLength": 1,
-            "title": "Scenario",
-            "type": "string"
-          },
-          "title": {
-            "maxLength": 300,
-            "minLength": 1,
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "scenario",
-          "options"
-        ],
-        "title": "QuestionDraft",
-        "type": "object"
-      },
       "Reaction": {
         "additionalProperties": false,
         "properties": {
@@ -3965,19 +3858,6 @@
       "SendMessageBody": {
         "additionalProperties": false,
         "properties": {
-          "new_option_id": {
-            "anyOf": [
-              {
-                "maxLength": 64,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "New Option Id"
-          },
           "revise_hint": {
             "anyOf": [
               {
@@ -4098,17 +3978,6 @@
             "title": "Generated At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "revision_id": {
             "anyOf": [
               {
@@ -4130,6 +3999,13 @@
             "title": "Status",
             "type": "string"
           },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
           "summary": {
             "$ref": "#/components/schemas/SoloAnalysisSummaryView"
           },
@@ -4144,12 +4020,11 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "generated_at",
           "revision_id",
           "summary",
-          "questions"
+          "students"
         ],
         "title": "SoloActivityAnalysisView",
         "type": "object"
@@ -4184,17 +4059,6 @@
             "title": "Generated At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloProgressQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "status": {
             "enum": [
               "draft",
@@ -4226,10 +4090,8 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "generated_at",
-          "questions",
           "summary",
           "students"
         ],
@@ -4265,10 +4127,6 @@
             "title": "Ends At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "status": {
             "enum": [
               "scheduled",
@@ -4289,110 +4147,22 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "attempt"
         ],
         "title": "SoloActivityView",
         "type": "object"
       },
-      "SoloAnalysisOptionView": {
-        "additionalProperties": false,
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "option_id": {
-            "title": "Option Id",
-            "type": "string"
-          },
-          "students": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisStudentView"
-            },
-            "title": "Students",
-            "type": "array"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "text",
-          "count",
-          "students"
-        ],
-        "title": "SoloAnalysisOptionView",
-        "type": "object"
-      },
-      "SoloAnalysisQuestionView": {
-        "additionalProperties": false,
-        "properties": {
-          "changed": {
-            "title": "Changed",
-            "type": "integer"
-          },
-          "comparable": {
-            "title": "Comparable",
-            "type": "integer"
-          },
-          "confirmed": {
-            "title": "Confirmed",
-            "type": "integer"
-          },
-          "index": {
-            "title": "Index",
-            "type": "integer"
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisOptionView"
-            },
-            "title": "Options",
-            "type": "array"
-          },
-          "question_id": {
-            "title": "Question Id",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          },
-          "unconfirmed": {
-            "title": "Unconfirmed",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "index",
-          "question_id",
-          "title",
-          "confirmed",
-          "unconfirmed",
-          "changed",
-          "comparable",
-          "options"
-        ],
-        "title": "SoloAnalysisQuestionView",
-        "type": "object"
-      },
       "SoloAnalysisStudentView": {
         "additionalProperties": false,
         "properties": {
-          "changed_from_option_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Changed From Option Id"
+          "confirmed_scenarios": {
+            "title": "Confirmed Scenarios",
+            "type": "integer"
+          },
+          "current_position": {
+            "title": "Current Position",
+            "type": "string"
           },
           "display_name": {
             "title": "Display Name",
@@ -4417,7 +4187,8 @@
         "required": [
           "enrollment_id",
           "display_name",
-          "changed_from_option_id",
+          "confirmed_scenarios",
+          "current_position",
           "reason_summary",
           "relevant_conditions"
         ],
@@ -4466,14 +4237,10 @@
           },
           "progress": {
             "items": {
-              "$ref": "#/components/schemas/SoloQuestionProgressView"
+              "$ref": "#/components/schemas/SoloScenarioProgressView"
             },
             "title": "Progress",
             "type": "array"
-          },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
           },
           "review_status": {
             "enum": [
@@ -4483,14 +4250,18 @@
             "title": "Review Status",
             "type": "string"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
           "state": {
             "enum": [
-              "choosing_stance",
+              "answering",
               "awaiting_tutor",
               "tutor_unavailable",
               "in_dialogue",
               "confirming",
-              "between_questions",
+              "between_scenarios",
               "reviewing",
               "awaiting_reflection_prompt",
               "reflecting",
@@ -4504,7 +4275,7 @@
         "required": [
           "id",
           "state",
-          "question_index",
+          "scenario_index",
           "progress",
           "review_status",
           "current_turn"
@@ -4526,12 +4297,11 @@
           "available_actions": {
             "items": {
               "enum": [
-                "submit_stance",
                 "send_message",
                 "retry",
                 "confirm_viewpoint",
                 "revise_viewpoint",
-                "next_question",
+                "next_scenario",
                 "submit_review",
                 "retry_reflection_prompt",
                 "continue_reflection",
@@ -4607,21 +4377,6 @@
             ],
             "title": "Principle Hint"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "rejected_summary": {
             "anyOf": [
               {
@@ -4636,14 +4391,25 @@
             "title": "Revising",
             "type": "boolean"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/SoloScenarioView"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
           "state": {
             "enum": [
-              "choosing_stance",
+              "answering",
               "awaiting_tutor",
               "tutor_unavailable",
               "in_dialogue",
               "confirming",
-              "between_questions",
+              "between_scenarios",
               "reviewing",
               "awaiting_reflection_prompt",
               "reflecting",
@@ -4673,9 +4439,8 @@
           "course_name",
           "display_name",
           "state",
-          "question_index",
-          "question_count",
-          "questions",
+          "scenario_index",
+          "scenarios",
           "messages",
           "candidate_summary",
           "summary_digest",
@@ -4718,10 +4483,6 @@
             ],
             "title": "Move"
           },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
-          },
           "revise_hint": {
             "anyOf": [
               {
@@ -4747,6 +4508,10 @@
             "title": "Role",
             "type": "string"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
           "text": {
             "title": "Text",
             "type": "string"
@@ -4754,7 +4519,7 @@
         },
         "required": [
           "id",
-          "question_index",
+          "scenario_index",
           "role",
           "text",
           "created_at",
@@ -4764,32 +4529,12 @@
         "title": "SoloMessageView",
         "type": "object"
       },
-      "SoloOptionView": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "text"
-        ],
-        "title": "SoloOptionView",
-        "type": "object"
-      },
       "SoloProgressCellView": {
         "additionalProperties": false,
         "properties": {
           "status": {
             "enum": [
-              "not_started",
-              "choosing_stance",
+              "answering",
               "in_dialogue",
               "confirming",
               "confirmed"
@@ -4816,25 +4561,6 @@
         "title": "SoloProgressCellView",
         "type": "object"
       },
-      "SoloProgressQuestionView": {
-        "additionalProperties": false,
-        "properties": {
-          "index": {
-            "title": "Index",
-            "type": "integer"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "index",
-          "title"
-        ],
-        "title": "SoloProgressQuestionView",
-        "type": "object"
-      },
       "SoloProgressSummaryView": {
         "additionalProperties": false,
         "properties": {
@@ -4853,53 +4579,44 @@
           "started": {
             "title": "Started",
             "type": "integer"
-          },
-          "unconfirmed_by_question": {
-            "items": {
-              "type": "integer"
-            },
-            "title": "Unconfirmed By Question",
-            "type": "array"
           }
         },
         "required": [
           "enrolled",
           "started",
           "done",
-          "unconfirmed_by_question",
           "attention"
         ],
         "title": "SoloProgressSummaryView",
         "type": "object"
       },
-      "SoloQuestionProgressView": {
+      "SoloScenarioProgressView": {
         "additionalProperties": false,
         "properties": {
           "index": {
             "title": "Index",
             "type": "integer"
           },
-          "option_label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Option Label"
-          },
           "status": {
             "enum": [
-              "not_started",
               "in_dialogue",
               "confirmed"
             ],
             "title": "Status",
             "type": "string"
-          },
-          "title": {
+          }
+        },
+        "required": [
+          "index",
+          "status"
+        ],
+        "title": "SoloScenarioProgressView",
+        "type": "object"
+      },
+      "SoloScenarioView": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
             "anyOf": [
               {
                 "type": "string"
@@ -4908,21 +4625,8 @@
                 "type": "null"
               }
             ],
-            "title": "Title"
-          }
-        },
-        "required": [
-          "index",
-          "status",
-          "title",
-          "option_label"
-        ],
-        "title": "SoloQuestionProgressView",
-        "type": "object"
-      },
-      "SoloQuestionView": {
-        "additionalProperties": false,
-        "properties": {
+            "title": "Answer"
+          },
           "confirmed_summary": {
             "anyOf": [
               {
@@ -4941,27 +4645,6 @@
             "title": "Index",
             "type": "integer"
           },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/SoloOptionView"
-            },
-            "title": "Options",
-            "type": "array"
-          },
-          "scenario": {
-            "title": "Scenario",
-            "type": "string"
-          },
-          "stance": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SoloStanceView"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "status": {
             "enum": [
               "in_progress",
@@ -4970,46 +4653,20 @@
             "title": "Status",
             "type": "string"
           },
-          "title": {
-            "title": "Title",
+          "text": {
+            "title": "Text",
             "type": "string"
           }
         },
         "required": [
           "index",
           "id",
-          "title",
-          "scenario",
-          "options",
-          "stance",
+          "text",
+          "answer",
           "status",
           "confirmed_summary"
         ],
-        "title": "SoloQuestionView",
-        "type": "object"
-      },
-      "SoloStanceView": {
-        "additionalProperties": false,
-        "properties": {
-          "current_option_id": {
-            "title": "Current Option Id",
-            "type": "string"
-          },
-          "option_id": {
-            "title": "Option Id",
-            "type": "string"
-          },
-          "reason": {
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "current_option_id",
-          "reason"
-        ],
-        "title": "SoloStanceView",
+        "title": "SoloScenarioView",
         "type": "object"
       },
       "SoloStudentProgressView": {
@@ -5100,29 +4757,6 @@
           "expected_roster_digest"
         ],
         "title": "Start",
-        "type": "object"
-      },
-      "SubmitStanceBody": {
-        "additionalProperties": false,
-        "properties": {
-          "option_id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Option Id",
-            "type": "string"
-          },
-          "reason": {
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "reason"
-        ],
-        "title": "SubmitStanceBody",
         "type": "object"
       },
       "TokenRequest": {
@@ -8735,12 +8369,11 @@
             "required": true,
             "schema": {
               "enum": [
-                "submit_stance",
                 "send_message",
                 "retry",
                 "confirm_viewpoint",
                 "revise_viewpoint",
-                "next_question",
+                "next_scenario",
                 "submit_review",
                 "retry_reflection_prompt",
                 "continue_reflection",
@@ -8757,9 +8390,6 @@
             "application/json": {
               "schema": {
                 "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/SubmitStanceBody"
-                  },
                   {
                     "$ref": "#/components/schemas/SendMessageBody"
                   },

@@ -1,7 +1,7 @@
 """Persistent solo-activity attempts and their messages.
 
-One attempt per student per activity. ``progress`` holds one entry per reached question; the
-pure state machine in attempt_machine.py owns its shape.
+One attempt per student per activity. ``progress`` holds one entry per scenario of the sequence so
+far; the pure state machine in attempt_machine.py owns its shape.
 """
 
 import time
@@ -24,7 +24,7 @@ class SoloAttempt(Base):
     revision_id: Mapped[str] = mapped_column(String(36), ForeignKey("activity_revisions.id"))
     account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
     state: Mapped[str] = mapped_column(String(40))
-    question_index: Mapped[int] = mapped_column(Integer, default=0)
+    scenario_index: Mapped[int] = mapped_column(Integer, default=0)
     progress: Mapped[list] = mapped_column(JSON, default=list)
     pending_key: Mapped[str | None] = mapped_column(String(200), nullable=True)
     pending_since: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -40,11 +40,12 @@ class SoloMessage(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     attempt_id: Mapped[str] = mapped_column(String(36), ForeignKey("solo_attempts.id"), index=True)
     seq: Mapped[int] = mapped_column(Integer)
-    question_index: Mapped[int] = mapped_column(Integer)
+    # The scenario of the sequence this message belongs to.
+    scenario_index: Mapped[int] = mapped_column(Integer)
     role: Mapped[str] = mapped_column(String(16))
     text: Mapped[str] = mapped_column(Text)
     # Only tutor messages carry observations; they never appear in the student's view.
     observations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    # Student: {revise_hint, new_option_id} after 不太對, kept for statistics. Tutor: {move}.
+    # Student: {revise_hint} after 不太對, kept for statistics. Tutor: {move}.
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)

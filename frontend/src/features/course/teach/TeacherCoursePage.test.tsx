@@ -108,7 +108,7 @@ test('new activity link follows create_activity', async () => {
 test('new activity link also follows create_activity when there are activities', async () => {
   mockApi({
     'GET /courses/c-1?role=teacher': { ...course, available_actions: ['update'] },
-    'GET /courses/c-1/activities?role=teacher': { role: 'teacher', items: [{ id: 'a1', title: '活動一', status: 'draft', locked: false, has_unpublished_changes: false, question_count: 1, starts_at: null, ends_at: 2_000_000_000, available_actions: ['update', 'publish', 'copy', 'delete'] }] },
+    'GET /courses/c-1/activities?role=teacher': { role: 'teacher', items: [{ id: 'a1', title: '活動一', status: 'draft', locked: false, has_unpublished_changes: false, starts_at: null, ends_at: 2_000_000_000, available_actions: ['update', 'publish', 'copy', 'delete'] }] },
   })
   renderAt('/teach/courses/c-1', '/teach/courses/:courseId/*', <TeacherCoursePage />)
   expect(await screen.findByText('活動一')).toBeInTheDocument()

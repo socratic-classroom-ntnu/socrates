@@ -1,4 +1,4 @@
-"""T6 statistics: owner-only, confirmed stances and their two summary fields, nothing else."""
+"""T6 statistics: owner-only, each student's confirmed viewpoint (three fields), nothing else."""
 
 import json
 
@@ -6,9 +6,9 @@ from app.modules.course_management.repositories import Activity, ActivityRevisio
 from app.modules.platform import storage as storage
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from tests.course_management.conftest import switch, user
-from tests.course_management.test_activities_api import create_activity, question
+from tests.course_management.test_activities_api import create_activity
 from tests.course_management.test_courses_api import create_course
-from tests.solo_activity.test_solo_attempts_api import join, ok, setup, start, two_questions
+from tests.solo_activity.test_solo_attempts_api import SECOND, add_scenario, join, ok, setup, start
 from tests.solo_activity.test_solo_progress_api import progress
 
 
@@ -26,28 +26,23 @@ def summary(reason, conditions=(), **private):
     }
 
 
-def set_attempt(attempt_id, state, question_index, *entries):
-    """Write state and per-question progress straight in; the state machine has its own tests."""
+def set_attempt(attempt_id, state, scenario_index, *entries):
+    """Write state and per-scenario progress straight in; the state machine has its own tests."""
     with storage.transaction() as db:
         row = db.get(SoloAttempt, attempt_id)
         row.state = state
-        row.question_index = question_index
+        row.scenario_index = scenario_index
         current = [dict(entry) for entry in row.progress]
         for index, fields in enumerate(entries):
             current[index].update(fields)
         row.progress = current
 
 
-def answered(option_id, final_option_id=None, reason="理由", conditions=()):
-    fields = {"option_id": option_id, "current_option_id": option_id}
-    if final_option_id is not None:
-        fields.update(
-            status="confirmed",
-            final_option_id=final_option_id,
-            current_option_id=final_option_id,
-            confirmed_summary=summary(reason, conditions),
-        )
-    return fields
+def confirmed(reason="理由", conditions=(), **fields):
+    return {
+        "status": "goal_met",
+        "confirmed_summary": summary(reason, conditions, **fields),
+    }
 
 
 def student(client, s, name):
@@ -62,7 +57,7 @@ def teacher_view(client, s):
 
 
 def test_only_course_owner_can_read(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     ok(start(client, s["activity_id"]))
     response = analysis(client, s["activity_id"])
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
@@ -83,7 +78,7 @@ def test_only_course_owner_can_read(client, tutor):
 
 
 def test_deleted_activity_is_not_found(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     with storage.transaction() as db:
         db.get(Activity, s["activity_id"]).deleted = True
 
@@ -92,13 +87,19 @@ def test_deleted_activity_is_not_found(client, tutor):
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
 
 
+def start_with_two_scenarios(client, activity_id):
+    attempt = ok(start(client, activity_id))
+    add_scenario(attempt["id"], SECOND)
+    return attempt
+
+
 def test_no_private_text_leaks(client, tutor):
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
+    s = setup(client)
+    attempt = start_with_two_scenarios(client, s["activity_id"])
     secret = {
         "message": "秘密訊息原文甲",
         "tutor": "秘密導師回覆乙",
-        "reason": "秘密第一個理由丙",
+        "answer": "秘密第一個回答丙",
         "candidate_position": "秘密候選立場丁",
         "candidate_reason": "秘密候選理由戊",
         "candidate_condition": "秘密候選條件己",
@@ -109,21 +110,31 @@ def test_no_private_text_leaks(client, tutor):
         "rejected_condition": "秘密否決條件子",
         "rejected_issue": "秘密否決疑問丑",
         "rejected_note": "秘密否決原則寅",
-        "confirmed_position": "秘密確認立場卯",
         "confirmed_issue": "秘密確認疑問辰",
         "confirmed_note": "秘密確認原則巳",
         "label": "秘密原則標籤午",
         "observation": "秘密觀察未",
         "meta": "秘密訊息附註申",
+        "scenario": "秘密後續情境酉",
     }
-    shown = {"reason_summary": "公開確認理由酉", "condition": "公開確認條件戌"}
+    shown = {
+        "current_position": "公開確認立場亥",
+        "reason_summary": "公開確認理由酉",
+        "condition": "公開確認條件戌",
+    }
     set_attempt(
         attempt["id"],
-        "reviewing",
+        "in_dialogue",
         1,
         {
-            **answered("o0", "o1"),
-            "reason": secret["reason"],
+            **confirmed(
+                shown["reason_summary"],
+                [shown["condition"]],
+                current_position=shown["current_position"],
+                unresolved_issue=secret["confirmed_issue"],
+                principle_note=secret["confirmed_note"],
+            ),
+            "answer": secret["answer"],
             "principle_label": secret["label"],
             "candidate_summary": {
                 "current_position": secret["candidate_position"],
@@ -139,15 +150,8 @@ def test_no_private_text_leaks(client, tutor):
                 "unresolved_issue": secret["rejected_issue"],
                 "principle_note": secret["rejected_note"],
             },
-            "confirmed_summary": summary(
-                shown["reason_summary"],
-                [shown["condition"]],
-                current_position=secret["confirmed_position"],
-                unresolved_issue=secret["confirmed_issue"],
-                principle_note=secret["confirmed_note"],
-            ),
         },
-        answered("o0", "o0"),
+        {"text": secret["scenario"]},
     )
     with storage.transaction() as db:
         db.add_all(
@@ -155,7 +159,7 @@ def test_no_private_text_leaks(client, tutor):
                 SoloMessage(
                     attempt_id=attempt["id"],
                     seq=1,
-                    question_index=0,
+                    scenario_index=0,
                     role="student",
                     text=secret["message"],
                     meta={"revise_hint": secret["meta"]},
@@ -163,7 +167,7 @@ def test_no_private_text_leaks(client, tutor):
                 SoloMessage(
                     attempt_id=attempt["id"],
                     seq=2,
-                    question_index=0,
+                    scenario_index=0,
                     role="tutor",
                     text=secret["tutor"],
                     observations={"principle_label": secret["observation"]},
@@ -179,122 +183,80 @@ def test_no_private_text_leaks(client, tutor):
         assert text in raw
 
 
-def test_unconfirmed_not_counted_in_any_option(client, tutor):
-    s = setup(client, questions=two_questions())
+def test_an_unconfirmed_student_has_an_empty_viewpoint(client, tutor):
+    s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
-    set_attempt(attempt["id"], "in_dialogue", 0, answered("o0"))
+    set_attempt(attempt["id"], "in_dialogue", 0, {"answer": "還在想"})
 
-    first = teacher_view(client, s)["questions"][0]
-    assert [(o["count"], o["students"]) for o in first["options"]] == [(0, []), (0, [])]
-    assert (first["confirmed"], first["unconfirmed"], first["comparable"]) == (0, 1, 0)
-    assert first["changed"] == 0
-
-
-def test_option_distribution_uses_final_option(client, tutor):
-    s = setup(client, questions=two_questions())
-    a = ok(start(client, s["activity_id"]))
-    b = student(client, s, "second")
-    c = student(client, s, "third")
-    set_attempt(a["id"], "between_questions", 0, answered("o0", "o0", reason="甲的理由"))
-    set_attempt(b["id"], "between_questions", 0, answered("o1", "o1", reason="乙的理由"))
-    set_attempt(
-        c["id"],
-        "between_questions",
-        0,
-        answered("o1", "o1", reason="丙的理由", conditions=["夜裡"]),
+    (row,) = teacher_view(client, s)["students"]
+    assert (row["display_name"], row["confirmed_scenarios"]) == ("student同學", 0)
+    assert (row["current_position"], row["reason_summary"], row["relevant_conditions"]) == (
+        "",
+        "",
+        [],
     )
 
-    first = teacher_view(client, s)["questions"][0]
-    assert [(o["option_id"], o["text"], o["count"]) for o in first["options"]] == [
-        ("o0", "拉", 1),
-        ("o1", "不拉", 2),
-    ]
-    assert first["options"][0]["students"] == [
-        {
-            "enrollment_id": first["options"][0]["students"][0]["enrollment_id"],
-            "display_name": "student同學",
-            "changed_from_option_id": None,
-            "reason_summary": "甲的理由",
-            "relevant_conditions": [],
-        }
-    ]
+
+def test_each_student_shows_the_latest_confirmed_viewpoint(client, tutor):
+    s = setup(client)
+    a = start_with_two_scenarios(client, s["activity_id"])
+    b = student(client, s, "second")
+    add_scenario(b["id"], SECOND)
+    c = student(client, s, "third")
+    set_attempt(
+        a["id"],
+        "between_scenarios",
+        0,
+        confirmed("甲的理由", current_position="甲拉"),
+    )
+    set_attempt(
+        b["id"],
+        "in_dialogue",
+        1,
+        confirmed("乙第一個情境的理由", current_position="乙不拉"),
+        confirmed("乙第二個情境的理由", ["夜裡"], current_position="乙改拉"),
+    )
+    set_attempt(c["id"], "in_dialogue", 0, {})
+
+    rows = teacher_view(client, s)["students"]
+    # Every student who started, in enrollment order; the later confirmation wins.
     assert [
-        (x["display_name"], x["reason_summary"], x["relevant_conditions"])
-        for x in first["options"][1]["students"]
-    ] == [("second同學", "乙的理由", []), ("third同學", "丙的理由", ["夜裡"])]
-    assert (first["confirmed"], first["unconfirmed"]) == (3, 0)
-
-
-def test_empty_options_are_listed(client, tutor):
-    s = setup(client, questions=[question("q1", "三選一", options=("拉", "不拉", "不知道"))])
-    attempt = ok(start(client, s["activity_id"]))
-    set_attempt(attempt["id"], "reviewing", 0, answered("o2", "o2"))
-
-    first = teacher_view(client, s)["questions"][0]
-    assert [(o["option_id"], o["count"]) for o in first["options"]] == [
-        ("o0", 0),
-        ("o1", 0),
-        ("o2", 1),
+        (
+            x["display_name"],
+            x["confirmed_scenarios"],
+            x["current_position"],
+            x["reason_summary"],
+            x["relevant_conditions"],
+        )
+        for x in rows
+    ] == [
+        ("student同學", 1, "甲拉", "甲的理由", []),
+        ("second同學", 2, "乙改拉", "乙第二個情境的理由", ["夜裡"]),
+        ("third同學", 0, "", "", []),
     ]
+    assert all(x["enrollment_id"] for x in rows)
 
 
-def test_changed_stance_counts(client, tutor):
-    s = setup(client, questions=two_questions())
-    moved = ok(start(client, s["activity_id"]))
-    stayed = student(client, s, "stayed")
-    set_attempt(moved["id"], "between_questions", 0, answered("o0", "o1"))
-    set_attempt(stayed["id"], "between_questions", 0, answered("o0", "o0"))
-    with storage.transaction() as db:
-        row = db.get(SoloAttempt, stayed["id"])
-        entries = [dict(entry) for entry in row.progress]
-        # Rewording the position in free text is not a changed stance; only option ids count.
-        entries[0]["confirmed_summary"] = summary("理由", current_position="完全不同的說法")
-        row.progress = entries
-
-    first = teacher_view(client, s)["questions"][0]
-    assert (first["changed"], first["comparable"]) == (1, 2)
-    (moved_row,) = first["options"][1]["students"]
-    assert moved_row["display_name"] == "student同學"
-    assert moved_row["changed_from_option_id"] == "o0"
-    (stayed_row,) = first["options"][0]["students"]
-    assert stayed_row["changed_from_option_id"] is None
-
-
-def test_changed_requires_both_values(client, tutor):
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
-    legacy = answered("o0", "o1")
-    legacy["option_id"] = None
-    set_attempt(attempt["id"], "between_questions", 0, legacy)
-
-    first = teacher_view(client, s)["questions"][0]
-    assert (first["changed"], first["comparable"], first["confirmed"]) == (0, 0, 1)
-    assert [o["count"] for o in first["options"]] == [0, 1]
-    assert first["options"][1]["students"][0]["changed_from_option_id"] is None
-
-
-def test_unconfirmed_includes_not_reached(client, tutor):
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
-    set_attempt(attempt["id"], "between_questions", 0, answered("o0", "o0"))
+def test_not_started_students_are_not_listed(client, tutor):
+    s = setup(client)
+    join(client, s["course"], "idle")
 
     view = teacher_view(client, s)
-    assert [(q["confirmed"], q["unconfirmed"]) for q in view["questions"]] == [(1, 0), (0, 1)]
-    live = ok(progress(client, s["activity_id"]))
-    assert [q["unconfirmed"] for q in view["questions"]] == live["summary"][
-        "unconfirmed_by_question"
-    ]
+    assert view["summary"] == {"enrolled": 2, "started": 0, "done": 0, "in_progress": 0}
+    assert view["students"] == []
 
 
 def test_summary_counts_match_progress(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     talking = ok(start(client, s["activity_id"]))
     between = student(client, s, "between")
     review = student(client, s, "review")
     join(client, s["course"], "idle")
-    set_attempt(talking["id"], "in_dialogue", 0, answered("o0"))
-    set_attempt(between["id"], "between_questions", 0, answered("o0", "o0"))
-    set_attempt(review["id"], "reviewing", 1, answered("o0", "o1"), answered("o1", "o1"))
+    add_scenario(between["id"], SECOND)
+    add_scenario(review["id"], SECOND)
+    set_attempt(talking["id"], "in_dialogue", 0, {})
+    set_attempt(between["id"], "between_scenarios", 0, confirmed())
+    set_attempt(review["id"], "reviewing", 1, confirmed(), confirmed())
 
     view = teacher_view(client, s)
     assert view["summary"] == {"enrolled": 4, "started": 3, "done": 1, "in_progress": 2}
@@ -303,35 +265,12 @@ def test_summary_counts_match_progress(client, tutor):
     assert view["summary"]["started"] == live["summary"]["started"]
 
 
-def test_questions_matched_by_question_id(client, tutor):
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
-    with storage.transaction() as db:
-        row = db.get(SoloAttempt, attempt["id"])
-        entries = [dict(entry) for entry in row.progress]
-        q1 = next(e for e in entries if e["question_id"] == "q1")
-        q2 = next(e for e in entries if e["question_id"] == "q2")
-        q1.update(answered("o0", "o0", reason="第一題的理由"))
-        q2.update(answered("o1", "o1", reason="第二題的理由"))
-        row.progress = [q2, q1]
-        row.state = "reviewing"
-        row.question_index = 1
-
-    first, second = teacher_view(client, s)["questions"]
-    assert (first["index"], first["question_id"], first["title"]) == (0, "q1", "岔道上的選擇")
-    assert [o["count"] for o in first["options"]] == [1, 0]
-    assert first["options"][0]["students"][0]["reason_summary"] == "第一題的理由"
-    assert (second["index"], second["question_id"], second["title"]) == (1, "q2", "天橋上的胖子")
-    assert [o["count"] for o in second["options"]] == [0, 1]
-    assert second["options"][1]["students"][0]["reason_summary"] == "第二題的理由"
-
-
 def test_other_revision_not_aggregated(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     counted = ok(start(client, s["activity_id"]))
     stray = student(client, s, "stray")
-    set_attempt(counted["id"], "between_questions", 0, answered("o0", "o0"))
-    set_attempt(stray["id"], "reviewing", 1, answered("o1", "o1"), answered("o1", "o1"))
+    set_attempt(counted["id"], "reviewing", 0, confirmed("算進來的理由"))
+    set_attempt(stray["id"], "reviewing", 0, confirmed("不該算的理由"))
     with storage.transaction() as db:
         current = db.get(ActivityRevision, db.get(Activity, s["activity_id"]).current_revision_id)
         other = ActivityRevision(
@@ -346,28 +285,18 @@ def test_other_revision_not_aggregated(client, tutor):
 
     view = teacher_view(client, s)
     assert view["revision_id"] == current.id
-    assert view["summary"] == {"enrolled": 2, "started": 1, "done": 0, "in_progress": 1}
-    first, second = view["questions"]
-    assert [o["count"] for o in first["options"]] == [1, 0]
-    assert (first["confirmed"], second["confirmed"], second["unconfirmed"]) == (1, 0, 1)
+    assert view["summary"] == {"enrolled": 2, "started": 1, "done": 1, "in_progress": 0}
+    assert [x["reason_summary"] for x in view["students"]] == ["算進來的理由"]
 
 
 def test_draft_activity_reads_as_zero(client):
     user(client, "owner")
     course = create_course(client)
-    body = create_activity(client, course["id"], questions=two_questions())
+    body = create_activity(client, course["id"])
 
     view = ok(analysis(client, body["id"]))
     assert view["status"] == "draft"
     assert view["revision_id"] is None
-    assert view["question_count"] == 2
     assert view["course_id"] == course["id"]
     assert view["summary"] == {"enrolled": 0, "started": 0, "done": 0, "in_progress": 0}
-    assert [
-        (q["index"], q["question_id"], q["title"], q["confirmed"], q["unconfirmed"])
-        for q in view["questions"]
-    ] == [(0, "q1", "岔道上的選擇", 0, 0), (1, "q2", "天橋上的胖子", 0, 0)]
-    assert [(o["option_id"], o["count"]) for o in view["questions"][0]["options"]] == [
-        ("o0", 0),
-        ("o1", 0),
-    ]
+    assert view["students"] == []

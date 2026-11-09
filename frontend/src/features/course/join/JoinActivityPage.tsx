@@ -70,7 +70,7 @@ export function JoinActivityPage() {
       <ChalkCard
         eyebrow={t('activity.byline', { course: data.course_name, teacher: data.teacher_name })}
         title={data.title}
-        rows={[{ label: t('activity.questions'), value: t('activity.questionCount', { count: data.question_count }) }, windowRow]}
+        rows={[windowRow]}
       />
       {note && <p className="join-note"><span aria-hidden="true">ⓘ</span>{note}</p>}
       {canJoin && !enrolled && <div className="form-field">

@@ -79,7 +79,7 @@ def test_learning_card_highlight_order(client, monkeypatch):
     assert card["highlight"]["id"] == sooner["id"]
     assert card["highlight"]["status"] == "open"
     assert card["highlight"]["title"] == "早結束"
-    assert card["highlight"]["question_count"] == 1
+    assert "question_count" not in card["highlight"]
 
     switch(client, teacher)
     clock[0] = start + 3

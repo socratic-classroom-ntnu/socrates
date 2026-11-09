@@ -171,7 +171,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "GET /api/v2/ai-settings/account",
     "PUT /api/v2/ai-settings/account",
     "POST /api/v2/scripts/assist",
-    "GET /api/v2/readiness",
 )
 
 # Returned only to the mail provider's webhook caller, never shown in the app.

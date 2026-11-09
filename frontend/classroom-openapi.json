@@ -3228,6 +3228,32 @@
         "title": "Reaction",
         "type": "object"
       },
+      "ReadinessView": {
+        "properties": {
+          "database": {
+            "const": "connected",
+            "title": "Database",
+            "type": "string"
+          },
+          "runtime": {
+            "const": "classroom",
+            "title": "Runtime",
+            "type": "string"
+          },
+          "status": {
+            "const": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database",
+          "runtime"
+        ],
+        "title": "ReadinessView",
+        "type": "object"
+      },
       "Register": {
         "additionalProperties": false,
         "properties": {
@@ -7864,7 +7890,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessView"
+                }
               }
             },
             "description": "Successful Response"

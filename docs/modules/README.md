@@ -25,7 +25,7 @@
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
-| [App Shell](./backend/app-shell.md) | ⚠️ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py`<br>`backend/app/modules/app_shell/` | 全部（組裝層） | 0 |
+| [App Shell](./backend/app-shell.md) | ✅ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py`<br>`backend/app/modules/app_shell/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./backend/contract.md) | ✅ | `backend/app/modules/contract/` | 全部（組裝層） | 0 |
 | [Platform](./backend/platform.md) | ✅ | `backend/app/modules/platform/` | — | 0 |
 | [Identity & Access](./backend/identity-access.md) | ⚠️ | `backend/app/modules/identity_access/` | platform | 0 |

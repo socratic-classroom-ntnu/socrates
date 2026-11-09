@@ -5,7 +5,9 @@ is reachable today. The student answers each scenario in their own words: there 
 An attempt walks a sequence of scenarios; the sequence is the length of ``progress`` and may
 grow, so nothing here assumes the count is known when the attempt starts. Whether a scenario's
 dialogue may move to confirmation is decided only by ``llm_runtime/policy.py``'s
-``should_advance`` (AGENTS.md), called from ``apply_tutor_turn``.
+``should_advance`` (AGENTS.md), called from ``apply_tutor_turn``; whether the sequence goes on
+or ends after a confirmation is decided only by its ``should_conclude``, called from
+``confirm_viewpoint``.
 
 Turn counting matches the group personal dialogue: the call after the first answer is turn 0
 (the opening follow-up), and each student message adds one. ``should_advance`` is given the turn
@@ -20,7 +22,7 @@ from dataclasses import dataclass, replace
 from typing import Any, NamedTuple
 
 from app.modules.llm_runtime.contracts import PersonalTutorTurn
-from app.modules.llm_runtime.service import should_advance
+from app.modules.llm_runtime.service import should_advance, should_conclude
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.contracts import (
     ReviseHint,
@@ -261,8 +263,20 @@ def confirm_viewpoint(a: AttemptState, digest: str) -> AttemptState:
         candidate_summary=None,
         summary_digest=None,
     )
-    more = a.scenario_index + 1 < a.scenario_count
-    return replace(a, state="between_scenarios" if more else "reviewing", progress=progress)
+    confirmed = replace(a, progress=progress)
+    return replace(confirmed, state=_after_confirmation(confirmed))
+
+
+def _after_confirmation(a: AttemptState) -> SoloState:
+    """The rule decides whether the sequence ends; the list only says whether a next scenario
+    exists. Until extended scenarios are produced there may be none even when the rule wants one,
+    and the student then goes to the review rather than waiting for a scenario that is not coming.
+    """
+    confirmed = sum(item.status == "goal_met" for item in a.progress)
+    if should_conclude(confirmed, shifted_in_latest=a.current.last_shift_turn is not None):
+        return "reviewing"
+    has_next = a.scenario_index + 1 < a.scenario_count
+    return "between_scenarios" if has_next else "reviewing"
 
 
 def revise_viewpoint(a: AttemptState) -> AttemptState:

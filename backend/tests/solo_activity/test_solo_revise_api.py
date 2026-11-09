@@ -6,6 +6,7 @@ are no options to change: 我其實改變想法了 is a hint like the others, sa
 
 import json
 
+import pytest
 from sqlalchemy import select
 
 from app.modules.platform import storage as storage
@@ -183,3 +184,16 @@ def test_revise_requires_one_more_turn(client, tutor):
     replies.append(MET)
     view = ok(do(client, attempt_id, "send_message", {"text": "我是說親手造成的那種"}))
     assert view["state"] == "confirming"
+
+
+@pytest.mark.parametrize("hint", ["stance", "reason", "condition", "changed_mind"])
+def test_every_entry_of_not_quite_right_goes_back_to_the_dialogue(client, tutor, hint):
+    _, replies = tutor
+    attempt_id = revising(client, replies)
+
+    replies.append(NOT_MET)
+    view = ok(do(client, attempt_id, "send_message", {"text": "我想補充", "revise_hint": hint}))
+    assert view["state"] == "in_dialogue"
+    assert view["revising"] is False
+    assert view["available_actions"] == ["send_message"]
+    assert [m["revise_hint"] for m in view["messages"] if m["role"] == "student"][-1] == hint

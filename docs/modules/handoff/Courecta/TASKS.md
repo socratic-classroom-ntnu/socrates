@@ -6,7 +6,7 @@
 ## 優先：開放式對話（配合 Ken，11/7 契約、11/13 完成）
 | 順序 | 模組 | 做什麼 | 完成的樣子 |
 |---|---|---|---|
-| O1 | llm-runtime | 兩個新角色的 schema 與 program：情境生成（老師的題目 → 起始情境與開場問句）、情境延伸（依學生到目前為止的立場與理由，只改一個條件並明講改了哪裡）；都走 `guarded_generate`，加進鐵則路由 ROUTER.json 與 test_iron_rules 的呼叫點 | Ken 可以 import 型別；鐵則測試全綠 |
+| O1 | llm-runtime | 新角色情境延伸的 schema 與 program：依學生到目前為止的立場與理由，只改一個條件並明講改了哪裡（第一個情境是老師原文、不經 LLM，所以沒有情境生成）；走 `guarded_generate`，加進鐵則路由 ROUTER.json 與 test_iron_rules 的呼叫點 | Ken 可以 import 型別；鐵則測試全綠 |
 | O2 | llm-runtime | 單人 prompt 你是唯一修改者：把 Ken 交來的改動合進去（拿掉選項、「表態」＝說出能被辨認的主張、延伸規則）；final_summary 改成以各階段確認為材料 | test_solo_outputs_match_prompt、test_solo_tutor_program 全綠 |
 | O3 | llm-runtime | 審 Ken 送來的 `policy.py` should_conclude PR：輸入是結構化觀察值與計數，地板與上限是可調參數 | 真值表測試先紅再綠 |
 

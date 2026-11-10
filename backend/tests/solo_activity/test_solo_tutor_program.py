@@ -14,8 +14,11 @@ def _template(kind: str) -> str:
 def test_programs_validate():
     validate_programs()
     solo = _template("solo_tutor")
-    for key in ("hypothetical", "principle_note", "revise_hint", "stance_changed_from"):
+    for key in ("scenario", "answer", "hypothetical", "principle_note", "revise_hint"):
         assert key in solo, key
+    # Keys the solo activity no longer sends since the options flow was removed.
+    for key in ("option_id", "option_text", "argument", "stance_changed_from"):
+        assert key not in solo, key
 
 
 def test_group_personal_tutor_is_untouched():
@@ -50,6 +53,6 @@ def test_solo_tutor_is_a_request_program_under_the_iron_rules():
     assert "solo_tutor" in prompts.REQUEST_PROGRAMS
     engine = storage.configure("sqlite+pysqlite:///:memory:", create=True)
     with Session(engine) as db:
-        messages, schema, _ = prompts.compile_program(db, "solo_tutor", {"argument": "x"})
+        messages, schema, _ = prompts.compile_program(db, "solo_tutor", {"answer": "x"})
     assert messages[0]["content"].startswith(iron_rules.rules_for("solo_tutor"))
     assert schema is prompts.SCHEMAS["PersonalTutorTurn"]

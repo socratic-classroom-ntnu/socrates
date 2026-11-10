@@ -56,6 +56,5 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- prompts.compile_program 的 key 算兩次（第一次被覆蓋）。
 - 鐵則：安全類訊息改固定關心句＋老師看得到的安全 flag（與偏題隱藏 flag 分欄）；第 5 條個資措辭已定案。
 <!-- module-map:end -->

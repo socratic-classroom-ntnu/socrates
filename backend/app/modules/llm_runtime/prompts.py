@@ -101,7 +101,6 @@ def compile_program(db, kind, context):
         "context_hash": digest(context),
         "use_case": kind,
     }
-    key = kind + ":" + digest(metadata)[:24]
     # Context-specific hash stays in call audit, not canonical program identity.
     canonical = {k: v for k, v in metadata.items() if k != "context_hash"}
     key = kind + ":" + digest(canonical)[:24]

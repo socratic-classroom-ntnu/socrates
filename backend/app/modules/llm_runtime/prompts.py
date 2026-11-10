@@ -3,11 +3,17 @@
 import json
 from pathlib import Path
 from app.modules.llm_runtime.contracts import (
+    ActivityExpansion,
     DynamicResult,
+    FinalSummary,
     LLMStudentTurn,
     PersonalTutorTurn,
+    RadarAxisNames,
+    RadarDimensions,
+    RadarScores,
     ScenarioExtension,
     ScriptAssistResult,
+    StanceClassification,
     SummaryResult,
     TutorTurn,
 )
@@ -24,6 +30,12 @@ SCHEMAS = {
     "LLMStudentTurn": LLMStudentTurn,
     "ScriptAssistResult": ScriptAssistResult,
     "ScenarioExtension": ScenarioExtension,
+    "ActivityExpansion": ActivityExpansion,
+    "FinalSummary": FinalSummary,
+    "RadarAxisNames": RadarAxisNames,
+    "RadarDimensions": RadarDimensions,
+    "RadarScores": RadarScores,
+    "StanceClassification": StanceClassification,
 }
 
 
@@ -40,7 +52,18 @@ JOB_KINDS = (
 # solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
 # activity the backend alone decides when the student confirms.
 # scenario_extension writes a solo student's next scenario; the first one is the teacher's text.
-REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor", "scenario_extension")
+# The rest are the solo activity's programs, called by course-management and solo-activity.
+REQUEST_PROGRAMS = (
+    "ai_script_authoring",
+    "solo_tutor",
+    "scenario_extension",
+    "activity_expansion",
+    "stance_classify",
+    "final_summary",
+    "radar_axis_naming",
+    "radar_dimensions",
+    "radar_scoring",
+)
 # L0 路由；compile_program 依角色載入 L1＋L2（app/modules/llm_runtime/iron_rules.py）。
 IRON_RULES_SKILL = "iron-rules/ROUTER.json"
 

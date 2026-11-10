@@ -194,6 +194,37 @@ class SoloTutorTurn(Strict):
     guard: Guard
 
 
+class ConditionChange(Strict):
+    """The one condition an extension changes, shown to the student as before → after.
+
+    condition names that one condition, so a change that touches two of them shows up as a
+    condition naming two things; judging that is the evals' job, not the schema's.
+    """
+
+    condition: str = Field(min_length=1, max_length=60)
+    before: str = Field(min_length=1, max_length=300)
+    after: str = Field(min_length=1, max_length=300)
+
+    @model_validator(mode="after")
+    def changed(self) -> "ConditionChange":
+        if self.before == self.after:
+            raise ValueError("延伸情境必須真的改變一個條件")
+        return self
+
+
+class ScenarioExtension(Strict):
+    """scenario_extension output: the next scenario for one student after a confirmed stage.
+
+    A single change object, not a list, so the model cannot alter two conditions at once. The first
+    scenario is the teacher's text verbatim; only later ones are generated.
+    """
+
+    scenario: str = Field(min_length=1, max_length=2000)
+    change: ConditionChange
+    # The confirmed words of the student's that this change tests.
+    sources: list[Citation] = Field(min_length=1, max_length=3)
+
+
 class Stance(Strict):
     id: str = Field(min_length=1, max_length=64)
     label: str = Field(min_length=1, max_length=200)

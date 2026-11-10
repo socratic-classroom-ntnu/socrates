@@ -19,6 +19,7 @@
 | solo_tutor | 單人活動的導師 | **改寫**：依敘述對話、輸出 flags、確認統整帶引用、output_locale | SoloTutorTurn | solo-activity |
 | activity_expansion | 敘述 → 立場空間＋追問方向 | **新增** | ActivityExpansion | course-management |
 | stance_classify | 學生的自由文字 → 歸到立場空間的哪一個 | **新增** | StanceClassification | solo-activity |
+| scenario_extension | 學生確認過的立場與理由 → 只改一個條件的下一個情境（第一個情境是老師原文，不經 LLM） | **新增** | ScenarioExtension | solo-activity |
 | final_summary | 多次確認統整 → 思想脈絡 | **新增** | FinalSummary | solo-activity |
 | radar_axis_naming | 向量軸 → 軸名與兩端描述 | **新增** | RadarAxisNames | solo-activity |
 | radar_dimensions／radar_scoring | 備援路線：LLM 定維度與打分 | **新增** | RadarDimensions／RadarScores | solo-activity |

@@ -1,11 +1,14 @@
 """The solo-activity state machine as pure functions: old state in, new state out, no I/O.
 
 States, actions and transitions follow the design spec §4.5 table; only the first part of it
-is reachable today. Whether a question's dialogue may move to confirmation is decided only by
-``llm_runtime/policy.py``'s ``should_advance`` (AGENTS.md), called from ``apply_tutor_turn``.
+is reachable today. The student answers each scenario in their own words: there are no options.
+An attempt walks a sequence of scenarios; the sequence is the length of ``progress`` and may
+grow, so nothing here assumes the count is known when the attempt starts. Whether a scenario's
+dialogue may move to confirmation is decided only by ``llm_runtime/policy.py``'s
+``should_advance`` (AGENTS.md), called from ``apply_tutor_turn``.
 
-Turn counting matches the group personal dialogue: the call after the stance is turn 0 (the
-opening follow-up), and each student message adds one. ``should_advance`` is given the turn
+Turn counting matches the group personal dialogue: the call after the first answer is turn 0
+(the opening follow-up), and each student message adds one. ``should_advance`` is given the turn
 index as its completed-turn count, so its floor keeps turn 0 from ever confirming.
 """
 
@@ -20,8 +23,8 @@ from app.modules.llm_runtime.contracts import PersonalTutorTurn
 from app.modules.llm_runtime.service import should_advance
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.contracts import (
-    QuestionStatus,
     ReviseHint,
+    ScenarioStatus,
     SoloAction,
     SoloNotice,
     SoloState,
@@ -29,38 +32,42 @@ from app.modules.solo_activity.contracts import (
 
 # A provider call still pending after this long has lost its request; the student may retry.
 STALE_SECONDS = 150
-# Student messages per question, the stance's reason included.
+# Student messages per scenario, the first answer included.
 MESSAGE_LIMIT = 40
 
 _ACTIONS: dict[str, list[SoloAction]] = {
-    "choosing_stance": ["submit_stance"],
+    "answering": ["send_message"],
     "tutor_unavailable": ["retry"],
     "in_dialogue": ["send_message"],
     "confirming": ["confirm_viewpoint", "revise_viewpoint"],
-    "between_questions": ["next_question"],
+    "between_scenarios": ["next_scenario"],
     "reviewing": ["submit_review"],
 }
 
 
+class Scenario(NamedTuple):
+    """One scenario of the sequence: the text the student reads, shown verbatim."""
+
+    scenario_id: str
+    text: str
+
+
 @dataclass(frozen=True)
-class QuestionProgress:
-    question_id: str
-    # The first choice; never changes, so initial != final counts changed stances.
-    option_id: str | None = None
-    # The option held now: option_id until 我其實改變想法了 picks another.
-    current_option_id: str | None = None
-    reason: str | None = None
+class ScenarioProgress:
+    scenario_id: str
+    text: str
+    # The student's first answer to this scenario, in their own words.
+    answer: str | None = None
     turn_index: int = 0
     # How many times this turn's provider call has been retried; part of the pending key.
     tries: int = 0
-    status: QuestionStatus = "in_progress"
+    status: ScenarioStatus = "in_progress"
     candidate_summary: dict[str, Any] | None = None
     summary_digest: str | None = None
     principle_label: str | None = None
     # The turn whose observations last reported a position shift; policy.py holds confirmation.
     last_shift_turn: int | None = None
     confirmed_summary: dict[str, Any] | None = None
-    final_option_id: str | None = None
     # 不太對 until the next student message; rejected_summary is the summary turned down.
     revising: bool = False
     rejected_summary: dict[str, Any] | None = None
@@ -72,31 +79,33 @@ class QuestionProgress:
 class AttemptState:
     attempt_id: str
     state: SoloState
-    question_index: int
-    question_count: int
-    progress: tuple[QuestionProgress, ...]
+    scenario_index: int
+    progress: tuple[ScenarioProgress, ...]
     pending_key: str | None = None
     pending_since: float | None = None
     notice: SoloNotice | None = None
 
     @property
-    def current(self) -> QuestionProgress:
-        return self.progress[self.question_index]
+    def current(self) -> ScenarioProgress:
+        return self.progress[self.scenario_index]
+
+    @property
+    def scenario_count(self) -> int:
+        return len(self.progress)
 
 
 class PendingTurn(NamedTuple):
     key: str
-    question_index: int
+    scenario_index: int
     turn_index: int
 
 
-def new_attempt(attempt_id: str, question_ids: list[str]) -> AttemptState:
+def new_attempt(attempt_id: str, scenarios: list[Scenario]) -> AttemptState:
     return AttemptState(
         attempt_id=attempt_id,
-        state="choosing_stance",
-        question_index=0,
-        question_count=len(question_ids),
-        progress=tuple(QuestionProgress(question_id=qid) for qid in question_ids),
+        state="answering",
+        scenario_index=0,
+        progress=tuple(ScenarioProgress(item.scenario_id, item.text) for item in scenarios),
     )
 
 
@@ -112,17 +121,17 @@ def _require(a: AttemptState, action: SoloAction, now: float = 0.0) -> None:
         raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
 
 
-def _with_current(a: AttemptState, **changes: Any) -> tuple[QuestionProgress, ...]:
+def _with_current(a: AttemptState, **changes: Any) -> tuple[ScenarioProgress, ...]:
     progress = list(a.progress)
-    progress[a.question_index] = replace(a.current, **changes)
+    progress[a.scenario_index] = replace(a.current, **changes)
     return tuple(progress)
 
 
 def _await(
-    a: AttemptState, progress: tuple[QuestionProgress, ...], now: float
+    a: AttemptState, progress: tuple[ScenarioProgress, ...], now: float
 ) -> tuple[AttemptState, PendingTurn]:
-    current = progress[a.question_index]
-    key = f"{a.attempt_id}:{a.question_index}:{current.turn_index}:{current.tries}"
+    current = progress[a.scenario_index]
+    key = f"{a.attempt_id}:{a.scenario_index}:{current.turn_index}:{current.tries}"
     waiting = replace(
         a,
         state="awaiting_tutor",
@@ -131,41 +140,24 @@ def _await(
         pending_since=now,
         notice=None,
     )
-    return waiting, PendingTurn(key, a.question_index, current.turn_index)
-
-
-def submit_stance(
-    a: AttemptState, option_id: str, reason: str, valid_option_ids: set[str], now: float
-) -> tuple[AttemptState, PendingTurn]:
-    _require(a, "submit_stance")
-    if option_id not in valid_option_ids:
-        raise DomainError("SOLO_OPTION_INVALID", 422)
-    progress = _with_current(
-        a, option_id=option_id, current_option_id=option_id, reason=reason, turn_index=0, tries=0
-    )
-    return _await(a, progress, now)
+    return waiting, PendingTurn(key, a.scenario_index, current.turn_index)
 
 
 def send_message(
-    a: AttemptState,
-    now: float,
-    revise_hint: ReviseHint | None = None,
-    new_option_id: str | None = None,
-    valid_option_ids: frozenset[str] = frozenset(),
+    a: AttemptState, text: str, now: float, revise_hint: ReviseHint | None = None
 ) -> tuple[AttemptState, PendingTurn]:
-    """One student message. While revising it may say which part was wrong (revise_hint);
-    changed_mind must name a different option of this question, and only changed_mind may."""
+    """One student message. The first one in a scenario is the answer, in the student's own words
+    (kept as ``answer``); the opening follow-up it triggers is turn 0. While revising a message
+    may say which part of the turned-down summary was wrong (revise_hint)."""
     _require(a, "send_message")
     current = a.current
+    if a.state == "answering":
+        if revise_hint is not None:
+            raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
+        return _await(a, _with_current(a, answer=text, turn_index=0, tries=0), now)
     if revise_hint is not None and not current.revising:
-        raise DomainError("SOLO_OPTION_INVALID", 422)
-    if (revise_hint == "changed_mind") != (new_option_id is not None):
-        raise DomainError("SOLO_OPTION_INVALID", 422)
-    if new_option_id is not None and (
-        new_option_id not in valid_option_ids or new_option_id == current.current_option_id
-    ):
-        raise DomainError("SOLO_OPTION_INVALID", 422)
-    # The stance's reason plus one message per completed turn.
+        raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
+    # The first answer plus one message per completed turn.
     if current.turn_index + 1 >= MESSAGE_LIMIT:
         raise DomainError("SOLO_MESSAGE_LIMIT", 409)
     turn_index = current.turn_index + 1
@@ -175,7 +167,6 @@ def send_message(
         tries=0,
         revising=False,
         rejected_summary=None,
-        current_option_id=new_option_id or current.current_option_id,
         last_revise_turn=turn_index if current.revising else current.last_revise_turn,
     )
     return _await(a, progress, now)
@@ -188,10 +179,10 @@ def retry(a: AttemptState, now: float) -> tuple[AttemptState, PendingTurn]:
 
 
 def summary_digest(
-    attempt_id: str, question_index: int, turn_index: int, summary: dict[str, Any]
+    attempt_id: str, scenario_index: int, turn_index: int, summary: dict[str, Any]
 ) -> str:
     raw = json.dumps(
-        [attempt_id, question_index, turn_index, summary],
+        [attempt_id, scenario_index, turn_index, summary],
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),
@@ -231,7 +222,7 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: PersonalTutorTurn) -> Atte
         settled,
         candidate_summary=summary,
         summary_digest=summary_digest(
-            a.attempt_id, a.question_index, a.current.turn_index, summary
+            a.attempt_id, a.scenario_index, a.current.turn_index, summary
         ),
         principle_label=turn.observations.principle_label,
     )
@@ -240,7 +231,7 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: PersonalTutorTurn) -> Atte
 
 def apply_pulled_back_turn(a: AttemptState, key: str) -> AttemptState | None:
     """The reply for ``key`` broke the iron rules twice and was replaced by the pull-back
-    sentence: nothing the model reported is trusted, so the question stays in dialogue.
+    sentence: nothing the model reported is trusted, so the scenario stays in dialogue.
     None when it is stale."""
     if not _is_pending(a, key):
         return None
@@ -267,12 +258,11 @@ def confirm_viewpoint(a: AttemptState, digest: str) -> AttemptState:
         a,
         status="goal_met",
         confirmed_summary=current.candidate_summary,
-        final_option_id=current.current_option_id,
         candidate_summary=None,
         summary_digest=None,
     )
-    more = a.question_index + 1 < a.question_count
-    return replace(a, state="between_questions" if more else "reviewing", progress=progress)
+    more = a.scenario_index + 1 < a.scenario_count
+    return replace(a, state="between_scenarios" if more else "reviewing", progress=progress)
 
 
 def revise_viewpoint(a: AttemptState) -> AttemptState:
@@ -288,13 +278,13 @@ def revise_viewpoint(a: AttemptState) -> AttemptState:
     return replace(a, state="in_dialogue", progress=progress)
 
 
-def next_question(a: AttemptState) -> AttemptState:
-    """The next question's dialogue starts from nothing: its own stance, turns and shift."""
-    _require(a, "next_question")
-    return replace(a, state="choosing_stance", question_index=a.question_index + 1)
+def next_scenario(a: AttemptState) -> AttemptState:
+    """The next scenario's dialogue starts from nothing: its own answer, turns and shift."""
+    _require(a, "next_scenario")
+    return replace(a, state="answering", scenario_index=a.scenario_index + 1)
 
 
 def submit_review(a: AttemptState) -> AttemptState:
-    """After the last confirmed question the review is sent and the attempt is completed."""
+    """After the last confirmed scenario the review is sent and the attempt is completed."""
     _require(a, "submit_review")
     return replace(a, state="completed")

@@ -41,8 +41,6 @@ const join: Shape<typeof zhHant> = {
     notFoundTitle: '找不到这个活动',
     notFoundBody: '链接可能已经失效，或老师已经删除这个活动。',
     byline: '{{course}} ・ {{teacher}} 老师',
-    questions: '题目',
-    questionCount: '{{count}} 题',
     openUntil: '开放到',
     opens: '开放',
     opensAt: '{{start}} 起',

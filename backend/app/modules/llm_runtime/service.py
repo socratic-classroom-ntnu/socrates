@@ -29,3 +29,10 @@ def should_advance(
         turns_since_shift=turns_since_shift,
         turns_since_revise=turns_since_revise,
     )
+
+
+def should_conclude(confirmed_scenarios: int, shifted_in_latest: bool) -> bool:
+    """Whether the scenario sequence ends (single source: llm_runtime/policy.py)."""
+    from app.modules.llm_runtime import policy
+
+    return policy.should_conclude(confirmed_scenarios, shifted_in_latest)

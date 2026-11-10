@@ -133,40 +133,13 @@ class PublicJoinPreview(Strict):
     course_name: str
 
 
-class ActivityOption(Strict):
-    id: str = Field(min_length=1, max_length=64)
-    text: str = Field(min_length=1, max_length=2000)
-
-
-class QuestionDraft(Strict):
-    id: str = Field(min_length=1, max_length=64)
-    title: str = Field(min_length=1, max_length=300)
-    scenario: str = Field(min_length=1, max_length=12000)
-    options: list[ActivityOption] = Field(min_length=2, max_length=4)
-    follow_up_direction: str = Field(default="", max_length=2000)
-
-    @model_validator(mode="after")
-    def unique_options(self):
-        if len({option.id for option in self.options}) != len(self.options):
-            raise ValueError("option ids must be unique")
-        return self
-
-
 class ActivityDraft(Strict):
-    """Complete but unpublished content; incomplete drafts are rejected, never stored."""
+    """The teacher's single input: one text that is both the activity name and the material the
+    first scenario is written from. Incomplete drafts are rejected, never stored."""
 
     title: str = Field(min_length=1, max_length=300)
-    topic_direction: str = Field(min_length=1, max_length=4000)
-    analysis_focus: str = Field(default="", max_length=4000)
     starts_at: float | None = None
     ends_at: float
-    questions: list[QuestionDraft] = Field(min_length=1, max_length=30)
-
-    @model_validator(mode="after")
-    def unique_questions(self):
-        if len({question.id for question in self.questions}) != len(self.questions):
-            raise ValueError("question ids must be unique")
-        return self
 
 
 class ActivityDetailsUpdate(Strict):
@@ -208,7 +181,6 @@ class ActivityTeacherCard(Strict):
     status: ActivityStatus
     locked: bool
     has_unpublished_changes: bool
-    question_count: int
     starts_at: float | None
     ends_at: float | None
     available_actions: list[TeacherAction]
@@ -218,7 +190,6 @@ class ActivityStudentCard(Strict):
     id: str
     title: str
     status: Literal["scheduled", "open", "ended"]
-    question_count: int
     starts_at: float
     ends_at: float
 
@@ -239,7 +210,6 @@ class ActivityJoinPreview(Strict):
     course_id: str
     course_name: str
     teacher_name: str
-    question_count: int
     starts_at: float
     ends_at: float
     status: Literal["scheduled", "open", "ended"]

@@ -114,7 +114,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "SOLO_ACTION_UNAVAILABLE": ("solo_activity",),
     "SOLO_ATTEMPT_NOT_FOUND": ("solo_activity",),
     "SOLO_MESSAGE_LIMIT": ("solo_activity",),
-    "SOLO_OPTION_INVALID": ("solo_activity",),
+    "SOLO_REVISE_HINT_INVALID": ("solo_activity",),
     "SOLO_STEP_NOT_READY": ("solo_activity",),
     "SOLO_SUMMARY_STALE": ("solo_activity",),
     "STARTED_CLASSROOM_REQUIRED": ("classroom_core",),
@@ -170,7 +170,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "GET /api/v2/ai-settings/account",
     "PUT /api/v2/ai-settings/account",
     "POST /api/v2/scripts/assist",
-    "GET /api/v2/readiness",
 )
 
 # Returned only to the mail provider's webhook caller, never shown in the app.

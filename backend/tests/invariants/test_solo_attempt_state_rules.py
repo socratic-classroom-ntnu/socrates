@@ -2,7 +2,7 @@
 
 - 設計規格 §8：結束（completed）之後任何動作一律拒絕。
 - 設計規格 §4.5：問到上限仍未達成，不得假裝達成。單人活動沒有 capped 狀態：
-  到了訊息上限就不能再送，題目維持 in_progress；只有學生自己確認整理卡才標 goal_met。
+  到了訊息上限就不能再送，情境維持 in_progress；只有學生自己確認整理卡才標 goal_met。
 """
 
 from typing import get_args
@@ -13,9 +13,8 @@ from app.modules.llm_runtime.contracts import Observations, PersonalSummary, Per
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity import attempt_machine as sm
 from app.modules.solo_activity.contracts import SoloAction
-from tests.solo_activity.test_solo_attempts_api import MET, OPENING, do, ok, setup, stance, start
+from tests.solo_activity.test_solo_attempts_api import MET, OPENING, answer, do, ok, setup, start
 
-OPTIONS = {"o0", "o1"}
 T0 = 1_000.0
 
 
@@ -36,8 +35,8 @@ def turn(**observed) -> PersonalTutorTurn:
 
 
 def in_dialogue() -> sm.AttemptState:
-    a, pending = sm.submit_stance(
-        sm.new_attempt("att-1", ["q0"]), "o1", "不能主動害人", OPTIONS, T0
+    a, pending = sm.send_message(
+        sm.new_attempt("att-1", [sm.Scenario("s1", "情境")]), "不能主動害人", T0
     )
     result = sm.apply_tutor_turn(a, pending.key, turn())
     assert result is not None and result.state == "in_dialogue"
@@ -45,7 +44,7 @@ def in_dialogue() -> sm.AttemptState:
 
 
 def completed() -> sm.AttemptState:
-    a, pending = sm.send_message(in_dialogue(), T0)
+    a, pending = sm.send_message(in_dialogue(), "回覆", T0)
     confirming = sm.apply_tutor_turn(a, pending.key, turn())
     assert confirming is not None and confirming.state == "confirming"
     reviewing = sm.confirm_viewpoint(confirming, confirming.current.summary_digest or "")
@@ -53,12 +52,11 @@ def completed() -> sm.AttemptState:
 
 
 TRANSITIONS = {
-    "submit_stance": lambda a: sm.submit_stance(a, "o0", "還想再選", OPTIONS, T0),
-    "send_message": lambda a: sm.send_message(a, T0),
+    "send_message": lambda a: sm.send_message(a, "回覆", T0),
     "retry": lambda a: sm.retry(a, T0 + 10 * sm.STALE_SECONDS),
     "confirm_viewpoint": lambda a: sm.confirm_viewpoint(a, a.current.summary_digest or "x"),
     "revise_viewpoint": sm.revise_viewpoint,
-    "next_question": sm.next_question,
+    "next_scenario": sm.next_scenario,
     "submit_review": sm.submit_review,
 }
 
@@ -83,7 +81,7 @@ def test_the_api_rejects_every_action_after_completion(client, tutor):
     _, replies = tutor
     attempt = ok(start(client, setup(client)["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     replies.append(MET)
     view = ok(do(client, attempt["id"], "send_message", {"text": "因為是我親手造成的"}))
     digest = view["summary_digest"]
@@ -92,7 +90,6 @@ def test_the_api_rejects_every_action_after_completion(client, tutor):
     assert (done["state"], done["available_actions"]) == ("completed", [])
 
     bodies = {
-        "submit_stance": {"option_id": "o1", "reason": "還想再說"},
         "send_message": {"text": "還想再說"},
         "confirm_viewpoint": {"summary_digest": digest},
     }
@@ -105,11 +102,11 @@ def test_the_api_rejects_every_action_after_completion(client, tutor):
     assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}")) == done
 
 
-def test_the_message_limit_never_marks_the_question_goal_met():
+def test_the_message_limit_never_marks_the_scenario_goal_met():
     a = in_dialogue()
     while True:
         try:
-            a, pending = sm.send_message(a, T0)
+            a, pending = sm.send_message(a, "回覆", T0)
         except DomainError as error:
             assert error.code == "SOLO_MESSAGE_LIMIT"
             break
@@ -124,7 +121,7 @@ def test_the_message_limit_never_marks_the_question_goal_met():
 
 
 def test_only_the_students_confirmation_marks_goal_met():
-    a, pending = sm.send_message(in_dialogue(), T0)
+    a, pending = sm.send_message(in_dialogue(), "回覆", T0)
     confirming = sm.apply_tutor_turn(a, pending.key, turn())
     assert confirming is not None and confirming.state == "confirming"
     # The policy allowing confirmation is not yet the student agreeing with the summary.

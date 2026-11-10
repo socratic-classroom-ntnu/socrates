@@ -49,13 +49,12 @@ export function activityDraftKey(accountId: string, target: DraftTarget): string
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 
+// 舊版表單（有多題與選項）暫存的內容不再相容，直接當作沒有
 function isForm(value: unknown): value is ActivityForm {
   const f = value as ActivityForm
-  return !!f && isString(f.title) && isString(f.topic_direction) && isString(f.analysis_focus)
+  return !!f && isString(f.title) && !('questions' in f)
     && !!f.start && (f.start.mode === 'now' || (f.start.mode === 'at' && isString(f.start.date) && isString(f.start.time)))
     && !!f.end && isString(f.end.date) && isString(f.end.time)
-    && Array.isArray(f.questions) && f.questions.every(q => q && isString(q.id) && isString(q.title) && isString(q.scenario)
-      && isString(q.follow_up_direction) && Array.isArray(q.options) && q.options.every(o => o && isString(o.id) && isString(o.text)))
 }
 
 function expired(updatedAt: string, now: number): boolean {

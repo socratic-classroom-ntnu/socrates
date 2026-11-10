@@ -2,7 +2,7 @@ import type { components } from '../../contract/classroomTypes'
 
 export type SoloActivityView = components['schemas']['SoloActivityView']
 export type SoloAttemptView = components['schemas']['SoloAttemptView']
-export type SoloQuestion = components['schemas']['SoloQuestionView']
+export type SoloScenario = components['schemas']['SoloScenarioView']
 export type SoloMessage = components['schemas']['SoloMessageView']
 export type SoloSummary = components['schemas']['PersonalSummaryView']
 export type SoloSendMessageBody = components['schemas']['SendMessageBody']
@@ -12,15 +12,8 @@ export function can(view: Pick<SoloAttemptView, 'available_actions'>, action: So
   return view.available_actions.includes(action)
 }
 
-export function optionLetter(index: number): string {
-  return String.fromCharCode(65 + index)
-}
-
-export function stanceLabel(question: SoloQuestion): string | null {
-  if (!question.stance) return null
-  const index = question.options.findIndex(option => option.id === question.stance?.current_option_id)
-  if (index < 0) return null
-  return `${optionLetter(index)} ${question.options[index].text}`
+export function currentScenario(view: Pick<SoloAttemptView, 'scenarios' | 'scenario_index'>): SoloScenario | undefined {
+  return view.scenarios.find(item => item.index === view.scenario_index)
 }
 
 export function principleKey(value: SoloAttemptView['principle_hint']): 'consequentialism' | 'deontology' | 'mixed' | null {

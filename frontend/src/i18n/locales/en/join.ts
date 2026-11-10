@@ -41,8 +41,6 @@ const join: Shape<typeof zhHant> = {
     notFoundTitle: 'Activity not found',
     notFoundBody: 'The link may have expired, or your teacher deleted this activity.',
     byline: '{{course}} · Teacher: {{teacher}}',
-    questions: 'Questions',
-    questionCount: '{{count}}',
     openUntil: 'Open until',
     opens: 'Opens',
     opensAt: 'from {{start}}',

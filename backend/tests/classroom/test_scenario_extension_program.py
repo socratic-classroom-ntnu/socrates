@@ -24,6 +24,13 @@ def test_template_names_every_input_and_output_field():
     entry = spec["programs"]["scenario_extension"]
     assert prompts.SCHEMAS[entry["schema"]] is ScenarioExtension
     inputs = ("scenario", "earlier_scenarios", "confirmed", "student_messages", "output_locale")
-    outputs = ("change.before", "change.after", "sources", "message_ref", "quote")
+    outputs = (
+        "change.condition",
+        "change.before",
+        "change.after",
+        "sources",
+        "message_ref",
+        "quote",
+    )
     for key in (*inputs, *outputs):
         assert key in entry["template"], key

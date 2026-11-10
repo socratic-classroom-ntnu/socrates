@@ -72,7 +72,11 @@ VALID: dict[type[BaseModel], dict] = {
     },
     ScenarioExtension: {
         "scenario": "同樣的電車，但軌道上那一個人是你的好朋友。你會拉桿嗎？",
-        "change": {"before": "軌道上的一個陌生人", "after": "軌道上的一個人是你的好朋友"},
+        "change": {
+            "condition": "軌道上那個人和你的關係",
+            "before": "軌道上的一個陌生人",
+            "after": "軌道上的一個人是你的好朋友",
+        },
         "sources": [{"message_ref": "m3", "quote": "我不認識他，所以只能看人數"}],
     },
     StanceClassification: {
@@ -125,6 +129,7 @@ INVALID = [
     (SoloTutorTurn, "不接受多餘欄位", lambda s: s.update(unknown_field=1)),
     (ScenarioExtension, "延伸要改變條件", lambda s: s["change"].update(after="軌道上的一個陌生人")),
     (ScenarioExtension, "延伸要指出測試學生哪句話", lambda s: s.update(sources=[])),
+    (ScenarioExtension, "要說出改的是哪一個條件", lambda s: s["change"].pop("condition")),
     (StanceClassification, "沒有立場要給 null，不是空字串", lambda s: s.update(stance_id="")),
     (ActivityExpansion, "立場 id 不可重複", lambda s: s["stances"][1].update(id="s1")),
     (StanceClassification, "confidence 只能是三個等級之一", lambda s: s.update(confidence="sure")),

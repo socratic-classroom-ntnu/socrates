@@ -10,13 +10,14 @@ type NavKey = 'home' | 'groups' | 'bank' | 'store' | 'settings'
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
-// 舊頁仍讀 window.location 決定畫面，所以導覽用一般連結整頁載入，與舊 TeacherShell 相同。
-const ITEMS: { key: NavKey; href: string; icon: ReactNode }[] = [
+// 新路由器的頁面在路由器內切換；整頁重載會先露出深色底與載入畫面，看起來像黑屏閃一下。
+// 舊教師頁（/teacher/home?view=…）在 render 時讀 window.location 決定畫面，仍用一般連結整頁載入（fullLoad）。
+const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] = [
   { key: 'home', href: '/', icon: icon(<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />) },
   { key: 'groups', href: '/groups', icon: icon(<><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20a6 6 0 0 1 12 0M14 20a4.5 4.5 0 0 1 7-3.7" /></>) },
-  { key: 'bank', href: '/teacher/home?view=bank', icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
-  { key: 'store', href: '/teacher/home?view=store', icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
-  { key: 'settings', href: '/teacher/home?view=settings', icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
+  { key: 'bank', href: '/teacher/home?view=bank', fullLoad: true, icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
+  { key: 'store', href: '/teacher/home?view=store', fullLoad: true, icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
+  { key: 'settings', href: '/teacher/home?view=settings', fullLoad: true, icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
 ]
 
 const COLLAPSED_KEY = 'socrates.shell.collapsed'
@@ -46,7 +47,7 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [back, setBack] = useState<ShellBack>(null)
   const active = activeItem(pathname, search)
-  const navItems: NavEntry[] = ITEMS.map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon }))
+  const navItems: NavEntry[] = ITEMS.map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
 
   function toggleCollapsed() {
     setCollapsed(value => { writeCollapsed(!value); return !value })
@@ -64,7 +65,7 @@ export function AppShell() {
       <header className="app-shell__topbar">
         {back
           ? <Link className="app-shell__back" to={back.to}><span aria-hidden="true">‹</span>{back.label}</Link>
-          : <a className="app-shell__brand" href="/"><span className="app-shell__mark" aria-hidden="true">問</span>{t('common:brand')}</a>}
+          : <Link className="app-shell__brand" to="/"><span className="app-shell__mark" aria-hidden="true">問</span>{t('common:brand')}</Link>}
         <AccountMenu variant="topbar" navItems={navItems} />
       </header>
       {content}
@@ -74,19 +75,22 @@ export function AppShell() {
   return <div className={'app-shell' + (collapsed ? ' app-shell--collapsed' : '')}>
     <a className="app-shell__skip" href="#app-content">{t('skip')}</a>
     <nav className="app-shell__nav" aria-label={t('nav.label')}>
-      <a className="app-shell__brand" href="/" aria-label={collapsed ? t('common:brand') : undefined}>
+      <Link className="app-shell__brand" to="/" aria-label={collapsed ? t('common:brand') : undefined}>
         <span className="app-shell__mark" aria-hidden="true">問</span>
         {!collapsed && t('common:brand')}
-      </a>
+      </Link>
       <ul className="app-shell__items">
-        {navItems.map(item => <li key={item.key}>
-          <a
-            href={item.href}
-            aria-current={active === item.key ? 'page' : undefined}
-            aria-label={collapsed ? item.label : undefined}
-            title={collapsed ? item.label : undefined}
-          >{item.icon}{!collapsed && item.label}</a>
-        </li>)}
+        {navItems.map(item => {
+          const props = {
+            'aria-current': active === item.key ? 'page' as const : undefined,
+            'aria-label': collapsed ? item.label : undefined,
+            title: collapsed ? item.label : undefined,
+          }
+          const body = <>{item.icon}{!collapsed && item.label}</>
+          return <li key={item.key}>
+            {item.fullLoad ? <a href={item.href} {...props}>{body}</a> : <Link to={item.href} {...props}>{body}</Link>}
+          </li>
+        })}
       </ul>
       <div className="app-shell__footer">
         <AccountMenu variant={collapsed ? 'collapsed' : 'sidebar'} />

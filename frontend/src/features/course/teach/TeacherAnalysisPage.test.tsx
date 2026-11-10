@@ -81,7 +81,7 @@ test('shares header and tabs with live page', async () => {
   const page = await screen.findByTestId('teacher-analysis-page')
   expect(within(page).getByRole('link', { name: '課程' })).toHaveAttribute('href', '/teach/courses/c-1')
   expect(within(page).getByRole('heading', { name: '科技與選擇' })).toBeInTheDocument()
-  expect(within(page).getByText('進行中', { selector: '.status-pill' })).toBeInTheDocument()
+  expect(within(page).getByText('進行中', { selector: '.pill' })).toBeInTheDocument()
   expect(within(page).getByRole('link', { name: '統計分析' })).toHaveAttribute('aria-current', 'page')
   expect(within(page).getByRole('link', { name: '即時狀況' })).toHaveAttribute('href', '/teach/activities/a-1')
   expect(within(page).getByRole('link', { name: 'AI 分析（開發中）' })).toHaveAttribute('href', '/teach/activities/a-1/analysis/ai')

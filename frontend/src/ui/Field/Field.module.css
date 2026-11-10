@@ -1,0 +1,13 @@
+/* 表單欄位（數值等於 PR C 之後 ui.css 的 .form-field*） */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-size: 15px; font-weight: 700; }
+.star { color: var(--ui-color-danger); }
+.field input, .field textarea, .field select {
+  box-sizing: border-box; width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid var(--ui-color-border); border-radius: 8px;
+  background: var(--ui-color-panel); color: var(--ui-color-ink); font: inherit; font-size: 16px; line-height: 1.5;
+}
+.field textarea { resize: vertical; }
+.field input:focus, .field textarea:focus { outline: none; border: 2px solid var(--ui-color-primary); padding: 9px 13px; }
+.invalid input, .invalid textarea { border: 2px solid var(--ui-color-danger); padding: 9px 13px; }
+.hint { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ui-color-muted); }
+.error { margin: 0; font-size: 13px; font-weight: 700; color: var(--ui-color-danger); }

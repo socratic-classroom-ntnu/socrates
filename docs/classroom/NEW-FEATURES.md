@@ -77,12 +77,12 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 ```
 學生訊息 → solo-activity 存訊息（locale）
         → llm-runtime.solo_tutor（輸入：敘述＋立場空間＋帶代號逐字稿＋output_locale）
-        → 回 SoloTutorTurn（reply_text、move、observations、flags、guard、confirm_summary?）
+        → 回 SoloTutorTurn（reply_text、move、observations、flags、guard、summary）
         → 語言檢查／引用驗證不過 → guarded_generate 重試一次
         → solo-activity 存導師訊息、flags；更新指標
         → 推播教師進度 view（即時）
 ```
-- 後端判定可以確認時，才要求 solo_tutor 產生 `confirm_summary`（points＋sources），學生按「確認」或「不太對」。
+- solo_tutor 每一輪都產生 `summary`（PersonalSummary 的欄位＋sources），後端依這一輪的 observations 判定可以確認時，才把它給學生，學生按「確認」或「不太對」。
 - 最後一次確認之後，solo-activity 呼叫 final_summary，學生確認最終統整。連續兩次「不太對」就標記「未確認」並結束。這一步取代現在的 submit_review（目前回 501）。
 - 指標只由後端從 flags 算，LLM 不直接打分。
 

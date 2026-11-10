@@ -3,6 +3,7 @@ import { ApiError, api } from '../../../contract/classroomClient'
 import { Dialog } from '../../../components/Dialog'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Button, FormError } from '../../../ui'
 
 type Props = { title: string; activityId: string; onCancel(): void; onDeleted(): void }
 
@@ -32,12 +33,12 @@ export function DeleteActivityDialog({ title, activityId, onCancel, onDeleted }:
     tone="danger"
     onClose={onCancel}
     footer={<>
-      <button type="button" className="button button--quiet" onClick={onCancel}>{t('cards.cancel')}</button>
-      <button type="button" className="button button--danger" disabled={busy} onClick={() => void confirm()}>{t('cards.deleteDialog.confirm')}</button>
+      <Button variant="quiet" onClick={onCancel}>{t('cards.cancel')}</Button>
+      <Button variant="danger" disabled={busy} onClick={() => void confirm()}>{t('cards.deleteDialog.confirm')}</Button>
     </>}
   >
     <p className="dialog__question">{t('cards.deleteDialog.question', { title })}</p>
     <p className="dialog__text">{t('cards.deleteDialog.body')}</p>
-    {failure && <p role="alert" className="form-error">{errorMessage(t, failure)}</p>}
+    {failure && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
   </Dialog>
 }

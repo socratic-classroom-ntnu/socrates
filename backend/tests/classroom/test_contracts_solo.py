@@ -58,7 +58,14 @@ VALID: dict[type[BaseModel], dict] = {
         "move": "probe",
         "observations": OBSERVATIONS,
         "flags": FLAGS,
-        "confirm_summary": None,
+        "summary": {
+            "current_position": "不會親手推人",
+            "reason_summary": "親手做和沒有阻止不一樣",
+            "relevant_conditions": [],
+            "unresolved_issue": "",
+            "principle_note": "",
+            "sources": [{"message_ref": "m3", "quote": "親手推下去就是我殺的"}],
+        },
         "guard": "on_topic",
     },
     ActivityExpansion: {
@@ -117,6 +124,7 @@ INVALID = [
     (SoloTutorTurn, "少一個 flag 就是失敗的回覆", lambda s: s["flags"].pop("danger_tendency")),
     (SoloTutorTurn, "observations 每欄必填", lambda s: s["observations"].pop("stance_id")),
     (SoloTutorTurn, "不接受多餘欄位", lambda s: s.update(unknown_field=1)),
+    (SoloTutorTurn, "每一輪都要有統整", lambda s: s.pop("summary")),
     (StanceClassification, "沒有立場要給 null，不是空字串", lambda s: s.update(stance_id="")),
     (ActivityExpansion, "立場 id 不可重複", lambda s: s["stances"][1].update(id="s1")),
     (StanceClassification, "confidence 只能是三個等級之一", lambda s: s.update(confidence="sure")),
@@ -145,10 +153,11 @@ def test_invalid_sample_fails(model, change):
         model.model_validate(sample)
 
 
-def test_confirm_summary_carries_citations():
-    turn = SoloTutorTurn.model_validate({**VALID[SoloTutorTurn], "confirm_summary": CITED})
-    assert turn.confirm_summary is not None
-    assert turn.confirm_summary.points[0].sources[0].message_ref == "m3"
+def test_summary_keeps_the_personal_summary_fields_and_carries_citations():
+    """solo-activity reads the per-turn summary as it read PersonalTutorTurn's."""
+    turn = SoloTutorTurn.model_validate(VALID[SoloTutorTurn])
+    assert turn.summary.current_position == "不會親手推人"
+    assert turn.summary.sources[0].message_ref == "m3"
 
 
 @pytest.mark.parametrize("model", [SoloFlags, SoloObservations], ids=lambda m: m.__name__)

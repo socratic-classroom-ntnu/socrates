@@ -11,6 +11,12 @@
 - verification delivery status
 - stable auth reason codes
 
+### 訪客（免註冊加入）
+
+- `POST /auth/guest`（暱稱＋語言）建訪客帳號與 session；`POST /auth/guest/upgrade`（email＋密碼）讓同一個帳號 id 轉成註冊帳號，和一般註冊一樣要先驗證 Email。
+- 訪客只靠裝置上的 session cookie 定位。每個允許訪客的請求都把 `guest_expires_at` 延到 7 天後；過了就回 `GUEST_EXPIRED`。
+- **預設拒絕訪客**：`service.account(...)` 遇到訪客回 `GUEST_NOT_ALLOWED`，學生端點要明確傳 `allow_guest=True`（例：選課、單人活動、分組課）。老師與金鑰相關的端點不傳，訪客就進不去。
+
 ## Toy page
 
 本模組使用既有`frontend/src/features/dev-console/`註冊fixture與操作面板。Toy page與production frontend共用generated client、ViewModel與reason codes。

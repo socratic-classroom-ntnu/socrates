@@ -38,6 +38,13 @@ def password_policy(value: str) -> str:
     return value
 
 
+def email_shape(value: str) -> str:
+    value = value.strip().casefold()
+    if "@" not in value or "." not in value.rsplit("@", 1)[1]:
+        raise ValueError("請填入可收信的 email")
+    return value
+
+
 class Register(Strict):
     username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
@@ -51,10 +58,31 @@ class Register(Strict):
     @field_validator("email")
     @classmethod
     def email_shape(cls, v: str) -> str:
-        v = v.strip().casefold()
-        if "@" not in v or "." not in v.rsplit("@", 1)[1]:
-            raise ValueError("請填入可收信的 email")
-        return v
+        return email_shape(v)
+
+
+class GuestJoin(Strict):
+    """Joining without registering: a nickname shown to the class and the interface language."""
+
+    nickname: str = Field(min_length=1, max_length=24)
+    locale: Locale
+
+
+class GuestUpgrade(Strict):
+    """A guest registering keeps its account; it adds what a registration needs."""
+
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=8, max_length=32)
+
+    @field_validator("password")
+    @classmethod
+    def password_rule(cls, v: str) -> str:
+        return password_policy(v)
+
+    @field_validator("email")
+    @classmethod
+    def email_rule(cls, v: str) -> str:
+        return email_shape(v)
 
 
 class Login(Strict):
@@ -118,6 +146,9 @@ class AccountView(Strict):
     points: int
     achievements: list[str]
     locale: Locale | None = None
+    kind: Literal["guest", "registered"] = "registered"
+    # Guests only: when the account is deleted unless it acts again before then.
+    guest_expires_at: float | None = None
 
 
 class LocaleUpdate(Strict):

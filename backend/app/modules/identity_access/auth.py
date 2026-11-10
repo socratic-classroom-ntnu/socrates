@@ -29,6 +29,9 @@ VERIFY_TOKEN_SECONDS = 86400
 RESET_TOKEN_SECONDS = 1800
 # 釋出的帳號不能再用密碼登入（不是合法的 argon2 雜湊，verify 會失敗）。
 RELEASED_PASSWORD_HASH = "RELEASED_UNVERIFIED_ACCOUNT"
+SESSION_SECONDS = 43200
+# 訪客閒置這麼久就到期；每次有動作都從現在重新算。
+GUEST_SECONDS = 7 * 86400
 
 
 # Modules that keep per-account progress (classroom points and achievements) add fields to the
@@ -45,14 +48,16 @@ def account_view(db, account, csrf=""):
     view = {
         "id": account.id,
         "username": account.username,
-        "email": account.email,
-        "email_masked": mask_recipient(account.email),
+        "email": account.email or "",
+        "email_masked": mask_recipient(account.email) if account.email else "",
         "verified": account.verified,
         "authority_state": ("FULL_PRODUCT" if account.verified else "EMAIL_VERIFICATION"),
         "csrf_token": csrf,
         "points": 0,
         "achievements": [],
         "locale": account.locale,
+        "kind": account.kind,
+        "guest_expires_at": account.guest_expires_at,
     }
     for extension in ACCOUNT_VIEW_EXTENSIONS:
         view.update(extension(db, account))
@@ -71,7 +76,8 @@ def _new_session(db, account):
             token_hash=digest(token),
             account_id=account.id,
             csrf_token=csrf,
-            expires_at=time.time() + 43200,
+            expires_at=time.time()
+            + (GUEST_SECONDS if account.kind == "guest" else SESSION_SECONDS),
         )
     )
     return token, account_view(db, account, csrf)
@@ -207,12 +213,13 @@ def _release(db, account, now):
         token.expires_at = min(token.expires_at, now)
 
 
-def _claim_identity(db, username, email, now):
+def _claim_identity(db, username, email, now, upgrading=None):
     """新註冊要用的使用者名稱／Email：已驗證帳號佔用就拒絕；驗證連結仍有效的未驗證帳號佔用也拒絕；
-    驗證連結已過期的未驗證帳號在同一個交易內釋出。"""
+    驗證連結已過期的未驗證帳號在同一個交易內釋出。訪客升級時（upgrading）不算它自己。"""
     holders = db.scalars(
         select(Account)
         .where((Account.username == username) | (Account.email == email))
+        .where(Account.id != (upgrading.id if upgrading else ""))
         .with_for_update()
     ).all()
     for field, code in (("username", "USERNAME_TAKEN"), ("email", "EMAIL_TAKEN")):
@@ -259,8 +266,8 @@ def login(body):
                 | (Account.email == body.login.casefold())
             )
         )
-        # Equal-work password verification also applies to unknown accounts.
-        if account is None:
+        # Equal-work password verification also applies to unknown accounts and to guests.
+        if account is None or account.password_hash is None:
             HASHER.hash(body.password)
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401)
         try:
@@ -270,9 +277,12 @@ def login(body):
         return _new_session(db, account)
 
 
-def identity(db, token, csrf=None, mutation=False, verified=True):
+def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=False):
+    """The session's account. Guests get in only where the endpoint opts in (allow_guest), and
+    every such request pushes their expiry 7 days ahead."""
+    now = time.time()
     session = db.get(LoginSession, digest(token or ""))
-    if session is None or session.expires_at <= time.time():
+    if session is None or session.expires_at <= now:
         raise DomainError("LOGIN_REQUIRED", 401)
     if mutation and not secrets.compare_digest(
         session.csrf_token,
@@ -280,6 +290,14 @@ def identity(db, token, csrf=None, mutation=False, verified=True):
     ):
         raise DomainError("SESSION_CSRF_REQUIRED", 403)
     account = db.get(Account, session.account_id)
+    if account.kind == "guest":
+        if (account.guest_expires_at or 0) <= now:
+            raise DomainError("GUEST_EXPIRED", 401)
+        if not allow_guest:
+            raise DomainError("GUEST_NOT_ALLOWED", 403)
+        account.guest_expires_at = now + GUEST_SECONDS
+        session.expires_at = now + GUEST_SECONDS
+        return account, session
     if verified and not account.verified:
         raise DomainError("EMAIL_VERIFICATION_REQUIRED", 403)
     return account, session
@@ -352,3 +370,34 @@ def verification_status(account_id: str) -> dict:
                 purpose="verify",
             ),
         }
+
+
+def join_as_guest(body):
+    """A guest account and its session; the username is the nickname plus a random suffix,
+    since two students in one class may pick the same nickname."""
+    with transaction() as db:
+        account = Account(
+            username=f"{body.nickname}-{secrets.token_hex(4)}",
+            kind="guest",
+            locale=body.locale,
+            guest_expires_at=time.time() + GUEST_SECONDS,
+        )
+        db.add(account)
+        db.flush()
+        return _new_session(db, account)
+
+
+def upgrade_guest(db, account, session, body):
+    """Registration for a guest: the same account id gains an email and password, so every
+    record it already has stays. Like any new registration, it starts unverified."""
+    now = time.time()
+    _claim_identity(db, account.username, body.email, now, upgrading=account)
+    account.email = body.email
+    account.password_hash = HASHER.hash(body.password)
+    account.kind = "registered"
+    account.guest_expires_at = None
+    session.expires_at = min(session.expires_at, now + SESSION_SECONDS)
+    db.flush()
+    result = account_view(db, account, session.csrf_token)
+    result["verification_delivery"] = queue_token(db, account, "verify")
+    return result

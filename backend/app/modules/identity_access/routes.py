@@ -12,6 +12,8 @@ from app.modules.identity_access.service import (
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.identity_access.contracts import (
     AccountView,
+    GuestJoin,
+    GuestUpgrade,
     LocaleUpdate,
     Login,
     MailRequest,
@@ -20,6 +22,7 @@ from app.modules.identity_access.contracts import (
     TokenRequest,
     VerificationStatusView,
 )
+from app.modules.platform.errors import DomainError
 from app.modules.platform.storage import transaction
 
 router = APIRouter()
@@ -41,17 +44,35 @@ def login(body: Login, request: Request, response: Response):
     return result
 
 
+@router.post("/auth/guest", response_model=AccountView)
+def join_as_guest(body: GuestJoin, request: Request, response: Response):
+    auth_limit(request, "guest")
+    token, result = auth.join_as_guest(body)
+    _set_session_cookie(response, token, guest=True)
+    return result
+
+
+@router.post("/auth/guest/upgrade", response_model=AccountView)
+def upgrade_guest(body: GuestUpgrade, request: Request):
+    auth_limit(request, "register")
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False, allow_guest=True)
+        if a.kind != "guest":
+            raise DomainError("GUEST_ONLY", 409)
+        return auth.upgrade_guest(db, a, s, body)
+
+
 @router.get("/auth/me", response_model=AccountView)
 def me(request: Request):
     with transaction() as db:
-        a, s = account(db, request, verified=False)
+        a, s = account(db, request, verified=False, allow_guest=True)
         return auth.account_view(db, a, s.csrf_token)
 
 
 @router.put("/account/locale", response_model=AccountView)
 def update_locale(body: LocaleUpdate, request: Request):
     with transaction() as db:
-        a, s = account(db, request, mutation=True, verified=False)
+        a, s = account(db, request, mutation=True, verified=False, allow_guest=True)
         auth.set_locale(a, body.locale)
         return auth.account_view(db, a, s.csrf_token)
 
@@ -59,7 +80,7 @@ def update_locale(body: LocaleUpdate, request: Request):
 @router.post("/auth/logout")
 def logout(request: Request, response: Response):
     with transaction() as db:
-        _, s = account(db, request, True, False)
+        _, s = account(db, request, True, False, allow_guest=True)
         db.delete(s)
     response.delete_cookie(auth.COOKIE, path="/")
     return {"status": "SIGNED_OUT"}

@@ -44,7 +44,7 @@
     },
     "scenario_extension": {
       "schema": "ScenarioExtension",
-      "template": "你為一位學生寫出單人活動的下一個情境。輸入有：學生剛確認過的這個情境 scenario、更早用過的情境 earlier_scenarios（可能是空陣列）、學生確認過的整理 confirmed（current_position、reason_summary、relevant_conditions、unresolved_issue）、學生在這個情境裡說過的話 student_messages（每則帶代號 ref 與原文 text），以及 output_locale。新的情境以 scenario 為底，只改一個條件，用來測試學生確認過的某一個理由或條件；其餘的人物、處境與可以做的選擇都保持不變。兩難必須保留：改完之後學生仍然要做出取捨，不能讓其中一邊變得顯然正確，也不能讓兩難消失（例如不要讓當事人自己跳下去）。不要重複 scenario 或 earlier_scenarios 已經用過的改法。不表達你自己的立場，不暗示哪個選擇才對。scenario 寫成學生可以直接閱讀的完整情境，用 output_locale 的語言，人稱沿用原本 scenario 的寫法；情境裡要寫出改動後的那個條件，結尾不要提問，導師會接著開場。change.before 是原本的條件、change.after 是改動後的條件，各用一個短語，兩者不可相同。sources 列出這個改動要測試的學生原話：message_ref 只能用 student_messages 裡的 ref，quote 必須從那則 text 逐字複製一段，不改字、不加字。"
+      "template": "你為一位學生寫出單人活動的下一個情境。輸入有：學生剛確認過的這個情境 scenario、更早用過的情境 earlier_scenarios（可能是空陣列）、學生確認過的整理 confirmed（current_position、reason_summary、relevant_conditions、unresolved_issue）、學生在這個情境裡說過的話 student_messages（每則帶代號 ref 與原文 text），以及 output_locale。新的情境以 scenario 為底，只改一個條件，用來測試學生確認過的某一個理由或條件；其餘的人物、處境與可以做的選擇都保持不變。兩難必須保留：改完之後學生仍然要做出取捨，不能讓其中一邊變得顯然正確，也不能讓兩難消失（例如不要讓當事人自己跳下去）。不要重複 scenario 或 earlier_scenarios 已經用過的改法。不表達你自己的立場，不暗示哪個選擇才對。scenario 寫成學生可以直接閱讀的完整情境，用 output_locale 的語言，人稱沿用原本 scenario 的寫法；情境裡要寫出改動後的那個條件，結尾不要提問，導師會接著開場。change.condition 用幾個字說出改的是哪一個條件（只能是一個），change.before 是它原本的樣子、change.after 是改動後的樣子，各用一個短語，兩者不可相同。sources 列出這個改動要測試的學生原話：message_ref 只能用 student_messages 裡的 ref，quote 必須從那則 text 逐字複製一段，不改字、不加字。"
     },
     "activity_expansion": {
       "schema": "ActivityExpansion",

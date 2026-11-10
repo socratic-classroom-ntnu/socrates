@@ -25,6 +25,22 @@ image 裡沒有 seed 腳本，網站照樣會起來，但**沒有測試帳號**�
 
 同時最多 6 個預覽環境。Fork 來的 PR 推不了 image，不能預覽。`backend/arthur/` 開頭的分支是後端重構，不建預覽環境。
 
+## 分支常駐預覽
+
+除了 PR 預覽，下面幾條分支各有一個**一直存在**的預覽，跟著分支最新的 commit 自動更新（flux-k8s 的
+`apps/base/socrates-preview/branches.yaml`），同樣有獨立的資料庫與測試帳號：
+
+| 分支 | 網址 |
+|---|---|
+| `develop` | `https://preview-develop.socrates.driseam.com` |
+| `stage` | `https://preview-stage.socrates.driseam.com` |
+| `master` | `https://preview-master.socrates.driseam.com` |
+| `backend/main` | `https://preview-backend-main.socrates.driseam.com` |
+
+image 來自 CI 的 `release` job（`.github/workflows/ci.yml`）：push 到這幾條分支就建一次。`backend/main` 的
+channel 叫 `backend-main`，沒有真正的環境追這個前綴，只有這個預覽用它的 `sha-<commit>` tag。
+PR 合併之後 `pr-<編號>` 會被刪掉，想看 `backend/main` 累積起來的樣子就開 `preview-backend-main`。
+
 ## 預設帳號（factory 資料）
 
 新資料庫啟動時，`scripts/seed_preview.py` 會建好以下帳號，**密碼都是 `preview-password`**，

@@ -1,0 +1,15 @@
+/* 課程頁共用按鈕（數值等於 PR C 之後 ui.css 的 .button*）。還沒進 @layer（D20），載入位置由 styleOrder.test.ts 守住 */
+.button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; box-sizing: border-box;
+  padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; font: inherit; font-size: 14px; font-weight: 700;
+  line-height: 1.3; text-align: center; text-decoration: none; cursor: pointer;
+}
+.button:disabled { opacity: 0.55; cursor: not-allowed; }
+.primary { background: var(--ui-color-primary); color: var(--ui-color-panel); }
+.primary:hover:not(:disabled) { background: var(--ui-color-primary-hover); }
+.dark { background: var(--ui-color-dark); color: var(--ui-color-panel); }
+.outline { background: var(--ui-color-panel); border-color: var(--ui-color-border); color: var(--ui-color-primary); }
+.outline:hover:not(:disabled) { background: var(--ui-color-panel-hover); }
+.quiet { background: var(--ui-color-panel); border-color: var(--ui-color-border); color: var(--ui-color-ink); font-weight: 400; }
+.danger { background: var(--ui-color-danger); color: var(--ui-color-panel); }
+.button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }

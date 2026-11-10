@@ -4,10 +4,10 @@ import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useShellBack } from '../../../shared/shellContext'
 import { useIsPhone } from '../../../shared/useIsPhone'
-import { CopyButton } from '../../../components/CopyButton'
 import { errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { ButtonLink, Chip, ChipGroup, CopyButton } from '../../../ui'
 import '../../../styles/learn.css'
 
 type Course = components['schemas']['CourseStudentView']
@@ -37,7 +37,7 @@ export function StudentCoursePage() {
     return <main className="learn-page learn-page--message">
       <h1>{notFound ? t('notFound.title') : errorMessage(t, error)}</h1>
       {notFound && <p>{t('notFound.body')}</p>}
-      <Link className="button button--outline" to="/">{t('notFound.back')}</Link>
+      <ButtonLink variant="outline" to="/">{t('notFound.back')}</ButtonLink>
     </main>
   }
 
@@ -63,7 +63,7 @@ export function StudentCoursePage() {
       <div className="learn-card__content">
         <span className="learn-card__meta">{t('openUntil', { end: date(card.ends_at, 'weekdayDateTime') })}</span>
       </div>
-      <Link className="button button--outline learn-card__start" to={`/learn/activities/${card.id}`}>{t('start')}<span aria-hidden="true">→</span></Link>
+      <ButtonLink variant="outline" className="learn-card__start" to={`/learn/activities/${card.id}`}>{t('start')}<span aria-hidden="true">→</span></ButtonLink>
     </article>
   }
 
@@ -79,14 +79,14 @@ export function StudentCoursePage() {
       {/* 手機稿沒有代碼框 */}
       {data.code && !phone && <div className="learn-head__code">
         <span>{t('code')}</span><strong>{data.code}</strong>
-        <CopyButton text={data.code} label={t('copyCode')} iconOnly className="icon-button icon-button--quiet" />
+        <CopyButton text={data.code} label={t('copyCode')} iconOnly tone="quiet" />
       </div>}
     </header>
     {items.length === 0 ? <p className="learn-empty">{t('nothing')}</p> : <>
-      <div role="group" aria-label={t('filterLabel')} className="chips">
-        {(['all', ...SECTIONS] as Filter[]).map(key => <button key={key} type="button" className="chip" aria-pressed={filter === key}
-          onClick={() => setParams(key === 'all' ? {} : { filter: key }, { replace: true })}>{t(`filters.${key}`)} {count(key)}</button>)}
-      </div>
+      <ChipGroup label={t('filterLabel')} className="learn-chips">
+        {(['all', ...SECTIONS] as Filter[]).map(key => <Chip key={key} className="learn-chip" pressed={filter === key}
+          onClick={() => setParams(key === 'all' ? {} : { filter: key }, { replace: true })}>{t(`filters.${key}`)} {count(key)}</Chip>)}
+      </ChipGroup>
       {shown.length === 0 && <p className="learn-empty">{t('noMatch')}</p>}
       {shown.map(([status, cards]) => <section key={status} className={`learn-section learn-section--${status}`} aria-labelledby={`learn-${status}`}>
         <h2 id={`learn-${status}`}>{t(`sections.${status}`)}</h2>

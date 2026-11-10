@@ -1,0 +1,8 @@
+/* 篩選 chip（數值等於 PR C 之後 ui.css 的 .chips、.chip*） */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  min-height: 34px; padding: 4px 14px; border: 1px solid var(--ui-color-border); border-radius: 999px; background: var(--ui-color-panel);
+  color: var(--ui-color-ink-soft); font: inherit; font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--ui-color-dark); background: var(--ui-color-dark); color: var(--ui-color-panel); font-weight: 700; }
+.chip:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }

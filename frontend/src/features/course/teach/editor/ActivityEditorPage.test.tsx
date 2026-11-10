@@ -99,11 +99,32 @@ test('invalid form shows the summary and calls no api', async () => {
   const calls = openNew()
   await screen.findByLabelText(/^題目/)
   await click('建立活動')
+  // 頂端只說一句，不逐條列出；畫面跳到第一個錯的欄位
   const summary = screen.getByRole('alert')
-  expect(within(summary).getByRole('heading')).toHaveTextContent(/^還有 \d+ 個地方要補完，才能儲存$/)
-  expect(summary).toHaveTextContent('基礎資訊：題目')
+  expect(summary).toHaveTextContent(/^部分欄位尚未填寫$/)
+  expect(within(summary).queryAllByRole('button')).toHaveLength(0)
   expect(screen.getByLabelText(/^題目/)).toHaveAttribute('aria-invalid', 'true')
+  await waitFor(() => expect(screen.getByLabelText(/^題目/)).toHaveFocus())
   expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
+})
+
+test('field errors and hints are read as each control’s description', async () => {
+  const titleHint = '寫一段話，蘇格拉底會以它為起點，替每位學生寫出第一個情境。這段話也是活動名稱。'
+  const windowHint = '時間到會自動結束；你也可以在活動頁提早開始或結束。結束後，學生只能回看自己的紀錄。'
+  openNew()
+  const title = await screen.findByLabelText(/^題目/)
+  expect(title).toHaveAccessibleDescription(titleHint)
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(windowHint)
+  fireEvent.click(screen.getByRole('radio', { name: '指定時間' }))
+  await click('建立活動')
+
+  expect(title).toHaveAccessibleDescription(`請填題目 ${titleHint}`)
+  expect(screen.getByRole('button', { name: /^開始時間/ })).toHaveAccessibleDescription(`請填開始時間 ${windowHint}`)
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(`請填結束時間 ${windowHint}`)
+
+  // 補好就只剩說明
+  fireEvent.change(title, { target: { value: '第三週倫理討論' } })
+  expect(title).toHaveAccessibleDescription(titleHint)
 })
 
 test('the editor has one topic input and no question, option or panel controls', async () => {
@@ -116,11 +137,12 @@ test('the editor has one topic input and no question, option or panel controls',
   expect(screen.queryByRole('tab')).toBeNull()
 })
 
-test('summary item focuses the topic field', async () => {
+test('invalid submit reopens a collapsed section and focuses the topic field', async () => {
   openNew()
   await screen.findByLabelText(/^題目/)
+  fireEvent.click(screen.getByRole('button', { expanded: true }))
+  expect(screen.queryByLabelText(/^題目/)).toBeNull()
   await click('建立活動')
-  await act(async () => { fireEvent.click(within(screen.getByRole('alert')).getAllByRole('button')[0]) })
   await waitFor(() => expect(screen.getByLabelText(/^題目/)).toHaveFocus())
 })
 
@@ -133,8 +155,8 @@ test('publish failure after create keeps the draft and flags end time', async ()
   await fillNew()
   await click('建立活動')
   await waitFor(() => expect(where()).toBe('/teach/activities/a-9/edit'))
-  const summary = await screen.findByRole('alert')
-  expect(summary).toHaveTextContent('基礎資訊：結束時間')
+  expect(await screen.findByRole('alert')).toHaveTextContent(/^部分欄位尚未填寫$/)
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAttribute('aria-invalid', 'true')
 })
 
 test('editing a published activity puts then publishes', async () => {

@@ -1,0 +1,3 @@
+/* QR 圖（數值等於 PR C 之後 ui.css 的 .qr-code*） */
+.qr { display: block; border-radius: 6px; image-rendering: pixelated; }
+.loading { background: var(--ui-color-bg); }

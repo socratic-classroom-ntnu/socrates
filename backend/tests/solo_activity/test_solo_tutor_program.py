@@ -27,6 +27,7 @@ def test_group_personal_tutor_is_untouched():
     group = _template("personal_tutor")
     for key in ("principle_note", "revise_hint", "stance_changed_from"):
         assert key not in group, key
+    assert "summary 依 history 整理" in group
 
 
 def test_solo_reply_style_section():

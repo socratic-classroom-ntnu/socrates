@@ -40,7 +40,8 @@ SoloAction = Literal[
     "continue_without_tutor",
 ]
 SoloNotice = Literal["tutor_unavailable", "owner_provider_missing"]
-ScenarioStatus = Literal["in_progress", "goal_met"]
+# capped: the scenario ran out of messages before the view settled; its summary was only shown.
+ScenarioStatus = Literal["in_progress", "goal_met", "capped"]
 PrincipleHint = Literal["後果主義", "義務論", "混合"]
 TutorMove = Literal["probe", "clarify", "challenge", "reflect", "summarize", "hypothetical"]
 # Which part of a turned-down summary the student says is wrong.
@@ -53,7 +54,7 @@ class View(BaseModel):
 
 class SoloScenarioProgressView(View):
     index: int
-    status: Literal["in_dialogue", "confirmed"]
+    status: Literal["in_dialogue", "confirmed", "capped"]
 
 
 class SoloAttemptBrief(View):
@@ -156,7 +157,7 @@ class SoloProgressSummaryView(View):
 
 
 class SoloProgressCellView(View):
-    status: Literal["answering", "in_dialogue", "confirming", "confirmed"]
+    status: Literal["answering", "in_dialogue", "confirming", "confirmed", "capped"]
     turns: int | None  # in_dialogue only
 
 

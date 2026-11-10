@@ -5210,7 +5210,8 @@
               "answering",
               "in_dialogue",
               "confirming",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -5273,7 +5274,8 @@
           "status": {
             "enum": [
               "in_dialogue",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -5321,7 +5323,8 @@
           "status": {
             "enum": [
               "in_progress",
-              "goal_met"
+              "goal_met",
+              "capped"
             ],
             "title": "Status",
             "type": "string"

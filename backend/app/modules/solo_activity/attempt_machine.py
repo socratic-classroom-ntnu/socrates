@@ -111,10 +111,18 @@ def new_attempt(attempt_id: str, scenarios: list[Scenario]) -> AttemptState:
     )
 
 
+def _can_still_talk(current: ScenarioProgress) -> bool:
+    """Whether the student may send another message in this scenario (the answer counts as one)."""
+    return current.turn_index + 1 < MESSAGE_LIMIT
+
+
 def actions_for(a: AttemptState, now: float) -> list[SoloAction]:
     if a.state == "awaiting_tutor":
         stale = a.pending_since is not None and now - a.pending_since > STALE_SECONDS
         return ["retry"] if stale else []
+    if a.state == "confirming" and not _can_still_talk(a.current):
+        # 不太對 leads back to a dialogue with no message left in it: only confirming is offered.
+        return ["confirm_viewpoint"]
     return list(_ACTIONS.get(a.state, []))
 
 
@@ -160,7 +168,7 @@ def send_message(
     if revise_hint is not None and not current.revising:
         raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
     # The first answer plus one message per completed turn.
-    if current.turn_index + 1 >= MESSAGE_LIMIT:
+    if not _can_still_talk(current):
         raise DomainError("SOLO_MESSAGE_LIMIT", 409)
     turn_index = current.turn_index + 1
     progress = _with_current(
@@ -216,12 +224,15 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: PersonalTutorTurn) -> Atte
         turns_since_shift=None if last_shift is None else turn_index - last_shift,
         turns_since_revise=None if last_revise is None else turn_index - last_revise,
     )
-    if not advance:
+    # Out of messages without a settled view: the current summary goes to confirmation as capped.
+    capped = not advance and not _can_still_talk(a.current)
+    if not advance and not capped:
         progress = _with_current(settled, candidate_summary=None, summary_digest=None)
         return replace(settled, state="in_dialogue", progress=progress)
     summary = turn.summary.model_dump()
     progress = _with_current(
         settled,
+        **({"status": "capped"} if capped else {}),
         candidate_summary=summary,
         summary_digest=summary_digest(
             a.attempt_id, a.scenario_index, a.current.turn_index, summary
@@ -238,6 +249,15 @@ def apply_pulled_back_turn(a: AttemptState, key: str) -> AttemptState | None:
     if not _is_pending(a, key):
         return None
     settled = replace(a, pending_key=None, pending_since=None, notice=None)
+    if not _can_still_talk(a.current):
+        # No message left and nothing trustworthy to confirm: the scenario ends capped.
+        capped = replace(
+            settled,
+            progress=_with_current(
+                settled, status="capped", candidate_summary=None, summary_digest=None
+            ),
+        )
+        return replace(capped, state=_after_confirmation(capped))
     progress = _with_current(settled, candidate_summary=None, summary_digest=None)
     return replace(settled, state="in_dialogue", progress=progress)
 
@@ -256,10 +276,12 @@ def confirm_viewpoint(a: AttemptState, digest: str) -> AttemptState:
     current = a.current
     if digest != current.summary_digest:
         raise DomainError("SOLO_SUMMARY_STALE", 409)
+    # A capped summary is only acknowledged: never a confirmed viewpoint, never goal_met.
+    capped = current.status == "capped"
     progress = _with_current(
         a,
-        status="goal_met",
-        confirmed_summary=current.candidate_summary,
+        status="capped" if capped else "goal_met",
+        confirmed_summary=None if capped else current.candidate_summary,
         candidate_summary=None,
         summary_digest=None,
     )

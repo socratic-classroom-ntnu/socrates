@@ -23,6 +23,12 @@
     "class_summary": {"L2": "L2/class_summary.md", "checks": ["no_leak"], "fallback": null},
     "personal_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
     "ai_script_authoring": {"L2": "L2/ai_script_authoring.md", "checks": ["no_leak"], "fallback": null},
-    "scenario_extension": {"L2": "L2/scenario_extension.md", "checks": ["no_leak"], "fallback": null}
+    "scenario_extension": {"L2": "L2/scenario_extension.md", "checks": ["no_leak"], "fallback": null},
+    "activity_expansion": {"L2": "L2/activity_expansion.md", "checks": ["no_leak"], "fallback": null},
+    "stance_classify": {"L2": "L2/stance_classify.md", "checks": ["no_leak"], "fallback": null},
+    "final_summary": {"L2": "L2/final_summary.md", "checks": ["no_leak"], "fallback": null},
+    "radar_axis_naming": {"L2": "L2/radar_axis_naming.md", "checks": ["no_leak"], "fallback": null},
+    "radar_dimensions": {"L2": "L2/radar_dimensions.md", "checks": ["no_leak"], "fallback": null},
+    "radar_scoring": {"L2": "L2/radar_scoring.md", "checks": ["no_leak"], "fallback": null}
   }
 }

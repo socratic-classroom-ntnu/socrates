@@ -22,6 +22,7 @@
     "question_summary": {"L2": "L2/question_summary.md", "checks": ["no_leak"], "fallback": null},
     "class_summary": {"L2": "L2/class_summary.md", "checks": ["no_leak"], "fallback": null},
     "personal_summary": {"L2": "L2/personal_summary.md", "checks": ["no_leak"], "fallback": null},
-    "ai_script_authoring": {"L2": "L2/ai_script_authoring.md", "checks": ["no_leak"], "fallback": null}
+    "ai_script_authoring": {"L2": "L2/ai_script_authoring.md", "checks": ["no_leak"], "fallback": null},
+    "scenario_extension": {"L2": "L2/scenario_extension.md", "checks": ["no_leak"], "fallback": null}
   }
 }

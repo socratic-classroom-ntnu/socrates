@@ -6,6 +6,7 @@ from app.modules.llm_runtime.contracts import (
     DynamicResult,
     LLMStudentTurn,
     PersonalTutorTurn,
+    ScenarioExtension,
     ScriptAssistResult,
     SummaryResult,
     TutorTurn,
@@ -22,6 +23,7 @@ SCHEMAS = {
     "DynamicResult": DynamicResult,
     "LLMStudentTurn": LLMStudentTurn,
     "ScriptAssistResult": ScriptAssistResult,
+    "ScenarioExtension": ScenarioExtension,
 }
 
 
@@ -37,7 +39,8 @@ JOB_KINDS = (
 # Request-time programs (no classroom job); same file, same validation.
 # solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
 # activity the backend alone decides when the student confirms.
-REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor")
+# scenario_extension writes a solo student's next scenario; the first one is the teacher's text.
+REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor", "scenario_extension")
 # L0 路由；compile_program 依角色載入 L1＋L2（app/modules/llm_runtime/iron_rules.py）。
 IRON_RULES_SKILL = "iron-rules/ROUTER.json"
 

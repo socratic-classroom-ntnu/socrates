@@ -20,6 +20,7 @@
 | `ai_script_authoring` | 教師出題助手（`app/modules/content_authoring/routes/script_assist.py`） |
 | `other_suggestion` | 其他觀點建議（`app/modules/group_dialogue/routes/ai_students.py`） |
 | `solo_tutor` | 單人活動的導師（`app/modules/solo_activity/service.py`） |
+| `scenario_extension` | 單人活動的延伸情境（由 solo-activity 呼叫；失敗時由它的後備做法接手） |
 
 ## 每次呼叫做什麼
 

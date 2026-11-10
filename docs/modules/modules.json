@@ -46,9 +46,7 @@
         "backend/app/modules/platform/"
       ],
       "uses": [],
-      "todo": [
-        "相容帳冊（COMPATIBILITY-LEDGER.md）的舊環境變數別名。"
-      ]
+      "todo": []
     },
     {
       "id": "identity-access",

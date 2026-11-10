@@ -28,7 +28,9 @@ def test_routed_to_its_own_rules_with_the_leak_check(kind):
     prompts.validate_programs()
     assert kind in prompts.REQUEST_PROGRAMS
     route = iron_rules.role(kind)
-    assert route == {"L2": f"L2/{kind}.md", "checks": ["no_leak"], "fallback": None}
+    assert route["L2"] == f"L2/{kind}.md" and route["fallback"] is None
+    assert route["checks"][0] == "no_leak"
+    assert ("citations" in route["checks"]) == (kind in CITING)
 
 
 @pytest.mark.parametrize("kind", INPUTS)

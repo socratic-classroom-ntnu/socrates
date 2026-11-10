@@ -10,7 +10,7 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 
 | # | 功能 | 一句話 | 主要的包 |
 |---|---|---|---|
-| 1 | 免註冊加入 | 老師給 QR code，學生掃了、填暱稱就能開始；只靠裝置上的 cookie 定位，閒置 7 天後刪除，期間註冊就轉正；已有帳號的人登入後，訪客期間的紀錄併進帳號 | C、B |
+| 1 | 免註冊加入 | 老師給 QR code，學生掃了、填暱稱就能開始；只靠裝置上的 cookie 定位，成為訪客 7 天後清掉名字（作答保留），期間註冊就轉正；已有帳號的人登入後，訪客期間的紀錄併進帳號 | C、B |
 | 2 | LLM prompt 設計 | 盤點所有用到 prompt 的地方，統一輸出 schema、旗標與鐵則 | C |
 | 3 | 敘述型活動與多語 | 老師只寫一段敘述，其餘由 LLM 拓展；回覆與統整用學生或老師的語言 | B、C |
 | 4 | 統整與雷達圖 | 對話中觸發確認統整，結束時產生最終統整；全班的歸納畫成雷達圖 | B、C |
@@ -23,10 +23,10 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 
 | 端 | 包 | 模組 | 功能 | 改動 |
 |---|---|---|---|---|
-| 後端 | C | identity-access | 1、3 | 帳號加 `kind`（guest／registered）與 `guest_expires_at`；email、password_hash 可為空（migration）；訪客 session（cookie 定位，有動作就延長 7 天）；註冊時原地升級；登入時併入訪客紀錄；訪客加入時選語言；訪客紀錄 hook 契約與閒置訪客刪除的排程工作 |
+| 後端 | C | identity-access | 1、3 | 帳號加 `kind`（guest／registered）與 `guest_expires_at`；email、password_hash 可為空（migration）；訪客 session（cookie 定位，固定 168 小時、不延長）；註冊時原地升級；登入時併入訪客紀錄；訪客加入時選語言；訪客紀錄 hook 契約與到期訪客清名字的排程工作 |
 | 後端 | C | ai-providers | 4 | 本地 embedding provider（預設 multilingual-e5-small，CPU 執行） |
 | 後端 | C | llm-runtime | 2–6 | 新增或改寫 7 個 program 與對應 schema；鐵則 L1 加「回覆語言」、新增 6 份 L2；語言檢查與引用驗證接進 `guarded_generate` 的重試；30 則固定題組與三家模型評測；TTS 契約 |
-| 後端 | B | course-management | 1、3 | 課程設定「允許免註冊」；QR 連結；訪客選課；活動內容改為「敘述＋立場空間」；發布時呼叫 activity_expansion，老師修改後鎖進 ActivityRevision；migration 把舊選項轉成立場空間 |
+| 後端 | B | course-management | 1、3 | 課程設定「允許免註冊」（預設開）；QR 連結（含活動 QR，訪客同時加入課程）；訪客選課；學生名單與即時狀況帶 `kind`、過期顯示匿名訪客 N；活動內容改為「敘述＋立場空間」；發布時呼叫 activity_expansion，老師修改後鎖進 ActivityRevision；migration 把舊選項轉成立場空間 |
 | 後端 | B | solo-activity | 3–6 | 拿掉選項流程，改成自由文字表態＋stance_classify；每則訊息存 locale 與 flags；指標純函式；最終統整與確認迴圈（取代現在回 501 的 submit_review）；引用存放；PCA、百分位與雷達彙總 |
 | 後端 | B | app-shell | 1 | 註冊 identity-access 提供的到期訪客排程工作（每日一次） |
 | 後端 | A | group-dialogue | 5（第二版） | 分組課個人追問套用同一組旗標 |
@@ -53,7 +53,7 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 | solo-activity → ai-providers | `embed(texts)` | 雷達的向量 | 已在 |
 | solo-activity → course-management | ActivityRevision（敘述、立場空間） | 對話的題目來源 | 已在 |
 | llm-runtime → ai-providers | provider 鏈 | 呼叫模型 | 已在 |
-| platform（排程）→ identity-access | 閒置訪客清單 | 刪除 | **反向**：platform 不能依賴業務模組。改由 identity-access 提供排程工作，app-shell 註冊 |
+| platform（排程）→ identity-access | 到期訪客清單 | 清名字 | **反向**：platform 不能依賴業務模組。改由 identity-access 提供排程工作，app-shell 註冊 |
 | group-dialogue → llm-runtime | personal_tutor 的 flags（第二版） | 分組課旗標 | 已在 |
 
 要動 `modules.json` 的兩條（course-management 新增依賴 llm-runtime、ai-providers）由 B 包在同一個 PR 改，並請 C 包負責人審。
@@ -63,9 +63,9 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 ### 3.1 免註冊加入
 1. 老師在課程設定打開「允許免註冊」，畫面顯示 QR（內容＝加入網址＋課程代碼）。
 2. 學生掃碼 → `GET /course-join/{code}`（預覽，回 `allow_guest`）→ 填暱稱、選語言 → `POST /auth/guest`（建訪客帳號與 session）→ `POST /courses/join`（照舊）。
-3. 訪客只靠裝置上的 session cookie 定位，每次有動作就把 `guest_expires_at` 延到 7 天後。閒置到期的訪客由每日排程刪除：先呼叫各模組的訪客紀錄 hook 刪紀錄，再刪帳號。
-4. 學生在 7 天內註冊 → `POST /auth/guest/upgrade`：同一個帳號 id 補上 email 與密碼，`kind` 改成 registered，資料全部保留。
-5. 已有帳號的人用訪客上了課（例如清掉 cookie 再掃、換平板），之後在同一台裝置登入：登入當下有訪客 cookie，就呼叫各模組的 `reassign` 把訪客紀錄改掛到帳號；同一課／同一活動兩邊都有時以帳號那份為準，訪客那份留在訪客帳號、到期一起刪。
+3. 訪客只靠裝置上的 session cookie 定位，`guest_expires_at` 是成為訪客那一刻起 168 小時，有動作不延長。到期的訪客由每日排程處理：呼叫各模組的訪客紀錄 hook 清掉訪客名字，清掉帳號的名字、session 失效、標成已過期；帳號、作答、對話、分組紀錄都保留，老師統計照算。訪客登出只讓 session 失效，名字照到期時間才清。
+4. 學生在 7 天內註冊 → `POST /auth/guest/upgrade`：同一個帳號 id 補上使用者名稱、email 與密碼（規則同一般註冊，一律是學生），`kind` 改成 registered、清掉 `guest_expires_at`，資料全部保留；之後照一般註冊要驗證 Email。Email 已註冊回 `EMAIL_TAKEN`（前端改走登入並併入）、使用者名稱被用掉回 `USERNAME_TAKEN`。
+5. 已有帳號的人用訪客上了課（例如清掉 cookie 再掃、換平板），之後在同一台裝置登入：登入當下有訪客 cookie，就呼叫各模組的 `reassign` 把訪客紀錄改掛到帳號；同一個活動兩邊都有作答時留帳號那份，訪客那份在併入時刪掉（分組課同一間教室兩邊都在時怎麼處理：待定）；併入後課內名字不變。老師帳號不能併入，等 `account_role` 上線。
 
 ### 3.2 敘述型活動
 1. 老師寫敘述 → `POST /activities/{id}/expansion`（同步呼叫 activity_expansion，回立場空間與追問方向的草稿）。
@@ -102,10 +102,13 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 | 方法與路徑（前綴 `/api/v2`） | 模組 | 誰呼叫 | 新增／修改 | 備註 |
 |---|---|---|---|---|
 | `POST /auth/guest` | identity-access | 前端 auth | 新增 | body：nickname、locale、course_code；回 session 與帳號 view |
-| `POST /auth/guest/upgrade` | identity-access | 前端 auth | 新增 | body：email、password；回升級後帳號 |
-| `GET /auth/me` | identity-access | 前端 | 修改 | 加 `kind`、`guest_expires_at` |
+| `POST /auth/guest/upgrade` | identity-access | 前端 auth | 新增 | body：username、email、password；回升級後帳號 |
+| `GET /auth/me` | identity-access | 前端 | 修改 | 加 `kind`（registered／guest／expired_guest）、`guest_expires_at` |
 | `GET /course-join/{code}` | course-management | 前端 auth | 修改 | 加 `allow_guest` |
+| `GET /activities/{id}/join-preview` | course-management | 前端 auth | 修改 | 加 `allow_guest` |
 | `PATCH /courses/{course_id}` | course-management | 前端 course | 修改 | 加 `allow_guest` |
+| 學生名單、即時狀況 | course-management、solo-activity | 前端 course | 修改 | 加 `kind`；過期訪客顯示匿名訪客 N |
+| 分組課教室名單、分組分析 | classroom-core、analytics | 前端 classroom | 修改 | 加 `kind`；過期訪客顯示匿名訪客 N |
 | `POST /activities/{id}/expansion` | course-management | 前端 authoring | 新增 | 產生立場空間草稿 |
 | `PUT /activities/{id}/expansion` | course-management | 前端 authoring | 新增 | 老師修改；發布時鎖進 revision |
 | `POST /solo/attempts/{id}/{action}` | solo-activity | 前端 solo-activity | 修改 | action 清單改為：`message`、`state_position`、`confirm_summary`、`revise_summary`、`confirm_final`、`reject_final`、`retry`；`available_actions` 照舊由後端給 |
@@ -123,7 +126,7 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 
 | 模組 | 變更 |
 |---|---|
-| identity-access | accounts：加 `kind`、`guest_expires_at`；`email`、`password_hash` 改可為空（唯一約束只對非空值） |
+| identity-access | accounts：加 `kind`（含 expired_guest）、`guest_expires_at`（成為訪客時 + 168 小時，不延長；註冊後清掉）；`email`、`password_hash` 改可為空（唯一約束只對非空值） |
 | course-management | courses：加 `allow_guest`；activities／activity_revisions：加 `narrative`、`stance_space`（JSON）、`expansion_locked_at`；舊選項轉成 stance_space |
 | solo-activity | messages：加 `locale`、`flags`（JSON）、`message_ref`；新表 summary_sources（統整點 → 訊息 → quote 位置）；新表 radar_results（活動、維度、學生分數、來源） |
 
@@ -133,7 +136,7 @@ migration 依模組順序：identity-access → course-management → solo-activ
 
 | 功能 | 驗收（每項都要有測試） |
 |---|---|
-| 1 | 訪客掃碼到開始對話不需要 email；閒置第 8 天的訪客帳號與紀錄都刪掉；7 天內註冊後帳號 id 不變、紀錄都在；帶訪客 cookie 登入後紀錄併進帳號；課程沒開「允許免註冊」時回 `GUEST_JOIN_DISABLED` |
+| 1 | 訪客掃碼到開始對話不需要 email；加入滿 168 小時的訪客名字清空、作答與對話還在；從活動 QR 進來的訪客同時加入課程；7 天內註冊後帳號 id 不變、紀錄都在；帶訪客 cookie 登入後紀錄併進帳號；課程沒開「允許免註冊」時回 `GUEST_JOIN_DISABLED` |
 | 2 | 30 則固定題組在 OpenAI、Anthropic、Gemini 各跑一次，出報表：schema 合格率、每個旗標的一致率、拉回遵守率、輸出語言正確率、引用有效率（只出報表，不擋合併） |
 | 3 | 發布後改敘述不影響已開始的作答；學生用英文作答時，逐字稿保留原文，給老師的統整用老師的語言 |
 | 4 | 15 人以上走向量路線，以下走 LLM 路線，兩條路回同一個契約；學生兩次「不太對」後標記「未確認」並結束 |

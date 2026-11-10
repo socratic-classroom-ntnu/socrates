@@ -188,8 +188,13 @@ class SoloTutorTurn(Strict):
 
 
 class ConditionChange(Strict):
-    """The one condition an extension changes, shown to the student as before → after."""
+    """The one condition an extension changes, shown to the student as before → after.
 
+    condition names that one condition, so a change that touches two of them shows up as a
+    condition naming two things; judging that is the evals' job, not the schema's.
+    """
+
+    condition: str = Field(min_length=1, max_length=60)
     before: str = Field(min_length=1, max_length=300)
     after: str = Field(min_length=1, max_length=300)
 

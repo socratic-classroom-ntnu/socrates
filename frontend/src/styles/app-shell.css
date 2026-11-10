@@ -1,13 +1,13 @@
 /* 新外框：左側導覽（設計稿 docs/superpowers/plans/assets/m1-design/H1-home-*.html 的側邊欄） */
 .app-shell {
-  --shell-bg: #F3F3F1;
-  --shell-panel: #FFFFFF;
-  --shell-line: #E3E3DF;
-  --shell-green: #2E5045;
-  --shell-green-soft: #E7EEEA;
-  --shell-ink: #1F2421;
-  --shell-ink-soft: #3F4642;
-  --shell-muted: #5F6661;
+  --shell-bg: var(--ui-color-bg);
+  --shell-panel: var(--ui-color-panel);
+  --shell-line: var(--ui-color-line);
+  --shell-green: var(--ui-color-primary);
+  --shell-green-soft: var(--ui-color-primary-soft);
+  --shell-ink: var(--ui-color-ink);
+  --shell-ink-soft: var(--ui-color-ink-soft);
+  --shell-muted: var(--ui-color-muted);
   display: grid;
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100dvh;
@@ -27,7 +27,7 @@
   color: var(--shell-ink); font-weight: 700; font-size: 15px; text-decoration: none;
 }
 .app-shell__mark {
-  flex-shrink: 0; width: 30px; height: 30px; border-radius: 7px; background: var(--shell-green); color: #FFFFFF;
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 7px; background: var(--shell-green); color: var(--ui-color-panel);
   display: flex; align-items: center; justify-content: center; font-size: 15px;
 }
 .app-shell__items { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
@@ -40,7 +40,7 @@
 .app-shell__items a[aria-current="page"] { background: var(--shell-green-soft); color: var(--shell-green); font-weight: 700; }
 .app-shell__footer { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--shell-line); }
 .app-shell__avatar {
-  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #2D4B8E; color: #FFFFFF;
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--ui-color-info); color: var(--ui-color-panel);
   display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
 }
 .app-shell__avatar--lg { width: 40px; height: 40px; font-size: 17px; }
@@ -57,12 +57,12 @@
 .account-menu__email { font-size: 12px; color: var(--shell-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-menu__chevron { color: var(--shell-muted); }
 .account-menu__header {
-  display: flex; align-items: center; gap: 12px; padding: 14px; background: #F7F7F5;
+  display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--ui-color-panel-hover);
   border-bottom: 1px solid #ECECE8; border-radius: 14px 14px 0 0;
 }
 .account-menu__header b { font-size: 15px; }
 .account-menu .menu__panel { width: 236px; }
-.account-menu__error { margin: 6px 8px 0; color: #A3311A; font-size: 13px; }
+.account-menu__error { margin: 6px 8px 0; color: var(--ui-color-ended-ink); font-size: 13px; }
 .app-shell__collapse {
   display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 8px;
   background: transparent; color: var(--shell-ink-soft); font: inherit; font-size: 14px; cursor: pointer;

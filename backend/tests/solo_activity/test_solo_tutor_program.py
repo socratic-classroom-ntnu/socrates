@@ -16,6 +16,8 @@ def test_programs_validate():
     solo = _template("solo_tutor")
     for key in ("scenario", "answer", "hypothetical", "principle_note", "revise_hint"):
         assert key in solo, key
+    # The first answer is not in history, so the summary has to read it too.
+    assert "summary 依 answer 與 history 整理" in solo
     # Keys the solo activity no longer sends since the options flow was removed.
     for key in ("option_id", "option_text", "argument", "stance_changed_from"):
         assert key not in solo, key

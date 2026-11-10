@@ -91,6 +91,7 @@ export interface components { schemas: {
   "SampleQuestionSet": { "title": string; "questions": Array<components["schemas"]["SampleQuestionDraft"]> };
   "ScenarioAI": { "provider_profile_id": string; "model": string };
   "ScriptAssistRequest": { "request": string; "document"?: Record<string, unknown>; "question_index"?: (number | null); "script_id"?: (string | null) };
+  "ScriptAssistView": { "question": components["schemas"]["PublicQuestion"]; "question_index": (number | null); "rationale": string; "model": (string | null); "provider": (string | null) };
   "ScriptDocument": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
   "ScriptRevisionView": { "id": string; "revision": number };
   "ScriptSave": { "document": components["schemas"]["ScriptDocument"]; "expected_revision"?: (number | null) };

@@ -4214,6 +4214,61 @@
         "title": "ScriptAssistRequest",
         "type": "object"
       },
+      "ScriptAssistView": {
+        "additionalProperties": false,
+        "description": "POST /scripts/assist: one question suggestion, ready to drop into the draft.",
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "question": {
+            "$ref": "#/components/schemas/PublicQuestion"
+          },
+          "question_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Index"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "question_index",
+          "rationale",
+          "model",
+          "provider"
+        ],
+        "title": "ScriptAssistView",
+        "type": "object"
+      },
       "ScriptDocument": {
         "additionalProperties": false,
         "properties": {
@@ -8561,7 +8616,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8597,7 +8654,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptAssistView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8623,7 +8682,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8678,7 +8739,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8771,8 +8834,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
+              "application/yaml": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"

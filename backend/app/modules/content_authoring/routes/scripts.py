@@ -21,6 +21,10 @@ from app.modules.content_authoring.service import validate_scenario_ai
 router = APIRouter()
 
 
+class YamlResponse(Response):
+    media_type = "application/yaml"
+
+
 @router.get("/scripts", response_model=list[ScriptView])
 def scripts(request: Request):
     with transaction() as db:
@@ -31,7 +35,7 @@ def scripts(request: Request):
         ]
 
 
-@router.post("/scripts")
+@router.post("/scripts", response_model=ScriptView)
 def create_script(body: ScriptSave, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
@@ -43,7 +47,7 @@ def create_script(body: ScriptSave, request: Request):
         return {"id": s.id, "revision": s.revision, "document": s.document}
 
 
-@router.put("/scripts/{script_id}")
+@router.put("/scripts/{script_id}", response_model=ScriptView)
 def update_script(script_id: str, body: ScriptSave, request: Request):
     with transaction() as db:
         a, _ = account(db, request, True)
@@ -59,7 +63,7 @@ def update_script(script_id: str, body: ScriptSave, request: Request):
         return {"id": s.id, "revision": s.revision, "document": s.document}
 
 
-@router.post("/scripts/import")
+@router.post("/scripts/import", response_model=ScriptView)
 async def import_script(request: Request):
     raw = await request.body()
     if len(raw) > 256 * 1024:
@@ -94,14 +98,11 @@ async def import_script(request: Request):
     return await run_in_threadpool(create_script, ScriptSave(document=doc), request)
 
 
-@router.get("/scripts/{script_id}/yaml")
+@router.get("/scripts/{script_id}/yaml", response_model=str, response_class=YamlResponse)
 def export_yaml(script_id: str, request: Request):
     with transaction() as db:
         a, _ = account(db, request)
         s = db.get(Script, script_id)
         if s is None or s.owner_id != a.id:
             raise DomainError("SCRIPT_OWNER_REQUIRED", 403)
-        return Response(
-            yaml.safe_dump(s.document, allow_unicode=True, sort_keys=False),
-            media_type="application/yaml",
-        )
+        return YamlResponse(yaml.safe_dump(s.document, allow_unicode=True, sort_keys=False))

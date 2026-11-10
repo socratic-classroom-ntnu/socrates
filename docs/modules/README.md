@@ -31,7 +31,7 @@
 | [Identity & Access](./backend/identity-access.md) | ⚠️ | `backend/app/modules/identity_access/` | platform | 0 |
 | [AI Providers](./backend/ai-providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity-access | 0 |
 | [LLM Runtime](./backend/llm-runtime.md) | ✅ | `backend/app/modules/llm_runtime/` | platform、ai-providers | 0 |
-| [Content Authoring](./backend/content-authoring.md) | ⚠️ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
+| [Content Authoring](./backend/content-authoring.md) | ✅ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
 | [Classroom Core](./backend/classroom-core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
 | [Group Dialogue](./backend/group-dialogue.md) | ✅ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |

@@ -32,6 +32,7 @@
 | 新增讀取查詢 | `backend/app/modules/solo_activity/routes.py` 的 `get_attempt`（查詢本身是 `service.py` 的 `attempt_view`） |
 | 改狀態機 | `backend/app/modules/solo_activity/attempt_machine.py`，先改 `backend/tests/solo_activity/test_solo_state_table.py` |
 | 新增前端按鈕 | 照 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`：只依後端的 `available_actions` 顯示——**不要在頁面裡自己判斷**（`frontend/src/invariants/soloActions.test.tsx` 會擋） |
+| 用按鈕、欄位、錯誤訊息、狀態標籤等共用控制項 | 從 `frontend/src/ui` 的 index import 元件，用法見 `docs/modules/frontend/ui-components.md`；不要在 TSX 寫 `button button--primary`、`form-field` 這類全域 class（`frontend/src/app/styleOrder.test.ts` 會擋），要改外觀就傳頁面自己的 `className` |
 | 新增前端畫面 | 放進所屬前端模組的 `frontend/src/features/<模組>/`（例：`frontend/src/features/solo-activity/SoloDialoguePage.tsx`）；模組與可依賴的模組見 `docs/modules/README.md` |
 | 呼叫 API | 只在 `frontend/src/contract/`（例：`classroomClient.ts`），型別一律從產生的 `classroomTypes.ts`／`types.ts` 取，不要手寫；`scripts/check_modules.py` 擋 contract/ 以外的 fetch 與 WebSocket |
 | 新增 migration | 改 ORM 後跑 `alembic revision --autogenerate`，範本是 `backend/migrations/versions/0010_classroom.py`；`tests/migrations/test_schema_matches_orm.py` 會擋 ORM 與 migration 不一致 |

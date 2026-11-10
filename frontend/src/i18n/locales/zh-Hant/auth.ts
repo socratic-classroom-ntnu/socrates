@@ -74,4 +74,6 @@ export default {
     loginToResend: '登入後重新寄送驗證信',
     logout: '登出',
   },
+  // 只在有測試帳號的環境出現（後端 /public-config 的 demo_login）
+  demo: { title: '測試帳號', teacher: '老師', student: '學生' },
 };

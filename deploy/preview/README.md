@@ -43,17 +43,24 @@ PR 合併之後 `pr-<編號>` 會被刪掉，想看 `backend/main` 累積起來�
 
 ## 預設帳號（factory 資料）
 
-新資料庫啟動時，`scripts/seed_preview.py` 會建好以下帳號，**密碼都是 `preview-password`**，
-而且都已經完成 Email 驗證：
+後端每次啟動都會跑 `scripts/seed_preview.py`（`deploy/stage/backend.Dockerfile`），缺什麼補什麼，
+**密碼都是 `preview-password`**，而且都已經完成 Email 驗證：
 
 | 帳號 | 身分 | 說明 |
 |---|---|---|
-| `teacher001` | 老師 | 擁有教室 `PREVIEW1`，`user001`–`user010` 已經在裡面 |
+| `teacher001` | 老師 | 擁有教室 `PREVIEW1`（`user001`–`user010` 已經在裡面），以及示範課程「示範課程：電車難題」 |
 | `teacher002`、`teacher003` | 老師 | 各自擁有空教室 `PREVIEW2`、`PREVIEW3` |
-| `user001`–`user030` | 學生 | `user011` 之後尚未加入任何教室，可以用課程碼自己加入 |
+| `user001`–`user030` | 學生 | `user001`–`user010` 已加入示範課程；`user011` 之後尚未加入任何課程 |
 
-用帳號名稱或 `<帳號>@preview.invalid` 都能登入。這份腳本只在
-`SOCRATES_ENVIRONMENT` **明確設定**為 `preview` 或 `local-dev` 時才會執行（沒設也會拒絕），不會在 QA 或正式環境建出這些帳號。
+示範課程裡有一個活動「岔道上的選擇：主動造成傷害與不作為，在道德上有沒有差別」，從第一次 seed 起開放 30 天；課程代碼每個環境不同，看後端啟動 log 的
+`seed_preview: … demo course <代碼>`，或用 teacher001 登入在首頁看。
+
+用帳號名稱或 `<帳號>@preview.invalid` 都能登入。登入頁會出現「測試帳號」按鈕（老師 `teacher001`、學生 `user001`），
+按了只會填好帳密、不會自動登入。
+
+帳號與按鈕只在 `SOCRATES_ENVIRONMENT` **明確設定**為 `local-dev`、`preview`、`stage`（QA）或 `dev` 時才有
+（名單在 `backend/app/modules/platform/demo.py`）；沒設定或其他值（正式環境）一律不建、不顯示。
+密碼是公開的，所以這幾個環境的資料都當成任何人都看得到。
 
 ## 看 log、查資料庫
 

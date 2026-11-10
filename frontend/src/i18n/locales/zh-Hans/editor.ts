@@ -64,12 +64,10 @@ const editor: Shape<typeof zhHant> = {
     endBeforeStart: '结束时间要晚于开始时间',
     endPast: '结束时间已经过了',
     startPast: '开始时间已经过了；要立刻开放，请选「创建后立刻开放」',
-    summaryTitle: '还有 {{count}} 个地方要补完，才能保存',
-    summaryBody: '草稿也要完整才能保存。点一下会跳到那个栏位：',
+    summary: '部分栏位尚未填写',
     missing: '还没填',
     beforeStart: '要晚于开始时间',
     past: '已经过了',
-    summaryItem: '{{where}}：{{field}}',
   },
   loadFailed: '活动没有加载成功。',
 };

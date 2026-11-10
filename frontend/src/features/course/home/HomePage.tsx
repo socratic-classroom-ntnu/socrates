@@ -1,4 +1,4 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useAuth } from '../../auth/AuthContext'
@@ -6,6 +6,7 @@ import { useIsPhone } from '../../../shared/useIsPhone'
 import { EmptyClassroomIllustration } from '../../../components/EmptyClassroomIllustration'
 import { greetingKey } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { Button, ButtonLink, FormError } from '../../../ui'
 import { CreateCourseDrawer } from '../teach/CreateCourseDrawer'
 import { LearningCard, TeachingCard } from './CourseCards'
 import { JoinCodeForm } from './JoinCodeForm'
@@ -36,7 +37,7 @@ export function HomePage() {
   // 老師端沒有手機版：手機帶著 create=1 進來就換成 S4m
   if (phone && creating) return <Navigate to="/teach/create-course" replace />
 
-  const createButton = <button type="button" className="button button--primary" onClick={openCreate}><span aria-hidden="true">+</span>{t('create')}</button>
+  const createButton = <Button variant="primary" onClick={openCreate}><span aria-hidden="true">+</span>{t('create')}</Button>
 
   return <main className={'home' + (phone ? ' home--phone' : '')}>
     <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: account?.username ?? '' })}</h1>
@@ -49,9 +50,9 @@ export function HomePage() {
       </div>
       {phone && (tab === 'learn'
         ? <JoinCodeForm variant="phone" />
-        : <Link className="button button--primary home__create-phone" to="/teach/create-course"><span aria-hidden="true">+</span>{t('create')}</Link>)}
+        : <ButtonLink variant="primary" className="home__create-phone" to="/teach/create-course"><span aria-hidden="true">+</span>{t('create')}</ButtonLink>)}
       {lists.loading && !data && <div aria-busy="true" className="home__loading" />}
-      {!data && !lists.loading && <p role="alert" className="form-error">{t('loadFailed')}</p>}
+      {!data && !lists.loading && <FormError role="alert">{t('loadFailed')}</FormError>}
       {data && <TabContent tab={tab} lists={data} phone={phone} />}
     </section>
     {creating && <CreateCourseDrawer onClose={closeCreate} />}

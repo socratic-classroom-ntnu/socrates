@@ -170,9 +170,15 @@ class SummaryPoint(Strict):
 
 
 class CitedSummary(Strict):
-    """The shared summary shape for confirm summaries, final summaries and radar (§5)."""
+    """The cited summary shape (§5); the final summary builds on it."""
 
     points: list[SummaryPoint] = Field(min_length=1, max_length=8)
+
+
+class SoloSummary(PersonalSummary):
+    """The per-turn candidate summary, plus the student's words it rests on."""
+
+    sources: list[Citation] = Field(max_length=5)
 
 
 class SoloTutorTurn(Strict):
@@ -182,8 +188,9 @@ class SoloTutorTurn(Strict):
     move: Literal["probe", "clarify", "challenge", "reflect", "hypothetical", "summarize"]
     observations: SoloObservations
     flags: SoloFlags
-    # Only requested when the backend decides the student can confirm; null otherwise.
-    confirm_summary: CitedSummary | None
+    # Every turn, as in PersonalTutorTurn: the backend decides from this turn's observations
+    # whether the student confirms, so the summary must already be there.
+    summary: SoloSummary
     guard: Guard
 
 

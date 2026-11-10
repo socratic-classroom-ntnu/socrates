@@ -15,7 +15,7 @@ def test_is_a_request_program_with_its_own_rules():
 def test_a_failed_check_is_an_error_not_a_canned_scenario():
     """No fallback sentence: solo-activity owns what the student sees when generation fails."""
     route = iron_rules.role("scenario_extension")
-    assert route["checks"] == ["no_leak"]
+    assert route["checks"] == ["no_leak", "language", "citations"]
     assert route["fallback"] is None
 
 

@@ -164,6 +164,18 @@ class Citation(Strict):
     quote: str = Field(min_length=1, max_length=500)
 
 
+class LocatedCitation(Strict):
+    """A validated citation as the caller stores it: the message and where the quote sits.
+
+    start and end count Unicode code points (Python string indices); end is exclusive.
+    """
+
+    message_id: str = Field(min_length=1)
+    quote: str = Field(min_length=1)
+    start: int = Field(ge=0)
+    end: int = Field(ge=1)
+
+
 class SummaryPoint(Strict):
     text: str = Field(min_length=1, max_length=1000)
     sources: list[Citation] = Field(max_length=5)

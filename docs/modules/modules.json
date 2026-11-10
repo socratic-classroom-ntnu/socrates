@@ -165,7 +165,6 @@
         "group-dialogue"
       ],
       "todo": [
-        "1 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：GET /api/v2/groups/classrooms/{rid}/analysis",
         "雷達圖契約（依設計稿的教師分析六畫面）。"
       ]
     },

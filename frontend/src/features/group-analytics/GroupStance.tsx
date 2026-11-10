@@ -1,18 +1,12 @@
+import type { components } from '../../contract/classroomTypes';
 import { PERSONAL_STATUS_TEXT } from '../../shared/personalStatus';
 
 // 教師端：單一組別在目前題目的立場分布（後端 GET /groups/classrooms/{id}?mode=teacher 的 groups[].stance）。
 // 人數只計學生已確認的基準；沒有基準的人依個人對話狀態另外計數。
-export type StanceOption = { option_id: string; text: string; count: number; percent: number };
-export type GroupStanceData = {
-    question_index: number;
-    question_title: string;
-    members: number;
-    confirmed: number;
-    unconfirmed: number;
-    unconfirmed_by_status: Record<string, number>;
-    options: StanceOption[];
-    differing: boolean;
-};
+export type StanceOption = components['schemas']['StanceOptionView'];
+// 只取畫面用到的欄位；型別來自產生的 GroupStanceView，不另外維護一份
+export type GroupStanceData = Pick<components['schemas']['GroupStanceView'],
+    'question_index' | 'question_title' | 'members' | 'confirmed' | 'unconfirmed' | 'unconfirmed_by_status' | 'options' | 'differing'>;
 
 const UNCONFIRMED_TEXT: Record<string, string> = { ...PERSONAL_STATUS_TEXT, not_answered: '未作答' };
 

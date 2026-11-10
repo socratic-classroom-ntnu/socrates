@@ -101,7 +101,7 @@
     {
       "id": "content-authoring",
       "name": "Content Authoring",
-      "status": "warn",
+      "status": "ok",
       "about": "劇本與題目（/scripts）、題庫、ladder、AI 協助出題。",
       "paths": [
         "backend/app/modules/content_authoring/"
@@ -112,9 +112,7 @@
         "ai-providers",
         "llm-runtime"
       ],
-      "todo": [
-        "5 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/scripts、PUT /api/v2/scripts/{script_id}、POST /api/v2/scripts/import、GET /api/v2/scripts/{script_id}/yaml、POST /api/v2/scripts/assist"
-      ]
+      "todo": []
     },
     {
       "id": "classroom-core",

@@ -1,9 +1,11 @@
 """Public contracts owned by Identity & Access."""
 
-from typing import Literal
+from typing import Literal, Protocol
 
 from pydantic import Field, field_validator
 from pydantic_core import PydanticCustomError
+from sqlalchemy.orm import Session
+
 from app.modules.platform.contracts import Strict
 
 # Interface languages an account can choose; the frontend owns the translations.
@@ -153,3 +155,18 @@ class AccountView(Strict):
 
 class LocaleUpdate(Strict):
     locale: Locale
+
+
+class GuestRecordHook(Protocol):
+    """What every module that keeps student records provides for guests (the app shell registers
+    it with service.register_guest_hook). Both run in the caller's transaction and never commit.
+
+    reassign: move the guest's records to the account the device just logged in as. When the same
+    course or activity has records under both, keep the account's and leave the guest's where
+    they are; they are deleted with the guest.
+    delete: remove the guest's records; called just before the guest account is deleted.
+    """
+
+    def reassign(self, db: Session, guest_id: str, account_id: str) -> None: ...
+
+    def delete(self, db: Session, guest_id: str) -> None: ...

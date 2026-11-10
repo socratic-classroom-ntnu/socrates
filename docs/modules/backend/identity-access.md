@@ -16,6 +16,8 @@
 - `POST /auth/guest`（暱稱＋語言）建訪客帳號與 session；`POST /auth/guest/upgrade`（email＋密碼）讓同一個帳號 id 轉成註冊帳號，和一般註冊一樣要先驗證 Email。
 - 訪客只靠裝置上的 session cookie 定位。每個允許訪客的請求都把 `guest_expires_at` 延到 7 天後；過了就回 `GUEST_EXPIRED`。
 - **預設拒絕訪客**：`service.account(...)` 遇到訪客回 `GUEST_NOT_ALLOWED`，學生端點要明確傳 `allow_guest=True`（例：選課、單人活動、分組課）。老師與金鑰相關的端點不傳，訪客就進不去。
+- **訪客紀錄 hook**（`contracts.GuestRecordHook`）：每個存學生紀錄的模組提供 `reassign(db, guest_id, account_id)` 與 `delete(db, guest_id)`，由 app-shell 用 `service.register_guest_hook(模組名, hook)` 註冊。兩個都在呼叫端的交易裡執行、不自己 commit。`reassign` 遇到同一課／同一活動兩邊都有紀錄時，以帳號那份為準，訪客那份留在訪客帳號。
+- **閒置訪客刪除**：`service.delete_expired_guests()` 給 app-shell 排成每日工作。`guest_expires_at` 已過的訪客逐一處理（一人一個交易）：先呼叫每個 hook 的 `delete`，再刪 session 與帳號。某個 hook 失敗時，那位訪客留到下一次，不影響其他人；期間已註冊的帳號不會被刪。
 
 ## Toy page
 

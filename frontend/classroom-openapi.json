@@ -2311,7 +2311,7 @@
       },
       "DiscoveredModel": {
         "additionalProperties": false,
-        "description": "One model a provider lists; pricing is the provider's own shape, when it sends one.",
+        "description": "One model a provider lists. pricing is the provider's own shape, and only OpenAI-style\nlistings send it; the routes exclude unset fields, so it stays absent rather than null.",
         "properties": {
           "id": {
             "title": "Id",

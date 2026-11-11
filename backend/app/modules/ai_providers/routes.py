@@ -116,7 +116,11 @@ def delete_profile(profile_id: str, request: Request):
         return {"status": "DELETED", "profile_id": profile_id}
 
 
-@router.post("/provider-profiles/{profile_id}/test", response_model=ConnectionTestView)
+@router.post(
+    "/provider-profiles/{profile_id}/test",
+    response_model=ConnectionTestView,
+    response_model_exclude_unset=True,
+)
 async def test_profile(profile_id: str, request: Request):
     from app.modules.ai_providers.classroom_gateway import test_connection
 
@@ -139,7 +143,11 @@ async def test_profile(profile_id: str, request: Request):
         raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
 
 
-@router.get("/provider-profiles/{profile_id}/models", response_model=ModelDiscoveryView)
+@router.get(
+    "/provider-profiles/{profile_id}/models",
+    response_model=ModelDiscoveryView,
+    response_model_exclude_unset=True,
+)
 async def provider_models(profile_id: str, request: Request):
     from app.modules.ai_providers.classroom_gateway import discover_models
 

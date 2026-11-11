@@ -113,7 +113,8 @@ class ProfileDeletedView(Strict):
 
 
 class DiscoveredModel(Strict):
-    """One model a provider lists; pricing is the provider's own shape, when it sends one."""
+    """One model a provider lists. pricing is the provider's own shape, and only OpenAI-style
+    listings send it; the routes exclude unset fields, so it stays absent rather than null."""
 
     id: str
     name: str | None

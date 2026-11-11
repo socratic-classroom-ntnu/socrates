@@ -109,3 +109,26 @@ def test_each_endpoint_answers_within_its_model(client, monkeypatch):
     assert client.get("/api/v2/ai-settings/account").json()["default_profile_id"] == profile["id"]
     client.put("/api/v2/ai-settings/account", json={"default_profile_id": None})
     assert client.delete(path).json() == {"status": "DELETED", "profile_id": profile["id"]}
+
+
+def test_a_model_listed_without_pricing_stays_without_it(client, monkeypatch):
+    """Gemini and Anthropic listings send no pricing; the response must not add "pricing": null."""
+    unpriced = {k: v for k, v in MODEL.items() if k != "pricing"}
+
+    async def discover(binding):
+        return {
+            "provider_profile_id": binding["profile_id"],
+            "adapter": binding["adapter"],
+            "models": [unpriced],
+            "manual_model_id_allowed": True,
+            "observed_at": time.time(),
+        }
+
+    monkeypatch.setattr(classroom_gateway, "discover_models", discover)
+    login(client, "owner")
+    body = {"name": "mine", "adapter": "openrouter", "default_model": "openrouter/free"}
+    path = f"/api/v2/provider-profiles/{client.post('/api/v2/provider-profiles', json=body).json()['id']}"
+    client.post(
+        path + "/credential", json={"credential": "sk-test-1234", "credential_mode": "SESSION"}
+    )
+    assert client.get(path + "/models").json()["models"] == [unpriced]

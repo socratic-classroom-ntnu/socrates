@@ -89,10 +89,12 @@ class SignedOutView(Strict):
     status: Literal["SIGNED_OUT"]
 
 
-class TokenUsedView(Strict):
-    """POST /auth/verify and /auth/reset-password: what the one-use token did."""
+class VerifiedView(Strict):
+    status: Literal["VERIFIED"]
 
-    status: Literal["VERIFIED", "PASSWORD_RESET"]
+
+class PasswordResetView(Strict):
+    status: Literal["PASSWORD_RESET"]
 
 
 class MailRequestView(Strict):
@@ -108,12 +110,14 @@ class VerificationMailView(Strict):
 
     status: Literal["REQUEST_RECORDED", "ALREADY_VERIFIED"]
     message: str
+    # Absent (not null) when no mail was queued; the route excludes unset fields.
     delivery: VerificationDelivery | None = None
 
 
 class ResendWebhookView(Strict):
     status: Literal["RECORDED"]
     matched: bool
+    # Absent (not null) when no delivery matched; the route excludes unset fields.
     provider_status: str | None = None
 
 

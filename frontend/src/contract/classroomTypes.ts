@@ -77,6 +77,7 @@ export interface components { schemas: {
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
+  "PasswordResetView": { "status": "PASSWORD_RESET" };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
   "PublicJoinPreview": { "course_name": string };
@@ -120,11 +121,11 @@ export interface components { schemas: {
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
   "TokenRequest": { "token": string };
-  "TokenUsedView": { "status": "VERIFIED" | "PASSWORD_RESET" };
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
   "VerificationDelivery": { "mail_id": string; "delivery_state": string; "expires_at": number };
   "VerificationMailView": { "status": "REQUEST_RECORDED" | "ALREADY_VERIFIED"; "message": string; "delivery"?: (components["schemas"]["VerificationDelivery"] | null) };
   "VerificationStatusDelivery": { "state": string; "provider"?: (string | null); "provider_message_id"?: (string | null); "provider_status"?: (string | null); "attempts"?: (number | null); "created_at"?: (number | null); "updated_at"?: (number | null); "sent_at"?: (number | null); "delivered_at"?: (number | null); "last_error"?: (string | null); "preview_url"?: (string | null) };
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
+  "VerifiedView": { "status": "VERIFIED" };
 } }

@@ -16,14 +16,15 @@ from app.modules.identity_access.contracts import (
     Login,
     MailRequest,
     MailRequestView,
+    PasswordResetView,
     Register,
     ResendWebhookView,
     ResetRequest,
     SignedOutView,
     TokenRequest,
-    TokenUsedView,
     VerificationMailView,
     VerificationStatusView,
+    VerifiedView,
 )
 from app.modules.platform.storage import transaction
 
@@ -70,13 +71,17 @@ def logout(request: Request, response: Response):
     return {"status": "SIGNED_OUT"}
 
 
-@router.post("/auth/verify", response_model=TokenUsedView)
+@router.post("/auth/verify", response_model=VerifiedView)
 def verify(body: TokenRequest, request: Request):
     auth_limit(request, "verify")
     return auth.use_token(body.token, "verify")
 
 
-@router.post("/auth/verification-email", response_model=VerificationMailView)
+@router.post(
+    "/auth/verification-email",
+    response_model=VerificationMailView,
+    response_model_exclude_unset=True,
+)
 def verification_email(body: MailRequest, request: Request):
     auth_limit(request, "mail")
     with transaction() as db:
@@ -116,13 +121,15 @@ def forgot(body: MailRequest, request: Request):
     return {"status": result["status"], "message": result["message"]}
 
 
-@router.post("/auth/reset-password", response_model=TokenUsedView)
+@router.post("/auth/reset-password", response_model=PasswordResetView)
 def reset(body: ResetRequest, request: Request):
     auth_limit(request, "reset")
     return auth.use_token(body.token, "reset", body.password)
 
 
-@router.post("/webhooks/resend", response_model=ResendWebhookView)
+@router.post(
+    "/webhooks/resend", response_model=ResendWebhookView, response_model_exclude_unset=True
+)
 async def resend_webhook(request: Request):
     from app.modules.identity_access.service import apply_resend_webhook
 

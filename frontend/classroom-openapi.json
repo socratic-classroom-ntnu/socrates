@@ -3366,6 +3366,21 @@
         "title": "OtherSuggestionView",
         "type": "object"
       },
+      "PasswordResetView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "PASSWORD_RESET",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PasswordResetView",
+        "type": "object"
+      },
       "PersonalSummaryView": {
         "additionalProperties": false,
         "properties": {
@@ -5597,25 +5612,6 @@
         "title": "TokenRequest",
         "type": "object"
       },
-      "TokenUsedView": {
-        "additionalProperties": false,
-        "description": "POST /auth/verify and /auth/reset-password: what the one-use token did.",
-        "properties": {
-          "status": {
-            "enum": [
-              "VERIFIED",
-              "PASSWORD_RESET"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status"
-        ],
-        "title": "TokenUsedView",
-        "type": "object"
-      },
       "UpdateProfile": {
         "additionalProperties": false,
         "properties": {
@@ -5941,6 +5937,21 @@
           "delivery"
         ],
         "title": "VerificationStatusView",
+        "type": "object"
+      },
+      "VerifiedView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "VERIFIED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "VerifiedView",
         "type": "object"
       }
     }
@@ -6616,7 +6627,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenUsedView"
+                  "$ref": "#/components/schemas/PasswordResetView"
                 }
               }
             },
@@ -6710,7 +6721,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenUsedView"
+                  "$ref": "#/components/schemas/VerifiedView"
                 }
               }
             },

@@ -111,8 +111,9 @@ export interface components { schemas: {
   "SoloMessageView": { "id": string; "scenario_index": number; "role": "student" | "tutor"; "text": string; "created_at": number; "move": ("probe" | "clarify" | "challenge" | "reflect" | "summarize" | "hypothetical" | null); "revise_hint": ("stance" | "reason" | "condition" | "changed_mind" | null) };
   "SoloProgressCellView": { "status": "answering" | "in_dialogue" | "confirming" | "confirmed"; "turns": (number | null) };
   "SoloProgressSummaryView": { "enrolled": number; "started": number; "done": number; "attention": number };
+  "SoloScenarioChangeView": { "condition": string; "before": string; "after": string };
   "SoloScenarioProgressView": { "index": number; "status": "in_dialogue" | "confirmed" };
-  "SoloScenarioView": { "index": number; "id": string; "text": string; "answer": (string | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
+  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (components["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "overall": "not_started" | "in_progress" | "done"; "cells": Array<components["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress"; "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };

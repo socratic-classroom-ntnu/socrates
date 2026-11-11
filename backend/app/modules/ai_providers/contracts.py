@@ -1,19 +1,12 @@
 from __future__ import annotations
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 from pydantic import Field, StringConstraints, field_validator
 from app.modules.platform.contracts import Strict
 from app.modules.platform.model_base import TrimmedModel
 
 
-ADAPTERS = frozenset(
-    {
-        "openrouter",
-        "openai",
-        "anthropic",
-        "gemini",
-        "openai-compatible",
-    }
-)
+Adapter = Literal["openrouter", "openai", "anthropic", "gemini", "openai-compatible"]
+ADAPTERS = frozenset(get_args(Adapter))
 
 
 # 從網頁複製金鑰時常夾帶的零寬字元：去掉後再檢查
@@ -94,7 +87,7 @@ class ProfileView(Strict):
 
     id: str
     name: str
-    adapter: str
+    adapter: Adapter
     base_url: str | None
     organization: str | None
     project: str | None
@@ -126,7 +119,7 @@ class DiscoveredModel(Strict):
 
 class ModelDiscoveryView(Strict):
     provider_profile_id: str
-    adapter: str
+    adapter: Adapter
     models: list[DiscoveredModel]
     manual_model_id_allowed: bool
     observed_at: float
@@ -135,7 +128,7 @@ class ModelDiscoveryView(Strict):
 class ConnectionTestView(Strict):
     status: Literal["READY"]
     provider_profile_id: str
-    adapter: str
+    adapter: Adapter
     model_count: int
     # The first ten models, enough to show the key works.
     sample: list[DiscoveredModel]
@@ -154,7 +147,7 @@ class RevisionView(Strict):
     """GET /meta/revision: which build is running, for support and deploy checks."""
 
     # "schema" would shadow a BaseModel attribute, so the field is renamed and keeps its wire name.
-    schema_id: str = Field(alias="schema")
+    schema_id: Literal["socrates/revision/v1"] = Field(alias="schema")
     source_sha: str
     worktree_sha256: str
     environment: str

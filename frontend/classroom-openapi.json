@@ -1699,6 +1699,13 @@
         "additionalProperties": false,
         "properties": {
           "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
             "title": "Adapter",
             "type": "string"
           },
@@ -3374,6 +3381,13 @@
         "additionalProperties": false,
         "properties": {
           "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
             "title": "Adapter",
             "type": "string"
           },
@@ -3600,6 +3614,13 @@
         "description": "A provider profile as its owner sees it; the credential itself never leaves the server.",
         "properties": {
           "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
             "title": "Adapter",
             "type": "string"
           },
@@ -4160,6 +4181,7 @@
             "type": "boolean"
           },
           "schema": {
+            "const": "socrates/revision/v1",
             "title": "Schema",
             "type": "string"
           },

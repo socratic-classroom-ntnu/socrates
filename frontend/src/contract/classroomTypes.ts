@@ -39,7 +39,7 @@ export interface components { schemas: {
   "Command": { "action_id": string; "kind": "start" | "draft" | "answer" | "barrage" | "focus_message" | "next" | "end" | "approve_question" | "regenerate_question" | "personal_summary"; "data"?: Record<string, unknown> };
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
   "ConfirmViewpointBody": { "summary_digest": string };
-  "ConnectionTestView": { "status": "READY"; "provider_profile_id": string; "adapter": string; "model_count": number; "sample": Array<components["schemas"]["DiscoveredModel"]>; "observed_at": number };
+  "ConnectionTestView": { "status": "READY"; "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "model_count": number; "sample": Array<components["schemas"]["DiscoveredModel"]>; "observed_at": number };
   "CourseCreate": { "name": string; "teacher_name": string; "intro": string; "goals": string };
   "CourseJoin": { "code": string; "display_name": string };
   "CourseLearningCard": { "id": string; "name": string; "teacher_name": string; "open_activity_count": number; "highlight": (components["schemas"]["ActivityStudentCard"] | null) };
@@ -76,13 +76,13 @@ export interface components { schemas: {
   "Login": { "login": string; "password": string };
   "MailRequest": { "email": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
-  "ModelDiscoveryView": { "provider_profile_id": string; "adapter": string; "models": Array<components["schemas"]["DiscoveredModel"]>; "manual_model_id_allowed": boolean; "observed_at": number };
+  "ModelDiscoveryView": { "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "models": Array<components["schemas"]["DiscoveredModel"]>; "manual_model_id_allowed": boolean; "observed_at": number };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
-  "ProfileView": { "id": string; "name": string; "adapter": string; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
+  "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
   "PublicJoinPreview": { "course_name": string };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
@@ -92,7 +92,7 @@ export interface components { schemas: {
   "ReadinessView": { "status": "ready"; "database": "connected"; "runtime": "classroom" };
   "Register": { "username": string; "email": string; "password": string };
   "ResetRequest": { "token": string; "password": string };
-  "RevisionView": { "schema": string; "source_sha": string; "worktree_sha256": string; "environment": string; "feature_revision": number; "provider_profiles": boolean; "classroom_owner_routing": boolean; "observed_at": number };
+  "RevisionView": { "schema": "socrates/revision/v1"; "source_sha": string; "worktree_sha256": string; "environment": string; "feature_revision": number; "provider_profiles": boolean; "classroom_owner_routing": boolean; "observed_at": number };
   "RoomBudgetView": { "live_llm_call_budget": number; "used": number };
   "RoomSummary": { "id": string; "title": string; "phase": string; "teacher": boolean };
   "RoomView": { "id": string; "code": (string | null); "title": string; "role": "teacher" | "student"; "member_id": (string | null); "phase": string; "seq": number; "server_now": number; "deadline_at": (number | null); "question": (components["schemas"]["PublicQuestion"] | null); "question_index": number; "question_run_id": (string | null); "question_count": number; "members": Array<components["schemas"]["MemberView"]>; "my_draft": (Record<string, unknown> | null); "my_answer": (Record<string, unknown> | null); "distribution": Array<Record<string, unknown>>; "focus": (Record<string, unknown> | null); "transcript": Array<Record<string, unknown>>; "preview": (components["schemas"]["PublicQuestion"] | null); "summaries": Record<string, unknown>; "available_actions": Array<string>; "source_mode": string; "last_error": (string | null) };

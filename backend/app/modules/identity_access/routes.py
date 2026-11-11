@@ -15,9 +15,14 @@ from app.modules.identity_access.contracts import (
     LocaleUpdate,
     Login,
     MailRequest,
+    MailRequestView,
     Register,
+    ResendWebhookView,
     ResetRequest,
+    SignedOutView,
     TokenRequest,
+    TokenUsedView,
+    VerificationMailView,
     VerificationStatusView,
 )
 from app.modules.platform.storage import transaction
@@ -56,7 +61,7 @@ def update_locale(body: LocaleUpdate, request: Request):
         return auth.account_view(db, a, s.csrf_token)
 
 
-@router.post("/auth/logout")
+@router.post("/auth/logout", response_model=SignedOutView)
 def logout(request: Request, response: Response):
     with transaction() as db:
         _, s = account(db, request, True, False)
@@ -65,13 +70,13 @@ def logout(request: Request, response: Response):
     return {"status": "SIGNED_OUT"}
 
 
-@router.post("/auth/verify")
+@router.post("/auth/verify", response_model=TokenUsedView)
 def verify(body: TokenRequest, request: Request):
     auth_limit(request, "verify")
     return auth.use_token(body.token, "verify")
 
 
-@router.post("/auth/verification-email")
+@router.post("/auth/verification-email", response_model=VerificationMailView)
 def verification_email(body: MailRequest, request: Request):
     auth_limit(request, "mail")
     with transaction() as db:
@@ -103,19 +108,21 @@ def verification_status(request: Request):
     return auth.verification_status(account_id)
 
 
-@router.post("/auth/forgot-password")
+@router.post("/auth/forgot-password", response_model=MailRequestView)
 def forgot(body: MailRequest, request: Request):
     auth_limit(request, "mail")
-    return auth.request_email(body.email, "reset")
+    result = auth.request_email(body.email, "reset")
+    # Only what every caller gets: the delivery receipt exists only for a registered email.
+    return {"status": result["status"], "message": result["message"]}
 
 
-@router.post("/auth/reset-password")
+@router.post("/auth/reset-password", response_model=TokenUsedView)
 def reset(body: ResetRequest, request: Request):
     auth_limit(request, "reset")
     return auth.use_token(body.token, "reset", body.password)
 
 
-@router.post("/webhooks/resend")
+@router.post("/webhooks/resend", response_model=ResendWebhookView)
 async def resend_webhook(request: Request):
     from app.modules.identity_access.service import apply_resend_webhook
 

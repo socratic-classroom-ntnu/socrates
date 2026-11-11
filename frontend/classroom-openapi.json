@@ -3136,6 +3136,27 @@
         "title": "MailRequest",
         "type": "object"
       },
+      "MailRequestView": {
+        "additionalProperties": false,
+        "description": "POST /auth/forgot-password: the same answer whether or not the email has an account, so\nthe endpoint cannot be used to learn which emails are registered.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "REQUEST_RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "MailRequestView",
+        "type": "object"
+      },
       "MemberView": {
         "additionalProperties": false,
         "properties": {
@@ -3791,6 +3812,37 @@
           "password"
         ],
         "title": "Register",
+        "type": "object"
+      },
+      "ResendWebhookView": {
+        "additionalProperties": false,
+        "properties": {
+          "matched": {
+            "title": "Matched",
+            "type": "boolean"
+          },
+          "provider_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status"
+          },
+          "status": {
+            "const": "RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "matched"
+        ],
+        "title": "ResendWebhookView",
         "type": "object"
       },
       "ResetRequest": {
@@ -4675,6 +4727,21 @@
         "title": "SettlementView",
         "type": "object"
       },
+      "SignedOutView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "SIGNED_OUT",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "SignedOutView",
+        "type": "object"
+      },
       "SoloActivityAnalysisView": {
         "additionalProperties": false,
         "properties": {
@@ -5530,6 +5597,25 @@
         "title": "TokenRequest",
         "type": "object"
       },
+      "TokenUsedView": {
+        "additionalProperties": false,
+        "description": "POST /auth/verify and /auth/reset-password: what the one-use token did.",
+        "properties": {
+          "status": {
+            "enum": [
+              "VERIFIED",
+              "PASSWORD_RESET"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "TokenUsedView",
+        "type": "object"
+      },
       "UpdateProfile": {
         "additionalProperties": false,
         "properties": {
@@ -5665,6 +5751,40 @@
           "expires_at"
         ],
         "title": "VerificationDelivery",
+        "type": "object"
+      },
+      "VerificationMailView": {
+        "additionalProperties": false,
+        "description": "POST /auth/verification-email: the signed-in account's own verification mail.",
+        "properties": {
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "REQUEST_RECORDED",
+              "ALREADY_VERIFIED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "VerificationMailView",
         "type": "object"
       },
       "VerificationStatusDelivery": {
@@ -6345,7 +6465,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MailRequestView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6409,7 +6531,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6491,7 +6615,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TokenUsedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6527,7 +6653,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationMailView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6581,7 +6709,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TokenUsedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -9248,7 +9378,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResendWebhookView"
+                }
               }
             },
             "description": "Successful Response"

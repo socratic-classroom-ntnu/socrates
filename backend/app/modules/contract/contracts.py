@@ -149,12 +149,6 @@ DYNAMIC_REASON_CODES: tuple[str, ...] = (
 # Classroom endpoints that still answer without a response_model. The list may only shrink:
 # a new endpoint without one fails tests/contract, and an endpoint that gains one must leave the list.
 RESPONSE_MODEL_PENDING: tuple[str, ...] = (
-    "POST /api/v2/auth/logout",
-    "POST /api/v2/auth/verify",
-    "POST /api/v2/auth/verification-email",
-    "POST /api/v2/auth/forgot-password",
-    "POST /api/v2/auth/reset-password",
-    "POST /api/v2/webhooks/resend",
     "GET /api/v2/meta/revision",
     "GET /api/v2/provider-profiles",
     "POST /api/v2/provider-profiles",

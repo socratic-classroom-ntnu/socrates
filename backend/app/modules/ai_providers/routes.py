@@ -18,8 +18,14 @@ from app.modules.ai_providers.repositories import (
 from app.modules.ai_providers.classroom_provider import ProviderWait
 from app.modules.platform.storage import transaction
 from app.modules.ai_providers.contracts import (
+    AISettingsView,
+    ConnectionTestView,
     CreateProfile,
     CredentialUpdate,
+    ModelDiscoveryView,
+    ProfileDeletedView,
+    ProfileView,
+    RevisionView,
     SettingsUpdate,
     UpdateProfile,
 )
@@ -45,7 +51,7 @@ from app.modules.ai_providers.service import (
 router = APIRouter()
 
 
-@router.get("/meta/revision")
+@router.get("/meta/revision", response_model=RevisionView)
 def revision_metadata():
     return {
         "schema": "socrates/revision/v1",
@@ -59,28 +65,28 @@ def revision_metadata():
     }
 
 
-@router.get("/provider-profiles")
+@router.get("/provider-profiles", response_model=list[ProfileView])
 def list_profiles(request: Request):
     with transaction() as db:
         account, session = account_from_request(db, request)
         return list_provider_profiles(db, account, session)
 
 
-@router.post("/provider-profiles")
+@router.post("/provider-profiles", response_model=ProfileView)
 def create_profile(body: CreateProfile, request: Request):
     with transaction() as db:
         account, session = account_from_request(db, request, True)
         return create_provider_profile(db, account, session, body)
 
 
-@router.patch("/provider-profiles/{profile_id}")
+@router.patch("/provider-profiles/{profile_id}", response_model=ProfileView)
 def update_profile(profile_id: str, body: UpdateProfile, request: Request):
     with transaction() as db:
         account, _ = account_from_request(db, request, True)
         return update_provider_profile(db, account, _, profile_id, body)
 
 
-@router.post("/provider-profiles/{profile_id}/credential")
+@router.post("/provider-profiles/{profile_id}/credential", response_model=ProfileView)
 def update_credential(profile_id: str, body: CredentialUpdate, request: Request):
     with transaction() as db:
         account, session = account_from_request(db, request, True)
@@ -95,7 +101,7 @@ def update_credential(profile_id: str, body: CredentialUpdate, request: Request)
         return profile_view(row, has_session_secret=True)
 
 
-@router.delete("/provider-profiles/{profile_id}")
+@router.delete("/provider-profiles/{profile_id}", response_model=ProfileDeletedView)
 def delete_profile(profile_id: str, request: Request):
     with transaction() as db:
         account, _ = account_from_request(db, request, True)
@@ -110,7 +116,11 @@ def delete_profile(profile_id: str, request: Request):
         return {"status": "DELETED", "profile_id": profile_id}
 
 
-@router.post("/provider-profiles/{profile_id}/test")
+@router.post(
+    "/provider-profiles/{profile_id}/test",
+    response_model=ConnectionTestView,
+    response_model_exclude_unset=True,
+)
 async def test_profile(profile_id: str, request: Request):
     from app.modules.ai_providers.classroom_gateway import test_connection
 
@@ -133,7 +143,11 @@ async def test_profile(profile_id: str, request: Request):
         raise DomainError(exc.reason, provider_error_status(exc.reason)) from exc
 
 
-@router.get("/provider-profiles/{profile_id}/models")
+@router.get(
+    "/provider-profiles/{profile_id}/models",
+    response_model=ModelDiscoveryView,
+    response_model_exclude_unset=True,
+)
 async def provider_models(profile_id: str, request: Request):
     from app.modules.ai_providers.classroom_gateway import discover_models
 
@@ -165,14 +179,14 @@ async def provider_models(profile_id: str, request: Request):
     return result
 
 
-@router.get("/ai-settings/account")
+@router.get("/ai-settings/account", response_model=AISettingsView)
 def account_settings(request: Request):
     with transaction() as db:
         account, _ = account_from_request(db, request)
         return settings_view(db.get(AccountAISettings, account.id))
 
 
-@router.put("/ai-settings/account")
+@router.put("/ai-settings/account", response_model=AISettingsView)
 def update_account_settings(body: SettingsUpdate, request: Request):
     with transaction() as db:
         account, session = account_from_request(db, request, True)

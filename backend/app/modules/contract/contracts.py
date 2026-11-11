@@ -148,18 +148,7 @@ DYNAMIC_REASON_CODES: tuple[str, ...] = (
 
 # Classroom endpoints that still answer without a response_model. The list may only shrink:
 # a new endpoint without one fails tests/contract, and an endpoint that gains one must leave the list.
-RESPONSE_MODEL_PENDING: tuple[str, ...] = (
-    "GET /api/v2/meta/revision",
-    "GET /api/v2/provider-profiles",
-    "POST /api/v2/provider-profiles",
-    "PATCH /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/credential",
-    "DELETE /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/test",
-    "GET /api/v2/provider-profiles/{profile_id}/models",
-    "GET /api/v2/ai-settings/account",
-    "PUT /api/v2/ai-settings/account",
-)
+RESPONSE_MODEL_PENDING: tuple[str, ...] = ()
 
 # Returned only to the mail provider's webhook caller, never shown in the app.
 SERVER_ONLY_REASON_CODES: tuple[str, ...] = (

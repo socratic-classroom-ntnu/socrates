@@ -1,6 +1,57 @@
 {
   "components": {
     "schemas": {
+      "AISettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "budgets": {
+            "title": "Budgets",
+            "type": "object"
+          },
+          "default_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Profile Id"
+          },
+          "fallback_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Profile Id"
+          },
+          "model_matrix": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Model Matrix",
+            "type": "object"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "default_profile_id",
+          "fallback_profile_id",
+          "model_matrix",
+          "budgets",
+          "revision"
+        ],
+        "title": "AISettingsView",
+        "type": "object"
+      },
       "AIStudentCreatedView": {
         "additionalProperties": false,
         "properties": {
@@ -1644,6 +1695,56 @@
         "title": "ConfirmViewpointBody",
         "type": "object"
       },
+      "ConnectionTestView": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "model_count": {
+            "title": "Model Count",
+            "type": "integer"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profile_id": {
+            "title": "Provider Profile Id",
+            "type": "string"
+          },
+          "sample": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveredModel"
+            },
+            "title": "Sample",
+            "type": "array"
+          },
+          "status": {
+            "const": "READY",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "provider_profile_id",
+          "adapter",
+          "model_count",
+          "sample",
+          "observed_at"
+        ],
+        "title": "ConnectionTestView",
+        "type": "object"
+      },
       "CourseCreate": {
         "additionalProperties": false,
         "properties": {
@@ -2213,6 +2314,68 @@
           "accounts"
         ],
         "title": "DemoLoginView",
+        "type": "object"
+      },
+      "DiscoveredModel": {
+        "additionalProperties": false,
+        "description": "One model a provider lists. pricing is the provider's own shape, and only OpenAI-style\nlistings send it; the routes exclude unset fields, so it stays absent rather than null.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "pricing": {
+            "title": "Pricing"
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning"
+          },
+          "structured_outputs": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Outputs"
+          },
+          "supported_parameters": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Parameters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "supported_parameters",
+          "structured_outputs",
+          "reasoning"
+        ],
+        "title": "DiscoveredModel",
         "type": "object"
       },
       "GroupActionReceipt": {
@@ -3235,6 +3398,50 @@
         "title": "MemberView",
         "type": "object"
       },
+      "ModelDiscoveryView": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "manual_model_id_allowed": {
+            "title": "Manual Model Id Allowed",
+            "type": "boolean"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveredModel"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profile_id": {
+            "title": "Provider Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_profile_id",
+          "adapter",
+          "models",
+          "manual_model_id_allowed",
+          "observed_at"
+        ],
+        "title": "ModelDiscoveryView",
+        "type": "object"
+      },
       "Option": {
         "additionalProperties": false,
         "properties": {
@@ -3416,6 +3623,140 @@
           "unresolved_issue"
         ],
         "title": "PersonalSummaryView",
+        "type": "object"
+      },
+      "ProfileDeletedView": {
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "DELETED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "profile_id"
+        ],
+        "title": "ProfileDeletedView",
+        "type": "object"
+      },
+      "ProfileView": {
+        "additionalProperties": false,
+        "description": "A provider profile as its owner sees it; the credential itself never leaves the server.",
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "credential_mode": {
+            "enum": [
+              "PERSISTENT",
+              "SESSION"
+            ],
+            "title": "Credential Mode",
+            "type": "string"
+          },
+          "default_model": {
+            "title": "Default Model",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "has_credential": {
+            "title": "Has Credential",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "metadata": {
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "secret_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret Last4"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "adapter",
+          "base_url",
+          "organization",
+          "project",
+          "default_model",
+          "credential_mode",
+          "has_credential",
+          "secret_last4",
+          "enabled",
+          "metadata",
+          "updated_at"
+        ],
+        "title": "ProfileView",
         "type": "object"
       },
       "PublicConfigView": {
@@ -3880,6 +4221,57 @@
           "password"
         ],
         "title": "ResetRequest",
+        "type": "object"
+      },
+      "RevisionView": {
+        "additionalProperties": false,
+        "description": "GET /meta/revision: which build is running, for support and deploy checks.",
+        "properties": {
+          "classroom_owner_routing": {
+            "title": "Classroom Owner Routing",
+            "type": "boolean"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "feature_revision": {
+            "title": "Feature Revision",
+            "type": "integer"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profiles": {
+            "title": "Provider Profiles",
+            "type": "boolean"
+          },
+          "schema": {
+            "const": "socrates/revision/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "source_sha": {
+            "title": "Source Sha",
+            "type": "string"
+          },
+          "worktree_sha256": {
+            "title": "Worktree Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "source_sha",
+          "worktree_sha256",
+          "environment",
+          "feature_revision",
+          "provider_profiles",
+          "classroom_owner_routing",
+          "observed_at"
+        ],
+        "title": "RevisionView",
         "type": "object"
       },
       "RoomBudgetView": {
@@ -6452,7 +6844,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6476,7 +6870,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8512,7 +8908,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8528,7 +8926,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileView"
+                  },
+                  "title": "Response List Profiles Api V2 Provider Profiles Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -8552,7 +8956,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8589,7 +8995,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileDeletedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8634,7 +9042,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8681,7 +9091,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8718,7 +9130,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDiscoveryView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8755,7 +9169,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestView"
+                }
               }
             },
             "description": "Successful Response"

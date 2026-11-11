@@ -155,16 +155,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "POST /api/v2/auth/forgot-password",
     "POST /api/v2/auth/reset-password",
     "POST /api/v2/webhooks/resend",
-    "GET /api/v2/meta/revision",
-    "GET /api/v2/provider-profiles",
-    "POST /api/v2/provider-profiles",
-    "PATCH /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/credential",
-    "DELETE /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/test",
-    "GET /api/v2/provider-profiles/{profile_id}/models",
-    "GET /api/v2/ai-settings/account",
-    "PUT /api/v2/ai-settings/account",
 )
 
 # Returned only to the mail provider's webhook caller, never shown in the app.

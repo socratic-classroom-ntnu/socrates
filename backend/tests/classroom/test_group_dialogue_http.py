@@ -22,24 +22,45 @@ def join(c, room, name):
     return r.json()["member_id"]
 
 
-def identity(c, room, member_id):
-    return c.get(f"/api/v2/groups/runs/{room['id']}/members/{member_id}/identity")
+def identity(c, run_id, member_id):
+    return c.get(f"/api/v2/groups/runs/{run_id}/members/{member_id}/identity")
+
+
+def start_groups(c, room):
+    _, digest = roster(c, room)
+    body = {"expected_roster_digest": digest}
+    configure = {**body, "action_id": str(uuid.uuid4()), "group_count": 1, "members_per_group": 1}
+    r = c.post(f"/api/v2/groups/classrooms/{room['id']}/configure", json=configure)
+    assert r.status_code == 200
+    r = c.post(
+        f"/api/v2/groups/classrooms/{room['id']}/start",
+        json={**body, "action_id": str(uuid.uuid4())},
+    )
+    assert r.status_code == 200
 
 
 def test_identity_reveals_username_to_teacher_only(client):  # noqa: F811
+    # 前端在分組畫面呼叫：rid 是分組 run，mid 是該組的 membership，兩者都和大廳不同
     user(client)
     room = open_room(client)
-    member = join(client, room, "student")
-    student = identity(client, room, member)
+    lobby_member = join(client, room, "student")
+    login(client, "teacher")
+    start_groups(client, room)
+    login(client, "student")
+    route = client.get(f"/api/v2/groups/classrooms/{room['id']}").json()["route"]
+    run_id, member = route["group_id"], route["membership_id"]
+    assert (run_id, member) != (room["id"], lobby_member)
+    student = identity(client, run_id, member)
     assert (student.status_code, student.json()) == (403, {"detail": "TEACHER_MEMBERSHIP_REQUIRED"})
     login(client, "teacher")
-    r = identity(client, room, member)
+    r = identity(client, run_id, member)
     assert (r.status_code, r.json()) == (
         200,
         {"username": "student", "scope": "teacher_hover_only"},
     )
-    missing = identity(client, room, "no-such-member")
-    assert (missing.status_code, missing.json()) == (404, {"detail": "GROUP_MEMBER_REQUIRED"})
+    for missing_id in ("no-such-member", lobby_member):
+        missing = identity(client, run_id, missing_id)
+        assert (missing.status_code, missing.json()) == (404, {"detail": "GROUP_MEMBER_REQUIRED"})
 
 
 def add_ai(c, room, count=2, action_id=None):

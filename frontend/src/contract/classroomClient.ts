@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { components } from './classroomTypes'
 import { errorText } from './errorText'
 
 // The adapter retains the established fetch(url, init) boundary used by resident tests.
@@ -213,6 +214,13 @@ export async function exportYAML(id) {
     responseType: 'text',
   })
   return response.data
+}
+
+export type GroupAnalysis = components['schemas']['GroupAnalysisView']
+
+/** 教師端的分組分析投影（假名化的原話、關係與立場分布）。 */
+export function getGroupAnalysis(classroomId: string): Promise<GroupAnalysis> {
+  return api(`/groups/classrooms/${classroomId}/analysis`)
 }
 
 /** 前端可公開的設定（例如 debug_mode）。 */

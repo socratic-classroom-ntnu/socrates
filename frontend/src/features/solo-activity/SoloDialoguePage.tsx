@@ -4,14 +4,14 @@ import { api, ApiError } from '../../contract/classroomClient'
 import { useResource } from '../../contract/useResource'
 import { errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
+import { ButtonLink } from '../../ui'
 import '../../styles/solo.css'
-import { QuestionBoard } from './QuestionBoard'
 import { ReviewPlaceholder } from './ReviewPlaceholder'
+import { ScenarioBoard } from './ScenarioBoard'
 import { SoloComposer } from './SoloComposer'
 import { SoloProgress } from './SoloProgress'
 import { SoloTimeline } from './SoloTimeline'
-import { StanceForm } from './StanceForm'
-import { can, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
+import { can, currentScenario, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { ViewpointCard } from './ViewpointCard'
 
 const SAVE_CHECK_MS = 1000
@@ -42,15 +42,15 @@ export function SoloDialoguePage() {
     const notFound = activity.error instanceof ApiError && activity.error.status === 404
     return <main className="solo-dialogue solo-dialogue--message">
       <h1>{notFound ? t('activity.notFound') : errorMessage(t, activity.error)}</h1>
-      <Link className="button button--outline" to="/">{t('activity.home')}</Link>
+      <ButtonLink variant="outline" to="/">{t('activity.home')}</ButtonLink>
     </main>
   }
   if (!activity.data.attempt) return <Navigate to={`/learn/activities/${activityId}`} replace />
   if (attempt.loading && !view) return <main className="solo-dialogue" aria-busy="true" />
   if (!view) return <main className="solo-dialogue solo-dialogue--message"><p>{errorMessage(t, attempt.error, 'solo')}</p></main>
 
-  const question = view.questions.find(item => item.index === view.question_index)
-  if (!question) return <main className="solo-dialogue solo-dialogue--message"><p>{t('questionUnavailable')}</p></main>
+  const scenario = currentScenario(view)
+  if (!scenario) return <main className="solo-dialogue solo-dialogue--message"><p>{t('scenarioUnavailable')}</p></main>
 
   async function perform(action: SoloAction, body?: Record<string, unknown>) {
     setActionError(null)
@@ -108,16 +108,12 @@ export function SoloDialoguePage() {
     }
   }
 
+  /** The first message of a scenario is the student's own answer; the same action carries it. */
   async function sendMessage(body: SoloSendMessageBody) {
-    return sendWithSaveCheck('send_message', body, { text: body.text, first: false })
-  }
-
-  async function submitStance(optionId: string, reason: string) {
-    return sendWithSaveCheck('submit_stance', { option_id: optionId, reason }, { text: reason, first: true })
+    return sendWithSaveCheck('send_message', body, { text: body.text, first: view!.state === 'answering' })
   }
 
   const waiting = view.state === 'awaiting_tutor'
-    || pendingAction === 'submit_stance'
     || pendingAction === 'send_message'
     || pendingAction === 'retry'
 
@@ -130,15 +126,15 @@ export function SoloDialoguePage() {
         <strong>{view.course_name} · {view.activity_title}</strong>
         <span>{t('dialogue.subtitle')}</span>
       </div>
-      <span className="solo-dialogue__count">{t('dialogue.count', { current: view.question_index + 1, count: view.question_count })}</span>
+      <span className="solo-dialogue__count">{t('dialogue.count', { current: view.scenario_index + 1 })}</span>
       <span className="solo-dialogue__person" aria-label={view.display_name}>{view.display_name.slice(0, 1)}</span>
     </header>
     <div className="solo-dialogue__columns">
-      <QuestionBoard
-        question={question}
+      <ScenarioBoard
+        scenario={scenario}
         confirming={can(view, 'confirm_viewpoint') || can(view, 'revise_viewpoint')}
         revising={view.revising}
-        progress={view.question_count > 1 ? <SoloProgress view={view} /> : null}
+        progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
       />
       <section className="solo-conversation">
         {view.state === 'reviewing'
@@ -154,27 +150,20 @@ export function SoloDialoguePage() {
               retrying={pendingAction === 'retry'}
               onRetry={() => { void perform('retry') }}
             />
-            <StanceForm
-              key={`stance-${view.id}-${question.index}`}
-              view={view}
-              question={question}
-              onSubmit={submitStance}
-            />
             <SoloComposer
-              key={`composer-${view.id}-${question.index}`}
+              key={`composer-${view.id}-${scenario.index}`}
               view={view}
               pending={pendingAction !== null}
               sending={pendingAction === 'send_message' && !savedEarly}
               onSend={sendMessage}
             />
-            {can(view, 'next_question') && <div className="solo-next">
-              <button className="solo-primary" type="button" disabled={pendingAction !== null} onClick={() => { void perform('next_question') }}>
+            {can(view, 'next_scenario') && <div className="solo-next">
+              <button className="solo-primary" type="button" disabled={pendingAction !== null} onClick={() => { void perform('next_scenario') }}>
                 {t('next.button')} <span aria-hidden="true">→</span>
               </button>
             </div>}
             <ViewpointCard
               view={view}
-              question={question}
               pending={pendingAction !== null}
               onConfirm={async () => {
                 if (view.summary_digest) await perform('confirm_viewpoint', { summary_digest: view.summary_digest })

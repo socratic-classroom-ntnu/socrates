@@ -8,6 +8,7 @@ import { Menu, type MenuItem } from '../../../components/Menu'
 import { errorCode, errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { ButtonLink, Button, Chip, ChipGroup, FormError, iconButtonClass, StatusPill } from '../../../ui'
 import { ActivityCardStats } from './ActivityCardStats'
 import { DeleteActivityDialog } from './DeleteActivityDialog'
 import { InviteDialog } from './InviteDialog'
@@ -43,7 +44,7 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
   const workingRef = useRef<string | null>(null)
 
   if (list.loading && !list.data) return <div aria-busy="true" />
-  if (!list.data) return <p role="alert" className="form-error">{errorMessage(t, list.error)}</p>
+  if (!list.data) return <FormError role="alert">{errorMessage(t, list.error)}</FormError>
   if (list.data.items.length === 0) return <EmptyActivities courseId={courseId} canCreate={canCreate} />
 
   const items = list.data.items
@@ -110,11 +111,10 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
   }
 
   function meta(card: Card) {
-    const questions = t('cards.questions', { count: card.question_count })
-    if (card.status === 'draft') return t('cards.draftMeta', { questions, end: when(card.ends_at, 'dateTime') })
-    if (card.status === 'scheduled') return t('cards.scheduledMeta', { questions, start: when(card.starts_at, 'weekdayDateTime'), end: when(card.ends_at, 'dateTime') })
-    if (card.status === 'open') return t('cards.openMeta', { questions, end: when(card.ends_at, 'weekdayDateTime') })
-    return t('cards.endedMeta', { questions, end: when(card.ends_at, 'weekdayDate') })
+    if (card.status === 'draft') return t('cards.draftMeta', { end: when(card.ends_at, 'dateTime') })
+    if (card.status === 'scheduled') return t('cards.scheduledMeta', { start: when(card.starts_at, 'weekdayDateTime'), end: when(card.ends_at, 'dateTime') })
+    if (card.status === 'open') return t('cards.openMeta', { end: when(card.ends_at, 'weekdayDateTime') })
+    return t('cards.endedMeta', { end: when(card.ends_at, 'weekdayDate') })
   }
 
   const counts = (Object.keys(FILTERS) as Filter[]).map(key => [key, items.filter(card => FILTERS[key](card.status)).length] as const)
@@ -122,22 +122,22 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
 
   return <section className="activity-cards">
     <div className="activity-cards__bar">
-      <div role="group" aria-label={t('cards.filterLabel')} className="chips">
-        {counts.map(([key, count]) => <button key={key} type="button" className="chip" aria-pressed={filter === key}
+      <ChipGroup label={t('cards.filterLabel')}>
+        {counts.map(([key, count]) => <Chip key={key} pressed={filter === key}
           onClick={() => setParams(key === 'all' ? {} : { filter: key }, { replace: true })}
-        >{t(`cards.filters.${key}`)} {count}</button>)}
-      </div>
-      {canCreate && <Link className="button button--primary" to={`/teach/courses/${courseId}/activities/new`}><span aria-hidden="true">+</span>{t('empty.newActivity')}</Link>}
+        >{t(`cards.filters.${key}`)} {count}</Chip>)}
+      </ChipGroup>
+      {canCreate && <ButtonLink variant="primary" to={`/teach/courses/${courseId}/activities/new`}><span aria-hidden="true">+</span>{t('empty.newActivity')}</ButtonLink>}
     </div>
-    {notice && <p role="alert" className="form-error">{notice}</p>}
+    {notice && <FormError role="alert">{notice}</FormError>}
     {shown.length === 0 && <p className="activity-cards__none">{t('cards.noMatch')}</p>}
     <div className="activity-cards__list">
       {shown.map(card => <article key={card.id} className={`activity-card activity-card--${card.status}`}>
         <div className="activity-card__main">
           <div className="activity-card__head">
             <h3><Link className="activity-card__link" to={`/teach/activities/${card.id}`}>{card.title}</Link></h3>
-            <span className={`status-pill status-pill--${card.status}`}>{t(`status.${card.status}`)}</span>
-            {card.has_unpublished_changes && <span className="status-pill status-pill--quiet">{t('cards.pending')}</span>}
+            <StatusPill tone={card.status} className="activity-card__status">{t(`status.${card.status}`)}</StatusPill>
+            {card.has_unpublished_changes && <StatusPill tone="quiet" className="activity-card__status">{t('cards.pending')}</StatusPill>}
           </div>
           <span className="activity-card__meta">{meta(card)}</span>
         </div>
@@ -146,13 +146,13 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
         </div>
         <div className="activity-card__actions">
           {card.status === 'scheduled' && card.available_actions.includes('start_now') &&
-            <button type="button" className="button button--dark" disabled={working === card.id} onClick={() => void transition(card, 'start_now')}>{t('cards.start')}</button>}
+            <Button variant="dark" disabled={working === card.id} onClick={() => void transition(card, 'start_now')}>{t('cards.start')}</Button>}
           <Menu
             label={t('cards.more', { title: card.title })}
             trigger={<span aria-hidden="true">⋮</span>}
             items={menuItems(card)}
             align="end"
-            triggerClassName="icon-button icon-button--quiet"
+            triggerClassName={iconButtonClass('quiet')}
             disabled={working === card.id}
           />
         </div>
@@ -168,10 +168,10 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
       title={t(confirm.kind === 'end' ? 'cards.endDialog.title' : 'cards.cancelDialog.title')}
       onClose={() => setConfirm(null)}
       footer={<>
-        <button type="button" className="button button--quiet" onClick={() => setConfirm(null)}>{t('cards.cancel')}</button>
-        <button type="button" className="button button--primary" onClick={() => { const card = confirm.card; setConfirm(null); void transition(card, 'end_now') }}>
+        <Button variant="quiet" onClick={() => setConfirm(null)}>{t('cards.cancel')}</Button>
+        <Button variant="primary" onClick={() => { const card = confirm.card; setConfirm(null); void transition(card, 'end_now') }}>
           {t(confirm.kind === 'end' ? 'cards.endDialog.confirm' : 'cards.cancelDialog.confirm')}
-        </button>
+        </Button>
       </>}
     >
       <p className="dialog__text">{t(confirm.kind === 'end' ? 'cards.endDialog.body' : 'cards.cancelDialog.body', { title: confirm.card.title })}</p>
@@ -192,6 +192,6 @@ function EmptyActivities({ courseId, canCreate }: { courseId: string; canCreate:
     <span className="teach-empty__icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z" /></svg></span>
     <h2>{t('empty.title')}</h2>
     <p>{t('empty.body')}</p>
-    {canCreate && <Link className="button button--primary" to={`/teach/courses/${courseId}/activities/new`}><span aria-hidden="true">+</span>{t('empty.newActivity')}</Link>}
+    {canCreate && <ButtonLink variant="primary" to={`/teach/courses/${courseId}/activities/new`}><span aria-hidden="true">+</span>{t('empty.newActivity')}</ButtonLink>}
   </section>
 }

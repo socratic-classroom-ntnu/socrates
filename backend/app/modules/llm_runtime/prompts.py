@@ -3,10 +3,17 @@
 import json
 from pathlib import Path
 from app.modules.llm_runtime.contracts import (
+    ActivityExpansion,
     DynamicResult,
+    FinalSummary,
     LLMStudentTurn,
     PersonalTutorTurn,
+    RadarAxisNames,
+    RadarDimensions,
+    RadarScores,
+    ScenarioExtension,
     ScriptAssistResult,
+    StanceClassification,
     SummaryResult,
     TutorTurn,
 )
@@ -22,6 +29,13 @@ SCHEMAS = {
     "DynamicResult": DynamicResult,
     "LLMStudentTurn": LLMStudentTurn,
     "ScriptAssistResult": ScriptAssistResult,
+    "ScenarioExtension": ScenarioExtension,
+    "ActivityExpansion": ActivityExpansion,
+    "FinalSummary": FinalSummary,
+    "RadarAxisNames": RadarAxisNames,
+    "RadarDimensions": RadarDimensions,
+    "RadarScores": RadarScores,
+    "StanceClassification": StanceClassification,
 }
 
 
@@ -37,7 +51,19 @@ JOB_KINDS = (
 # Request-time programs (no classroom job); same file, same validation.
 # solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
 # activity the backend alone decides when the student confirms.
-REQUEST_PROGRAMS = ("ai_script_authoring", "solo_tutor")
+# scenario_extension writes a solo student's next scenario; the first one is the teacher's text.
+# The rest are the solo activity's programs, called by course-management and solo-activity.
+REQUEST_PROGRAMS = (
+    "ai_script_authoring",
+    "solo_tutor",
+    "scenario_extension",
+    "activity_expansion",
+    "stance_classify",
+    "final_summary",
+    "radar_axis_naming",
+    "radar_dimensions",
+    "radar_scoring",
+)
 # L0 路由；compile_program 依角色載入 L1＋L2（app/modules/llm_runtime/iron_rules.py）。
 IRON_RULES_SKILL = "iron-rules/ROUTER.json"
 
@@ -101,7 +127,6 @@ def compile_program(db, kind, context):
         "context_hash": digest(context),
         "use_case": kind,
     }
-    key = kind + ":" + digest(metadata)[:24]
     # Context-specific hash stays in call audit, not canonical program identity.
     canonical = {k: v for k, v in metadata.items() if k != "context_hash"}
     key = kind + ":" + digest(canonical)[:24]

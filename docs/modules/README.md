@@ -25,13 +25,13 @@
 
 | 模組 | 邊界 | 檔案範圍 | 可依賴 | 待清違規 |
 |---|---|---|---|---|
-| [App Shell](./backend/app-shell.md) | ⚠️ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py`<br>`backend/app/modules/app_shell/` | 全部（組裝層） | 0 |
+| [App Shell](./backend/app-shell.md) | ✅ | `backend/app/main.py`<br>`backend/app/classroom_app.py`<br>`backend/app/classroom_server.py`<br>`backend/app/modules/app_shell/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./backend/contract.md) | ✅ | `backend/app/modules/contract/` | 全部（組裝層） | 0 |
 | [Platform](./backend/platform.md) | ✅ | `backend/app/modules/platform/` | — | 0 |
 | [Identity & Access](./backend/identity-access.md) | ⚠️ | `backend/app/modules/identity_access/` | platform | 0 |
 | [AI Providers](./backend/ai-providers.md) | ⚠️ | `backend/app/modules/ai_providers/` | platform、identity-access | 0 |
 | [LLM Runtime](./backend/llm-runtime.md) | ✅ | `backend/app/modules/llm_runtime/` | platform、ai-providers | 0 |
-| [Content Authoring](./backend/content-authoring.md) | ⚠️ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
+| [Content Authoring](./backend/content-authoring.md) | ✅ | `backend/app/modules/content_authoring/` | platform、identity-access、ai-providers、llm-runtime | 0 |
 | [Classroom Core](./backend/classroom-core.md) | ✅ | `backend/app/modules/classroom_core/` | platform、identity-access、ai-providers、llm-runtime、content-authoring | 0 |
 | [Group Dialogue](./backend/group-dialogue.md) | ✅ | `backend/app/modules/group_dialogue/` | platform、identity-access、ai-providers、llm-runtime、content-authoring、classroom-core | 0 |
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue | 0 |
@@ -44,7 +44,7 @@
 |---|---|---|---|---|
 | [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/app/`<br>`frontend/src/testing/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./frontend/contract.md) | ✅ | `frontend/src/contract/` | — | 0 |
-| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
+| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/ui/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
 | [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
 | [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/` | platform、contract | 0 |
 | [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform、contract | 0 |

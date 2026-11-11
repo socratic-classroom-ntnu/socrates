@@ -1,21 +1,18 @@
 import { useT } from '../../i18n/useT'
-import { StanceChip } from './StanceChip'
-import { can, principleKey, stanceLabel, type SoloAttemptView, type SoloQuestion } from './soloView'
+import { can, principleKey, type SoloAttemptView } from './soloView'
 
 type Props = {
   view: SoloAttemptView
-  question: SoloQuestion
   pending: boolean
   onConfirm(): Promise<void>
   onRevise(): Promise<void>
 }
 
-export function ViewpointCard({ view, question, pending, onConfirm, onRevise }: Props) {
+export function ViewpointCard({ view, pending, onConfirm, onRevise }: Props) {
   const { t } = useT('solo')
   const summary = view.candidate_summary
   if (!summary) return null
 
-  const position = stanceLabel(question)
   const key = principleKey(view.principle_hint)
   const principle = key ? t(`viewpoint.principles.${key}`) : null
 
@@ -28,7 +25,6 @@ export function ViewpointCard({ view, question, pending, onConfirm, onRevise }: 
       </div>
     </header>
     <dl>
-      {position && <div><dt>{t('viewpoint.position')}</dt><dd><StanceChip question={question} /></dd></div>}
       <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary}</dd></div>
       {summary.relevant_conditions.length > 0 && <div>
         <dt>{t('viewpoint.conditions')}</dt>

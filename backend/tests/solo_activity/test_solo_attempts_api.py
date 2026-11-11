@@ -1,19 +1,21 @@
-"""/api/v2/solo: starting, the single-question flow, privacy, and the provider boundary."""
+"""/api/v2/solo: starting, the single-scenario flow, privacy, and the provider boundary."""
 
 import asyncio
 import json
 import time
+from dataclasses import asdict
 
 from sqlalchemy import func, select
 
 from app.modules.ai_providers.service import ProviderWait
 from app.modules.identity_access.repositories import Account
 from app.modules.platform import storage as storage
-from app.modules.solo_activity.contracts import SubmitStanceBody
-from app.modules.solo_activity.repositories import SoloMessage
+from app.modules.solo_activity.attempt_machine import ScenarioProgress
+from app.modules.solo_activity.contracts import SendMessageBody
+from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity import service as service
 from tests.course_management.conftest import switch, user
-from tests.course_management.test_activities_api import act, create_activity, question
+from tests.course_management.test_activities_api import act, create_activity
 from tests.course_management.test_courses_api import create_course
 
 OPENING = {
@@ -75,12 +77,19 @@ def join(client, course, name):
     return account
 
 
-def setup(client, *, questions=None, ai=True, **activity):
-    """Teacher with a published, open activity and one enrolled student (logged in)."""
+SCENARIO = (
+    "一輛失控的電車正駛向五名工人。你站在拉桿旁：拉下它，電車會轉向另一條軌道，那裡有一名工人。"
+)
+
+
+def setup(client, *, scenario=SCENARIO, ai=True, **activity):
+    """Teacher with a published, open activity and one enrolled student (logged in).
+
+    The teacher's single input is the activity's title and the first scenario's text."""
     teacher = user(client, "owner")
     profile_id = configure_ai(client) if ai else None
     course = create_course(client)
-    body = create_activity(client, course["id"], questions=questions or [question()], **activity)
+    body = create_activity(client, course["id"], title=scenario, **activity)
     assert act(client, body["id"], "publish").status_code == 200
     student = join(client, course, "student")
     return {
@@ -106,8 +115,15 @@ def ok(response):
     return response.json()
 
 
-def stance(client, attempt_id, option_id="o1", reason="不能主動害人"):
-    return ok(do(client, attempt_id, "submit_stance", {"option_id": option_id, "reason": reason}))
+def answer(client, attempt_id, text="不能主動害人"):
+    return ok(do(client, attempt_id, "send_message", {"text": text}))
+
+
+def add_scenario(attempt_id, text, scenario_id="s2"):
+    """What scenario extension will do (O5): append the next scenario to the attempt's sequence."""
+    with storage.transaction() as db:
+        row = db.get(SoloAttempt, attempt_id)
+        row.progress = [*row.progress, asdict(ScenarioProgress(scenario_id, text))]
 
 
 def tutor_messages() -> int:
@@ -122,18 +138,15 @@ def test_activity_view_shows_own_attempt(client, tutor):
     view = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))
     assert view["attempt"] is None
     assert view["status"] == "open"
-    assert view["question_count"] == 1
     assert view["course_name"] == s["course"]["name"]
 
     attempt = ok(start(client, s["activity_id"]))
     view = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))
     assert view["attempt"] == {
         "id": attempt["id"],
-        "state": "choosing_stance",
-        "question_index": 0,
-        "progress": [
-            {"index": 0, "status": "in_dialogue", "title": "岔道上的選擇", "option_label": None}
-        ],
+        "state": "answering",
+        "scenario_index": 0,
+        "progress": [{"index": 0, "status": "in_dialogue"}],
         "review_status": "not_started",
         "current_turn": 0,
     }
@@ -191,7 +204,7 @@ def test_start_is_idempotent_and_locks_revision(client, tutor):
     second = ok(start(client, s["activity_id"]))
     assert first["id"] == second["id"]
     assert first["display_name"] == "student同學"
-    assert first["available_actions"] == ["submit_stance"]
+    assert first["available_actions"] == ["send_message"]
 
     switch(client, s["teacher"])
     cards = ok(client.get(f"/api/v2/courses/{s['course']['id']}/activities"))["items"]
@@ -211,7 +224,7 @@ def test_student_message_persisted_before_provider(client, tutor):
         raise ProviderWait("PROVIDER_TIMEOUT", 60)
 
     replies.append(fail_after_looking)
-    view = stance(client, attempt["id"])
+    view = answer(client, attempt["id"])
 
     assert seen_at_call == [["不能主動害人"]]
     assert view["state"] == "tutor_unavailable"
@@ -233,9 +246,9 @@ def test_concurrent_retry_single_reply(client, tutor):
     attempt = ok(start(client, s["activity_id"]))
     with storage.transaction() as db:
         account = db.get(Account, s["student"]["id"])
-        body = SubmitStanceBody(option_id="o1", reason="不能主動害人")
+        body = SendMessageBody(text="不能主動害人")
         prepared = service.begin_action(
-            db, account, attempt["id"], "submit_stance", body, service.now()
+            db, account, attempt["id"], "send_message", body, service.now()
         )
     replies.extend([OPENING, OPENING])
     first = asyncio.run(service.finish_action(prepared))
@@ -244,27 +257,27 @@ def test_concurrent_retry_single_reply(client, tutor):
     assert tutor_messages() == 1
 
 
-def test_full_single_question_flow(client, tutor):
+def test_full_single_scenario_flow(client, tutor):
     calls, replies = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
+    # The teacher's text is the first scenario, shown verbatim before any provider call.
+    assert [x["text"] for x in attempt["scenarios"]] == [SCENARIO]
+    assert attempt["scenarios"][0]["answer"] is None
 
     replies.append(OPENING)
-    view = stance(client, attempt["id"])
+    view = answer(client, attempt["id"])
     assert view["state"] == "in_dialogue"
-    assert view["questions"][0]["stance"] == {
-        "option_id": "o1",
-        "current_option_id": "o1",
-        "reason": "不能主動害人",
-    }
+    assert view["scenarios"][0]["answer"] == "不能主動害人"
     assert view["candidate_summary"] is None and view["summary_digest"] is None
     opening_context = json.loads(calls[0]["messages"][1]["content"])
     assert opening_context["turn_index"] == 0
     assert opening_context["history"] == []
-    assert opening_context["option_id"] == "o1"
-    assert opening_context["option_text"] == "不拉"
-    assert opening_context["argument"] == "不能主動害人"
-    assert opening_context["question"]["tutor_goal"] == "協助學生照見自己的立場與理由。"
+    assert opening_context["scenario"] == SCENARIO
+    assert opening_context["answer"] == "不能主動害人"
+    assert opening_context["tutor_goal"] == "協助學生照見自己的立場與理由。"
+    # No options exist any more, so none reach the tutor.
+    assert not {"question", "option_id", "option_text", "argument"} & set(opening_context)
 
     replies.append(MET)
     view = ok(do(client, attempt["id"], "send_message", {"text": "因為是我親手造成的"}))
@@ -295,8 +308,8 @@ def test_full_single_question_flow(client, tutor):
     )
     assert view["state"] == "reviewing"
     assert view["available_actions"] == ["submit_review"]
-    assert view["questions"][0]["status"] == "goal_met"
-    assert view["questions"][0]["confirmed_summary"] == MET["summary"]
+    assert view["scenarios"][0]["status"] == "goal_met"
+    assert view["scenarios"][0]["confirmed_summary"] == MET["summary"]
     assert view["candidate_summary"] is None
 
     view = ok(do(client, attempt["id"], "submit_review"))
@@ -310,42 +323,57 @@ def test_full_single_question_flow(client, tutor):
 def test_unavailable_action_and_body_shape(client, tutor):
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
-    response = do(client, attempt["id"], "send_message", {"text": "太早了"})
+    # Before the first answer only a message is offered.
+    assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))["available_actions"] == [
+        "send_message"
+    ]
+    response = do(client, attempt["id"], "confirm_viewpoint", {"summary_digest": "x"})
     assert (response.status_code, response.json()) == (409, {"detail": "SOLO_ACTION_UNAVAILABLE"})
-    assert do(client, attempt["id"], "submit_stance").status_code == 422
-    assert do(client, attempt["id"], "submit_stance", {"text": "錯的欄位"}).status_code == 422
+    assert do(client, attempt["id"], "send_message").status_code == 422
+    assert do(client, attempt["id"], "send_message", {"reason": "錯的欄位"}).status_code == 422
+    # The old option fields are not part of any body any more.
+    assert (
+        do(client, attempt["id"], "send_message", {"text": "x", "option_id": "o1"}).status_code
+        == 422
+    )
     assert do(client, attempt["id"], "retry", {"text": "不該有 body"}).status_code == 422
     assert do(client, attempt["id"], "fly").status_code == 422
-    response = do(client, attempt["id"], "submit_stance", {"option_id": "nope", "reason": "x"})
-    assert (response.status_code, response.json()) == (422, {"detail": "SOLO_OPTION_INVALID"})
+    assert do(client, attempt["id"], "submit_stance", {"text": "舊的動作"}).status_code == 422
 
 
-def test_view_hides_unreached_questions(client, tutor):
+def test_a_revise_hint_outside_revising_is_rejected(client, tutor):
     _, replies = tutor
-    questions = [
-        question("q1", "岔道上的選擇"),
-        {**question("q2", "天橋上的胖子"), "scenario": "你站在天橋上，旁邊有一位陌生人。"},
-        {**question("q3", "器官移植的醫生"), "scenario": "五位病人各自需要不同的器官。"},
-    ]
-    s = setup(client, questions=questions)
-    hidden = ["天橋上的胖子", "你站在天橋上", "器官移植的醫生", "五位病人各自"]
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    replies.append(OPENING)
+    answer(client, attempt["id"])
+    response = do(client, attempt["id"], "send_message", {"text": "x", "revise_hint": "reason"})
+    assert (response.status_code, response.json()) == (
+        422,
+        {"detail": "SOLO_REVISE_HINT_INVALID"},
+    )
 
+
+def test_view_hides_unreached_scenarios(client, tutor):
+    _, replies = tutor
+    s = setup(client)
+    secret = "你站在天橋上，旁邊有一位陌生人。"
     responses = [
         client.get(f"/api/v2/solo/activities/{s['activity_id']}"),
         start(client, s["activity_id"]),
     ]
     attempt = ok(responses[-1])
-    assert attempt["question_count"] == 3
-    assert [q["index"] for q in attempt["questions"]] == [0]
+    # The sequence may already hold a later scenario; the student only ever gets the reached ones.
+    add_scenario(attempt["id"], secret)
+    assert [x["index"] for x in attempt["scenarios"]] == [0]
     replies.append(OPENING)
-    responses.append(
-        do(client, attempt["id"], "submit_stance", {"option_id": "o0", "reason": "救五個"})
-    )
+    responses.append(do(client, attempt["id"], "send_message", {"text": "救五個"}))
     responses.append(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))
+    responses.append(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))
     for response in responses:
         text = response.content.decode()
         assert response.status_code == 200, text
-        assert not [word for word in hidden if word in text]
+        assert secret not in text
 
 
 def test_attempt_is_private_to_its_student(client, tutor):
@@ -357,7 +385,7 @@ def test_attempt_is_private_to_its_student(client, tutor):
             switch(client, s["teacher"])
         for response in (
             client.get(f"/api/v2/solo/attempts/{attempt['id']}"),
-            do(client, attempt["id"], "submit_stance", {"option_id": "o1", "reason": "冒名"}),
+            do(client, attempt["id"], "send_message", {"text": "冒名"}),
         ):
             assert (response.status_code, response.json()) == (
                 404,
@@ -374,7 +402,7 @@ def test_owner_chain_uses_teacher_profile(client, tutor):
     configure_ai(client, model="student-model")
     attempt = ok(start(client, s["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     (call,) = calls
     assert call["binding"]["profile_id"] == s["profile_id"]
     assert call["binding"]["owner_id"] == s["teacher"]["id"]
@@ -389,7 +417,7 @@ def test_solo_prompt_keeps_summaries_out_of_the_reply(client, tutor):
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     system = calls[0]["messages"][0]["content"]
     # The group dialogue's personal_tutor prompt lets the model decide to recap; solo must not.
     assert "請學生檢視摘要" not in system
@@ -403,7 +431,7 @@ def test_teacher_without_profile_reports_missing_provider(client, tutor):
     calls, _ = tutor
     s = setup(client, ai=False)
     attempt = ok(start(client, s["activity_id"]))
-    view = stance(client, attempt["id"])
+    view = answer(client, attempt["id"])
     assert calls == []
     assert view["state"] == "tutor_unavailable"
     assert view["notice"] == "owner_provider_missing"
@@ -422,19 +450,15 @@ def test_started_attempt_continues_after_activity_ends(client, tutor):
     view = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))
     assert view["status"] == "ended" and view["attempt"]["id"] == attempt["id"]
     replies.append(OPENING)
-    assert stance(client, attempt["id"])["state"] == "in_dialogue"
+    assert answer(client, attempt["id"])["state"] == "in_dialogue"
 
 
-def two_questions():
-    return [
-        question("q1", "岔道上的選擇"),
-        {**question("q2", "天橋上的胖子"), "scenario": "你站在天橋上，旁邊有一位陌生人。"},
-    ]
+SECOND = "你站在天橋上，旁邊有一位陌生人。把他推下去可以擋住電車，救下五個人。"
 
 
-def to_confirming(client, attempt_id, replies, option_id="o1"):
+def to_confirming(client, attempt_id, replies):
     replies.append(OPENING)
-    stance(client, attempt_id, option_id=option_id)
+    answer(client, attempt_id)
     replies.append(MET)
     view = ok(do(client, attempt_id, "send_message", {"text": "因為是我親手造成的"}))
     assert view["state"] == "confirming"
@@ -447,42 +471,41 @@ def confirm(client, attempt_id, view):
     )
 
 
-def test_multi_question_flow(client, tutor):
+def test_multi_scenario_flow(client, tutor):
     calls, replies = tutor
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
+    add_scenario(attempt["id"], SECOND)
     view = confirm(client, attempt["id"], to_confirming(client, attempt["id"], replies))
-    assert view["state"] == "between_questions"
-    assert view["available_actions"] == ["next_question"]
-    assert [q["index"] for q in view["questions"]] == [0]
-    assert view["questions"][0]["status"] == "goal_met"
+    assert view["state"] == "between_scenarios"
+    assert view["available_actions"] == ["next_scenario"]
+    assert [x["index"] for x in view["scenarios"]] == [0]
+    assert view["scenarios"][0]["status"] == "goal_met"
     reloaded = client.get(f"/api/v2/solo/attempts/{attempt['id']}").content.decode()
-    assert "天橋上的胖子" not in reloaded and "你站在天橋上" not in reloaded
+    assert "你站在天橋上" not in reloaded
 
-    view = ok(do(client, attempt["id"], "next_question"))
-    assert view["state"] == "choosing_stance"
-    assert view["question_index"] == 1
-    assert view["available_actions"] == ["submit_stance"]
-    second = view["questions"][1]
-    assert (second["title"], second["scenario"]) == (
-        "天橋上的胖子",
-        "你站在天橋上，旁邊有一位陌生人。",
-    )
-    assert second["stance"] is None and second["status"] == "in_progress"
-    assert view["questions"][0]["confirmed_summary"] == MET["summary"]
+    view = ok(do(client, attempt["id"], "next_scenario"))
+    assert view["state"] == "answering"
+    assert view["scenario_index"] == 1
+    assert view["available_actions"] == ["send_message"]
+    second = view["scenarios"][1]
+    assert (second["id"], second["text"]) == ("s2", SECOND)
+    assert second["answer"] is None and second["status"] == "in_progress"
+    assert view["scenarios"][0]["confirmed_summary"] == MET["summary"]
     brief = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))["attempt"]
-    assert (brief["question_index"], brief["current_turn"]) == (1, 0)
+    assert (brief["scenario_index"], brief["current_turn"]) == (1, 0)
 
     replies.append(OPENING)
-    view = stance(client, attempt["id"], option_id="o0", reason="推人和拉桿不一樣")
+    view = answer(client, attempt["id"], "推人和拉桿不一樣")
     assert view["state"] == "in_dialogue"
     context = json.loads(calls[-1]["messages"][1]["content"])
-    # The second question's dialogue starts over: its own turn count and history.
+    # The second scenario's dialogue starts over: its own turn count and history.
     assert context["turn_index"] == 0
     assert context["history"] == []
-    assert context["question"]["title"] == "天橋上的胖子"
-    assert context["argument"] == "推人和拉桿不一樣"
-    assert [m["question_index"] for m in view["messages"]] == [0, 0, 0, 0, 1, 1]
+    assert context["scenario"] == SECOND
+    assert context["answer"] == "推人和拉桿不一樣"
+    # Every message carries the scenario it belongs to.
+    assert [m["scenario_index"] for m in view["messages"]] == [0, 0, 0, 0, 1, 1]
 
     replies.append(MET)
     view = ok(do(client, attempt["id"], "send_message", {"text": "推人是親手做的"}))
@@ -492,33 +515,31 @@ def test_multi_question_flow(client, tutor):
     assert view["available_actions"] == ["submit_review"]
 
 
-def test_next_question_not_in_last_question(client, tutor):
+def test_next_scenario_not_after_the_last_scenario(client, tutor):
     _, replies = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
     view = confirm(client, attempt["id"], to_confirming(client, attempt["id"], replies))
     assert view["state"] == "reviewing"
-    assert "next_question" not in view["available_actions"]
-    response = do(client, attempt["id"], "next_question")
+    assert "next_scenario" not in view["available_actions"]
+    response = do(client, attempt["id"], "next_scenario")
     assert (response.status_code, response.json()) == (409, {"detail": "SOLO_ACTION_UNAVAILABLE"})
     brief = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))["attempt"]
     assert brief["review_status"] == "in_progress"
 
 
-def test_activity_view_progress_hides_unreached_titles(client, tutor):
+def test_activity_view_progress_lists_only_reached_scenarios(client, tutor):
     _, replies = tutor
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     url = f"/api/v2/solo/activities/{s['activity_id']}"
     attempt = ok(start(client, s["activity_id"]))
+    add_scenario(attempt["id"], SECOND)
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     response = client.get(url)
-    assert "天橋上的胖子" not in response.content.decode()
+    assert "你站在天橋上" not in response.content.decode()
     brief = ok(response)["attempt"]
-    assert brief["progress"] == [
-        {"index": 0, "status": "in_dialogue", "title": "岔道上的選擇", "option_label": None},
-        {"index": 1, "status": "not_started", "title": None, "option_label": None},
-    ]
+    assert brief["progress"] == [{"index": 0, "status": "in_dialogue"}]
     assert brief["current_turn"] == 0
 
     replies.append(MET)
@@ -526,13 +547,7 @@ def test_activity_view_progress_hides_unreached_titles(client, tutor):
     assert ok(client.get(url))["attempt"]["current_turn"] == 1
     confirm(client, attempt["id"], view)
     brief = ok(client.get(url))["attempt"]
-    assert brief["progress"][0] == {
-        "index": 0,
-        "status": "confirmed",
-        "title": "岔道上的選擇",
-        "option_label": "不拉",
-    }
-    assert brief["progress"][1]["title"] is None
+    assert brief["progress"] == [{"index": 0, "status": "confirmed"}]
     assert brief["review_status"] == "not_started"
 
 

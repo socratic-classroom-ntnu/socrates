@@ -4,6 +4,7 @@ import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Chip, FormError } from '../../../ui'
 import '../../../styles/teach.css'
 import '../../../styles/teacher-live.css'
 import { ActivityPageHeader } from './ActivityPageHeader'
@@ -36,7 +37,7 @@ export function TeacherLivePage() {
   }, [progress.reload])
 
   if (progress.loading && !progress.data) return <div aria-busy="true" />
-  if (!progress.data) return <main className="teach-page teach-page--message"><p role="alert" className="form-error">{errorMessage(t, progress.error)}</p></main>
+  if (!progress.data) return <main className="teach-page teach-page--message"><FormError role="alert">{errorMessage(t, progress.error)}</FormError></main>
 
   const view = progress.data
   const shown = view.students.filter(FILTERS[filter])
@@ -59,19 +60,23 @@ export function TeacherLivePage() {
     if (cell.status === 'confirmed') return t('live.cells.confirmed')
     if (cell.status === 'in_dialogue') return t('live.cells.inDialogue', { count: cell.turns ?? 0 })
     if (cell.status === 'confirming') return t('live.cells.confirming')
-    if (cell.status === 'choosing_stance') return t('live.cells.choosingStance')
-    return t('live.cells.notStarted')
+    return t('live.cells.answering')
   }
+
+  // One cell per scenario a student has reached; the table is as wide as the furthest student.
+  const scenarioCount = Math.max(1, ...view.students.map(student => student.cells.length))
+  const scenarios = Array.from({ length: scenarioCount }, (_, index) => index)
 
   return <main className="teach-page teacher-live" data-testid="teacher-live-page">
     <ActivityPageHeader activity={view} current="live" onEnded={progress.reload} />
 
     <section className="live-summaries" aria-label={t('live.tabs.live')}>
-      {/* unconfirmed counts students who have not reached the question yet, so the base is everyone who started */}
-      {view.questions.map((question, position) => <article className="live-summary-card" key={question.index}>
-        <h2>{question.title}</h2>
-        <p>{t('live.questionSummary', { unconfirmed: view.summary.unconfirmed_by_question[position] ?? 0, started: view.summary.started })}</p>
-      </article>)}
+      <article className="live-summary-card">
+        <p>{t('live.startedSummary', { started: view.summary.started, enrolled: view.summary.enrolled })}</p>
+      </article>
+      <article className="live-summary-card">
+        <p>{t('live.doneSummary', { count: view.summary.done })}</p>
+      </article>
       <article className="live-summary-card live-summary-card--attention">
         <span aria-hidden="true">!</span>
         <p>{t('live.attentionSummary', { count: view.summary.attention })}</p>
@@ -80,29 +85,31 @@ export function TeacherLivePage() {
 
     <section className="live-roster">
       <div className="live-roster__filters" role="group" aria-label={t('live.filterLabel')}>
-        {filterKeys.map(key => <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>
+        {filterKeys.map(key => <Chip key={key} pressed={filter === key} onClick={() => setFilter(key)}>
           {t(`live.filters.${key}`)} {counts[key]}
-        </button>)}
+        </Chip>)}
       </div>
       <div className="live-table-wrap">
         <table className="live-table">
           <thead><tr>
             <th scope="col">{t('live.table.student')}</th>
-            {view.questions.map(question => <th scope="col" key={question.index}>{question.title}</th>)}
+            {scenarios.map(index => <th scope="col" key={index}>{t('live.table.scenario', { number: index + 1 })}</th>)}
             <th scope="col">{t('live.table.review')}</th>
             <th scope="col">{t('live.table.lastActivity')}</th>
           </tr></thead>
           <tbody>
             {shown.map(student => <tr key={student.enrollment_id} className={student.attention ? 'live-table__attention' : undefined}>
               <th scope="row">{student.display_name}</th>
-              {view.questions.map((question, position) => {
-                const cell = student.cells[position] ?? { status: 'not_started' as const, turns: null }
-                return <td key={question.index}><span className={`live-cell live-cell--${cell.status}`}>{cellLabel(cell)}</span></td>
+              {scenarios.map(index => {
+                const cell = student.cells[index]
+                return <td key={index}>{cell
+                  ? <span className={`live-cell live-cell--${cell.status}`}>{cellLabel(cell)}</span>
+                  : <span className="live-cell live-cell--not_started">{t('live.cells.notStarted')}</span>}</td>
               })}
               <td><span className="live-cell live-cell--review">{t(`live.review.${student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'}`)}</span></td>
               <td>{lastActivity(student)}</td>
             </tr>)}
-            {shown.length === 0 && <tr><td colSpan={view.questions.length + 3} className="live-table__empty">{t('live.empty')}</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={scenarios.length + 3} className="live-table__empty">{t('live.empty')}</td></tr>}
           </tbody>
         </table>
       </div>

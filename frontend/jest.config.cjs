@@ -5,6 +5,6 @@ module.exports = {
   transform: {
     '^.+\\.(m?js|[jt]sx?)$': ['@swc/jest', { jsc: { parser: { syntax: 'typescript', tsx: true }, transform: { react: { runtime: 'automatic' } } } }],
   },
-  moduleNameMapper: { '\\.(css)$': '<rootDir>/test/styleMock.cjs', '\\.(png|jpe?g|svg|webp)$': '<rootDir>/test/fileMock.cjs' },
+  moduleNameMapper: { '\\.module\\.css$': '<rootDir>/test/cssModuleMock.cjs', '\\.(css)$': '<rootDir>/test/styleMock.cjs', '\\.(png|jpe?g|svg|webp)$': '<rootDir>/test/fileMock.cjs' },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'mjs', 'json'],
 }

@@ -11,7 +11,7 @@
     {
       "id": "app-shell",
       "name": "App Shell",
-      "status": "warn",
+      "status": "ok",
       "about": "組裝層：建 FastAPI app、掛各模組的 router、註冊 ORM 與跨模組 hook、跑背景工作。",
       "paths": [
         "backend/app/main.py",
@@ -22,9 +22,7 @@
       "uses": [
         "*"
       ],
-      "todo": [
-        "1 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：GET /api/v2/readiness"
-      ]
+      "todo": []
     },
     {
       "id": "contract",
@@ -96,14 +94,13 @@
         "ai-providers"
       ],
       "todo": [
-        "prompts.compile_program 的 key 算兩次（第一次被覆蓋）。",
         "鐵則：安全類訊息改固定關心句＋老師看得到的安全 flag（與偏題隱藏 flag 分欄）；第 5 條個資措辭已定案。"
       ]
     },
     {
       "id": "content-authoring",
       "name": "Content Authoring",
-      "status": "warn",
+      "status": "ok",
       "about": "劇本與題目（/scripts）、題庫、ladder、AI 協助出題。",
       "paths": [
         "backend/app/modules/content_authoring/"
@@ -114,9 +111,7 @@
         "ai-providers",
         "llm-runtime"
       ],
-      "todo": [
-        "5 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/scripts、PUT /api/v2/scripts/{script_id}、POST /api/v2/scripts/import、GET /api/v2/scripts/{script_id}/yaml、POST /api/v2/scripts/assist"
-      ]
+      "todo": []
     },
     {
       "id": "classroom-core",
@@ -363,6 +358,7 @@
       "about": "呼叫後端的唯一出口（api/：產生的型別、client、錯誤文字）、共用 UI、開發控制台與 toy page。",
       "paths": [
         "frontend/src/components/",
+        "frontend/src/ui/",
         "frontend/src/shared/phaseLabels.ts",
         "frontend/src/shared/personalStatus.ts",
         "frontend/src/shared/clipboard.test.ts",

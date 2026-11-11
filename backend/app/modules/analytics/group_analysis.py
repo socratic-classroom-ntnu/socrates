@@ -10,6 +10,15 @@ def pseudonym(classroom_id, member_id):
     return "p-" + sha256((classroom_id + ":" + member_id).encode()).hexdigest()[:12]
 
 
+def pseudonymous_settlement(settlement, midmap):
+    out = deepcopy(settlement)
+    if "incomplete_members" in out:
+        out["incomplete_members"] = [midmap[m] for m in out["incomplete_members"]]
+    if "member_status" in out:
+        out["member_status"] = {midmap[m]: v for m, v in out["member_status"].items()}
+    return out
+
+
 def analysis(classroom_id, title, rooms):
     groups = []
     for room in rooms:
@@ -61,7 +70,7 @@ def analysis(classroom_id, title, rooms):
                 "label": p["label"],
                 "phase": s["phase"],
                 "snapshot_id": p["snapshot_id"],
-                "settlement": deepcopy(p["settlement"]),
+                "settlement": pseudonymous_settlement(p["settlement"], midmap),
                 "persons": persons,
                 "nodes": nodes,
                 "edges": edges,

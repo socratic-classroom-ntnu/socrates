@@ -148,6 +148,13 @@ class SoloFlags(Strict):
     self_corrected: Flag
 
 
+class GroupTutorTurn(PersonalTutorTurn):
+    """personal_tutor output in the group class: PersonalTutorTurn plus the same ten flags as the
+    solo activity, so group-dialogue computes its student metrics from one flag definition."""
+
+    flags: SoloFlags
+
+
 class SoloObservations(Observations):
     """Observations plus the stance id, so policy.should_advance accepts them unchanged."""
 

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import type { components } from '../../../contract/classroomTypes'
-import { CopyButton } from '../../../components/CopyButton'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { ButtonLink, CopyButton, StatusPill } from '../../../ui'
 
 type Teaching = components['schemas']['CourseTeachingCard']
 type Learning = components['schemas']['CourseLearningCard']
@@ -13,7 +13,7 @@ const CHEVRON = <span className="course-card__chevron" aria-hidden="true">›</s
 /** H1 我教的課: whole card opens the course; on phones it leads to S4m. Phones show no code (H1m-t). */
 export function TeachingCard({ course, phone }: { course: Teaching; phone: boolean }) {
   const { t } = useT('home')
-  const live = course.open_activity_count > 0 && <span className="status-pill status-pill--open">{t('teaching.live')}</span>
+  const live = course.open_activity_count > 0 && <StatusPill tone="open">{t('teaching.live')}</StatusPill>
   if (phone) return <article className="course-card course-card--phone">
     <Link className="course-card__whole" to={`/teach/courses/${course.id}`}>
       <span className="course-card__body">
@@ -32,7 +32,7 @@ export function TeachingCard({ course, phone }: { course: Teaching; phone: boole
     <div className="course-card__stats"><span>{t('teaching.students', { count: course.student_count })}</span><span>{t('teaching.activities', { count: course.activity_count })}</span></div>
     {course.code_enabled && <div className="course-card__code">
       <span>#{course.code}</span>
-      <CopyButton text={course.code} label={t('teaching.copyCode')} iconOnly className="icon-button icon-button--quiet" />
+      <CopyButton text={course.code} label={t('teaching.copyCode')} iconOnly tone="quiet" />
     </div>}
   </article>
 }
@@ -42,8 +42,8 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
   const { t, locale } = useT('home')
   const h = course.highlight
   const pill = course.open_activity_count > 0
-    ? <span className="status-pill status-pill--open">{course.open_activity_count > 1 ? t('learning.openCount', { count: course.open_activity_count }) : t('learning.open')}</span>
-    : <span className="status-pill status-pill--quiet">{phone ? t('learning.phoneNone') : t('learning.none')}</span>
+    ? <StatusPill tone="open">{course.open_activity_count > 1 ? t('learning.openCount', { count: course.open_activity_count }) : t('learning.open')}</StatusPill>
+    : <StatusPill tone="quiet">{phone ? t('learning.phoneNone') : t('learning.none')}</StatusPill>
 
   let title = t('learning.nothing')
   let detail = ''
@@ -51,7 +51,7 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
     title = h.title
     detail = phone
       ? t('learning.phoneOpenMeta', { end: formatDateTime(h.ends_at, locale, 'date') })
-      : t('learning.openMeta', { questions: t('learning.questions', { count: h.question_count }), end: formatDateTime(h.ends_at, locale, 'weekdayDateTime') })
+      : t('learning.openMeta', { end: formatDateTime(h.ends_at, locale, 'weekdayDateTime') })
   } else if (h?.status === 'scheduled') {
     title = t('learning.next', { title: h.title })
     detail = t('learning.opensAt', { start: formatDateTime(h.starts_at, locale, phone ? 'weekdayDateTime' : 'dateTime') })
@@ -82,7 +82,7 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
     </div>
     <div className="course-card__content">{body}</div>
     {h?.status === 'open' && <div className="course-card__actions">
-      <Link className="button button--primary" to={`/learn/activities/${h.id}`}>{t('learning.start')}<span aria-hidden="true">→</span></Link>
+      <ButtonLink variant="primary" className="course-card__button" to={`/learn/activities/${h.id}`}>{t('learning.start')}<span aria-hidden="true">→</span></ButtonLink>
     </div>}
   </article>
 }

@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
 from app.modules.app_shell import models as _models  # noqa: F401  註冊所有模組的 ORM
 from app.modules.app_shell import wiring as _wiring  # noqa: F401  接上跨模組的 hook
+from app.modules.app_shell.contracts import ReadinessView
 from app.modules.app_shell.routes import include_classroom_routers
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.realtime import BUS
@@ -45,7 +46,7 @@ def create_app(legacy=False, background=True):
         app.router.routes.extend(first_run.router.routes)
     include_classroom_routers(app)
 
-    @app.get("/api/v2/readiness")
+    @app.get("/api/v2/readiness", response_model=ReadinessView)
     def readiness():
         from sqlalchemy import text
 

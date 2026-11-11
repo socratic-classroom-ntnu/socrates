@@ -4,9 +4,9 @@ import { ApiError, api } from '../../../contract/classroomClient'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useIsPhone } from '../../../shared/useIsPhone'
-import { CopyButton } from '../../../components/CopyButton'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Button, ButtonLink, CopyButton, Field, FieldError, FieldHint, FormError } from '../../../ui'
 import { ChalkCard, JoinLayout } from '../../auth/JoinLayout'
 
 type Preview = components['schemas']['JoinPreview']
@@ -45,7 +45,7 @@ function JoinCourse({ code }: { code: string }) {
     return <JoinLayout><section className="join-message">
       <h1>{notFound ? t('course.notFoundTitle') : errorMessage(t, preview.error)}</h1>
       {notFound && <p>{t('course.notFoundBody')}</p>}
-      <Link className="button button--outline" to="/">{t('course.home')}</Link>
+      <ButtonLink variant="outline" to="/">{t('course.home')}</ButtonLink>
     </section></JoinLayout>
   }
   if (data.already_enrolled) return null
@@ -66,14 +66,13 @@ function JoinCourse({ code }: { code: string }) {
     }
   }
 
-  const nameField = <div className={'form-field' + (missingName ? ' form-field--error' : '')}>
-    <label htmlFor="join-name">{phone ? t('course.phoneName') : t('course.name')}</label>
+  const nameField = <Field id="join-name" label={phone ? t('course.phoneName') : t('course.name')} invalid={missingName} className="join-field">
     <input id="join-name" value={displayName} maxLength={40} aria-invalid={missingName ? true : undefined}
       aria-describedby="join-name-hint" onChange={event => { setName(event.target.value); setMissingName(false) }} />
-    <p id="join-name-hint" className={missingName ? 'form-field__error' : 'form-field__hint'}>{missingName ? t('course.nameRequired') : t('course.nameHint')}</p>
-  </div>
+    {missingName ? <FieldError id="join-name-hint">{t('course.nameRequired')}</FieldError> : <FieldHint id="join-name-hint">{t('course.nameHint')}</FieldHint>}
+  </Field>
   const footer = <>
-    {failure && <p role="alert" className="form-error">{errorMessage(t, failure)}</p>}
+    {failure && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
     <Link className="join-link" to="/">{t('course.notThis')}</Link>
   </>
 
@@ -82,11 +81,11 @@ function JoinCourse({ code }: { code: string }) {
       <h1>{t('course.phoneTitle')}</h1>
       <ChalkCard title={data.name} rows={[
         { label: t('course.teacherLabel'), value: data.teacher_name },
-        { label: t('course.code'), value: <span className="chalk-card__code">{code}<CopyButton text={code} label={t('course.copyCode')} iconOnly className="chalk-card__copy" /></span> },
+        { label: t('course.code'), value: <span className="chalk-card__code">{code}<CopyButton text={code} label={t('course.copyCode')} iconOnly unstyled className="chalk-card__copy" /></span> },
         ...(data.open_activity_title ? [{ label: t('course.now'), value: <span className="chalk-card__live">{t('course.liveShort', { title: data.open_activity_title })}</span> }] : []),
       ]} />
       {nameField}
-      <button type="submit" className="button button--primary join-sheet__submit" disabled={busy}>{t('course.phoneEnter')}<span aria-hidden="true">→</span></button>
+      <Button type="submit" variant="primary" className="join-sheet__submit" disabled={busy}>{t('course.phoneEnter')}<span aria-hidden="true">→</span></Button>
       {footer}
     </form>
   </JoinLayout>
@@ -99,11 +98,11 @@ function JoinCourse({ code }: { code: string }) {
       </div>
       <dl className="join-plaque__rows">
         <div><dt>{t('course.host')}</dt><dd>{t('course.socrates')}</dd></div>
-        <div><dt>{t('course.code')}</dt><dd className="join-plaque__code">{code}<CopyButton text={code} label={t('course.copyCode')} iconOnly className="icon-button icon-button--quiet" /></dd></div>
+        <div><dt>{t('course.code')}</dt><dd className="join-plaque__code">{code}<CopyButton text={code} label={t('course.copyCode')} iconOnly tone="quiet" /></dd></div>
       </dl>
       {data.open_activity_title && <p className="join-plaque__live">{t('course.live', { title: data.open_activity_title })}</p>}
       {nameField}
-      <button type="submit" className="button button--dark join-plaque__submit" disabled={busy}>{t('course.enter')}<span aria-hidden="true">→</span></button>
+      <Button type="submit" variant="dark" className="join-plaque__submit" disabled={busy}>{t('course.enter')}<span aria-hidden="true">→</span></Button>
       {footer}
     </form>
     <div className="join-door" aria-hidden="true"><span className="join-door__window" /><span className="join-door__handle" /><span className="join-door__panel" /><span className="join-door__panel" /></div>

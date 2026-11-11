@@ -13,10 +13,10 @@ from app.modules.solo_activity.repositories import SoloMessage
 from tests.solo_activity.test_solo_attempts_api import (
     NOT_MET,
     OPENING,
+    answer,
     do,
     ok,
     setup,
-    stance,
     start,
 )
 
@@ -33,7 +33,7 @@ def in_dialogue(client, tutor) -> str:
     _, replies = tutor
     attempt = ok(start(client, setup(client)["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     return attempt["id"]
 
 

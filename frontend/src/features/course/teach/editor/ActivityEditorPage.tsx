@@ -9,17 +9,15 @@ import { Dialog } from '../../../../components/Dialog'
 import { errorCode, errorMessage } from '../../../../i18n/errors'
 import { formatDateTime } from '../../../../i18n/format'
 import { useT } from '../../../../i18n/useT'
-import { ComingSoonPage } from '../../../../components/ComingSoonPage'
+import { Button, ButtonLink, describedBy, Field, FieldError, FieldHint, FormError, RequiredMark, StatusPill } from '../../../../ui'
 import { DeleteActivityDialog } from '../DeleteActivityDialog'
 import { activityDraftKey } from './draftStorage'
 import {
-  type ActivityForm, emptyForm, fromDraft, fromEpochSeconds, LIMITS, type Problem, problemCountByQuestion, problemsFrom422, toDraft,
+  type ActivityForm, emptyForm, fromDraft, fromEpochSeconds, LIMITS, type Problem, problemsFrom422, toDraft,
   toEpochSeconds, validate,
 } from './editorState'
 import { ErrorSummary } from './ErrorSummary'
 import { locate } from './problemText'
-import { QuestionForm } from './QuestionForm'
-import { QuestionOrderPanel } from './QuestionOrderPanel'
 import { useActivityDraftRecovery } from './useActivityDraftRecovery'
 import '../../../../styles/editor.css'
 
@@ -27,7 +25,6 @@ type View = components['schemas']['ActivityTeacherView']
 type Course = components['schemas']['CourseTeacherView']
 type Mode = 'new' | 'draft' | 'published' | 'locked' | 'readonly'
 type NavState = { copiedFrom?: string; notice?: 'savedToList'; publishError?: string; publishStatus?: number } | null
-type Panel = 'order' | 'ai' | 'import'
 
 function modeOf(view: View | null): Mode {
   if (!view) return 'new'
@@ -55,7 +52,7 @@ export function ActivityEditorPage() {
     if (!error) return <main className="editor-page" aria-busy="true" />
     return <main className="editor-page editor-page--message">
       <h1>{error instanceof ApiError && error.status === 404 ? t('loadFailed') : errorMessage(t, error)}</h1>
-      <Link className="button button--outline" to="/?tab=teach">{t('crumb')}</Link>
+      <ButtonLink variant="outline" to="/?tab=teach">{t('crumb')}</ButtonLink>
     </main>
   }
   return <Editor
@@ -72,12 +69,10 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
   const { account } = useAuth()
   const navigate = useNavigate()
   const mode = modeOf(view)
-  const contentLocked = mode === 'locked' || mode === 'readonly'
   const [form, setForm] = useState<ActivityForm>(() => view ? fromDraft(view.draft) : emptyForm())
   const [dirty, setDirty] = useState(false)
   // 每次改表單加一：存檔回來時，送出後又改過的內容不算已存，草稿與未存狀態要留著
   const edits = useRef(0)
-  const [selected, setSelected] = useState(form.questions[0]?.id ?? '')
   const [baseline] = useState(form)
   // 前端 validate 找到的問題，打字時補好就拿掉；後端回的問題留到下一次送出
   const [clientProblems, setClientProblems] = useState<Problem[]>([])
@@ -90,15 +85,14 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
   const [failure, setFailure] = useState<unknown>(navState?.publishError && navState.publishError !== 'ACTIVITY_TIME_INVALID'
     ? new ApiError(navState.publishStatus ?? 0, navState.publishError) : null)
   const [busy, setBusy] = useState(false)
-  const [closed, setClosed] = useState<Record<string, boolean>>({})
-  const [panel, setPanel] = useState<Panel>('order')
+  const [closed, setClosed] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [focusField, setFocusField] = useState<string | null>(null)
   const coursePath = `/teach/courses/${course.id}`
 
   const draftKey = mode === 'readonly' || !account ? null
     : activityDraftKey(account.id, view ? { kind: 'activity', activityId: view.id } : { kind: 'new', courseId: course.id })
-  const recovery = useActivityDraftRecovery({ key: draftKey, form, setForm: restored => { edits.current += 1; setForm(restored); setDirty(true) }, dirty, baseline, ignoreIds: !view })
+  const recovery = useActivityDraftRecovery({ key: draftKey, form, setForm: restored => { edits.current += 1; setForm(restored); setDirty(true) }, dirty, baseline })
 
   useEffect(() => {
     if (!focusField) return
@@ -106,36 +100,23 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     setFocusField(null)
   }, [focusField])
 
-  function change(next: ActivityForm, select?: string) {
+  function change(next: ActivityForm) {
     edits.current += 1
     setForm(next)
     setDirty(true)
-    if (select) setSelected(select)
-    else if (!next.questions.some(q => q.id === selected)) setSelected(next.questions[0]?.id ?? '')
     // 已經顯示的錯誤，補好的就拿掉；沒顯示過的不在打字時冒出來
     if (clientProblems.length) setClientProblems(current => validate(next, nowSeconds(), { startFixed: !startEditable }).filter(p => current.some(c => c.field === p.field)))
   }
 
   function jump(problem: Problem) {
-    const place = locate(problem, form, t)
-    const section = place.section === 'question' ? 'question:' + place.questionId : place.section
-    setClosed(current => ({ ...current, [section]: false }))
-    if (place.questionId) setSelected(place.questionId)
-    setFocusField(problem.field === 'end' || problem.field === 'start' ? problem.field : problem.field)
+    setClosed(false)
+    setFocusField(problem.field)
   }
 
-  // 有錯的區塊展開，捲回頂部讓錯誤摘要看得到
+  // 有錯就展開，再跳到第一個錯的欄位（頂端摘要只有一句，不再逐條列出）
   function reveal(found: Problem[]) {
     if (!found.length) return
-    setClosed(current => {
-      const open = { ...current }
-      for (const p of found) {
-        const place = locate(p, form, t)
-        open[place.section === 'question' ? 'question:' + place.questionId : place.section] = false
-      }
-      return open
-    })
-    window.scrollTo?.({ top: 0 })
+    jump(found[0])
   }
 
   function check(fields?: string[]): boolean {
@@ -157,7 +138,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
 
   async function rejected(error: unknown) {
     const code = errorCode(error)
-    const fields = error instanceof ApiError && error.status === 422 ? problemsFrom422(error.detail, form)
+    const fields = error instanceof ApiError && error.status === 422 ? problemsFrom422(error.detail)
       : code === 'ACTIVITY_TIME_INVALID' ? [{ field: 'end', kind: 'endPast' } as Problem] : []
     if (fields.length) {
       setServerProblems(fields)
@@ -255,51 +236,40 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     navigate(coursePath)
   }
 
-  const counts = problemCountByQuestion(problems)
-  const index = Math.max(0, form.questions.findIndex(q => q.id === selected))
-  const question = form.questions[index]
-  const fieldError = (field: string) => { const p = problems.find(x => x.field === field); return p ? locate(p, form, t).message : null }
-  const toggle = (key: string) => setClosed(current => ({ ...current, [key]: !current[key] }))
+  const fieldError = (field: string) => { const p = problems.find(x => x.field === field); return p ? locate(p, t).message : null }
   const startEditable = mode === 'new' || mode === 'draft' || (mode === 'published' && view?.status === 'scheduled')
   const readonlyAll = mode === 'readonly'
 
   const buttons: ReactNode = {
     new: <>
-      <button type="button" className="button button--quiet" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</button>
-      <button type="button" className="button button--outline" disabled={busy} onClick={() => void saveNew(false)}>{t('actions.saveToList')}</button>
-      <button type="button" className="button button--primary" disabled={busy} onClick={() => void saveNew(true)}>{t('actions.create')}</button>
+      <Button variant="quiet" className="editor-head__button" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</Button>
+      <Button variant="outline" className="editor-head__button" disabled={busy} onClick={() => void saveNew(false)}>{t('actions.saveToList')}</Button>
+      <Button variant="primary" className="editor-head__button" disabled={busy} onClick={() => void saveNew(true)}>{t('actions.create')}</Button>
     </>,
     draft: <>
-      <button type="button" className="button button--quiet" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</button>
-      <button type="button" className="button button--outline" disabled={busy} onClick={() => void saveExisting(false)}>{t('actions.saveChanges')}</button>
-      <button type="button" className="button button--primary" disabled={busy} onClick={() => void saveExisting(true)}>{t('actions.create')}</button>
+      <Button variant="quiet" className="editor-head__button" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</Button>
+      <Button variant="outline" className="editor-head__button" disabled={busy} onClick={() => void saveExisting(false)}>{t('actions.saveChanges')}</Button>
+      <Button variant="primary" className="editor-head__button" disabled={busy} onClick={() => void saveExisting(true)}>{t('actions.create')}</Button>
     </>,
     published: <>
-      <button type="button" className="button button--quiet" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</button>
-      <button type="button" className="button button--primary" disabled={busy} onClick={() => void saveExisting(true)}>{t('actions.saveChanges')}</button>
+      <Button variant="quiet" className="editor-head__button" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</Button>
+      <Button variant="primary" className="editor-head__button" disabled={busy} onClick={() => void saveExisting(true)}>{t('actions.saveChanges')}</Button>
     </>,
     locked: <>
-      <button type="button" className="button button--quiet" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</button>
-      <button type="button" className="button button--primary" disabled={busy} onClick={() => void saveDetails()}>{t('actions.saveChanges')}</button>
+      <Button variant="quiet" className="editor-head__button" disabled={busy} onClick={() => void cancel()}>{t('actions.cancel')}</Button>
+      <Button variant="primary" className="editor-head__button" disabled={busy} onClick={() => void saveDetails()}>{t('actions.saveChanges')}</Button>
     </>,
-    readonly: <Link className="button button--quiet" to={coursePath}>{t('actions.back')}</Link>,
+    readonly: <ButtonLink variant="quiet" className="editor-head__button" to={coursePath}>{t('actions.back')}</ButtonLink>,
   }[mode]
 
   const canDelete = view?.available_actions.includes('delete')
-  const sectionHead = (key: string, title: ReactNode, extra?: ReactNode) => <header className="editor-card__head">
-    {title}
-    {extra}
-    <button type="button" className="editor-card__toggle" aria-expanded={!closed[key]} onClick={() => toggle(key)}
-      aria-label={closed[key] ? t('sections.expand', { name: key === 'basics' ? t('sections.basics') : t('sections.direction') }) : t('sections.collapse', { name: key === 'basics' ? t('sections.basics') : t('sections.direction') })}>⌄</button>
-  </header>
-
   const banner = mode === 'locked' || mode === 'readonly'
     ? <div className="editor-banner editor-banner--locked">
         <div>
           {mode === 'locked' && <strong>{t('locked.title')}</strong>}
           <p>{mode === 'readonly' ? t('locked.readonlyBody') : view?.has_unpublished_changes ? t('locked.pendingBody') : t('locked.body')}</p>
         </div>
-        <button type="button" className="button button--outline" disabled={busy} onClick={() => void copy()}>{t('actions.copy')}</button>
+        <Button variant="outline" disabled={busy} onClick={() => void copy()}>{t('actions.copy')}</Button>
       </div>
     : null
 
@@ -309,7 +279,7 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
         <nav className="editor-crumbs" aria-label={t('crumb')}><Link to="/?tab=teach">{t('crumb')}</Link><span aria-hidden="true">/</span><Link to={coursePath}>{course.name}</Link></nav>
         <div className="editor-head__row">
           <h1>{view ? t('titleEdit') : t('titleNew')}</h1>
-          {view && <span className={`status-pill status-pill--${view.status}`}>{t(`teach:status.${view.status}`)}</span>}
+          {view && <StatusPill tone={view.status}>{t(`teach:status.${view.status}`)}</StatusPill>}
         </div>
         {!readonlyAll && <span className="editor-autosave" role="status">{recovery.savedAt ? t('autosave.saved') : t('autosave.idle')}</span>}
       </div>
@@ -324,19 +294,23 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
     {publishFailed && <p className="editor-banner editor-banner--warn" role="status">{t('notices.publishFailed')}</p>}
     {!publishFailed && mode === 'published' && view?.has_unpublished_changes && <p className="editor-banner editor-banner--warn">{t('notices.pending')}</p>}
     {banner}
-    {problems.length > 0 && <ErrorSummary problems={problems} form={form} onJump={jump} />}
-    {failure !== null && <p className="form-error" role="alert">{errorMessage(t, failure)}</p>}
-    {gone && <p className="form-error" role="alert">{t('notices.notFound')} <Link to={coursePath}>{t('actions.toCourse')}</Link></p>}
+    {problems.length > 0 && <ErrorSummary />}
+    {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
+    {gone && <FormError role="alert">{t('notices.notFound')} <Link to={coursePath}>{t('actions.toCourse')}</Link></FormError>}
 
     <div className="editor-columns">
       <div className="editor-main">
         <section className="editor-card" aria-labelledby="editor-basics">
-          {sectionHead('basics', <h2 id="editor-basics">{t('sections.basics')}</h2>)}
-          {!closed.basics && <div className="editor-card__body">
-            <Field id="title" label={t('fields.title')} required error={fieldError('title')} t={t}>
-              <input id="title" value={form.title} maxLength={LIMITS.title} readOnly={readonlyAll}
-                aria-invalid={fieldError('title') ? true : undefined} onChange={event => change({ ...form, title: event.target.value })} />
-            </Field>
+          <header className="editor-card__head">
+            <h2 id="editor-basics">{t('sections.basics')}</h2>
+            <button type="button" className="editor-card__toggle" aria-expanded={!closed} onClick={() => setClosed(current => !current)}
+              aria-label={closed ? t('sections.expand', { name: t('sections.basics') }) : t('sections.collapse', { name: t('sections.basics') })}>⌄</button>
+          </header>
+          {!closed && <div className="editor-card__body">
+            <EditorField id="title" label={t('fields.title')} hint={t('fields.titleHint')} required error={fieldError('title')} t={t}>
+              <textarea id="title" rows={4} value={form.title} maxLength={LIMITS.title} readOnly={readonlyAll}
+                aria-invalid={fieldError('title') ? true : undefined} aria-describedby={describedBy(fieldError('title') && 'title-error', 'title-hint')} onChange={event => change({ ...form, title: event.target.value })} />
+            </EditorField>
             <div className="editor-window">
               <fieldset className="editor-window__start">
                 <legend>{t('fields.start')}</legend>
@@ -346,71 +320,32 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
                     <button type="button" role="radio" aria-checked={form.start.mode === 'at'} onClick={() => change({ ...form, start: form.start.mode === 'at' ? form.start : { mode: 'at', date: '', time: '' } })}>{t('fields.startAt')}</button>
                   </div>
                   {form.start.mode === 'at' && <DateTimeField id="start" label={t('fields.start')} value={form.start} invalid={Boolean(fieldError('start'))}
+                    describedBy={describedBy(fieldError('start') && 'start-error', !readonlyAll && 'editor-window-hint')}
                     onChange={value => change({ ...form, start: { mode: 'at', ...value } })} />}
-                  {fieldError('start') && <p className="form-field__error">{fieldError('start')}</p>}
+                  {fieldError('start') && <FieldError id="start-error">{fieldError('start')}</FieldError>}
                 </> : <p className="editor-window__fixed">{view?.starts_at ? t('fields.opened', { time: formatDateTime(view.starts_at, locale, 'weekdayDateTime') }) : '—'}</p>}
               </fieldset>
-              <fieldset className={'editor-window__end' + (fieldError('end') ? ' form-field--error' : '')}>
-                <legend>{t('fields.end')}<span className="form-field__star" aria-hidden="true"> *</span></legend>
+              <fieldset className="editor-window__end">
+                <legend>{t('fields.end')}<RequiredMark /></legend>
                 <DateTimeField id="end" label={t('fields.end')} value={form.end} readOnly={readonlyAll} invalid={Boolean(fieldError('end'))}
+                  describedBy={describedBy(fieldError('end') && 'end-error', !readonlyAll && 'editor-window-hint')}
                   min={form.start.mode === 'at' && form.start.date && form.start.time ? form.start : undefined}
                   onChange={value => change({ ...form, end: value })} />
-                {fieldError('end') && <p className="form-field__error">{fieldError('end')}</p>}
+                {fieldError('end') && <FieldError id="end-error">{fieldError('end')}</FieldError>}
               </fieldset>
             </div>
-            {!readonlyAll && <p className="form-field__hint">{contentLocked ? t('fields.lockedWindowHint') : t('fields.windowHint')}</p>}
+            {!readonlyAll && <FieldHint id="editor-window-hint">{mode === 'locked' ? t('fields.lockedWindowHint') : t('fields.windowHint')}</FieldHint>}
           </div>}
         </section>
-
-        <section className="editor-card" aria-labelledby="editor-direction">
-          {sectionHead('direction', <div className="editor-card__titled">
-            <span className="editor-card__person" aria-hidden="true">◯</span>
-            <div><h2 id="editor-direction">{t('sections.direction')}</h2><p>{t('sections.directionHint')}</p></div>
-          </div>, contentLocked ? <span className="locked-badge">{t('locked.badge')}</span> : null)}
-          {!closed.direction && <div className="editor-card__body">
-            <Field id="topic_direction" label={t('fields.topic')} required error={fieldError('topic_direction')} t={t}>
-              <textarea id="topic_direction" rows={3} value={form.topic_direction} maxLength={LIMITS.topic} readOnly={contentLocked}
-                aria-invalid={fieldError('topic_direction') ? true : undefined} onChange={event => change({ ...form, topic_direction: event.target.value })} />
-            </Field>
-            <Field id="analysis_focus" label={t('fields.analysis')} hint={t('fields.analysisHint')} t={t}>
-              <textarea id="analysis_focus" rows={3} value={form.analysis_focus} maxLength={LIMITS.analysis} readOnly={contentLocked}
-                onChange={event => change({ ...form, analysis_focus: event.target.value })} />
-            </Field>
-          </div>}
-        </section>
-
-        {question && <QuestionForm
-          key={question.id}
-          form={form}
-          question={question}
-          index={index}
-          locked={contentLocked}
-          problems={problems}
-          onChange={change}
-          collapsed={Boolean(closed['question:' + question.id])}
-          onToggle={() => toggle('question:' + question.id)}
-        />}
       </div>
-
-      <aside className="editor-side">
-        <div role="tablist" aria-label={t('panel.tabsLabel')} className="editor-tabs">
-          {(['order', 'ai', 'import'] as Panel[]).map(key => <button key={key} type="button" role="tab" aria-selected={panel === key}
-            disabled={key !== 'order' && contentLocked} onClick={() => setPanel(key)}>{t(`panel.${key}`)}</button>)}
-        </div>
-        <div className="editor-side__body">
-          {panel === 'order' && <QuestionOrderPanel form={form} selected={selected} counts={counts} locked={contentLocked} onSelect={setSelected} onChange={change} />}
-          {panel === 'ai' && <ComingSoonPage variant="panel" body={t('panel.aiSoon')} backTo={null} />}
-          {panel === 'import' && <ComingSoonPage variant="panel" body={t('panel.importSoon')} backTo={null} />}
-        </div>
-      </aside>
     </div>
 
     {recovery.restoreOpen && <Dialog
       title={t('restore.title', { time: recovery.updatedAt ? formatDateTime(Date.parse(recovery.updatedAt) / 1000, locale, 'dateTime') : '' })}
       onClose={() => recovery.dismiss()}
       footer={<>
-        <button type="button" className="button button--quiet" onClick={() => void recovery.discard()}>{t('restore.discard')}</button>
-        <button type="button" className="button button--primary" data-autofocus onClick={() => recovery.restore()}>{t('restore.restore')}</button>
+        <Button variant="quiet" onClick={() => void recovery.discard()}>{t('restore.discard')}</Button>
+        <Button variant="primary" data-autofocus onClick={() => recovery.restore()}>{t('restore.restore')}</Button>
       </>}
     ><p className="dialog__text">{t('restore.body')}</p></Dialog>}
     {deleting && view && <DeleteActivityDialog
@@ -424,11 +359,10 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
 
-function Field({ id, label, required, hint, error, children, t }: { id: string; label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode; t: Translate }) {
-  return <div className={'form-field' + (error ? ' form-field--error' : '')}>
-    <label htmlFor={id}>{label}{required && <><span className="form-field__star" aria-hidden="true"> *</span><span className="sr-only">{t('fields.required')}</span></>}</label>
+function EditorField({ id, label, required, hint, error, children, t }: { id: string; label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode; t: Translate }) {
+  return <Field id={id} label={label} required={required} requiredText={t('fields.required')} invalid={Boolean(error)}>
     {children}
-    {error && <p className="form-field__error">{error}</p>}
-    {hint && <p className="form-field__hint">{hint}</p>}
-  </div>
+    {error && <FieldError id={`${id}-error`}>{error}</FieldError>}
+    {hint && <FieldHint id={`${id}-hint`}>{hint}</FieldHint>}
+  </Field>
 }

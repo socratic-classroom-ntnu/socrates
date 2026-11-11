@@ -18,20 +18,17 @@ jest.mock('../app/legacyRoutes', () => ({
 
 const activity = {
   activity_id: 'a-1', title: '倫理討論', course_id: 'c-1', course_name: '哲學導論',
-  status: 'open', question_count: 1, ends_at: 1_782_317_940,
-  attempt: { id: 'attempt-1', state: 'choosing_stance', question_index: 0 },
+  status: 'open', ends_at: 1_782_317_940,
+  attempt: { id: 'attempt-1', state: 'answering', scenario_index: 0 },
 }
 const attempt = {
   id: 'attempt-1', activity_id: 'a-1', activity_title: '倫理討論',
-  course_id: 'c-1', course_name: '哲學導論', display_name: '小華', state: 'choosing_stance',
-  question_index: 0, question_count: 1,
-  questions: [{
-    index: 0, id: 'q-1', title: '岔道上的選擇', scenario: '一輛失控的電車正駛向五名工人。',
-    options: [{ id: 'o-a', text: '拉下拉桿' }, { id: 'o-b', text: '不拉' }],
-    stance: null, status: 'in_progress', confirmed_summary: null,
-  }],
+  course_id: 'c-1', course_name: '哲學導論', display_name: '小華', state: 'answering',
+  scenario_index: 0,
+  scenarios: [{ index: 0, id: 's1', text: '一輛失控的電車正駛向五名工人。', answer: null, status: 'in_progress', confirmed_summary: null }],
   messages: [], candidate_summary: null, summary_digest: null, principle_hint: null,
-  notice: null, available_actions: ['submit_stance'],
+  revising: false, rejected_summary: null,
+  notice: null, available_actions: ['send_message'],
 }
 
 function renderAttempt(availableActions: string[]) {
@@ -52,14 +49,14 @@ beforeEach(async () => {
 
 describe('單人活動的按鈕（不可妥協：前端不推導狀態）', () => {
   it('狀態相同時，後端給了動作才出現對應的控制', async () => {
-    renderAttempt(['submit_stance'])
-    expect(await screen.findByLabelText('為什麼？')).toBeInTheDocument()
+    renderAttempt(['send_message'])
+    expect(await screen.findByLabelText('你的回答')).toBeInTheDocument()
   })
 
-  it('後端沒給動作，就算 state 是 choosing_stance 也不顯示任何控制', async () => {
+  it('後端沒給動作，就算 state 是 answering 也不顯示任何控制', async () => {
     renderAttempt([])
     expect(await screen.findByText(/小華，先讀一讀黑板上的情境/)).toBeInTheDocument()
-    expect(screen.queryByLabelText('為什麼？')).toBeNull()
-    expect(screen.queryByRole('button', { name: '送出' })).toBeNull()
+    expect(screen.queryByLabelText('你的回答')).toBeNull()
+    expect(screen.queryByRole('button', { name: '送出回答' })).toBeNull()
   })
 })

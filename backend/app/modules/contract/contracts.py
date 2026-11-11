@@ -114,7 +114,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "SOLO_ACTION_UNAVAILABLE": ("solo_activity",),
     "SOLO_ATTEMPT_NOT_FOUND": ("solo_activity",),
     "SOLO_MESSAGE_LIMIT": ("solo_activity",),
-    "SOLO_OPTION_INVALID": ("solo_activity",),
+    "SOLO_REVISE_HINT_INVALID": ("solo_activity",),
     "SOLO_STEP_NOT_READY": ("solo_activity",),
     "SOLO_SUMMARY_STALE": ("solo_activity",),
     "STARTED_CLASSROOM_REQUIRED": ("classroom_core",),
@@ -155,11 +155,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "POST /api/v2/auth/forgot-password",
     "POST /api/v2/auth/reset-password",
     "POST /api/v2/webhooks/resend",
-    "POST /api/v2/scripts",
-    "PUT /api/v2/scripts/{script_id}",
-    "POST /api/v2/scripts/import",
-    "GET /api/v2/scripts/{script_id}/yaml",
-    "GET /api/v2/groups/classrooms/{rid}/analysis",
     "GET /api/v2/meta/revision",
     "GET /api/v2/provider-profiles",
     "POST /api/v2/provider-profiles",
@@ -170,8 +165,6 @@ RESPONSE_MODEL_PENDING: tuple[str, ...] = (
     "GET /api/v2/provider-profiles/{profile_id}/models",
     "GET /api/v2/ai-settings/account",
     "PUT /api/v2/ai-settings/account",
-    "POST /api/v2/scripts/assist",
-    "GET /api/v2/readiness",
 )
 
 # Returned only to the mail provider's webhook caller, never shown in the app.

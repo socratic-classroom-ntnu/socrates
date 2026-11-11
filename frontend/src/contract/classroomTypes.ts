@@ -29,6 +29,7 @@ export interface components { schemas: {
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
   "ChartSemanticsView": { "sunburst": string; "sankey": string; "graph": string; "heatmap": string; "timeline": string };
+  "CitationSourceView": { /** ID of the student message whose exact text contains quote. */ "message_id": string; /** Exact, unnormalised substring of the referenced SoloMessageView.text. */ "quote": string; /** Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text. */ "start": number; /** Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote. */ "end": number };
   "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision": number };
   "ClassroomActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
   "ClassroomBatchView": { "id": string; "classroom_id": string; "batch_id": string; "code": (string | null) };
@@ -82,7 +83,7 @@ export interface components { schemas: {
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
   "PasswordResetView": { "status": "PASSWORD_RESET" };
-  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
+  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string; "sources"?: Array<components["schemas"]["CitationSourceView"]> };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };

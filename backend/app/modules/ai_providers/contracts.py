@@ -1,18 +1,12 @@
 from __future__ import annotations
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, get_args
 from pydantic import Field, StringConstraints, field_validator
+from app.modules.platform.contracts import Strict
 from app.modules.platform.model_base import TrimmedModel
 
 
-ADAPTERS = frozenset(
-    {
-        "openrouter",
-        "openai",
-        "anthropic",
-        "gemini",
-        "openai-compatible",
-    }
-)
+Adapter = Literal["openrouter", "openai", "anthropic", "gemini", "openai-compatible"]
+ADAPTERS = frozenset(get_args(Adapter))
 
 
 # 從網頁複製金鑰時常夾帶的零寬字元：去掉後再檢查
@@ -83,3 +77,81 @@ class SettingsUpdate(TrimmedModel):
     ] = Field(default_factory=dict, max_length=32)
     budgets: dict[str, Any] = Field(default_factory=dict, max_length=32)
     active_room_id: str | None = Field(default=None, max_length=36)
+
+
+# --- Response views (what the routes return) ---
+
+
+class ProfileView(Strict):
+    """A provider profile as its owner sees it; the credential itself never leaves the server."""
+
+    id: str
+    name: str
+    adapter: Adapter
+    base_url: str | None
+    organization: str | None
+    project: str | None
+    default_model: str
+    credential_mode: Literal["PERSISTENT", "SESSION"]
+    has_credential: bool
+    secret_last4: str | None
+    enabled: bool
+    metadata: dict[str, Any]
+    updated_at: float
+
+
+class ProfileDeletedView(Strict):
+    status: Literal["DELETED"]
+    profile_id: str
+
+
+class DiscoveredModel(Strict):
+    """One model a provider lists. pricing is the provider's own shape, and only OpenAI-style
+    listings send it; the routes exclude unset fields, so it stays absent rather than null."""
+
+    id: str
+    name: str | None
+    pricing: Any = None
+    supported_parameters: list[str]
+    structured_outputs: bool | None
+    reasoning: dict[str, Any] | None
+
+
+class ModelDiscoveryView(Strict):
+    provider_profile_id: str
+    adapter: Adapter
+    models: list[DiscoveredModel]
+    manual_model_id_allowed: bool
+    observed_at: float
+
+
+class ConnectionTestView(Strict):
+    status: Literal["READY"]
+    provider_profile_id: str
+    adapter: Adapter
+    model_count: int
+    # The first ten models, enough to show the key works.
+    sample: list[DiscoveredModel]
+    observed_at: float
+
+
+class AISettingsView(Strict):
+    default_profile_id: str | None
+    fallback_profile_id: str | None
+    model_matrix: dict[str, str]
+    budgets: dict[str, Any]
+    revision: int
+
+
+class RevisionView(Strict):
+    """GET /meta/revision: which build is running, for support and deploy checks."""
+
+    # "schema" would shadow a BaseModel attribute, so the field is renamed and keeps its wire name.
+    schema_id: Literal["socrates/revision/v1"] = Field(alias="schema")
+    source_sha: str
+    worktree_sha256: str
+    environment: str
+    feature_revision: int
+    provider_profiles: bool
+    classroom_owner_routing: bool
+    observed_at: float

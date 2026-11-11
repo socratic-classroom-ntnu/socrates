@@ -1,9 +1,10 @@
 """Public entry point of the llm_runtime module."""
 
-from app.modules.llm_runtime.contracts import Observations
+from app.modules.llm_runtime.contracts import Citation, LocatedCitation, Observations
 
 # Public surface for other modules (they import from service, not from these files).
 from app.modules.llm_runtime.iron_rules import (  # noqa: E402
+    IronRuleCheckFailed as IronRuleCheckFailed,
     check as check,
     fallback_text as fallback_text,
     guarded_generate as guarded_generate,
@@ -36,3 +37,12 @@ def should_conclude(confirmed_scenarios: int, shifted_in_latest: bool) -> bool:
     from app.modules.llm_runtime import policy
 
     return policy.should_conclude(confirmed_scenarios, shifted_in_latest)
+
+
+def locate_citation(citation: Citation, message_id: str, text: str) -> LocatedCitation | None:
+    """Where a citation's quote sits in its message (text); None when it is not there."""
+    start = text.find(citation.quote)
+    if start < 0:
+        return None
+    end = start + len(citation.quote)
+    return LocatedCitation(message_id=message_id, quote=citation.quote, start=start, end=end)

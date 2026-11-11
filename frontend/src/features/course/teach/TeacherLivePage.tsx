@@ -4,6 +4,7 @@ import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Chip, FormError } from '../../../ui'
 import '../../../styles/teach.css'
 import '../../../styles/teacher-live.css'
 import { ActivityPageHeader } from './ActivityPageHeader'
@@ -36,7 +37,7 @@ export function TeacherLivePage() {
   }, [progress.reload])
 
   if (progress.loading && !progress.data) return <div aria-busy="true" />
-  if (!progress.data) return <main className="teach-page teach-page--message"><p role="alert" className="form-error">{errorMessage(t, progress.error)}</p></main>
+  if (!progress.data) return <main className="teach-page teach-page--message"><FormError role="alert">{errorMessage(t, progress.error)}</FormError></main>
 
   const view = progress.data
   const shown = view.students.filter(FILTERS[filter])
@@ -85,9 +86,9 @@ export function TeacherLivePage() {
 
     <section className="live-roster">
       <div className="live-roster__filters" role="group" aria-label={t('live.filterLabel')}>
-        {filterKeys.map(key => <button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>
+        {filterKeys.map(key => <Chip key={key} pressed={filter === key} onClick={() => setFilter(key)}>
           {t(`live.filters.${key}`)} {counts[key]}
-        </button>)}
+        </Chip>)}
       </div>
       <div className="live-table-wrap">
         <table className="live-table">

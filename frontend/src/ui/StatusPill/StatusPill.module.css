@@ -1,0 +1,10 @@
+/* 狀態標籤（數值等於 PR C 之後 ui.css 的 .status-pill*） */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.open { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.open::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--ui-color-success); }
+.scheduled { background: var(--ui-color-info-soft); color: var(--ui-color-info); }
+.draft { background: var(--ui-color-neutral-soft); color: var(--ui-color-muted); }
+.ended { background: var(--ui-color-danger-soft); color: var(--ui-color-ended-ink); }
+.quiet { background: var(--ui-color-bg); color: var(--ui-color-muted); font-weight: 400; }

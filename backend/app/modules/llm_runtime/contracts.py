@@ -164,15 +164,33 @@ class Citation(Strict):
     quote: str = Field(min_length=1, max_length=500)
 
 
+class LocatedCitation(Strict):
+    """A validated citation as the caller stores it: the message and where the quote sits.
+
+    start and end count Unicode code points (Python string indices); end is exclusive.
+    """
+
+    message_id: str = Field(min_length=1)
+    quote: str = Field(min_length=1)
+    start: int = Field(ge=0)
+    end: int = Field(ge=1)
+
+
 class SummaryPoint(Strict):
     text: str = Field(min_length=1, max_length=1000)
     sources: list[Citation] = Field(max_length=5)
 
 
 class CitedSummary(Strict):
-    """The shared summary shape for confirm summaries, final summaries and radar (§5)."""
+    """The cited summary shape (§5); the final summary builds on it."""
 
     points: list[SummaryPoint] = Field(min_length=1, max_length=8)
+
+
+class SoloSummary(PersonalSummary):
+    """The per-turn candidate summary, plus the student's words it rests on."""
+
+    sources: list[Citation] = Field(max_length=5)
 
 
 class SoloTutorTurn(Strict):
@@ -182,9 +200,41 @@ class SoloTutorTurn(Strict):
     move: Literal["probe", "clarify", "challenge", "reflect", "hypothetical", "summarize"]
     observations: SoloObservations
     flags: SoloFlags
-    # Only requested when the backend decides the student can confirm; null otherwise.
-    confirm_summary: CitedSummary | None
+    # Every turn, as in PersonalTutorTurn: the backend decides from this turn's observations
+    # whether the student confirms, so the summary must already be there.
+    summary: SoloSummary
     guard: Guard
+
+
+class ConditionChange(Strict):
+    """The one condition an extension changes, shown to the student as before → after.
+
+    condition names that one condition, so a change that touches two of them shows up as a
+    condition naming two things; judging that is the evals' job, not the schema's.
+    """
+
+    condition: str = Field(min_length=1, max_length=60)
+    before: str = Field(min_length=1, max_length=300)
+    after: str = Field(min_length=1, max_length=300)
+
+    @model_validator(mode="after")
+    def changed(self) -> "ConditionChange":
+        if self.before == self.after:
+            raise ValueError("延伸情境必須真的改變一個條件")
+        return self
+
+
+class ScenarioExtension(Strict):
+    """scenario_extension output: the next scenario for one student after a confirmed stage.
+
+    A single change object, not a list, so the model cannot alter two conditions at once. The first
+    scenario is the teacher's text verbatim; only later ones are generated.
+    """
+
+    scenario: str = Field(min_length=1, max_length=2000)
+    change: ConditionChange
+    # The confirmed words of the student's that this change tests.
+    sources: list[Citation] = Field(min_length=1, max_length=3)
 
 
 class Stance(Strict):

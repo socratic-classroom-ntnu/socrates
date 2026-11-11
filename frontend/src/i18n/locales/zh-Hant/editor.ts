@@ -61,12 +61,10 @@ export default {
     endBeforeStart: '結束時間要晚於開始時間',
     endPast: '結束時間已經過了',
     startPast: '開始時間已經過了；要立刻開放，請選「建立後立刻開放」',
-    summaryTitle: '還有 {{count}} 個地方要補完，才能儲存',
-    summaryBody: '草稿也要完整才能存。點一下會跳到那個欄位：',
+    summary: '部分欄位尚未填寫',
     missing: '還沒填',
     beforeStart: '要晚於開始時間',
     past: '已經過了',
-    summaryItem: '{{where}}：{{field}}',
   },
   loadFailed: '活動沒有載入成功。',
 };

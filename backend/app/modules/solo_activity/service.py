@@ -31,8 +31,8 @@ from app.modules.course_management.repositories import (
     Enrollment,
 )
 from app.modules.identity_access.repositories import Account
-from app.modules.llm_runtime.contracts import PersonalTutorTurn
-from app.modules.llm_runtime.service import compile_program, guarded_generate
+from app.modules.llm_runtime.contracts import Citation, PersonalTutorTurn, ScenarioExtension
+from app.modules.llm_runtime.service import compile_program, guarded_generate, locate_citation
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
@@ -48,6 +48,10 @@ if TYPE_CHECKING:
 
 ROLE = "socratic_tutor"
 PROGRAM = "solo_tutor"
+# Writes the next scenario of a student's sequence; the first one is the teacher's text.
+EXTENSION_PROGRAM = "scenario_extension"
+# The language a student's scenarios are written in when their account names none.
+DEFAULT_LOCALE = "zh-Hant"
 PROVIDER_TIMEOUT_SECONDS = 130
 DEFAULT_TUTOR_GOAL = "協助學生照見自己的立場與理由。"
 PRINCIPLE_HINTS = frozenset({"後果主義", "義務論", "混合"})
@@ -179,6 +183,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "index": index,
                 "id": progress.scenario_id,
                 "text": progress.text,
+                "change": progress.change,
                 "answer": progress.answer,
                 "status": progress.status,
                 "confirmed_summary": progress.confirmed_summary,
@@ -350,6 +355,10 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
     new, pending = _transition(db, row, _state(row), action, body, at)
     if pending is None:
         _store(row, new)
+        if action == "confirm_viewpoint" and machine.wants_extension(new):
+            prepared = _prepare_extension(db, row, new, account)
+            if prepared is not None:
+                return prepared
         return {"view": _attempt_view(db, row, at)}
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
@@ -370,6 +379,134 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
         "schema": schema,
         "context": context,
     }
+
+
+def _prepare_extension(db, row: SoloAttempt, a: AttemptState, account: Account) -> dict | None:
+    """What writing this student's next scenario needs; None when there is nobody to write it.
+
+    Only this student's words in this scenario go in, each under a ref the model quotes by.
+    """
+    activity = db.get(Activity, row.activity_id)
+    course = db.get(Course, activity.course_id)
+    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    if not bindings:
+        return None
+    current = a.current
+    said = [
+        m
+        for m in _messages(db, row.id)
+        if m.scenario_index == a.scenario_index and m.role == "student"
+    ]
+    refs = {f"m{number}": m for number, m in enumerate(said, start=1)}
+    context = {
+        # A teacher key, as in the tutor's context: the scenario is not student input.
+        "scenario": current.text,
+        "earlier_scenarios": [item.text for item in a.progress[: a.scenario_index]],
+        "confirmed": current.confirmed_summary,
+        "student_messages": [{"ref": ref, "text": m.text} for ref, m in refs.items()],
+        "output_locale": account.locale or DEFAULT_LOCALE,
+    }
+    messages, schema, _ = compile_program(db, EXTENSION_PROGRAM, context)
+    return {
+        "extension": True,
+        "attempt_id": row.id,
+        "account_id": account.id,
+        "bindings": bindings,
+        "messages": messages,
+        "schema": schema,
+        "context": context,
+        "message_texts": {ref: (m.id, m.text) for ref, m in refs.items()},
+    }
+
+
+async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | None:
+    """Each binding in order, every attempt audited; None when none of them wrote a usable one."""
+
+    async def no_delta(_):
+        return None
+
+    for binding in prepared["bindings"]:
+        started = time.monotonic()
+        try:
+            result, audit = await asyncio.wait_for(
+                guarded_generate(
+                    binding,
+                    prepared["messages"],
+                    prepared["schema"],
+                    no_delta,
+                    kind=EXTENSION_PROGRAM,
+                    context=prepared["context"],
+                ),
+                PROVIDER_TIMEOUT_SECONDS,
+            )
+            extension = ScenarioExtension.model_validate(result)
+        except Exception as exc:  # noqa: BLE001 — any failure means no scenario, never a stuck student
+            reason = (
+                getattr(exc, "reason", None)
+                or getattr(exc, "code", None)
+                or ("PROVIDER_TIMEOUT" if isinstance(exc, TimeoutError) else type(exc).__name__)
+            )
+            record_direct_call_audit(
+                actor_id=prepared["account_id"],
+                endpoint="solo.scenario_extension",
+                role=ROLE,
+                binding=binding,
+                state="FAILED",
+                reason_code=str(reason),
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            continue
+        record_direct_call_audit(
+            actor_id=prepared["account_id"],
+            endpoint="solo.scenario_extension",
+            role=ROLE,
+            binding=binding,
+            state="READY",
+            audit=audit,
+        )
+        return extension, binding
+    return None
+
+
+def _located_sources(extension: ScenarioExtension, texts: dict) -> list[dict]:
+    """The citations that really sit in this student's messages, with where they sit."""
+    located = []
+    for citation in extension.sources:
+        message = texts.get(citation.message_ref)
+        if message is None:
+            continue
+        found = locate_citation(Citation.model_validate(citation), message[0], message[1])
+        if found is not None:
+            located.append(found.model_dump())
+    return located
+
+
+async def _finish_extension(prepared: dict) -> dict:
+    """Write the scenario if it is still wanted; either way the student gets the current view.
+
+    The call ran between two transactions, so the attempt is read again: a student who has
+    already moved on keeps what they have, and a scenario is stored at most once.
+    """
+    called = await _call_extension(prepared)
+    with transaction() as db:
+        account = db.get(Account, prepared["account_id"])
+        row = _locked_attempt(db, account, prepared["attempt_id"])
+        a = _state(row)
+        if called is not None and machine.wants_extension(a):
+            extension, binding = called
+            sources = _located_sources(extension, prepared["message_texts"])
+            if sources:  # a scenario that rests on none of the student's words is not written
+                made_by = {"provider": binding.get("adapter"), "model": binding.get("model")}
+                written = machine.extend(
+                    a,
+                    f"s{a.scenario_count + 1}",
+                    extension.scenario,
+                    extension.change.model_dump(),
+                    sources,
+                    made_by,
+                )
+                _store(row, written)
+        return _attempt_view(db, row, now())
 
 
 async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
@@ -431,6 +568,8 @@ async def finish_action(prepared: dict) -> dict:
     """Provider call, then Tx2. A result for a key no longer awaited changes nothing."""
     if "view" in prepared:
         return prepared["view"]
+    if prepared.get("extension"):
+        return await _finish_extension(prepared)
     called = await _call_tutor(prepared)
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])

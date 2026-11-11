@@ -94,7 +94,6 @@
         "ai-providers"
       ],
       "todo": [
-        "prompts.compile_program 的 key 算兩次（第一次被覆蓋）。",
         "鐵則：安全類訊息改固定關心句＋老師看得到的安全 flag（與偏題隱藏 flag 分欄）；第 5 條個資措辭已定案。"
       ]
     },
@@ -359,6 +358,7 @@
       "about": "呼叫後端的唯一出口（api/：產生的型別、client、錯誤文字）、共用 UI、開發控制台與 toy page。",
       "paths": [
         "frontend/src/components/",
+        "frontend/src/ui/",
         "frontend/src/shared/phaseLabels.ts",
         "frontend/src/shared/personalStatus.ts",
         "frontend/src/shared/clipboard.test.ts",

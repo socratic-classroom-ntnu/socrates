@@ -85,10 +85,20 @@ class PersonalSummaryView(View):
     principle_note: str = ""
 
 
+class SoloScenarioChangeView(View):
+    """The one condition a written scenario changed, shown as before → after."""
+
+    condition: str
+    before: str
+    after: str
+
+
 class SoloScenarioView(View):
     index: int
     id: str
     text: str  # the scenario as the teacher or the scenario writer wrote it, verbatim
+    # None for the teacher's own first scenario; what the written ones changed.
+    change: SoloScenarioChangeView | None
     answer: str | None  # the student's first answer; None until given
     status: ScenarioStatus
     confirmed_summary: PersonalSummaryView | None

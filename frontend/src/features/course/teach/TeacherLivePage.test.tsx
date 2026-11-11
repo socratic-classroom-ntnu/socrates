@@ -71,7 +71,7 @@ test('renders the live header, summary cards, progress table, timestamps and pri
   expect(within(page).getByRole('link', { name: '課程' })).toHaveAttribute('href', '/teach/courses/c-1')
   expect(within(page).getByText('科技倫理')).toBeInTheDocument()
   expect(within(page).getByRole('heading', { name: '科技與選擇' })).toBeInTheDocument()
-  expect(within(page).getByText('進行中', { selector: '.status-pill' })).toBeInTheDocument()
+  expect(within(page).getByText('進行中', { selector: '.pill' })).toBeInTheDocument()
   expect(within(page).getByText(/開放到.*即時更新/)).toBeInTheDocument()
   expect(within(page).getByRole('link', { name: '投影活動 QR' })).toHaveAttribute('href', '/teach/activities/a-1/projector')
   expect(within(page).getByRole('link', { name: '統計分析' })).toHaveAttribute('href', '/teach/activities/a-1/analysis')

@@ -5317,6 +5317,31 @@
         "title": "SoloProgressSummaryView",
         "type": "object"
       },
+      "SoloScenarioChangeView": {
+        "additionalProperties": false,
+        "description": "The one condition a written scenario changed, shown as before → after.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "string"
+          },
+          "before": {
+            "title": "Before",
+            "type": "string"
+          },
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "condition",
+          "before",
+          "after"
+        ],
+        "title": "SoloScenarioChangeView",
+        "type": "object"
+      },
       "SoloScenarioProgressView": {
         "additionalProperties": false,
         "properties": {
@@ -5354,6 +5379,16 @@
             ],
             "title": "Answer"
           },
+          "change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloScenarioChangeView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "confirmed_summary": {
             "anyOf": [
               {
@@ -5389,6 +5424,7 @@
           "index",
           "id",
           "text",
+          "change",
           "answer",
           "status",
           "confirmed_summary"

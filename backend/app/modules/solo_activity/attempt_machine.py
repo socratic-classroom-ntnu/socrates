@@ -75,6 +75,11 @@ class ScenarioProgress:
     rejected_summary: dict[str, Any] | None = None
     # The turn of the first student message after the latest 不太對; policy.py holds confirmation.
     last_revise_turn: int | None = None
+    # Only a written (not the teacher's) scenario: the one condition it changed, the student's
+    # words it tests (message id and where the quote sits), and which provider and model wrote it.
+    change: dict[str, str] | None = None
+    sources: list[dict[str, Any]] | None = None
+    generated_by: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -277,6 +282,38 @@ def _after_confirmation(a: AttemptState) -> SoloState:
         return "reviewing"
     has_next = a.scenario_index + 1 < a.scenario_count
     return "between_scenarios" if has_next else "reviewing"
+
+
+def wants_extension(a: AttemptState) -> bool:
+    """After the last scenario's confirmation: the rule asks for another one, and none is left.
+
+    The pure confirmation above sends such a student to the review; whoever can write a scenario
+    asks this next, so a scenario that cannot be written costs the student nothing.
+    """
+    current = a.current
+    if a.state != "reviewing" or a.scenario_index + 1 < a.scenario_count:
+        return False
+    if current.status != "goal_met":  # nothing confirmed to build on
+        return False
+    confirmed = sum(item.status == "goal_met" for item in a.progress)
+    return not should_conclude(confirmed, shifted_in_latest=current.last_shift_turn is not None)
+
+
+def extend(
+    a: AttemptState,
+    scenario_id: str,
+    text: str,
+    change: dict[str, str],
+    sources: list[dict[str, Any]],
+    generated_by: dict[str, Any],
+) -> AttemptState:
+    """Append the written scenario; the student moves on to it with ``next_scenario``."""
+    if not wants_extension(a):
+        raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
+    added = ScenarioProgress(
+        scenario_id, text, change=change, sources=sources, generated_by=generated_by
+    )
+    return replace(a, state="between_scenarios", progress=(*a.progress, added))
 
 
 def revise_viewpoint(a: AttemptState) -> AttemptState:

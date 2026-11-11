@@ -101,7 +101,7 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 
 | 方法與路徑（前綴 `/api/v2`） | 模組 | 誰呼叫 | 新增／修改 | 備註 |
 |---|---|---|---|---|
-| `POST /auth/guest` | identity-access | 前端 auth | 新增 | body：nickname、locale、course_code；回 session 與帳號 view |
+| `POST /auth/guest` | identity-access | 前端 auth | 新增 | body：nickname、locale；回 session 與帳號 view。不帶 course_code：identity-access 不依賴 course-management，課程是否允許訪客由接著的 `POST /courses/join` 檢查（`GUEST_JOIN_DISABLED`） |
 | `POST /auth/guest/upgrade` | identity-access | 前端 auth | 新增 | body：username、email、password；回升級後帳號 |
 | `GET /auth/me` | identity-access | 前端 | 修改 | 加 `kind`（registered／guest／expired_guest）、`guest_expires_at` |
 | `GET /course-join/{code}` | course-management | 前端 auth | 修改 | 加 `allow_guest` |

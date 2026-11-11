@@ -282,17 +282,21 @@ def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=Fa
     every such request pushes their expiry 7 days ahead."""
     now = time.time()
     session = db.get(LoginSession, digest(token or ""))
-    if session is None or session.expires_at <= now:
+    if session is None:
+        raise DomainError("LOGIN_REQUIRED", 401)
+    account = db.get(Account, session.account_id)
+    # A guest's session ends together with the guest, so idle expiry is checked first: the
+    # student then sees GUEST_EXPIRED (scan the QR code again), not a login prompt.
+    if account.kind == "guest" and (account.guest_expires_at or 0) <= now:
+        raise DomainError("GUEST_EXPIRED", 401)
+    if session.expires_at <= now:
         raise DomainError("LOGIN_REQUIRED", 401)
     if mutation and not secrets.compare_digest(
         session.csrf_token,
         csrf or "",
     ):
         raise DomainError("SESSION_CSRF_REQUIRED", 403)
-    account = db.get(Account, session.account_id)
     if account.kind == "guest":
-        if (account.guest_expires_at or 0) <= now:
-            raise DomainError("GUEST_EXPIRED", 401)
         if not allow_guest:
             raise DomainError("GUEST_NOT_ALLOWED", 403)
         account.guest_expires_at = now + GUEST_SECONDS

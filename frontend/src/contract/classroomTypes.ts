@@ -28,6 +28,7 @@ export interface components { schemas: {
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
   "ChartSemanticsView": { "sunburst": string; "sankey": string; "graph": string; "heatmap": string; "timeline": string };
+  "CitationSourceView": { /** ID of the student message whose exact text contains quote. */ "message_id": string; /** Exact, unnormalised substring of the referenced SoloMessageView.text. */ "quote": string; /** Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text. */ "start": number; /** Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote. */ "end": number };
   "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision": number };
   "ClassroomActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
   "ClassroomBatchView": { "id": string; "classroom_id": string; "batch_id": string; "code": (string | null) };
@@ -76,7 +77,7 @@ export interface components { schemas: {
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
-  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
+  "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string; "sources"?: Array<components["schemas"]["CitationSourceView"]> };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
   "PublicJoinPreview": { "course_name": string };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };

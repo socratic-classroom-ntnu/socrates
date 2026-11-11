@@ -1311,6 +1311,45 @@
         "title": "ChartSemanticsView",
         "type": "object"
       },
+      "CitationSourceView": {
+        "additionalProperties": false,
+        "description": "One exact quote from a student message, located at its first exact occurrence.\n\nOffsets index the exact ``SoloMessageView.text`` returned by the API. They are not Unicode\ncode-point or grapheme-cluster offsets.",
+        "properties": {
+          "end": {
+            "description": "Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote.",
+            "minimum": 1.0,
+            "title": "End",
+            "type": "integer"
+          },
+          "message_id": {
+            "description": "ID of the student message whose exact text contains quote.",
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "quote": {
+            "description": "Exact, unnormalised substring of the referenced SoloMessageView.text.",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "start": {
+            "description": "Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text.",
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "message_id",
+          "quote",
+          "start",
+          "end"
+        ],
+        "title": "CitationSourceView",
+        "type": "object"
+      },
       "ClassroomAISettingsView": {
         "additionalProperties": false,
         "properties": {
@@ -3366,6 +3405,13 @@
               "type": "string"
             },
             "title": "Relevant Conditions",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
             "type": "array"
           },
           "unresolved_issue": {

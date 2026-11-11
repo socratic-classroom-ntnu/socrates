@@ -283,7 +283,7 @@ def test_full_single_scenario_flow(client, tutor):
     view = ok(do(client, attempt["id"], "send_message", {"text": "因為是我親手造成的"}))
     assert view["state"] == "confirming"
     assert view["available_actions"] == ["confirm_viewpoint", "revise_viewpoint"]
-    assert view["candidate_summary"] == MET["summary"]
+    assert view["candidate_summary"] == {**MET["summary"], "sources": []}
     assert view["principle_hint"] == "義務論"
     second_context = json.loads(calls[1]["messages"][1]["content"])
     assert second_context["turn_index"] == 1
@@ -309,7 +309,7 @@ def test_full_single_scenario_flow(client, tutor):
     assert view["state"] == "reviewing"
     assert view["available_actions"] == ["submit_review"]
     assert view["scenarios"][0]["status"] == "goal_met"
-    assert view["scenarios"][0]["confirmed_summary"] == MET["summary"]
+    assert view["scenarios"][0]["confirmed_summary"] == {**MET["summary"], "sources": []}
     assert view["candidate_summary"] is None
 
     view = ok(do(client, attempt["id"], "submit_review"))
@@ -491,7 +491,7 @@ def test_multi_scenario_flow(client, tutor):
     second = view["scenarios"][1]
     assert (second["id"], second["text"]) == ("s2", SECOND)
     assert second["answer"] is None and second["status"] == "in_progress"
-    assert view["scenarios"][0]["confirmed_summary"] == MET["summary"]
+    assert view["scenarios"][0]["confirmed_summary"] == {**MET["summary"], "sources": []}
     brief = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))["attempt"]
     assert (brief["scenario_index"], brief["current_turn"]) == (1, 0)
 
@@ -560,7 +560,7 @@ def test_revise_sets_revising_until_next_message(client, tutor):
 
     view = ok(do(client, attempt["id"], "revise_viewpoint"))
     assert view["revising"] is True
-    assert view["rejected_summary"] == MET["summary"]
+    assert view["rejected_summary"] == {**MET["summary"], "sources": []}
     assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))["revising"] is True
 
     replies.append(NOT_MET)

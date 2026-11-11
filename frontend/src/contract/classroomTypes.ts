@@ -75,11 +75,13 @@ export interface components { schemas: {
   "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
   "MailRequest": { "email": string };
+  "MailRequestView": { "status": "REQUEST_RECORDED"; "message": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "ModelDiscoveryView": { "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "models": Array<components["schemas"]["DiscoveredModel"]>; "manual_model_id_allowed": boolean; "observed_at": number };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
+  "PasswordResetView": { "status": "PASSWORD_RESET" };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
@@ -91,6 +93,7 @@ export interface components { schemas: {
   "Reaction": { "action_id": string; "kind": "heart" | "like" | "gift"; "focus_id": string; "turn_index": number };
   "ReadinessView": { "status": "ready"; "database": "connected"; "runtime": "classroom" };
   "Register": { "username": string; "email": string; "password": string };
+  "ResendWebhookView": { "status": "RECORDED"; "matched": boolean; "provider_status"?: (string | null) };
   "ResetRequest": { "token": string; "password": string };
   "RevisionView": { "schema": "socrates/revision/v1"; "source_sha": string; "worktree_sha256": string; "environment": string; "feature_revision": number; "provider_profiles": boolean; "classroom_owner_routing": boolean; "observed_at": number };
   "RoomBudgetView": { "live_llm_call_budget": number; "used": number };
@@ -108,6 +111,7 @@ export interface components { schemas: {
   "SendMessageBody": { "text": string; "revise_hint"?: ("stance" | "reason" | "condition" | "changed_mind" | null) };
   "SettingsUpdate": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "budgets"?: Record<string, unknown>; "active_room_id"?: (string | null) };
   "SettlementView": { "state": "EXPLORING" | "CURRENT_PHASE_FINISHING" | "FINAL_STAGE" | "SETTLED"; "latched_at"?: (number | null); "latched_phase"?: (string | null); "final_stage_count"?: (number | null); "started_at"?: (number | null); "settled_at"?: (number | null); "ended_by"?: ("system" | "teacher" | null); "end_reason"?: ("final_stage_complete" | "teacher_force_end" | null); "incomplete_members"?: (Array<string> | null); "member_status"?: (Record<string, "confirmed" | "incomplete"> | null) };
+  "SignedOutView": { "status": "SIGNED_OUT" };
   "SoloActivityAnalysisView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended"; "ends_at": (number | null); "generated_at": number; "revision_id": (string | null); "summary": components["schemas"]["SoloAnalysisSummaryView"]; "students": Array<components["schemas"]["SoloAnalysisStudentView"]> };
   "SoloActivityProgressView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended"; "ends_at": (number | null); "generated_at": number; "summary": components["schemas"]["SoloProgressSummaryView"]; "students": Array<components["schemas"]["SoloStudentProgressView"]> };
   "SoloActivityView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "scheduled" | "open" | "ended"; "ends_at": number; "attempt": (components["schemas"]["SoloAttemptBrief"] | null) };
@@ -118,8 +122,9 @@ export interface components { schemas: {
   "SoloMessageView": { "id": string; "scenario_index": number; "role": "student" | "tutor"; "text": string; "created_at": number; "move": ("probe" | "clarify" | "challenge" | "reflect" | "summarize" | "hypothetical" | null); "revise_hint": ("stance" | "reason" | "condition" | "changed_mind" | null) };
   "SoloProgressCellView": { "status": "answering" | "in_dialogue" | "confirming" | "confirmed"; "turns": (number | null) };
   "SoloProgressSummaryView": { "enrolled": number; "started": number; "done": number; "attention": number };
+  "SoloScenarioChangeView": { "condition": string; "before": string; "after": string };
   "SoloScenarioProgressView": { "index": number; "status": "in_dialogue" | "confirmed" };
-  "SoloScenarioView": { "index": number; "id": string; "text": string; "answer": (string | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
+  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (components["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "overall": "not_started" | "in_progress" | "done"; "cells": Array<components["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress"; "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
@@ -127,6 +132,8 @@ export interface components { schemas: {
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
   "VerificationDelivery": { "mail_id": string; "delivery_state": string; "expires_at": number };
+  "VerificationMailView": { "status": "REQUEST_RECORDED" | "ALREADY_VERIFIED"; "message": string; "delivery"?: (components["schemas"]["VerificationDelivery"] | null) };
   "VerificationStatusDelivery": { "state": string; "provider"?: (string | null); "provider_message_id"?: (string | null); "provider_status"?: (string | null); "attempts"?: (number | null); "created_at"?: (number | null); "updated_at"?: (number | null); "sent_at"?: (number | null); "delivered_at"?: (number | null); "last_error"?: (string | null); "preview_url"?: (string | null) };
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
+  "VerifiedView": { "status": "VERIFIED" };
 } }

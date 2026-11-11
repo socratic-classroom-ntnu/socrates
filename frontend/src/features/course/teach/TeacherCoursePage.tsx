@@ -5,6 +5,7 @@ import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Button, ButtonLink } from '../../../ui'
 import { ComingSoonPage } from '../../../components/ComingSoonPage'
 import { ActivityCards } from './ActivityCards'
 import { InviteDialog } from './InviteDialog'
@@ -34,7 +35,7 @@ export function TeacherCoursePage() {
     return <main className="teach-page teach-page--message">
       <h1>{notFound ? t('course.notFound.title') : errorMessage(t, course.error)}</h1>
       {notFound && <p>{t('course.notFound.body')}</p>}
-      <Link className="button button--outline" to="/">{t('course.notFound.back')}</Link>
+      <ButtonLink variant="outline" to="/">{t('course.notFound.back')}</ButtonLink>
     </main>
   }
 
@@ -55,10 +56,10 @@ export function TeacherCoursePage() {
         <h1>{data.name}</h1>
         <span className="teach-head__meta">{t('course.meta', { teacher: data.teacher_name, count: data.student_count })}</span>
       </div>
-      <button type="button" className="button button--outline" onClick={() => setInviting(true)}>
+      <Button variant="outline" onClick={() => setInviting(true)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3M21 14v7h-7" /></svg>
         {t('course.invite')}
-      </button>
+      </Button>
     </header>
     <nav className="teach-tabs" aria-label={t('course.tabsLabel')}>
       {tabs.map(item => <Link key={item.key} to={item.to} aria-current={tab === item.key ? 'page' : undefined}>

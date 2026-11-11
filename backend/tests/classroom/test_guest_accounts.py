@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.classroom_app import create_app
 from app.modules.identity_access.auth import GUEST_SECONDS
-from app.modules.identity_access.repositories import Account, Mail
+from app.modules.identity_access.repositories import Account, LoginSession, Mail
 from app.modules.platform import storage
 from app.modules.platform.env import env_str
 
@@ -36,8 +36,13 @@ def join(c, nickname="小明"):
 
 
 def set_expiry(account_id, at):
+    """Idle until at: the account and its session expire together, as they do for real."""
     with storage.transaction() as db:
         db.get(Account, account_id).guest_expires_at = at
+        for session in db.scalars(
+            select(LoginSession).where(LoginSession.account_id == account_id)
+        ):
+            session.expires_at = at
 
 
 def test_a_guest_needs_only_a_nickname_and_a_language(client):
@@ -122,3 +127,39 @@ def test_a_guest_cannot_log_in_with_a_password(client):
     client.cookies.clear()
     r = client.post("/api/v2/auth/login", json={"login": username, "password": PASSWORD})
     assert (r.status_code, r.json()["detail"]) == (401, "AUTH_INVALID_CREDENTIALS")
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"nickname": "", "locale": "en"},
+        {"nickname": "x" * 25, "locale": "en"},
+        {"nickname": "小明", "locale": "fr"},
+        {"nickname": "小明"},
+        {"nickname": "小明", "locale": "en", "course_code": "ABCD1234"},
+    ],
+    ids=["empty-nickname", "long-nickname", "unknown-locale", "no-locale", "extra-field"],
+)
+def test_joining_validates_the_request(client, body):
+    assert client.post("/api/v2/auth/guest", json=body).status_code == 422
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"email": "not-an-email", "password": PASSWORD},
+        {"email": "ming@example.org", "password": "weakpassword"},
+        {"email": "ming@example.org"},
+    ],
+    ids=["bad-email", "weak-password", "no-password"],
+)
+def test_registering_validates_the_request(client, body):
+    join(client)
+    assert client.post("/api/v2/auth/guest/upgrade", json=body).status_code == 422
+
+
+def test_registering_needs_a_session(client):
+    r = client.post(
+        "/api/v2/auth/guest/upgrade", json={"email": "a@example.org", "password": PASSWORD}
+    )
+    assert (r.status_code, r.json()["detail"]) == (401, "LOGIN_REQUIRED")

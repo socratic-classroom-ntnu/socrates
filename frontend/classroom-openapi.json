@@ -2191,6 +2191,50 @@
         "title": "CredentialUpdate",
         "type": "object"
       },
+      "DemoAccountView": {
+        "properties": {
+          "role": {
+            "enum": [
+              "teacher",
+              "student"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "role"
+        ],
+        "title": "DemoAccountView",
+        "type": "object"
+      },
+      "DemoLoginView": {
+        "description": "測試帳號的快速登入；只在 seed 過的環境出現（app/modules/platform/demo.py）。",
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccountView"
+            },
+            "title": "Accounts",
+            "type": "array"
+          },
+          "password": {
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password",
+          "accounts"
+        ],
+        "title": "DemoLoginView",
+        "type": "object"
+      },
       "GroupActionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -3415,6 +3459,16 @@
           "debug_mode": {
             "title": "Debug Mode",
             "type": "boolean"
+          },
+          "demo_login": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DemoLoginView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "google_cse_id": {
             "title": "Google Cse Id",

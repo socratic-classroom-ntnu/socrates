@@ -9,7 +9,7 @@
 | 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
 |---|---|---|---|---|---|
 | 1 | contract | 全部 | 上面的第一個 PR；之後 Ken、Courecta 每開一個新端點，你審 response_model、reason code、重產型別後沒有 diff 三件事 | — | 檢查表合進 `backend/main` |
-| 2 | contract | 免註冊加入、敘述型活動、雷達 | 審 4 個新 code：`GUEST_JOIN_DISABLED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`（Ken）、`GUEST_EXPIRED`（Courecta），目錄、前端文字與 raise 的位置三者一致 | 他們第一次 raise 的 PR | contract gate 測試通過 |
+| 2 | contract | 免註冊加入、敘述型活動、雷達 | 審 6 個新 code：`GUEST_JOIN_DISABLED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY`（Ken）、`GUEST_EXPIRED`、`GUEST_NOT_ALLOWED`、`GUEST_ONLY`（Courecta），目錄、前端文字與 raise 的位置三者一致 | 他們第一次 raise 的 PR | contract gate 測試通過 |
 | 3 | contract | 雷達圖 | 雷達契約：dimensions［name、low_pole、high_pole、source＝embedding｜llm］＋每位學生每維的分數＋引用 | Ken 做雷達之前先定 | 前端只接這一份 |
 | 4 | contract | 統整引用 | 對外引用型別：points［text、sources［message_id、quote、起訖位置］］，統整、最終統整、雷達三處共用。LLM 輸出的 `message_ref`（例如 m3）只在 llm-runtime 內部，Courecta 驗證後換成 `message_id`；起訖位置的單位（字元或 UTF-16）由你寫明，前端要用它標出原句 | 和 Courecta 定 schema 時一起 | 三處用同一個型別 |
 | 5 | contract | 語音 | TTS 契約（文字→音訊＋字時間點） | Courecta 做語音時 | 前端 media 能接 |

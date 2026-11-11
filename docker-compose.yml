@@ -17,6 +17,8 @@ services:
     build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg://socrates:socrates@db:5432/socrates
+      # 明確標成本機：測試帳號 seed 與登入頁的快速登入按鈕都只認明確設定的值（backend/app/modules/platform/demo.py）
+      SOCRATES_ENVIRONMENT: local-dev
       SOCRATES_PUBLIC_ORIGIN: http://localhost:5173
       SOCRATES_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       LADDER_PATH: /app/ladders/trolley.yaml

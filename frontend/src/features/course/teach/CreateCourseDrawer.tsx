@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { Dialog } from '../../../components/Dialog'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { Button, Field as FormField, FieldError, FieldHint, FormError } from '../../../ui'
 import { type FieldProblem, fieldProblemsFrom422 } from './fieldErrors'
 import '../../../styles/teach.css'
 
@@ -71,12 +72,11 @@ export function CreateCourseDrawer({ onClose }: { onClose(): void }) {
       'aria-invalid': problem ? true : undefined, 'aria-describedby': described,
       onChange: (event: { target: { value: string } }) => set(name, event.target.value),
     }
-    return <div className={'form-field' + (problem ? ' form-field--error' : '')}>
-      <label htmlFor={id}>{label}{options.required && <><span className="form-field__star" aria-hidden="true"> *</span><span className="sr-only">{t('create.required')}</span></>}</label>
+    return <FormField id={id} label={label} required={options.required} requiredText={t('create.required')} invalid={Boolean(problem)}>
       {options.multiline ? <textarea rows={4} {...common} /> : <input {...common} data-autofocus={name === 'name' ? true : undefined} />}
-      {options.hint && <p id={id + '-hint'} className="form-field__hint">{options.hint}</p>}
-      {problem && <p id={id + '-error'} className="form-field__error">{message(problem)}</p>}
-    </div>
+      {options.hint && <FieldHint id={id + '-hint'}>{options.hint}</FieldHint>}
+      {problem && <FieldError id={id + '-error'}>{message(problem)}</FieldError>}
+    </FormField>
   }
 
   return <Dialog
@@ -86,8 +86,8 @@ export function CreateCourseDrawer({ onClose }: { onClose(): void }) {
     onClose={close}
     footer={<>
       <span className="drawer-footnote">{t('create.footnote')}</span>
-      <button type="button" className="button button--quiet" disabled={busy} onClick={close}>{t('create.cancel')}</button>
-      <button type="submit" form="create-course" className="button button--primary" disabled={busy}>{busy ? t('create.submitting') : t('create.submit')}</button>
+      <Button variant="quiet" disabled={busy} onClick={close}>{t('create.cancel')}</Button>
+      <Button type="submit" form="create-course" variant="primary" disabled={busy}>{busy ? t('create.submitting') : t('create.submit')}</Button>
     </>}
   >
     <form id="create-course" className="create-course" onSubmit={event => void submit(event)} noValidate>
@@ -102,7 +102,7 @@ export function CreateCourseDrawer({ onClose }: { onClose(): void }) {
         {field('intro', t('create.intro'), { multiline: true, placeholder: t('create.introPlaceholder') })}
         {field('goals', t('create.goals'), { multiline: true, placeholder: t('create.goalsPlaceholder') })}
       </section>
-      {failure && <p role="alert" className="form-error">{errorMessage(t, failure)}</p>}
+      {failure && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
     </form>
   </Dialog>
 }

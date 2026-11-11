@@ -34,12 +34,13 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 |---|---|---|---|---|---|
 | 1 | course-management | 敘述型活動 | 上面的第一個 PR | Courecta 的 ActivityExpansion | 發布後改敘述，不影響已開始的作答 |
 | 2 | solo-activity | 敘述型活動、多語 | 拿掉選項流程，改成自由文字表態，再用 stance_classify 歸類；「我其實改變想法了」＝重新歸類，舊立場留在紀錄；每則訊息存 locale | Courecta 的 StanceClassification、SoloTutorTurn | 學生用英文作答時，逐字稿保留原文 |
-| 3 | course-management | 免註冊加入 | 課程設定加「允許免註冊」；QR 連結；訪客可以選課；`GET /course-join/{code}` 回 `allow_guest`；沒開時回 `GUEST_JOIN_DISABLED`（這個 code 在同一個 PR 加進 `REASON_CODES` 與前端文字，`EXPANSION_LOCKED`、`RADAR_NOT_READY` 也照這樣在第 1、6 項的 PR 加） | Courecta 的訪客帳號 migration | 訪客從掃碼到開始對話不需要 email |
+| 3 | course-management | 免註冊加入 | 課程設定加「允許免註冊」，預設開（含既有課程）；QR 連結；訪客可以選課；`GET /course-join/{code}` 與活動 QR 的預覽（`GET /activities/{id}/join-preview`）都回 `allow_guest`；訪客從活動 QR 進來同時加入那門課，建立訪客與加入課程在同一個交易，失敗時不留下訪客；老師關掉後只擋新加入，已加入的訪客照常參與；沒開時回 `GUEST_JOIN_DISABLED`（這個 code 在同一個 PR 加進 `REASON_CODES` 與前端文字，`EXPANSION_LOCKED`、`RADAR_NOT_READY` 也照這樣在第 1、6 項的 PR 加） | Courecta 的訪客帳號 migration（4、4a） | 訪客從掃碼到開始對話不需要 email；從活動 QR 進來的訪客同時出現在課程名單 |
+| 3a | course-management、solo-activity | 免註冊加入 | 學生名單（course-management）與即時狀況（solo-activity progress）的回應加 `kind`（`registered`／`guest`／`expired_guest`）；已過期的名字顯示「匿名訪客 N」，同一門課依加入順序（選課時間）編號，查詢時算、不另外存，名單換排序也不變編號；名單計數分成正式學生、訪客、匿名訪客（Figma VG-T05）；按註冊就轉正，所以還沒驗證 Email 的人顯示成正式學生 | Courecta 4a；Amethus 審契約 | 名單與即時狀況回 `kind`；兩位過期訪客依加入順序顯示「匿名訪客 1」「匿名訪客 2」，改排序後編號不變；重產型別後沒有 diff |
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | Courecta 的 flags | 危險傾向或惡意離題＝1 時，教師 progress 回該學生的標記；學生端回應裡沒有 flags |
 | 5 | solo-activity | 統整引用 | 存放引用（新表 summary_sources），view 回傳 message id 與 quote 的起訖位置 | Courecta 的引用驗證；Amethus 的引用型別 | 每個 quote 都是該學生原句的子字串 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |
-| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的閒置訪客刪除排程（每日一次），並把各模組的訪客紀錄 hook註冊進去 | Courecta 5 | 少註冊一個 hook 時啟動就報錯；閒置第 8 天的訪客已刪除 |
-| 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`、`delete`；同一課／同一活動兩邊都有時以帳號那份為準 | Courecta 5 | 每個衝突情境各一條測試 |
+| 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的到期訪客清名字排程（每日一次），並把各模組的訪客紀錄 hook 註冊進去 | Courecta 5、5b | 少註冊一個 hook 時啟動就報錯；加入滿 168 小時的訪客，下一次排程後名字已清空、標成已過期，作答與對話都還在 |
+| 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`，以及清掉這兩個模組存的訪客名字（選課的課內名字等），紀錄本身不動；同一課／同一活動兩邊都有時留帳號那份、訪客那份刪掉 | Courecta 5、5b 的契約 | 每個衝突情境各一條測試；到期後名字清掉、作答還在、老師統計照算 |
 | — | content-authoring | 現有待辦 | 5 個端點補 response_model（清單在 `RESPONSE_MODEL_PENDING`） | Amethus 審 | 重產型別後沒有 diff |
 | — | platform | 現有待辦 | 相容帳冊（`COMPATIBILITY-LEDGER.md`）裡的舊環境變數別名 | — | — |
 | — | app-shell | 現有待辦 | `GET /api/v2/readiness` 補 response_model | Amethus 審 | 重產型別後沒有 diff |

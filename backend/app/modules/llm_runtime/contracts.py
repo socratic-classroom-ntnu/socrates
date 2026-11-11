@@ -167,7 +167,8 @@ class Citation(Strict):
 class LocatedCitation(Strict):
     """A validated citation as the caller stores it: the message and where the quote sits.
 
-    start and end count Unicode code points (Python string indices); end is exclusive.
+    start and end count UTF-16 code units (JavaScript string indices, the public contract's
+    unit); end is exclusive. In Python, slice text.encode("utf-16-le")[2 * start : 2 * end].
     """
 
     message_id: str = Field(min_length=1)

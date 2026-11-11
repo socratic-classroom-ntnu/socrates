@@ -5,7 +5,7 @@ export default {
     statuses: { scheduled: 'Not open yet', open: 'In progress', ended: 'Ended' },
     progress: 'Your progress', scenarioNumber: 'Scenario {{number}}', review: 'Review and final reflection',
     backToCourse: 'Back to the course',
-    notStarted: 'Not started', inProgress: 'In progress', inDialogue: 'In dialogue', confirmed: 'Confirmed',
+    notStarted: 'Not started', inProgress: 'In progress', inDialogue: 'In dialogue', confirmed: 'Confirmed', capped: 'Not settled yet',
     progressHint: 'There is no time limit. You can leave and return at any time. A scenario stays hidden until you reach it.',
     startTitle: 'Read the scenario and answer in your own words',
     lastStop: 'You stopped at', resumeAt: 'Scenario {{number}}, round {{turn}} of the dialogue', reviewNext: 'Every scenario is confirmed. Next comes the review of your viewpoints.',
@@ -39,7 +39,7 @@ export default {
   next: {
     button: 'Next scenario', scenarioLabel: 'A new scenario',
     intuition: 'A new scenario. Do not reach for reasons yet: what is your first instinct?',
-    progress: 'My progress', confirmed: 'Confirmed', current: 'In progress',
+    progress: 'My progress', confirmed: 'Confirmed', current: 'In progress', capped: 'Not settled yet',
   },
   revise: {
     asideTitle: 'It is fine if the summary is off',
@@ -57,6 +57,7 @@ export default {
     reason: 'Reason', conditions: 'Conditions',
     principle: 'Related idea: {{principle}}', principleNote: 'This is a reference, not a label for you.',
     confirm: 'Yes, that is what I think', revise: 'Not quite, I want to explain more',
+    cappedTitle: 'You reached the message limit. Here is where things stand', cappedSubtitle: 'Socrates organized it; this scenario will not be marked as confirmed', cappedConfirm: 'OK, got it',
     principles: { consequentialism: 'Consequentialism', deontology: 'Deontology', mixed: 'Mixed approach' },
   },
   review: {

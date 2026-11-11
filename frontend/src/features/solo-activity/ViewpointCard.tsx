@@ -1,5 +1,5 @@
 import { useT } from '../../i18n/useT'
-import { can, principleKey, type SoloAttemptView } from './soloView'
+import { can, currentScenario, principleKey, type SoloAttemptView } from './soloView'
 
 type Props = {
   view: SoloAttemptView
@@ -15,13 +15,16 @@ export function ViewpointCard({ view, pending, onConfirm, onRevise }: Props) {
 
   const key = principleKey(view.principle_hint)
   const principle = key ? t(`viewpoint.principles.${key}`) : null
+  // Wording only: the buttons still come from available_actions. A capped scenario is never saved as
+  // the student's confirmed view, so the card must not ask them to say it is.
+  const capped = currentScenario(view)?.status === 'capped'
 
   return <section className="solo-viewpoint" aria-labelledby="solo-viewpoint-title">
     <header>
       <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
       <div>
-        <h2 id="solo-viewpoint-title">{t('viewpoint.title')}</h2>
-        <p>{t('viewpoint.subtitle')}</p>
+        <h2 id="solo-viewpoint-title">{t(capped ? 'viewpoint.cappedTitle' : 'viewpoint.title')}</h2>
+        <p>{t(capped ? 'viewpoint.cappedSubtitle' : 'viewpoint.subtitle')}</p>
       </div>
     </header>
     <dl>
@@ -38,7 +41,7 @@ export function ViewpointCard({ view, pending, onConfirm, onRevise }: Props) {
     </div>}
     <div className="solo-viewpoint__actions">
       {can(view, 'confirm_viewpoint') && <button className="solo-primary" type="button" disabled={pending || !view.summary_digest} onClick={() => { void onConfirm() }}>
-        {t('viewpoint.confirm')}
+        {t(capped ? 'viewpoint.cappedConfirm' : 'viewpoint.confirm')}
       </button>}
       {can(view, 'revise_viewpoint') && <button className="solo-secondary" type="button" disabled={pending} onClick={() => { void onRevise() }}>
         {t('viewpoint.revise')}

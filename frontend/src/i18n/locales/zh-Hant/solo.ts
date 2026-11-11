@@ -5,7 +5,7 @@ export default {
     statuses: { scheduled: '尚未開始', open: '進行中', ended: '已結束' },
     progress: '你的進度', scenarioNumber: '情境 {{number}}', review: '回顧與最後反思',
     backToCourse: '返回上一層',
-    notStarted: '還沒開始', inProgress: '進行中', inDialogue: '對話中', confirmed: '已確認',
+    notStarted: '還沒開始', inProgress: '進行中', inDialogue: '對話中', confirmed: '已確認', capped: '尚未釐清',
     progressHint: '不限時間，可以隨時離開再回來。還沒到的情境不會先顯示內容，到了才看得到。',
     startTitle: '先讀情境，用自己的話回答',
     lastStop: '上次停在', resumeAt: '情境 {{number}}，第 {{turn}} 輪對話', reviewNext: '情境都確認了，下一步是觀點回顧',
@@ -39,7 +39,7 @@ export default {
   next: {
     button: '下一個情境', scenarioLabel: '新的情境',
     intuition: '換一個情境。先別急著想理由，你的第一個直覺是什麼？',
-    progress: '我的進度', confirmed: '已確認', current: '進行中',
+    progress: '我的進度', confirmed: '已確認', current: '進行中', capped: '尚未釐清',
   },
   revise: {
     asideTitle: '整理不對很正常',
@@ -57,6 +57,7 @@ export default {
     reason: '理由', conditions: '條件',
     principle: '接近的想法：{{principle}}', principleNote: '這只是參考，不是你的標籤。',
     confirm: '對，這就是我的想法', revise: '不太對，我想再說清楚',
+    cappedTitle: '訊息已達上限，這是到目前為止的整理', cappedSubtitle: '蘇格拉底整理；這個情境不會標成「已確認」', cappedConfirm: '好，我知道了',
     principles: { consequentialism: '後果主義', deontology: '義務論', mixed: '混合' },
   },
   review: {

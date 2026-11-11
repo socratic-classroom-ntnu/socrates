@@ -9,6 +9,8 @@ import { useT } from '../../i18n/useT'
 import '../../styles/solo.css'
 import type { SoloActivityView } from './soloView'
 
+const SCENARIO_NOTE = { confirmed: 'confirmed', capped: 'capped', in_dialogue: 'inDialogue' } as const
+
 export function SoloActivityPage() {
   const { t, locale } = useT('solo')
   const { activityId = '' } = useParams()
@@ -33,7 +35,7 @@ export function SoloActivityPage() {
     ? brief.progress.map(scenario => ({
       status: scenario.status,
       label: t('activity.scenarioNumber', { number: scenario.index + 1 }),
-      note: scenario.status === 'confirmed' ? t('activity.confirmed') : t('activity.inDialogue'),
+      note: t(`activity.${SCENARIO_NOTE[scenario.status]}`),
     }))
     : [{
       status: 'not_started' as const,

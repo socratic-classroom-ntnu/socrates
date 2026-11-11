@@ -108,6 +108,25 @@ test.each([
   expect(within(table).queryByText(/0 (輪|turns?|turnos?)/)).toBeNull()
 })
 
+test('a capped scenario shows as not settled, not as answering or confirmed', async () => {
+  open({
+    view: {
+      ...progress,
+      students: [{
+        enrollment_id: 'e-5', display_name: '小恩', overall: 'in_progress',
+        cells: [{ status: 'capped', turns: 10 }, { status: 'in_dialogue', turns: 1 }],
+        review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false,
+      }],
+    },
+  })
+  const table = await screen.findByRole('table')
+
+  const row = within(table).getByRole('row', { name: /小恩/ })
+  expect(within(row).getByText('尚未釐清')).toBeInTheDocument()
+  expect(within(row).queryByText('寫第一個回答中')).toBeNull()
+  expect(within(row).queryByText('已確認')).toBeNull()
+})
+
 test('the table has one column per scenario the furthest student reached, and at least one', async () => {
   open({ view: { ...progress, students: [progress.students[2]] } })
   const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')

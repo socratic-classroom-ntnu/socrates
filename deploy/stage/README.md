@@ -31,6 +31,11 @@ Flux 每個環境有獨立的 ImagePolicy，只追自己前綴的 tag（flux-k8s
 成功就代表這個 SHA 會被部署。確認線上版本用 `curl -fsSL https://socrates.driseam.com/api/release`
 的 `source_sha`。
 
+**測試帳號：** QA（`stage`）與 dev 的後端啟動時會建好和 PR 預覽一樣的測試帳號與示範課程，
+登入頁有一鍵填入的按鈕；正式環境（`master`）不會有。帳號清單與規則見 `deploy/preview/README.md` 的「預設帳號」。
+如果叢集的 Deployment 覆寫了 image 的啟動指令，就不會自動建，要請負責人在 backend pod 執行一次
+`python /data/scripts/seed_preview.py`。
+
 下方第 2、3、6、7 節是用 `docker compose`（`compose.yml`、`up.sh`、`update.sh`）在自架主機上部署的方式，
 **不是目前 stage 的部署方式**，保留給自架或本機重現時使用。第 1 節的環境變數與第 4 節的 smoke 兩種方式都適用。
 

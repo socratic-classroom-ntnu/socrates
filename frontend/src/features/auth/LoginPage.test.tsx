@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { ApiError, api } from '../../contract/classroomClient'
 import { AuthProvider } from './AuthContext'
@@ -369,5 +369,47 @@ describe('J0: login reached from an invite or activity QR', () => {
     openApp('/login?next=' + encodeURIComponent('/teacher/home'))
     expect(await screen.findByRole('button', { name: '登入' })).toBeInTheDocument()
     expect(screen.queryByText('登入後就會加入')).toBeNull()
+  })
+})
+
+describe('test accounts (only where the server seeded them)', () => {
+  const demo = {
+    debug_mode: false,
+    demo_login: { password: 'preview-password', accounts: [{ username: 'teacher001', role: 'teacher' }, { username: 'user001', role: 'student' }] },
+  }
+  const offering = (more: (url: string) => unknown = () => []) => anonymous(url => (url === '/public-config' ? demo : more(url)))
+
+  test('a button fills the account and password but does not log in', async () => {
+    offering()
+    openApp('/login')
+    const group = await screen.findByRole('group', { name: '測試帳號' })
+    fireEvent.click(within(group).getByRole('button', { name: '老師 teacher001' }))
+    expect(screen.getByLabelText('使用者名稱或 Email')).toHaveValue('teacher001')
+    expect(screen.getByLabelText('密碼')).toHaveValue('preview-password')
+    fireEvent.click(within(group).getByRole('button', { name: '學生 user001' }))
+    expect(screen.getByLabelText('使用者名稱或 Email')).toHaveValue('user001')
+    expect(jest.mocked(api).mock.calls.some(([url]) => url === '/auth/login')).toBe(false)
+  })
+
+  test('the join login offers them too', async () => {
+    offering(url => (url === '/course-join/public-preview?code=AB12' ? { course_name: '哲學導論' } : []))
+    openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
+    expect(await screen.findByRole('group', { name: '測試帳號' })).toBeInTheDocument()
+  })
+
+  test('register and forgot never show them', async () => {
+    offering()
+    openApp('/login?mode=register')
+    expect(await screen.findByLabelText('Email')).toBeInTheDocument()
+    await act(async () => {})
+    expect(screen.queryByRole('group', { name: '測試帳號' })).toBeNull()
+  })
+
+  test('nothing appears when the server offers none', async () => {
+    anonymous(url => (url === '/public-config' ? { debug_mode: false, demo_login: null } : []))
+    openApp('/login')
+    expect(await screen.findByRole('button', { name: '登入' })).toBeInTheDocument()
+    await act(async () => {})
+    expect(screen.queryByRole('group', { name: '測試帳號' })).toBeNull()
   })
 })

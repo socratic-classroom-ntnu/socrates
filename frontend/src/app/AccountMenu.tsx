@@ -8,7 +8,7 @@ import { useT } from '../i18n/useT'
 import { useAuth } from '../features/auth/AuthContext'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
 
-export type NavEntry = { key: string; label: string; href: string; icon: ReactNode }
+export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean }
 
 /** S2: personal settings, the language submenu and logout; on phones the nav items come first. */
 export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | 'collapsed' | 'topbar'; navItems?: NavEntry[] }) {
@@ -21,8 +21,11 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
   const email = account?.email ?? ''
 
   const items: MenuItem[] = [
-    // 舊頁在 render 時讀 window.location，所以導覽項目和側邊欄一樣整頁載入。
-    ...navItems.map(item => ({ key: 'nav-' + item.key, label: item.label, icon: item.icon, onSelect: () => window.location.assign(item.href) })),
+    // 和側邊欄一樣：新路由器的頁面在路由器內切換，舊教師頁（fullLoad）在 render 時讀 window.location，整頁載入。
+    ...navItems.map(item => ({
+      key: 'nav-' + item.key, label: item.label, icon: item.icon,
+      onSelect: () => item.fullLoad ? window.location.assign(item.href) : navigate(item.href),
+    })),
     { key: 'settings', label: t('account.settings'), dividerBefore: navItems.length > 0, onSelect: () => navigate('/account') },
     {
       key: 'language',

@@ -1,6 +1,5 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useT } from '../i18n/useT'
-import '../styles/ui.css'
 import '../styles/dialog.css'
 
 type Props = {

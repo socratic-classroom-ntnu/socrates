@@ -4,6 +4,7 @@ import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
+import { FormError } from '../../../ui'
 import '../../../styles/teach.css'
 import '../../../styles/teacher-live.css'
 import '../../../styles/teacher-analysis.css'
@@ -45,7 +46,7 @@ export function TeacherAnalysisPage({ source = ANALYSIS_SOURCE }: { source?: 'ap
 
   const resource = source === 'api' ? analysis : progress
   if (resource.loading && !view) return <div aria-busy="true" />
-  if (!view) return <main className="teach-page teach-page--message"><p role="alert" className="form-error">{errorMessage(t, resource.error)}</p></main>
+  if (!view) return <main className="teach-page teach-page--message"><FormError role="alert">{errorMessage(t, resource.error)}</FormError></main>
 
   const notStarted = Math.max(0, view.summary.enrolled - view.summary.started)
   // Only viewpoints a student has confirmed are shown; someone still on their first answer has none yet.

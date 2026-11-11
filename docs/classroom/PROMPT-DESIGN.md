@@ -19,6 +19,7 @@
 | solo_tutor | 單人活動的導師 | **改寫**：依敘述對話、輸出 flags、確認統整帶引用、output_locale | SoloTutorTurn | solo-activity |
 | activity_expansion | 敘述 → 立場空間＋追問方向 | **新增** | ActivityExpansion | course-management |
 | stance_classify | 學生的自由文字 → 歸到立場空間的哪一個 | **新增** | StanceClassification | solo-activity |
+| scenario_extension | 學生確認過的立場與理由 → 只改一個條件的下一個情境（第一個情境是老師原文，不經 LLM） | **新增** | ScenarioExtension | solo-activity |
 | final_summary | 多次確認統整 → 思想脈絡 | **新增** | FinalSummary | solo-activity |
 | radar_axis_naming | 向量軸 → 軸名與兩端描述 | **新增** | RadarAxisNames | solo-activity |
 | radar_dimensions／radar_scoring | 備援路線：LLM 定維度與打分 | **新增** | RadarDimensions／RadarScores | solo-activity |
@@ -46,7 +47,7 @@
     "asked_question": 0,
     "self_corrected": 0
   },
-  "confirm_summary": null,
+  "summary": {"current_position": "…", "reason_summary": "…", "relevant_conditions": [], "unresolved_issue": "", "principle_note": "", "sources": [{"message_ref": "m3", "quote": "…"}]},
   "guard": "on_topic | off_topic | instruction_override"
 }
 ```
@@ -68,7 +69,7 @@ flags 只評**學生最新的那一則**，每個值都是 0 或 1。prompt 裡�
 
 **回覆行為**：off_topic、malicious_off_topic、danger_tendency 任一個是 1 時，一律用蘇格拉底式的提問把話題拉回本活動，不另外做關懷回覆。flag 只給教師端呈現，後續怎麼處理不在系統範圍內。回覆裡不提到 flag。
 
-`confirm_summary` 只有在後端判定可以確認時才要求產生，格式見第 5 節。
+`summary` 每一輪都要產生：後端依這一輪的 observations 判定可以確認時，才把它給學生確認（沿用分組課 PersonalTutorTurn 的作法）。`sources` 的格式見第 5 節。
 
 ## 4. 指標（後端計算）
 指標在 solo-activity 的**一個純函式檔**裡算，全系統只有這一處定義。母體是一次作答的全部學生訊息，另外取最近 5 則當作近期窗。

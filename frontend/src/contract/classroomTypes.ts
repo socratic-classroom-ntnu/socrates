@@ -51,6 +51,8 @@ export interface components { schemas: {
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
   "CreateRoom": { "script_id": string };
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
+  "DemoAccountView": { "username": string; "role": "teacher" | "student" };
+  "DemoLoginView": { "password": string; "accounts": Array<components["schemas"]["DemoAccountView"]> };
   "GroupActionReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null) };
   "GroupAnalysisView": { "schema": "socrates/group-analysis/v1"; "classroom_id": string; "title": string; "groups": Array<components["schemas"]["AnalysisGroupView"]>; "basis": "attributed_original_quotes"; "identity": "nickname_and_classroom_scoped_pseudonym"; "chart_semantics": components["schemas"]["ChartSemanticsView"] };
   "GroupCollectionView": { "kind": "GroupCollection"; "id": string; "role": "teacher" | "student"; "route"?: (Record<string, string> | null); "title"?: (string | null); "phase"?: (string | null); "code"?: (string | null); "asset_classroom_id"?: (string | null); "ai_settings"?: (components["schemas"]["ClassroomAISettingsView"] | null); "features"?: (Record<string, unknown> | null); "roster"?: Array<Record<string, unknown>>; "roster_digest"?: (string | null); "configuration"?: (Record<string, unknown> | null); "groups"?: Array<Record<string, unknown>>; "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string> };
@@ -77,7 +79,7 @@ export interface components { schemas: {
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string };
-  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean };
+  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
   "PublicJoinPreview": { "course_name": string };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };

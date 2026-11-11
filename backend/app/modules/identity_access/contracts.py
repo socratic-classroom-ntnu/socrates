@@ -85,6 +85,42 @@ class VerificationDelivery(Strict):
     expires_at: float
 
 
+class SignedOutView(Strict):
+    status: Literal["SIGNED_OUT"]
+
+
+class VerifiedView(Strict):
+    status: Literal["VERIFIED"]
+
+
+class PasswordResetView(Strict):
+    status: Literal["PASSWORD_RESET"]
+
+
+class MailRequestView(Strict):
+    """POST /auth/forgot-password: the same answer whether or not the email has an account, so
+    the endpoint cannot be used to learn which emails are registered."""
+
+    status: Literal["REQUEST_RECORDED"]
+    message: str
+
+
+class VerificationMailView(Strict):
+    """POST /auth/verification-email: the signed-in account's own verification mail."""
+
+    status: Literal["REQUEST_RECORDED", "ALREADY_VERIFIED"]
+    message: str
+    # Absent (not null) when no mail was queued; the route excludes unset fields.
+    delivery: VerificationDelivery | None = None
+
+
+class ResendWebhookView(Strict):
+    status: Literal["RECORDED"]
+    matched: bool
+    # Absent (not null) when no delivery matched; the route excludes unset fields.
+    provider_status: str | None = None
+
+
 class VerificationStatusDelivery(Strict):
     state: str
     provider: str | None = None

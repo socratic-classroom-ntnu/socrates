@@ -3136,6 +3136,27 @@
         "title": "MailRequest",
         "type": "object"
       },
+      "MailRequestView": {
+        "additionalProperties": false,
+        "description": "POST /auth/forgot-password: the same answer whether or not the email has an account, so\nthe endpoint cannot be used to learn which emails are registered.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "REQUEST_RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "MailRequestView",
+        "type": "object"
+      },
       "MemberView": {
         "additionalProperties": false,
         "properties": {
@@ -3343,6 +3364,21 @@
           "suggestion_provider"
         ],
         "title": "OtherSuggestionView",
+        "type": "object"
+      },
+      "PasswordResetView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "PASSWORD_RESET",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PasswordResetView",
         "type": "object"
       },
       "PersonalSummaryView": {
@@ -3791,6 +3827,37 @@
           "password"
         ],
         "title": "Register",
+        "type": "object"
+      },
+      "ResendWebhookView": {
+        "additionalProperties": false,
+        "properties": {
+          "matched": {
+            "title": "Matched",
+            "type": "boolean"
+          },
+          "provider_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status"
+          },
+          "status": {
+            "const": "RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "matched"
+        ],
+        "title": "ResendWebhookView",
         "type": "object"
       },
       "ResetRequest": {
@@ -4673,6 +4740,21 @@
           "state"
         ],
         "title": "SettlementView",
+        "type": "object"
+      },
+      "SignedOutView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "SIGNED_OUT",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "SignedOutView",
         "type": "object"
       },
       "SoloActivityAnalysisView": {
@@ -5703,6 +5785,40 @@
         "title": "VerificationDelivery",
         "type": "object"
       },
+      "VerificationMailView": {
+        "additionalProperties": false,
+        "description": "POST /auth/verification-email: the signed-in account's own verification mail.",
+        "properties": {
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "REQUEST_RECORDED",
+              "ALREADY_VERIFIED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "VerificationMailView",
+        "type": "object"
+      },
       "VerificationStatusDelivery": {
         "additionalProperties": false,
         "properties": {
@@ -5857,6 +5973,21 @@
           "delivery"
         ],
         "title": "VerificationStatusView",
+        "type": "object"
+      },
+      "VerifiedView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "VERIFIED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "VerifiedView",
         "type": "object"
       }
     }
@@ -6381,7 +6512,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MailRequestView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6445,7 +6578,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6527,7 +6662,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6563,7 +6700,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationMailView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6617,7 +6756,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerifiedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -9284,7 +9425,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResendWebhookView"
+                }
               }
             },
             "description": "Successful Response"

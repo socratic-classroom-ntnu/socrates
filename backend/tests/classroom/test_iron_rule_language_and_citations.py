@@ -104,9 +104,12 @@ def test_no_valid_citation_is_regenerated_once_then_a_typed_error():
     assert failed.value.reason == "NO_VALID_CITATION"
 
 
-def test_locate_citation_gives_code_point_offsets():
+def test_locate_citation_gives_utf16_offsets():
+    """The emoji is one code point but two UTF-16 units, as in the frontend's JS strings."""
     text = "我覺得🙂五個人比較多"
     located = locate_citation(Citation(message_ref="m1", quote="五個人"), "msg-1", text)
-    assert located is not None and text[located.start : located.end] == "五個人"
+    assert located is not None and (located.start, located.end) == (5, 8)
+    units = text.encode("utf-16-le")[2 * located.start : 2 * located.end]
+    assert units.decode("utf-16-le") == "五個人"
     assert located.message_id == "msg-1"
     assert locate_citation(Citation(message_ref="m1", quote="六個人"), "msg-1", text) is None

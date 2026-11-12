@@ -2,7 +2,7 @@
 export interface components { schemas: {
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "registered"; "guest_expires_at"?: (number | null) };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "guest_expires_at"?: (number | null) };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
   "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
@@ -67,7 +67,7 @@ export interface components { schemas: {
   "GroupStanceView": { "question_index": number; "question_id": string; "question_title": string; "run_id": string; "run_phase": string; "basis": "personal_baseline"; "members": number; "confirmed": number; "unconfirmed": number; "unconfirmed_by_status": Record<string, number>; "options": Array<components["schemas"]["StanceOptionView"]>; "differing": boolean };
   "GroupStartReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null); "groups": Array<components["schemas"]["GroupMetaView"]>; "snapshot_id": string };
   "GuestJoin": { "nickname": string; "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
-  "GuestUpgrade": { "email": string; "password": string };
+  "GuestUpgrade": { "username": string; "email": string; "password": string };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
   "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string; "open_activity_title": (string | null) };

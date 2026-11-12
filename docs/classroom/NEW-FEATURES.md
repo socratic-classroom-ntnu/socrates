@@ -63,9 +63,10 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 ### 3.1 免註冊加入
 1. 老師在課程設定打開「允許免註冊」，畫面顯示 QR（內容＝加入網址＋課程代碼）。
 2. 學生掃碼 → `GET /course-join/{code}`（預覽，回 `allow_guest`）→ 填暱稱、選語言 → `POST /auth/guest`（建訪客帳號與 session）→ `POST /courses/join`（照舊）。
-3. 訪客只靠裝置上的 session cookie 定位，`guest_expires_at` 是成為訪客那一刻起 168 小時，有動作不延長。到期的訪客由每日排程處理：呼叫各模組的訪客紀錄 hook 清掉訪客名字，清掉帳號的名字、session 失效、標成已過期；帳號、作答、對話、分組紀錄都保留，老師統計照算。訪客登出只讓 session 失效，名字照到期時間才清。
+3. 訪客只靠裝置上的 session cookie 定位，`guest_expires_at` 是成為訪客那一刻起 168 小時，有動作不延長。到期的訪客由每日排程處理：呼叫各模組的訪客紀錄 hook 清掉訪客名字，清掉帳號的名字、session 失效、標成已過期；帳號、作答、對話都保留，老師統計照算。訪客登出只讓 session 失效，名字照到期時間才清。
 4. 學生在 7 天內註冊 → `POST /auth/guest/upgrade`：同一個帳號 id 補上使用者名稱、email 與密碼（規則同一般註冊，一律是學生），`kind` 改成 registered、清掉 `guest_expires_at`，資料全部保留；之後照一般註冊要驗證 Email。Email 已註冊回 `EMAIL_TAKEN`（前端改走登入並併入）、使用者名稱被用掉回 `USERNAME_TAKEN`。
-5. 已有帳號的人用訪客上了課（例如清掉 cookie 再掃、換平板），之後在同一台裝置登入：登入當下有訪客 cookie，就呼叫各模組的 `reassign` 把訪客紀錄改掛到帳號；同一個活動兩邊都有作答時留帳號那份，訪客那份在併入時刪掉（分組課同一間教室兩邊都在時怎麼處理：待定）；併入後課內名字不變。老師帳號不能併入，等 `account_role` 上線。
+5. 已有帳號的人用訪客上了課（例如清掉 cookie 再掃、換平板），之後在同一台裝置登入：登入當下有訪客 cookie，就呼叫各模組的 `reassign` 把訪客紀錄改掛到帳號；同一課／同一活動兩邊都有時留帳號那份，訪客那份在併入時刪掉；併入後課內名字不變。老師帳號不能併入，等 `account_role` 上線。
+6. 這一輪訪客不能進分組課：classroom-core、group-dialogue 的端點（含 WebSocket）維持預設拒絕訪客（`GUEST_NOT_ALLOWED`），不打開 `allow_guest`。所以分組課沒有訪客紀錄，訪客紀錄 hook 只有 course-management、solo-activity 要提供。
 
 ### 3.2 敘述型活動
 1. 老師寫敘述 → `POST /activities/{id}/expansion`（同步呼叫 activity_expansion，回立場空間與追問方向的草稿）。
@@ -108,7 +109,6 @@ LLM 的 prompt、輸出 schema 與旗標定義寫在 [PROMPT-DESIGN.md](PROMPT-D
 | `GET /activities/{id}/join-preview` | course-management | 前端 auth | 修改 | 加 `allow_guest` |
 | `PATCH /courses/{course_id}` | course-management | 前端 course | 修改 | 加 `allow_guest` |
 | 學生名單、即時狀況 | course-management、solo-activity | 前端 course | 修改 | 加 `kind`；過期訪客顯示匿名訪客 N |
-| 分組課教室名單、分組分析 | classroom-core、analytics | 前端 classroom | 修改 | 加 `kind`；過期訪客顯示匿名訪客 N |
 | `POST /activities/{id}/expansion` | course-management | 前端 authoring | 新增 | 產生立場空間草稿 |
 | `PUT /activities/{id}/expansion` | course-management | 前端 authoring | 新增 | 老師修改；發布時鎖進 revision |
 | `POST /solo/attempts/{id}/{action}` | solo-activity | 前端 solo-activity | 修改 | action 清單改為：`message`、`state_position`、`confirm_summary`、`revise_summary`、`confirm_final`、`reject_final`、`retry`；`available_actions` 照舊由後端給 |

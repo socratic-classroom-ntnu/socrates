@@ -109,4 +109,4 @@ flags 只評**學生最新的那一則**，每個值都是 0 或 1。prompt 裡�
 - 固定題組 30 則，每類數則：一般作答、強理由、敷衍、離題、惡意離題、提到自殺、指令覆寫、改變立場、多語。每則標好期望的 flags 與 move。
 - 每個 program 在 OpenAI、Anthropic、Gemini 三家各跑一次（OpenRouter 不另外測）。
 - 量測：schema 合格率、每個 flag 與期望值的一致率、拉回遵守率、規則洩漏、輸出語言正確率、引用有效率。
-- 換模型前手動觸發，結果出報表，不擋合併。
+- 換模型前手動觸發，結果出報表，不擋合併。題組在 `backend/tests/evals/cases.json`，執行：`cd backend && python -m tests.evals.run_evals --adapter openai --model <模型>`（金鑰讀環境變數）。solo_tutor 換成有 flags 的版本之前，flag 一致率顯示 n/a。

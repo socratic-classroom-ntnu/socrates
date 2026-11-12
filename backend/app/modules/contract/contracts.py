@@ -73,6 +73,9 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "GROUP_MEMBERSHIP_REQUIRED": ("group_dialogue",),
     "GROUP_MEMBER_REQUIRED": ("group_dialogue",),
     "GROUP_RUN_REQUIRED": ("group_dialogue",),
+    "GUEST_EXPIRED": ("identity_access",),
+    "GUEST_NOT_ALLOWED": ("identity_access",),
+    "GUEST_ONLY": ("identity_access",),
     "KNOWN_ACTION_REQUIRED": ("classroom_core",),
     "LOBBY_REQUIRED": ("classroom_core", "group_dialogue"),
     "LOGIN_REQUIRED": ("ai_providers", "identity_access"),
@@ -148,24 +151,7 @@ DYNAMIC_REASON_CODES: tuple[str, ...] = (
 
 # Classroom endpoints that still answer without a response_model. The list may only shrink:
 # a new endpoint without one fails tests/contract, and an endpoint that gains one must leave the list.
-RESPONSE_MODEL_PENDING: tuple[str, ...] = (
-    "POST /api/v2/auth/logout",
-    "POST /api/v2/auth/verify",
-    "POST /api/v2/auth/verification-email",
-    "POST /api/v2/auth/forgot-password",
-    "POST /api/v2/auth/reset-password",
-    "POST /api/v2/webhooks/resend",
-    "GET /api/v2/meta/revision",
-    "GET /api/v2/provider-profiles",
-    "POST /api/v2/provider-profiles",
-    "PATCH /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/credential",
-    "DELETE /api/v2/provider-profiles/{profile_id}",
-    "POST /api/v2/provider-profiles/{profile_id}/test",
-    "GET /api/v2/provider-profiles/{profile_id}/models",
-    "GET /api/v2/ai-settings/account",
-    "PUT /api/v2/ai-settings/account",
-)
+RESPONSE_MODEL_PENDING: tuple[str, ...] = ()
 
 # Returned only to the mail provider's webhook caller, never shown in the app.
 SERVER_ONLY_REASON_CODES: tuple[str, ...] = (

@@ -56,7 +56,7 @@ def test_changed_mind_is_a_hint_in_the_students_own_words(client, tutor):
     view = ok(do(client, attempt_id, "send_message", {"text": "救五個人比較重要"}))
     assert view["state"] == "confirming"
     view = confirm(client, attempt_id, view)
-    assert view["scenarios"][0]["confirmed_summary"] == MET["summary"]
+    assert view["scenarios"][0]["confirmed_summary"] == {**MET["summary"], "sources": []}
 
 
 def test_revise_hint_only_while_revising(client, tutor):

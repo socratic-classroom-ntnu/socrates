@@ -6,6 +6,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 
+def property_ts(name, schema, required):
+    description=schema.get('description')
+    jsdoc='/** '+str(description).replace('*/', '*\\/')+' */ ' if description else ''
+    optional='' if name in required or 'default' in schema else '?'
+    return jsdoc+json.dumps(name)+optional+': '+ts(schema)
+
 def ts(schema):
     if '$ref' in schema:
         return 'components["schemas"][' + json.dumps(schema['$ref'].rsplit('/', 1)[1]) + ']'
@@ -26,7 +32,7 @@ def ts(schema):
             return 'Record<string, '+(ts(value) if isinstance(value,dict) and value else 'unknown')+'>'
         # Response DTOs serialize their defaults; fields are required unless explicitly optional.
         required=schema.get('required',[])
-        return '{ '+ '; '.join(json.dumps(k)+( '' if k in required or 'default' in v else '?')+': '+ts(v) for k,v in props.items())+' }'
+        return '{ '+ '; '.join(property_ts(k,v,required) for k,v in props.items())+' }'
     return {'string':'string','integer':'number','number':'number','boolean':'boolean','null':'null'}.get(kind,'unknown')
 
 def build_spec():

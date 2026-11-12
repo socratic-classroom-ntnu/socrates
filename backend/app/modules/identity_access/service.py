@@ -15,6 +15,6 @@ from app.modules.identity_access.email_delivery import (  # noqa: E402
     apply_resend_webhook as apply_resend_webhook,
 )
 from app.modules.identity_access.guests import (  # noqa: E402
-    delete_expired_guests as delete_expired_guests,
+    expire_guests as expire_guests,
     register_guest_hook as register_guest_hook,
 )

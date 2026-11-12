@@ -1,13 +1,14 @@
-"""Deleting idle guests: each module's records through its hook, then the account."""
+"""Expiring guests: each module forgets the name, the account stays as an expired_guest."""
 
 import time
 
 import pytest
+from sqlalchemy import select
 
 from app.modules.identity_access import guests
 from app.modules.identity_access.auth import GUEST_SECONDS
 from app.modules.identity_access.repositories import Account, LoginSession
-from app.modules.identity_access.service import delete_expired_guests, register_guest_hook
+from app.modules.identity_access.service import expire_guests, register_guest_hook
 from app.modules.platform import storage
 from app.modules.platform.env import env_str
 from app.modules.platform.storage import digest
@@ -21,57 +22,62 @@ def database(monkeypatch):
     monkeypatch.setattr(guests, "GUEST_HOOKS", {})
 
 
-class Records:
-    """A module's guest records, as a set of owner ids."""
+class Names:
+    """A module's stored guest names, by owner id."""
 
     def __init__(self, *owners, broken=False):
-        self.owners = set(owners)
+        self.names = {owner: "小明" for owner in owners}
         self.broken = broken
 
     def reassign(self, db, guest_id, account_id):
         raise AssertionError("not part of the expiry job")
 
-    def delete(self, db, guest_id):
+    def forget_name(self, db, guest_id):
         if self.broken:
-            raise RuntimeError("cannot delete")
-        self.owners.discard(guest_id)
+            raise RuntimeError("cannot forget")
+        self.names[guest_id] = None
 
 
-def account(name, kind="guest", idle_days=8.0):
+def account(name, kind="guest", hours_since_join=169.0):
     with storage.transaction() as db:
         row = Account(
             username=name,
             kind=kind,
-            guest_expires_at=time.time() + GUEST_SECONDS - idle_days * 86400
+            guest_expires_at=time.time() + GUEST_SECONDS - hours_since_join * 3600
             if kind == "guest"
             else None,
         )
         db.add(row)
         db.flush()
         db.add(
-            LoginSession(token_hash=digest(name), account_id=row.id, csrf_token="c", expires_at=0)
+            LoginSession(token_hash=digest(name), account_id=row.id, csrf_token="c", expires_at=2e9)
         )
         return row.id
 
 
-def exists(account_id):
+def state(account_id):
     with storage.transaction() as db:
-        return db.get(Account, account_id) is not None
+        row = db.get(Account, account_id)
+        sessions = db.scalars(select(LoginSession).where(LoginSession.account_id == account_id))
+        return row.kind, row.username, len(sessions.all())
 
 
-def test_a_guest_idle_on_day_8_is_deleted_with_its_records():
-    idle, active = account("idle"), account("active", idle_days=6)
-    registered = account("registered", kind="registered")
-    solo, enrollments = Records(idle, active), Records(idle)
+def test_a_guest_past_168_hours_expires_and_keeps_its_records():
+    due, active = account("due"), account("active", hours_since_join=72)
+    unverified = account("unverified", kind="registered")
+    solo, enrollments = Names(due, active), Names(due)
     register_guest_hook("solo-activity", solo)
     register_guest_hook("course-management", enrollments)
-    assert delete_expired_guests() == [idle]
-    assert not exists(idle) and exists(active) and exists(registered)
-    assert solo.owners == {active} and enrollments.owners == set()
+    assert expire_guests() == [due]
+    assert state(due) == ("expired_guest", f"expired-guest-{due}", 0)
+    assert state(active) == ("guest", "active", 1)
+    assert state(unverified) == ("registered", "unverified", 1)
+    assert solo.names == {due: None, active: "小明"} and enrollments.names == {due: None}
+    assert expire_guests() == []
 
 
 def test_a_failing_hook_keeps_that_guest_for_the_next_run():
     first, second = account("first"), account("second")
-    register_guest_hook("solo-activity", Records(first, second, broken=True))
-    assert delete_expired_guests() == []
-    assert exists(first) and exists(second)
+    register_guest_hook("solo-activity", Names(first, second, broken=True))
+    assert expire_guests() == []
+    assert state(first) == ("guest", "first", 1) and state(second) == ("guest", "second", 1)

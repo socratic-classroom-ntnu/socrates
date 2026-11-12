@@ -186,11 +186,12 @@ class GuestRecordHook(Protocol):
     it with service.register_guest_hook). Both run in the caller's transaction and never commit.
 
     reassign: move the guest's records to the account the device just logged in as. When the same
-    course or activity has records under both, keep the account's and leave the guest's where
-    they are; they are deleted with the guest.
-    delete: remove the guest's records; called just before the guest account is deleted.
+    course or activity has records under both, keep the account's and delete the guest's.
+    forget_name: clear the guest's name wherever the module stores it (no soft delete); the
+    records themselves stay, so teacher statistics still count them. Called when the guest
+    expires.
     """
 
     def reassign(self, db: Session, guest_id: str, account_id: str) -> None: ...
 
-    def delete(self, db: Session, guest_id: str) -> None: ...
+    def forget_name(self, db: Session, guest_id: str) -> None: ...

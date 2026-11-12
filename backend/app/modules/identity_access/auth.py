@@ -30,8 +30,8 @@ RESET_TOKEN_SECONDS = 1800
 # 釋出的帳號不能再用密碼登入（不是合法的 argon2 雜湊，verify 會失敗）。
 RELEASED_PASSWORD_HASH = "RELEASED_UNVERIFIED_ACCOUNT"
 SESSION_SECONDS = 43200
-# 訪客閒置這麼久就到期；每次有動作都從現在重新算。
-GUEST_SECONDS = 7 * 86400
+# 訪客從加入那一刻起算這麼久就到期；有動作也不延長。
+GUEST_SECONDS = 168 * 3600
 
 
 # Modules that keep per-account progress (classroom points and achievements) add fields to the
@@ -278,16 +278,16 @@ def login(body):
 
 
 def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=False):
-    """The session's account. Guests get in only where the endpoint opts in (allow_guest), and
-    every such request pushes their expiry 7 days ahead."""
+    """The session's account. Guests get in only where the endpoint opts in (allow_guest)."""
     now = time.time()
     session = db.get(LoginSession, digest(token or ""))
     if session is None:
         raise DomainError("LOGIN_REQUIRED", 401)
     account = db.get(Account, session.account_id)
-    # A guest's session ends together with the guest, so idle expiry is checked first: the
-    # student then sees GUEST_EXPIRED (scan the QR code again), not a login prompt.
-    if account.kind == "guest" and (account.guest_expires_at or 0) <= now:
+    # A guest's session ends together with the guest, so guest expiry is checked first: the
+    # student then sees GUEST_EXPIRED (scan the QR code again), not a login prompt. An
+    # expired_guest has passed it too.
+    if account.kind != "registered" and (account.guest_expires_at or 0) <= now:
         raise DomainError("GUEST_EXPIRED", 401)
     if session.expires_at <= now:
         raise DomainError("LOGIN_REQUIRED", 401)
@@ -299,8 +299,6 @@ def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=Fa
     if account.kind == "guest":
         if not allow_guest:
             raise DomainError("GUEST_NOT_ALLOWED", 403)
-        account.guest_expires_at = now + GUEST_SECONDS
-        session.expires_at = now + GUEST_SECONDS
         return account, session
     if verified and not account.verified:
         raise DomainError("EMAIL_VERIFICATION_REQUIRED", 403)
@@ -392,10 +390,12 @@ def join_as_guest(body):
 
 
 def upgrade_guest(db, account, session, body):
-    """Registration for a guest: the same account id gains an email and password, so every
-    record it already has stays. Like any new registration, it starts unverified."""
+    """Registration for a guest: the same account id gains a username, email and password, so
+    every record it already has stays. Like any new registration, it starts unverified."""
     now = time.time()
-    _claim_identity(db, account.username, body.email, now, upgrading=account)
+    username = body.username.casefold()
+    _claim_identity(db, username, body.email, now, upgrading=account)
+    account.username = username
     account.email = body.email
     account.password_hash = HASHER.hash(body.password)
     account.kind = "registered"

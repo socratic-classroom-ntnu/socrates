@@ -64,25 +64,12 @@ class Register(Strict):
 class GuestJoin(Strict):
     """Joining without registering: a nickname shown to the class and the interface language."""
 
-    nickname: str = Field(min_length=1, max_length=24)
+    nickname: str = Field(min_length=1, max_length=40)
     locale: Locale
 
 
-class GuestUpgrade(Strict):
-    """A guest registering keeps its account; it adds what a registration needs."""
-
-    email: str = Field(min_length=3, max_length=254)
-    password: str = Field(min_length=8, max_length=32)
-
-    @field_validator("password")
-    @classmethod
-    def password_rule(cls, v: str) -> str:
-        return password_policy(v)
-
-    @field_validator("email")
-    @classmethod
-    def email_rule(cls, v: str) -> str:
-        return email_shape(v)
+class GuestUpgrade(Register):
+    """A guest registering keeps its account id; it sends exactly what a registration does."""
 
 
 class Login(Strict):
@@ -182,8 +169,9 @@ class AccountView(Strict):
     points: int
     achievements: list[str]
     locale: Locale | None = None
-    kind: Literal["guest", "registered"] = "registered"
-    # Guests only: when the account is deleted unless it acts again before then.
+    kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    # Guests only: 168 hours after joining; the daily job then clears the name and marks the
+    # account expired_guest.
     guest_expires_at: float | None = None
 
 

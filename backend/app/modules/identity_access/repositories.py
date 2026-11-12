@@ -49,9 +49,10 @@ class Account(Base):
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     locale: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
-    # "guest" (joined without registering, found only by its session cookie) or "registered".
+    # "guest" (joined without registering, found only by its session cookie), "expired_guest"
+    # (past guest_expires_at; the account and its records stay) or "registered".
     kind: Mapped[str] = mapped_column(String(16), default="registered", server_default="registered")
-    # Guests only: pushed 7 days ahead on every action; the daily job deletes guests past it.
+    # Guests only: 168 hours after joining, never extended.
     guest_expires_at: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
 
 

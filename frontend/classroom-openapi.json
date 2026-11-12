@@ -148,6 +148,7 @@
             "default": "registered",
             "enum": [
               "guest",
+              "expired_guest",
               "registered"
             ],
             "title": "Kind",
@@ -3108,7 +3109,7 @@
             "type": "string"
           },
           "nickname": {
-            "maxLength": 24,
+            "maxLength": 40,
             "minLength": 1,
             "title": "Nickname",
             "type": "string"
@@ -3123,7 +3124,7 @@
       },
       "GuestUpgrade": {
         "additionalProperties": false,
-        "description": "A guest registering keeps its account; it adds what a registration needs.",
+        "description": "A guest registering keeps its account id; it sends exactly what a registration does.",
         "properties": {
           "email": {
             "maxLength": 254,
@@ -3136,9 +3137,17 @@
             "minLength": 8,
             "title": "Password",
             "type": "string"
+          },
+          "username": {
+            "maxLength": 32,
+            "minLength": 3,
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$",
+            "title": "Username",
+            "type": "string"
           }
         },
         "required": [
+          "username",
           "email",
           "password"
         ],

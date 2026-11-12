@@ -4,10 +4,12 @@ import { ApiError } from '../../../contract/classroomClient'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { QrCode } from '../../../ui'
-import '../../../styles/projector.css'
+import styles from './projector.module.css'
 
 type Course = components['schemas']['CourseTeacherView']
 type Activity = components['schemas']['ActivityTeacherView']
+
+const cx = (...names: string[]) => names.map(name => styles[name]).join(' ')
 
 function useEscapeToCourse(courseId: string) {
   const navigate = useNavigate()
@@ -21,16 +23,16 @@ function useEscapeToCourse(courseId: string) {
 }
 
 function EscapeHint() {
-  return <div className="projector-escape-hint">按 <kbd>Esc</kbd> 離開投影</div>
+  return <div className={cx('escapeHint')}>按 <kbd>Esc</kbd> 離開投影</div>
 }
 
 function LoadingScreen() {
-  return <main className="projector-page" aria-label="載入投影畫面" aria-busy="true">
-    <div className="projector-join projector-loading">
-      <section className="projector-qr-column"><div className="projector-qr-skeleton"><span /></div></section>
-      <section className="projector-copy">
-        <div><div className="projector-skeleton projector-skeleton--eyebrow" /><div className="projector-skeleton projector-skeleton--title" /><div className="projector-skeleton projector-skeleton--copy" /><div className="projector-skeleton projector-skeleton--copy projector-skeleton--short" /></div>
-        <div><div className="projector-skeleton projector-skeleton--label" /><div className="projector-skeleton projector-skeleton--code" /></div>
+  return <main className={cx('page')} aria-label="載入投影畫面" aria-busy="true">
+    <div className={cx('join', 'loading')}>
+      <section className={cx('qrColumn')}><div className={cx('qrSkeleton')}><span /></div></section>
+      <section className={cx('copy')}>
+        <div><div className={cx('skeleton', 'skeletonEyebrow')} /><div className={cx('skeleton', 'skeletonTitle')} /><div className={cx('skeleton', 'skeletonCopy')} /><div className={cx('skeleton', 'skeletonCopy', 'skeletonShort')} /></div>
+        <div><div className={cx('skeleton', 'skeletonLabel')} /><div className={cx('skeleton', 'skeletonCode')} /></div>
       </section>
     </div>
     <EscapeHint />
@@ -50,13 +52,13 @@ function StatusScreen({
   action?: { label: string; onClick(): void; disabled?: boolean }
   busy?: boolean
 }) {
-  return <main className="projector-page projector-page--status" aria-busy={busy}>
-    <section className="projector-status-card" role={action ? undefined : 'status'}>
-      <div className="projector-status-icon" aria-hidden="true">{eyebrow === '活動狀態' ? '✓' : eyebrow === '課程狀態' ? '▤' : '!'}</div>
-      <div className="projector-eyebrow">{eyebrow}</div>
+  return <main className={cx('page', 'statusPage')} aria-busy={busy}>
+    <section className={cx('statusCard')} role={action ? undefined : 'status'}>
+      <div className={cx('statusIcon')} aria-hidden="true">{eyebrow === '活動狀態' ? '✓' : eyebrow === '課程狀態' ? '▤' : '!'}</div>
+      <div className={cx('eyebrow')}>{eyebrow}</div>
       <h1>{title}</h1>
       <p>{description}</p>
-      {action && <button type="button" className="projector-retry" onClick={action.onClick} disabled={action.disabled}>{action.label}</button>}
+      {action && <button type="button" className={cx('retry')} onClick={action.onClick} disabled={action.disabled}>{action.label}</button>}
     </section>
     <EscapeHint />
   </main>
@@ -100,25 +102,25 @@ function JoinScreen({
   upcoming?: boolean
 }) {
   const isActivity = parentCourse !== undefined
-  return <main className="projector-page">
-    <div className="projector-join">
-      <section className="projector-qr-column">
-        <div className="projector-qr"><QrCode value={url} alt={`加入「${name}」的 QR Code`} size={480} /></div>
+  return <main className={cx('page')}>
+    <div className={cx('join')}>
+      <section className={cx('qrColumn')}>
+        <div className={cx('qr')}><QrCode value={url} alt={`加入「${name}」的 QR Code`} size={480} /></div>
       </section>
-      <section className="projector-copy">
+      <section className={cx('copy')}>
         <div>
-          <div className="projector-eyebrow">{isActivity ? '課堂活動' : upcoming ? '即將開始' : '加入課程'}</div>
-          {isActivity && <div className="projector-parent-course">{parentCourse}</div>}
+          <div className={cx('eyebrow')}>{isActivity ? '課堂活動' : upcoming ? '即將開始' : '加入課程'}</div>
+          {isActivity && <div className={cx('parentCourse')}>{parentCourse}</div>}
           <h1>{name}</h1>
-          <p className="projector-description">{isActivity
+          <p className={cx('description')}>{isActivity
             ? upcoming ? '活動即將開始，你可以先掃描 QR Code，準備加入。' : '使用手機掃描 QR Code，加入這個課堂活動。'
             : upcoming
               ? '課程尚未開始，你可以先掃描 QR Code 或輸入代碼加入。'
               : '使用手機掃描 QR Code，或輸入課程代碼加入。'}</p>
         </div>
         {code
-          ? <div className="projector-code-block"><span>課程代碼</span><strong>{code}</strong></div>
-          : <div className="projector-scan-note">掃描後即可參與活動</div>}
+          ? <div className={cx('codeBlock')}><span>課程代碼</span><strong>{code}</strong></div>
+          : <div className={cx('scanNote')}>掃描後即可參與活動</div>}
       </section>
     </div>
     <EscapeHint />

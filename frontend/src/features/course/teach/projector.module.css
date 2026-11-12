@@ -1,4 +1,4 @@
-.projector-page {
+.page {
   position: relative;
   display: grid;
   min-width: 320px;
@@ -12,7 +12,7 @@
   font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
 }
 
-.projector-join {
+.join {
   container-type: size;
   width: min(100vw, 177.7778vh);
   height: min(100vh, 56.25vw);
@@ -27,14 +27,14 @@
   box-shadow: 0 1.5cqh 4cqh rgba(35, 72, 61, .07), 0 .3cqh .8cqh rgba(35, 72, 61, .04);
 }
 
-.projector-qr-column {
+.qrColumn {
   display: grid;
   height: 100%;
   place-items: center;
 }
 
-.projector-qr,
-.projector-qr-skeleton {
+.qr,
+.qrSkeleton {
   width: min(62cqh, 39cqw);
   height: min(62cqh, 39cqw);
   overflow: hidden;
@@ -44,10 +44,10 @@
   box-shadow: 0 .7cqh 2.4cqh rgba(28, 49, 42, .06);
 }
 
-.projector-qr { display: grid; place-items: center; }
+.qr { display: grid; place-items: center; }
 
-.projector-qr > img,
-.projector-qr > span {
+.qr > img,
+.qr > span {
   display: block;
   max-width: 100%;
   max-height: 100%;
@@ -57,7 +57,7 @@
   object-fit: contain;
 }
 
-.projector-copy {
+.copy {
   min-width: 0;
   height: min(62cqh, 39cqw);
   display: flex;
@@ -66,7 +66,7 @@
   padding: 1cqh 0 .5cqh;
 }
 
-.projector-eyebrow {
+.eyebrow {
   display: inline-flex;
   align-items: center;
   gap: .55cqw;
@@ -77,7 +77,7 @@
   letter-spacing: .13em;
 }
 
-.projector-eyebrow::before {
+.eyebrow::before {
   width: 1.5cqw;
   height: .25cqh;
   border-radius: 99px;
@@ -85,14 +85,14 @@
   content: '';
 }
 
-.projector-parent-course {
+.parentCourse {
   margin-bottom: 1.2cqh;
   color: #6e7773;
   font-size: clamp(10px, 1.25cqw, 22px);
   font-weight: 500;
 }
 
-.projector-copy h1 {
+.copy h1 {
   max-width: 100%;
   margin: 0;
   color: #1f2825;
@@ -103,7 +103,7 @@
   overflow-wrap: anywhere;
 }
 
-.projector-description {
+.description {
   max-width: 34cqw;
   margin: 2.2cqh 0 0;
   color: #626c68;
@@ -111,12 +111,12 @@
   line-height: 1.7;
 }
 
-.projector-code-block {
+.codeBlock {
   padding-top: 2.4cqh;
   border-top: 1px solid #e2e5e1;
 }
 
-.projector-code-block span {
+.codeBlock span {
   display: block;
   margin-bottom: 1.05cqh;
   color: #6d7672;
@@ -124,7 +124,7 @@
   font-weight: 500;
 }
 
-.projector-code-block strong {
+.codeBlock strong {
   display: block;
   color: #24483d;
   font-family: 'Noto Sans Mono', ui-monospace, monospace;
@@ -135,7 +135,7 @@
   white-space: nowrap;
 }
 
-.projector-scan-note {
+.scanNote {
   display: flex;
   align-items: center;
   gap: .7cqw;
@@ -144,7 +144,7 @@
   font-weight: 600;
 }
 
-.projector-scan-note::before {
+.scanNote::before {
   display: grid;
   width: 1.45cqw;
   height: 1.45cqw;
@@ -156,7 +156,7 @@
   font-size: .8cqw;
 }
 
-.projector-escape-hint {
+.escapeHint {
   position: absolute;
   right: 2.6vw;
   bottom: 1.55vh;
@@ -168,7 +168,7 @@
   font-weight: 500;
 }
 
-.projector-escape-hint kbd {
+.escapeHint kbd {
   min-width: 2.25vw;
   padding: .28vh .5vw;
   border: 1px solid #cdd2cd;
@@ -180,11 +180,11 @@
   text-align: center;
 }
 
-.projector-page--status {
+.statusPage {
   padding: 8vh 8vw;
 }
 
-.projector-status-card {
+.statusCard {
   width: min(58vw, 840px);
   min-height: 59vh;
   display: flex;
@@ -199,7 +199,7 @@
   text-align: center;
 }
 
-.projector-status-icon {
+.statusIcon {
   width: 7.5vh;
   height: 7.5vh;
   display: grid;
@@ -211,9 +211,9 @@
   font-size: 3.2vh;
 }
 
-.projector-status-card .projector-eyebrow { margin-bottom: 1.8vh; }
+.statusCard .eyebrow { margin-bottom: 1.8vh; }
 
-.projector-status-card h1 {
+.statusCard h1 {
   margin: 0;
   color: #202724;
   font-size: clamp(24px, 3.25vw, 60px);
@@ -221,7 +221,7 @@
   letter-spacing: -.04em;
 }
 
-.projector-status-card p {
+.statusCard p {
   max-width: 40vw;
   margin: 2.2vh 0 0;
   color: #68716e;
@@ -229,7 +229,7 @@
   line-height: 1.8;
 }
 
-.projector-retry {
+.retry {
   margin-top: 3vh;
   padding: .8em 1.4em;
   border: 1px solid #315b4d;
@@ -240,11 +240,11 @@
   cursor: pointer;
 }
 
-.projector-retry:disabled { opacity: .65; cursor: wait; }
+.retry:disabled { opacity: .65; cursor: wait; }
 
-.projector-loading { border-color: transparent; box-shadow: none; background: transparent; }
+.loading { border-color: transparent; box-shadow: none; background: transparent; }
 
-.projector-qr-skeleton {
+.qrSkeleton {
   display: grid;
   place-items: center;
   border-color: #d8dcd7;
@@ -253,7 +253,7 @@
   animation: projector-shimmer 1.5s linear infinite;
 }
 
-.projector-qr-skeleton span {
+.qrSkeleton span {
   width: 5.4cqh;
   height: 5.4cqh;
   border: .55cqh solid #d6dbd6;
@@ -262,29 +262,29 @@
   animation: projector-spin 1s linear infinite;
 }
 
-.projector-skeleton {
+.skeleton {
   border-radius: 99px;
   background: linear-gradient(90deg, #e9ece8 25%, #f5f6f4 45%, #e9ece8 65%) 0 0 / 220% 100%;
   animation: projector-shimmer 1.5s linear infinite;
 }
 
-.projector-skeleton--eyebrow { width: 8cqw; height: 1.8cqh; margin-bottom: 3cqh; }
-.projector-skeleton--title { width: 24cqw; height: 5.2cqh; margin-bottom: 3.4cqh; }
-.projector-skeleton--copy { width: 30cqw; height: 1.7cqh; margin-bottom: 1.4cqh; }
-.projector-skeleton--short { width: 21cqw; }
-.projector-skeleton--label { width: 6cqw; height: 1.4cqh; margin-bottom: 1.8cqh; }
-.projector-skeleton--code { width: 25cqw; height: 4.3cqh; }
+.skeletonEyebrow { width: 8cqw; height: 1.8cqh; margin-bottom: 3cqh; }
+.skeletonTitle { width: 24cqw; height: 5.2cqh; margin-bottom: 3.4cqh; }
+.skeletonCopy { width: 30cqw; height: 1.7cqh; margin-bottom: 1.4cqh; }
+.skeletonShort { width: 21cqw; }
+.skeletonLabel { width: 6cqw; height: 1.4cqh; margin-bottom: 1.8cqh; }
+.skeletonCode { width: 25cqw; height: 4.3cqh; }
 
 @keyframes projector-shimmer { to { background-position: -220% 0; } }
 @keyframes projector-spin { to { transform: rotate(360deg); } }
 
 @media (max-aspect-ratio: 4 / 3) {
-  .projector-join { width: 100vw; height: 100dvh; gap: 4vw; padding: 5vw; }
-  .projector-status-card { width: min(84vw, 840px); min-height: 52vh; }
+  .join { width: 100vw; height: 100dvh; gap: 4vw; padding: 5vw; }
+  .statusCard { width: min(84vw, 840px); min-height: 52vh; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .projector-page *, .projector-page *::before, .projector-page *::after {
+  .page *, .page *::before, .page *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;

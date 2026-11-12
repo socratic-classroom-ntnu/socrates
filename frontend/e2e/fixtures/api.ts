@@ -104,7 +104,7 @@ const attempt = {
   id: attemptId, activity_id: 'a-open', activity_title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論',
   display_name: '小華', state: 'in_dialogue', scenario_index: 0, revising: false,
   scenarios: [{
-    index: 0, id: 's-1', text: scenario, answer: '五個人比一個人多，救多數人比較好。',
+    index: 0, id: 's-1', text: scenario, change: null, answer: '五個人比一個人多，救多數人比較好。',
     status: 'in_progress', confirmed_summary: null,
   }],
   messages: [

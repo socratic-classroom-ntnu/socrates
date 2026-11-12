@@ -47,7 +47,7 @@
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
 
 <!-- module-map:begin -->
-## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 端：後端；default owner：後端開發團隊
 - 可依賴的模組：platform
@@ -64,5 +64,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 7 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/auth/logout、POST /api/v2/auth/verify、POST /api/v2/auth/verification-email、GET /api/v2/auth/verification-status、POST /api/v2/auth/forgot-password、POST /api/v2/auth/reset-password、POST /api/v2/webhooks/resend
+- 無
 <!-- module-map:end -->

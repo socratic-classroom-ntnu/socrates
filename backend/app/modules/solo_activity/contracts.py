@@ -75,6 +75,38 @@ class SoloActivityView(View):
     attempt: SoloAttemptBrief | None  # None until the student starts
 
 
+class CitationSourceView(View):
+    """One exact quote from a student message, located at its first exact occurrence.
+
+    Offsets index the exact ``SoloMessageView.text`` returned by the API. They are not Unicode
+    code-point or grapheme-cluster offsets.
+    """
+
+    message_id: str = Field(
+        min_length=1,
+        description="ID of the student message whose exact text contains quote.",
+    )
+    quote: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Exact, unnormalised substring of the referenced SoloMessageView.text.",
+    )
+    start: int = Field(
+        ge=0,
+        description=(
+            "Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence "
+            "in SoloMessageView.text."
+        ),
+    )
+    end: int = Field(
+        ge=1,
+        description=(
+            "Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; "
+            "text.slice(start, end) equals quote."
+        ),
+    )
+
+
 class PersonalSummaryView(View):
     current_position: str
     reason_summary: str
@@ -82,12 +114,24 @@ class PersonalSummaryView(View):
     unresolved_issue: str
     # Why the reasons sit near principle_hint; empty when there is none (or stored before it).
     principle_note: str = ""
+    # Empty until llm-runtime hands solo-activity validated, located citations.
+    sources: list[CitationSourceView] = Field(default_factory=list)
+
+
+class SoloScenarioChangeView(View):
+    """The one condition a written scenario changed, shown as before → after."""
+
+    condition: str
+    before: str
+    after: str
 
 
 class SoloScenarioView(View):
     index: int
     id: str
     text: str  # the scenario as the teacher or the scenario writer wrote it, verbatim
+    # None for the teacher's own first scenario; what the written ones changed.
+    change: SoloScenarioChangeView | None
     answer: str | None  # the student's first answer; None until given
     status: ScenarioStatus
     confirmed_summary: PersonalSummaryView | None

@@ -39,10 +39,19 @@ def should_conclude(confirmed_scenarios: int, shifted_in_latest: bool) -> bool:
     return policy.should_conclude(confirmed_scenarios, shifted_in_latest)
 
 
+def _utf16_length(text: str) -> int:
+    return len(text.encode("utf-16-le")) // 2
+
+
 def locate_citation(citation: Citation, message_id: str, text: str) -> LocatedCitation | None:
-    """Where a citation's quote sits in its message (text); None when it is not there."""
-    start = text.find(citation.quote)
-    if start < 0:
+    """Where a citation's quote sits in its message (text); None when it is not there.
+
+    The one place offsets are made: they are UTF-16 code units, the unit of the public citation
+    contract and of the frontend's strings, so nothing downstream converts them again.
+    """
+    index = text.find(citation.quote)
+    if index < 0:
         return None
-    end = start + len(citation.quote)
+    start = _utf16_length(text[:index])
+    end = start + _utf16_length(citation.quote)
     return LocatedCitation(message_id=message_id, quote=citation.quote, start=start, end=end)

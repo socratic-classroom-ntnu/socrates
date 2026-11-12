@@ -129,8 +129,28 @@
             "title": "Email Masked",
             "type": "string"
           },
+          "guest_expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Expires At"
+          },
           "id": {
             "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "registered",
+            "enum": [
+              "guest",
+              "registered"
+            ],
+            "title": "Kind",
             "type": "string"
           },
           "locale": {
@@ -3071,6 +3091,58 @@
           "snapshot_id"
         ],
         "title": "GroupStartReceipt",
+        "type": "object"
+      },
+      "GuestJoin": {
+        "additionalProperties": false,
+        "description": "Joining without registering: a nickname shown to the class and the interface language.",
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 24,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestJoin",
+        "type": "object"
+      },
+      "GuestUpgrade": {
+        "additionalProperties": false,
+        "description": "A guest registering keeps its account; it adds what a registration needs.",
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 32,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "GuestUpgrade",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -6973,6 +7045,82 @@
           }
         },
         "summary": "Forgot"
+      }
+    },
+    "/api/v2/auth/guest": {
+      "post": {
+        "operationId": "join_as_guest_api_v2_auth_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Join As Guest"
+      }
+    },
+    "/api/v2/auth/guest/upgrade": {
+      "post": {
+        "operationId": "upgrade_guest_api_v2_auth_guest_upgrade_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpgrade"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upgrade Guest"
       }
     },
     "/api/v2/auth/login": {

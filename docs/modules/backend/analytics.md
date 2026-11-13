@@ -48,7 +48,7 @@
 - `backend/app/modules/analytics/`
 
 契約：
-- 雷達圖（等契約（設計稿））
+- —
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
@@ -56,5 +56,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 雷達圖契約（依設計稿的教師分析六畫面）。
+- 分組課雷達圖沿用 solo-activity 的共用契約（第二版）。
 <!-- module-map:end -->

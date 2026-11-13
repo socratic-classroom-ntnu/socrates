@@ -46,3 +46,64 @@ def test_object_property_descriptions_become_safe_jsdoc():
     rendered = _generator_module().ts(schema)
 
     assert rendered == '{ /** UTF-16 code units; inclusive. *\\/ */ "start": number }'
+
+
+def test_operation_types_include_body_success_and_empty_response():
+    spec = {
+        "paths": {
+            "/api/v2/items/{item_id}": {
+                "post": {
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ItemInput"}
+                            }
+                        },
+                    },
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ItemView"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "delete": {"responses": {"204": {"description": "No Content"}}},
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert '"/items/{item_id}"' in rendered
+    assert (
+        '"post": { body: components["schemas"]["ItemInput"]; response: components["schemas"]["ItemView"]'
+        in rendered
+    )
+    assert '"delete": { body: never; response: null' in rendered
+
+
+def test_operation_types_keep_query_and_non_json_media():
+    spec = {
+        "paths": {
+            "/api/v2/items": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {"content": {"application/yaml": {"schema": {"type": "string"}}}}
+                    },
+                }
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert 'query: { "offset"?: number }' in rendered
+    assert "response: string" in rendered

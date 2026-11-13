@@ -140,3 +140,239 @@ export interface components { schemas: {
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
   "VerifiedView": { "status": "VERIFIED" };
 } }
+
+export interface paths {
+  "/account/locale": {
+    "put": { body: components["schemas"]["LocaleUpdate"]; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/activities/{activity_id}": {
+    "get": { body: never; response: components["schemas"]["ActivityTeacherView"]; path: { "activity_id": string }; query: never };
+    "put": { body: components["schemas"]["ActivityDraft"]; response: components["schemas"]["ActivityTeacherView"]; path: { "activity_id": string }; query: never };
+    "patch": { body: components["schemas"]["ActivityDetailsUpdate"]; response: components["schemas"]["ActivityTeacherView"]; path: { "activity_id": string }; query: never };
+    "delete": { body: never; response: null; path: { "activity_id": string }; query: never };
+  };
+  "/activities/{activity_id}/copy": {
+    "post": { body: never; response: components["schemas"]["ActivityTeacherView"]; path: { "activity_id": string }; query: never };
+  };
+  "/activities/{activity_id}/join": {
+    "post": { body: components["schemas"]["ActivityJoin"]; response: components["schemas"]["ActivityJoinResult"]; path: { "activity_id": string }; query: never };
+  };
+  "/activities/{activity_id}/join-preview": {
+    "get": { body: never; response: components["schemas"]["ActivityJoinPreview"]; path: { "activity_id": string }; query: never };
+  };
+  "/activities/{activity_id}/public-preview": {
+    "get": { body: never; response: components["schemas"]["PublicJoinPreview"]; path: { "activity_id": string }; query: never };
+  };
+  "/activities/{activity_id}/{action}": {
+    "post": { body: never; response: components["schemas"]["ActivityTeacherView"]; path: { "activity_id": string; "action": "publish" | "start_now" | "end_now" }; query: never };
+  };
+  "/ai-settings/account": {
+    "get": { body: never; response: components["schemas"]["AISettingsView"]; path: never; query: never };
+    "put": { body: components["schemas"]["SettingsUpdate"]; response: components["schemas"]["AISettingsView"]; path: never; query: never };
+  };
+  "/auth/forgot-password": {
+    "post": { body: components["schemas"]["MailRequest"]; response: components["schemas"]["MailRequestView"]; path: never; query: never };
+  };
+  "/auth/guest": {
+    "post": { body: components["schemas"]["GuestJoin"]; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/auth/guest/upgrade": {
+    "post": { body: components["schemas"]["GuestUpgrade"]; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/auth/login": {
+    "post": { body: components["schemas"]["Login"]; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/auth/logout": {
+    "post": { body: never; response: components["schemas"]["SignedOutView"]; path: never; query: never };
+  };
+  "/auth/me": {
+    "get": { body: never; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/auth/register": {
+    "post": { body: components["schemas"]["Register"]; response: components["schemas"]["AccountView"]; path: never; query: never };
+  };
+  "/auth/reset-password": {
+    "post": { body: components["schemas"]["ResetRequest"]; response: components["schemas"]["PasswordResetView"]; path: never; query: never };
+  };
+  "/auth/verification-email": {
+    "post": { body: components["schemas"]["MailRequest"]; response: components["schemas"]["VerificationMailView"]; path: never; query: never };
+  };
+  "/auth/verification-status": {
+    "get": { body: never; response: components["schemas"]["VerificationStatusView"]; path: never; query: never };
+  };
+  "/auth/verify": {
+    "post": { body: components["schemas"]["TokenRequest"]; response: components["schemas"]["VerifiedView"]; path: never; query: never };
+  };
+  "/bank/questions": {
+    "get": { body: never; response: components["schemas"]["BankSearchResult"]; path: never; query: { "q"?: string; "offset"?: number; "limit"?: number; "mine"?: boolean } };
+    "post": { body: components["schemas"]["Publish"]; response: components["schemas"]["BankQuestionDetail"]; path: never; query: never };
+  };
+  "/bank/questions/{bank_id}": {
+    "get": { body: never; response: components["schemas"]["BankQuestionDetail"]; path: { "bank_id": string }; query: never };
+  };
+  "/bank/questions/{bank_id}/import": {
+    "post": { body: components["schemas"]["ImportQuestion"]; response: components["schemas"]["BankImportResult"]; path: { "bank_id": string }; query: never };
+  };
+  "/bank/questions/{bank_id}/unpublish": {
+    "post": { body: components["schemas"]["BankMutation"]; response: components["schemas"]["BankUnpublishResult"]; path: { "bank_id": string }; query: never };
+  };
+  "/classrooms": {
+    "get": { body: never; response: Array<components["schemas"]["RoomSummary"]>; path: never; query: never };
+    "post": { body: components["schemas"]["CreateRoom"]; response: components["schemas"]["RoomView"]; path: never; query: never };
+  };
+  "/classrooms/join": {
+    "post": { body: components["schemas"]["JoinRoom"]; response: components["schemas"]["RoomView"]; path: never; query: never };
+  };
+  "/classrooms/{room_id}": {
+    "get": { body: never; response: components["schemas"]["RoomView"]; path: { "room_id": string }; query: { "mode"?: string } };
+  };
+  "/classrooms/{room_id}/budget": {
+    "post": { body: never; response: components["schemas"]["RoomBudgetView"]; path: { "room_id": string }; query: { "live_llm_call_budget": number } };
+  };
+  "/classrooms/{room_id}/commands": {
+    "post": { body: components["schemas"]["Command"]; response: components["schemas"]["ClassroomActionReceipt"]; path: { "room_id": string }; query: never };
+  };
+  "/classrooms/{room_id}/events": {
+    "get": { body: never; response: components["schemas"]["ClassroomEventPage"]; path: { "room_id": string }; query: { "after"?: number } };
+  };
+  "/classrooms/{room_id}/reactions": {
+    "post": { body: components["schemas"]["Reaction"]; response: components["schemas"]["ClassroomActionReceipt"]; path: { "room_id": string }; query: never };
+  };
+  "/course-join/preview": {
+    "get": { body: never; response: components["schemas"]["JoinPreview"]; path: never; query: { "code": string } };
+  };
+  "/course-join/public-preview": {
+    "get": { body: never; response: components["schemas"]["PublicJoinPreview"]; path: never; query: { "code": string } };
+  };
+  "/courses": {
+    "get": { body: never; response: components["schemas"]["CourseLists"]; path: never; query: never };
+    "post": { body: components["schemas"]["CourseCreate"]; response: components["schemas"]["CourseTeacherView"]; path: never; query: never };
+  };
+  "/courses/join": {
+    "post": { body: components["schemas"]["CourseJoin"]; response: components["schemas"]["CourseStudentView"]; path: never; query: never };
+  };
+  "/courses/{course_id}": {
+    "get": { body: never; response: (components["schemas"]["CourseTeacherView"] | components["schemas"]["CourseStudentView"]); path: { "course_id": string }; query: { "role"?: ("teacher" | "student" | null) } };
+    "patch": { body: components["schemas"]["CourseUpdate"]; response: components["schemas"]["CourseTeacherView"]; path: { "course_id": string }; query: never };
+  };
+  "/courses/{course_id}/activities": {
+    "get": { body: never; response: (components["schemas"]["ActivityTeacherList"] | components["schemas"]["ActivityStudentList"]); path: { "course_id": string }; query: { "role"?: ("teacher" | "student" | null) } };
+    "post": { body: components["schemas"]["ActivityDraft"]; response: components["schemas"]["ActivityTeacherView"]; path: { "course_id": string }; query: never };
+  };
+  "/courses/{course_id}/{action}": {
+    "post": { body: never; response: components["schemas"]["CourseTeacherView"]; path: { "course_id": string; "action": "rotate_code" | "disable_code" | "enable_code" }; query: never };
+  };
+  "/groups/classrooms/{rid}": {
+    "get": { body: never; response: (components["schemas"]["GroupCollectionView"] | components["schemas"]["GroupRunView"] | components["schemas"]["LegacyGroupView"]); path: { "rid": string }; query: never };
+  };
+  "/groups/classrooms/{rid}/ai-students": {
+    "post": { body: components["schemas"]["AddAIStudents"]; response: components["schemas"]["AddAIStudentsReceipt"]; path: { "rid": string }; query: never };
+  };
+  "/groups/classrooms/{rid}/ai-students/clear": {
+    "post": { body: components["schemas"]["ClearAIStudents"]; response: components["schemas"]["ClearAIStudentsReceipt"]; path: { "rid": string }; query: never };
+  };
+  "/groups/classrooms/{rid}/analysis": {
+    "get": { body: never; response: components["schemas"]["GroupAnalysisView"]; path: { "rid": string }; query: never };
+  };
+  "/groups/classrooms/{rid}/configure": {
+    "post": { body: components["schemas"]["Configure"]; response: components["schemas"]["GroupActionReceipt"]; path: { "rid": string }; query: never };
+  };
+  "/groups/classrooms/{rid}/start": {
+    "post": { body: components["schemas"]["Start"]; response: components["schemas"]["GroupStartReceipt"]; path: { "rid": string }; query: never };
+  };
+  "/groups/runs/{rid}/commands": {
+    "post": { body: components["schemas"]["GroupCommand"]; response: components["schemas"]["GroupActionReceipt"]; path: { "rid": string }; query: never };
+  };
+  "/groups/runs/{rid}/members/{mid}/identity": {
+    "get": { body: never; response: components["schemas"]["GroupMemberIdentityView"]; path: { "rid": string; "mid": string }; query: never };
+  };
+  "/library/classrooms": {
+    "get": { body: never; response: Array<components["schemas"]["LibraryClassroomView"]>; path: never; query: never };
+    "post": { body: components["schemas"]["CreateClassroom"]; response: components["schemas"]["LibraryClassroomView"]; path: never; query: never };
+  };
+  "/library/classrooms/{cid}": {
+    "get": { body: never; response: components["schemas"]["LibraryClassroomDetailView"]; path: { "cid": string }; query: never };
+  };
+  "/library/classrooms/{cid}/ai-settings": {
+    "get": { body: never; response: components["schemas"]["ClassroomAISettingsView"]; path: { "cid": string }; query: never };
+    "put": { body: components["schemas"]["SettingsUpdate"]; response: components["schemas"]["ClassroomAISettingsView"]; path: { "cid": string }; query: never };
+  };
+  "/library/classrooms/{cid}/batches": {
+    "post": { body: components["schemas"]["CreateBatch"]; response: components["schemas"]["ClassroomBatchView"]; path: { "cid": string }; query: never };
+  };
+  "/library/classrooms/{cid}/scripts": {
+    "post": { body: components["schemas"]["AttachScript"]; response: components["schemas"]["AttachedScriptView"]; path: { "cid": string }; query: never };
+  };
+  "/meta/revision": {
+    "get": { body: never; response: components["schemas"]["RevisionView"]; path: never; query: never };
+  };
+  "/provider-profiles": {
+    "get": { body: never; response: Array<components["schemas"]["ProfileView"]>; path: never; query: never };
+    "post": { body: components["schemas"]["CreateProfile"]; response: components["schemas"]["ProfileView"]; path: never; query: never };
+  };
+  "/provider-profiles/{profile_id}": {
+    "patch": { body: components["schemas"]["UpdateProfile"]; response: components["schemas"]["ProfileView"]; path: { "profile_id": string }; query: never };
+    "delete": { body: never; response: components["schemas"]["ProfileDeletedView"]; path: { "profile_id": string }; query: never };
+  };
+  "/provider-profiles/{profile_id}/credential": {
+    "post": { body: components["schemas"]["CredentialUpdate"]; response: components["schemas"]["ProfileView"]; path: { "profile_id": string }; query: never };
+  };
+  "/provider-profiles/{profile_id}/models": {
+    "get": { body: never; response: components["schemas"]["ModelDiscoveryView"]; path: { "profile_id": string }; query: never };
+  };
+  "/provider-profiles/{profile_id}/test": {
+    "post": { body: never; response: components["schemas"]["ConnectionTestView"]; path: { "profile_id": string }; query: never };
+  };
+  "/public-config": {
+    "get": { body: never; response: components["schemas"]["PublicConfigView"]; path: never; query: never };
+  };
+  "/readiness": {
+    "get": { body: never; response: components["schemas"]["ReadinessView"]; path: never; query: never };
+  };
+  "/scripts": {
+    "get": { body: never; response: Array<components["schemas"]["ScriptView"]>; path: never; query: never };
+    "post": { body: components["schemas"]["ScriptSave"]; response: components["schemas"]["ScriptView"]; path: never; query: never };
+  };
+  "/scripts/assist": {
+    "post": { body: components["schemas"]["ScriptAssistRequest"]; response: components["schemas"]["ScriptAssistView"]; path: never; query: never };
+  };
+  "/scripts/import": {
+    "post": { body: never; response: components["schemas"]["ScriptView"]; path: never; query: never };
+  };
+  "/scripts/samples": {
+    "get": { body: never; response: components["schemas"]["SampleQuestionSet"]; path: never; query: never };
+  };
+  "/scripts/{script_id}": {
+    "put": { body: components["schemas"]["ScriptSave"]; response: components["schemas"]["ScriptView"]; path: { "script_id": string }; query: never };
+  };
+  "/scripts/{script_id}/adopt-question/{room_id}/{index}": {
+    "post": { body: never; response: components["schemas"]["ScriptRevisionView"]; path: { "script_id": string; "room_id": string; "index": number }; query: never };
+  };
+  "/scripts/{script_id}/yaml": {
+    "get": { body: never; response: string; path: { "script_id": string }; query: never };
+  };
+  "/solo/activities/{activity_id}": {
+    "get": { body: never; response: components["schemas"]["SoloActivityView"]; path: { "activity_id": string }; query: never };
+  };
+  "/solo/activities/{activity_id}/analysis": {
+    "get": { body: never; response: components["schemas"]["SoloActivityAnalysisView"]; path: { "activity_id": string }; query: never };
+  };
+  "/solo/activities/{activity_id}/attempt": {
+    "post": { body: never; response: components["schemas"]["SoloAttemptView"]; path: { "activity_id": string }; query: never };
+  };
+  "/solo/activities/{activity_id}/progress": {
+    "get": { body: never; response: components["schemas"]["SoloActivityProgressView"]; path: { "activity_id": string }; query: never };
+  };
+  "/solo/attempts/{attempt_id}": {
+    "get": { body: never; response: components["schemas"]["SoloAttemptView"]; path: { "attempt_id": string }; query: never };
+  };
+  "/solo/attempts/{attempt_id}/{action}": {
+    "post": { body: (components["schemas"]["SendMessageBody"] | components["schemas"]["ConfirmViewpointBody"] | null); response: components["schemas"]["SoloAttemptView"]; path: { "attempt_id": string; "action": "send_message" | "retry" | "confirm_viewpoint" | "revise_viewpoint" | "next_scenario" | "submit_review" | "retry_reflection_prompt" | "continue_reflection" | "submit_reflection" | "continue_without_tutor" }; query: never };
+  };
+  "/suggestions/other": {
+    "post": { body: components["schemas"]["OtherSuggestionRequest"]; response: components["schemas"]["OtherSuggestionView"]; path: never; query: never };
+  };
+  "/webhooks/resend": {
+    "post": { body: never; response: components["schemas"]["ResendWebhookView"]; path: never; query: never };
+  };
+}

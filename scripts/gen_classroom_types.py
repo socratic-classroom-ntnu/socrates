@@ -40,6 +40,38 @@ def build_spec():
     from app.modules.contract.service import classroom_openapi
     return classroom_openapi()
 
+def render_paths(spec):
+    """Render the public operation map from the FastAPI OpenAPI paths."""
+    rows=['export interface paths {']
+    methods=('get','post','put','patch','delete')
+    for full_path,operations in sorted(spec['paths'].items()):
+        path=full_path.removeprefix('/api/v2')
+        rows.append('  '+json.dumps(path)+': {')
+        for method in methods:
+            if method not in operations:
+                continue
+            operation=operations[method]
+            body=operation.get('requestBody',{}).get('content',{}).get('application/json',{}).get('schema')
+            body_type=ts(body) if body else 'never'
+            success=[]
+            for status,response in sorted(operation.get('responses',{}).items()):
+                if not status.startswith('2'):
+                    continue
+                content=response.get('content',{})
+                success.extend(ts(media.get('schema',{})) for media in content.values())
+                if not content:
+                    success.append('null')
+            response_type=' | '.join(dict.fromkeys(success)) if success else 'unknown'
+            fields=[f'body: {body_type}',f'response: {response_type}']
+            params=operation.get('parameters',[])
+            for location in ('path','query'):
+                selected=[p for p in params if p.get('in')==location]
+                shape='{ '+ '; '.join(json.dumps(p['name'])+('' if p.get('required') else '?')+': '+ts(p.get('schema',{})) for p in selected)+' }' if selected else 'never'
+                fields.append(f'{location}: {shape}')
+            rows.append('    '+json.dumps(method)+': { '+'; '.join(fields)+' };')
+        rows.append('  };')
+    return '\n'.join(rows+['}'])
+
 def write_contracts(spec):
     dest=ROOT/'frontend';dest.mkdir(exist_ok=True)
     (dest/'classroom-openapi.json').write_text(json.dumps(spec,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
@@ -63,6 +95,7 @@ def write_contracts(spec):
             rows.append('  '+json.dumps(stable)+': components["schemas"]['+json.dumps(key)+'];')
     out+='\n'.join(rows)
     out+='\n} }\n'
+    out+='\n'+render_paths(spec)+'\n'
     target=dest/'src/contract/classroomTypes.ts';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(out)
     print('CLASSROOM_CONTRACT_GENERATED',len(schemas),len(spec['paths']))
 

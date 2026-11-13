@@ -62,6 +62,7 @@ def test_radar_schema_reuses_the_browser_citation_component():
 
     assert set(schema["properties"]) == {"dimensions", "students"}
     assert set(schema["required"]) == {"dimensions", "students"}
+    assert "message_ref" not in repr(schema)
     definitions = schema["$defs"]
     assert definitions["RadarDimensionView"]["properties"]["source"]["enum"] == [
         "embedding",
@@ -106,6 +107,7 @@ INVALID = [
     ("score below zero", lambda payload: _score_out_of_range(payload, -0.01)),
     ("score above four", lambda payload: _score_out_of_range(payload, 4.01)),
     ("dimensions start above zero", lambda payload: _dimension_indices(payload, [1, 2])),
+    ("dimensions are duplicated", lambda payload: _dimension_indices(payload, [0, 0])),
     ("dimensions are reordered", lambda payload: _dimension_indices(payload, [1, 0])),
     ("student misses a dimension", lambda payload: payload["students"][0]["scores"].pop()),
     (

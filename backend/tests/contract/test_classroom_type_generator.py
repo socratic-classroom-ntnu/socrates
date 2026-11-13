@@ -107,3 +107,16 @@ def test_operation_types_keep_query_and_non_json_media():
     rendered = _generator_module().render_paths(spec)
     assert 'query: { "offset"?: number }' in rendered
     assert "response: string" in rendered
+
+
+def test_reason_codes_are_read_from_literal_catalog_without_importing_backend(tmp_path):
+    catalog = tmp_path / "contracts.py"
+    catalog.write_text(
+        'REASON_CODES = {"VISIBLE": ("owner",), "PRIVATE": ("owner",)}\n'
+        'DYNAMIC_REASON_CODES = ("DYNAMIC",)\n'
+        'SERVER_ONLY_REASON_CODES = ("PRIVATE",)\n'
+    )
+    assert _generator_module().render_reason_codes(catalog) == (
+        "// Generated from backend/app/modules/contract/contracts.py.\n"
+        'export type ClassroomReasonCode = "DYNAMIC" | "VISIBLE";\n'
+    )

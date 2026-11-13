@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate the classroom contracts from the actual FastAPI schema, deterministically."""
+import ast
 import json
 import sys
 from pathlib import Path
@@ -72,6 +73,24 @@ def render_paths(spec):
         rows.append('  };')
     return '\n'.join(rows+['}'])
 
+def render_reason_codes(catalog):
+    """Read only literal assignments, so host generation needs no backend imports."""
+    names={'REASON_CODES','DYNAMIC_REASON_CODES','SERVER_ONLY_REASON_CODES'}
+    values={}
+    for node in ast.parse(Path(catalog).read_text(encoding='utf-8')).body:
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            name=node.target.id
+        elif isinstance(node, ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
+            name=node.targets[0].id
+        else:
+            continue
+        if name in names:
+            values[name]=ast.literal_eval(node.value)
+    if set(values)!=names:
+        raise ValueError('Incomplete reason-code catalog')
+    codes=sorted((set(values['REASON_CODES'])|set(values['DYNAMIC_REASON_CODES']))-set(values['SERVER_ONLY_REASON_CODES']))
+    return '// Generated from backend/app/modules/contract/contracts.py.\nexport type ClassroomReasonCode = '+' | '.join(json.dumps(code) for code in codes)+';\n'
+
 def write_contracts(spec):
     dest=ROOT/'frontend';dest.mkdir(exist_ok=True)
     (dest/'classroom-openapi.json').write_text(json.dumps(spec,ensure_ascii=False,indent=2,sort_keys=True)+'\n')
@@ -97,6 +116,7 @@ def write_contracts(spec):
     out+='\n} }\n'
     out+='\n'+render_paths(spec)+'\n'
     target=dest/'src/contract/classroomTypes.ts';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(out)
+    (dest/'src/contract/classroomReasonCodes.ts').write_text(render_reason_codes(ROOT/'backend/app/modules/contract/contracts.py'))
     print('CLASSROOM_CONTRACT_GENERATED',len(schemas),len(spec['paths']))
 
 def main():

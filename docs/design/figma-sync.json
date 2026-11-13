@@ -731,7 +731,7 @@
     "RoleRegister.dc.html": {
       "code": "E1r",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:6870",
+      "nodeId": "822:10384",
       "canvasSha": "e3e3a0945ef4d452d95c256dc04ea0761a192ff7f74bfd6473f096cfc9ed174f",
       "figmaFingerprint": "c17ff1782ddfb745299c8360037e5f5685b3a9a27340d8362bd2eb6523c25167",
       "syncedAt": "2026-11-14",
@@ -741,7 +741,7 @@
     "RoleRegisterStudent.dc.html": {
       "code": "E1r-s",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:6935",
+      "nodeId": "822:10449",
       "canvasSha": "b2237582c6de6533658c366c635f187b9ccf131d0df18d1020788b6dfca4e47e",
       "figmaFingerprint": "63cebb9615041c10ad7819c828292fbb2d1000c1ae0ab1bdc09d53f5620e31bb",
       "syncedAt": "2026-11-14",
@@ -751,7 +751,7 @@
     "RoleRegisterTeacher.dc.html": {
       "code": "E1r-t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7004",
+      "nodeId": "822:10518",
       "canvasSha": "4dd405eda284c860ca19830f1853892052cda7650f0a5fb1da2fc3e33cb8526f",
       "figmaFingerprint": "d1facbbf51225f31c4c635abd7760bb54ca86b3ee85f74c043ceba18ae43f172",
       "syncedAt": "2026-11-14",
@@ -761,7 +761,7 @@
     "RoleRegisterError.dc.html": {
       "code": "E1r-e",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7073",
+      "nodeId": "822:10587",
       "canvasSha": "eb961d8ed9667a4b29c60ff7c6e69f27069dccea6d1842c4a81ab75a95b4879c",
       "figmaFingerprint": "a8d68b3403df618b073d0d0c9de7b51acb669daa71b0379bd151d904223ec732",
       "syncedAt": "2026-11-14",
@@ -771,7 +771,7 @@
     "RoleRegisterPhone.dc.html": {
       "code": "E1rm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7144",
+      "nodeId": "822:10658",
       "canvasSha": "ca4e47581b63f89b78a064208585edd1ef9ec9d11acde493734b443c44f9a74f",
       "figmaFingerprint": "726d0bb6e8ac8e2eb3991218787403f3754342ec817830f59d464874a8cf985b",
       "syncedAt": "2026-11-14",
@@ -781,7 +781,7 @@
     "RoleRegisterPhoneStudent.dc.html": {
       "code": "E1rm-s",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7201",
+      "nodeId": "822:10715",
       "canvasSha": "b83473b0075b51cac500b6799a95e04a0ce8d396182237a81954744713c9f1f6",
       "figmaFingerprint": "67d557e76bb48f147a51498bea1196f7a03aa5f91d292b01162a6107dc85f6a7",
       "syncedAt": "2026-11-14",
@@ -791,7 +791,7 @@
     "RoleRegisterPhoneTeacher.dc.html": {
       "code": "E1rm-t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7262",
+      "nodeId": "822:10776",
       "canvasSha": "abf3995898a2b2255ef30f307ddeb9f3cea5db185e8e5d1a18104ec1afd8d861",
       "figmaFingerprint": "20e1c0e45dbe2ca412bec4646d88818bf6e5fcd08464f382fcb1761fa7854a1f",
       "syncedAt": "2026-11-14",
@@ -801,7 +801,7 @@
     "RoleRegisterPhoneError.dc.html": {
       "code": "E1rm-e",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7323",
+      "nodeId": "822:10837",
       "canvasSha": "3590f34d3ce5cf3f4004e31b8e0bdd34ac3dbba8e1c518362c5b248af4fdfddc",
       "figmaFingerprint": "156b6c9c1fd959e0fbd919bf0c43f8e789b6dde9bf4c2d8a802702fc42bfbb1f",
       "syncedAt": "2026-11-14",
@@ -811,7 +811,7 @@
     "RoleRegisterQrPhone.dc.html": {
       "code": "J0r",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7386",
+      "nodeId": "822:10900",
       "canvasSha": "150f973744722075cc2869a683077a3bdcbb23bf2d48f4e4dd5f17007e3cfb6e",
       "figmaFingerprint": "196695f02baeb6bc562fb4e88be7dd7054d45d7cc1a33018e878c829c7dbc3db",
       "syncedAt": "2026-11-14",
@@ -821,7 +821,7 @@
     "RoleTeacherHome.dc.html": {
       "code": "H1t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7432",
+      "nodeId": "822:10946",
       "canvasSha": "7698b2bf6b7767921816adf650f913031de875cdce8a567790542bbb16b01c31",
       "figmaFingerprint": "353a286aa7277aa98346e308c782f3c4ae761ba9bb91688daef2db2bebe39fb7",
       "syncedAt": "2026-11-14",
@@ -831,7 +831,7 @@
     "RoleTeacherHomeEmpty.dc.html": {
       "code": "H2t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7555",
+      "nodeId": "822:11069",
       "canvasSha": "a2bd05a4600fd36fbbefbea3b3eb30fe2cd480776dff795a667855a819c58dec",
       "figmaFingerprint": "9fa955722144b8faacb9917f80b1c867d1970dd1252a116901b935a1e90e180b",
       "syncedAt": "2026-11-14",
@@ -841,7 +841,7 @@
     "RoleTeacherMenu.dc.html": {
       "code": "S2t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7656",
+      "nodeId": "822:11170",
       "canvasSha": "f672d16faf9fff1f135fa0995a4e7e61600788500de6bcd4c3b5331c65b165c1",
       "figmaFingerprint": "776ea4d0624d48769a6a8272c6a190e33cea74202a638f505f1dd22f55ea187e",
       "syncedAt": "2026-11-14",
@@ -851,7 +851,7 @@
     "RoleTeacherCollapsed.dc.html": {
       "code": "S3t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7813",
+      "nodeId": "822:11327",
       "canvasSha": "8993e14065123bfcb32309adc43092200c6449e26379cb561e3359f51bc5a5ab",
       "figmaFingerprint": "19e34299ef7679e4ef81ba6121f223edc67cb767045863a7229053e880b47ad2",
       "syncedAt": "2026-11-14",
@@ -861,7 +861,7 @@
     "RoleStudentMenu.dc.html": {
       "code": "S2s",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:7919",
+      "nodeId": "822:11433",
       "canvasSha": "7acbbe860725aee6d4cf6adbb215c5e803379dc659cd7a7f899ca0e523663842",
       "figmaFingerprint": "a3ec90d7dcbd179bd42c62efed3e48905262e36ac0e7c94d30c19407e83ca319",
       "syncedAt": "2026-11-14",
@@ -871,7 +871,7 @@
     "RoleStudentCollapsed.dc.html": {
       "code": "S3s",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8001",
+      "nodeId": "822:11515",
       "canvasSha": "1fe6e89e151b2633804900caf0b6c02038c311a9b7d30139ec2313edcdb3e917",
       "figmaFingerprint": "3d2d98830e84bc44e79631168644a53e981dd38b0a00d43ee4e340a3efc08c72",
       "syncedAt": "2026-11-14",
@@ -881,7 +881,7 @@
     "RoleStudentMenuPhone.dc.html": {
       "code": "S2sm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8028",
+      "nodeId": "822:11542",
       "canvasSha": "fd2bde1b93ba6a1a18279e8bb6079ea1e9768f3a980946802a0b499fa695044c",
       "figmaFingerprint": "03ed63a0942274c14f7b08f16a479739280154f46c3a99d76e370fec6ced6632",
       "syncedAt": "2026-11-14",
@@ -891,7 +891,7 @@
     "RoleTeacherPhone.dc.html": {
       "code": "S4m-t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8134",
+      "nodeId": "822:11648",
       "canvasSha": "a7a4065fbb1bc81e2223c692ed9036b10d504b92e101d597052246f6141cc850",
       "figmaFingerprint": "52a14ea9a45f1f6883ec369f34593e7df7c33e4b2277df8fe0cc02727bde0509",
       "syncedAt": "2026-11-14",
@@ -901,7 +901,7 @@
     "RoleTeacherPhoneMenu.dc.html": {
       "code": "S4m-tm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8168",
+      "nodeId": "822:11682",
       "canvasSha": "f7c909bad96417ab678a2118105e3d00377cbf78efa2e76da66e0b691e588a1f",
       "figmaFingerprint": "c0ac4c77adb8ac01368c4d805860190ea1bc2b31eb012b4b76ceace33dad0c47",
       "syncedAt": "2026-11-14",
@@ -911,7 +911,7 @@
     "RoleCrossStudent.dc.html": {
       "code": "X5s",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8237",
+      "nodeId": "822:11751",
       "canvasSha": "84fa10059e945c586cfb97b10047869ebc74397b314797d881e4944a0cd4e199",
       "figmaFingerprint": "68fced8b49b805e5c86ee944df6354ee11611bc17a40806deec2e20a358a96a3",
       "syncedAt": "2026-11-14",
@@ -921,7 +921,7 @@
     "RoleCrossTeacher.dc.html": {
       "code": "X5t",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8307",
+      "nodeId": "822:11821",
       "canvasSha": "2cc455f8668e0208f37c663edc76f5f30b5d68693733d2fb8facb455b3d68764",
       "figmaFingerprint": "5be142b51ffff74c5d8244a2c0737d51028665fbf9752af9eaad86da937376a0",
       "syncedAt": "2026-11-14",
@@ -931,7 +931,7 @@
     "RoleCrossStudentPhone.dc.html": {
       "code": "X5sm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8386",
+      "nodeId": "822:11900",
       "canvasSha": "1594dda8fa1c5d754ec8c37d2fb7732d9c6380abbc295502df17edb38a087cdb",
       "figmaFingerprint": "b5e29883651c0d4927a21bbad75f4fe4e2d9ccf00fc667fe1780df79af59b499",
       "syncedAt": "2026-11-14",
@@ -941,7 +941,7 @@
     "RoleCrossTeacherPhone.dc.html": {
       "code": "X5tm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8439",
+      "nodeId": "822:11953",
       "canvasSha": "4f0509ebceca7ed3fdaa74c7e838f1b16437d8e6198f64f53146b23ac993eb37",
       "figmaFingerprint": "46b5804b566538933ad7e09791c4db4626078f8cbb2dcf7a844229008bcff5a3",
       "syncedAt": "2026-11-14",
@@ -951,7 +951,7 @@
     "RoleCrossQrPhone.dc.html": {
       "code": "X5q",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8479",
+      "nodeId": "822:11993",
       "canvasSha": "fd4f5f2d705a1aa846c530b9c5ebb2fde8372c55f3fd1f9633596a9267e4156b",
       "figmaFingerprint": "4c7702bf6bf5b81fb5625aa0b1e383e6144dd94d36b400b5a0e9d6cb2b07632b",
       "syncedAt": "2026-11-14",
@@ -961,9 +961,9 @@
     "MyDialogFirst.dc.html": {
       "code": "M1",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8524",
+      "nodeId": "822:12038",
       "canvasSha": "948dfded891235902ed91d8e4fd328a235e6795b8256fb4169f344ae9c79c0ae",
-      "figmaFingerprint": "3182658bf895fd690cbbd90b5517b9b26305525dcb273006af3eec4d1d8632ae",
+      "figmaFingerprint": "3b0a180d120fe68192b17c0e5eb7a9346a5831c1e7cec2549108f799e0ce501a",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -971,9 +971,9 @@
     "MyDialogList.dc.html": {
       "code": "M1d",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8651",
+      "nodeId": "822:12171",
       "canvasSha": "126a42d14bc9c3e7396cd69f937cefe33a9a90f82107524c5211f185f8c8a02f",
-      "figmaFingerprint": "00d33993e450e93556d06230beaf156222e66614108bddcb302466de6c248a78",
+      "figmaFingerprint": "9500226abbe23c21c019785badb2e3f3be2e991faf29dab86722a71de88ccca2",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -981,9 +981,9 @@
     "MyDialogQuota.dc.html": {
       "code": "M1x",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8790",
+      "nodeId": "822:12315",
       "canvasSha": "8209370d2a123b65471c7714545300c0bfc81d776caea8e25139039f24be8fcc",
-      "figmaFingerprint": "912ed09b12d4e017203978c2baddb27e3aa0b615e00a5593bb052d128b499060",
+      "figmaFingerprint": "5a8ea4718de6ab2e3242fe41a5474bcd7851624e7f4bcd3c2586e63b3af9b9b7",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -991,9 +991,9 @@
     "MyDialogPicker.dc.html": {
       "code": "M3",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:8928",
+      "nodeId": "822:12458",
       "canvasSha": "76a263135ad724be88eddefc9fe800934bca26eca652e760bc249ba405f344a6",
-      "figmaFingerprint": "8f9c80862e9ed665ac187affac5a4762345b08a41f3d88c38dde7b03b0e98044",
+      "figmaFingerprint": "cc7c8f4c1c5f4c02d06d814d8ad87c40228c34ef6b22b229061d5845e716c084",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1001,9 +1001,9 @@
     "MyDialogGuest.dc.html": {
       "code": "M1g",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9140",
+      "nodeId": "822:12675",
       "canvasSha": "11db7c4ac3b6e587b9e549f54d0c42b81056f82f3d04e81c45ca05dac1df8910",
-      "figmaFingerprint": "95d141708afc21d325a206499c1e53d4c025290747a7e409f1512a3942483158",
+      "figmaFingerprint": "095885fc96c0ea50ecd20efe2772decd0d612a23f7f532ada8268c38e70bf9ae",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1011,7 +1011,7 @@
     "MyCourses.dc.html": {
       "code": "M2",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9237",
+      "nodeId": "822:12775",
       "canvasSha": "5ff82f00237e06df60605154f8fb55d8904250e1165f0e2db1dc19dea9236e8a",
       "figmaFingerprint": "cf7ce4fa00568b576f2ef1567035fa5651482759cf91b1aa5aaad87d898d000e",
       "syncedAt": "2026-11-14",
@@ -1021,7 +1021,7 @@
     "MyCoursesEmpty.dc.html": {
       "code": "M2e",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9323",
+      "nodeId": "822:12861",
       "canvasSha": "bf84cdf8f05209cbbe4be158ef83b3a46866c877d3df9da7e9d57bfaebe12d4a",
       "figmaFingerprint": "3ff2961a66bfd1742d15e5597f26739129365ab3dd261a8335c7232c1d35e4fd",
       "syncedAt": "2026-11-14",
@@ -1031,9 +1031,9 @@
     "MyDialogFirstPhone.dc.html": {
       "code": "M1m",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9393",
+      "nodeId": "822:12931",
       "canvasSha": "c0865b41611208425a4e4f207a64c079da5435ac42cdbd50cd64862b7b135f59",
-      "figmaFingerprint": "4eed29449d5bab0f2ddf9f1e20e801482f2ea1eeaf6194cb01fa3df73d7a9268",
+      "figmaFingerprint": "1ca31014b170f3f4035e6b7d1d385cf32902e7bf014c276596c0ec5cb16a98ac",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1041,9 +1041,9 @@
     "MyDialogListPhone.dc.html": {
       "code": "M1dm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9492",
+      "nodeId": "822:13034",
       "canvasSha": "a6a2c90ffb617dd04d119940e20afdb74b5b8cd78344674c171bb0048ffcf65a",
-      "figmaFingerprint": "ae543045fd20cad92f2feb230119ee5ee7a89fac9bc6321cee599878d75409a9",
+      "figmaFingerprint": "088a63d870325ce0a61100f762d75aec1eeb4439e8163896023dbc96f62ab840",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1051,9 +1051,9 @@
     "MyDialogQuotaPhone.dc.html": {
       "code": "M1xm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9623",
+      "nodeId": "822:13168",
       "canvasSha": "9d7473638940a47e6d38c9ab96f57ecc23bb09e418f16f0407b546adb9dc9de2",
-      "figmaFingerprint": "95a80c902ba5560fdff95f71e5be8de7168a8ae0486fd708bce4b86f8ab845d9",
+      "figmaFingerprint": "9a601e394a52745b4c2e78d3fa4a06fea97df0e0e2f672e1a2a3235114436e7a",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1061,9 +1061,9 @@
     "MyDialogPickerPhone.dc.html": {
       "code": "M3m",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9748",
+      "nodeId": "822:13296",
       "canvasSha": "9d25bb4a2fd48cd316e3e89df58b22bb8625ddc88ecda9e95c0a2c9c47317ea8",
-      "figmaFingerprint": "6d6713c87ea0d23cc8edb4afc0d76be765b52ac67150f7a6fbd07a9abbf61455",
+      "figmaFingerprint": "4fd3ec6199206fed53bbd8c41e0fee3f7ce1172cfb3ff12d20f27e6da26e1b27",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1071,9 +1071,9 @@
     "MyDialogGuestPhone.dc.html": {
       "code": "M1gm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:9956",
+      "nodeId": "822:13513",
       "canvasSha": "0d9eec21933b58faa34488dc4462b8eb23a6614a722d5e6c65c510653f965225",
-      "figmaFingerprint": "a6b45583f3103121da84776d745bfad86c74ec954f8cff6268c0f1ec22b331d2",
+      "figmaFingerprint": "c1146ebce7b53afecb8e440f55fea79069c3eeb2a3e5f2bead57ef42134bc3f4",
       "syncedAt": "2026-11-14",
       "status": "synced",
       "adjustNote": null
@@ -1081,7 +1081,7 @@
     "MyCoursesPhone.dc.html": {
       "code": "M2m",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:10043",
+      "nodeId": "822:13603",
       "canvasSha": "643790270679a22fb2eaef260d5292a491ea91f2fa5f5f29f37fc26a1c5592d3",
       "figmaFingerprint": "082ce01c4f89f619c1197973de76f51058fae283425dc1434963226a133ce45e",
       "syncedAt": "2026-11-14",
@@ -1091,7 +1091,7 @@
     "MyCoursesEmptyPhone.dc.html": {
       "code": "M2em",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:10112",
+      "nodeId": "822:13672",
       "canvasSha": "b01b30966dc88174a5157bc9fdd1aacca4520115bd4b855a492be7612b4a2057",
       "figmaFingerprint": "ae5a7daa03b68747a793c84d6e672ddcd43b8c8b09547e4bea42d1fb0134529c",
       "syncedAt": "2026-11-14",
@@ -1101,7 +1101,7 @@
     "RoleGuestMenuPhone.dc.html": {
       "code": "S2gm",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:10175",
+      "nodeId": "822:13735",
       "canvasSha": "6d17b9419c49d58a726ca9e16177ed48cae6312681a520f3a85c7dd30a832b77",
       "figmaFingerprint": "5a8686400638de3bd01734c21b76f0bb2b07f96d5598741c9d0f28b6cf397e78",
       "syncedAt": "2026-11-14",
@@ -1111,7 +1111,7 @@
     "InnerPagePhone.dc.html": {
       "code": "S5m",
       "figmaPage": "學生／老師角色",
-      "nodeId": "816:10287",
+      "nodeId": "822:13847",
       "canvasSha": "a72b609b5ba9854fc50991944a50e80bdafd4dd3f704b57c1cbdcf509b4d94eb",
       "figmaFingerprint": "feeb80402a4cfcd2347cd49c90c89f2266a17d0c49d2d9521a0b7ce72b2d93f4",
       "syncedAt": "2026-11-14",

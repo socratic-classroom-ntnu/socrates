@@ -676,6 +676,7 @@ def extend(Native):
                     "text": result["reply_text"],
                     "at": self.now,
                     "observations": observations,
+                    "flags": result["flags"],
                     "provenance": provider,
                     "move": result.get("move", "probe"),
                 }

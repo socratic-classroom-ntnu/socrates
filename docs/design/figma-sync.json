@@ -3,9 +3,9 @@
   "figmaFile": "NOkA7gaIpOZ9f1dppYRW6Z",
   "canvas": "https://claude.ai/artifact/Liyge5WMLQK5YHoGtwS5gx",
   "library": {
-    "variablesFingerprint": "ca9583183a9f3ea36666d5bf8b28510fbf952c6fad5fd93101e53f952dc1e460",
-    "componentsFingerprint": "76b88bbd959128aa2ddfedae30da6070bf473445ce4e943add3eef864a44f32a",
-    "syncedAt": "2026-11-07"
+    "variablesFingerprint": "1beda7f09582e3ca7ce806deefcf98c9badd2e8d5bdb86454b840b242ec254fc",
+    "componentsFingerprint": "25ef358da0abb53fba98bf1d38720407bf93beec82dfad1baf4ec8e3597c3b4b",
+    "syncedAt": "2026-11-14"
   },
   "boards": {
     "Activity.dc.html": {
@@ -584,8 +584,8 @@
       "nodeId": "466:32975",
       "canvasSha": "920576e79a23439f5788c515f365f173d043886b0311562ca0e6a28ecb918c8f",
       "figmaFingerprint": "97d08f2cd3a91a17e3956f86948b4047e461f5d1964ea6a1d957b6511e87e5ea",
-      "syncedAt": "2026-11-07",
-      "status": "synced",
+      "syncedAt": "2026-11-10",
+      "status": "superseded",
       "adjustNote": "一個主題：情境＋給蘇格拉底的方向；沒有選項、沒有多題，右側「題目順序」分頁拿掉"
     },
     "TeacherAnalysis.dc.html": {
@@ -803,6 +803,25 @@
     "45:4096",
     "47:5034",
     "48:6034",
-    "48:6077"
+    "48:6077",
+    "510:324",
+    "761:17794",
+    "761:20218",
+    "761:22638",
+    "761:23177",
+    "761:23452",
+    "761:24024",
+    "761:24539",
+    "761:25178",
+    "761:25416",
+    "761:26508",
+    "761:26645",
+    "761:26674",
+    "761:26770",
+    "761:27469",
+    "761:30368",
+    "761:30452",
+    "761:30554",
+    "761:30656"
   ]
 }

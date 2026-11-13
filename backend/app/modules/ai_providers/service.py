@@ -585,6 +585,7 @@ def profile_in_use(db, owner_id: str, profile_id: str) -> str | None:
 from app.modules.ai_providers.classroom_provider import (  # noqa: E402
     ProviderWait as ProviderWait,
 )
+from app.modules.ai_providers.embeddings import embed as embed  # noqa: E402
 
 
 def provider_generate(*args: Any, **kwargs: Any) -> Any:

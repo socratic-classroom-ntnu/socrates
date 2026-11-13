@@ -5,6 +5,7 @@ from pathlib import Path
 from app.modules.llm_runtime.contracts import (
     ActivityExpansion,
     DynamicResult,
+    GroupTutorTurn,
     FinalSummary,
     LLMStudentTurn,
     PersonalTutorTurn,
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[3]
 SCHEMAS = {
     "TutorTurn": TutorTurn,
     "PersonalTutorTurn": PersonalTutorTurn,
+    "GroupTutorTurn": GroupTutorTurn,
     "SummaryResult": SummaryResult,
     "DynamicResult": DynamicResult,
     "LLMStudentTurn": LLMStudentTurn,

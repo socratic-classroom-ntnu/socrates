@@ -43,11 +43,17 @@ class Account(Base):
     __tablename__ = "accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     username: Mapped[str] = mapped_column(String(64), unique=True)
-    email: Mapped[str] = mapped_column(String(254), unique=True)
-    password_hash: Mapped[str] = mapped_column(Text)
+    # Null for guests, who have neither; unique only among accounts that have one.
+    email: Mapped[str | None] = mapped_column(String(254), unique=True, nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     locale: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
+    # "guest" (joined without registering, found only by its session cookie), "expired_guest"
+    # (past guest_expires_at; the account and its records stay) or "registered".
+    kind: Mapped[str] = mapped_column(String(16), default="registered", server_default="registered")
+    # Guests only: 168 hours after joining, never extended.
+    guest_expires_at: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
 
 
 class LoginSession(Base):

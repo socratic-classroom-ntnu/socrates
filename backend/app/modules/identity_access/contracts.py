@@ -38,6 +38,13 @@ def password_policy(value: str) -> str:
     return value
 
 
+def email_shape(value: str) -> str:
+    value = value.strip().casefold()
+    if "@" not in value or "." not in value.rsplit("@", 1)[1]:
+        raise ValueError("請填入可收信的 email")
+    return value
+
+
 class Register(Strict):
     username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
@@ -51,10 +58,18 @@ class Register(Strict):
     @field_validator("email")
     @classmethod
     def email_shape(cls, v: str) -> str:
-        v = v.strip().casefold()
-        if "@" not in v or "." not in v.rsplit("@", 1)[1]:
-            raise ValueError("請填入可收信的 email")
-        return v
+        return email_shape(v)
+
+
+class GuestJoin(Strict):
+    """Joining without registering: a nickname shown to the class and the interface language."""
+
+    nickname: str = Field(min_length=1, max_length=40)
+    locale: Locale
+
+
+class GuestUpgrade(Register):
+    """A guest registering keeps its account id; it sends exactly what a registration does."""
 
 
 class Login(Strict):
@@ -154,6 +169,10 @@ class AccountView(Strict):
     points: int
     achievements: list[str]
     locale: Locale | None = None
+    kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    # Guests only: 168 hours after joining; the daily job then clears the name and marks the
+    # account expired_guest.
+    guest_expires_at: float | None = None
 
 
 class LocaleUpdate(Strict):

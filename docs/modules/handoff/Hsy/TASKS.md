@@ -16,7 +16,7 @@ classroom-core 的 HTTP 層測試：用 TestClient 打真的路由，讀回 200 
 | 4 | group-dialogue | 旗標與學生指標（第二版） | 個人追問（personal_tutor）套用同一組 10 個旗標，每則訊息存 flags | Courecta 的 PersonalTutorTurn flags | 每則個人追問都存 10 個旗標；學生端回應裡沒有 flags |
 | 5 | analytics | 旗標與學生指標（第二版） | 分組課的教師分析帶出同一組指標與標記 | Ken 的指標純函式 | 指標只在那一個純函式裡算 |
 | 6 | analytics | 雷達圖（第二版） | 分組課沿用單人活動的雷達契約 | Amethus 的雷達契約 | 前端用同一份契約畫分組課雷達 |
-| 7 | classroom-core | 免註冊加入 | 實作訪客紀錄 hook：分組課成員與作答紀錄的 `reassign`、`delete`；同一間教室兩邊都有時以帳號那份為準 | Courecta 5 的契約 | 併入與刪除之後分組課測試全綠 |
+| 7 | classroom-core、group-dialogue | 免註冊加入 | 這一輪訪客不能進分組課：classroom-core、group-dialogue 的所有端點（HTTP 與 WebSocket `/classrooms/{room_id}/ws`）維持預設拒絕訪客，不打開 `allow_guest`；加測試，訪客的 session 打這些端點要回 `GUEST_NOT_ALLOWED`。分組課沒有訪客紀錄，所以不用實作訪客紀錄 hook（Courecta 5b 的契約不要求分組課提供） | Courecta 4（#124：預設拒絕訪客） | 訪客的 session 打分組課的 HTTP 端點與 WebSocket 都回 `GUEST_NOT_ALLOWED`；分組課測試全綠 |
 
 ## 注意
 - 舊的單人對話（solo-dialogue）已經刪除，classroom-core 對它的依賴也一起拿掉了。接手時先跑一次 `python scripts/check_modules.py`，確認違規數是 0。

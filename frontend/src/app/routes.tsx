@@ -29,6 +29,7 @@ import { TeacherCoursePage } from '../features/course/teach/TeacherCoursePage'
 import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPage'
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
+import { ActivityProjectorPage, CourseProjectorPage } from '../features/course/teach/ProjectorPages'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
@@ -98,8 +99,8 @@ export function AppRoutes() {
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
       <Route path="/learn/activities/:activityId/dialogue" element={<SoloDialoguePage />} />
       <Route element={<TeacherDesktopOnly />}>
-        <Route path="/teach/courses/:courseId/projector" element={<TeachPlaceholder kind="projector" />} />
-        <Route path="/teach/activities/:activityId/projector" element={<TeachPlaceholder kind="projector" />} />
+        <Route path="/teach/courses/:courseId/projector" element={<CourseProjectorPage />} />
+        <Route path="/teach/activities/:activityId/projector" element={<ActivityProjectorPage />} />
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />

@@ -58,5 +58,5 @@ PostgreSQL、realtime、HTTP composition、environment、migration、deployment 
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 相容帳冊（COMPATIBILITY-LEDGER.md）的舊環境變數別名。
+- 無
 <!-- module-map:end -->

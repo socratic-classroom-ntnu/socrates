@@ -90,7 +90,7 @@ Job priority：`llm_student_turn`(0) > focused tutor／personal tutor(1) > dynam
 額度依序檢查（`modules/app_shell/llm_workers.py` 的 `reserve_call`）：班級呼叫次數上限 → 班級 token 上限（預設 1M）
 → 選填的成本上限 → 平台每日 `CLASSROOM_LLM_DAILY_BUDGET`。班級呼叫次數上限取劇本的
 `live_llm_call_budget`（教師額度，預設 240；0 表示不使用 live LLM）與帳號路由 `max_calls`（預設 240，0 視為未設定）
-的較小者（`effective_call_limit`）；AI 學生另有 `CLASSROOM_AI_CALL_BUDGET`（預設 240）的保底。（舊名 `RUN2_*`／`PORTAL_AI_*` 仍可讀，下一版移除。）
+的較小者（`effective_call_limit`）；AI 學生另有 `CLASSROOM_AI_CALL_BUDGET`（預設 240）的保底。
 
 Templates＋SkillSet＋Prompt metadata 保存 version 與 hash；每次呼叫的 audit 記錄 provider、
 provider profile、classroom owner、requested／actual model、use case、latency、token usage、

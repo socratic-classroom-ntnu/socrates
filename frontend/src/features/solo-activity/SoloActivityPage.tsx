@@ -6,6 +6,7 @@ import { useShellBack } from '../../shared/shellContext'
 import { errorMessage } from '../../i18n/errors'
 import { formatDateTime } from '../../i18n/format'
 import { useT } from '../../i18n/useT'
+import { ButtonLink } from '../../ui'
 import '../../styles/solo.css'
 import type { SoloActivityView } from './soloView'
 
@@ -23,7 +24,7 @@ export function SoloActivityPage() {
     const notFound = activity.error instanceof ApiError && activity.error.status === 404
     return <main className="solo-activity solo-activity--message">
       <h1>{notFound ? t('activity.notFound') : errorMessage(t, activity.error)}</h1>
-      <Link className="button button--outline" to="/">{t('activity.home')}</Link>
+      <ButtonLink variant="outline" to="/">{t('activity.home')}</ButtonLink>
     </main>
   }
 

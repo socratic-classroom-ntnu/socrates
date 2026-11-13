@@ -1,5 +1,3 @@
-@import './ui.css';
-
 /* T3／T3E／T3L 活動編輯器 */
 .editor-page {
   box-sizing: border-box; min-height: 100%; padding: 28px 36px 48px; display: flex; flex-direction: column; gap: 16px;
@@ -14,7 +12,7 @@
 .editor-head h1 { margin: 0; font-size: 28px; }
 .editor-autosave { font-size: 12px; color: var(--ui-color-muted); }
 .editor-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.editor-head__actions .button { min-height: 44px; font-size: 15px; }
+.editor-head__actions .editor-head__button { min-height: 44px; font-size: 15px; }
 .editor-link { border: 0; background: transparent; font: inherit; font-size: 14px; cursor: pointer; padding: 8px; color: var(--ui-color-primary); }
 .editor-link--danger { color: var(--ui-color-ended-ink); }
 
@@ -30,10 +28,6 @@
 
 .error-summary { padding: 16px 20px; border-radius: 12px; background: var(--ui-color-danger-soft); border: 1px solid #E9B7AC; color: var(--ui-color-error-ink); }
 .error-summary h2 { margin: 0; font-size: 16px; }
-.error-summary p { margin: 6px 0; font-size: 14px; color: #3F3424; }
-.error-summary ul { margin: 0; padding-left: 20px; }
-.error-summary button { border: 0; background: transparent; padding: 4px 0; font: inherit; font-size: 14px; color: var(--ui-color-error-ink); cursor: pointer; text-align: left; }
-.error-summary__where { font-weight: 700; text-decoration: underline; }
 
 .editor-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
 .editor-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }

@@ -4,6 +4,7 @@ import { api, ApiError } from '../../contract/classroomClient'
 import { useResource } from '../../contract/useResource'
 import { errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
+import { ButtonLink } from '../../ui'
 import '../../styles/solo.css'
 import { QuestionBoard } from './QuestionBoard'
 import { ReviewPlaceholder } from './ReviewPlaceholder'
@@ -42,7 +43,7 @@ export function SoloDialoguePage() {
     const notFound = activity.error instanceof ApiError && activity.error.status === 404
     return <main className="solo-dialogue solo-dialogue--message">
       <h1>{notFound ? t('activity.notFound') : errorMessage(t, activity.error)}</h1>
-      <Link className="button button--outline" to="/">{t('activity.home')}</Link>
+      <ButtonLink variant="outline" to="/">{t('activity.home')}</ButtonLink>
     </main>
   }
   if (!activity.data.attempt) return <Navigate to={`/learn/activities/${activityId}`} replace />

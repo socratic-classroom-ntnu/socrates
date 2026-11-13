@@ -89,8 +89,7 @@ const editor: Shape<typeof zhHant> = {
     scenario: '请写下情境叙述',
     option: '选项不能空白；不需要的选项可以按 ✕ 移除，但至少要留 2 个',
     optionsMin: '至少要 2 个选项',
-    summaryTitle: '还有 {{count}} 个地方要补完，才能保存',
-    summaryBody: '草稿也要完整才能保存。点一下会跳到那个栏位：',
+    summary: '部分栏位尚未填写',
     missing: '还没填',
     empty: '是空的',
     emptyOption: '是空的（至少要 2 个选项）',
@@ -98,7 +97,6 @@ const editor: Shape<typeof zhHant> = {
     past: '已经过了',
     questionLabel: '题目 {{n}}',
     questionLabelNamed: '题目 {{n}}「{{title}}」',
-    summaryItem: '{{where}}：{{field}}',
   },
   panel: {
     tabsLabel: '题目工具',

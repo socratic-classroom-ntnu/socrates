@@ -3,6 +3,7 @@ import { restrictToFirstScrollableAncestor, restrictToVerticalAxis } from '@dnd-
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useT } from '../../../../i18n/useT'
+import { Button } from '../../../../ui'
 import { type ActivityForm, addQuestion, LIMITS, moveQuestion, type QuestionForm } from './editorState'
 
 type Props = {
@@ -41,7 +42,7 @@ export function QuestionOrderPanel({ form, selected, counts, locked, onSelect, o
       <span>{t('panel.count', { count: form.questions.length })}</span>
       {locked
         ? <span className="locked-badge">{t('locked.badge')}</span>
-        : <button type="button" className="button button--outline editor-order__add" disabled={form.questions.length >= LIMITS.questions} onClick={add}>{t('panel.add')}</button>}
+        : <Button variant="outline" className="editor-order__add" disabled={form.questions.length >= LIMITS.questions} onClick={add}>{t('panel.add')}</Button>}
     </div>
     <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis, restrictToFirstScrollableAncestor]} onDragEnd={onDragEnd}>
       <SortableContext items={form.questions.map(q => q.id)} strategy={verticalListSortingStrategy}>

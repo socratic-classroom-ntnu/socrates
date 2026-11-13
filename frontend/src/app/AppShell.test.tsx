@@ -93,6 +93,31 @@ test('sidebar lists the five nav items', async () => {
   ])
 })
 
+// 新路由器掛的頁面在路由器內切換：整頁重載會先露出深色底與載入畫面，看起來像黑屏閃一下
+test.each([
+  ['/teach/courses/c-1', '首頁', '/'],
+  ['/', '分組課', '/groups'],
+])('sidebar %s → %s switches without a page load', async (url, label, target) => {
+  open(url)
+  await act(async () => { fireEvent.click(await screen.findByRole('link', { name: label })) })
+  expect(screen.getByTestId('where').textContent).toBe(target)
+})
+
+test('brand link goes home without a page load', async () => {
+  open('/groups')
+  await screen.findByRole('navigation', { name: '主選單' })
+  await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Socrates Classroom' })) })
+  expect(screen.getByTestId('where').textContent).toBe('/')
+})
+
+test('phone menu switches to the groups page without a page load', async () => {
+  phone()
+  open('/')
+  const menu = await openAccountMenu()
+  await act(async () => { fireEvent.click(within(menu).getByRole('menuitem', { name: '分組課' })) })
+  expect(screen.getByTestId('where').textContent).toBe('/groups')
+})
+
 test.each([
   ['/', '首頁'],
   ['/learn/courses/c-1', '首頁'],

@@ -46,3 +46,31 @@ def test_debug_dependency_returns_404_when_disabled(monkeypatch):
     response = TestClient(app).get("/debug/ping")
     assert response.status_code == 200
     assert response.json() == {"state": "ready"}
+
+
+# 快速登入：只在 seed 會建出測試帳號的環境回傳帳密，其他環境（含沒設定）一律沒有
+DEMO = {
+    "password": "preview-password",
+    "accounts": [
+        {"username": "teacher001", "role": "teacher"},
+        {"username": "user001", "role": "student"},
+    ],
+}
+
+
+@pytest.mark.parametrize("environment", ["local-dev", "preview", "stage", "dev"])
+def test_demo_login_in_seeded_environments(monkeypatch, environment):
+    monkeypatch.setenv("SOCRATES_ENVIRONMENT", environment)
+    assert public_config()["demo_login"] == DEMO
+
+
+@pytest.mark.parametrize("environment", ["production", "prod", "master", "", "Stage", " stage"])
+def test_no_demo_login_elsewhere(monkeypatch, environment):
+    monkeypatch.setenv("SOCRATES_ENVIRONMENT", environment)
+    assert public_config()["demo_login"] is None
+
+
+def test_no_demo_login_when_environment_unset(monkeypatch):
+    # 其他地方把沒設定當成 local-dev；這裡不行，正式環境漏設不能變成公開帳密
+    monkeypatch.delenv("SOCRATES_ENVIRONMENT", raising=False)
+    assert public_config()["demo_login"] is None

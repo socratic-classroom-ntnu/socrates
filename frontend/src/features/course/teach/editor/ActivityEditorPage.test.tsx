@@ -108,14 +108,44 @@ test('invalid form shows the summary and calls no api', async () => {
   const calls = openNew()
   await screen.findByLabelText(/^活動名稱/)
   await click('建立活動')
+  // 頂端只說一句，不逐條列出；畫面跳到第一個錯的欄位
   const summary = screen.getByRole('alert')
-  expect(within(summary).getByRole('heading')).toHaveTextContent(/^還有 \d+ 個地方要補完，才能儲存$/)
-  expect(summary).toHaveTextContent('基礎資訊：活動名稱')
+  expect(summary).toHaveTextContent(/^部分欄位尚未填寫$/)
+  expect(within(summary).queryAllByRole('button')).toHaveLength(0)
   expect(screen.getByLabelText(/^活動名稱/)).toHaveAttribute('aria-invalid', 'true')
+  await waitFor(() => expect(screen.getByLabelText(/^活動名稱/)).toHaveFocus())
   expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
 })
 
-test('summary item focuses the field and selects its question', async () => {
+test('field errors and hints are read as each control’s description', async () => {
+  const windowHint = '時間到會自動結束；你也可以在活動頁提早開始或結束。結束後，學生只能回看自己的紀錄。'
+  const scenarioHint = '學生看到的會和這裡一字不差，蘇格拉底不會改寫。'
+  const optionError = '選項不能空白；不需要的選項可以按 ✕ 移除，但至少要留 2 個'
+  openNew()
+  const title = await screen.findByLabelText(/^活動名稱/)
+  expect(title).toHaveAccessibleDescription('')
+  expect(screen.getByLabelText(/^想在分析裡看到什麼/)).toHaveAccessibleDescription('活動結束後，給你的全班分析會依這裡整理。')
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(windowHint)
+  fireEvent.click(screen.getByRole('radio', { name: '指定時間' }))
+  await click('建立活動')
+
+  expect(title).toHaveAccessibleDescription('請填活動名稱')
+  expect(screen.getByRole('button', { name: /^開始時間/ })).toHaveAccessibleDescription(`請填開始時間 ${windowHint}`)
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(`請填結束時間 ${windowHint}`)
+  expect(screen.getByLabelText(/^主題方向/)).toHaveAccessibleDescription('請填主題方向')
+  expect(screen.getByLabelText(/^標題/)).toHaveAccessibleDescription('請寫下標題')
+  expect(screen.getByLabelText(/^情境敘述/)).toHaveAccessibleDescription(`請寫下情境敘述 ${scenarioHint}`)
+  expect(screen.getByLabelText('選項 A')).toHaveAccessibleDescription(optionError)
+  expect(screen.getByLabelText('選項 B')).toHaveAccessibleDescription(optionError)
+
+  // 補好就只剩說明（沒有說明的欄位就沒有描述）
+  fireEvent.change(title, { target: { value: '第三週倫理討論' } })
+  fireEvent.change(screen.getByLabelText('選項 A'), { target: { value: '拉' } })
+  expect(title).toHaveAccessibleDescription('')
+  expect(screen.getByLabelText('選項 A')).toHaveAccessibleDescription('')
+})
+
+test('invalid submit jumps to the first problem and selects its question', async () => {
   openNew()
   await fillNew()
   await click('＋ 新增空白題目')
@@ -123,11 +153,6 @@ test('summary item focuses the field and selects its question', async () => {
   await click(/^1\s*岔道上的選擇/)
   expect(screen.getByRole('heading', { name: /題目 1/ })).toBeInTheDocument()
   await click('建立活動')
-  const items = within(screen.getByRole('alert')).getAllByRole('button')
-  expect(items[0]).toHaveTextContent('題目 2：標題')
-  await click(/^2\s*（未命名）/)
-  await click(/^1\s*岔道上的選擇/)
-  await act(async () => { fireEvent.click(within(screen.getByRole('alert')).getAllByRole('button')[0]) })
   expect(screen.getByRole('heading', { name: /題目 2/ })).toBeInTheDocument()
   await waitFor(() => expect(screen.getByLabelText(/^標題/)).toHaveFocus())
   expect(screen.getByRole('button', { name: /^2\s*（未命名）/ })).toHaveTextContent(/[34]$/)
@@ -142,8 +167,8 @@ test('publish failure after create keeps the draft and flags end time', async ()
   await fillNew()
   await click('建立活動')
   await waitFor(() => expect(where()).toBe('/teach/activities/a-9/edit'))
-  const summary = await screen.findByRole('alert')
-  expect(summary).toHaveTextContent('基礎資訊：結束時間')
+  expect(await screen.findByRole('alert')).toHaveTextContent(/^部分欄位尚未填寫$/)
+  expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAttribute('aria-invalid', 'true')
 })
 
 test('editing a published activity puts then publishes', async () => {

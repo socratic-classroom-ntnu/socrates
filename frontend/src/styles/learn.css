@@ -1,5 +1,3 @@
-@import './ui.css';
-
 /* 學生課程頁 */
 .learn-page {
   box-sizing: border-box; min-height: 100%; padding: 28px 40px 48px; display: flex; flex-direction: column; gap: 20px;
@@ -37,7 +35,7 @@
 .learn-card__stretch::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
 .learn-card__stretch:focus-visible { outline: none; }
 .learn-card__stretch:focus-visible::after { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
-.learn-card__start { position: relative; z-index: 1; align-self: flex-end; min-height: 44px; font-size: 15px; }
+.learn-card__start { position: relative; z-index: 1; align-self: flex-end; }
 .learn-card--scheduled { border: 1px dashed var(--ui-color-border); background: #F9F9F7; gap: 6px; padding: 16px 20px; }
 .learn-card--scheduled .learn-card__title { color: var(--ui-color-ink-soft); }
 .learn-ended { margin: 0; padding: 0; list-style: none; border: 1px solid var(--ui-color-line); border-radius: 12px; background: var(--ui-color-panel); }
@@ -58,6 +56,6 @@
   .learn-card { padding: 16px 18px; }
   .learn-card--open { border: 2px solid var(--ui-color-primary); padding: 15px 17px; }
   .learn-card--open .learn-card__title { padding-bottom: 0; border-bottom: 0; }
-  .chips { flex-wrap: nowrap; overflow-x: auto; }
-  .chip { flex-shrink: 0; }
+  .learn-chips { overflow-x: auto; }
+  .learn-chip { flex-shrink: 0; }
 }

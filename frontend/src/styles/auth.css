@@ -132,3 +132,15 @@
 }
 
 .auth-card__local-preview { font-size: 13px; color: #2F4A3F; text-decoration: underline; }
+
+/* 等 /auth/me 的載入畫面：和外框、登入頁一樣是淺色底。整頁載入時若露出舊版深色 body，看起來像黑屏閃一下 */
+.auth-loading {
+  display: grid; place-content: center; min-height: 100dvh;
+  background: var(--ui-color-bg);
+}
+.auth-loading__pulse {
+  width: 17px; height: 17px; border-radius: 50%; background: var(--ui-color-primary);
+  opacity: .5; animation: auth-loading-breathe 1.5s infinite;
+}
+@keyframes auth-loading-breathe { 50% { opacity: .2; scale: .88; } }
+@media (prefers-reduced-motion: reduce) { .auth-loading__pulse { animation: none; } }

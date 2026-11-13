@@ -7,6 +7,7 @@ import { Dialog } from '../../../components/Dialog'
 import { errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
+import { Button, ButtonLink, FormError, StatusPill } from '../../../ui'
 
 type Activity = Pick<components['schemas']['SoloActivityProgressView'],
   'activity_id' | 'title' | 'course_id' | 'course_name' | 'status' | 'question_count' | 'ends_at'>
@@ -53,13 +54,13 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
         </nav>
         <div className="teacher-live__title-row">
           <h1>{activity.title}</h1>
-          <span className={`status-pill status-pill--${activity.status}`}>{t(`status.${activity.status}`)}</span>
+          <StatusPill tone={activity.status}>{t(`status.${activity.status}`)}</StatusPill>
         </div>
         <span className="teach-head__meta">{meta}</span>
       </div>
       <div className="teacher-live__actions">
-        <Link className="button button--quiet" to={`/teach/activities/${activity.activity_id}/projector`}>{t('live.qr')}</Link>
-        {canEnd && <button type="button" className="button button--dark" disabled={working} onClick={() => setConfirmEnd(true)}>{t('live.endEarly')}</button>}
+        <ButtonLink variant="quiet" to={`/teach/activities/${activity.activity_id}/projector`}>{t('live.qr')}</ButtonLink>
+        {canEnd && <Button variant="dark" disabled={working} onClick={() => setConfirmEnd(true)}>{t('live.endEarly')}</Button>}
       </div>
     </header>
 
@@ -68,14 +69,14 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
       <Link to={`/teach/activities/${activity.activity_id}/analysis`} aria-current={current === 'analysis' ? 'page' : undefined}>{t('live.tabs.analysis')}</Link>
     </nav>
 
-    {notice && <p role="alert" className="form-error">{notice}</p>}
+    {notice && <FormError role="alert">{notice}</FormError>}
 
     {confirmEnd && <Dialog
       title={t('live.endDialog.title')}
       onClose={() => setConfirmEnd(false)}
       footer={<>
-        <button type="button" className="button button--quiet" onClick={() => setConfirmEnd(false)}>{t('live.endDialog.cancel')}</button>
-        <button type="button" className="button button--primary" onClick={() => void endActivity()}>{t('live.endDialog.confirm')}</button>
+        <Button variant="quiet" onClick={() => setConfirmEnd(false)}>{t('live.endDialog.cancel')}</Button>
+        <Button variant="primary" onClick={() => void endActivity()}>{t('live.endDialog.confirm')}</Button>
       </>}
     ><p className="dialog__text">{t('live.endDialog.body', { title: activity.title })}</p></Dialog>}
   </>

@@ -1,4 +1,5 @@
-"""Guests' records across modules, and expiring guests 168 hours after they joined.
+"""Guests' records across modules: merging them at login, and expiring guests 168 hours after
+they joined.
 
 identity-access cannot import the modules that keep a guest's records, so each of them registers
 a GuestRecordHook here; the app shell wires them, as it does account view extensions.
@@ -8,10 +9,11 @@ import logging
 import time
 
 from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 from app.modules.identity_access.contracts import GuestRecordHook
 from app.modules.identity_access.repositories import Account, LoginSession
-from app.modules.platform.storage import transaction
+from app.modules.platform.storage import digest, transaction
 
 logger = logging.getLogger(__name__)
 GUEST_HOOKS: dict[str, GuestRecordHook] = {}
@@ -19,6 +21,29 @@ GUEST_HOOKS: dict[str, GuestRecordHook] = {}
 
 def register_guest_hook(module: str, hook: GuestRecordHook) -> None:
     GUEST_HOOKS[module] = hook
+
+
+def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -> None:
+    """The device logging in still holds a live guest session: every module moves that guest's
+    records to the account (on a conflict the hook keeps the account's), and the guest session
+    ends. The guest account stays and expires on its own schedule.
+
+    Runs in the login's transaction. A failing hook rolls the whole merge back and the login goes
+    ahead without it: a bug in one module must not lock a student out.
+    """
+    session = db.get(LoginSession, digest(guest_token or ""))
+    if session is None:
+        return
+    guest = db.get(Account, session.account_id, with_for_update=True)
+    if guest is None or guest.kind != "guest" or (guest.guest_expires_at or 0) <= time.time():
+        return
+    try:
+        with db.begin_nested():
+            for hook in GUEST_HOOKS.values():
+                hook.reassign(db, guest.id, account_id)
+            db.delete(session)
+    except Exception:
+        logger.exception("guest %s was not merged into %s", guest.id, account_id)
 
 
 def expire_guests(now: float | None = None) -> list[str]:

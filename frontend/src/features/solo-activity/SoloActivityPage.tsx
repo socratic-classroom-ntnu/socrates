@@ -31,20 +31,16 @@ export function SoloActivityPage() {
   const data = activity.data
   const brief = data.attempt
   const rows = brief
-    ? brief.progress.map(question => ({
-      status: question.status,
-      label: question.title
-        ? t('activity.questionTitle', { number: question.index + 1, title: question.title })
-        : t('activity.questionNumber', { number: question.index + 1 }),
-      note: question.status === 'confirmed'
-        ? t('activity.confirmed', { option: question.option_label ?? '' })
-        : question.status === 'in_dialogue' ? t('activity.inDialogue') : t('activity.notStarted'),
+    ? brief.progress.map(scenario => ({
+      status: scenario.status,
+      label: t('activity.scenarioNumber', { number: scenario.index + 1 }),
+      note: scenario.status === 'confirmed' ? t('activity.confirmed') : t('activity.inDialogue'),
     }))
-    : Array.from({ length: data.question_count }, (_, index) => ({
+    : [{
       status: 'not_started' as const,
-      label: t('activity.questionNumber', { number: index + 1 }),
+      label: t('activity.scenarioNumber', { number: 1 }),
       note: t('activity.notStarted'),
-    }))
+    }]
   const reviewing = brief?.review_status === 'in_progress'
 
   async function start() {
@@ -81,7 +77,6 @@ export function SoloActivityPage() {
       <div className="solo-activity__main">
         <dl className="solo-activity__facts">
           <div><dt>{t('activity.status')}</dt><dd><span className={`solo-activity__status solo-activity__status--${data.status}`}>{t(`activity.statuses.${data.status}`)}</span></dd></div>
-          <div><dt>{t('activity.questions')}</dt><dd>{t('activity.questionCount', { count: data.question_count })}</dd></div>
           <div><dt>{t('activity.openUntil')}</dt><dd>{formatDateTime(data.ends_at, locale, 'weekdayDateTime')}</dd></div>
         </dl>
         <section className="solo-activity__progress" aria-labelledby="solo-activity-progress">
@@ -111,8 +106,8 @@ export function SoloActivityPage() {
           ? <b>{t('activity.reviewNext')}</b>
           : <>
             <span className="solo-activity__card-label">{t('activity.lastStop')}</span>
-            {/* current_turn is the question's turn_index, and the stance itself is turn 0. */}
-            <b>{t('activity.resumeAt', { number: brief.question_index + 1, turn: brief.current_turn + 1 })}</b>
+            {/* current_turn is the scenario's turn_index, and the first answer is turn 0. */}
+            <b>{t('activity.resumeAt', { number: brief.scenario_index + 1, turn: brief.current_turn + 1 })}</b>
           </>)}
         {(brief || data.status === 'open')
           ? <button className="solo-activity__cta" type="button" disabled={starting} onClick={start}>

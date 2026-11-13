@@ -12,6 +12,7 @@ const DAY = 24 * HOUR
 export const account = {
   id: 'u-1', username: '林小華', email: 'student@example.org', email_masked: 's***@example.org', verified: true,
   authority_state: 'FULL_PRODUCT', csrf_token: 'csrf-baseline', points: 0, achievements: [], locale: 'zh-Hant',
+  kind: 'registered',
 } satisfies S['AccountView']
 
 export const unverifiedAccount = {
@@ -24,23 +25,10 @@ const verificationStatus = {
   delivery: { state: 'sent', sent_at: now - 120, delivered_at: now - 110, attempts: 1 },
 } satisfies S['VerificationStatusView']
 
-const questions = [
-  {
-    id: 'q-1', title: '岔道上的選擇',
-    scenario: '一輛失控的電車正駛向五名工人。你站在轉轍器旁，拉下拉桿，電車會轉向另一條軌道，那裡有一名工人。',
-    options: [{ id: 'o-pull', text: '拉下拉桿' }, { id: 'o-stay', text: '不拉' }],
-    follow_up_direction: '追問學生如何看待「行動」與「不行動」的差別。',
-  },
-  {
-    id: 'q-2', title: '天橋上的陌生人',
-    scenario: '同一輛電車，這次你站在天橋上，身旁有一位體型壯碩的陌生人。把他推下去可以擋住電車。',
-    options: [{ id: 'o-push', text: '推下去' }, { id: 'o-hold', text: '不推' }, { id: 'o-other', text: '另找辦法' }],
-    follow_up_direction: '',
-  },
-] satisfies S['QuestionDraft'][]
+const scenario = '一輛失控的電車正駛向五名工人。你站在轉轍器旁，拉下拉桿，電車會轉向另一條軌道，那裡有一名工人。'
 
 const teacherCard = (id: string, title: string, status: S['ActivityTeacherCard']['status'], extra: Partial<S['ActivityTeacherCard']> = {}) => ({
-  id, title, status, question_count: 2, has_unpublished_changes: false, locked: status !== 'draft',
+  id, title, status, has_unpublished_changes: false, locked: status !== 'draft',
   starts_at: status === 'draft' ? null : status === 'scheduled' ? now + DAY : now - 2 * HOUR,
   ends_at: status === 'draft' ? null : status === 'ended' ? now - HOUR : now + 3 * DAY,
   available_actions: status === 'draft' ? ['update', 'publish', 'copy', 'delete']
@@ -52,12 +40,12 @@ const teacherCard = (id: string, title: string, status: S['ActivityTeacherCard']
 const teacherCards = [
   teacherCard('a-open', '第三週倫理討論', 'open'),
   teacherCard('a-scheduled', '第四週：天橋難題', 'scheduled'),
-  teacherCard('a-draft', '第五週草稿', 'draft', { question_count: 1 }),
+  teacherCard('a-draft', '第五週草稿', 'draft'),
   teacherCard('a-ended', '第二週：說謊可以嗎', 'ended'),
 ]
 
-const studentCard = ({ id, title, status, question_count, starts_at, ends_at }: S['ActivityTeacherCard']) =>
-  ({ id, title, status: status === 'draft' ? 'scheduled' : status, question_count, starts_at, ends_at }) satisfies S['ActivityStudentCard']
+const studentCard = ({ id, title, status, starts_at, ends_at }: S['ActivityTeacherCard']) =>
+  ({ id, title, status: status === 'draft' ? 'scheduled' : status, starts_at: starts_at ?? now, ends_at: ends_at ?? now + 3 * DAY }) satisfies S['ActivityStudentCard']
 
 const studentCards = teacherCards.filter(card => card.status !== 'draft').map(studentCard)
 
@@ -87,10 +75,7 @@ const studentCourse = {
 const activityView = (card: S['ActivityTeacherCard']) => ({
   id: card.id, course_id: 'c-1', status: card.status, locked: card.locked, revision: card.status === 'draft' ? null : 1,
   has_unpublished_changes: false, starts_at: card.starts_at, ends_at: card.ends_at, available_actions: card.available_actions,
-  draft: {
-    title: card.title, topic_direction: '電車難題', analysis_focus: '學生是否區分行動與不行動',
-    starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY, questions: card.question_count === 1 ? questions.slice(0, 1) : questions,
-  },
+  draft: { title: card.title, starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
 }) satisfies S['ActivityTeacherView']
 
 const joinPreview = {
@@ -100,7 +85,7 @@ const joinPreview = {
 
 const activityJoinPreview = {
   activity_id: 'a-open', title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論', teacher_name: '王思齊',
-  status: 'open', question_count: 2, starts_at: now - 2 * HOUR, ends_at: now + 3 * DAY,
+  status: 'open', starts_at: now - 2 * HOUR, ends_at: now + 3 * DAY,
   default_display_name: '林小華', already_enrolled: false,
 } satisfies S['ActivityJoinPreview']
 
@@ -108,29 +93,25 @@ const attemptId = 'attempt-1'
 
 const soloActivity = {
   activity_id: 'a-open', title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論', status: 'open',
-  question_count: 2, ends_at: now + 3 * DAY,
+  ends_at: now + 3 * DAY,
   attempt: {
-    id: attemptId, state: 'in_dialogue', question_index: 0, current_turn: 2, review_status: 'not_started',
-    progress: [
-      { index: 0, title: '岔道上的選擇', status: 'in_dialogue', option_label: 'A' },
-      { index: 1, title: null, status: 'not_started', option_label: null },
-    ],
+    id: attemptId, state: 'in_dialogue', scenario_index: 0, current_turn: 2, review_status: 'not_started',
+    progress: [{ index: 0, status: 'in_dialogue' }],
   },
 } satisfies S['SoloActivityView']
 
 const attempt = {
   id: attemptId, activity_id: 'a-open', activity_title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論',
-  display_name: '小華', state: 'in_dialogue', question_index: 0, question_count: 2, revising: false,
-  questions: [{
-    index: 0, id: 'q-1', title: questions[0].title, scenario: questions[0].scenario, options: questions[0].options,
-    stance: { option_id: 'o-pull', current_option_id: 'o-pull', reason: '五個人比一個人多，救多數人比較好。' },
+  display_name: '小華', state: 'in_dialogue', scenario_index: 0, revising: false,
+  scenarios: [{
+    index: 0, id: 's-1', text: scenario, change: null, answer: '五個人比一個人多，救多數人比較好。',
     status: 'in_progress', confirmed_summary: null,
   }],
   messages: [
-    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', question_index: 0, created_at: now - 300, move: null, revise_hint: null },
-    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', question_index: 0, created_at: now - 280, move: 'probe', revise_hint: null },
-    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', question_index: 0, created_at: now - 120, move: null, revise_hint: null },
-    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', question_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null },
+    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', scenario_index: 0, created_at: now - 300, move: null, revise_hint: null },
+    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', scenario_index: 0, created_at: now - 280, move: 'probe', revise_hint: null },
+    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', scenario_index: 0, created_at: now - 120, move: null, revise_hint: null },
+    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null },
   ],
   candidate_summary: null, rejected_summary: null, summary_digest: null, principle_hint: null, notice: null,
   available_actions: ['send_message'],
@@ -138,39 +119,31 @@ const attempt = {
 
 const progress = {
   activity_id: 'a-open', course_id: 'c-1', course_name: '哲學導論', title: '第三週倫理討論', status: 'open',
-  ends_at: now + 3 * DAY, generated_at: now, question_count: 2,
-  questions: [{ index: 0, title: '岔道上的選擇' }, { index: 1, title: '天橋上的陌生人' }],
-  summary: { enrolled: 4, started: 3, done: 1, attention: 1, unconfirmed_by_question: [1, 2] },
+  ends_at: now + 3 * DAY, generated_at: now,
+  summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
     { enrollment_id: 'e-1', display_name: '小華', overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
       cells: [{ status: 'confirmed', turns: 4 }, { status: 'confirmed', turns: 3 }] },
     { enrollment_id: 'e-2', display_name: '阿明', overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
-      cells: [{ status: 'confirming', turns: 6 }, { status: 'not_started', turns: null }] },
+      cells: [{ status: 'confirming', turns: 6 }] },
     { enrollment_id: 'e-3', display_name: '佳穎', overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
       cells: [{ status: 'confirmed', turns: 2 }, { status: 'in_dialogue', turns: 1 }] },
     { enrollment_id: 'e-4', display_name: '志豪', overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
-      cells: [{ status: 'not_started', turns: null }, { status: 'not_started', turns: null }] },
+      cells: [] },
   ],
 } satisfies S['SoloActivityProgressView']
 
-const analysisStudent = (enrollment_id: string, display_name: string, reason_summary: string, changed_from_option_id: string | null = null) =>
-  ({ enrollment_id, display_name, reason_summary, changed_from_option_id, relevant_conditions: ['人數差距很大'] }) satisfies S['SoloAnalysisStudentView']
+const analysisStudent = (enrollment_id: string, display_name: string, current_position: string, reason_summary: string, confirmed_scenarios = 2) =>
+  ({ enrollment_id, display_name, confirmed_scenarios, current_position, reason_summary, relevant_conditions: ['人數差距很大'] }) satisfies S['SoloAnalysisStudentView']
 
 const analysis = {
   activity_id: 'a-ended', course_id: 'c-1', course_name: '哲學導論', title: '第二週：說謊可以嗎', status: 'ended',
-  ends_at: now - HOUR, generated_at: now, question_count: 2, revision_id: 'rev-1',
+  ends_at: now - HOUR, generated_at: now, revision_id: 'rev-1',
   summary: { enrolled: 4, started: 3, done: 2, in_progress: 1 },
-  questions: [
-    { question_id: 'q-1', index: 0, title: '岔道上的選擇', confirmed: 3, unconfirmed: 0, comparable: 3, changed: 1, options: [
-      { option_id: 'o-pull', text: '拉下拉桿', count: 2, students: [
-        analysisStudent('e-1', '小華', '救多數人的後果比較好。'), analysisStudent('e-3', '佳穎', '不行動也是一種選擇。', 'o-stay')] },
-      { option_id: 'o-stay', text: '不拉', count: 1, students: [analysisStudent('e-2', '阿明', '主動造成傷害跟放任不同。')] },
-    ] },
-    { question_id: 'q-2', index: 1, title: '天橋上的陌生人', confirmed: 2, unconfirmed: 1, comparable: 2, changed: 0, options: [
-      { option_id: 'o-push', text: '推下去', count: 0, students: [] },
-      { option_id: 'o-hold', text: '不推', count: 2, students: [analysisStudent('e-1', '小華', '把人當工具不對。'), analysisStudent('e-3', '佳穎', '身體接觸讓我做不到。')] },
-      { option_id: 'o-other', text: '另找辦法', count: 0, students: [] },
-    ] },
+  students: [
+    analysisStudent('e-1', '小華', '應該拉下拉桿', '救多數人的後果比較好。'),
+    analysisStudent('e-2', '阿明', '不該主動介入', '主動造成傷害跟放任不同。', 1),
+    analysisStudent('e-3', '佳穎', '會拉，但不會推人', '身體接觸讓我做不到。'),
   ],
 } satisfies S['SoloActivityAnalysisView']
 

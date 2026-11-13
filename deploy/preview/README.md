@@ -25,6 +25,22 @@ image 裡沒有 seed 腳本，網站照樣會起來，但**沒有測試帳號**�
 
 同時最多 6 個預覽環境。Fork 來的 PR 推不了 image，不能預覽。`backend/arthur/` 開頭的分支是後端重構，不建預覽環境。
 
+## 分支常駐預覽
+
+除了 PR 預覽，下面幾條分支各有一個**一直存在**的預覽，跟著分支最新的 commit 自動更新（flux-k8s 的
+`apps/base/socrates-preview/branches.yaml`），同樣有獨立的資料庫與測試帳號：
+
+| 分支 | 網址 |
+|---|---|
+| `develop` | `https://preview-develop.socrates.driseam.com` |
+| `stage` | `https://preview-stage.socrates.driseam.com` |
+| `master` | `https://preview-master.socrates.driseam.com` |
+| `backend/main` | `https://preview-backend-main.socrates.driseam.com` |
+
+image 來自 CI 的 `release` job（`.github/workflows/ci.yml`）：push 到這幾條分支就建一次。`backend/main` 的
+channel 叫 `backend-main`，沒有真正的環境追這個前綴，只有這個預覽用它的 `sha-<commit>` tag。
+PR 合併之後 `pr-<編號>` 會被刪掉，想看 `backend/main` 累積起來的樣子就開 `preview-backend-main`。
+
 ## 預設帳號（factory 資料）
 
 後端每次啟動都會跑 `scripts/seed_preview.py`（`deploy/stage/backend.Dockerfile`），缺什麼補什麼，
@@ -36,7 +52,7 @@ image 裡沒有 seed 腳本，網站照樣會起來，但**沒有測試帳號**�
 | `teacher002`、`teacher003` | 老師 | 各自擁有空教室 `PREVIEW2`、`PREVIEW3` |
 | `user001`–`user030` | 學生 | `user001`–`user010` 已加入示範課程；`user011` 之後尚未加入任何課程 |
 
-示範課程裡有一個活動「岔道上的選擇」，從第一次 seed 起開放 30 天；課程代碼每個環境不同，看後端啟動 log 的
+示範課程裡有一個活動「岔道上的選擇：主動造成傷害與不作為，在道德上有沒有差別」，從第一次 seed 起開放 30 天；課程代碼每個環境不同，看後端啟動 log 的
 `seed_preview: … demo course <代碼>`，或用 teacher001 登入在首頁看。
 
 用帳號名稱或 `<帳號>@preview.invalid` 都能登入。登入頁會出現「測試帳號」按鈕（老師 `teacher001`、學生 `user001`），

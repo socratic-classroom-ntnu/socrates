@@ -88,6 +88,16 @@ class ScriptView(Strict):
     document: dict[str, Any]
 
 
+class ScriptAssistView(Strict):
+    """POST /scripts/assist: one question suggestion, ready to drop into the draft."""
+
+    question: PublicQuestion
+    question_index: int | None  # the draft question it revises; None when it is a new one
+    rationale: str
+    model: str | None
+    provider: str | None
+
+
 class ScriptAssistRequest(Strict):
     """Teacher's AI-assisted design request against the draft currently in the editor."""
 

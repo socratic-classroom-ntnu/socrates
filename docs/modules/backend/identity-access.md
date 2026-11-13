@@ -11,6 +11,12 @@
 - verification delivery status
 - stable auth reason codes
 
+### 訪客（免註冊加入）
+
+- `POST /auth/guest`（暱稱＋語言）建訪客帳號與 session；`POST /auth/guest/upgrade`（使用者名稱＋email＋密碼，規則與一般註冊相同）讓同一個帳號 id 轉成註冊帳號，和一般註冊一樣要先驗證 Email；被已驗證帳號佔用時回 `USERNAME_TAKEN`／`EMAIL_TAKEN`。
+- 訪客只靠裝置上的 session cookie 定位。`guest_expires_at` 固定是加入那一刻 + 168 小時，有動作也不延長；過了就回 `GUEST_EXPIRED`。`kind` 是 `registered`／`guest`／`expired_guest`（到期後由排程標記，帳號與紀錄保留）。訪客登出只讓 session 失效，不動到期時間與名字。
+- **預設拒絕訪客**：`service.account(...)` 遇到訪客回 `GUEST_NOT_ALLOWED`，學生端點要明確傳 `allow_guest=True`（例：選課、單人活動、分組課）。老師與金鑰相關的端點不傳，訪客就進不去。
+
 ## Toy page
 
 本模組使用既有`frontend/src/features/dev-console/`註冊fixture與操作面板。Toy page與production frontend共用generated client、ViewModel與reason codes。
@@ -39,7 +45,7 @@
 - 交接使用[HANDOFF-TEMPLATE.md](../HANDOFF-TEMPLATE.md)。
 
 <!-- module-map:begin -->
-## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
+## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 端：後端；default owner：後端開發團隊
 - 可依賴的模組：platform
@@ -56,5 +62,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 7 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：POST /api/v2/auth/logout、POST /api/v2/auth/verify、POST /api/v2/auth/verification-email、GET /api/v2/auth/verification-status、POST /api/v2/auth/forgot-password、POST /api/v2/auth/reset-password、POST /api/v2/webhooks/resend
+- 無
 <!-- module-map:end -->

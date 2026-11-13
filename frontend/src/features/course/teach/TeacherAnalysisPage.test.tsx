@@ -17,7 +17,8 @@ type Student = components['schemas']['SoloAnalysisStudentView']
 const student = (index: number, extra: Partial<Student> = {}): Student => ({
   enrollment_id: `e-${index}`,
   display_name: `學生${index}`,
-  changed_from_option_id: null,
+  confirmed_scenarios: 1,
+  current_position: `立場${index}`,
   reason_summary: `理由${index}`,
   relevant_conditions: [],
   ...extra,
@@ -25,31 +26,19 @@ const student = (index: number, extra: Partial<Student> = {}): Student => ({
 
 const analysis: Analysis = {
   activity_id: 'a-1', title: '科技與選擇', course_id: 'c-1', course_name: '科技倫理',
-  status: 'open', question_count: 2, ends_at: 1_800_003_600, generated_at: 1_800_000_000, revision_id: 'r-1',
+  status: 'open', ends_at: 1_800_003_600, generated_at: 1_800_000_000, revision_id: 'r-1',
   summary: { enrolled: 18, started: 18, done: 9, in_progress: 9 },
-  questions: [
-    {
-      index: 0, question_id: 'q-1', title: '岔道上的選擇', confirmed: 14, unconfirmed: 4, changed: 3, comparable: 14,
-      options: [
-        { option_id: 'a', text: '拉下拉桿', count: 6, students: Array.from({ length: 6 }, (_, index) => student(index + 1, index === 0 ? { relevant_conditions: ['不會波及更多人', '沒有其他選擇'] } : {})) },
-        { option_id: 'b', text: '不拉', count: 8, students: [student(7, { changed_from_option_id: 'a', display_name: '小安' })] },
-        { option_id: 'c', text: '其他', count: 0, students: [] },
-      ],
-    },
-    {
-      index: 1, question_id: 'q-2', title: '天橋上的陌生人', confirmed: 0, unconfirmed: 18, changed: 0, comparable: 0,
-      options: [
-        { option_id: 'x', text: '推下去', count: 0, students: [] },
-        { option_id: 'y', text: '不推', count: 0, students: [] },
-      ],
-    },
+  students: [
+    student(1, { confirmed_scenarios: 2, relevant_conditions: ['不會波及更多人', '沒有其他選擇'] }),
+    ...Array.from({ length: 5 }, (_, index) => student(index + 2)),
+    student(7, { confirmed_scenarios: 0, display_name: '還沒確認的人' }),
   ],
 }
 
 function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
-    revision: 1, draft: { title: analysis.title, topic_direction: '', analysis_focus: '', ends_at: analysis.ends_at!, questions: [] },
+    revision: 1, draft: { title: analysis.title, ends_at: analysis.ends_at! },
     starts_at: 1_799_999_000, ends_at: analysis.ends_at, available_actions: actions,
   }
 }
@@ -57,8 +46,8 @@ function activity(actions: Activity['available_actions'] = ['end_now']): Activit
 function progress() {
   return {
     activity_id: analysis.activity_id, title: analysis.title, course_id: analysis.course_id, course_name: analysis.course_name,
-    status: analysis.status, question_count: analysis.question_count, ends_at: analysis.ends_at, generated_at: analysis.generated_at,
-    summary: { enrolled: 18, started: 18, done: 9, unconfirmed_by_question: [4, 18], attention: 0 }, questions: [], students: [],
+    status: analysis.status, ends_at: analysis.ends_at, generated_at: analysis.generated_at,
+    summary: { enrolled: 18, started: 18, done: 9, attention: 0 }, students: [],
   }
 }
 
@@ -104,79 +93,48 @@ test('end early only with end_now action', async () => {
   expect(within(page).queryByRole('button', { name: '提早結束' })).toBeNull()
 })
 
-test('question tabs switch the option list', async () => {
+test('lists the confirmed viewpoint of each student who has one', async () => {
   open()
-  const page = await screen.findByTestId('teacher-analysis-page')
-  expect(within(page).getByRole('button', { name: /A 拉下拉桿/ })).toBeInTheDocument()
-  fireEvent.click(within(page).getByRole('tab', { name: '題目 2 · 天橋上的陌生人' }))
-  expect(within(page).getByRole('button', { name: /A 推下去/ })).toBeInTheDocument()
-  expect(within(page).queryByRole('button', { name: /拉下拉桿/ })).toBeNull()
-})
-
-test('confirmed line states unconfirmed are excluded', async () => {
-  open()
-  expect(await screen.findByText('已確認 14 人 · 另有 4 人還沒確認這一題，不算進任何選項')).toBeInTheDocument()
-})
-
-test('changed stance line shows comparable denominator', async () => {
-  open()
-  expect(await screen.findByText('改變立場 3 人（14 人可比較）')).toBeInTheDocument()
-})
-
-test('option bars show count and percent including empty options', async () => {
-  open()
-  const page = await screen.findByTestId('teacher-analysis-page')
-  expect(within(page).getByRole('button', { name: /A 拉下拉桿 · 6 人 · 43%/ })).toBeInTheDocument()
-  expect(within(page).getByRole('button', { name: /C 其他 · 0 人 · 0%/ })).toBeInTheDocument()
-  fireEvent.click(within(page).getByRole('tab', { name: '題目 2 · 天橋上的陌生人' }))
-  expect(within(page).getByRole('button', { name: /A 推下去 · 0 人 · 0%/ })).toBeInTheDocument()
-})
-
-test('expanding an option lists students with reason and conditions', async () => {
-  open()
-  const button = await screen.findByRole('button', { name: /A 拉下拉桿/ })
-  fireEvent.click(button)
-  expect(button).toHaveAttribute('aria-expanded', 'true')
-  expect(screen.getByText('學生1')).toBeInTheDocument()
-  expect(screen.getByText('理由1')).toBeInTheDocument()
-  expect(screen.getByText('條件：不會波及更多人；沒有其他選擇')).toBeInTheDocument()
-})
-
-test('changed student shows from-to tag by letter', async () => {
-  open()
-  fireEvent.click(await screen.findByRole('button', { name: /B 不拉/ }))
-  expect(screen.getByText('從 A 改為 B')).toBeInTheDocument()
-  expect(screen.getAllByText('從 A 改為 B')).toHaveLength(1)
+  const list = await screen.findByRole('region', { name: '學生確認過的想法' })
+  expect(within(list).getByText('6 人有確認過的想法')).toBeInTheDocument()
+  expect(within(list).getByText('學生1')).toBeInTheDocument()
+  expect(within(list).getByText('已確認 2 個情境')).toBeInTheDocument()
+  expect(within(list).getByText('立場1')).toBeInTheDocument()
+  expect(within(list).getByText('理由1')).toBeInTheDocument()
+  expect(within(list).getByText('條件：不會波及更多人；沒有其他選擇')).toBeInTheDocument()
+  // 還沒確認任何情境的學生沒有可以顯示的想法
+  expect(within(list).queryByText('還沒確認的人')).toBeNull()
 })
 
 test('shows four students then expands to all', async () => {
   open()
-  fireEvent.click(await screen.findByRole('button', { name: /A 拉下拉桿/ }))
-  expect(screen.getByText('學生4')).toBeInTheDocument()
+  expect(await screen.findByText('學生4')).toBeInTheDocument()
   expect(screen.queryByText('學生5')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '看全部 6 人' }))
   expect(screen.getByText('學生5')).toBeInTheDocument()
   expect(screen.getByText('學生6')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /看全部/ })).toBeNull()
+})
+
+test('shows an empty note when nobody has confirmed a viewpoint', async () => {
+  open({ view: { ...analysis, students: [student(1, { confirmed_scenarios: 0 })] } })
+  expect(await screen.findByText('還沒有人確認過想法')).toBeInTheDocument()
 })
 
 test('students are not links', async () => {
   open()
-  fireEvent.click(await screen.findByRole('button', { name: /A 拉下拉桿/ }))
-  const list = screen.getByRole('region', { name: '選擇 A 的學生' })
+  const list = await screen.findByRole('region', { name: '學生確認過的想法' })
   expect(within(list).queryByRole('link')).toBeNull()
 })
 
-test('refreshes every 10 seconds and keeps selection', async () => {
+test('refreshes every 10 seconds and keeps the expanded list', async () => {
   jest.useFakeTimers()
   const calls = open()
   await act(async () => { await Promise.resolve(); await Promise.resolve() })
-  fireEvent.click(screen.getByRole('tab', { name: '題目 2 · 天橋上的陌生人' }))
-  const option = screen.getByRole('button', { name: /A 推下去/ })
-  fireEvent.click(option)
+  fireEvent.click(screen.getByRole('button', { name: '看全部 6 人' }))
   await act(async () => { jest.advanceTimersByTime(10_000); await Promise.resolve() })
   expect(calls.filter(call => call.key === 'GET /solo/activities/a-1/analysis')).toHaveLength(2)
-  expect(screen.getByRole('tab', { name: '題目 2 · 天橋上的陌生人' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.getByRole('button', { name: /A 推下去/ })).toHaveAttribute('aria-expanded', 'true')
+  expect(screen.getByText('學生6')).toBeInTheDocument()
 })
 
 test('demo source shows the sample banner and skips the api', async () => {
@@ -188,8 +146,11 @@ test('demo source shows the sample banner and skips the api', async () => {
 test.each(['en' as const, 'es' as const])('%s contains no Chinese interface text', async locale => {
   open({ locale, view: {
     ...analysis, title: 'Technology and Choice', course_name: 'Technology Ethics',
-    questions: analysis.questions.map((question, index) => ({ ...question, title: index ? 'Bridge' : 'Trolley', options: question.options.map(option => ({ ...option, text: option.option_id })) })),
+    students: analysis.students.map(item => ({
+      ...item, display_name: `Student ${item.enrollment_id}`, current_position: 'Position', reason_summary: 'Reason',
+      relevant_conditions: item.relevant_conditions.map(() => 'Condition'),
+    })),
   } })
   const page = await screen.findByTestId('teacher-analysis-page')
-  expect(page.textContent).not.toMatch(/[\u3400-\u9fff]/)
+  expect(page.textContent).not.toMatch(/[㐀-鿿]/)
 })

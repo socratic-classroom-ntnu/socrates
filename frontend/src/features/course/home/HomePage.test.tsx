@@ -17,7 +17,7 @@ const teaching = {
   student_count: 35, activity_count: 3, open_activity_count: 1,
 }
 const highlight = (status: 'open' | 'scheduled' | 'ended', title = '第三週倫理討論') => ({
-  id: 'a-1', title, status, question_count: 2, starts_at: now - 60, ends_at: now + 3600,
+  id: 'a-1', title, status, starts_at: now - 60, ends_at: now + 3600,
 })
 const learning = (extra: Record<string, unknown> = {}) => ({
   id: 'c-1', name: '哲學導論', teacher_name: '王思齊', open_activity_count: 1, highlight: highlight('open'), ...extra,
@@ -197,7 +197,7 @@ test('learning card shows highlight by status', async () => {
   const card = async (name: string) => (await screen.findByRole('link', { name })).closest('article') as HTMLElement
   expect(await card('哲學導論')).toHaveTextContent('進行中')
   expect(await card('哲學導論')).toHaveTextContent('第三週倫理討論')
-  expect(await card('哲學導論')).toHaveTextContent('2 題 ・ 開放到')
+  expect(await card('哲學導論')).toHaveTextContent('開放到')
   expect(await card('排程課')).toHaveTextContent('下一個：器官該分給誰？')
   expect(await card('排程課')).toHaveTextContent('開放')
   expect(await card('排程課')).toHaveTextContent('沒有進行中的活動')

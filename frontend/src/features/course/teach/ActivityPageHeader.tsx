@@ -10,7 +10,7 @@ import { useT } from '../../../i18n/useT'
 import { Button, ButtonLink, FormError, StatusPill } from '../../../ui'
 
 type Activity = Pick<components['schemas']['SoloActivityProgressView'],
-  'activity_id' | 'title' | 'course_id' | 'course_name' | 'status' | 'question_count' | 'ends_at'>
+  'activity_id' | 'title' | 'course_id' | 'course_name' | 'status' | 'ends_at'>
 type ActivityView = components['schemas']['ActivityTeacherView']
 
 export function ActivityPageHeader({ activity, current, onEnded }: {
@@ -23,10 +23,9 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
   const [confirmEnd, setConfirmEnd] = useState(false)
   const [working, setWorking] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const questions = t('live.questions', { count: activity.question_count })
   const meta = activity.ends_at === null
-    ? t('live.metaNoEnd', { questions })
-    : t('live.meta', { questions, end: formatDateTime(activity.ends_at, locale, 'weekdayDateTime') })
+    ? t('live.metaNoEnd')
+    : t('live.meta', { end: formatDateTime(activity.ends_at, locale, 'weekdayDateTime') })
   const canEnd = detail.data?.available_actions.includes('end_now') ?? false
 
   async function endActivity() {

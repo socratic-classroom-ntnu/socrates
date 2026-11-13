@@ -1,6 +1,57 @@
 {
   "components": {
     "schemas": {
+      "AISettingsView": {
+        "additionalProperties": false,
+        "properties": {
+          "budgets": {
+            "title": "Budgets",
+            "type": "object"
+          },
+          "default_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Profile Id"
+          },
+          "fallback_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Profile Id"
+          },
+          "model_matrix": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Model Matrix",
+            "type": "object"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "default_profile_id",
+          "fallback_profile_id",
+          "model_matrix",
+          "budgets",
+          "revision"
+        ],
+        "title": "AISettingsView",
+        "type": "object"
+      },
       "AIStudentCreatedView": {
         "additionalProperties": false,
         "properties": {
@@ -78,8 +129,29 @@
             "title": "Email Masked",
             "type": "string"
           },
+          "guest_expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Expires At"
+          },
           "id": {
             "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "registered",
+            "enum": [
+              "guest",
+              "expired_guest",
+              "registered"
+            ],
+            "title": "Kind",
             "type": "string"
           },
           "locale": {
@@ -168,26 +240,11 @@
       },
       "ActivityDraft": {
         "additionalProperties": false,
-        "description": "Complete but unpublished content; incomplete drafts are rejected, never stored.",
+        "description": "The teacher's single input: one text that is both the activity name and the material the\nfirst scenario is written from. Incomplete drafts are rejected, never stored.",
         "properties": {
-          "analysis_focus": {
-            "default": "",
-            "maxLength": 4000,
-            "title": "Analysis Focus",
-            "type": "string"
-          },
           "ends_at": {
             "title": "Ends At",
             "type": "number"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/QuestionDraft"
-            },
-            "maxItems": 30,
-            "minItems": 1,
-            "title": "Questions",
-            "type": "array"
           },
           "starts_at": {
             "anyOf": [
@@ -205,19 +262,11 @@
             "minLength": 1,
             "title": "Title",
             "type": "string"
-          },
-          "topic_direction": {
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Topic Direction",
-            "type": "string"
           }
         },
         "required": [
           "title",
-          "topic_direction",
-          "ends_at",
-          "questions"
+          "ends_at"
         ],
         "title": "ActivityDraft",
         "type": "object"
@@ -265,10 +314,6 @@
             "title": "Ends At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "starts_at": {
             "title": "Starts At",
             "type": "number"
@@ -297,7 +342,6 @@
           "course_id",
           "course_name",
           "teacher_name",
-          "question_count",
           "starts_at",
           "ends_at",
           "status",
@@ -331,29 +375,6 @@
         "title": "ActivityJoinResult",
         "type": "object"
       },
-      "ActivityOption": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Id",
-            "type": "string"
-          },
-          "text": {
-            "maxLength": 2000,
-            "minLength": 1,
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "text"
-        ],
-        "title": "ActivityOption",
-        "type": "object"
-      },
       "ActivityStudentCard": {
         "additionalProperties": false,
         "properties": {
@@ -364,10 +385,6 @@
           "id": {
             "title": "Id",
             "type": "string"
-          },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
           },
           "starts_at": {
             "title": "Starts At",
@@ -391,7 +408,6 @@
           "id",
           "title",
           "status",
-          "question_count",
           "starts_at",
           "ends_at"
         ],
@@ -463,10 +479,6 @@
             "title": "Locked",
             "type": "boolean"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "starts_at": {
             "anyOf": [
               {
@@ -499,7 +511,6 @@
           "status",
           "locked",
           "has_unpublished_changes",
-          "question_count",
           "starts_at",
           "ends_at",
           "available_actions"
@@ -709,6 +720,300 @@
           "roster_digest"
         ],
         "title": "AddAIStudentsReceipt",
+        "type": "object"
+      },
+      "AnalysisEdgeView": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "enum": [
+              "student_selected_relation",
+              "confirmation_snapshot"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "supports",
+              "challenges",
+              "qualifies",
+              "revises"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "type",
+          "provenance"
+        ],
+        "title": "AnalysisEdgeView",
+        "type": "object"
+      },
+      "AnalysisGroupView": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisEdgeView"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisNodeView"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "persons": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisPersonView"
+            },
+            "title": "Persons",
+            "type": "array"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "roots": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roots",
+            "type": "array"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/SettlementView"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/GroupStanceView"
+            },
+            "title": "Stances",
+            "type": "array"
+          },
+          "tree_projection": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisTreeNodeView"
+            },
+            "title": "Tree Projection",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "phase",
+          "snapshot_id",
+          "settlement",
+          "persons",
+          "nodes",
+          "edges",
+          "tree_projection",
+          "roots",
+          "stances"
+        ],
+        "title": "AnalysisGroupView",
+        "type": "object"
+      },
+      "AnalysisNodeView": {
+        "additionalProperties": false,
+        "description": "One attributed original quote (a group argument) with its author pseudonymised.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "statement",
+              "post_ack_observation",
+              "confirmed_viewpoint"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "nickname": {
+            "title": "Nickname",
+            "type": "string"
+          },
+          "person_id": {
+            "title": "Person Id",
+            "type": "string"
+          },
+          "provenance": {
+            "enum": [
+              "student_original_quote",
+              "student_explicit_confirmation"
+            ],
+            "title": "Provenance",
+            "type": "string"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "summary_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Digest"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "enum": [
+                  "personal",
+                  "stage",
+                  "group_shared"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          }
+        },
+        "required": [
+          "id",
+          "person_id",
+          "nickname",
+          "text",
+          "at",
+          "sequence",
+          "stage",
+          "question_index",
+          "kind",
+          "provenance"
+        ],
+        "title": "AnalysisNodeView",
+        "type": "object"
+      },
+      "AnalysisPersonView": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmation_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmation Digest"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "nickname": {
+            "title": "Nickname",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisNodeView"
+            },
+            "title": "Timeline",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "nickname",
+          "confirmed",
+          "confirmation_digest",
+          "timeline"
+        ],
+        "title": "AnalysisPersonView",
+        "type": "object"
+      },
+      "AnalysisTreeNodeView": {
+        "additionalProperties": false,
+        "properties": {
+          "cross_references": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisEdgeView"
+            },
+            "title": "Cross References",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          }
+        },
+        "required": [
+          "id",
+          "parent",
+          "cross_references"
+        ],
+        "title": "AnalysisTreeNodeView",
         "type": "object"
       },
       "AttachScript": {
@@ -1044,6 +1349,79 @@
         "title": "BankUnpublishResult",
         "type": "object"
       },
+      "ChartSemanticsView": {
+        "additionalProperties": false,
+        "properties": {
+          "graph": {
+            "title": "Graph",
+            "type": "string"
+          },
+          "heatmap": {
+            "title": "Heatmap",
+            "type": "string"
+          },
+          "sankey": {
+            "title": "Sankey",
+            "type": "string"
+          },
+          "sunburst": {
+            "title": "Sunburst",
+            "type": "string"
+          },
+          "timeline": {
+            "title": "Timeline",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sunburst",
+          "sankey",
+          "graph",
+          "heatmap",
+          "timeline"
+        ],
+        "title": "ChartSemanticsView",
+        "type": "object"
+      },
+      "CitationSourceView": {
+        "additionalProperties": false,
+        "description": "One exact quote from a student message, located at its first exact occurrence.\n\nOffsets index the exact ``SoloMessageView.text`` returned by the API. They are not Unicode\ncode-point or grapheme-cluster offsets.",
+        "properties": {
+          "end": {
+            "description": "Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote.",
+            "minimum": 1.0,
+            "title": "End",
+            "type": "integer"
+          },
+          "message_id": {
+            "description": "ID of the student message whose exact text contains quote.",
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "quote": {
+            "description": "Exact, unnormalised substring of the referenced SoloMessageView.text.",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "start": {
+            "description": "Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text.",
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "message_id",
+          "quote",
+          "start",
+          "end"
+        ],
+        "title": "CitationSourceView",
+        "type": "object"
+      },
       "ClassroomAISettingsView": {
         "additionalProperties": false,
         "properties": {
@@ -1375,6 +1753,56 @@
           "summary_digest"
         ],
         "title": "ConfirmViewpointBody",
+        "type": "object"
+      },
+      "ConnectionTestView": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "model_count": {
+            "title": "Model Count",
+            "type": "integer"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profile_id": {
+            "title": "Provider Profile Id",
+            "type": "string"
+          },
+          "sample": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveredModel"
+            },
+            "title": "Sample",
+            "type": "array"
+          },
+          "status": {
+            "const": "READY",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "provider_profile_id",
+          "adapter",
+          "model_count",
+          "sample",
+          "observed_at"
+        ],
+        "title": "ConnectionTestView",
         "type": "object"
       },
       "CourseCreate": {
@@ -1948,6 +2376,68 @@
         "title": "DemoLoginView",
         "type": "object"
       },
+      "DiscoveredModel": {
+        "additionalProperties": false,
+        "description": "One model a provider lists. pricing is the provider's own shape, and only OpenAI-style\nlistings send it; the routes exclude unset fields, so it stays absent rather than null.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "pricing": {
+            "title": "Pricing"
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning"
+          },
+          "structured_outputs": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Outputs"
+          },
+          "supported_parameters": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Parameters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "supported_parameters",
+          "structured_outputs",
+          "reasoning"
+        ],
+        "title": "DiscoveredModel",
+        "type": "object"
+      },
       "GroupActionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -1981,6 +2471,55 @@
           "seq"
         ],
         "title": "GroupActionReceipt",
+        "type": "object"
+      },
+      "GroupAnalysisView": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "const": "attributed_original_quotes",
+            "title": "Basis",
+            "type": "string"
+          },
+          "chart_semantics": {
+            "$ref": "#/components/schemas/ChartSemanticsView"
+          },
+          "classroom_id": {
+            "title": "Classroom Id",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisGroupView"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "identity": {
+            "const": "nickname_and_classroom_scoped_pseudonym",
+            "title": "Identity",
+            "type": "string"
+          },
+          "schema": {
+            "const": "socrates/group-analysis/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "classroom_id",
+          "title",
+          "groups",
+          "basis",
+          "identity",
+          "chart_semantics"
+        ],
+        "title": "GroupAnalysisView",
         "type": "object"
       },
       "GroupCollectionView": {
@@ -2430,6 +2969,83 @@
         "title": "GroupRunView",
         "type": "object"
       },
+      "GroupStanceView": {
+        "additionalProperties": false,
+        "description": "One question run's stance distribution in a group; counts only, no identities.",
+        "properties": {
+          "basis": {
+            "const": "personal_baseline",
+            "title": "Basis",
+            "type": "string"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "integer"
+          },
+          "differing": {
+            "title": "Differing",
+            "type": "boolean"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/StanceOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "question_id": {
+            "title": "Question Id",
+            "type": "string"
+          },
+          "question_index": {
+            "title": "Question Index",
+            "type": "integer"
+          },
+          "question_title": {
+            "title": "Question Title",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_phase": {
+            "title": "Run Phase",
+            "type": "string"
+          },
+          "unconfirmed": {
+            "title": "Unconfirmed",
+            "type": "integer"
+          },
+          "unconfirmed_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Unconfirmed By Status",
+            "type": "object"
+          }
+        },
+        "required": [
+          "question_index",
+          "question_id",
+          "question_title",
+          "run_id",
+          "run_phase",
+          "basis",
+          "members",
+          "confirmed",
+          "unconfirmed",
+          "unconfirmed_by_status",
+          "options",
+          "differing"
+        ],
+        "title": "GroupStanceView",
+        "type": "object"
+      },
       "GroupStartReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -2476,6 +3092,66 @@
           "snapshot_id"
         ],
         "title": "GroupStartReceipt",
+        "type": "object"
+      },
+      "GuestJoin": {
+        "additionalProperties": false,
+        "description": "Joining without registering: a nickname shown to the class and the interface language.",
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestJoin",
+        "type": "object"
+      },
+      "GuestUpgrade": {
+        "additionalProperties": false,
+        "description": "A guest registering keeps its account id; it sends exactly what a registration does.",
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 32,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 32,
+            "minLength": 3,
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$",
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "password"
+        ],
+        "title": "GuestUpgrade",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -2743,6 +3419,27 @@
         "title": "MailRequest",
         "type": "object"
       },
+      "MailRequestView": {
+        "additionalProperties": false,
+        "description": "POST /auth/forgot-password: the same answer whether or not the email has an account, so\nthe endpoint cannot be used to learn which emails are registered.",
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "const": "REQUEST_RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "MailRequestView",
+        "type": "object"
+      },
       "MemberView": {
         "additionalProperties": false,
         "properties": {
@@ -2819,6 +3516,50 @@
           "achievements"
         ],
         "title": "MemberView",
+        "type": "object"
+      },
+      "ModelDiscoveryView": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "manual_model_id_allowed": {
+            "title": "Manual Model Id Allowed",
+            "type": "boolean"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/DiscoveredModel"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profile_id": {
+            "title": "Provider Profile Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_profile_id",
+          "adapter",
+          "models",
+          "manual_model_id_allowed",
+          "observed_at"
+        ],
+        "title": "ModelDiscoveryView",
         "type": "object"
       },
       "Option": {
@@ -2952,6 +3693,21 @@
         "title": "OtherSuggestionView",
         "type": "object"
       },
+      "PasswordResetView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "PASSWORD_RESET",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "PasswordResetView",
+        "type": "object"
+      },
       "PersonalSummaryView": {
         "additionalProperties": false,
         "properties": {
@@ -2975,6 +3731,13 @@
             "title": "Relevant Conditions",
             "type": "array"
           },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
           "unresolved_issue": {
             "title": "Unresolved Issue",
             "type": "string"
@@ -2987,6 +3750,140 @@
           "unresolved_issue"
         ],
         "title": "PersonalSummaryView",
+        "type": "object"
+      },
+      "ProfileDeletedView": {
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "DELETED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "profile_id"
+        ],
+        "title": "ProfileDeletedView",
+        "type": "object"
+      },
+      "ProfileView": {
+        "additionalProperties": false,
+        "description": "A provider profile as its owner sees it; the credential itself never leaves the server.",
+        "properties": {
+          "adapter": {
+            "enum": [
+              "openrouter",
+              "openai",
+              "anthropic",
+              "gemini",
+              "openai-compatible"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "credential_mode": {
+            "enum": [
+              "PERSISTENT",
+              "SESSION"
+            ],
+            "title": "Credential Mode",
+            "type": "string"
+          },
+          "default_model": {
+            "title": "Default Model",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "has_credential": {
+            "title": "Has Credential",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "metadata": {
+            "title": "Metadata",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "secret_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret Last4"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "adapter",
+          "base_url",
+          "organization",
+          "project",
+          "default_model",
+          "credential_mode",
+          "has_credential",
+          "secret_last4",
+          "enabled",
+          "metadata",
+          "updated_at"
+        ],
+        "title": "ProfileView",
         "type": "object"
       },
       "PublicConfigView": {
@@ -3305,52 +4202,6 @@
         "title": "Question",
         "type": "object"
       },
-      "QuestionDraft": {
-        "additionalProperties": false,
-        "properties": {
-          "follow_up_direction": {
-            "default": "",
-            "maxLength": 2000,
-            "title": "Follow Up Direction",
-            "type": "string"
-          },
-          "id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Id",
-            "type": "string"
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/ActivityOption"
-            },
-            "maxItems": 4,
-            "minItems": 2,
-            "title": "Options",
-            "type": "array"
-          },
-          "scenario": {
-            "maxLength": 12000,
-            "minLength": 1,
-            "title": "Scenario",
-            "type": "string"
-          },
-          "title": {
-            "maxLength": 300,
-            "minLength": 1,
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "scenario",
-          "options"
-        ],
-        "title": "QuestionDraft",
-        "type": "object"
-      },
       "Reaction": {
         "additionalProperties": false,
         "properties": {
@@ -3389,6 +4240,32 @@
         "title": "Reaction",
         "type": "object"
       },
+      "ReadinessView": {
+        "properties": {
+          "database": {
+            "const": "connected",
+            "title": "Database",
+            "type": "string"
+          },
+          "runtime": {
+            "const": "classroom",
+            "title": "Runtime",
+            "type": "string"
+          },
+          "status": {
+            "const": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database",
+          "runtime"
+        ],
+        "title": "ReadinessView",
+        "type": "object"
+      },
       "Register": {
         "additionalProperties": false,
         "properties": {
@@ -3420,6 +4297,37 @@
         "title": "Register",
         "type": "object"
       },
+      "ResendWebhookView": {
+        "additionalProperties": false,
+        "properties": {
+          "matched": {
+            "title": "Matched",
+            "type": "boolean"
+          },
+          "provider_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Status"
+          },
+          "status": {
+            "const": "RECORDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "matched"
+        ],
+        "title": "ResendWebhookView",
+        "type": "object"
+      },
       "ResetRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3440,6 +4348,57 @@
           "password"
         ],
         "title": "ResetRequest",
+        "type": "object"
+      },
+      "RevisionView": {
+        "additionalProperties": false,
+        "description": "GET /meta/revision: which build is running, for support and deploy checks.",
+        "properties": {
+          "classroom_owner_routing": {
+            "title": "Classroom Owner Routing",
+            "type": "boolean"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "feature_revision": {
+            "title": "Feature Revision",
+            "type": "integer"
+          },
+          "observed_at": {
+            "title": "Observed At",
+            "type": "number"
+          },
+          "provider_profiles": {
+            "title": "Provider Profiles",
+            "type": "boolean"
+          },
+          "schema": {
+            "const": "socrates/revision/v1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "source_sha": {
+            "title": "Source Sha",
+            "type": "string"
+          },
+          "worktree_sha256": {
+            "title": "Worktree Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "source_sha",
+          "worktree_sha256",
+          "environment",
+          "feature_revision",
+          "provider_profiles",
+          "classroom_owner_routing",
+          "observed_at"
+        ],
+        "title": "RevisionView",
         "type": "object"
       },
       "RoomBudgetView": {
@@ -3895,6 +4854,61 @@
         "title": "ScriptAssistRequest",
         "type": "object"
       },
+      "ScriptAssistView": {
+        "additionalProperties": false,
+        "description": "POST /scripts/assist: one question suggestion, ready to drop into the draft.",
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "question": {
+            "$ref": "#/components/schemas/PublicQuestion"
+          },
+          "question_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Index"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "question_index",
+          "rationale",
+          "model",
+          "provider"
+        ],
+        "title": "ScriptAssistView",
+        "type": "object"
+      },
       "ScriptDocument": {
         "additionalProperties": false,
         "properties": {
@@ -4019,19 +5033,6 @@
       "SendMessageBody": {
         "additionalProperties": false,
         "properties": {
-          "new_option_id": {
-            "anyOf": [
-              {
-                "maxLength": 64,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "New Option Id"
-          },
           "revise_hint": {
             "anyOf": [
               {
@@ -4122,6 +5123,159 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SettlementView": {
+        "additionalProperties": false,
+        "description": "The group's settlement latch; later states add their fields to the earlier ones.",
+        "properties": {
+          "end_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "final_stage_complete",
+                  "teacher_force_end"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "ended_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "system",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended By"
+          },
+          "final_stage_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Stage Count"
+          },
+          "incomplete_members": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Incomplete Members"
+          },
+          "latched_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latched At"
+          },
+          "latched_phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latched Phase"
+          },
+          "member_status": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "enum": [
+                    "confirmed",
+                    "incomplete"
+                  ],
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Member Status"
+          },
+          "settled_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settled At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "enum": [
+              "EXPLORING",
+              "CURRENT_PHASE_FINISHING",
+              "FINAL_STAGE",
+              "SETTLED"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "SettlementView",
+        "type": "object"
+      },
+      "SignedOutView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "SIGNED_OUT",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "SignedOutView",
+        "type": "object"
+      },
       "SoloActivityAnalysisView": {
         "additionalProperties": false,
         "properties": {
@@ -4152,17 +5306,6 @@
             "title": "Generated At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "revision_id": {
             "anyOf": [
               {
@@ -4184,6 +5327,13 @@
             "title": "Status",
             "type": "string"
           },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloAnalysisStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
           "summary": {
             "$ref": "#/components/schemas/SoloAnalysisSummaryView"
           },
@@ -4198,12 +5348,11 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "generated_at",
           "revision_id",
           "summary",
-          "questions"
+          "students"
         ],
         "title": "SoloActivityAnalysisView",
         "type": "object"
@@ -4238,17 +5387,6 @@
             "title": "Generated At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloProgressQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "status": {
             "enum": [
               "draft",
@@ -4280,10 +5418,8 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "generated_at",
-          "questions",
           "summary",
           "students"
         ],
@@ -4319,10 +5455,6 @@
             "title": "Ends At",
             "type": "number"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
           "status": {
             "enum": [
               "scheduled",
@@ -4343,110 +5475,22 @@
           "course_id",
           "course_name",
           "status",
-          "question_count",
           "ends_at",
           "attempt"
         ],
         "title": "SoloActivityView",
         "type": "object"
       },
-      "SoloAnalysisOptionView": {
-        "additionalProperties": false,
-        "properties": {
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          },
-          "option_id": {
-            "title": "Option Id",
-            "type": "string"
-          },
-          "students": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisStudentView"
-            },
-            "title": "Students",
-            "type": "array"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "text",
-          "count",
-          "students"
-        ],
-        "title": "SoloAnalysisOptionView",
-        "type": "object"
-      },
-      "SoloAnalysisQuestionView": {
-        "additionalProperties": false,
-        "properties": {
-          "changed": {
-            "title": "Changed",
-            "type": "integer"
-          },
-          "comparable": {
-            "title": "Comparable",
-            "type": "integer"
-          },
-          "confirmed": {
-            "title": "Confirmed",
-            "type": "integer"
-          },
-          "index": {
-            "title": "Index",
-            "type": "integer"
-          },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/SoloAnalysisOptionView"
-            },
-            "title": "Options",
-            "type": "array"
-          },
-          "question_id": {
-            "title": "Question Id",
-            "type": "string"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          },
-          "unconfirmed": {
-            "title": "Unconfirmed",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "index",
-          "question_id",
-          "title",
-          "confirmed",
-          "unconfirmed",
-          "changed",
-          "comparable",
-          "options"
-        ],
-        "title": "SoloAnalysisQuestionView",
-        "type": "object"
-      },
       "SoloAnalysisStudentView": {
         "additionalProperties": false,
         "properties": {
-          "changed_from_option_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Changed From Option Id"
+          "confirmed_scenarios": {
+            "title": "Confirmed Scenarios",
+            "type": "integer"
+          },
+          "current_position": {
+            "title": "Current Position",
+            "type": "string"
           },
           "display_name": {
             "title": "Display Name",
@@ -4471,7 +5515,8 @@
         "required": [
           "enrollment_id",
           "display_name",
-          "changed_from_option_id",
+          "confirmed_scenarios",
+          "current_position",
           "reason_summary",
           "relevant_conditions"
         ],
@@ -4520,14 +5565,10 @@
           },
           "progress": {
             "items": {
-              "$ref": "#/components/schemas/SoloQuestionProgressView"
+              "$ref": "#/components/schemas/SoloScenarioProgressView"
             },
             "title": "Progress",
             "type": "array"
-          },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
           },
           "review_status": {
             "enum": [
@@ -4537,14 +5578,18 @@
             "title": "Review Status",
             "type": "string"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
           "state": {
             "enum": [
-              "choosing_stance",
+              "answering",
               "awaiting_tutor",
               "tutor_unavailable",
               "in_dialogue",
               "confirming",
-              "between_questions",
+              "between_scenarios",
               "reviewing",
               "awaiting_reflection_prompt",
               "reflecting",
@@ -4558,7 +5603,7 @@
         "required": [
           "id",
           "state",
-          "question_index",
+          "scenario_index",
           "progress",
           "review_status",
           "current_turn"
@@ -4580,12 +5625,11 @@
           "available_actions": {
             "items": {
               "enum": [
-                "submit_stance",
                 "send_message",
                 "retry",
                 "confirm_viewpoint",
                 "revise_viewpoint",
-                "next_question",
+                "next_scenario",
                 "submit_review",
                 "retry_reflection_prompt",
                 "continue_reflection",
@@ -4661,21 +5705,6 @@
             ],
             "title": "Principle Hint"
           },
-          "question_count": {
-            "title": "Question Count",
-            "type": "integer"
-          },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
-          },
-          "questions": {
-            "items": {
-              "$ref": "#/components/schemas/SoloQuestionView"
-            },
-            "title": "Questions",
-            "type": "array"
-          },
           "rejected_summary": {
             "anyOf": [
               {
@@ -4690,14 +5719,25 @@
             "title": "Revising",
             "type": "boolean"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/SoloScenarioView"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
           "state": {
             "enum": [
-              "choosing_stance",
+              "answering",
               "awaiting_tutor",
               "tutor_unavailable",
               "in_dialogue",
               "confirming",
-              "between_questions",
+              "between_scenarios",
               "reviewing",
               "awaiting_reflection_prompt",
               "reflecting",
@@ -4727,9 +5767,8 @@
           "course_name",
           "display_name",
           "state",
-          "question_index",
-          "question_count",
-          "questions",
+          "scenario_index",
+          "scenarios",
           "messages",
           "candidate_summary",
           "summary_digest",
@@ -4772,10 +5811,6 @@
             ],
             "title": "Move"
           },
-          "question_index": {
-            "title": "Question Index",
-            "type": "integer"
-          },
           "revise_hint": {
             "anyOf": [
               {
@@ -4801,6 +5836,10 @@
             "title": "Role",
             "type": "string"
           },
+          "scenario_index": {
+            "title": "Scenario Index",
+            "type": "integer"
+          },
           "text": {
             "title": "Text",
             "type": "string"
@@ -4808,7 +5847,7 @@
         },
         "required": [
           "id",
-          "question_index",
+          "scenario_index",
           "role",
           "text",
           "created_at",
@@ -4818,32 +5857,12 @@
         "title": "SoloMessageView",
         "type": "object"
       },
-      "SoloOptionView": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "text"
-        ],
-        "title": "SoloOptionView",
-        "type": "object"
-      },
       "SoloProgressCellView": {
         "additionalProperties": false,
         "properties": {
           "status": {
             "enum": [
-              "not_started",
-              "choosing_stance",
+              "answering",
               "in_dialogue",
               "confirming",
               "confirmed"
@@ -4870,25 +5889,6 @@
         "title": "SoloProgressCellView",
         "type": "object"
       },
-      "SoloProgressQuestionView": {
-        "additionalProperties": false,
-        "properties": {
-          "index": {
-            "title": "Index",
-            "type": "integer"
-          },
-          "title": {
-            "title": "Title",
-            "type": "string"
-          }
-        },
-        "required": [
-          "index",
-          "title"
-        ],
-        "title": "SoloProgressQuestionView",
-        "type": "object"
-      },
       "SoloProgressSummaryView": {
         "additionalProperties": false,
         "properties": {
@@ -4907,53 +5907,69 @@
           "started": {
             "title": "Started",
             "type": "integer"
-          },
-          "unconfirmed_by_question": {
-            "items": {
-              "type": "integer"
-            },
-            "title": "Unconfirmed By Question",
-            "type": "array"
           }
         },
         "required": [
           "enrolled",
           "started",
           "done",
-          "unconfirmed_by_question",
           "attention"
         ],
         "title": "SoloProgressSummaryView",
         "type": "object"
       },
-      "SoloQuestionProgressView": {
+      "SoloScenarioChangeView": {
+        "additionalProperties": false,
+        "description": "The one condition a written scenario changed, shown as before → after.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "string"
+          },
+          "before": {
+            "title": "Before",
+            "type": "string"
+          },
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "condition",
+          "before",
+          "after"
+        ],
+        "title": "SoloScenarioChangeView",
+        "type": "object"
+      },
+      "SoloScenarioProgressView": {
         "additionalProperties": false,
         "properties": {
           "index": {
             "title": "Index",
             "type": "integer"
           },
-          "option_label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Option Label"
-          },
           "status": {
             "enum": [
-              "not_started",
               "in_dialogue",
               "confirmed"
             ],
             "title": "Status",
             "type": "string"
-          },
-          "title": {
+          }
+        },
+        "required": [
+          "index",
+          "status"
+        ],
+        "title": "SoloScenarioProgressView",
+        "type": "object"
+      },
+      "SoloScenarioView": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
             "anyOf": [
               {
                 "type": "string"
@@ -4962,21 +5978,18 @@
                 "type": "null"
               }
             ],
-            "title": "Title"
-          }
-        },
-        "required": [
-          "index",
-          "status",
-          "title",
-          "option_label"
-        ],
-        "title": "SoloQuestionProgressView",
-        "type": "object"
-      },
-      "SoloQuestionView": {
-        "additionalProperties": false,
-        "properties": {
+            "title": "Answer"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloScenarioChangeView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "confirmed_summary": {
             "anyOf": [
               {
@@ -4995,27 +6008,6 @@
             "title": "Index",
             "type": "integer"
           },
-          "options": {
-            "items": {
-              "$ref": "#/components/schemas/SoloOptionView"
-            },
-            "title": "Options",
-            "type": "array"
-          },
-          "scenario": {
-            "title": "Scenario",
-            "type": "string"
-          },
-          "stance": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SoloStanceView"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "status": {
             "enum": [
               "in_progress",
@@ -5024,46 +6016,21 @@
             "title": "Status",
             "type": "string"
           },
-          "title": {
-            "title": "Title",
+          "text": {
+            "title": "Text",
             "type": "string"
           }
         },
         "required": [
           "index",
           "id",
-          "title",
-          "scenario",
-          "options",
-          "stance",
+          "text",
+          "change",
+          "answer",
           "status",
           "confirmed_summary"
         ],
-        "title": "SoloQuestionView",
-        "type": "object"
-      },
-      "SoloStanceView": {
-        "additionalProperties": false,
-        "properties": {
-          "current_option_id": {
-            "title": "Current Option Id",
-            "type": "string"
-          },
-          "option_id": {
-            "title": "Option Id",
-            "type": "string"
-          },
-          "reason": {
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "current_option_id",
-          "reason"
-        ],
-        "title": "SoloStanceView",
+        "title": "SoloScenarioView",
         "type": "object"
       },
       "SoloStudentProgressView": {
@@ -5129,6 +6096,35 @@
         "title": "SoloStudentProgressView",
         "type": "object"
       },
+      "StanceOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          },
+          "percent": {
+            "title": "Percent",
+            "type": "number"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id",
+          "text",
+          "count",
+          "percent"
+        ],
+        "title": "StanceOptionView",
+        "type": "object"
+      },
       "Start": {
         "additionalProperties": false,
         "properties": {
@@ -5154,29 +6150,6 @@
           "expected_roster_digest"
         ],
         "title": "Start",
-        "type": "object"
-      },
-      "SubmitStanceBody": {
-        "additionalProperties": false,
-        "properties": {
-          "option_id": {
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Option Id",
-            "type": "string"
-          },
-          "reason": {
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Reason",
-            "type": "string"
-          }
-        },
-        "required": [
-          "option_id",
-          "reason"
-        ],
-        "title": "SubmitStanceBody",
         "type": "object"
       },
       "TokenRequest": {
@@ -5329,6 +6302,40 @@
           "expires_at"
         ],
         "title": "VerificationDelivery",
+        "type": "object"
+      },
+      "VerificationMailView": {
+        "additionalProperties": false,
+        "description": "POST /auth/verification-email: the signed-in account's own verification mail.",
+        "properties": {
+          "delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "REQUEST_RECORDED",
+              "ALREADY_VERIFIED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "VerificationMailView",
         "type": "object"
       },
       "VerificationStatusDelivery": {
@@ -5485,6 +6492,21 @@
           "delivery"
         ],
         "title": "VerificationStatusView",
+        "type": "object"
+      },
+      "VerifiedView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "VERIFIED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "VerifiedView",
         "type": "object"
       }
     }
@@ -5949,7 +6971,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -5973,7 +6997,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AISettingsView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6009,7 +7035,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MailRequestView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6026,6 +7054,82 @@
           }
         },
         "summary": "Forgot"
+      }
+    },
+    "/api/v2/auth/guest": {
+      "post": {
+        "operationId": "join_as_guest_api_v2_auth_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Join As Guest"
+      }
+    },
+    "/api/v2/auth/guest/upgrade": {
+      "post": {
+        "operationId": "upgrade_guest_api_v2_auth_guest_upgrade_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestUpgrade"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upgrade Guest"
       }
     },
     "/api/v2/auth/login": {
@@ -6073,7 +7177,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6155,7 +7261,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6191,7 +7299,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationMailView"
+                }
               }
             },
             "description": "Successful Response"
@@ -6245,7 +7355,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/VerifiedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -7495,7 +8607,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/GroupAnalysisView"
+                }
               }
             },
             "description": "Successful Response"
@@ -7997,7 +9111,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8013,7 +9129,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileView"
+                  },
+                  "title": "Response List Profiles Api V2 Provider Profiles Get",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -8037,7 +9159,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8074,7 +9198,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileDeletedView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8119,7 +9245,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8166,7 +9294,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8203,7 +9333,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDiscoveryView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8240,7 +9372,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8284,7 +9418,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8330,7 +9466,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8366,7 +9504,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptAssistView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8392,7 +9532,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8447,7 +9589,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptView"
+                }
               }
             },
             "description": "Successful Response"
@@ -8540,8 +9684,10 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
+              "application/yaml": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "description": "Successful Response"
@@ -8789,12 +9935,11 @@
             "required": true,
             "schema": {
               "enum": [
-                "submit_stance",
                 "send_message",
                 "retry",
                 "confirm_viewpoint",
                 "revise_viewpoint",
-                "next_question",
+                "next_scenario",
                 "submit_review",
                 "retry_reflection_prompt",
                 "continue_reflection",
@@ -8811,9 +9956,6 @@
             "application/json": {
               "schema": {
                 "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/SubmitStanceBody"
-                  },
                   {
                     "$ref": "#/components/schemas/SendMessageBody"
                   },
@@ -8902,7 +10044,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ResendWebhookView"
+                }
               }
             },
             "description": "Successful Response"

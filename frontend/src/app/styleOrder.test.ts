@@ -281,19 +281,19 @@ test('course sheets: palette colors are referenced through tokens', () => {
 
 // 棘輪：課程檔寫死的色碼只能變少。數量變少時把常數改成新的數字；某個顏色整個不見了，也從清單拿掉。
 // 只看數量擋不住「刪一個舊色、加一個新色」，所以另外列出現有的顏色：清單外的新顏色要先加進 tokens.css
-const COURSE_RAW_HEX = 282
+const COURSE_RAW_HEX = 272
 const COURSE_RAW_COLORS = [
-  '#1E1C18', '#1E6B60', '#1F3A31', '#24493C', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B',
-  '#3A362F', '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129',
-  '#5A432D', '#5E432B', '#5E655F', '#675A1D', '#684B20', '#6A4D33', '#6A706C', '#6B4E0E', '#6C665F', '#6E4520',
-  '#6E5034', '#77716A', '#7A5A1E', '#7A5A3C', '#7FCB9B', '#8A572E', '#8A8F8B', '#8A908C', '#8C8578', '#8F8678',
-  '#9A958B', '#A3322C', '#A3A8A4', '#A83C15', '#A99E8A', '#A9B5AE', '#B5B9B5', '#B7CBC1', '#B8B2A5', '#B8BBB8',
-  '#C4501F', '#C9A24A', '#C9C2B1', '#C9C2B2', '#C9C4B8', '#C9CCC9', '#CFE0D6', '#D2C8B8', '#D5A64C', '#D8E7F1',
-  '#D9A22E', '#D9D3C6', '#DCE9E2', '#DDD5C6', '#DDE4E0', '#DDE6E1', '#E4EFF6', '#E5F0EA', '#E8573A', '#E8C46A',
-  '#E8D5A9', '#E9B7AC', '#E9E4DA', '#E9E6DF', '#E9E9E4', '#EAF0F5', '#ECE4D3', '#ECE6DA', '#ECE6DC', '#ECECE8',
-  '#EDF2EF', '#EEF2EF', '#EEF4FA', '#EFEBE0', '#EFEDE7', '#F0F0EC', '#F0F1EF', '#F1DDA9', '#F3D4AD', '#F3DFA8',
-  '#F3EEE3', '#F3F2EE', '#F4F0E8', '#F4F0E9', '#F5E7A8', '#F6E3A8', '#F6E3D8', '#F7F5F0', '#F7F6F2', '#F8F6F1',
-  '#F9F9F7', '#FAFAF8', '#FFF1CF', '#FFF6E0', '#FFF9E9', '#FFF9EC', '#FFFCF3', '#FFFDF8',
+  '#1E1C18', '#1E6B60', '#1F3A31', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B', '#3A362F',
+  '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129', '#5A432D',
+  '#5E432B', '#5E655F', '#684B20', '#6A4D33', '#6A706C', '#6B4E0E', '#6C665F', '#6E5034', '#77716A', '#7A5A1E',
+  '#7A5A3C', '#7FCB9B', '#8A572E', '#8A8F8B', '#8A908C', '#8C8578', '#8F8678', '#9A958B', '#A3322C', '#A3A8A4',
+  '#A83C15', '#A99E8A', '#A9B5AE', '#B5B9B5', '#B7CBC1', '#B8B2A5', '#B8BBB8', '#C4501F', '#C9A24A', '#C9C2B1',
+  '#C9C2B2', '#C9C4B8', '#C9CCC9', '#CFE0D6', '#D2C8B8', '#D5A64C', '#D9A22E', '#D9D3C6', '#DDD5C6', '#DDE4E0',
+  '#DDE6E1', '#E4EFF6', '#E5F0EA', '#E8573A', '#E8C46A', '#E8D5A9', '#E9B7AC', '#E9E4DA', '#E9E6DF', '#E9E9E4',
+  '#EAF0F5', '#ECE4D3', '#ECE6DA', '#ECE6DC', '#ECECE8', '#EDF2EF', '#EEF2EF', '#EEF4FA', '#EFEBE0', '#EFEDE7',
+  '#F0F0EC', '#F0F1EF', '#F1DDA9', '#F3DFA8', '#F3EEE3', '#F3F2EE', '#F4F0E8', '#F4F0E9', '#F6E3A8', '#F6E3D8',
+  '#F7F5F0', '#F7F6F2', '#F8F6F1', '#F9F9F7', '#FAFAF8', '#FFF1CF', '#FFF6E0', '#FFF9E9', '#FFF9EC', '#FFFCF3',
+  '#FFFDF8',
 ]
 test('course sheets: raw hex count only shrinks', () => {
   const found = COURSE.flatMap(hexesIn)

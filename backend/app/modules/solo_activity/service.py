@@ -31,30 +31,35 @@ from app.modules.course_management.repositories import (
     Enrollment,
 )
 from app.modules.identity_access.repositories import Account
-from app.modules.llm_runtime.contracts import PersonalTutorTurn
-from app.modules.llm_runtime.service import compile_program, guarded_generate
+from app.modules.llm_runtime.contracts import Citation, PersonalTutorTurn, ScenarioExtension
+from app.modules.llm_runtime.service import compile_program, guarded_generate, locate_citation
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
 from app.modules.solo_activity import attempt_machine as machine
-from app.modules.solo_activity.attempt_machine import AttemptState, QuestionProgress
+from app.modules.solo_activity.attempt_machine import AttemptState, Scenario, ScenarioProgress
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 
 if TYPE_CHECKING:
     from app.modules.solo_activity.contracts import (
         ConfirmViewpointBody,
         SendMessageBody,
-        SubmitStanceBody,
     )
 
 ROLE = "socratic_tutor"
 PROGRAM = "solo_tutor"
+# Writes the next scenario of a student's sequence; the first one is the teacher's text.
+EXTENSION_PROGRAM = "scenario_extension"
+# The language a student's scenarios are written in when their account names none.
+DEFAULT_LOCALE = "zh-Hant"
 PROVIDER_TIMEOUT_SECONDS = 130
 DEFAULT_TUTOR_GOAL = "協助學生照見自己的立場與理由。"
 PRINCIPLE_HINTS = frozenset({"後果主義", "義務論", "混合"})
+# The teacher's single input is the first scenario, shown to every student as written.
+FIRST_SCENARIO_ID = "s1"
 # Actions in the spec's table whose transition is not built yet: offered, but answered 501.
 NOT_READY: frozenset[str] = frozenset()
-# States after every question is confirmed: the review step (R1) has begun.
+# States after every scenario is confirmed: the review step (R1) has begun.
 REVIEW_STATES = frozenset({"reviewing", "awaiting_reflection_prompt", "reflecting", "completed"})
 
 
@@ -112,26 +117,17 @@ def _state(row: SoloAttempt) -> AttemptState:
     return AttemptState(
         attempt_id=row.id,
         state=cast(Any, row.state),
-        question_index=row.question_index,
-        question_count=len(row.progress),
-        # Progress saved before current_option_id existed holds the first choice.
-        progress=tuple(
-            QuestionProgress(**{**entry, "current_option_id": _current_option(entry)})
-            for entry in row.progress
-        ),
+        scenario_index=row.scenario_index,
+        progress=tuple(ScenarioProgress(**entry) for entry in row.progress),
         pending_key=row.pending_key,
         pending_since=row.pending_since,
         notice=cast(Any, row.notice),
     )
 
 
-def _current_option(entry: dict) -> str | None:
-    return entry.get("current_option_id") or entry.get("option_id")
-
-
 def _store(row: SoloAttempt, a: AttemptState) -> None:
     row.state = a.state
-    row.question_index = a.question_index
+    row.scenario_index = a.scenario_index
     # Reassign the whole list: SQLAlchemy does not see in-place changes to a JSON column.
     row.progress = [asdict(entry) for entry in a.progress]
     row.pending_key = a.pending_key
@@ -147,7 +143,7 @@ def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None, 
         SoloMessage(
             attempt_id=row.id,
             seq=(last or 0) + 1,
-            question_index=row.question_index,
+            scenario_index=row.scenario_index,
             role=role,
             text=text,
             observations=observations,
@@ -175,28 +171,18 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
     enrolled = activities.existing_enrollment(db, db.get(Account, row.account_id), course)
-    questions = db.get(ActivityRevision, row.revision_id).content["questions"]
     reached = []
-    # Questions after question_index never leave the server (AGENTS.md: 未進入的階段不回傳 title).
-    for index, (question, progress) in enumerate(zip(questions, a.progress)):
-        if index > a.question_index:
+    # Scenarios after scenario_index never leave the server (AGENTS.md: 未進入的階段不回傳 title).
+    for index, progress in enumerate(a.progress):
+        if index > a.scenario_index:
             break
         reached.append(
             {
                 "index": index,
-                "id": question["id"],
-                "title": question["title"],
-                "scenario": question["scenario"],
-                "options": [{"id": o["id"], "text": o["text"]} for o in question["options"]],
-                "stance": (
-                    {
-                        "option_id": progress.option_id,
-                        "current_option_id": progress.current_option_id,
-                        "reason": progress.reason,
-                    }
-                    if progress.option_id is not None
-                    else None
-                ),
+                "id": progress.scenario_id,
+                "text": progress.text,
+                "change": progress.change,
+                "answer": progress.answer,
                 "status": progress.status,
                 "confirmed_summary": progress.confirmed_summary,
             }
@@ -211,13 +197,12 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
         "course_name": course.name,
         "display_name": enrolled.display_name if enrolled else "",
         "state": a.state,
-        "question_index": a.question_index,
-        "question_count": a.question_count,
-        "questions": reached,
+        "scenario_index": a.scenario_index,
+        "scenarios": reached,
         "messages": [
             {
                 "id": m.id,
-                "question_index": m.question_index,
+                "scenario_index": m.scenario_index,
                 "role": m.role,
                 "text": m.text,
                 "created_at": m.created_at,
@@ -225,7 +210,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "revise_hint": (m.meta or {}).get("revise_hint") if m.role == "student" else None,
             }
             for m in _messages(db, row.id)
-            if m.question_index <= a.question_index
+            if m.scenario_index <= a.scenario_index
         ],
         "candidate_summary": a.current.candidate_summary if confirming else None,
         "summary_digest": a.current.summary_digest if confirming else None,
@@ -237,54 +222,39 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     }
 
 
-def _attempt_brief(row: SoloAttempt, questions: list[dict]) -> dict:
-    """C2's progress: titles only for reached questions (AGENTS.md: 未進入的階段不回傳 title)."""
+def _attempt_brief(row: SoloAttempt) -> dict:
+    """C2's progress: a status per scenario of the sequence so far, never any text."""
     a = _state(row)
-    progress = []
-    for index, (question, entry) in enumerate(zip(questions, a.progress)):
-        reached = index <= a.question_index
-        confirmed = entry.status == "goal_met"
-        options = {option["id"]: option["text"] for option in question["options"]}
-        progress.append(
-            {
-                "index": index,
-                "status": (
-                    "confirmed" if confirmed else "in_dialogue" if reached else "not_started"
-                ),
-                "title": question["title"] if reached else None,
-                "option_label": (
-                    options.get(cast(str, entry.final_option_id)) if confirmed else None
-                ),
-            }
-        )
     return {
         "id": row.id,
         "state": a.state,
-        "question_index": a.question_index,
-        "progress": progress,
+        "scenario_index": a.scenario_index,
+        "progress": [
+            {
+                "index": index,
+                "status": "confirmed" if entry.status == "goal_met" else "in_dialogue",
+            }
+            for index, entry in enumerate(a.progress)
+            if index <= a.scenario_index
+        ],
         "review_status": "in_progress" if a.state in REVIEW_STATES else "not_started",
         "current_turn": a.current.turn_index,
     }
 
 
 def activity_view(db, account: Account, activity_id: str, at: float) -> dict:
-    activity, revision = _published_activity(db, activity_id)
+    activity, _ = _published_activity(db, activity_id)
     course = db.get(Course, activity.course_id)
     _enrollment(db, account, course, "ACTIVITY_NOT_FOUND")
     row = _own_attempt(db, activity.id, account.id)
-    if row is not None:
-        revision = db.get(ActivityRevision, row.revision_id)
     return {
         "activity_id": activity.id,
         "title": activity.title,
         "course_id": course.id,
         "course_name": course.name,
         "status": _status(activity, at),
-        "question_count": len(revision.content["questions"]),
         "ends_at": activity.ends_at,
-        "attempt": (
-            _attempt_brief(row, revision.content["questions"]) if row is not None else None
-        ),
+        "attempt": _attempt_brief(row) if row is not None else None,
     }
 
 
@@ -320,8 +290,8 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
     row = SoloAttempt(
         id=str(uuid4()), activity_id=activity.id, revision_id=revision.id, account_id=account.id
     )
-    question_ids = [question["id"] for question in revision.content["questions"]]
-    _store(row, machine.new_attempt(row.id, question_ids))
+    first = Scenario(FIRST_SCENARIO_ID, revision.content["title"])
+    _store(row, machine.new_attempt(row.id, [first]))
     db.add(row)
     db.flush()
     return _attempt_view(db, row, at)
@@ -331,25 +301,15 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
 
 
 def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.PendingTurn) -> dict:
-    """Only the teacher's question, this student's stance and this question's dialogue."""
-    question = db.get(ActivityRevision, row.revision_id).content["questions"][
-        pending.question_index
-    ]
-    progress = a.progress[pending.question_index]
-    options = {option["id"]: option["text"] for option in question["options"]}
-    messages = [m for m in _messages(db, row.id) if m.question_index == pending.question_index]
+    """Only this scenario's text, this student's answer and this scenario's dialogue."""
+    progress = a.progress[pending.scenario_index]
+    messages = [m for m in _messages(db, row.id) if m.scenario_index == pending.scenario_index]
     context = {
-        "question": {
-            "title": question["title"],
-            "scenario": question["scenario"],
-            "options": question["options"],
-            "tutor_goal": question.get("follow_up_direction", "").strip() or DEFAULT_TUTOR_GOAL,
-        },
-        # The option held now; a changed stance is told apart below.
-        "option_id": progress.current_option_id,
-        "option_text": options.get(cast(str, progress.current_option_id), ""),
-        "argument": progress.reason,
-        # The first student message is the stance's reason, already given as argument.
+        # Teacher keys (llm_runtime's TEACHER_KEYS): never screened as student input.
+        "scenario": progress.text,
+        "tutor_goal": DEFAULT_TUTOR_GOAL,
+        "answer": progress.answer,
+        # The first student message is the first answer, already given as answer.
         "history": [{"role": m.role, "text": m.text} for m in messages[1:]],
         "turn_index": pending.turn_index,
     }
@@ -358,37 +318,16 @@ def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.Pendi
     hint = (latest.meta or {}).get("revise_hint") if latest is not None else None
     if hint is not None:
         context["revise_hint"] = hint
-    if progress.current_option_id != progress.option_id:
-        context["stance_changed_from"] = options.get(cast(str, progress.option_id), "")
     return context
 
 
 def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
     """The pure transition for one action; saves the student's message when there is one."""
-    revision = db.get(ActivityRevision, row.revision_id)
-    if action == "submit_stance":
-        stance = cast("SubmitStanceBody", body)
-        question = revision.content["questions"][a.question_index]
-        valid = {option["id"] for option in question["options"]}
-        new, pending = machine.submit_stance(a, stance.option_id, stance.reason, valid, at)
-        _add_message(db, row, "student", stance.reason)
-        return new, pending
     if action == "send_message":
         enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
         message = cast("SendMessageBody", body)
-        question = revision.content["questions"][a.question_index]
-        new, pending = machine.send_message(
-            a,
-            at,
-            revise_hint=message.revise_hint,
-            new_option_id=message.new_option_id,
-            valid_option_ids=frozenset(option["id"] for option in question["options"]),
-        )
-        meta = (
-            {"revise_hint": message.revise_hint, "new_option_id": message.new_option_id}
-            if message.revise_hint is not None
-            else None
-        )
+        new, pending = machine.send_message(a, message.text, at, revise_hint=message.revise_hint)
+        meta = {"revise_hint": message.revise_hint} if message.revise_hint is not None else None
         _add_message(db, row, "student", message.text, meta=meta)
         return new, pending
     if action == "retry":
@@ -399,8 +338,8 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         return machine.confirm_viewpoint(a, digest), None
     if action == "revise_viewpoint":
         return machine.revise_viewpoint(a), None
-    if action == "next_question":
-        return machine.next_question(a), None
+    if action == "next_scenario":
+        return machine.next_scenario(a), None
     if action == "submit_review":
         return machine.submit_review(a), None
     if action in NOT_READY and action in machine.actions_for(a, at):
@@ -414,6 +353,10 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
     new, pending = _transition(db, row, _state(row), action, body, at)
     if pending is None:
         _store(row, new)
+        if action == "confirm_viewpoint" and machine.wants_extension(new):
+            prepared = _prepare_extension(db, row, new, account)
+            if prepared is not None:
+                return prepared
         return {"view": _attempt_view(db, row, at)}
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
@@ -434,6 +377,134 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
         "schema": schema,
         "context": context,
     }
+
+
+def _prepare_extension(db, row: SoloAttempt, a: AttemptState, account: Account) -> dict | None:
+    """What writing this student's next scenario needs; None when there is nobody to write it.
+
+    Only this student's words in this scenario go in, each under a ref the model quotes by.
+    """
+    activity = db.get(Activity, row.activity_id)
+    course = db.get(Course, activity.course_id)
+    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    if not bindings:
+        return None
+    current = a.current
+    said = [
+        m
+        for m in _messages(db, row.id)
+        if m.scenario_index == a.scenario_index and m.role == "student"
+    ]
+    refs = {f"m{number}": m for number, m in enumerate(said, start=1)}
+    context = {
+        # A teacher key, as in the tutor's context: the scenario is not student input.
+        "scenario": current.text,
+        "earlier_scenarios": [item.text for item in a.progress[: a.scenario_index]],
+        "confirmed": current.confirmed_summary,
+        "student_messages": [{"ref": ref, "text": m.text} for ref, m in refs.items()],
+        "output_locale": account.locale or DEFAULT_LOCALE,
+    }
+    messages, schema, _ = compile_program(db, EXTENSION_PROGRAM, context)
+    return {
+        "extension": True,
+        "attempt_id": row.id,
+        "account_id": account.id,
+        "bindings": bindings,
+        "messages": messages,
+        "schema": schema,
+        "context": context,
+        "message_texts": {ref: (m.id, m.text) for ref, m in refs.items()},
+    }
+
+
+async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | None:
+    """Each binding in order, every attempt audited; None when none of them wrote a usable one."""
+
+    async def no_delta(_):
+        return None
+
+    for binding in prepared["bindings"]:
+        started = time.monotonic()
+        try:
+            result, audit = await asyncio.wait_for(
+                guarded_generate(
+                    binding,
+                    prepared["messages"],
+                    prepared["schema"],
+                    no_delta,
+                    kind=EXTENSION_PROGRAM,
+                    context=prepared["context"],
+                ),
+                PROVIDER_TIMEOUT_SECONDS,
+            )
+            extension = ScenarioExtension.model_validate(result)
+        except Exception as exc:  # noqa: BLE001 — any failure means no scenario, never a stuck student
+            reason = (
+                getattr(exc, "reason", None)
+                or getattr(exc, "code", None)
+                or ("PROVIDER_TIMEOUT" if isinstance(exc, TimeoutError) else type(exc).__name__)
+            )
+            record_direct_call_audit(
+                actor_id=prepared["account_id"],
+                endpoint="solo.scenario_extension",
+                role=ROLE,
+                binding=binding,
+                state="FAILED",
+                reason_code=str(reason),
+                latency_ms=round((time.monotonic() - started) * 1000),
+            )
+            continue
+        record_direct_call_audit(
+            actor_id=prepared["account_id"],
+            endpoint="solo.scenario_extension",
+            role=ROLE,
+            binding=binding,
+            state="READY",
+            audit=audit,
+        )
+        return extension, binding
+    return None
+
+
+def _located_sources(extension: ScenarioExtension, texts: dict) -> list[dict]:
+    """The citations that really sit in this student's messages, with where they sit."""
+    located = []
+    for citation in extension.sources:
+        message = texts.get(citation.message_ref)
+        if message is None:
+            continue
+        found = locate_citation(Citation.model_validate(citation), message[0], message[1])
+        if found is not None:
+            located.append(found.model_dump())
+    return located
+
+
+async def _finish_extension(prepared: dict) -> dict:
+    """Write the scenario if it is still wanted; either way the student gets the current view.
+
+    The call ran between two transactions, so the attempt is read again: a student who has
+    already moved on keeps what they have, and a scenario is stored at most once.
+    """
+    called = await _call_extension(prepared)
+    with transaction() as db:
+        account = db.get(Account, prepared["account_id"])
+        row = _locked_attempt(db, account, prepared["attempt_id"])
+        a = _state(row)
+        if called is not None and machine.wants_extension(a):
+            extension, binding = called
+            sources = _located_sources(extension, prepared["message_texts"])
+            if sources:  # a scenario that rests on none of the student's words is not written
+                made_by = {"provider": binding.get("adapter"), "model": binding.get("model")}
+                written = machine.extend(
+                    a,
+                    f"s{a.scenario_count + 1}",
+                    extension.scenario,
+                    extension.change.model_dump(),
+                    sources,
+                    made_by,
+                )
+                _store(row, written)
+        return _attempt_view(db, row, now())
 
 
 async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
@@ -495,6 +566,8 @@ async def finish_action(prepared: dict) -> dict:
     """Provider call, then Tx2. A result for a key no longer awaited changes nothing."""
     if "view" in prepared:
         return prepared["view"]
+    if prepared.get("extension"):
+        return await _finish_extension(prepared)
     called = await _call_tutor(prepared)
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])

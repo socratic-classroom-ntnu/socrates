@@ -51,7 +51,7 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
     title = h.title
     detail = phone
       ? t('learning.phoneOpenMeta', { end: formatDateTime(h.ends_at, locale, 'date') })
-      : t('learning.openMeta', { questions: t('learning.questions', { count: h.question_count }), end: formatDateTime(h.ends_at, locale, 'weekdayDateTime') })
+      : t('learning.openMeta', { end: formatDateTime(h.ends_at, locale, 'weekdayDateTime') })
   } else if (h?.status === 'scheduled') {
     title = t('learning.next', { title: h.title })
     detail = t('learning.opensAt', { start: formatDateTime(h.starts_at, locale, phone ? 'weekdayDateTime' : 'dateTime') })

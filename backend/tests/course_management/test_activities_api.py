@@ -17,21 +17,10 @@ from tests.course_management.test_courses_api import create_course
 TEST_DIALECT = make_url(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://")).get_backend_name()
 
 
-def question(qid="q1", title="岔道上的選擇", options=("拉", "不拉")):
-    return {
-        "id": qid,
-        "title": title,
-        "scenario": "一輛失控的電車正駛向五名工人。",
-        "options": [{"id": f"o{i}", "text": text} for i, text in enumerate(options)],
-    }
-
-
 def draft(**overrides):
     body = {
         "title": "第三週倫理討論",
-        "topic_direction": "從電車難題出發，探討主動與不作為的責任。",
         "ends_at": time.time() + 3600,
-        "questions": [question()],
     }
     body.update(overrides)
     return body
@@ -89,12 +78,10 @@ def test_draft_hidden_from_students(client):
     "broken",
     [
         {"title": ""},
-        {"topic_direction": " "},
+        {"title": "x" * 301},
         {"ends_at": None},
-        {"questions": []},
-        {"questions": [question(title="")]},
-        {"questions": [question(options=("拉", " "))]},
-        {"questions": [question(options=("拉",))]},
+        {"questions": [{"id": "q1", "title": "多題", "scenario": "x", "options": []}]},
+        {"topic_direction": "已移除的欄位"},
     ],
 )
 def test_save_requires_complete_activity(client, broken):
@@ -112,7 +99,7 @@ def test_save_requires_complete_activity(client, broken):
 
 def test_saved_draft_roundtrip(client):
     teacher, course = teacher_with_course(client)
-    body = draft(analysis_focus="改變立場的條件")
+    body = draft()
 
     created = client.post(f"/api/v2/courses/{course['id']}/activities", json=body).json()
     fetched = client.get(f"/api/v2/activities/{created['id']}").json()
@@ -120,12 +107,7 @@ def test_saved_draft_roundtrip(client):
     assert created["status"] == "draft"
     assert created["revision"] is None
     assert created["available_actions"] == ["update", "publish", "copy", "delete"]
-    assert fetched["draft"] == {
-        **body,
-        "starts_at": None,
-        "questions": fetched["draft"]["questions"],
-    }
-    assert fetched["draft"]["questions"][0]["follow_up_direction"] == ""
+    assert fetched["draft"] == {**body, "starts_at": None}
 
 
 def test_publish_immediately_opens(client):
@@ -210,12 +192,7 @@ def test_locked_activity_rejects_update_and_publish(client):
     copy = copied.json()
     assert copy["id"] != activity["id"]
     assert copy["status"] == "draft" and copy["locked"] is False
-    original_q = view["draft"]["questions"][0]
-    copied_q = copy["draft"]["questions"][0]
-    assert copied_q["id"] != original_q["id"]
-    assert [o["id"] for o in copied_q["options"]] != [o["id"] for o in original_q["options"]]
-    assert copied_q["title"] == original_q["title"]
-    assert [o["text"] for o in copied_q["options"]] == [o["text"] for o in original_q["options"]]
+    assert copy["draft"] == view["draft"]
 
 
 @pytest.mark.skipif(TEST_DIALECT != "postgresql", reason="requires PostgreSQL row locks")
@@ -307,7 +284,7 @@ def test_start_now_keeps_a_concurrent_put(client):
     saved = threading.Event()
     release = threading.Event()
     outcome: dict = {}
-    edited = draft(starts_at=time.time() + 1800, questions=[question(title="新的題目")])
+    edited = draft(starts_at=time.time() + 1800, title="新的題目")
 
     def teacher_saves():
         with storage.transaction() as db:
@@ -338,7 +315,7 @@ def test_start_now_keeps_a_concurrent_put(client):
     assert outcome["result"] == "started"
     with storage.transaction() as db:
         row = db.get(Activity, activity["id"])
-        assert row.draft["questions"][0]["title"] == "新的題目"
+        assert row.draft["title"] == "新的題目"
         assert row.draft["starts_at"] == row.starts_at
 
 
@@ -370,7 +347,7 @@ def test_activity_qr_enrolls_once(client):
     assert preview["already_enrolled"] is False
     assert preview["default_display_name"] == account["username"]
     assert preview["course_name"] == course["name"]
-    assert preview["question_count"] == 1
+    assert "question_count" not in preview
     assert first.status_code == second.status_code == 200
     assert first.json() == {
         "course_id": course["id"],
@@ -432,7 +409,7 @@ def test_teacher_list_includes_drafts_with_actions(client):
     assert body["role"] == "teacher"
     assert body["items"][0]["status"] == "draft"
     assert body["items"][0]["available_actions"] == ["update", "publish", "copy", "delete"]
-    assert body["items"][0]["question_count"] == 1
+    assert "question_count" not in body["items"][0]
 
 
 def test_server_clock_decides(client, monkeypatch):
@@ -472,3 +449,22 @@ def test_join_preview_includes_the_window(client):
     assert preview["status"] == "scheduled"
     assert preview["starts_at"] == pytest.approx(starts)
     assert preview["ends_at"] == pytest.approx(starts + 3600)
+
+
+def test_published_revision_has_no_option_or_question_fields(client):
+    teacher, course = teacher_with_course(client)
+    activity = create_activity(client, course["id"])
+    assert act(client, activity["id"], "publish").status_code == 200
+
+    with storage.transaction() as db:
+        revision = db.scalars(
+            select(ActivityRevision).where(ActivityRevision.activity_id == activity["id"])
+        ).one()
+        assert set(revision.content) == {
+            "title",
+            "starts_at",
+            "ends_at",
+            "course_intro",
+            "course_goals",
+        }
+        assert revision.content["title"] == draft()["title"]

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { components } from './classroomTypes'
+import type { components, paths } from './classroomTypes'
 import { errorText } from './errorText'
 
 // The adapter retains the established fetch(url, init) boundary used by resident tests.
@@ -179,6 +179,60 @@ export async function api(path: string, method = 'GET', body?: { signal?: AbortS
   return response.data
 }
 
+type ClassroomRoute = keyof paths & string
+type RouteOperation<P extends ClassroomRoute, M extends string> =
+  Lowercase<M> extends keyof paths[P] ? paths[P][Lowercase<M>] : never
+type RouteBody<P extends string, M extends string> =
+  P extends ClassroomRoute ? RouteOperation<P, M> extends { body: infer B } ? B : never : never
+type RouteResponse<P extends ClassroomRoute, M extends string> =
+  RouteOperation<P, M> extends { response: infer R } ? R : never
+type RequiredKeys<T> = { [K in keyof T]-?: Record<never, never> extends Pick<T, K> ? never : K }[keyof T]
+type RouteOptions<P extends ClassroomRoute, M extends string> =
+  (RouteOperation<P, M> extends { path: infer Path }
+    ? [Path] extends [never] ? object : { path: Path } : never) &
+  (RouteOperation<P, M> extends { query: infer Query }
+    ? [Query] extends [never] ? object
+      : [RequiredKeys<Query>] extends [never] ? { query?: Query } : { query: Query }
+    : never) &
+  ([RouteBody<P, M>] extends [never] ? { body?: never }
+    : RouteOperation<P, M> extends { bodyRequired: true }
+      ? { body: RouteBody<P, M> } : { body?: RouteBody<P, M> }) &
+  { signal?: AbortSignal }
+type JsonMethod<P extends ClassroomRoute> = {
+  [M in keyof paths[P] & string]: paths[P][M] extends {
+    requestMedia: 'application/json' | 'none'; responseMedia: 'application/json' | 'none'
+  } ? Uppercase<M> : never
+}[keyof paths[P] & string]
+
+/** Strict JSON client; YAML import/export retain their dedicated helpers. */
+export function typedApi<const P extends ClassroomRoute, const M extends JsonMethod<P>>(
+  path: P,
+  method: M,
+  ...args: [RequiredKeys<RouteOptions<P, M>>] extends [never]
+    ? [options?: RouteOptions<P, M>]
+    : [options: RouteOptions<P, M>]
+): Promise<RouteResponse<P, M>>
+export async function typedApi(path: string, method: string, options: unknown = {}): Promise<unknown> {
+  const input = options as {
+    path?: Record<string, unknown>
+    query?: Record<string, unknown>
+    body?: unknown
+    signal?: AbortSignal
+  }
+  const url = path.replace(/\{([^}]+)\}/g, (_, name: string) => encodeURIComponent(String(input.path?.[name] ?? '')))
+  const query = new URLSearchParams()
+  for (const [name, value] of Object.entries(input.query ?? {})) {
+    if (value !== undefined && value !== null) query.set(name, String(value))
+  }
+  const response = await http.request({
+    url: query.toString() ? `${url}?${query}` : url,
+    method,
+    data: input.body,
+    signal: input.signal,
+  })
+  return response.data
+}
+
 export function command(
   room,
   kind,
@@ -220,7 +274,7 @@ export type GroupAnalysis = components['schemas']['GroupAnalysisView']
 
 /** 教師端的分組分析投影（假名化的原話、關係與立場分布）。 */
 export function getGroupAnalysis(classroomId: string): Promise<GroupAnalysis> {
-  return api(`/groups/classrooms/${classroomId}/analysis`)
+  return typedApi('/groups/classrooms/{rid}/analysis', 'GET', { path: { rid: classroomId } })
 }
 
 /** 前端可公開的設定（例如 debug_mode）。 */

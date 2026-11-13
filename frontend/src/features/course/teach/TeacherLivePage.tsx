@@ -60,6 +60,7 @@ export function TeacherLivePage() {
     if (cell.status === 'confirmed') return t('live.cells.confirmed')
     if (cell.status === 'in_dialogue') return t('live.cells.inDialogue', { count: cell.turns ?? 0 })
     if (cell.status === 'confirming') return t('live.cells.confirming')
+    if (cell.status === 'capped') return t('live.cells.capped')
     return t('live.cells.answering')
   }
 

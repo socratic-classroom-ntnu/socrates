@@ -248,8 +248,14 @@ def test_message_limit_per_scenario():
         applied = sm.apply_tutor_turn(a, pending.key, turn(reason_tested=False))
         assert applied is not None
         a = applied
+    # The last reply left no message to send: the scenario is in confirmation, not stuck in dialogue.
+    assert a.state == "confirming"
     with pytest.raises(DomainError) as error:
         sm.send_message(a, "回覆", T0)
+    assert (error.value.code, error.value.status) == ("SOLO_ACTION_UNAVAILABLE", 409)
+    # The limit itself is still enforced for a dialogue that somehow reaches it.
+    with pytest.raises(DomainError) as error:
+        sm.send_message(replace(a, state="in_dialogue"), "回覆", T0)
     assert (error.value.code, error.value.status) == ("SOLO_MESSAGE_LIMIT", 409)
 
 

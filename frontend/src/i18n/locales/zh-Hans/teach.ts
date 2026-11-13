@@ -155,7 +155,7 @@ const teach: Shape<typeof zhHant> = {
     filterLabel: '筛选学生',
     filters: { all: '全部', inProgress: '对话中', attention: '需要留意', done: '已完成', notStarted: '还没开始' },
     table: { student: '学生', scenario: '情境 {{number}}', review: '回顾与反思', lastActivity: '最后动作' },
-    cells: { confirmed: '已确认', inDialogue: '对话中 · {{count}} 轮', confirming: '确认观点中', answering: '写第一个回答中', notStarted: '未开始' },
+    cells: { confirmed: '已确认', inDialogue: '对话中 · {{count}} 轮', confirming: '确认观点中', capped: '尚未厘清', answering: '写第一个回答中', notStarted: '未开始' },
     review: { notStarted: '未开始', inProgress: '进行中' },
     time: { now: '刚刚', minutes: '{{count}} 分钟前', none: '—', attention: '⏸ {{count}} 分钟没有动作' },
     empty: '目前没有学生',

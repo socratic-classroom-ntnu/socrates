@@ -34,12 +34,14 @@ def _cells(row: SoloAttempt | None) -> list[dict]:
         return []
     cells: list[dict] = []
     for index, entry in enumerate(row.progress):
+        # A scenario that ran out of messages is not a confirmed one.
+        done = "capped" if entry.get("status") == "capped" else "confirmed"
         if index < row.scenario_index:
-            cells.append({"status": "confirmed", "turns": None})
+            cells.append({"status": done, "turns": None})
         elif index > row.scenario_index:
             continue
         elif row.state in SETTLED_STATES:
-            cells.append({"status": "confirmed", "turns": None})
+            cells.append({"status": done, "turns": None})
         elif row.state == "confirming":
             cells.append({"status": "confirming", "turns": None})
         elif row.state == "answering":

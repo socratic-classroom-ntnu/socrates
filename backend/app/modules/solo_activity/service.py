@@ -61,6 +61,8 @@ FIRST_SCENARIO_ID = "s1"
 NOT_READY: frozenset[str] = frozenset()
 # States after every scenario is confirmed: the review step (R1) has begun.
 REVIEW_STATES = frozenset({"reviewing", "awaiting_reflection_prompt", "reflecting", "completed"})
+# A scenario's status as the progress strip names it; anything else is still being talked over.
+_BRIEF_STATUS = {"goal_met": "confirmed", "capped": "capped"}
 
 
 def now() -> float:
@@ -232,7 +234,7 @@ def _attempt_brief(row: SoloAttempt) -> dict:
         "progress": [
             {
                 "index": index,
-                "status": "confirmed" if entry.status == "goal_met" else "in_dialogue",
+                "status": _BRIEF_STATUS.get(entry.status, "in_dialogue"),
             }
             for index, entry in enumerate(a.progress)
             if index <= a.scenario_index

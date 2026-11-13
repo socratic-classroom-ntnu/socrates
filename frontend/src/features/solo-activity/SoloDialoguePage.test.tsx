@@ -74,6 +74,14 @@ function renderPage(routes: Record<string, unknown>, locale = 'zh-Hant') {
   </MemoryRouter>)
 }
 
+function renderPageWithCalls(routes: Record<string, unknown>) {
+  const calls = mockApi({ 'GET /auth/me': signedIn, ...routes })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /><Where /></AuthProvider>
+  </MemoryRouter>)
+  return calls
+}
+
 beforeEach(async () => {
   jest.useRealTimers()
   localStorage.clear()
@@ -792,6 +800,62 @@ test('confirming shows summary and both choices', async () => {
   expect(screen.getByText('接近的想法：義務論')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeInTheDocument()
+})
+
+test('a capped scenario says the limit was reached and is not agreed to as "my view"', async () => {
+  // The backend keeps the scenario capped and saves no confirmed viewpoint, so the card must not
+  // ask the student to say "this is my view"; only the action the backend offers is shown.
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...confirmingAttempt,
+      scenarios: [{ ...firstScenario, status: 'capped' }],
+      available_actions: ['confirm_viewpoint'],
+    },
+  })
+
+  expect(await screen.findByRole('heading', { name: '訊息已達上限，這是到目前為止的整理' })).toBeInTheDocument()
+  expect(screen.getByText('蘇格拉底整理；這個情境不會標成「已確認」')).toBeInTheDocument()
+  expect(screen.getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '好，我知道了' })).toBeEnabled()
+  expect(screen.queryByRole('button', { name: '對，這就是我的想法' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '不太對，我想再說清楚' })).toBeNull()
+})
+
+test('a capped scenario still posts confirm_viewpoint with the digest', async () => {
+  const calls = renderPageWithCalls({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...confirmingAttempt,
+      scenarios: [{ ...firstScenario, status: 'capped' }],
+      available_actions: ['confirm_viewpoint'],
+    },
+    'POST /solo/attempts/attempt-1/confirm_viewpoint': { ...betweenAttempt, available_actions: [] },
+  })
+
+  fireEvent.click(await screen.findByRole('button', { name: '好，我知道了' }))
+  await waitFor(() => expect(calls).toContainEqual({
+    key: 'POST /solo/attempts/attempt-1/confirm_viewpoint',
+    body: { summary_digest: 'digest-current' },
+  }))
+})
+
+test('a scenario that ended capped is not shown as confirmed in my progress', async () => {
+  const capped = { ...firstConfirmed, status: 'capped', confirmed_summary: null }
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...secondScenarioAttempt,
+      scenarios: [capped, secondScenarioAttempt.scenarios[1]],
+    },
+  })
+
+  const progress = await screen.findByRole('region', { name: '我的進度' })
+  const rows = within(progress).getAllByRole('listitem')
+  expect(rows[0]).toHaveTextContent('情境 1')
+  expect(rows[0]).toHaveTextContent('尚未釐清')
+  expect(rows[0]).not.toHaveTextContent('已確認')
+  expect(rows[1]).toHaveTextContent('進行中')
 })
 
 test('principle note is shown with the reference disclaimer when present', async () => {

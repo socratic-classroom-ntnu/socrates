@@ -5,7 +5,7 @@ export default {
     statuses: { scheduled: 'Aún no abre', open: 'En curso', ended: 'Finalizada' },
     progress: 'Tu progreso', scenarioNumber: 'Escenario {{number}}', review: 'Repaso y reflexión final',
     backToCourse: 'Volver al curso',
-    notStarted: 'Sin empezar', inProgress: 'En curso', inDialogue: 'En diálogo', confirmed: 'Confirmado',
+    notStarted: 'Sin empezar', inProgress: 'En curso', inDialogue: 'En diálogo', confirmed: 'Confirmado', capped: 'Sin definir',
     progressHint: 'No hay límite de tiempo. Puedes salir y volver cuando quieras. Cada escenario permanece oculto hasta que llegues a él.',
     startTitle: 'Lee el escenario y responde con tus palabras',
     lastStop: 'Te quedaste en', resumeAt: 'Escenario {{number}}, ronda {{turn}} del diálogo', reviewNext: 'Todos los escenarios están confirmados. Lo siguiente es repasar tus puntos de vista.',
@@ -39,7 +39,7 @@ export default {
   next: {
     button: 'Siguiente escenario', scenarioLabel: 'Un escenario nuevo',
     intuition: 'Un escenario nuevo. No busques razones todavía: ¿cuál es tu primera intuición?',
-    progress: 'Mi progreso', confirmed: 'Confirmado', current: 'En curso',
+    progress: 'Mi progreso', confirmed: 'Confirmado', current: 'En curso', capped: 'Sin definir',
   },
   revise: {
     asideTitle: 'Es normal que el resumen no acierte',
@@ -57,6 +57,7 @@ export default {
     reason: 'Razón', conditions: 'Condiciones',
     principle: 'Idea relacionada: {{principle}}', principleNote: 'Es solo una referencia, no una etiqueta para ti.',
     confirm: 'Sí, eso es lo que pienso', revise: 'No del todo, quiero explicarlo mejor',
+    cappedTitle: 'Llegaste al límite de mensajes. Así queda hasta ahora', cappedSubtitle: 'Sócrates lo organizó; este escenario no se marcará como confirmado', cappedConfirm: 'De acuerdo, entendido',
     principles: { consequentialism: 'Consecuencialismo', deontology: 'Deontología', mixed: 'Enfoque mixto' },
   },
   review: {

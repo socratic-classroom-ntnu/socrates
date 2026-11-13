@@ -93,6 +93,30 @@ test('activity page shows the scenarios reached so far', async () => {
   expect(rows[2]).toHaveTextContent('還沒開始')
 })
 
+test('activity page does not call a capped scenario confirmed or in dialogue', async () => {
+  mockApi({
+    'GET /solo/activities/a-1': {
+      ...activity,
+      attempt: {
+        ...attempt, scenario_index: 1,
+        progress: [
+          { index: 0, status: 'capped' },
+          { index: 1, status: 'in_dialogue' },
+        ],
+      },
+    },
+  })
+  renderPage()
+
+  const progress = await screen.findByRole('region', { name: '你的進度' }, { timeout: 5000 })
+  const rows = within(progress).getAllByRole('listitem')
+  expect(rows[0]).toHaveTextContent('情境 1')
+  expect(rows[0]).toHaveTextContent('尚未釐清')
+  expect(rows[0]).not.toHaveTextContent('已確認')
+  expect(rows[0]).not.toHaveTextContent('對話中')
+  expect(rows[1]).toHaveTextContent('對話中')
+})
+
 test('continue card shows scenario and turn', async () => {
   // current_turn is the scenario's turn_index: the first answer is turn 0, so turn 2 is the third round.
   mockApi({ 'GET /solo/activities/a-1': { ...activity, attempt: { ...attempt, scenario_index: 1, current_turn: 2 } } })

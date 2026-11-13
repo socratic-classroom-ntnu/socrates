@@ -171,6 +171,7 @@ const teach: Shape<typeof zhHant> = {
       inDialogue_one: 'En diálogo · {{count}} turno',
       inDialogue_other: 'En diálogo · {{count}} turnos',
       confirming: 'Confirmando su punto de vista',
+      capped: 'Sin definir',
       answering: 'Escribiendo la primera respuesta',
       notStarted: 'Sin empezar',
     },

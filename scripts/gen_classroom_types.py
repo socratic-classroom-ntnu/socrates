@@ -7,33 +7,34 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend'))
 
-def property_ts(name, schema, required):
+def property_ts(name, schema, required, input_type=False):
     description=schema.get('description')
     jsdoc='/** '+str(description).replace('*/', '*\\/')+' */ ' if description else ''
-    optional='' if name in required or 'default' in schema else '?'
-    return jsdoc+json.dumps(name)+optional+': '+ts(schema)
+    optional='' if name in required or (not input_type and 'default' in schema) else '?'
+    return jsdoc+json.dumps(name)+optional+': '+ts(schema,input_type=input_type)
 
-def ts(schema):
+def ts(schema,input_type=False):
     if '$ref' in schema:
-        return 'components["schemas"][' + json.dumps(schema['$ref'].rsplit('/', 1)[1]) + ']'
+        namespace='requestComponents' if input_type else 'components'
+        return namespace+'["schemas"][' + json.dumps(schema['$ref'].rsplit('/', 1)[1]) + ']'
     if 'enum' in schema:
         return ' | '.join(json.dumps(v, ensure_ascii=False) for v in schema['enum'])
     if 'const' in schema:
         return json.dumps(schema['const'])
     if 'anyOf' in schema or 'oneOf' in schema:
-        return '('+' | '.join(ts(x) for x in schema.get('anyOf', schema.get('oneOf')))+')'
+        return '('+' | '.join(ts(x,input_type=input_type) for x in schema.get('anyOf', schema.get('oneOf')))+')'
     if 'allOf' in schema:
-        return '('+' & '.join(ts(x) for x in schema['allOf'])+')'
+        return '('+' & '.join(ts(x,input_type=input_type) for x in schema['allOf'])+')'
     kind=schema.get('type')
-    if kind=='array': return 'Array<'+ts(schema.get('items',{}))+'>'
+    if kind=='array': return 'Array<'+ts(schema.get('items',{}),input_type=input_type)+'>'
     if kind=='object' or 'properties' in schema:
         props=schema.get('properties',{})
         if not props:
             value=schema.get('additionalProperties',{})
-            return 'Record<string, '+(ts(value) if isinstance(value,dict) and value else 'unknown')+'>'
+            return 'Record<string, '+(ts(value,input_type=input_type) if isinstance(value,dict) and value else 'unknown')+'>'
         # Response DTOs serialize their defaults; fields are required unless explicitly optional.
         required=schema.get('required',[])
-        return '{ '+ '; '.join(property_ts(k,v,required) for k,v in props.items())+' }'
+        return '{ '+ '; '.join(property_ts(k,v,required,input_type=input_type) for k,v in props.items())+' }'
     return {'string':'string','integer':'number','number':'number','boolean':'boolean','null':'null'}.get(kind,'unknown')
 
 def build_spec():
@@ -52,8 +53,11 @@ def render_paths(spec):
             if method not in operations:
                 continue
             operation=operations[method]
-            body=operation.get('requestBody',{}).get('content',{}).get('application/json',{}).get('schema')
-            body_type=ts(body) if body else 'never'
+            request_content=operation.get('requestBody',{}).get('content',{})
+            request_media=next(iter(request_content),'none')
+            body=request_content.get(request_media,{}).get('schema')
+            body_type=ts(body,input_type=True) if body else 'never'
+            body_required='true' if operation.get('requestBody',{}).get('required',False) else 'false'
             success=[]
             for status,response in sorted(operation.get('responses',{}).items()):
                 if not status.startswith('2'):
@@ -63,7 +67,8 @@ def render_paths(spec):
                 if not content:
                     success.append('null')
             response_type=' | '.join(dict.fromkeys(success)) if success else 'unknown'
-            fields=[f'body: {body_type}',f'response: {response_type}']
+            success_media=next((media for status,response in sorted(operation.get('responses',{}).items()) if status.startswith('2') for media in response.get('content',{})), 'none')
+            fields=[f'body: {body_type}',f'bodyRequired: {body_required}',f'requestMedia: {json.dumps(request_media)}',f'response: {response_type}',f'responseMedia: {json.dumps(success_media)}']
             params=operation.get('parameters',[])
             for location in ('path','query'):
                 selected=[p for p in params if p.get('in')==location]
@@ -113,6 +118,9 @@ def write_contracts(spec):
         if stable not in schemas and stable+'-Input' in schemas:
             rows.append('  '+json.dumps(stable)+': components["schemas"]['+json.dumps(key)+'];')
     out+='\n'.join(rows)
+    out+='\n} }\n'
+    out+='\nexport interface requestComponents { schemas: {\n'
+    out+='\n'.join('  '+json.dumps(key)+': '+ts(value,input_type=True)+';' for key,value in sorted(schemas.items()))
     out+='\n} }\n'
     out+='\n'+render_paths(spec)+'\n'
     out+='\n'+render_reason_codes(ROOT/'backend/app/modules/contract/contracts.py')

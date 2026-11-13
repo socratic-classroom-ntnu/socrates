@@ -78,10 +78,13 @@ def test_operation_types_include_body_success_and_empty_response():
     rendered = _generator_module().render_paths(spec)
     assert '"/items/{item_id}"' in rendered
     assert (
-        '"post": { body: components["schemas"]["ItemInput"]; response: components["schemas"]["ItemView"]'
+        '"post": { body: requestComponents["schemas"]["ItemInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["ItemView"]'
         in rendered
     )
-    assert '"delete": { body: never; response: null' in rendered
+    assert (
+        '"delete": { body: never; bodyRequired: false; requestMedia: "none"; response: null'
+        in rendered
+    )
 
 
 def test_operation_types_keep_query_and_non_json_media():
@@ -136,3 +139,35 @@ def test_reason_code_type_is_part_of_existing_generated_contract(tmp_path):
     output = (tmp_path / "frontend/src/contract/classroomTypes.ts").read_text()
     assert 'export type ClassroomReasonCode = "VISIBLE";' in output
     assert not (tmp_path / "frontend/src/contract/classroomReasonCodes.ts").exists()
+
+
+def test_input_schema_keeps_defaulted_field_optional():
+    schema = {
+        "type": "object",
+        "properties": {"code": {"type": "string"}, "avatar": {"type": "string", "default": "owl"}},
+        "required": ["code"],
+    }
+    rendered = _generator_module().ts(schema, input_type=True)
+    assert '"code": string' in rendered
+    assert '"avatar"?: string' in rendered
+
+
+def test_operation_keeps_optional_body_and_success_media():
+    spec = {
+        "paths": {
+            "/api/v2/retry": {
+                "post": {
+                    "requestBody": {
+                        "required": False,
+                        "content": {"application/json": {"schema": {"type": "object"}}},
+                    },
+                    "responses": {
+                        "200": {"content": {"application/yaml": {"schema": {"type": "string"}}}}
+                    },
+                }
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert "bodyRequired: false" in rendered
+    assert 'responseMedia: "application/yaml"' in rendered

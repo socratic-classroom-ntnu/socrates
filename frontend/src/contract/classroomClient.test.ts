@@ -1,5 +1,11 @@
-import { ApiError, RECENT_API_ERROR_LIMIT, api, command, importYAML, recentApiErrors, recordApiError, setCSRF } from './classroomClient';
+import { ApiError, RECENT_API_ERROR_LIMIT, api, command, importYAML, recentApiErrors, recordApiError, setCSRF, typedApi } from './classroomClient';
 afterEach(() => jest.restoreAllMocks());
+test('typed client encodes path and required query values', async () => {
+    const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ budget: 3 }) });
+    globalThis.fetch = fn;
+    await typedApi('/classrooms/{room_id}/budget', 'POST', { path: { room_id: 'room/one' }, query: { live_llm_call_budget: 3 } });
+    expect(fn).toHaveBeenCalledWith('/api/v2/classrooms/room%2Fone/budget?live_llm_call_budget=3', expect.objectContaining({ method: 'POST' }));
+});
 test('Classroom command carries one stable action identity and same-origin credentials', async () => {
     const fn = jest.fn().mockResolvedValue({ ok: true, status: 200, headers: { get: () => 'application/json' }, json: async () => ({ status: 'RECORDED' }) });
     globalThis.fetch = fn;

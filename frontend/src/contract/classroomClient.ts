@@ -180,49 +180,57 @@ export async function api(path: string, method = 'GET', body?: { signal?: AbortS
 }
 
 type ClassroomRoute = keyof paths & string
-type WithoutQuery<P extends string> = P extends `${infer Base}?${string}` ? Base : P
-type SameSegment<P extends string, R extends string> = R extends `{${string}}`
-  ? P extends '' ? false : true
-  : P extends R ? true : false
-type SameRoute<P extends string, R extends string> = P extends `${infer PH}/${infer PT}`
-  ? R extends `${infer RH}/${infer RT}`
-    ? SameSegment<PH, RH> extends true ? SameRoute<PT, RT> : false
-    : false
-  : R extends `${string}/${string}` ? false : SameSegment<P, R>
-type TemplateRoute<P extends string> = {
-  [R in ClassroomRoute]: SameRoute<WithoutQuery<P>, R> extends true ? R : never
-}[ClassroomRoute]
-type RoutePattern<R extends string> = R extends `${infer Start}{${string}}${infer End}`
-  ? `${Start}${string}${RoutePattern<End>}` : R
-type MoreSpecific<R extends string, Candidates extends string> = Candidates extends string
-  ? RoutePattern<Candidates> extends RoutePattern<R>
-    ? RoutePattern<R> extends RoutePattern<Candidates> ? never : Candidates
-    : never
-  : never
-type PreferredRoutes<All extends string, Candidate extends string = All> = Candidate extends string
-  ? [MoreSpecific<Candidate, Exclude<All, Candidate>>] extends [never] ? Candidate : never
-  : never
-type RouteFor<P extends string> = WithoutQuery<P> extends ClassroomRoute
-  ? WithoutQuery<P> : PreferredRoutes<TemplateRoute<P>>
-type RouteMethod<P extends string> = Uppercase<keyof paths[RouteFor<P>] & string>
-type RouteOperation<P extends string, M extends string> =
-  Lowercase<M> extends keyof paths[RouteFor<P>]
-    ? paths[RouteFor<P>][Lowercase<M>] : never
+type RouteOperation<P extends ClassroomRoute, M extends string> =
+  Lowercase<M> extends keyof paths[P] ? paths[P][Lowercase<M>] : never
 type RouteBody<P extends string, M extends string> =
-  RouteOperation<P, M> extends { body: infer B } ? B : never
-type RouteResponse<P extends string, M extends string> =
+  P extends ClassroomRoute ? RouteOperation<P, M> extends { body: infer B } ? B : never : never
+type RouteResponse<P extends ClassroomRoute, M extends string> =
   RouteOperation<P, M> extends { response: infer R } ? R : never
+type RequiredKeys<T> = { [K in keyof T]-?: Record<never, never> extends Pick<T, K> ? never : K }[keyof T]
+type RouteOptions<P extends ClassroomRoute, M extends string> =
+  (RouteOperation<P, M> extends { path: infer Path }
+    ? [Path] extends [never] ? object : { path: Path } : never) &
+  (RouteOperation<P, M> extends { query: infer Query }
+    ? [Query] extends [never] ? object
+      : [RequiredKeys<Query>] extends [never] ? { query?: Query } : { query: Query }
+    : never) &
+  ([RouteBody<P, M>] extends [never] ? { body?: never }
+    : RouteOperation<P, M> extends { bodyRequired: true }
+      ? { body: RouteBody<P, M> } : { body?: RouteBody<P, M> }) &
+  { signal?: AbortSignal }
+type JsonMethod<P extends ClassroomRoute> = {
+  [M in keyof paths[P] & string]: paths[P][M] extends {
+    requestMedia: 'application/json' | 'none'; responseMedia: 'application/json' | 'none'
+  } ? Uppercase<M> : never
+}[keyof paths[P] & string]
 
-/** Strict contract entry point for endpoints with a known path and method. */
-export function typedApi<const P extends string, const M extends RouteMethod<P>>(
-  path: P & (RouteFor<P> extends never ? never : P),
+/** Strict JSON client; YAML import/export retain their dedicated helpers. */
+export function typedApi<const P extends ClassroomRoute, const M extends JsonMethod<P>>(
+  path: P,
   method: M,
-  ...args: [RouteBody<P, M>] extends [never]
-    ? [options?: { signal?: AbortSignal }]
-    : [body: RouteBody<P, M> & { signal?: AbortSignal }]
+  ...args: [RequiredKeys<RouteOptions<P, M>>] extends [never]
+    ? [options?: RouteOptions<P, M>]
+    : [options: RouteOptions<P, M>]
 ): Promise<RouteResponse<P, M>>
-export function typedApi(path: string, method: string, body?: { signal?: AbortSignal } & Record<string, unknown>): Promise<unknown> {
-  return api(path, method, body)
+export async function typedApi(path: string, method: string, options: unknown = {}): Promise<unknown> {
+  const input = options as {
+    path?: Record<string, unknown>
+    query?: Record<string, unknown>
+    body?: unknown
+    signal?: AbortSignal
+  }
+  const url = path.replace(/\{([^}]+)\}/g, (_, name: string) => encodeURIComponent(String(input.path?.[name] ?? '')))
+  const query = new URLSearchParams()
+  for (const [name, value] of Object.entries(input.query ?? {})) {
+    if (value !== undefined && value !== null) query.set(name, String(value))
+  }
+  const response = await http.request({
+    url: query.toString() ? `${url}?${query}` : url,
+    method,
+    data: input.body,
+    signal: input.signal,
+  })
+  return response.data
 }
 
 export function command(
@@ -266,7 +274,7 @@ export type GroupAnalysis = components['schemas']['GroupAnalysisView']
 
 /** 教師端的分組分析投影（假名化的原話、關係與立場分布）。 */
 export function getGroupAnalysis(classroomId: string): Promise<GroupAnalysis> {
-  return typedApi(`/groups/classrooms/${classroomId}/analysis`, 'GET')
+  return typedApi('/groups/classrooms/{rid}/analysis', 'GET', { path: { rid: classroomId } })
 }
 
 /** 前端可公開的設定（例如 debug_mode）。 */

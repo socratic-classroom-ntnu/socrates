@@ -2,8 +2,8 @@
 
 ## 11/14 起的順序（11/24 開放客戶）
 11/14 調整，這一段排在下面所有段落前面：
-1. **O6 最終確認**：11/24 學生主流程一定要有。依賴的 `final_summary` 已經在 develop。回顧階段 capped 的顯示照 #113 的討論，放進 F2 一起處理。
-2. **免註冊完整功能**（11/24 也要上）：前後端都由你做，包含下面「全部工作」的 3、3a、7、7a、7b（前端）。#125 的訪客紀錄 hook 契約與到期排程已經合進 `backend/main`；登入時併入訪客紀錄（Courecta 5a）由 Courecta 同時進行，會呼叫你 7a 的 `reassign`。詳細需求另開討論串。
+1. **免註冊完整功能**（**11/16 完成**，11/24 要上）：前後端都由你做，包含下面「全部工作」的 3、3a、7、7a、7b（前端），細節以 Discord 的「免註冊加入（全端）」需求為準；這份的 PR 全部由 Fizzy 審。
+2. **O6 最終確認**（免註冊做完接著做，11/24 學生主流程一定要有）：依賴的 `final_summary` 已經在 develop。回顧階段 capped 的顯示照 #113 的討論，放進 F2 一起處理。#125 的訪客紀錄 hook 契約與到期排程已經合進 `backend/main`；登入時併入訪客紀錄（Courecta 5a）由 Courecta 同時進行，會呼叫你 7a 的 `reassign`。詳細需求另開討論串。
 3. 這一輪先不排：第 4（旗標與學生指標）、5（統整引用）項。第 6 項的「最終統整與確認迴圈」就是 O6；其中的雷達這一輪要做，但另開需求、由其他組員負責，你不用做。
 
 已完成：O1–O5（#77、#83、#85、#127）、O7（#113）、content-authoring 與 readiness 的 response_model（#109、#84）。#110 等 Arthur 確認 stage／dev 的環境變數已改用新名稱再合。
@@ -58,7 +58,7 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 - 學生確認最後一題後按「送出回顧」，目前作答直接進入 `completed`，這是過渡做法，第 6 項會取代它。
 - 舊單人對話的資料表已經搬到 `legacy_solo_dialogue` schema（migration 0017，issue #71）。要不要把舊資料帶進單人活動，等決定後再排，現在不用動。
 - migration 順序：Courecta 的 identity-access → 你的 course-management → 你的 solo-activity，每個 down_revision 接前一個。
-- migration 編號（11/14）：develop 已到 0020。「學生／老師角色」的 `account_role`（identity-access）用 0021，你的「允許免註冊」（course-management）用 0022，`down_revision` 接 0021；角色那支如果還沒合，先跟 Fizzy 對好。
+- migration 編號（11/14）：develop 已到 0020。你的「允許免註冊」（course-management）先做，用 0021、接 0020；「學生／老師角色」的 `account_role` 之後接在你後面。
 - 訪客的 `username` 是「暱稱-8 碼亂數」，加入課程時 `default_display_name` 直接用它，老師會看到亂碼；預設課內名字要是暱稱本身。
 - `errorText` 的 `GUEST_EXPIRED`「請重新掃描課程 QR code 加入」容易讓人以為能接回原本的對話；過期的訪客重新掃碼會是全新的訪客，舊紀錄只留給老師看，文字要改。
 

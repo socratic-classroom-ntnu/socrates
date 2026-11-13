@@ -10,7 +10,7 @@ not implemented yet are part of the type but never produced.
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.platform.model_base import TrimmedModel
 
@@ -105,6 +105,54 @@ class CitationSourceView(View):
             "text.slice(start, end) equals quote."
         ),
     )
+
+
+RadarDimensionSource = Literal["embedding", "llm"]
+
+
+class RadarDimensionView(View):
+    index: int = Field(ge=0, le=5)
+    name: str = Field(min_length=1, max_length=60)
+    low_pole: str = Field(min_length=1, max_length=300)
+    high_pole: str = Field(min_length=1, max_length=300)
+    source: RadarDimensionSource
+
+
+class RadarScoreView(View):
+    dimension_index: int = Field(ge=0, le=5)
+    score: float = Field(ge=0, le=4)
+    sources: list[CitationSourceView] = Field(max_length=3)
+
+
+class RadarStudentView(View):
+    # Opaque within this payload: enrollment id for solo, scoped pseudonym for group analytics.
+    student_id: str = Field(min_length=1)
+    display_name: str = Field(min_length=1, max_length=64)
+    scores: list[RadarScoreView] = Field(min_length=1, max_length=6)
+
+
+class RadarView(View):
+    dimensions: list[RadarDimensionView] = Field(min_length=1, max_length=6)
+    students: list[RadarStudentView] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def aligned(self) -> "RadarView":
+        indices = [dimension.index for dimension in self.dimensions]
+        if indices != list(range(len(self.dimensions))):
+            raise ValueError("雷達維度必須從 0 開始連續排列")
+        student_ids = [student.student_id for student in self.students]
+        if len(set(student_ids)) != len(student_ids):
+            raise ValueError("雷達學生 id 不可重複")
+        if any(
+            [score.dimension_index for score in student.scores] != indices
+            for student in self.students
+        ):
+            raise ValueError("每位學生必須依序包含每個雷達維度的分數")
+        return self
+
+
+class RadarDimensionUpdate(TrimmedModel):
+    name: str = Field(min_length=1, max_length=60)
 
 
 class PersonalSummaryView(View):

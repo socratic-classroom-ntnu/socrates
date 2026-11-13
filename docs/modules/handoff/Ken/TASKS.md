@@ -1,5 +1,13 @@
 # Ken 的工作清單（B 包：課程、單人活動與底層）
 
+## 11/14 起的順序（11/24 開放客戶）
+11/14 調整，這一段排在下面所有段落前面：
+1. **O6 最終確認**：11/24 學生主流程一定要有。依賴的 `final_summary` 已經在 develop。回顧階段 capped 的顯示照 #113 的討論，放進 F2 一起處理。
+2. **免註冊完整功能**（11/24 也要上）：前後端都由你做，包含下面「全部工作」的 3、3a、7、7a、7b（前端）。#125 的訪客紀錄 hook 契約與到期排程已經合進 `backend/main`；登入時併入訪客紀錄（Courecta 5a）由 Courecta 同時進行，會呼叫你 7a 的 `reassign`。詳細需求另開討論串。
+3. 這一輪先不排：第 4（旗標與學生指標）、5（統整引用）項。第 6 項的「最終統整與確認迴圈」就是 O6；其中的雷達這一輪要做，但另開需求、由其他組員負責，你不用做。
+
+已完成：O1–O5（#77、#83、#85、#127）、O7（#113）、content-authoring 與 readiness 的 response_model（#109、#84）。#110 等 Arthur 確認 stage／dev 的環境變數已改用新名稱再合。
+
 ## 你的第一個 PR
 course-management 的敘述型活動：活動內容改成「敘述＋立場空間」，加 `POST`／`PUT /activities/{id}/expansion`，發布時把立場空間鎖進 ActivityRevision；用 migration 把舊的選項轉成立場空間。同一個 PR 改 `modules.json`（新增依賴 llm-runtime、ai-providers），請 Courecta 審。
 
@@ -41,6 +49,7 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |
 | 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的到期訪客清名字排程（每日一次），並把各模組的訪客紀錄 hook 註冊進去 | Courecta 5、5b | 少註冊一個 hook 時啟動就報錯；加入滿 168 小時的訪客，下一次排程後名字已清空、標成已過期，作答與對話都還在 |
 | 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`，以及清掉這兩個模組存的訪客名字（選課的課內名字等），紀錄本身不動；同一課／同一活動兩邊都有時留帳號那份、訪客那份刪掉 | Courecta 5、5b 的契約 | 每個衝突情境各一條測試；到期後名字清掉、作答還在、老師統計照算 |
+| 7b | 前端 | 免註冊加入 | 照 Figma「免註冊加入」頁：掃課程或活動 QR 後選免註冊加入、填暱稱與語言；訪客使用中的帳號選單與受限功能的邀請；保留紀錄 → 註冊升級或登入併入；老師端的「允許免註冊」開關與名單上的訪客標示。訪客過期（`GUEST_EXPIRED`）和沒登入一樣導到登入頁，不另做說明頁 | 3、3a；Courecta 5a | 頁面測試先紅再綠；電腦與手機都照設計稿 |
 | — | content-authoring | 現有待辦 | 5 個端點補 response_model（清單在 `RESPONSE_MODEL_PENDING`） | Amethus 審 | 重產型別後沒有 diff |
 | — | platform | 現有待辦 | 相容帳冊（`COMPATIBILITY-LEDGER.md`）裡的舊環境變數別名 | — | — |
 | — | app-shell | 現有待辦 | `GET /api/v2/readiness` 補 response_model | Amethus 審 | 重產型別後沒有 diff |
@@ -49,6 +58,9 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 - 學生確認最後一題後按「送出回顧」，目前作答直接進入 `completed`，這是過渡做法，第 6 項會取代它。
 - 舊單人對話的資料表已經搬到 `legacy_solo_dialogue` schema（migration 0017，issue #71）。要不要把舊資料帶進單人活動，等決定後再排，現在不用動。
 - migration 順序：Courecta 的 identity-access → 你的 course-management → 你的 solo-activity，每個 down_revision 接前一個。
+- migration 編號（11/14）：develop 已到 0020。「學生／老師角色」的 `account_role`（identity-access）用 0021，你的「允許免註冊」（course-management）用 0022，`down_revision` 接 0021；角色那支如果還沒合，先跟 Fizzy 對好。
+- 訪客的 `username` 是「暱稱-8 碼亂數」，加入課程時 `default_display_name` 直接用它，老師會看到亂碼；預設課內名字要是暱稱本身。
+- `errorText` 的 `GUEST_EXPIRED`「請重新掃描課程 QR code 加入」容易讓人以為能接回原本的對話；過期的訪客重新掃碼會是全新的訪客，舊紀錄只留給老師看，文字要改。
 
 ## 規則（repo 現行檢查會擋）
 - 只 import 其他模組的 contracts／service／repositories；route 不互相引用，也不動態 import。`python scripts/check_modules.py` 的違規數只能變少。

@@ -120,3 +120,19 @@ def test_reason_codes_are_read_from_literal_catalog_without_importing_backend(tm
         "// Generated from backend/app/modules/contract/contracts.py.\n"
         'export type ClassroomReasonCode = "DYNAMIC" | "VISIBLE";\n'
     )
+
+
+def test_reason_code_type_is_part_of_existing_generated_contract(tmp_path):
+    generator = _generator_module()
+    generator.ROOT = tmp_path
+    catalog = tmp_path / "backend/app/modules/contract/contracts.py"
+    catalog.parent.mkdir(parents=True)
+    catalog.write_text(
+        'REASON_CODES = {"VISIBLE": ("owner",)}\n'
+        "DYNAMIC_REASON_CODES = ()\n"
+        "SERVER_ONLY_REASON_CODES = ()\n"
+    )
+    generator.write_contracts({"components": {"schemas": {}}, "paths": {}})
+    output = (tmp_path / "frontend/src/contract/classroomTypes.ts").read_text()
+    assert 'export type ClassroomReasonCode = "VISIBLE";' in output
+    assert not (tmp_path / "frontend/src/contract/classroomReasonCodes.ts").exists()

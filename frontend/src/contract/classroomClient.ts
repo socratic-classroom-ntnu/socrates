@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { components } from './classroomTypes'
+import type { components, paths } from './classroomTypes'
 import { errorText } from './errorText'
 
 // The adapter retains the established fetch(url, init) boundary used by resident tests.
@@ -179,6 +179,52 @@ export async function api(path: string, method = 'GET', body?: { signal?: AbortS
   return response.data
 }
 
+type ClassroomRoute = keyof paths & string
+type WithoutQuery<P extends string> = P extends `${infer Base}?${string}` ? Base : P
+type SameSegment<P extends string, R extends string> = R extends `{${string}}`
+  ? P extends '' ? false : true
+  : P extends R ? true : false
+type SameRoute<P extends string, R extends string> = P extends `${infer PH}/${infer PT}`
+  ? R extends `${infer RH}/${infer RT}`
+    ? SameSegment<PH, RH> extends true ? SameRoute<PT, RT> : false
+    : false
+  : R extends `${string}/${string}` ? false : SameSegment<P, R>
+type TemplateRoute<P extends string> = {
+  [R in ClassroomRoute]: SameRoute<WithoutQuery<P>, R> extends true ? R : never
+}[ClassroomRoute]
+type RoutePattern<R extends string> = R extends `${infer Start}{${string}}${infer End}`
+  ? `${Start}${string}${RoutePattern<End>}` : R
+type MoreSpecific<R extends string, Candidates extends string> = Candidates extends string
+  ? RoutePattern<Candidates> extends RoutePattern<R>
+    ? RoutePattern<R> extends RoutePattern<Candidates> ? never : Candidates
+    : never
+  : never
+type PreferredRoutes<All extends string, Candidate extends string = All> = Candidate extends string
+  ? [MoreSpecific<Candidate, Exclude<All, Candidate>>] extends [never] ? Candidate : never
+  : never
+type RouteFor<P extends string> = WithoutQuery<P> extends ClassroomRoute
+  ? WithoutQuery<P> : PreferredRoutes<TemplateRoute<P>>
+type RouteMethod<P extends string> = Uppercase<keyof paths[RouteFor<P>] & string>
+type RouteOperation<P extends string, M extends string> =
+  Lowercase<M> extends keyof paths[RouteFor<P>]
+    ? paths[RouteFor<P>][Lowercase<M>] : never
+type RouteBody<P extends string, M extends string> =
+  RouteOperation<P, M> extends { body: infer B } ? B : never
+type RouteResponse<P extends string, M extends string> =
+  RouteOperation<P, M> extends { response: infer R } ? R : never
+
+/** Strict contract entry point for endpoints with a known path and method. */
+export function typedApi<const P extends string, const M extends RouteMethod<P>>(
+  path: P & (RouteFor<P> extends never ? never : P),
+  method: M,
+  ...args: [RouteBody<P, M>] extends [never]
+    ? [options?: { signal?: AbortSignal }]
+    : [body: RouteBody<P, M> & { signal?: AbortSignal }]
+): Promise<RouteResponse<P, M>>
+export function typedApi(path: string, method: string, body?: { signal?: AbortSignal } & Record<string, unknown>): Promise<unknown> {
+  return api(path, method, body)
+}
+
 export function command(
   room,
   kind,
@@ -220,7 +266,7 @@ export type GroupAnalysis = components['schemas']['GroupAnalysisView']
 
 /** 教師端的分組分析投影（假名化的原話、關係與立場分布）。 */
 export function getGroupAnalysis(classroomId: string): Promise<GroupAnalysis> {
-  return api(`/groups/classrooms/${classroomId}/analysis`)
+  return typedApi(`/groups/classrooms/${classroomId}/analysis`, 'GET')
 }
 
 /** 前端可公開的設定（例如 debug_mode）。 */

@@ -115,8 +115,8 @@ def write_contracts(spec):
     out+='\n'.join(rows)
     out+='\n} }\n'
     out+='\n'+render_paths(spec)+'\n'
+    out+='\n'+render_reason_codes(ROOT/'backend/app/modules/contract/contracts.py')
     target=dest/'src/contract/classroomTypes.ts';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(out)
-    (dest/'src/contract/classroomReasonCodes.ts').write_text(render_reason_codes(ROOT/'backend/app/modules/contract/contracts.py'))
     print('CLASSROOM_CONTRACT_GENERATED',len(schemas),len(spec['paths']))
 
 def main():

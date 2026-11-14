@@ -10,6 +10,7 @@ import '../../../styles/teacher-live.css'
 import '../../../styles/teacher-analysis.css'
 import { ActivityPageHeader } from './ActivityPageHeader'
 import { ANALYSIS_DEMO, ANALYSIS_SOURCE } from './analysisDemo'
+import { StudentName } from './StudentName'
 
 type Analysis = components['schemas']['SoloActivityAnalysisView']
 type Progress = components['schemas']['SoloActivityProgressView']
@@ -91,7 +92,7 @@ function StudentViewpoint({ student }: { student: Student }) {
   const { t } = useT('teach')
   return <div className="analysis-student">
     <div className="analysis-student__head">
-      <strong>{student.display_name}</strong>
+      <strong><StudentName student={student} /></strong>
       <span className="analysis-student__tag">{t('analysis.confirmedScenarios', { count: student.confirmed_scenarios })}</span>
     </div>
     <p className="analysis-student__position">{student.current_position}</p>

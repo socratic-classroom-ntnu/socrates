@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api, setCSRF } from '../../contract/classroomClient'
+import { onSessionLost } from '../../contract/sessionEvents'
 import type { components } from '../../contract/classroomTypes'
 import { publishDevAccount } from '../dev-console/devConsoleStore'
 import { applyLocale, currentLocale } from '../../i18n'
@@ -56,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => { void refresh() }, [refresh])
+  // 訪客過期或 session 失效：重新讀一次帳號，未登入時 RequireAuth 會帶著目前網址導到登入頁
+  useEffect(() => onSessionLost(() => { void refresh() }), [refresh])
   useEffect(() => { publishDevAccount(account) }, [account]) // 開發控制台沿用這次 /auth/me，不另外查詢
 
   const value = useMemo(

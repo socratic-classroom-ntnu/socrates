@@ -8,6 +8,7 @@ import { Chip, FormError } from '../../../ui'
 import '../../../styles/teach.css'
 import '../../../styles/teacher-live.css'
 import { ActivityPageHeader } from './ActivityPageHeader'
+import { StudentName } from './StudentName'
 
 type ProgressView = components['schemas']['SoloActivityProgressView']
 type Student = components['schemas']['SoloStudentProgressView']
@@ -100,7 +101,7 @@ export function TeacherLivePage() {
           </tr></thead>
           <tbody>
             {shown.map(student => <tr key={student.enrollment_id} className={student.attention ? 'live-table__attention' : undefined}>
-              <th scope="row">{student.display_name}</th>
+              <th scope="row"><StudentName student={student} /></th>
               {scenarios.map(index => {
                 const cell = student.cells[index]
                 return <td key={index}>{cell

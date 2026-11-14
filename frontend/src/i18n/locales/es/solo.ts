@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: 'Completado', completedNext: 'Completaste esta actividad. Puedes volver a ver tu resumen final.',
     back: 'Cursos', breadcrumbLabel: 'Ruta del curso', notFound: 'No encontramos esta actividad', home: 'Volver al inicio',
     status: 'Estado', openUntil: 'Abierta hasta',
     statuses: { scheduled: 'Aún no abre', open: 'En curso', ended: 'Finalizada' },
@@ -8,7 +9,7 @@ export default {
     notStarted: 'Sin empezar', inProgress: 'En curso', inDialogue: 'En diálogo', confirmed: 'Confirmado', capped: 'Sin definir',
     progressHint: 'No hay límite de tiempo. Puedes salir y volver cuando quieras. Cada escenario permanece oculto hasta que llegues a él.',
     startTitle: 'Lee el escenario y responde con tus palabras',
-    lastStop: 'Te quedaste en', resumeAt: 'Escenario {{number}}, ronda {{turn}} del diálogo', reviewNext: 'Todos los escenarios están confirmados. Lo siguiente es repasar tus puntos de vista.',
+    lastStop: 'Te quedaste en', resumeAt: 'Escenario {{number}}, ronda {{turn}} del diálogo', reviewNext: 'Terminaste todos los escenarios. Lo siguiente es resumir tu razonamiento.',
     startBody: 'Cuenta con tus palabras qué harías y por qué, escribiendo o usando la voz. Después Sócrates te hará más preguntas. No hay respuestas correctas ni límite de intervenciones.',
     start: 'Iniciar diálogo', continue: 'Continuar diálogo', closed: 'Esta actividad no se puede iniciar ahora.',
     saved: 'El diálogo se guarda automáticamente para que puedas volver al mismo punto.',
@@ -61,9 +62,21 @@ export default {
     principles: { consequentialism: 'Consecuencialismo', deontology: 'Deontología', mixed: 'Enfoque mixto' },
   },
   review: {
-    closing: '{{name}}, ya explicaste tu postura en cada escenario. Ahora volveremos a mirar estas ideas.',
-    eyebrow: 'Tu progreso', title: 'Todos los escenarios están confirmados', subtitle: 'Repasa lo que pensaste hoy',
-    confirmedCard: 'Escenario {{number}}: postura confirmada', start: 'Iniciar repaso', comingSoon: 'El repaso de posturas está en desarrollo',
+    closing: '{{name}}, ya recorriste todos los escenarios. Ahora repasemos juntos todo tu razonamiento.',
+    eyebrow: 'Tu progreso', title: 'Terminaste todos los escenarios', subtitle: 'Repasa lo que pensaste hoy',
+    confirmedCard: 'Escenario {{number}}: postura confirmada',
+  },
+  final: {
+    feedbackLabel: 'Lo que dijiste que no encajaba', feedback: 'Dijiste: «{{text}}»',
+    writing: 'Sócrates está resumiendo todo tu razonamiento…', failed: 'Esta vez no se pudo resumir tu razonamiento', ownerMissing: 'Tu docente aún no configuró la conexión de IA, así que por ahora no se puede resumir',
+    write: 'Resumir mi razonamiento', retry: 'Intentar de nuevo', finish: 'Terminar sin resumen',
+    title: 'Intenté resumir todo tu razonamiento. ¿Es así?', subtitle: 'Sócrates lo escribió a partir de las posturas que confirmaste; tú decides si es correcto',
+    points: 'Resumen', trajectory: 'Razonamiento', step: 'Escenario {{number}}', shift: 'Por qué cambió: {{reason}}',
+    position: 'Tu postura final', style: 'En qué te basas a menudo para juzgar', question: 'Una pregunta para llevarte', quote: 'Dijiste: «{{quote}}»',
+    confirm: 'Sí, este es mi razonamiento', revise: 'No del todo',
+    reviseLabel: '¿Qué no encaja? Basta con una frase', revisePlaceholder: 'Por ejemplo: en realidad no estoy tan seguro', reviseSend: 'Pedir a Sócrates que lo reescriba', reviseCancel: 'Cancelar',
+    lastChance: 'Después de esto la actividad termina y este resumen queda marcado como «no confirmado».', reviseEnd: 'Enviar y terminar',
+    doneTitle: 'Tu razonamiento', confirmed: 'Confirmado', unconfirmed: 'No confirmado', doneNoSummary: 'Esta actividad está completa', back: 'Volver a la actividad',
   },
   errors: {
     SOLO_ATTEMPT_NOT_FOUND: 'No encontramos este diálogo.', ACTIVITY_NOT_OPEN: 'Esta actividad no se puede iniciar ahora.',

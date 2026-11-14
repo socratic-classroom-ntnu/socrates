@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: '已完成', completedNext: '你已经完成这个活动，可以回头看看最终统整。',
     back: '课程', breadcrumbLabel: '课程路径', notFound: '找不到这个活动', home: '回到首页',
     status: '状态', openUntil: '开放到',
     statuses: { scheduled: '尚未开始', open: '进行中', ended: '已结束' },
@@ -8,7 +9,7 @@ export default {
     notStarted: '还没开始', inProgress: '进行中', inDialogue: '对话中', confirmed: '已确认', capped: '尚未厘清',
     progressHint: '不限时间，可以随时离开再回来。还没到的情境不会先显示内容，到了才看得到。',
     startTitle: '先读情境，用自己的话回答',
-    lastStop: '上次停在', resumeAt: '情境 {{number}}，第 {{turn}} 轮对话', reviewNext: '情境都确认了，下一步是观点回顾',
+    lastStop: '上次停在', resumeAt: '情境 {{number}}，第 {{turn}} 轮对话', reviewNext: '情境都走完了，下一步是整理你的思路',
     startBody: '用你自己的话说你会怎么做、为什么，打字或用说的都可以。接着苏格拉底会追问。没有对错，也不限回复次数。',
     start: '开始对话', continue: '继续对话', closed: '这个活动目前不能开始。',
     saved: '对话会自动保存，离开后回来会接着上次的地方。',
@@ -61,9 +62,21 @@ export default {
     principles: { consequentialism: '后果主义', deontology: '义务论', mixed: '混合' },
   },
   review: {
-    closing: '{{name}}，你已经把每个情境的想法说清楚了。接下来，我们会回头看看这些观点。',
-    eyebrow: '你的进度', title: '情境都确认了', subtitle: '回头看看今天的想法',
-    confirmedCard: '情境 {{number}} 的观点已确认', start: '开始回顾', comingSoon: '观点回顾开发中',
+    closing: '{{name}}，每个情境都走完了。接下来，我们一起回头看看你整个思路。',
+    eyebrow: '你的进度', title: '情境都走完了', subtitle: '回头看看今天的想法',
+    confirmedCard: '情境 {{number}} 的观点已确认',
+  },
+  final: {
+    feedbackLabel: '你说哪里不太对', feedback: '你说：“{{text}}”',
+    writing: '苏格拉底正在整理你整个思路⋯', failed: '这次没能整理出你的思路', ownerMissing: '老师尚未设置 AI 连接，暂时无法整理',
+    write: '整理我的思路', retry: '再试一次', finish: '先结束，不整理',
+    title: '我试着整理你整个思路，这样说对吗？', subtitle: '苏格拉底依你确认过的想法整理，是否正确由你决定',
+    points: '统整', trajectory: '思路', step: '情境 {{number}}', shift: '转变的原因：{{reason}}',
+    position: '最后的主张', style: '你判断时常依据', question: '还可以带走的问题', quote: '你说过：“{{quote}}”',
+    confirm: '对，这就是我的思路', revise: '不太对',
+    reviseLabel: '哪里不对？写一句就好', revisePlaceholder: '例如：我其实没有那么确定', reviseSend: '请苏格拉底重写', reviseCancel: '取消',
+    lastChance: '这次之后就会结束，这份统整会标成“未确认”。', reviseEnd: '送出并结束',
+    doneTitle: '你的思路统整', confirmed: '已确认', unconfirmed: '未确认', doneNoSummary: '这个活动已经完成', back: '回到活动',
   },
   errors: {
     SOLO_ATTEMPT_NOT_FOUND: '找不到这段对话。', ACTIVITY_NOT_OPEN: '这个活动目前不能开始。',

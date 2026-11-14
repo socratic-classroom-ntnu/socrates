@@ -42,6 +42,8 @@ SoloAction = Literal[
 SoloNotice = Literal["tutor_unavailable", "owner_provider_missing"]
 # capped: the scenario ran out of messages before the view settled; its summary was only shown.
 ScenarioStatus = Literal["in_progress", "goal_met", "capped"]
+# The final summary the attempt ended with: confirmed by the student, or turned down twice (未確認).
+FinalStatus = Literal["confirmed", "unconfirmed"]
 PrincipleHint = Literal["後果主義", "義務論", "混合"]
 TutorMove = Literal["probe", "clarify", "challenge", "reflect", "summarize", "hypothetical"]
 # Which part of a turned-down summary the student says is wrong.
@@ -57,12 +59,16 @@ class SoloScenarioProgressView(View):
     status: Literal["in_dialogue", "confirmed", "capped"]
 
 
+# The review after the last scenario: completed once the attempt is (final summary or not).
+ReviewStatus = Literal["not_started", "in_progress", "completed"]
+
+
 class SoloAttemptBrief(View):
     id: str
     state: SoloState
     scenario_index: int
     progress: list[SoloScenarioProgressView]  # one per scenario of the sequence so far
-    review_status: Literal["not_started", "in_progress"]
+    review_status: ReviewStatus
     current_turn: int  # the current scenario's turn_index
 
 
@@ -138,6 +144,30 @@ class SoloScenarioView(View):
     confirmed_summary: PersonalSummaryView | None
 
 
+class FinalSummaryPointView(View):
+    text: str
+    sources: list[CitationSourceView]
+
+
+class FinalTrajectoryStepView(View):
+    """The student's position in one scenario of the sequence, oldest first."""
+
+    position: str
+    # Why the student moved here from the previous step; empty for the first and when unchanged.
+    shift_reason: str
+    sources: list[CitationSourceView]
+
+
+class FinalSummaryView(View):
+    """The whole attempt's line of thought, written from the confirmed stages (O6)."""
+
+    points: list[FinalSummaryPointView]
+    trajectory: list[FinalTrajectoryStepView]
+    final_position: str
+    reasoning_style: str
+    open_question: str  # empty when there is none
+
+
 class SoloMessageView(View):
     id: str
     scenario_index: int  # the scenario this message belongs to
@@ -146,6 +176,9 @@ class SoloMessageView(View):
     created_at: float
     move: TutorMove | None  # tutor messages only
     revise_hint: ReviseHint | None  # student messages only
+    # A student's sentence on what is off in the final summary (不太對): it belongs to the review,
+    # not to the scenario whose index it carries.
+    final_feedback: bool
 
 
 class SoloAttemptView(View):
@@ -167,6 +200,12 @@ class SoloAttemptView(View):
     revising: bool
     rejected_summary: PersonalSummaryView | None
     notice: SoloNotice | None
+    # Shown while reflecting, kept once completed; None before it is written or when skipped.
+    final_summary: FinalSummaryView | None
+    final_digest: str | None  # reflecting only; submit_reflection sends it back
+    final_status: FinalStatus | None  # completed only; None when finished without a summary
+    # One 不太對 was already given: the next one ends the attempt as 未確認.
+    final_revised: bool
     available_actions: list[SoloAction]
 
 
@@ -187,6 +226,9 @@ SoloActionBody = SendMessageBody | ConfirmViewpointBody
 ACTION_BODIES: dict[str, type[TrimmedModel]] = {
     "send_message": SendMessageBody,
     "confirm_viewpoint": ConfirmViewpointBody,
+    # 不太對 on the final summary carries the student's sentence on what is off.
+    "continue_reflection": SendMessageBody,
+    "submit_reflection": ConfirmViewpointBody,
 }
 
 
@@ -196,7 +238,7 @@ ACTION_BODIES: dict[str, type[TrimmedModel]] = {
 class SoloProgressSummaryView(View):
     enrolled: int
     started: int
-    done: int  # reached the review step
+    done: int  # completed the attempt
     attention: int
 
 
@@ -210,7 +252,9 @@ class SoloStudentProgressView(View):
     display_name: str
     overall: Literal["not_started", "in_progress", "done"]
     cells: list[SoloProgressCellView]  # one per scenario of this student's sequence so far
-    review_status: Literal["not_started", "in_progress"]
+    review_status: ReviewStatus
+    # completed only: confirmed, turned down twice (unconfirmed), or None when finished without.
+    final_status: FinalStatus | None
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
     attention: bool  # in progress and idle for over ATTENTION_SECONDS
@@ -234,7 +278,7 @@ class SoloActivityProgressView(View):
 class SoloAnalysisSummaryView(View):
     enrolled: int
     started: int
-    done: int  # reached the review step, the same definition as T5
+    done: int  # completed the attempt, the same definition as T5
     in_progress: int  # started - done
 
 
@@ -246,6 +290,7 @@ class SoloAnalysisStudentView(View):
     current_position: str
     reason_summary: str
     relevant_conditions: list[str]
+    final_status: FinalStatus | None  # as in SoloStudentProgressView
 
 
 class SoloActivityAnalysisView(View):

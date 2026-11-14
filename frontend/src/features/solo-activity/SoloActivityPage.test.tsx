@@ -145,11 +145,29 @@ test('reviewing card says every scenario is confirmed', async () => {
   renderPage()
 
   const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
-  expect(within(card).getByText('情境都確認了，下一步是觀點回顧')).toBeInTheDocument()
+  expect(within(card).getByText('情境都走完了，下一步是整理你的思路')).toBeInTheDocument()
   expect(within(card).queryByText(/輪對話/)).toBeNull()
   const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
   expect(rows[2]).toHaveTextContent('回顧與最後反思')
   expect(rows[2]).toHaveTextContent('進行中')
+})
+
+test('a completed attempt says so on the card and on the review step', async () => {
+  mockApi({
+    'GET /solo/activities/a-1': {
+      ...activity,
+      attempt: {
+        ...attempt, state: 'completed', scenario_index: 1, review_status: 'completed',
+        progress: [{ index: 0, status: 'confirmed' }, { index: 1, status: 'confirmed' }],
+      },
+    },
+  })
+  renderPage()
+
+  const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
+  expect(within(card).getByText('你已經完成這個活動，可以回頭看看最終統整。')).toBeInTheDocument()
+  const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
+  expect(rows[2]).toHaveTextContent('已完成')
 })
 
 test('start posts the attempt then opens the dialogue', async () => {

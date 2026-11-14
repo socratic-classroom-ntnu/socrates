@@ -1220,34 +1220,155 @@ test('review keeps the conversation and ends it with the confirmed viewpoint', a
   expect(within(timeline).queryByText('那麼「選擇」對你來說是什麼？')).toBeNull()
   expect(within(timeline).getByText('情境 1 的觀點已確認')).toBeInTheDocument()
   expect(within(timeline).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
-  expect(within(timeline).getByText(/小華，你已經把每個情境的想法說清楚了/)).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: '情境都確認了' })).toBeInTheDocument()
+  expect(within(timeline).getByText(/小華，每個情境都走完了/)).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: '情境都走完了' })).toBeInTheDocument()
 })
 
-test('review state shows the placeholder without submit', async () => {
-  const reviewAttempt = {
-    ...confirmingAttempt,
-    state: 'reviewing',
-    scenarios: [{
-      ...confirmingAttempt.scenarios[0], status: 'goal_met',
-      confirmed_summary: confirmingAttempt.candidate_summary,
-    }],
-    candidate_summary: null,
-    summary_digest: null,
-    available_actions: ['submit_review'],
-  }
-  const calls = mockApi({
-    'GET /auth/me': signedIn,
+const reviewAttempt = {
+  ...confirmingAttempt,
+  state: 'reviewing',
+  scenarios: [{
+    ...confirmingAttempt.scenarios[0], status: 'goal_met',
+    confirmed_summary: confirmingAttempt.candidate_summary,
+  }],
+  candidate_summary: null,
+  summary_digest: null,
+  final_summary: null, final_digest: null, final_status: null, final_revised: false,
+  available_actions: ['retry_reflection_prompt', 'submit_review'],
+}
+const finalSummary = {
+  points: [{ text: '你認為主動介入和任其發生不一樣。', sources: [{ message_id: 'm-1', quote: '不行動', start: 0, end: 3 }] }],
+  trajectory: [{ position: '不拉下拉桿', shift_reason: '', sources: [] }],
+  final_position: '你最後選擇不拉下拉桿。',
+  reasoning_style: '你常從誰造成傷害來判斷。',
+  open_question: '不行動是否也算一種選擇？',
+}
+const reflectingAttempt = {
+  ...reviewAttempt,
+  state: 'reflecting',
+  final_summary: finalSummary,
+  final_digest: 'final-digest',
+  available_actions: ['submit_reflection', 'continue_reflection'],
+}
+
+test('the review offers writing the summary or finishing, as the backend allows', async () => {
+  const calls = renderPageWithCalls({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': reviewAttempt,
+    'POST /solo/attempts/attempt-1/retry_reflection_prompt': reflectingAttempt,
   })
-  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
-    <AuthProvider><AppRoutes /></AuthProvider>
-  </MemoryRouter>)
 
-  expect(await screen.findByRole('heading', { name: '情境都確認了' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: '開始回顧' })).toBeDisabled()
-  expect(screen.getByText('觀點回顧開發中')).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: '情境都走完了' })).toBeInTheDocument()
   expect(screen.queryByLabelText('回答蘇格拉底')).toBeNull()
+  expect(screen.getByRole('button', { name: '先結束，不整理' })).toBeEnabled()
+  fireEvent.click(screen.getByRole('button', { name: /整理我的思路/ }))
+  expect(await screen.findByRole('heading', { name: '我試著整理你整個思路，這樣說對嗎？' })).toBeInTheDocument()
   expect(calls.some(call => call.key === 'POST /solo/attempts/attempt-1/submit_review')).toBe(false)
 })
+
+test('a failed summary says so and offers trying again', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...reviewAttempt, notice: 'tutor_unavailable' },
+  })
+
+  expect(await screen.findByText('這次沒能整理出你的思路')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /再試一次/ })).toBeEnabled()
+})
+
+test('while the summary is written nothing can be pressed', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...reviewAttempt, state: 'awaiting_reflection_prompt', available_actions: [] },
+  })
+
+  expect(await screen.findByText('蘇格拉底正在整理你整個思路⋯')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /再試一次|整理我的思路|先結束/ })).toBeNull()
+})
+
+test('the final summary is shown and 對 sends its digest', async () => {
+  const calls = renderPageWithCalls({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': reflectingAttempt,
+    'POST /solo/attempts/attempt-1/submit_reflection': {
+      ...reflectingAttempt, state: 'completed', final_digest: null, final_status: 'confirmed', available_actions: [],
+    },
+  })
+
+  expect(await screen.findByText('你認為主動介入和任其發生不一樣。')).toBeInTheDocument()
+  expect(screen.getByText('你說過：「不行動」')).toBeInTheDocument()
+  expect(screen.getByText('你最後選擇不拉下拉桿。')).toBeInTheDocument()
+  expect(screen.getByText('不行動是否也算一種選擇？', { selector: 'dd' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: '對，這就是我的思路' }))
+  await waitFor(() => expect(calls).toContainEqual({
+    key: 'POST /solo/attempts/attempt-1/submit_reflection',
+    body: { summary_digest: 'final-digest' },
+  }))
+  expect(await screen.findByText('已確認')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '回到活動' })).toHaveAttribute('href', '/learn/activities/a-1')
+})
+
+test('不太對 asks for one sentence before the summary is written again', async () => {
+  const calls = renderPageWithCalls({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': reflectingAttempt,
+    'POST /solo/attempts/attempt-1/continue_reflection': {
+      ...reflectingAttempt, final_digest: 'final-digest-2', final_revised: true,
+    },
+  })
+
+  fireEvent.click(await screen.findByRole('button', { name: '不太對' }))
+  const send = screen.getByRole('button', { name: '請蘇格拉底重寫' })
+  expect(send).toBeDisabled()
+  expect(calls.some(call => call.key === 'POST /solo/attempts/attempt-1/continue_reflection')).toBe(false)
+  fireEvent.change(screen.getByLabelText('哪裡不對？寫一句就好'), { target: { value: '  我其實有猶豫  ' } })
+  fireEvent.click(send)
+  await waitFor(() => expect(calls).toContainEqual({
+    key: 'POST /solo/attempts/attempt-1/continue_reflection',
+    body: { text: '我其實有猶豫' },
+  }))
+  expect(await screen.findByRole('button', { name: '對，這就是我的思路' })).toBeEnabled()
+})
+
+test('after one 不太對 the student is told the next one ends it', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...reflectingAttempt, final_revised: true },
+  })
+
+  fireEvent.click(await screen.findByRole('button', { name: '不太對' }))
+  expect(screen.getByText('這次之後就會結束，這份統整會標成「未確認」。')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '送出並結束' })).toBeInTheDocument()
+})
+
+test('a summary turned down twice is kept and marked 未確認', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...reflectingAttempt, state: 'completed', final_digest: null, final_status: 'unconfirmed', available_actions: [],
+    },
+  })
+
+  expect(await screen.findByText('未確認')).toBeInTheDocument()
+  expect(screen.getByText('你最後選擇不拉下拉桿。')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '對，這就是我的思路' })).toBeNull()
+})
+
+test('the sentence on the final summary sits in the review, not in the scenario dialogue', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...reflectingAttempt,
+      final_revised: true,
+      messages: [
+        ...reflectingAttempt.messages,
+        { id: 'm-fb', scenario_index: 0, role: 'student', text: '我其實有猶豫', created_at: 9, move: null, revise_hint: null, final_feedback: true },
+      ],
+    },
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  expect(within(timeline).queryByText('我其實有猶豫')).toBeNull()
+  expect(screen.getByRole('list', { name: '你說哪裡不太對' })).toHaveTextContent('你說：「我其實有猶豫」')
+})
+

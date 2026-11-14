@@ -8,6 +8,9 @@ export type SoloSummary = components['schemas']['PersonalSummaryView']
 export type SoloSendMessageBody = components['schemas']['SendMessageBody']
 export type SoloAction = SoloAttemptView['available_actions'][number]
 
+/** States after the last scenario: the review and its final summary (O6) replace the composer. */
+export const REVIEW_STATES: ReadonlyArray<SoloAttemptView['state']> = ['reviewing', 'awaiting_reflection_prompt', 'reflecting', 'completed']
+
 export function can(view: Pick<SoloAttemptView, 'available_actions'>, action: SoloAction): boolean {
   return view.available_actions.includes(action)
 }

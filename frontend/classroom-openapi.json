@@ -5767,6 +5767,21 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
           "guest_number": {
             "anyOf": [
               {
@@ -5807,7 +5822,8 @@
           "confirmed_scenarios",
           "current_position",
           "reason_summary",
-          "relevant_conditions"
+          "relevant_conditions",
+          "final_status"
         ],
         "title": "SoloAnalysisStudentView",
         "type": "object"
@@ -5862,7 +5878,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -6121,6 +6138,10 @@
             "title": "Created At",
             "type": "number"
           },
+          "final_feedback": {
+            "title": "Final Feedback",
+            "type": "boolean"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -6185,7 +6206,8 @@
           "text",
           "created_at",
           "move",
-          "revise_hint"
+          "revise_hint",
+          "final_feedback"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -6391,6 +6413,21 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
           "guest_number": {
             "anyOf": [
               {
@@ -6434,7 +6471,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -6448,6 +6486,7 @@
           "overall",
           "cells",
           "review_status",
+          "final_status",
           "last_activity_at",
           "attention"
         ],

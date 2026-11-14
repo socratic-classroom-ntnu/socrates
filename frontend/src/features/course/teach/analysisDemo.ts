@@ -11,7 +11,7 @@ const student = (index: number): Student => ({
   enrollment_id: `demo-${index}`,
   display_name: `示範學生 ${index}`,
   kind: 'registered',
-  guest_number: null,
+  guest_number: null, final_status: null,
   confirmed_scenarios: (index % 3) + 1,
   current_position: POSITIONS[index % POSITIONS.length],
   reason_summary: index % 2 === 0 ? '我在意的是能不能避免更多傷害。' : '我不確定人數是否足以決定該怎麼做。',

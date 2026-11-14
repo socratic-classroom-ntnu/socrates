@@ -182,7 +182,7 @@ const teach: Shape<typeof zhHant> = {
       answering: 'Writing the first answer',
       notStarted: 'Not started',
     },
-    review: { notStarted: 'Not started', inProgress: 'In progress' },
+    review: { notStarted: 'Not started', inProgress: 'In progress', completed: 'Completed', unconfirmed: 'Completed · not confirmed' },
     time: {
       now: 'Just now',
       minutes: '{{count}} minutes ago',

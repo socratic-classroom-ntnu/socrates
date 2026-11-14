@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import asdict
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
 
@@ -50,6 +51,9 @@ from app.modules.solo_activity.attempt_machine import (
 )
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 
+# Runs the final summary after the response (the route's BackgroundTasks); None runs it inline.
+Defer = Callable[[dict], None]
+
 if TYPE_CHECKING:
     from app.modules.solo_activity.contracts import (
         ConfirmViewpointBody,
@@ -73,6 +77,22 @@ FIRST_SCENARIO_ID = "s1"
 NOT_READY: frozenset[str] = frozenset()
 # States after every scenario is confirmed: the review step (R1) has begun.
 REVIEW_STATES = frozenset({"reviewing", "awaiting_reflection_prompt", "reflecting", "completed"})
+
+
+def review_status(state: str) -> str:
+    """The review as students and teachers see it: begun, or done once the attempt is completed."""
+    if state == "completed":
+        return "completed"
+    return "in_progress" if state in REVIEW_STATES else "not_started"
+
+
+def final_status(row: SoloAttempt) -> str | None:
+    """How a completed attempt's final summary ended; None before that or when finished without."""
+    if row.state != "completed":
+        return None
+    return (row.final or {}).get("status")
+
+
 # A scenario's status as the progress strip names it; anything else is still being talked over.
 _BRIEF_STATUS = {"goal_met": "confirmed", "capped": "capped"}
 
@@ -227,6 +247,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "created_at": m.created_at,
                 "move": (m.meta or {}).get("move") if m.role == "tutor" else None,
                 "revise_hint": (m.meta or {}).get("revise_hint") if m.role == "student" else None,
+                "final_feedback": bool((m.meta or {}).get("final_feedback")),
             }
             for m in _messages(db, row.id)
             if m.scenario_index <= a.scenario_index
@@ -274,7 +295,7 @@ def _attempt_brief(row: SoloAttempt) -> dict:
             for index, entry in enumerate(a.progress)
             if index <= a.scenario_index
         ],
-        "review_status": "in_progress" if a.state in REVIEW_STATES else "not_started",
+        "review_status": review_status(a.state),
         "current_turn": a.current.turn_index,
     }
 
@@ -398,10 +419,9 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
 
 def _final_transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
     """The two final-summary actions that ask for a summary: they return a final pending call."""
-    if action == "retry_reflection_prompt":
-        enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
-        return machine.retry_reflection_prompt(a, at)
     enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
+    if action == "retry_reflection_prompt":
+        return machine.retry_reflection_prompt(a, at)
     message = cast("SendMessageBody", body)
     if message.revise_hint is not None:
         raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
@@ -553,7 +573,7 @@ def _located(citations, texts: dict) -> list[dict]:
     return located
 
 
-async def _finish_extension(prepared: dict) -> dict:
+async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     """Write the scenario if it is still wanted; either way the student gets the current view.
 
     The call ran between two transactions, so the attempt is read again: a student who has
@@ -586,7 +606,7 @@ async def _finish_extension(prepared: dict) -> dict:
         # No next scenario: the review begins, and with it the final summary.
         waiting, pending = machine.start_final(a, now())
         follow = _prepare_final(db, row, waiting, pending, account, now())
-    return await finish_action(follow)
+    return await finish_action(follow, defer)
 
 
 async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
@@ -644,13 +664,19 @@ async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
     return None
 
 
-async def finish_action(prepared: dict) -> dict:
+async def finish_action(prepared: dict, defer: Defer | None = None) -> dict:
     """Provider call, then Tx2. A result for a key no longer awaited changes nothing."""
     if "view" in prepared:
         return prepared["view"]
     if prepared.get("extension"):
-        return await _finish_extension(prepared)
+        return await _finish_extension(prepared, defer)
     if prepared.get("final"):
+        # Two model calls in one request (a scenario that could not be written, then the summary)
+        # may outlast the ingress or the browser: the summary is written after the response, and
+        # the page re-reads the attempt while it is awaiting_reflection_prompt.
+        if defer is not None:
+            defer(prepared)
+            return prepared["waiting_view"]
         return await _finish_final(prepared)
     called = await _call_tutor(prepared)
     with transaction() as db:
@@ -725,8 +751,7 @@ def _prepare_final(
     context: dict[str, Any] = {
         # Each scenario is a teacher key (llm_runtime's TEACHER_KEYS), never screened as input.
         "scenarios": [
-            {"scenario": item.text, "confirmed": item.confirmed_summary}
-            for item in waiting.progress[: waiting.scenario_index + 1]
+            _final_material(item) for item in waiting.progress[: waiting.scenario_index + 1]
         ],
         "student_messages": [{"ref": ref, "text": m.text} for ref, m in refs.items()],
         "output_locale": account.locale or DEFAULT_LOCALE,
@@ -738,6 +763,7 @@ def _prepare_final(
     messages, schema, _ = compile_program(db, FINAL_PROGRAM, context)
     return {
         "final": True,
+        "waiting_view": _attempt_view(db, row, at),
         "attempt_id": row.id,
         "account_id": account.id,
         "key": pending.key,
@@ -749,6 +775,15 @@ def _prepare_final(
     }
 
 
+def _final_material(item: ScenarioProgress) -> dict[str, Any]:
+    """One scenario as the final summary reads it. A capped one carries the summary the student saw
+    and acknowledged under capped_summary: not confirmed, so the model gives it less weight."""
+    material: dict[str, Any] = {"scenario": item.text, "confirmed": item.confirmed_summary}
+    if item.status == "capped" and item.capped_summary is not None:
+        material["capped_summary"] = item.capped_summary
+    return material
+
+
 def _stored_final(summary: FinalSummary, texts: dict) -> dict:
     """The summary as kept: every quote replaced by where it sits; quotes not found are dropped."""
     stored = summary.model_dump()
@@ -757,6 +792,15 @@ def _stored_final(summary: FinalSummary, texts: dict) -> dict:
     for step, written_step in zip(stored["trajectory"], summary.trajectory, strict=True):
         step["sources"] = _located(written_step.sources, texts)
     return stored
+
+
+async def write_final(prepared: dict) -> None:
+    """The final summary after the response: an attempt that is gone (merged into an account,
+    say) or a provider that fails leaves nothing to report; the student's page reads the result."""
+    try:
+        await _finish_final(prepared)
+    except DomainError:
+        pass
 
 
 async def _finish_final(prepared: dict) -> dict:

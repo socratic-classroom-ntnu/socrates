@@ -14,7 +14,7 @@ const WORDS: Record<Locale, { adjectives: string[]; nouns: string[]; join(adject
   },
   en: {
     adjectives: ['Quiet', 'Curious', 'Brave', 'Gentle', 'Thoughtful', 'Cheerful', 'Clever', 'Careful', 'Calm', 'Bright', 'Patient', 'Lively', 'Steady', 'Kind', 'Honest', 'Focused', 'Hopeful', 'Nimble', 'Friendly', 'Easygoing', 'Bold', 'Warm'],
-    nouns: ['Owl', 'Dolphin', 'Fox', 'Squirrel', 'Penguin', 'Heron', 'Hedgehog', 'Whale', 'Sparrow', 'Otter', 'Rabbit', 'Deer', 'Bear', 'Swallow', 'Turtle', 'Raccoon', 'Goat', 'Lark', 'Robin', 'Panda', 'Koala', 'Seal'],
+    nouns: ['Owl', 'Dolphin', 'Fox', 'Squirrel', 'Penguin', 'Swan', 'Hedgehog', 'Whale', 'Sparrow', 'Otter', 'Rabbit', 'Deer', 'Bear', 'Swallow', 'Turtle', 'Raccoon', 'Goat', 'Lark', 'Robin', 'Panda', 'Koala', 'Seal'],
     join: (adjective, noun) => `${adjective} ${noun}`,
   },
   es: {

@@ -65,7 +65,7 @@ export function GuestHomeNotices({ account }: { account: Account | null }) {
   </>
 }
 
-/** G15: a guest who logs out cannot come back, so they confirm first; × keeps them where they are. */
+/** Logging out as a guest: a guest who logs out cannot come back, so they confirm first; × keeps them where they are. */
 export function GuestLogoutDialog({ date, onClose, onLogout }: { date: string; onClose(): void; onLogout(): void }) {
   const { t } = useT('guest')
   const navigate = useNavigate()
@@ -80,7 +80,7 @@ export function GuestLogoutDialog({ date, onClose, onLogout }: { date: string; o
   >{null}</Dialog>
 }
 
-/** G27／G28: a guest scanned a course or activity that does not take guests. Registering or
+/** Closed to guests: a guest scanned a course or activity that does not take guests. Registering or
  * logging in keeps `next`, so they come back to this join afterwards; home changes nothing. */
 export function GuestClosedCard({ kind, next, account }: { kind: 'course' | 'activity'; next: string; account: Account }) {
   const { t } = useT('guest')

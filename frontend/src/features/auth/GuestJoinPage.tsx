@@ -15,7 +15,7 @@ import { LanguageSwitcher } from './LanguageSwitcher'
 type Result = components['schemas']['GuestJoinResult']
 type Problem = 'blank' | 'tooLong' | null
 
-/** 02／G07–G12: pick a name and a language, then become a guest and join in one request.
+/** The guest name page: pick a name and a language, then become a guest and join in one request.
  * Afterwards the student goes straight to the course (03) or the open activity, never through
  * the join confirmation. */
 export function GuestJoinPage() {

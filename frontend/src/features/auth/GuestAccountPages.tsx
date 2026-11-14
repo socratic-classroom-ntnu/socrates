@@ -23,7 +23,7 @@ function useIssueText() {
     : t(`fieldErrors.${issue.field}.${issue.kind}`, { min: issue.min, max: issue.max })
 }
 
-/** G16–G19: a guest registers in place. Like any registration the email must be verified before
+/** A guest registers in place (the design's register-to-keep screens). Like any registration the email must be verified before
  * classes go on (E2); afterwards home shows G26. An email already registered leads to G19 → G21. */
 export function GuestUpgradePage() {
   const { t } = useT('guest')
@@ -116,7 +116,7 @@ export function GuestUpgradePage() {
   </AuthLayout>
 }
 
-/** G20–G24: a guest logs in to an existing account; the backend (Courecta's 5a) moves this device's
+/** A guest logs in to an existing account (the design's log-in-and-merge screens); the backend (Courecta's 5a) moves this device's
  * guest records into it. Home then shows G25. A teacher account is refused (G24). */
 export function GuestLoginPage() {
   const { t } = useT('guest')

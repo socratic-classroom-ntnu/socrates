@@ -100,6 +100,14 @@
       "AccountView": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
           "achievements": {
             "items": {
               "type": "string"
@@ -201,7 +209,8 @@
           "verified",
           "csrf_token",
           "points",
-          "achievements"
+          "achievements",
+          "account_role"
         ],
         "title": "AccountView",
         "type": "object"
@@ -3124,7 +3133,7 @@
       },
       "GuestUpgrade": {
         "additionalProperties": false,
-        "description": "A guest registering keeps its account id; it sends exactly what a registration does.",
+        "description": "A guest registering keeps its account id and stays a student, so it sends no role.",
         "properties": {
           "email": {
             "maxLength": 254,
@@ -4269,6 +4278,21 @@
       "Register": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "teacher",
+                  "student"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Role"
+          },
           "email": {
             "maxLength": 254,
             "minLength": 3,

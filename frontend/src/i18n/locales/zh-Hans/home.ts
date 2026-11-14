@@ -7,11 +7,7 @@ const home: Shape<typeof zhHant> = {
     afternoon: '下午好，{{name}}',
     evening: '晚上好，{{name}}',
   },
-  tabs: {
-    label: '首页分页',
-    learn: '我学的课',
-    teach: '我教的课',
-  },
+  learn: { label: '学的课' },
   join: {
     label: '课程代码',
     placeholder: '输入 8 位课程代码',
@@ -24,12 +20,26 @@ const home: Shape<typeof zhHant> = {
     notFoundBody: '请再对照一次老师给的 8 位课程代码。如果确定没输错，请向老师确认代码是否已更换。',
   },
   create: '创建课程',
-  phoneHint: '管理课程与活动请用电脑打开',
   empty: {
-    learnTitle: '暂无已加入的课程',
-    learnBody: '加入老师的课程后，将在此处显示',
-    teachTitle: '暂无任教课程',
-    teachBody: '创建课程后，将在此处显示',
+    learnTitle: '还没有加入任何课程',
+    learnBody: '输入老师给的代码加入课程。',
+    learnBodyPhone: '扫描二维码或输入代码加入课程。',
+    teachTitle: '还没有任何课程',
+    teachBody: '创建第一门课，邀请学生用代码或二维码加入，就可以开始出题，看见每位学生的想法。',
+    teachCreate: '创建第一门课',
+    stepsLabel: '开始的三个步骤',
+    steps: {
+      create: { title: '创建课程', body: '填写课程名称，系统会生成课程代码。' },
+      invite: { title: '邀请学生', body: '投影二维码或分享代码，学生用手机就能加入。' },
+      activity: { title: '新增活动', body: '写下情境，学生和苏格拉底对话后，你会看到全班的想法。' },
+    },
+  },
+  teach: { title: '我的课程', count: '{{count}} 门' },
+  teacherPhone: {
+    title: '老师的功能请用电脑打开',
+    body: '创建课程、出题和查看学生的想法，目前只能在电脑上使用。请用电脑登录同一个账号。',
+    signedIn: '当前登录：{{name}}',
+    role: '老师',
   },
   teaching: {
     live: '上课中',
@@ -51,6 +61,7 @@ const home: Shape<typeof zhHant> = {
     endedAt: '{{end}} 结束',
     nothing: '老师还没有开放活动',
     start: '开始',
+    enter: '进入课程',
   },
   loadFailed: '课程列表没有加载成功。',
 };

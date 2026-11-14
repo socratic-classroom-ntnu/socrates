@@ -35,6 +35,7 @@ import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
+import { RoleGate } from './RoleGate'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -48,7 +49,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
+type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector' | 'guestRegister' | 'guestLogin'
 
 // 這一批不做的入口：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -77,6 +78,8 @@ export function AppRoutes() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route element={<RequireAuth />}>
+      {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
+      <Route element={<RoleGate />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />
       {/* 寫死資料的示範頁：要登入才看得到，外框標明「示範資料」 */}
@@ -90,9 +93,14 @@ export function AppRoutes() {
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/scan" element={<Placeholder kind="scan" />} />
         <Route path="/account" element={<Placeholder kind="account" />} />
+        {/* 訪客帳號面板的兩個入口：真正的頁面由免註冊需求做（P27） */}
+        <Route path="/guest/register" element={<Placeholder kind="guestRegister" />} />
+        <Route path="/guest/login" element={<Placeholder kind="guestLogin" />} />
+      </Route>
       </Route>
     </Route>
     <Route element={<RequireAuth verified />}>
+      <Route element={<RoleGate />}>
       {/* 加入流程與投影是全螢幕，不包外框 */}
       <Route path="/join" element={<JoinCoursePage />} />
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
@@ -117,8 +125,11 @@ export function AppRoutes() {
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>
-        <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
-        <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+        <Route element={<TeacherDesktopOnly />}>
+          <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
+          <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+        </Route>
+      </Route>
       </Route>
     </Route>
     <Route path="*" element={<NotFoundPage />} />

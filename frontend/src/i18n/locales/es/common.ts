@@ -19,6 +19,7 @@ const common: Shape<typeof zhHant> = {
     USERNAME_TAKEN: 'Ese nombre de usuario ya está en uso. Elige otro.',
     EMAIL_TAKEN: 'Ese correo ya está registrado. Inicia sesión o restablece la contraseña si la olvidaste.',
     ACCOUNT_PENDING_VERIFICATION: 'Ese nombre de usuario o correo ya está registrado y espera la verificación. Si es tu cuenta, inicia sesión y reenvía el correo de verificación. Si no, quedará libre cuando caduque el enlace (24 horas después del último envío) y podrás registrarte.',
+    ACCOUNT_ROLE_FORBIDDEN: 'Esto requiere el otro tipo de cuenta: crear un curso requiere una cuenta de docente, y unirse a un curso o actividad, una cuenta de estudiante.',
     LOGIN_REQUIRED: 'Primero inicia sesión.',
     SESSION_CSRF_REQUIRED: 'Tu sesión ha caducado. Vuelve a cargar la página.',
     RATE_LIMITED: 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
@@ -38,6 +39,8 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'El análisis con IA todavía está en desarrollo. Más adelante organizará patrones de la clase a partir de posturas confirmadas.',
     toCourse: 'Volver al curso',
     projector: 'La proyección a pantalla completa todavía está en construcción. Por ahora, usa el código QR de la ventana de invitación.',
+    guestRegister: 'Aquí podrás registrarte como invitado y conservar tus registros en la misma cuenta.',
+    guestLogin: 'Aquí podrás iniciar sesión con una cuenta existente y llevar tus registros de invitado.',
   },
   dateTime: {
     chooseDate: 'Elige una fecha',

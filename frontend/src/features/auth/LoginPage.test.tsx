@@ -11,6 +11,8 @@ import { keepPasswordChars, PASSWORD_SPECIALS, passwordOk, REGISTER_LIMITS, regi
 import type { Locale } from '../../i18n/locale'
 
 const PASSWORD_RULE_TEXT = '密碼需 8–32 個字元，並包含大寫字母、小寫字母、數字與特殊字元（可用 ! @ # $ % ^ & * _ - + = . ? ~），不能有空白或其他符號。'
+const PASSWORD_HINT_TEXT = '密碼 8–32 個字元，需含大寫、小寫字母、數字和符號。'
+const VERIFY_NOTE_TEXT = '註冊後會寄一封驗證信到你的 Email。'
 
 jest.mock('../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../contract/classroomClient')>('../../contract/classroomClient')
@@ -44,7 +46,7 @@ beforeEach(() => jest.mocked(api).mockReset())
 
 // 未登入時打開 /teacher/home?view=bank 書籤，登入後要回到題庫分頁，不能只剩 /teacher/home
 test('login returns to the full teacher bookmark, query included', async () => {
-  anonymous(url => (url === '/auth/login' ? account : []))
+  anonymous(url => (url === '/auth/login' ? { ...account, account_role: 'teacher' } : []))
   openApp('/teacher/home?view=bank#teacher-content')
 
   fireEvent.change(await screen.findByLabelText('使用者名稱或 Email'), { target: { value: 'Fizzy' } })
@@ -67,11 +69,105 @@ async function openRegister() {
   }
 }
 
-function fill(f: Awaited<ReturnType<typeof openRegister>>, username: string, email: string, password: string) {
+function fill(f: Awaited<ReturnType<typeof openRegister>>, username: string, email: string, password: string, role: string | null = '我是學生') {
   fireEvent.change(f.username, { target: { value: username } })
   fireEvent.change(f.email, { target: { value: email } })
   fireEvent.change(f.password, { target: { value: password } })
+  if (role) fireEvent.click(screen.getByRole('radio', { name: new RegExp(role) }))
 }
+
+function phoneWidth() {
+  Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+    matches: query === '(max-width: 767px)', media: query, addEventListener: () => {}, removeEventListener: () => {},
+  }) })
+}
+const desktopMatchMedia = window.matchMedia
+afterEach(() => { Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktopMatchMedia }) })
+
+describe('account role on register (P11–P13)', () => {
+  test('nothing is chosen at first; submitting without a role explains it and sends nothing', async () => {
+    const f = await openRegister()
+    const group = screen.getByRole('group', { name: /身分/ })
+    expect(within(group).getByRole('radio', { name: /我是學生/ })).not.toBeChecked()
+    expect(within(group).getByRole('radio', { name: /我是老師/ })).not.toBeChecked()
+    expect(within(group).getByText('註冊後不能更改。')).toBeInTheDocument()
+    fill(f, 'goose', 'a@b.co', 'Socratic-123456', null)
+    await submit('註冊')
+    expect(screen.getByRole('alert')).toHaveTextContent('請選擇身分')
+    expect(screen.getByText('請選擇身分')).toHaveAttribute('id', 'register-account_role-error')
+    expect(within(group).getByRole('radio', { name: /我是學生/ })).toHaveFocus()
+    expect(api).not.toHaveBeenCalledWith('/auth/register', 'POST', expect.anything())
+  })
+
+  test('each role option carries its own person icon, hidden from the accessible name', async () => {
+    await openRegister()
+    for (const [name, kind] of [[/我是學生/, 'student'], [/我是老師/, 'teacher']] as const) {
+      const option = screen.getByRole('radio', { name }).closest('label')!
+      const icon = option.querySelector(`svg.auth-role__icon--${kind}`)
+      expect(icon).not.toBeNull()
+      expect(icon).toHaveAttribute('aria-hidden', 'true')
+    }
+    expect(screen.getByRole('radio', { name: /我是學生/ })).toHaveAccessibleName('我是學生')
+  })
+
+  test('the chosen role is sent with the registration', async () => {
+    const f = await openRegister()
+    fill(f, 'goose', 'a@b.co', 'Socratic-123456', '我是老師')
+    expect(screen.queryByText('請選擇身分')).toBeNull()
+    await submit('註冊')
+    expect(api).toHaveBeenCalledWith('/auth/register', 'POST', {
+      username: 'goose', email: 'a@b.co', password: 'Socratic-123456', account_role: 'teacher',
+    })
+  })
+
+  test('the role survives a trip to login and forgot password', async () => {
+    await openRegister()
+    fireEvent.click(screen.getByRole('radio', { name: /我是老師/ }))
+    fireEvent.click(screen.getByRole('button', { name: '回到登入' }))
+    fireEvent.click(await screen.findByRole('button', { name: '忘記密碼' }))
+    fireEvent.click(await screen.findByRole('button', { name: '註冊' }))
+    expect(await screen.findByRole('radio', { name: /我是老師/ })).toBeChecked()
+  })
+
+  test('on a phone the teacher option says it is for computers', async () => {
+    phoneWidth()
+    await openRegister()
+    expect(screen.getByRole('radio', { name: /我是老師/ })).toHaveAccessibleName(/限電腦使用/)
+    fireEvent.click(screen.getByRole('radio', { name: /我是老師/ }))
+    expect(screen.getByText('老師功能請用電腦登入使用；註冊後不能更改。')).toBeInTheDocument()
+  })
+
+  test.each([
+    ['course invite', '/join?code=AB12'],
+    ['activity QR', '/activities/a-1/join?from=qr'],
+  ])('registering from a %s has no choice and makes a student', async (_, next) => {
+    anonymous()
+    openApp('/login?mode=register&next=' + encodeURIComponent(next))
+    const f = {
+      username: await screen.findByLabelText('使用者名稱'),
+      email: screen.getByLabelText('Email'),
+      password: screen.getByLabelText('密碼'),
+    }
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getByText('從課程 QR 或邀請連結註冊的是學生帳號。')).toBeInTheDocument()
+    fill(f, 'goose', 'a@b.co', 'Socratic-123456', null)
+    await submit('註冊')
+    expect(api).toHaveBeenCalledWith('/auth/register', 'POST', {
+      username: 'goose', email: 'a@b.co', password: 'Socratic-123456', account_role: 'student',
+    })
+  })
+
+  test('a 422 on account_role lands under the role choice', async () => {
+    const f = await openRegister()
+    anonymous(url => {
+      if (url === '/auth/register') throw new ApiError(422, [{ type: 'literal_error', loc: ['body', 'account_role'], msg: 'x' }])
+      return []
+    })
+    fill(f, 'goose', 'a@b.co', 'Socratic-123456')
+    await submit('註冊')
+    expect(screen.getByText('請選擇身分')).toHaveAttribute('id', 'register-account_role-error')
+  })
+})
 
 // 123@g 被瀏覽器的 type=email 放行；送出前就要在 Email 欄位下說明，並把焦點移到該欄位
 test('register pre-checks the email domain and explains it under the field', async () => {
@@ -106,8 +202,10 @@ test('register pre-checks username and password with the backend limits', async 
 
 test('register asks for upper, lower, digit and an allowed special character', async () => {
   const f = await openRegister()
-  const rule = screen.getByText(PASSWORD_RULE_TEXT)
+  // 欄位下是精簡版；完整規則（含可用符號）只在送出不符時的錯誤裡
+  const rule = screen.getByText(PASSWORD_HINT_TEXT)
   expect(rule).toHaveAttribute('id', 'password-rule')
+  expect(screen.queryByText(PASSWORD_RULE_TEXT)).toBeNull()
   expect(f.password).toHaveAttribute('aria-describedby', 'password-rule')
   for (const weak of ['socratic-1', 'SOCRATIC-1', 'Socratic-x', 'Socratic12', "Socratic-1'", 'Socratic 1-a'])
     expect(passwordOk(weak)).toBe(false)
@@ -121,8 +219,33 @@ test('register asks for upper, lower, digit and an allowed special character', a
   fill(f, 'goose', 'a@b.co', 'Socratic12')
   await submit('註冊')
   expect(screen.getByRole('alert')).toHaveTextContent(PASSWORD_RULE_TEXT)
-  expect(f.password).toHaveAttribute('aria-describedby', 'password-rule register-password-error')
+  // 錯誤取代欄位下的說明，同一段規則不出現兩次（跟身分欄一樣）
+  expect(screen.queryByText(PASSWORD_HINT_TEXT)).toBeNull()
+  expect(f.password).toHaveAttribute('aria-describedby', 'register-password-error')
+  // 錯誤緊貼欄位，驗證信說明排在錯誤後面
+  const error = screen.getByRole('alert')
+  expect(error.compareDocumentPosition(screen.getByText(VERIFY_NOTE_TEXT)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(api).not.toHaveBeenCalledWith('/auth/register', 'POST', expect.anything())
+  fireEvent.change(f.password, { target: { value: 'Socratic-12' } })
+  expect(screen.getByText(PASSWORD_HINT_TEXT)).toHaveAttribute('id', 'password-rule')
+  expect(f.password).toHaveAttribute('aria-describedby', 'password-rule')
+})
+
+test('the verification-email note sits right under the password rule, above the role choice', async () => {
+  await openRegister()
+  const rule = screen.getByText(PASSWORD_HINT_TEXT)
+  const verify = screen.getByText(VERIFY_NOTE_TEXT)
+  const role = screen.getByRole('group', { name: /身分/ })
+  expect(rule.compareDocumentPosition(verify) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(verify.compareDocumentPosition(role) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getAllByText(VERIFY_NOTE_TEXT)).toHaveLength(1)
+})
+
+test('reset shows the short password rule but not the verification-email note', async () => {
+  anonymous()
+  openApp('/login?mode=reset&token=tok-1')
+  expect(await screen.findByText(PASSWORD_HINT_TEXT)).toHaveAttribute('id', 'password-rule')
+  expect(screen.queryByText(VERIFY_NOTE_TEXT)).toBeNull()
 })
 
 test('a password_policy 422 from the server shows the password rule under the field', async () => {
@@ -178,7 +301,10 @@ const withBackend = fs.existsSync(identityContracts) ? test : test.skip
 
 withBackend('register limits match the backend Register contract', () => {
   const source = fs.readFileSync(identityContracts, 'utf8')
-  const register = source.match(/class Register\(Strict\):([\s\S]*?)\n\n/)?.[1] || ''
+  // 帳密三欄在 Credentials（Register 與訪客升級共用），Register 另加 account_role
+  const register = source.match(/class Credentials\(Strict\):([\s\S]*?)\n\n/)?.[1] || ''
+  expect(source).toMatch(/class Register\(Credentials\):\n[\s\S]*?account_role: AccountRole \| None = None/)
+  expect(source).toContain('AccountRole = Literal["student", "teacher"]')
   for (const field of ['username', 'email', 'password'] as const) {
     const line = register.match(new RegExp(`${field}: str = Field\\(([^)]*)\\)`))?.[1] || ''
     expect([Number(line.match(/min_length=(\d+)/)?.[1]), Number(line.match(/max_length=(\d+)/)?.[1])]).toEqual([...REGISTER_LIMITS[field]])

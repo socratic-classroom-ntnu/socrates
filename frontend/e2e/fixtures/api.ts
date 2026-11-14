@@ -12,7 +12,12 @@ const DAY = 24 * HOUR
 export const account = {
   id: 'u-1', username: '林小華', email: 'student@example.org', email_masked: 's***@example.org', verified: true,
   authority_state: 'FULL_PRODUCT', csrf_token: 'csrf-baseline', points: 0, achievements: [], locale: 'zh-Hant',
-  kind: 'registered',
+  kind: 'registered', account_role: 'student',
+} satisfies S['AccountView']
+
+// 帳號只有一個角色：老師頁要用老師帳號才看得到，學生帳號會看到跨角色說明頁
+export const teacherAccount = {
+  ...account, id: 'u-2', username: '王思齊', email: 'teacher@example.org', email_masked: 't***@example.org', account_role: 'teacher',
 } satisfies S['AccountView']
 
 export const unverifiedAccount = {
@@ -148,8 +153,8 @@ const analysis = {
 } satisfies S['SoloActivityAnalysisView']
 
 /** `GET <path?query>` → body。沒列到的請求一律回 404，並記在基準輸出的 unmocked 裡。 */
-export function classroomRoutes(options: { signedIn: boolean; verified?: boolean }): Record<string, unknown> {
-  const me = options.verified === false ? unverifiedAccount : account
+export function classroomRoutes(options: { signedIn: boolean; verified?: boolean; role?: 'student' | 'teacher' }): Record<string, unknown> {
+  const me = options.verified === false ? unverifiedAccount : options.role === 'teacher' ? teacherAccount : account
   const routes: Record<string, unknown> = {
     'GET /courses': courseLists,
     'GET /courses/c-1?role=teacher': teacherCourse,

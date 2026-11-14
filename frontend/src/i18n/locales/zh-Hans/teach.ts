@@ -72,7 +72,7 @@ const teach: Shape<typeof zhHant> = {
   phone: {
     title: '暂时不支持手机操作',
     body: '老师的课程页、出题和看学生的想法，目前只能在电脑上使用。请用电脑登录同一个账号打开。',
-    back: '回到我教的课',
+    back: '回首页',
   },
   cards: {
     filterLabel: '筛选活动',

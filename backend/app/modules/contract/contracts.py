@@ -9,6 +9,7 @@ front/back seam so a check can say when one side drifts from the other.
 REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACCOUNT_DATA_TAKEN": ("identity_access",),
     "ACCOUNT_PENDING_VERIFICATION": ("identity_access",),
+    "ACCOUNT_ROLE_FORBIDDEN": ("course_management",),
     "ACTION_ID_PAYLOAD_CONFLICT": ("classroom_core", "content_authoring", "group_dialogue"),
     "ACTION_SCOPE_REQUIRED": ("content_authoring",),
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),

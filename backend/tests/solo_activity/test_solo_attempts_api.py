@@ -86,7 +86,7 @@ def setup(client, *, scenario=SCENARIO, ai=True, **activity):
     """Teacher with a published, open activity and one enrolled student (logged in).
 
     The teacher's single input is the activity's title and the first scenario's text."""
-    teacher = user(client, "owner")
+    teacher = user(client, "owner", account_role="teacher")
     profile_id = configure_ai(client) if ai else None
     course = create_course(client)
     body = create_activity(client, course["id"], title=scenario, **activity)
@@ -160,7 +160,7 @@ def test_activity_view_shows_own_attempt(client, tutor):
 
 
 def test_draft_activity_is_not_found(client, tutor):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     draft = create_activity(client, course["id"])
     join(client, course, "student")

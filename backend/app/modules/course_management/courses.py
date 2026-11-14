@@ -26,6 +26,13 @@ class CourseAccess:
     enrollment: Enrollment | None
 
 
+def require_account_role(account: Account, role: Literal["student", "teacher"]) -> None:
+    """The course entry points only: creating needs a teacher account, joining a student one.
+    Everything inside a course keeps checking membership, not the account role."""
+    if account.account_role != role:
+        raise DomainError("ACCOUNT_ROLE_FORBIDDEN", 403)
+
+
 def create(db, owner: Account, data: CourseCreate) -> Course:
     values = data.model_dump()
     for _ in range(5):

@@ -10,8 +10,9 @@ type Props = {
   /** Short explanation under the title (T2b). */
   description?: ReactNode
   tone?: 'default' | 'danger'
-  /** `right` is the T1 drawer; `center` the T2b/T4b dialogs. */
-  placement?: 'center' | 'right'
+  /** `right` is the T1 drawer; `center` the T2b/T4b dialogs; `bottom` the phone account sheet
+   * (S2sm): the title is only for screen readers and there is no ×, Esc and the backdrop close it. */
+  placement?: 'center' | 'right' | 'bottom'
   /** `false` keeps the dialog open when the dimmed backdrop is clicked (T1: typed content survives). */
   closeOnBackdrop?: boolean
 }
@@ -77,11 +78,13 @@ export function Dialog({ title, onClose, children, footer, description, tone = '
       tabIndex={-1}
       className={`dialog__panel dialog__panel--${tone}`}
     >
-      <header className="dialog__header">
-        {tone === 'danger' && <span className="dialog__alert" aria-hidden="true">!</span>}
-        <h2 id={titleId}>{title}</h2>
-        <button type="button" className="dialog__close" aria-label={t('close')} onClick={onClose}>×</button>
-      </header>
+      {placement === 'bottom'
+        ? <><span className="dialog__handle" aria-hidden="true" /><h2 id={titleId} className="sr-only">{title}</h2></>
+        : <header className="dialog__header">
+          {tone === 'danger' && <span className="dialog__alert" aria-hidden="true">!</span>}
+          <h2 id={titleId}>{title}</h2>
+          <button type="button" className="dialog__close" aria-label={t('close')} onClick={onClose}>×</button>
+        </header>}
       {description && <div className="dialog__description">{description}</div>}
       <div className="dialog__body">{children}</div>
       {footer && <footer className="dialog__footer">{footer}</footer>}

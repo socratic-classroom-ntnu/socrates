@@ -19,6 +19,7 @@ const common: Shape<typeof zhHant> = {
     USERNAME_TAKEN: '这个用户名已经有人使用，请换一个。',
     EMAIL_TAKEN: '这个 Email 已经注册过了，请直接登录；忘记密码可以重置。',
     ACCOUNT_PENDING_VERIFICATION: '这个用户名或 Email 已注册，正在等待 Email 验证。如果是你的账号，请直接登录并重新发送验证邮件；如果不是，等验证链接过期（最后一次发送后 24 小时）就会释放，届时可以再注册。',
+    ACCOUNT_ROLE_FORBIDDEN: '这个操作需要另一种账号：创建课程要用老师账号，加入课程或活动要用学生账号。',
     LOGIN_REQUIRED: '请先登录。',
     SESSION_CSRF_REQUIRED: '登录状态已过期，请刷新页面。',
     RATE_LIMITED: '操作太频繁，请稍后再试。',
@@ -38,6 +39,8 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'AI 分析还在开发中，之后会从已确认的想法整理班级层级的脉络。',
     toCourse: '回到课程',
     projector: '全屏投影还在建设中。现在可以先用邀请窗口里的二维码。',
+    guestRegister: '访客注册之后会放在这里：用同一个账号保留现在的记录。',
+    guestLogin: '用已有的账号登录并把访客记录并进去，之后会放在这里。',
   },
   dateTime: {
     chooseDate: '选择日期',

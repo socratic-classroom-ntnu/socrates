@@ -40,7 +40,7 @@ test('phone width shows S4m instead of the teacher course page', async () => {
   const calls = open()
   expect(await screen.findByRole('heading', { name: '暫時不支援手機操作' })).toBeInTheDocument()
   expect(screen.getByText('老師的課程頁、出題和看學生的想法，目前只能在電腦上使用。請用電腦登入同一個帳號開啟。')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '回到我教的課' })).toHaveAttribute('href', '/?tab=teach')
+  expect(screen.getByRole('link', { name: '回首頁' })).toHaveAttribute('href', '/')
   expect(calls.some(call => call.key.startsWith('GET /courses/c-1'))).toBe(false)
 })
 

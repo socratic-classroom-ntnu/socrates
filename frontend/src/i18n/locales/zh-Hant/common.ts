@@ -16,6 +16,7 @@ export default {
     USERNAME_TAKEN: '這個使用者名稱已經有人使用，請換一個。',
     EMAIL_TAKEN: '這個 Email 已經註冊過了，請直接登入；忘記密碼可以重設。',
     ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
+    ACCOUNT_ROLE_FORBIDDEN: '這個動作需要另一種帳號：建立課程要用老師帳號，加入課程或活動要用學生帳號。',
     LOGIN_REQUIRED: '請先登入。',
     SESSION_CSRF_REQUIRED: '登入狀態已過期，請重新整理頁面。',
     RATE_LIMITED: '操作太頻繁，請稍候再試。',
@@ -35,6 +36,8 @@ export default {
     aiAnalysis: 'AI 分析還在開發中，之後會從已確認的想法整理班級層級的脈絡。',
     toCourse: '回到課程',
     projector: '全螢幕投影還在施工。現在可以先用邀請視窗裡的 QR code。',
+    guestRegister: '訪客註冊之後會放在這裡：用同一個帳號保留現在的紀錄。',
+    guestLogin: '用已有的帳號登入並把訪客紀錄併進去，之後會放在這裡。',
   },
   dateTime: {
     chooseDate: '選擇日期',

@@ -7,11 +7,7 @@ const home: Shape<typeof zhHant> = {
     afternoon: 'Good afternoon, {{name}}',
     evening: 'Good evening, {{name}}',
   },
-  tabs: {
-    label: 'Home sections',
-    learn: 'My courses',
-    teach: 'My teaching',
-  },
+  learn: { label: 'My courses' },
   join: {
     label: 'Course code',
     placeholder: 'Enter the 8-character course code',
@@ -24,12 +20,26 @@ const home: Shape<typeof zhHant> = {
     notFoundBody: 'Check the 8-character code from your teacher again. If it is typed correctly, ask your teacher whether the code has changed.',
   },
   create: 'Create course',
-  phoneHint: 'Use a computer to manage courses and activities',
   empty: {
-    learnTitle: 'No courses yet',
-    learnBody: 'Courses you join will appear here',
-    teachTitle: 'No courses you teach yet',
-    teachBody: 'Courses you create will appear here',
+    learnTitle: 'You have not joined any course yet',
+    learnBody: 'Enter the code from your teacher to join a course.',
+    learnBodyPhone: 'Scan a QR code or enter a code to join a course.',
+    teachTitle: 'No courses yet',
+    teachBody: 'Create your first course and invite students with its code or QR code. Then add a question and see what each student thinks.',
+    teachCreate: 'Create your first course',
+    stepsLabel: 'Three steps to start',
+    steps: {
+      create: { title: 'Create a course', body: 'Give it a name; a course code is made for you.' },
+      invite: { title: 'Invite students', body: 'Project the QR code or share the code; students join on their phones.' },
+      activity: { title: 'Add an activity', body: 'Write a scenario. After students talk it through with Socrates, you see what the class thinks.' },
+    },
+  },
+  teach: { title: 'My courses', count: '{{count}}' },
+  teacherPhone: {
+    title: 'Teacher features need a computer',
+    body: 'Creating courses, writing questions and reading what students think only work on a computer for now. Sign in to the same account there.',
+    signedIn: 'Signed in as {{name}}',
+    role: 'Teacher',
   },
   teaching: {
     live: 'In class',
@@ -55,6 +65,7 @@ const home: Shape<typeof zhHant> = {
     endedAt: 'Ended {{end}}',
     nothing: 'Your teacher has not opened an activity yet',
     start: 'Start',
+    enter: 'Open course',
   },
   loadFailed: 'The course list did not load.',
 };

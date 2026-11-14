@@ -74,7 +74,7 @@ const teach: Shape<typeof zhHant> = {
   phone: {
     title: 'Not available on phones yet',
     body: 'Course pages, question writing, and student viewpoints for teachers only work on a computer for now. Please sign in to the same account on a computer.',
-    back: 'Back to my teaching',
+    back: 'Back to home',
   },
   cards: {
     filterLabel: 'Filter activities',

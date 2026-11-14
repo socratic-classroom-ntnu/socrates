@@ -106,6 +106,10 @@ def test_add_ai_students_joins_them_to_the_lobby_roster(client):  # noqa: F811
     assert receipt["roster_digest"] == digest
     assert {row["id"] for row in rows} == {c["membership_id"] for c in receipt["created"]}
     assert {row["actor_type"] for row in rows} == {"llm_student"}
+    # AI 學生的帳號吃預設角色：學生
+    with storage.transaction() as db:
+        for created in receipt["created"]:
+            assert db.get(Account, created["account_id"]).account_role == "student"
     # 重送同一個 action_id 不會再加人；同 id 換內容是衝突
     assert add_ai(client, room, 2, action_id).json() == receipt
     assert len(roster(client, room)[0]) == 2

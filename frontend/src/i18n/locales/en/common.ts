@@ -19,6 +19,7 @@ const common: Shape<typeof zhHant> = {
     USERNAME_TAKEN: 'That username is taken. Please choose another.',
     EMAIL_TAKEN: 'That email is already registered. Log in instead, or reset your password if you forgot it.',
     ACCOUNT_PENDING_VERIFICATION: 'That username or email is registered and waiting for email verification. If it is yours, log in and resend the verification email. If not, it is released once the link expires (24 hours after the last email), and you can sign up then.',
+    ACCOUNT_ROLE_FORBIDDEN: 'This needs the other kind of account: creating a course takes a teacher account, and joining a course or activity takes a student account.',
     LOGIN_REQUIRED: 'Please log in first.',
     SESSION_CSRF_REQUIRED: 'Your session has expired. Please reload the page.',
     RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
@@ -38,6 +39,8 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'AI analysis is still being built. It will later organize class-level patterns from confirmed viewpoints.',
     toCourse: 'Back to the course',
     projector: 'Full-screen projection is still being built. For now, use the QR code in the invite window.',
+    guestRegister: 'Signing up as a guest will be here: the same account keeps your records.',
+    guestLogin: 'Logging in to an existing account and bringing your guest records along will be here.',
   },
   dateTime: {
     chooseDate: 'Choose a date',

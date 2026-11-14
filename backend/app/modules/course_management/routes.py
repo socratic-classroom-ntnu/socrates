@@ -66,6 +66,7 @@ def course_lists(request: Request):
 def create_course(body: CourseCreate, request: Request):
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
+        service.require_account_role(current, "teacher")
         course = service.create(db, current, body)
         return service.teacher_view(db, course)
 
@@ -75,6 +76,7 @@ def join_course(body: CourseJoin, request: Request):
     _join_limit(request, mutation=True)
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
+        service.require_account_role(current, "student")
         course = enrollment.find_by_code(db, body.code)
         row, _ = enrollment.enroll(db, current, course, body.display_name)
         return service.student_view(course, row)
@@ -218,6 +220,7 @@ def activity_public_preview(activity_id: str, request: Request):
 def join_activity(activity_id: str, body: ActivityJoin, request: Request):
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
+        service.require_account_role(current, "student")
         activity = activity_service.get_activity(db, activity_id)
         return activity_service.join_by_activity(
             db, current, activity, body.display_name, activity_service.now()

@@ -69,7 +69,7 @@ export default {
   phone: {
     title: '暫時不支援手機操作',
     body: '老師的課程頁、出題和看學生的想法，目前只能在電腦上使用。請用電腦登入同一個帳號開啟。',
-    back: '回到我教的課',
+    back: '回首頁',
   },
   cards: {
     filterLabel: '篩選活動',

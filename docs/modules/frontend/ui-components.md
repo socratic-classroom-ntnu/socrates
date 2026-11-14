@@ -1,7 +1,7 @@
 ---
-description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、狀態標籤、篩選 chip、複製鈕、QR
+description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、狀態標籤、篩選 chip、複製鈕、QR、底部導覽
 globs: frontend/src/**/*.tsx
-keywords: [Button, ButtonLink, IconButton, Field, FormError, StatusPill, Chip, ChipGroup, CopyButton, QrCode, className, CSS Modules]
+keywords: [Button, ButtonLink, IconButton, Field, FormError, StatusPill, Chip, ChipGroup, CopyButton, QrCode, BottomNav, className, CSS Modules]
 ---
 
 # 前端共用元件（`frontend/src/ui`）
@@ -25,6 +25,7 @@ keywords: [Button, ButtonLink, IconButton, Field, FormError, StatusPill, Chip, C
 | `ChipGroup` | 一排 chip | `label` 是這組的名稱（`role="group"`） |
 | `CopyButton` | 複製文字並顯示結果 | `text`、`label`；`iconOnly` 時用 `tone`，有文字時用 `variant`；`unstyled` 只套頁面的 `className` |
 | `QrCode` | 網址的 QR 圖 | `value`、`alt`、`size` |
+| `BottomNav` | 手機底部導覽（學生端） | `label` 是導覽名稱；`items` 每格有 `to`（連結，`current` 標目前頁）或 `onSelect`（按鈕，`expanded` 標面板開著）；固定在畫面最下方，頁面內容要自己留出 64px＋安全區的底部空間 |
 
 ## 什麼情境用哪個
 

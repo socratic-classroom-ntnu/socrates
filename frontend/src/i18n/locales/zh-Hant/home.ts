@@ -4,11 +4,7 @@ export default {
     afternoon: '午安，{{name}}',
     evening: '晚安，{{name}}',
   },
-  tabs: {
-    label: '首頁分頁',
-    learn: '我學的課',
-    teach: '我教的課',
-  },
+  learn: { label: '學的課' },
   join: {
     label: '課程代碼',
     placeholder: '輸入 8 碼課程代碼',
@@ -21,12 +17,26 @@ export default {
     notFoundBody: '請再對照一次老師給的 8 碼課程代碼。如果確定沒打錯，請向老師確認代碼是否有更換。',
   },
   create: '建立課程',
-  phoneHint: '管理課程與活動請用電腦開啟',
   empty: {
-    learnTitle: '暫無已加入課程',
-    learnBody: '加入老師的課程後，將在此處顯示',
-    teachTitle: '暫無任教課程',
-    teachBody: '建立課程後，將在此處顯示',
+    learnTitle: '還沒有加入任何課程',
+    learnBody: '輸入老師給的代碼加入課程。',
+    learnBodyPhone: '掃描 QR 或輸入代碼加入課程。',
+    teachTitle: '還沒有任何課程',
+    teachBody: '建立第一門課，邀請學生用代碼或 QR 加入，就可以開始出題，看見每位學生的想法。',
+    teachCreate: '建立第一門課',
+    stepsLabel: '開始的三個步驟',
+    steps: {
+      create: { title: '建立課程', body: '填課程名稱，系統會產生課程代碼。' },
+      invite: { title: '邀請學生', body: '投影 QR 或分享代碼，學生用手機就能加入。' },
+      activity: { title: '新增活動', body: '寫下情境，學生和蘇格拉底對話後，你會看到全班的想法。' },
+    },
+  },
+  teach: { title: '我的課程', count: '{{count}} 門' },
+  teacherPhone: {
+    title: '老師的功能請用電腦開啟',
+    body: '建立課程、出題和查看學生的想法，目前只能在電腦上使用。請用電腦登入同一個帳號。',
+    signedIn: '目前登入：{{name}}',
+    role: '老師',
   },
   teaching: {
     live: '上課中',
@@ -48,6 +58,7 @@ export default {
     endedAt: '{{end}} 結束',
     nothing: '老師還沒有開放活動',
     start: '開始',
+    enter: '進入課程',
   },
   loadFailed: '課程清單沒有載入成功。',
 };

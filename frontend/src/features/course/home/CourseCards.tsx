@@ -81,8 +81,11 @@ export function LearningCard({ course, phone }: { course: Learning; phone: boole
       {pill}
     </div>
     <div className="course-card__content">{body}</div>
-    {h?.status === 'open' && <div className="course-card__actions">
-      <ButtonLink variant="primary" className="course-card__button" to={`/learn/activities/${h.id}`}>{t('learning.start')}<span aria-hidden="true">→</span></ButtonLink>
-    </div>}
+    <div className="course-card__actions">
+      {h?.status === 'open'
+        ? <ButtonLink variant="primary" className="course-card__button" to={`/learn/activities/${h.id}`}>{t('learning.start')}<span aria-hidden="true">→</span></ButtonLink>
+        // 畫布 M2：沒有進行中活動的卡片右下是「進入課程 →」（整張卡也能點，這是看得見的入口）
+        : <Link className="course-card__enter" to={`/learn/courses/${course.id}`}>{t('learning.enter')}<span aria-hidden="true">→</span></Link>}
+    </div>
   </article>
 }

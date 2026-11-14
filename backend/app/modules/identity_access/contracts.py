@@ -8,6 +8,8 @@ from app.modules.platform.contracts import Strict
 
 # Interface languages an account can choose; the frontend owns the translations.
 Locale = Literal["zh-Hant", "zh-Hans", "en", "es"]
+# Chosen at registration and fixed; not the role a course or classroom membership carries.
+AccountRole = Literal["student", "teacher"]
 
 USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
 
@@ -45,7 +47,7 @@ def email_shape(value: str) -> str:
     return value
 
 
-class Register(Strict):
+class Credentials(Strict):
     username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=8, max_length=32)
@@ -61,6 +63,12 @@ class Register(Strict):
         return email_shape(v)
 
 
+class Register(Credentials):
+    # Optional so other callers (the dev console) still register; the sign-up form always sends
+    # it. Missing or null makes a student.
+    account_role: AccountRole | None = None
+
+
 class GuestJoin(Strict):
     """Joining without registering: a nickname shown to the class and the interface language."""
 
@@ -68,8 +76,8 @@ class GuestJoin(Strict):
     locale: Locale
 
 
-class GuestUpgrade(Register):
-    """A guest registering keeps its account id; it sends exactly what a registration does."""
+class GuestUpgrade(Credentials):
+    """A guest registering keeps its account id and stays a student, so it sends no role."""
 
 
 class Login(Strict):
@@ -170,6 +178,7 @@ class AccountView(Strict):
     achievements: list[str]
     locale: Locale | None = None
     kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    account_role: AccountRole
     # Guests only: 168 hours after joining; the daily job then clears the name and marks the
     # account expired_guest.
     guest_expires_at: float | None = None

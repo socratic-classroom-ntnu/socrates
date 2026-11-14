@@ -17,6 +17,13 @@
 - 訪客只靠裝置上的 session cookie 定位。`guest_expires_at` 固定是加入那一刻 + 168 小時，有動作也不延長；過了就回 `GUEST_EXPIRED`。`kind` 是 `registered`／`guest`／`expired_guest`（到期後由排程標記，帳號與紀錄保留）。訪客登出只讓 session 失效，不動到期時間與名字。
 - **預設拒絕訪客**：`service.account(...)` 遇到訪客回 `GUEST_NOT_ALLOWED`，學生端點要明確傳 `allow_guest=True`（例：選課、單人活動、分組課）。老師與金鑰相關的端點不傳，訪客就進不去。
 
+### 帳號角色（`account_role`）
+
+- 每個帳號是 `student` 或 `teacher`，註冊時決定（`POST /auth/register` 的 `account_role`，沒帶或 `null` 是 `student`），之後不能改，沒有改角色的 API。訪客、訪客升級、分組課的 AI 學生一律是 `student`；`POST /auth/guest/upgrade` 不收這個欄位。
+- `AccountView.account_role` 必有。前端登入後依它決定顯示學生或老師的畫面。
+- 後端只在課程這條線的三個入口依它擋（`course_management` 的 `require_account_role`，403 `ACCOUNT_ROLE_FORBIDDEN`）：學生帳號不能 `POST /courses`；老師帳號不能 `POST /courses/join`、`POST /activities/{id}/join`。預覽、課程裡的其他動作、分組課都不看它。
+- 它和 membership 的 `role`（「這個人在這門課／這間教室是老師還是學生」）是兩件事：課程裡的權限照舊看是不是這門課的老師、有沒有選課，不要改成看 `account_role`。
+
 ## Toy page
 
 本模組使用既有`frontend/src/features/dev-console/`註冊fixture與操作面板。Toy page與production frontend共用generated client、ViewModel與reason codes。

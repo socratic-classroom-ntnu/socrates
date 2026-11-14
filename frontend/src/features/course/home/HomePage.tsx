@@ -1,4 +1,6 @@
 import { Navigate, useSearchParams } from 'react-router-dom'
+import { Avatar } from '../../../components/Avatar'
+import { DesktopOnlyIllustration } from '../../../components/DesktopOnlyIllustration'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useAuth } from '../../auth/AuthContext'
@@ -6,76 +8,124 @@ import { useIsPhone } from '../../../shared/useIsPhone'
 import { EmptyClassroomIllustration } from '../../../components/EmptyClassroomIllustration'
 import { greetingKey } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
-import { Button, ButtonLink, FormError } from '../../../ui'
+import { Button, FormError } from '../../../ui'
 import { CreateCourseDrawer } from '../teach/CreateCourseDrawer'
 import { LearningCard, TeachingCard } from './CourseCards'
 import { JoinCodeForm } from './JoinCodeForm'
 import '../../../styles/home.css'
 
 type Lists = components['schemas']['CourseLists']
-type Tab = 'learn' | 'teach'
 
-/** H1／H1m (and H2／H2m when a tab is empty): one layout with or without courses. */
+/**
+ * 帳號只有一個角色（P20、P21）：學生是 M1／M1m（學的課＋加入課程），老師是 H1t／H2t（教的課＋建立課程），
+ * 手機老師是 S4m-t（請用電腦）。沒有分頁，網址上的 ?tab= 一律忽略；?create=1 只對老師開抽屜。
+ */
 export function HomePage() {
-  const { t } = useT('home')
   const { account } = useAuth()
   const phone = useIsPhone()
+  const teacher = account?.account_role === 'teacher'
+  if (teacher && phone) return <TeacherPhoneHome />
+  return teacher ? <TeacherHome /> : <StudentHome phone={phone} />
+}
+
+function Greeting() {
+  const { t } = useT('home')
+  const { account } = useAuth()
+  return <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: account?.username ?? '' })}</h1>
+}
+
+function StudentHome({ phone }: { phone: boolean }) {
+  const { t } = useT('home')
   const lists = useResource<Lists>('/courses')
-  const [params, setParams] = useSearchParams()
-  const requested = params.get('tab')
-
   const data = lists.data
-  const tab: Tab = requested === 'learn' || requested === 'teach'
-    ? requested
-    : data && data.learning.length === 0 && data.teaching.length > 0 ? 'teach' : 'learn'
-  const creating = params.get('create') === '1'
-
-  function choose(next: Tab) { setParams({ tab: next }, { replace: true }) }
-  function openCreate() { setParams({ tab: 'teach', create: '1' }, { replace: true }) }
-  function closeCreate() { setParams({ tab }, { replace: true }) }
-
-  // 老師端沒有手機版：手機帶著 create=1 進來就換成 S4m
-  if (phone && creating) return <Navigate to="/teach/create-course" replace />
-
-  const createButton = <Button variant="primary" onClick={openCreate}><span aria-hidden="true">+</span>{t('create')}</Button>
-
   return <main className={'home' + (phone ? ' home--phone' : '')}>
-    <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: account?.username ?? '' })}</h1>
-    <section className="home__panel">
-      <div className="home__bar">
-        <div role="tablist" aria-label={t('tabs.label')} className="home__tabs">
-          {(['learn', 'teach'] as const).map(key => <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => choose(key)}>{t(`tabs.${key}`)}</button>)}
-        </div>
-        {!phone && (tab === 'learn' ? <JoinCodeForm variant="inline" /> : createButton)}
-      </div>
-      {phone && (tab === 'learn'
-        ? <JoinCodeForm variant="phone" />
-        : <ButtonLink variant="primary" className="home__create-phone" to="/teach/create-course"><span aria-hidden="true">+</span>{t('create')}</ButtonLink>)}
+    {/* 畫布 M2：加入課程跟問候語同一列（電腦在右邊，手機排在問候語下面） */}
+    <div className="home__head">
+      <Greeting />
+      <JoinCodeForm variant={phone ? 'phone' : 'inline'} />
+    </div>
+    <section className="home__panel" aria-label={t('learn.label')}>
       {lists.loading && !data && <div aria-busy="true" className="home__loading" />}
       {!data && !lists.loading && <FormError role="alert">{t('loadFailed')}</FormError>}
-      {data && <TabContent tab={tab} lists={data} phone={phone} />}
+      {data && (data.learning.length === 0
+        ? <div className="home__empty">
+          <EmptyClassroomIllustration />
+          <h2>{t('empty.learnTitle')}</h2>
+          <p>{t(phone ? 'empty.learnBodyPhone' : 'empty.learnBody')}</p>
+        </div>
+        : <div className="home__cards">
+          {data.learning.map(course => <LearningCard key={course.id} course={course} phone={phone} />)}
+        </div>)}
+    </section>
+  </main>
+}
+
+function TeacherHome() {
+  const { t } = useT('home')
+  const lists = useResource<Lists>('/courses')
+  const [params, setParams] = useSearchParams()
+  const creating = params.get('create') === '1'
+  const data = lists.data
+
+  function openCreate() {
+    const next = new URLSearchParams(params)
+    next.set('create', '1')
+    setParams(next, { replace: true })
+  }
+  function closeCreate() {
+    const next = new URLSearchParams(params)
+    next.delete('create')
+    setParams(next, { replace: true })
+  }
+
+  const empty = data !== null && data.teaching.length === 0
+  return <main className="home">
+    <Greeting />
+    <section className="home__panel" aria-labelledby="home-teaching-title">
+      <div className="home__bar">
+        <h2 id="home-teaching-title" className="home__title">
+          {t('teach.title')}{data && data.teaching.length > 0 && <span className="home__count"> {t('teach.count', { count: data.teaching.length })}</span>}
+        </h2>
+        {!empty && <Button variant="primary" onClick={openCreate}><span aria-hidden="true">+</span>{t('create')}</Button>}
+      </div>
+      {lists.loading && !data && <div aria-busy="true" className="home__loading" />}
+      {!data && !lists.loading && <FormError role="alert">{t('loadFailed')}</FormError>}
+      {data && (empty
+        ? <div className="home__empty home__empty--teach">
+          <EmptyClassroomIllustration />
+          <h3>{t('empty.teachTitle')}</h3>
+          <p>{t('empty.teachBody')}</p>
+          <Button variant="primary" className="home__create-first" onClick={openCreate}><span aria-hidden="true">+</span>{t('empty.teachCreate')}</Button>
+          <ol className="home__steps" aria-label={t('empty.stepsLabel')}>
+            {(['create', 'invite', 'activity'] as const).map((step, index) => <li key={step}>
+              <span className="home__step-number" aria-hidden="true">{index + 1}</span>
+              <span><b>{t(`empty.steps.${step}.title`)}</b>{t(`empty.steps.${step}.body`)}</span>
+            </li>)}
+          </ol>
+        </div>
+        : <div className="home__cards">
+          {data.teaching.map(course => <TeachingCard key={course.id} course={course} phone={false} />)}
+        </div>)}
     </section>
     {creating && <CreateCourseDrawer onClose={closeCreate} />}
   </main>
 }
 
-function TabContent({ tab, lists, phone }: { tab: Tab; lists: Lists; phone: boolean }) {
+/** S4m-t：老師帳號在手機上只有這一頁；頂部列與頭像選單照舊（可以登出）。手機帶 ?create=1 照舊轉 S4m。 */
+function TeacherPhoneHome() {
   const { t } = useT('home')
-  const courses = tab === 'learn' ? lists.learning : lists.teaching
-  if (courses.length === 0) return <div className="home__empty">
-    <EmptyClassroomIllustration />
-    <h2>{t(tab === 'learn' ? 'empty.learnTitle' : 'empty.teachTitle')}</h2>
-    <p>{t(tab === 'learn' ? 'empty.learnBody' : 'empty.teachBody')}</p>
-  </div>
-  return <>
-    {tab === 'teach' && phone && <p className="home__hint">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></svg>
-      {t('phoneHint')}
-    </p>}
-    <div className="home__cards">
-      {tab === 'learn'
-        ? lists.learning.map(course => <LearningCard key={course.id} course={course} phone={phone} />)
-        : lists.teaching.map(course => <TeachingCard key={course.id} course={course} phone={phone} />)}
-    </div>
-  </>
+  const { account } = useAuth()
+  const [params] = useSearchParams()
+  if (params.get('create') === '1') return <Navigate to="/teach/create-course" replace />
+  const name = account?.username ?? ''
+  return <main className="home home--phone home--teacher-phone">
+    <DesktopOnlyIllustration />
+    <h1>{t('teacherPhone.title')}</h1>
+    <p>{t('teacherPhone.body')}</p>
+    <p className="home__signed-in">
+      <Avatar name={name} />
+      <span>{t('teacherPhone.signedIn', { name })}</span>
+      <span className="home__role-tag">{t('teacherPhone.role')}</span>
+    </p>
+  </main>
 }

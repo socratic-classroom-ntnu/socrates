@@ -10,6 +10,7 @@ const COMMON_CODES = new Set([
   'USERNAME_TAKEN',
   'EMAIL_TAKEN',
   'ACCOUNT_PENDING_VERIFICATION',
+  'ACCOUNT_ROLE_FORBIDDEN',
   'LOGIN_REQUIRED',
   // A stale tab (another login, a dev reload) loses its CSRF token; a reload fixes it.
   'SESSION_CSRF_REQUIRED',

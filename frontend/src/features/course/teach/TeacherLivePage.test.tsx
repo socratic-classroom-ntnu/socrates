@@ -19,10 +19,10 @@ const progress: Progress = {
   status: 'open', ends_at: generatedAt + 3600, generated_at: generatedAt,
   summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
-    { enrollment_id: 'e-1', display_name: '小安', overall: 'in_progress', cells: [{ status: 'confirmed', turns: 4 }, { status: 'in_dialogue', turns: 3 }], review_status: 'not_started', last_activity_at: generatedAt - 120, attention: true },
-    { enrollment_id: 'e-2', display_name: '小博', overall: 'done', cells: [{ status: 'confirmed', turns: 3 }, { status: 'confirmed', turns: 5 }], review_status: 'in_progress', last_activity_at: generatedAt - 20, attention: false },
-    { enrollment_id: 'e-3', display_name: '小慈', overall: 'not_started', cells: [], review_status: 'not_started', last_activity_at: null, attention: false },
-    { enrollment_id: 'e-4', display_name: '小德', overall: 'in_progress', cells: [{ status: 'confirming', turns: 2 }], review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false },
+    { enrollment_id: 'e-1', display_name: '小安', kind: 'registered', guest_number: null, overall: 'in_progress', cells: [{ status: 'confirmed', turns: 4 }, { status: 'in_dialogue', turns: 3 }], review_status: 'not_started', last_activity_at: generatedAt - 120, attention: true },
+    { enrollment_id: 'e-2', display_name: '小博', kind: 'registered', guest_number: null, overall: 'done', cells: [{ status: 'confirmed', turns: 3 }, { status: 'confirmed', turns: 5 }], review_status: 'in_progress', last_activity_at: generatedAt - 20, attention: false },
+    { enrollment_id: 'e-3', display_name: '小慈', kind: 'registered', guest_number: null, overall: 'not_started', cells: [], review_status: 'not_started', last_activity_at: null, attention: false },
+    { enrollment_id: 'e-4', display_name: '小德', kind: 'registered', guest_number: null, overall: 'in_progress', cells: [{ status: 'confirming', turns: 2 }], review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false },
   ],
 }
 
@@ -113,7 +113,7 @@ test('a capped scenario shows as not settled, not as answering or confirmed', as
     view: {
       ...progress,
       students: [{
-        enrollment_id: 'e-5', display_name: '小恩', overall: 'in_progress',
+        enrollment_id: 'e-5', display_name: '小恩', kind: 'registered', guest_number: null, overall: 'in_progress',
         cells: [{ status: 'capped', turns: 10 }, { status: 'in_dialogue', turns: 1 }],
         review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false,
       }],

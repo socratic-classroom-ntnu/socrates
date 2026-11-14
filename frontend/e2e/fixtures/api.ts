@@ -124,19 +124,19 @@ const progress = {
   ends_at: now + 3 * DAY, generated_at: now,
   summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
-    { enrollment_id: 'e-1', display_name: '小華', overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
+    { enrollment_id: 'e-1', display_name: '小華', kind: 'registered', guest_number: null, overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
       cells: [{ status: 'confirmed', turns: 4 }, { status: 'confirmed', turns: 3 }] },
-    { enrollment_id: 'e-2', display_name: '阿明', overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
+    { enrollment_id: 'e-2', display_name: '阿明', kind: 'registered', guest_number: null, overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
       cells: [{ status: 'confirming', turns: 6 }] },
-    { enrollment_id: 'e-3', display_name: '佳穎', overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
+    { enrollment_id: 'e-3', display_name: '佳穎', kind: 'registered', guest_number: null, overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
       cells: [{ status: 'confirmed', turns: 2 }, { status: 'in_dialogue', turns: 1 }] },
-    { enrollment_id: 'e-4', display_name: '志豪', overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
+    { enrollment_id: 'e-4', display_name: '志豪', kind: 'registered', guest_number: null, overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
       cells: [] },
   ],
 } satisfies S['SoloActivityProgressView']
 
 const analysisStudent = (enrollment_id: string, display_name: string, current_position: string, reason_summary: string, confirmed_scenarios = 2) =>
-  ({ enrollment_id, display_name, confirmed_scenarios, current_position, reason_summary, relevant_conditions: ['人數差距很大'] }) satisfies S['SoloAnalysisStudentView']
+  ({ enrollment_id, display_name, kind: 'registered', guest_number: null, confirmed_scenarios, current_position, reason_summary, relevant_conditions: ['人數差距很大'] }) satisfies S['SoloAnalysisStudentView']
 
 const analysis = {
   activity_id: 'a-ended', course_id: 'c-1', course_name: '哲學導論', title: '第二週：說謊可以嗎', status: 'ended',

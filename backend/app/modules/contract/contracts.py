@@ -21,6 +21,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACTIVITY_NOT_OPEN": ("solo_activity",),
     "ACTIVITY_TIME_INVALID": ("course_management",),
     "AI_BUDGET_REQUIRED": ("ai_providers",),
+    "ALREADY_SIGNED_IN": ("course_management",),
     "AI_MODEL_ID_REQUIRED": ("ai_providers",),
     "AI_ROLE_REQUIRED": ("ai_providers",),
     "ANSWER_ALREADY_SUBMITTED": ("classroom_core",),

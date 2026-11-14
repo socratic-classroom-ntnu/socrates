@@ -63,8 +63,8 @@ def require_guests_allowed(course: Course) -> None:
 
 def join_as_new_guest(db, course: Course, nickname: str, locale: str) -> tuple[str, dict]:
     """A new guest enrolled in the course, in the caller's transaction: if anything fails, there
-    is no guest either. Returns the session token and the guest's account view."""
-    require_guests_allowed(course)
+    is no guest either (enroll refuses a course that takes no guests, and the rollback takes the
+    new guest with it). Returns the session token and the guest's account view."""
     token, view = identity.create_guest(db, nickname, locale)
     enroll(db, db.get(Account, view["id"]), course, nickname)
     return token, view

@@ -19,6 +19,7 @@ from app.modules.identity_access.email_delivery import (
     queue_delivery,
 )
 from app.modules.platform.errors import DomainError
+from app.modules.identity_access.guests import merge_guest_records
 from app.modules.identity_access.repositories import Account, EmailToken, LoginSession, Mail
 from app.modules.platform.storage import digest, transaction
 
@@ -258,7 +259,8 @@ def register(body):
         raise DomainError("ACCOUNT_DATA_TAKEN", 409) from exc
 
 
-def login(body):
+def login(body, guest_token=None):
+    """A session for the account; a guest session on the same device hands its records over."""
     with transaction() as db:
         account = db.scalar(
             select(Account).where(
@@ -274,6 +276,7 @@ def login(body):
             HASHER.verify(account.password_hash, body.password)
         except (VerifyMismatchError, InvalidHashError) as exc:
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401) from exc
+        merge_guest_records(db, guest_token, account.id)
         return _new_session(db, account)
 
 

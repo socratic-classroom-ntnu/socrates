@@ -7,6 +7,7 @@ from app.modules.identity_access import auth as auth
 from app.modules.identity_access.service import (
     account,
     auth_limit,
+    same_origin,
     set_session_cookie as _set_session_cookie,
 )
 from app.modules.platform.rate_limit import enforce_rate_limit
@@ -45,7 +46,12 @@ def register(body: Register, request: Request, response: Response):
 @router.post("/auth/login", response_model=AccountView)
 def login(body: Login, request: Request, response: Response):
     auth_limit(request, "login")
-    token, result = auth.login(body)
+    # The session cookie may be a guest's, whose records then move to this account; the cookie
+    # is SameSite=Lax, and checking the origin too keeps another site from steering them.
+    current = request.cookies.get(auth.COOKIE)
+    if current:
+        same_origin(request)
+    token, result = auth.login(body, current)
     _set_session_cookie(response, token)
     return result
 

@@ -16,5 +16,6 @@ from app.modules.identity_access.email_delivery import (  # noqa: E402
 )
 from app.modules.identity_access.guests import (  # noqa: E402
     expire_guests as expire_guests,
+    merge_guest_records as merge_guest_records,
     register_guest_hook as register_guest_hook,
 )

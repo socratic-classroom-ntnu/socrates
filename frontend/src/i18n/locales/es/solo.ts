@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: 'Completado', completedNext: 'Completaste esta actividad. Puedes volver a ver tu resumen final.',
     back: 'Cursos', breadcrumbLabel: 'Ruta del curso', notFound: 'No encontramos esta actividad', home: 'Volver al inicio',
     status: 'Estado', openUntil: 'Abierta hasta',
     statuses: { scheduled: 'Aún no abre', open: 'En curso', ended: 'Finalizada' },
@@ -66,6 +67,7 @@ export default {
     confirmedCard: 'Escenario {{number}}: postura confirmada',
   },
   final: {
+    feedbackLabel: 'Lo que dijiste que no encajaba', feedback: 'Dijiste: «{{text}}»',
     writing: 'Sócrates está resumiendo todo tu razonamiento…', failed: 'Esta vez no se pudo resumir tu razonamiento', ownerMissing: 'Tu docente aún no configuró la conexión de IA, así que por ahora no se puede resumir',
     write: 'Resumir mi razonamiento', retry: 'Intentar de nuevo', finish: 'Terminar sin resumen',
     title: 'Intenté resumir todo tu razonamiento. ¿Es así?', subtitle: 'Sócrates lo escribió a partir de las posturas que confirmaste; tú decides si es correcto',

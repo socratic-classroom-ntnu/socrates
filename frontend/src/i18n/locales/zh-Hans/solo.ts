@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: '已完成', completedNext: '你已经完成这个活动，可以回头看看最终统整。',
     back: '课程', breadcrumbLabel: '课程路径', notFound: '找不到这个活动', home: '回到首页',
     status: '状态', openUntil: '开放到',
     statuses: { scheduled: '尚未开始', open: '进行中', ended: '已结束' },
@@ -66,6 +67,7 @@ export default {
     confirmedCard: '情境 {{number}} 的观点已确认',
   },
   final: {
+    feedbackLabel: '你说哪里不太对', feedback: '你说：“{{text}}”',
     writing: '苏格拉底正在整理你整个思路⋯', failed: '这次没能整理出你的思路', ownerMissing: '老师尚未设置 AI 连接，暂时无法整理',
     write: '整理我的思路', retry: '再试一次', finish: '先结束，不整理',
     title: '我试着整理你整个思路，这样说对吗？', subtitle: '苏格拉底依你确认过的想法整理，是否正确由你决定',

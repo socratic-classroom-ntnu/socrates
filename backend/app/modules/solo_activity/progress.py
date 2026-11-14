@@ -16,7 +16,7 @@ from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.guest_records import student_kinds
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
-from app.modules.solo_activity.service import REVIEW_STATES
+from app.modules.solo_activity.service import REVIEW_STATES, final_status, review_status
 
 # In progress and idle longer than this: the teacher may want to look over.
 ATTENTION_SECONDS = 300
@@ -87,7 +87,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         if row is None:
             overall, last_at = "not_started", None
         else:
-            overall = "done" if row.state in REVIEW_STATES else "in_progress"
+            overall = "done" if row.state == "completed" else "in_progress"
             last_at = max(row.updated_at, last_message.get(row.id) or row.updated_at)
         students.append(
             {
@@ -96,11 +96,8 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
                 **kinds[enrollment.id],
                 "overall": overall,
                 "cells": cells,
-                "review_status": (
-                    "in_progress"
-                    if row is not None and row.state in REVIEW_STATES
-                    else "not_started"
-                ),
+                "review_status": review_status(row.state) if row is not None else "not_started",
+                "final_status": final_status(row) if row is not None else None,
                 "last_activity_at": last_at,
                 "attention": (
                     overall == "in_progress"

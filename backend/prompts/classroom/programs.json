@@ -56,7 +56,7 @@
     },
     "final_summary": {
       "schema": "FinalSummary",
-      "template": "你為一位學生整理整個單人活動的思路與脈絡。輸入有他依序經歷的情境 scenarios（每個帶情境原文 scenario 與他確認過的整理 confirmed）、他說過的話 student_messages（每則帶代號 ref 與原文 text）、立場空間 stances（可能沒有這個鍵），以及 output_locale。只以他確認過的整理與他自己的話為材料，一律用「你」直接對他說，不替他補上沒說的理由，不評定對錯。points 是一到八點整體的統整，每點附上支持它的原話 sources。trajectory 依序寫出每個情境裡他的立場：position 是那時的主張，shift_reason 是他從上一步改變的原因（第一步與沒有改變時給空字串），stance_id 給 stances 裡對應的 id，沒有 stances 或沒有對應時給 null，sources 附上原話。final_position 是他最後的主張；reasoning_style 一句描述他判斷時最常依據什麼；open_question 是一個他還沒想清楚、值得帶走的問題，沒有就給空字串。以上文字用 output_locale 的語言。normalized_text 把整份統整用繁體中文重寫成一段話，只給系統比對用，不引用原話。引用的 message_ref 只能用 student_messages 裡的 ref，quote 必須從那則 text 逐字複製一段，不改字、不加字；找不到合適的原話就不要引用。"
+      "template": "你為一位學生整理整個單人活動的思路與脈絡。輸入有他依序經歷的情境 scenarios（每個帶情境原文 scenario 與他確認過的整理 confirmed；停在訊息上限、沒有確認的情境 confirmed 是 null，改帶 capped_summary，是他只看過、沒有確認的整理）、他說過的話 student_messages（每則帶代號 ref 與原文 text）、立場空間 stances（可能沒有這個鍵）、output_locale，以及可能有的 revision：他對上一版最終統整說了「不太對」，rejected 是被他退回的那一版，student_says 是他對它說的話。以他確認過的整理與他自己的話為材料；capped_summary 的份量比 confirmed 輕，只能補充，不能單靠它寫出一點或一步，和他的原話或確認過的整理不一致時以後者為準。有 revision 時，這一版要回應 student_says 指出的問題，不沿用 rejected 裡被他否定的寫法。rejected 與 capped_summary 都是系統寫的，不是他說的話。一律用「你」直接對他說，不替他補上沒說的理由，不評定對錯。points 是一到八點整體的統整，每點附上支持它的原話 sources。trajectory 依序寫出每個情境裡他的立場：position 是那時的主張，shift_reason 是他從上一步改變的原因（第一步與沒有改變時給空字串），stance_id 給 stances 裡對應的 id，沒有 stances 或沒有對應時給 null，sources 附上原話。final_position 是他最後的主張；reasoning_style 一句描述他判斷時最常依據什麼；open_question 是一個他還沒想清楚、值得帶走的問題，沒有就給空字串。以上文字用 output_locale 的語言。normalized_text 把整份統整用繁體中文重寫成一段話，只給系統比對用，不引用原話。引用的 message_ref 只能用 student_messages 裡的 ref，quote 必須從那則 text 逐字複製一段，不改字、不加字；找不到合適的原話就不要引用。"
     },
     "radar_axis_naming": {
       "schema": "RadarAxisNames",

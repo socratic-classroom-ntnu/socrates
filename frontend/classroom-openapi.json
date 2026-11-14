@@ -3404,6 +3404,125 @@
         "title": "Login",
         "type": "object"
       },
+      "LoginView": {
+        "additionalProperties": false,
+        "properties": {
+          "achievements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Achievements",
+            "type": "array"
+          },
+          "authority_state": {
+            "default": "EMAIL_VERIFICATION",
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_masked": {
+            "default": "",
+            "title": "Email Masked",
+            "type": "string"
+          },
+          "guest_expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Expires At"
+          },
+          "guest_merge": {
+            "enum": [
+              "MERGED",
+              "NONE",
+              "REFUSED_TEACHER"
+            ],
+            "title": "Guest Merge",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "registered",
+            "enum": [
+              "guest",
+              "expired_guest",
+              "registered"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "zh-Hant",
+                  "zh-Hans",
+                  "en",
+                  "es"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "verification_delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "verified",
+          "csrf_token",
+          "points",
+          "achievements",
+          "guest_merge"
+        ],
+        "title": "LoginView",
+        "type": "object"
+      },
       "MailRequest": {
         "additionalProperties": false,
         "properties": {
@@ -7153,7 +7272,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountView"
+                  "$ref": "#/components/schemas/LoginView"
                 }
               }
             },

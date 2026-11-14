@@ -11,7 +11,7 @@ import time
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.modules.identity_access.contracts import GuestRecordHook
+from app.modules.identity_access.contracts import GuestMerge, GuestRecordHook
 from app.modules.identity_access.repositories import Account, LoginSession
 from app.modules.platform.storage import digest, transaction
 
@@ -23,20 +23,21 @@ def register_guest_hook(module: str, hook: GuestRecordHook) -> None:
     GUEST_HOOKS[module] = hook
 
 
-def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -> None:
+def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -> GuestMerge:
     """The device logging in still holds a live guest session: every module moves that guest's
     records to the account (on a conflict the hook keeps the account's), and the guest session
     ends. The guest account stays and expires on its own schedule.
 
     Runs in the login's transaction. A failing hook rolls the whole merge back and the login goes
-    ahead without it: a bug in one module must not lock a student out.
+    ahead without it: a bug in one module must not lock a student out. Returns what happened,
+    for the login response.
     """
     session = db.get(LoginSession, digest(guest_token or ""))
     if session is None:
-        return
+        return "NONE"
     guest = db.get(Account, session.account_id, with_for_update=True)
     if guest is None or guest.kind != "guest" or (guest.guest_expires_at or 0) <= time.time():
-        return
+        return "NONE"
     try:
         with db.begin_nested():
             for hook in GUEST_HOOKS.values():
@@ -44,6 +45,8 @@ def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -
             db.delete(session)
     except Exception:
         logger.exception("guest %s was not merged into %s", guest.id, account_id)
+        return "NONE"
+    return "MERGED"
 
 
 def expire_guests(now: float | None = None) -> list[str]:

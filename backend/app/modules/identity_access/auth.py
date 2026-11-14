@@ -276,8 +276,9 @@ def login(body, guest_token=None):
             HASHER.verify(account.password_hash, body.password)
         except (VerifyMismatchError, InvalidHashError) as exc:
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401) from exc
-        merge_guest_records(db, guest_token, account.id)
-        return _new_session(db, account)
+        merged = merge_guest_records(db, guest_token, account.id)
+        token, view = _new_session(db, account)
+        return token, {**view, "guest_merge": merged}
 
 
 def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=False):

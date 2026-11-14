@@ -79,7 +79,7 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
 
   return <JoinLayout>
     <div className="join-login">
-      <JoinLoginBanner courseName={courseName} />
+      <JoinLoginBanner courseName={courseName} guest />
       <form className="join-login__card" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
         <div className="join-guest__head">
           <h1>{t(target.kind === 'course' ? 'name.titleCourse' : 'name.titleActivity')}</h1>

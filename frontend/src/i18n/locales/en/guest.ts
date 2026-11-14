@@ -1,5 +1,7 @@
 export default {
   join: {
+    joining: 'Pick a name to join',
+    noName: 'Pick a name to join the course',
     button: 'Join without an account',
     keep: 'No email needed: pick a name and start. Your records are kept for 7 days.',
   },

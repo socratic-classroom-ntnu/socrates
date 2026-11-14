@@ -1,5 +1,7 @@
 export default {
   join: {
+    joining: '取好名字就会加入',
+    noName: '取好名字就会加入课程',
     button: '免注册加入',
     keep: '不用 Email，取个名字就能开始；记录保留 7 天。',
   },

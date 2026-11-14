@@ -37,13 +37,16 @@ export function usePublicPreview(target: JoinTarget | null): PublicPreview {
   return preview
 }
 
-/** J0: the dark banner above the login card. */
-export function JoinLoginBanner({ courseName }: { courseName: string | null }) {
+/** J0: the dark banner above the login card. The guest name page joins without logging in, so it
+ * passes its own wording (`guest`). */
+export function JoinLoginBanner({ courseName, guest = false }: { courseName: string | null; guest?: boolean }) {
   const { t } = useT('join')
+  const joining = guest ? t('guest:join.joining') : t('login.joining')
+  const noName = guest ? t('guest:join.noName') : t('login.noName')
   return <div className="join-banner" role="status">
     <span className="join-banner__check" aria-hidden="true">✓</span>
     {courseName
-      ? <span className="join-banner__text"><small>{t('login.joining')}</small><strong>{courseName}</strong></span>
-      : <span className="join-banner__text"><small>{t('login.noName')}</small></span>}
+      ? <span className="join-banner__text"><small>{joining}</small><strong>{courseName}</strong></span>
+      : <span className="join-banner__text"><small>{noName}</small></span>}
   </div>
 }

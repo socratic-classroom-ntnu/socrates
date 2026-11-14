@@ -1,5 +1,7 @@
 export default {
   join: {
+    joining: 'Elige un nombre para unirte a',
+    noName: 'Elige un nombre para unirte al curso',
     button: 'Unirse sin cuenta',
     keep: 'Sin correo: elige un nombre y empieza. Tus registros se guardan 7 días.',
   },

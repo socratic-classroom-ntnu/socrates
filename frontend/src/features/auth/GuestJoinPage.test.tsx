@@ -86,6 +86,13 @@ function openNamePage(next = '/join?code=AB12', routes: Routes = {}) {
   return calls
 }
 
+test('the banner on the name page says joining, not logging in', async () => {
+  openNamePage()
+  const banner = await screen.findByText('取好名字就會加入')
+  expect(banner.closest('[role=status]')).toHaveTextContent('哲學導論')
+  expect(screen.queryByText('登入後就會加入')).toBeNull()
+})
+
 test('the name is pre-filled from the word lists and 換一個 picks another', async () => {
   openNamePage()
   const input = await screen.findByLabelText('你的名字') as HTMLInputElement

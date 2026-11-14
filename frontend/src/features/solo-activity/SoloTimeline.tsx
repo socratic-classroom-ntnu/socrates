@@ -143,7 +143,8 @@ const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between
  * the tutor's reply to that turn is left out: its new question would ask the student two
  * things at once (the designs put the summary right after the student's last message). */
 function withoutConfirmingFollowUp(view: SoloAttemptView) {
-  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index)
+  // 對最終統整說「不太對」的那句屬於回顧，不是這個情境的對話
+  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index && !message.final_feedback)
   const last = messages[messages.length - 1]
   if ((SETTLED.includes(view.state) || view.revising) && last?.role === 'tutor') return messages.slice(0, -1)
   return messages

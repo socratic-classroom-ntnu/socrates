@@ -126,7 +126,10 @@ CELL_CASES = [
     ("answering", 1, 0, [("confirmed", None), ("answering", None)], "in_progress"),
     ("in_dialogue", 1, 4, [("confirmed", None), ("in_dialogue", 4)], "in_progress"),
     ("confirming", 1, 2, [("confirmed", None), ("confirming", None)], "in_progress"),
-    ("reviewing", 1, 2, [("confirmed", None), ("confirmed", None)], "done"),
+    # The review has begun but the attempt is not completed: still in progress (O6).
+    ("reviewing", 1, 2, [("confirmed", None), ("confirmed", None)], "in_progress"),
+    ("reflecting", 1, 2, [("confirmed", None), ("confirmed", None)], "in_progress"),
+    ("completed", 1, 2, [("confirmed", None), ("confirmed", None)], "done"),
 ]
 
 
@@ -140,7 +143,8 @@ def test_cells_follow_attempt_state(client, tutor, state, index, turn, cells, ov
     row = ok(progress(client, s["activity_id"]))["students"][0]
     assert [(c["status"], c["turns"]) for c in row["cells"]] == cells
     assert row["overall"] == overall
-    assert row["review_status"] == ("in_progress" if state == "reviewing" else "not_started")
+    expected = {"reviewing": "in_progress", "reflecting": "in_progress", "completed": "completed"}
+    assert row["review_status"] == expected.get(state, "not_started")
 
 
 def test_summary_counts(client, tutor):
@@ -153,7 +157,7 @@ def test_summary_counts(client, tutor):
     join(client, s["course"], "idle")
     set_attempt(dialogue["id"], "in_dialogue", 0, turn=2)
     set_attempt(between_attempt["id"], "between_scenarios", 0)
-    set_attempt(review_attempt["id"], "reviewing", 1)
+    set_attempt(review_attempt["id"], "completed", 1)
 
     switch(client, s["teacher"])
     view = ok(progress(client, s["activity_id"]))
@@ -185,7 +189,7 @@ def test_attention_after_300_seconds(client, tutor, monkeypatch):
     answer(client, attempt["id"])
     join(client, s["course"], "review")
     review_attempt = start_with_two_scenarios(client, s["activity_id"])
-    set_attempt(review_attempt["id"], "reviewing", 1, updated_at=time.time() - 3600)
+    set_attempt(review_attempt["id"], "completed", 1, updated_at=time.time() - 3600)
     with storage.transaction() as db:
         last_message = max(db.scalars(select(SoloMessage.created_at)))
         row = db.get(SoloAttempt, attempt["id"])

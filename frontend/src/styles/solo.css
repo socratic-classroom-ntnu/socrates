@@ -205,6 +205,7 @@
 .solo-final__revise { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
 .solo-final__revise label { font-weight: 700; }
 .solo-final__revise textarea { min-height: 84px; padding: 10px 12px; border: 1px solid var(--ui-color-border); border-radius: 10px; font: inherit; resize: vertical; }
+.solo-final__feedback { margin: 14px 0 0; padding: 10px 14px; border-radius: 9px; background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); list-style: none; }
 .solo-final__last { margin: 0; color: var(--ui-color-ink-soft); font-size: 13px; }
 .solo-stance { padding: 22px 24px; border-top: 1px solid #ddd5c6; background: #fffdf8; }
 .solo-stance fieldset { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0; padding: 0; border: 0; }

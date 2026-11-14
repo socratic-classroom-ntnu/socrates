@@ -34,9 +34,11 @@ from app.modules.course_management.contracts import (
     PublicJoinPreview,
 )
 from app.modules.identity_access.service import (
+    COOKIE,
     account,
     auth_limit,
     display_name,
+    identity,
     set_session_cookie,
 )
 from app.modules.platform.errors import DomainError
@@ -56,6 +58,18 @@ def _join_limit(request: Request, mutation: bool) -> None:
         enforce_rate_limit(db, f"course-join:{current.id}", 20, 60, error_code="RATE_LIMITED")
         # A whole class often shares the school's address; 200/min lets ~40 students retry.
         enforce_rate_limit(db, f"course-join-ip:{host}", 200, 60, error_code="RATE_LIMITED")
+
+
+def _refuse_signed_in(db, request: Request) -> None:
+    """Becoming a guest needs a device that is not signed in. A retry whose first try already
+    made the guest, or a student who is logged in, would otherwise get a second account and
+    lose the first one's records: ALREADY_SIGNED_IN, and the page continues as that account.
+    An expired guest or a stale session counts as signed out."""
+    try:
+        identity(db, request.cookies.get(COOKIE), verified=False, allow_guest=True)
+    except DomainError:
+        return
+    raise DomainError("ALREADY_SIGNED_IN", 409)
 
 
 def _teacher_course(db, current, course_id: str):
@@ -119,6 +133,7 @@ def guest_join_course(body: GuestCourseJoin, request: Request, response: Respons
     """Become a guest and join the course in one transaction; the cookie only after it commits."""
     auth_limit(request, "guest")
     with transaction() as db:
+        _refuse_signed_in(db, request)
         course = enrollment.find_by_code(db, body.code)
         token, view = enrollment.join_as_new_guest(db, course, body.nickname, body.locale)
         result = {
@@ -249,6 +264,7 @@ def guest_join_activity(
     """Become a guest from an activity link and join its course, in one transaction."""
     auth_limit(request, "guest")
     with transaction() as db:
+        _refuse_signed_in(db, request)
         activity = activity_service.get_activity(db, activity_id)
         token, result = activity_service.join_as_new_guest(
             db, activity, body.nickname, body.locale, activity_service.now()

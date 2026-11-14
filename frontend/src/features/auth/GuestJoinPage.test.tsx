@@ -197,3 +197,27 @@ test('the fields are disabled while sending (G10)', async () => {
   expect(screen.getByLabelText('你的名字')).toBeDisabled()
   await act(async () => { release(courseJoined) })
 })
+
+test('a device already signed in continues as that account instead of becoming a second guest', async () => {
+  let signedIn = false
+  const calls: string[] = []
+  jest.mocked(api).mockImplementation(async (url: string, method = 'GET') => {
+    calls.push(`${method} ${url}`)
+    if (url === '/auth/me') {
+      if (!signedIn) throw new ApiError(401, 'LOGIN_REQUIRED')
+      return guest
+    }
+    if (url === '/course-join/public-preview?code=AB12') return { course_name: '哲學導論', allow_guest: true }
+    if (url === '/course-join/guest') { signedIn = true; throw new ApiError(409, 'ALREADY_SIGNED_IN') }
+    if (url === '/course-join/preview?code=AB12') {
+      return { course_id: 'c-1', name: '哲學導論', teacher_name: '王', already_enrolled: true, default_display_name: '安靜的貓頭鷹', open_activity_title: null, allow_guest: true }
+    }
+    return []
+  })
+  openApp('/join/guest?next=' + encodeURIComponent('/join?code=AB12'))
+  await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /^加入/ })) })
+  await waitFor(() => expect(where()).toBe('/learn/courses/c-1'))
+  expect(calls.filter(call => call === 'POST /course-join/guest')).toHaveLength(1)
+  expect(screen.queryByRole('alert')).toBeNull()
+})
+

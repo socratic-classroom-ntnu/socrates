@@ -28,7 +28,7 @@ export function GuestJoinPage() {
 
 function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnType<typeof joinTarget>> }) {
   const { t, locale } = useT('guest')
-  const { account, signIn } = useAuth()
+  const { account, refresh, signIn } = useAuth()
   const { courseName } = usePublicPreview(target)
   const [name, setName] = useState(() => guestName(locale))
   const [edited, setEdited] = useState(false)
@@ -63,7 +63,11 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
         ? `/learn/activities/${result.activity_id}`
         : `/learn/courses/${result.course_id}`)
     } catch (error) {
-      if (errorCode(error) === 'GUEST_JOIN_DISABLED') setClosed(true)
+      const code = errorCode(error)
+      if (code === 'GUEST_JOIN_DISABLED') setClosed(true)
+      // This device is signed in already (a retry whose first try went through, or a student):
+      // read the account again and continue the normal join as it.
+      else if (code === 'ALREADY_SIGNED_IN') await refresh()
       else setFailure(error)
     } finally {
       setBusy(false)

@@ -66,6 +66,7 @@ function FinalCheck({ view, summary, pending, perform }: Props & { summary: Fina
         <p>{t('final.subtitle')}</p>
       </div>
     </header>
+    <Feedback view={view} />
     <SummaryBody summary={summary} />
     {revising
       ? <form className="solo-final__revise" onSubmit={event => { event.preventDefault(); void sendRevision() }}>
@@ -110,11 +111,22 @@ function FinalDone({ view }: { view: SoloAttemptView }) {
         </p>}
       </div>
     </header>
+    <Feedback view={view} />
     {summary && <SummaryBody summary={summary} />}
     <div className="solo-viewpoint__actions">
       <ButtonLink variant="outline" to={`/learn/activities/${view.activity_id}`}>{t('final.back')}</ButtonLink>
     </div>
   </section>
+}
+
+/** What the student said was off (不太對), shown in the review rather than in a scenario's dialogue. */
+function Feedback({ view }: { view: SoloAttemptView }) {
+  const { t } = useT('solo')
+  const said = view.messages.filter(message => message.final_feedback)
+  if (said.length === 0) return null
+  return <ul className="solo-final__feedback" aria-label={t('final.feedbackLabel')}>
+    {said.map(message => <li key={message.id}>{t('final.feedback', { text: message.text })}</li>)}
+  </ul>
 }
 
 function Quotes({ sources }: { sources: FinalSummary['points'][number]['sources'] }) {

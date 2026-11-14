@@ -17,7 +17,7 @@ from app.modules.platform.errors import DomainError
 from app.modules.solo_activity import attempt_machine as sm
 from app.modules.solo_activity import service as service
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
-from tests.solo_activity.test_solo_attempts_api import do, ok
+from tests.solo_activity.test_solo_attempts_api import do, ok, settled
 from tests.solo_activity.test_solo_conclude import confirm_current
 from tests.solo_activity.test_solo_extension import to_confirmed_view
 from tests.solo_activity.test_solo_state_table import fresh
@@ -229,7 +229,11 @@ def test_不太對_takes_one_sentence_and_the_summary_is_written_again_with_it(c
     calls, replies = tutor
     _, attempt_id, view = to_reflecting(client, tutor)
     replies.append(SECOND)
-    again = ok(do(client, attempt_id, "continue_reflection", {"text": "我其實有猶豫"}))
+    again = settled(
+        client,
+        attempt_id,
+        ok(do(client, attempt_id, "continue_reflection", {"text": "我其實有猶豫"})),
+    )
     assert again["state"] == "reflecting"
     assert again["final_revised"] is True
     assert again["final_summary"]["final_position"] == SECOND["final_position"]
@@ -252,7 +256,11 @@ def test_a_second_不太對_ends_unconfirmed_without_another_call(client, tutor)
     calls, replies = tutor
     _, attempt_id, _ = to_reflecting(client, tutor)
     replies.append(SECOND)
-    ok(do(client, attempt_id, "continue_reflection", {"text": "我其實有猶豫"}))
+    settled(
+        client,
+        attempt_id,
+        ok(do(client, attempt_id, "continue_reflection", {"text": "我其實有猶豫"})),
+    )
     done = ok(do(client, attempt_id, "continue_reflection", {"text": "還是不像我"}))
     assert (done["state"], done["final_status"]) == ("completed", "unconfirmed")
     assert done["final_summary"]["final_position"] == SECOND["final_position"]
@@ -265,7 +273,7 @@ def test_a_failed_call_leaves_the_review_with_retry_and_finish(client, tutor):
     assert (view["state"], view["notice"]) == ("reviewing", "tutor_unavailable")
     assert view["available_actions"] == ["retry_reflection_prompt", "submit_review"]
     replies.append(FINAL)
-    again = ok(do(client, attempt_id, "retry_reflection_prompt"))
+    again = settled(client, attempt_id, ok(do(client, attempt_id, "retry_reflection_prompt")))
     assert (again["state"], again["notice"]) == ("reflecting", None)
 
 
@@ -310,3 +318,85 @@ def test_the_final_summary_survives_a_refresh(client, tutor):
     assert again["final_summary"] == view["final_summary"]
     assert again["final_digest"] == view["final_digest"]
     assert stored(attempt_id).final["summary"]["normalized_text"] == FINAL["normalized_text"]
+
+
+# ---- Fizzy's review on #150 ----------------------------------------------------------------
+
+
+def test_the_confirmation_does_not_wait_for_the_summary(client, tutor):
+    """The summary is written after the response; the page keeps re-reading meanwhile."""
+    _, replies = tutor
+    from tests.solo_activity.test_solo_attempts_api import MET, NOT_MET, answer, setup, start
+
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    replies.append(NOT_MET)
+    answer(client, attempt["id"])
+    replies.append(MET)
+    view = ok(do(client, attempt["id"], "send_message", {"text": "因為是我親手造成的"}))
+    replies.extend([NO_SCENARIO, FINAL])
+    answered = ok(
+        do(client, attempt["id"], "confirm_viewpoint", {"summary_digest": view["summary_digest"]})
+    )
+    assert answered["state"] == "awaiting_reflection_prompt"
+    assert answered["available_actions"] == []
+    assert settled(client, attempt["id"], answered)["state"] == "reflecting"
+
+
+def test_a_completed_review_says_completed_to_the_student_and_the_teacher(client, tutor):
+    from tests.course_management.conftest import switch
+
+    s, attempt_id, view = to_reflecting(client, tutor)
+    brief = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))["attempt"]
+    assert brief["review_status"] == "in_progress"
+    switch(client, s["teacher"])
+    reading = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/progress"))
+    assert (reading["students"][0]["overall"], reading["summary"]["done"]) == ("in_progress", 0)
+    assert reading["students"][0]["final_status"] is None
+    switch(client, s["student"])
+    ok(do(client, attempt_id, "submit_reflection", {"summary_digest": view["final_digest"]}))
+    brief = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))["attempt"]
+    assert brief["review_status"] == "completed"
+    switch(client, s["teacher"])
+    done = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/progress"))
+    row = done["students"][0]
+    assert (row["overall"], row["review_status"], row["final_status"]) == (
+        "done",
+        "completed",
+        "confirmed",
+    )
+    assert done["summary"]["done"] == 1
+    stats = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/analysis"))
+    assert (stats["summary"]["done"], stats["students"][0]["final_status"]) == (1, "confirmed")
+
+
+def test_a_summary_turned_down_twice_is_unconfirmed_for_the_teacher(client, tutor):
+    from tests.course_management.conftest import switch
+
+    _, replies = tutor
+    s, attempt_id, _ = to_reflecting(client, tutor)
+    replies.append(SECOND)
+    settled(
+        client, attempt_id, ok(do(client, attempt_id, "continue_reflection", {"text": "不太像"}))
+    )
+    ok(do(client, attempt_id, "continue_reflection", {"text": "還是不像"}))
+    switch(client, s["teacher"])
+    row = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/progress"))["students"][0]
+    assert (row["overall"], row["final_status"]) == ("done", "unconfirmed")
+
+
+def test_the_sentence_on_the_final_summary_is_marked_as_review_feedback(client, tutor):
+    _, replies = tutor
+    _, attempt_id, _ = to_reflecting(client, tutor)
+    replies.append(SECOND)
+    view = settled(
+        client,
+        attempt_id,
+        ok(do(client, attempt_id, "continue_reflection", {"text": "我其實有猶豫"})),
+    )
+    marked = [(m["text"], m["final_feedback"]) for m in view["messages"] if m["role"] == "student"]
+    assert marked == [
+        ("不能主動害人", False),
+        ("因為是我親手造成的", False),
+        ("我其實有猶豫", True),
+    ]

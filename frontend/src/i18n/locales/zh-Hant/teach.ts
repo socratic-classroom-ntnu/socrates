@@ -153,7 +153,7 @@ export default {
     filters: { all: '全部', inProgress: '對話中', attention: '需要留意', done: '已完成', notStarted: '還沒開始' },
     table: { student: '學生', scenario: '情境 {{number}}', review: '回顧與反思', lastActivity: '最後動作' },
     cells: { confirmed: '已確認', inDialogue: '對話中 · {{count}} 輪', confirming: '確認觀點中', capped: '尚未釐清', answering: '寫第一個回答中', notStarted: '未開始' },
-    review: { notStarted: '未開始', inProgress: '進行中' },
+    review: { notStarted: '未開始', inProgress: '進行中', completed: '已完成', unconfirmed: '已完成・未確認' },
     time: { now: '剛剛', minutes: '{{count}} 分鐘前', none: '—', attention: '⏸ {{count}} 分鐘沒有動作' },
     empty: '目前沒有學生',
     updating: '每 10 秒自動更新',

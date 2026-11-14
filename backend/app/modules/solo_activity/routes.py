@@ -8,7 +8,7 @@ the student's message (AGENTS.md: 學生訊息先落地才呼叫 provider).
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Request
 from fastapi.exceptions import RequestValidationError
 
 from app.modules.identity_access.service import account
@@ -54,6 +54,7 @@ async def act_on_attempt(
     attempt_id: str,
     action: SoloAction,
     request: Request,
+    background: BackgroundTasks,
     body: Annotated[SoloActionBody | None, Body()] = None,
 ):
     expected = ACTION_BODIES.get(action)
@@ -69,7 +70,9 @@ async def act_on_attempt(
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
         prepared = service.begin_action(db, current, attempt_id, action, body, service.now())
-    return await service.finish_action(prepared)
+    return await service.finish_action(
+        prepared, lambda final: background.add_task(service.write_final, final)
+    )
 
 
 @router.get("/activities/{activity_id}/progress", response_model=SoloActivityProgressView)

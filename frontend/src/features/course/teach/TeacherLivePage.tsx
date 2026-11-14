@@ -107,7 +107,7 @@ export function TeacherLivePage() {
                   ? <span className={`live-cell live-cell--${cell.status}`}>{cellLabel(cell)}</span>
                   : <span className="live-cell live-cell--not_started">{t('live.cells.notStarted')}</span>}</td>
               })}
-              <td><span className="live-cell live-cell--review">{t(`live.review.${student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'}`)}</span></td>
+              <td><span className="live-cell live-cell--review">{t(`live.review.${reviewKey(student)}`)}</span></td>
               <td>{lastActivity(student)}</td>
             </tr>)}
             {shown.length === 0 && <tr><td colSpan={scenarios.length + 3} className="live-table__empty">{t('live.empty')}</td></tr>}
@@ -122,4 +122,10 @@ export function TeacherLivePage() {
     </footer>
 
   </main>
+}
+
+/** The review column: a completed review says whether its final summary was confirmed. */
+function reviewKey(student: { review_status: string; final_status: string | null }): string {
+  if (student.review_status === 'completed') return student.final_status === 'unconfirmed' ? 'unconfirmed' : 'completed'
+  return student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'
 }

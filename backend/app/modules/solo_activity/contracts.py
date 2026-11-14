@@ -59,12 +59,16 @@ class SoloScenarioProgressView(View):
     status: Literal["in_dialogue", "confirmed", "capped"]
 
 
+# The review after the last scenario: completed once the attempt is (final summary or not).
+ReviewStatus = Literal["not_started", "in_progress", "completed"]
+
+
 class SoloAttemptBrief(View):
     id: str
     state: SoloState
     scenario_index: int
     progress: list[SoloScenarioProgressView]  # one per scenario of the sequence so far
-    review_status: Literal["not_started", "in_progress"]
+    review_status: ReviewStatus
     current_turn: int  # the current scenario's turn_index
 
 
@@ -172,6 +176,9 @@ class SoloMessageView(View):
     created_at: float
     move: TutorMove | None  # tutor messages only
     revise_hint: ReviseHint | None  # student messages only
+    # A student's sentence on what is off in the final summary (不太對): it belongs to the review,
+    # not to the scenario whose index it carries.
+    final_feedback: bool
 
 
 class SoloAttemptView(View):
@@ -231,7 +238,7 @@ ACTION_BODIES: dict[str, type[TrimmedModel]] = {
 class SoloProgressSummaryView(View):
     enrolled: int
     started: int
-    done: int  # reached the review step
+    done: int  # completed the attempt
     attention: int
 
 
@@ -245,7 +252,9 @@ class SoloStudentProgressView(View):
     display_name: str
     overall: Literal["not_started", "in_progress", "done"]
     cells: list[SoloProgressCellView]  # one per scenario of this student's sequence so far
-    review_status: Literal["not_started", "in_progress"]
+    review_status: ReviewStatus
+    # completed only: confirmed, turned down twice (unconfirmed), or None when finished without.
+    final_status: FinalStatus | None
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
     attention: bool  # in progress and idle for over ATTENTION_SECONDS
@@ -269,7 +278,7 @@ class SoloActivityProgressView(View):
 class SoloAnalysisSummaryView(View):
     enrolled: int
     started: int
-    done: int  # reached the review step, the same definition as T5
+    done: int  # completed the attempt, the same definition as T5
     in_progress: int  # started - done
 
 
@@ -281,6 +290,7 @@ class SoloAnalysisStudentView(View):
     current_position: str
     reason_summary: str
     relevant_conditions: list[str]
+    final_status: FinalStatus | None  # as in SoloStudentProgressView
 
 
 class SoloActivityAnalysisView(View):

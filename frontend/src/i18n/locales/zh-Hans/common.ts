@@ -22,6 +22,8 @@ const common: Shape<typeof zhHant> = {
     LOGIN_REQUIRED: '请先登录。',
     SESSION_CSRF_REQUIRED: '登录状态已过期，请刷新页面。',
     RATE_LIMITED: '操作太频繁，请稍后再试。',
+    GUEST_EXPIRED: '访客身份已过期，请重新登录，或扫描 QR code 以新的访客身份加入。',
+    GUEST_JOIN_DISABLED: '这门课目前不开放免注册加入，请登录或注册后再加入。',
     invalidInput: '有字段内容不符合格式，请检查后再试。',
     server: '服务器暂时无法处理，请稍后再试。',
     generic: '操作没有完成，请稍后再试。',

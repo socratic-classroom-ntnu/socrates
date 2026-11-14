@@ -8,14 +8,14 @@ def anonymous(client):
     client.headers.pop("X-CSRF-Token", None)
 
 
-def test_public_course_preview_returns_name_only(client):
+def test_public_course_preview_returns_the_name_and_whether_guests_may_join(client):
     teacher, course = teacher_with_course(client)
     anonymous(client)
 
     response = client.get(f"/api/v2/course-join/public-preview?code={course['code'].lower()}")
 
     assert response.status_code == 200, response.text
-    assert response.json() == {"course_name": "科技倫理"}
+    assert response.json() == {"course_name": "科技倫理", "allow_guest": True}
 
 
 def test_public_course_preview_hides_bad_codes(client):
@@ -38,7 +38,7 @@ def test_public_activity_preview(client):
 
     ok = client.get(f"/api/v2/activities/{published['id']}/public-preview")
     assert ok.status_code == 200, ok.text
-    assert ok.json() == {"course_name": "科技倫理"}
+    assert ok.json() == {"course_name": "科技倫理", "allow_guest": True, "status": "open"}
     for activity_id in (unpublished["id"], "no-such-activity"):
         response = client.get(f"/api/v2/activities/{activity_id}/public-preview")
         assert response.status_code == 404

@@ -65,6 +65,7 @@ const teacherCourse = {
   id: 'c-1', role: 'teacher', name: '哲學導論', teacher_name: '林小華', code: '3CKTGE7Q', code_enabled: true,
   intro: '從經典思想實驗出發，練習說清楚自己的立場與理由。', goals: '能分辨後果與義務的考量。',
   student_count: 35, activity_count: 4, available_actions: ['update', 'rotate_code', 'disable_code', 'create_activity'],
+  allow_guest: true,
 } satisfies S['CourseTeacherView']
 
 const studentCourse = {
@@ -80,13 +81,13 @@ const activityView = (card: S['ActivityTeacherCard']) => ({
 
 const joinPreview = {
   course_id: 'c-1', name: '哲學導論', teacher_name: '王思齊', default_display_name: '林小華',
-  already_enrolled: false, open_activity_title: '第三週倫理討論',
+  already_enrolled: false, open_activity_title: '第三週倫理討論', allow_guest: true,
 } satisfies S['JoinPreview']
 
 const activityJoinPreview = {
   activity_id: 'a-open', title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論', teacher_name: '王思齊',
   status: 'open', starts_at: now - 2 * HOUR, ends_at: now + 3 * DAY,
-  default_display_name: '林小華', already_enrolled: false,
+  default_display_name: '林小華', already_enrolled: false, allow_guest: true,
 } satisfies S['ActivityJoinPreview']
 
 const attemptId = 'attempt-1'

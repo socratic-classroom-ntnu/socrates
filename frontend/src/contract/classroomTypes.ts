@@ -6,7 +6,7 @@ export interface components { schemas: {
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
   "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
-  "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string };
+  "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string; "allow_guest": boolean };
   "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };
   "ActivityStudentCard": { "id": string; "title": string; "status": "scheduled" | "open" | "ended"; "starts_at": number; "ends_at": number };
   "ActivityStudentList": { "role": "student"; "items": Array<components["schemas"]["ActivityStudentCard"]> };
@@ -46,9 +46,9 @@ export interface components { schemas: {
   "CourseLearningCard": { "id": string; "name": string; "teacher_name": string; "open_activity_count": number; "highlight": (components["schemas"]["ActivityStudentCard"] | null) };
   "CourseLists": { "teaching": Array<components["schemas"]["CourseTeachingCard"]>; "learning": Array<components["schemas"]["CourseLearningCard"]> };
   "CourseStudentView": { "role": "student"; "id": string; "name": string; "teacher_name": string; "intro": string; "code": (string | null); "display_name": string };
-  "CourseTeacherView": { "role": "teacher"; "id": string; "name": string; "teacher_name": string; "intro": string; "goals": string; "code": string; "code_enabled": boolean; "student_count": number; "activity_count": number; "available_actions": Array<"update" | "rotate_code" | "disable_code" | "enable_code" | "create_activity"> };
+  "CourseTeacherView": { "role": "teacher"; "id": string; "name": string; "teacher_name": string; "intro": string; "goals": string; "code": string; "code_enabled": boolean; "allow_guest": boolean; "student_count": number; "activity_count": number; "available_actions": Array<"update" | "rotate_code" | "disable_code" | "enable_code" | "create_activity"> };
   "CourseTeachingCard": { "id": string; "name": string; "teacher_name": string; "code": string; "code_enabled": boolean; "student_count": number; "activity_count": number; "open_activity_count": number };
-  "CourseUpdate": { "name"?: (string | null); "teacher_name"?: (string | null); "intro"?: (string | null); "goals"?: (string | null) };
+  "CourseUpdate": { "name"?: (string | null); "teacher_name"?: (string | null); "intro"?: (string | null); "goals"?: (string | null); "allow_guest"?: (boolean | null) };
   "CreateBatch": { "action_id": string; "script_id": string };
   "CreateClassroom": { "action_id": string; "title": string };
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
@@ -69,11 +69,14 @@ export interface components { schemas: {
   "GroupRunView": { "kind": "GroupRun"; "id": string; "role": "teacher" | "student"; "seq": number; "title": string; "phase": string; "deadline_at": (number | null); "member_id": (string | null); "members": Array<Record<string, unknown>>; "runtime_mode": string; "session_batch_id": string; "group_label": string; "classroom_id": string; "question": (components["schemas"]["PublicQuestion"] | null); "transcript": Array<Record<string, unknown>>; "arguments": Array<Record<string, unknown>>; "edges": Array<Record<string, unknown>>; "settlement": Record<string, unknown>; "confirmed_members": Array<string>; "my_summary": (Record<string, unknown> | null); "avatar_pack_id": string; "source_mode": string; "focus_notice"?: unknown; "personal"?: (Record<string, unknown> | null); "available_actions"?: Array<string>; "unavailable_actions"?: Record<string, string>; "personal_progress"?: (Record<string, unknown> | null); "personal_overview"?: (Array<Record<string, unknown>> | null) };
   "GroupStanceView": { "question_index": number; "question_id": string; "question_title": string; "run_id": string; "run_phase": string; "basis": "personal_baseline"; "members": number; "confirmed": number; "unconfirmed": number; "unconfirmed_by_status": Record<string, number>; "options": Array<components["schemas"]["StanceOptionView"]>; "differing": boolean };
   "GroupStartReceipt": { "status": string; "action_id": string; "seq": number; "room_id"?: (string | null); "groups": Array<components["schemas"]["GroupMetaView"]>; "snapshot_id": string };
+  "GuestActivityJoin": { "nickname": string; "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
+  "GuestCourseJoin": { "code": string; "nickname": string; "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "GuestJoin": { "nickname": string; "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
+  "GuestJoinResult": { "account": components["schemas"]["AccountView"]; "course_id": string; "activity_id": (string | null); "activity_status": ("scheduled" | "open" | "ended" | null) };
   "GuestUpgrade": { "username": string; "email": string; "password": string };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
-  "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string; "open_activity_title": (string | null) };
+  "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string; "open_activity_title": (string | null); "allow_guest": boolean };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
   "LegacyGroupView": { "kind": "Legacy"; "id": string };
   "LibraryClassroomDetailView": { "id": string; "title": string; "revision": number; "assets": Record<string, unknown>; "scripts": Array<Record<string, unknown>>; "sessions": Array<Record<string, unknown>>; "lessons": Array<Record<string, unknown>> };
@@ -91,8 +94,9 @@ export interface components { schemas: {
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string; "sources"?: Array<components["schemas"]["CitationSourceView"]> };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
+  "PublicActivityPreview": { "course_name": string; "allow_guest": boolean; "status": "scheduled" | "open" | "ended" };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
-  "PublicJoinPreview": { "course_name": string };
+  "PublicJoinPreview": { "course_name": string; "allow_guest": boolean };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
   "Question": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number; "scenario_ai"?: (components["schemas"]["ScenarioAI"] | null) };

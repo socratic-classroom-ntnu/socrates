@@ -299,6 +299,10 @@
             "title": "Activity Id",
             "type": "string"
           },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "already_enrolled": {
             "title": "Already Enrolled",
             "type": "boolean"
@@ -351,7 +355,8 @@
           "ends_at",
           "status",
           "already_enrolled",
-          "default_display_name"
+          "default_display_name",
+          "allow_guest"
         ],
         "title": "ActivityJoinPreview",
         "type": "object"
@@ -1992,6 +1997,10 @@
             "title": "Activity Count",
             "type": "integer"
           },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "available_actions": {
             "items": {
               "enum": [
@@ -2053,6 +2062,7 @@
           "goals",
           "code",
           "code_enabled",
+          "allow_guest",
           "student_count",
           "activity_count",
           "available_actions"
@@ -2112,6 +2122,17 @@
       "CourseUpdate": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Guest"
+          },
           "goals": {
             "anyOf": [
               {
@@ -3190,6 +3211,69 @@
         "title": "GroupStartReceipt",
         "type": "object"
       },
+      "GuestActivityJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest from an activity link: the guest joins that activity's course.",
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestActivityJoin",
+        "type": "object"
+      },
+      "GuestCourseJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest and joining a course by its code, in one step.",
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestCourseJoin",
+        "type": "object"
+      },
       "GuestJoin": {
         "additionalProperties": false,
         "description": "Joining without registering: a nickname shown to the class and the interface language.",
@@ -3216,6 +3300,53 @@
           "locale"
         ],
         "title": "GuestJoin",
+        "type": "object"
+      },
+      "GuestJoinResult": {
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountView"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "activity_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "scheduled",
+                  "open",
+                  "ended"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Status"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "course_id",
+          "activity_id",
+          "activity_status"
+        ],
+        "title": "GuestJoinResult",
         "type": "object"
       },
       "GuestUpgrade": {
@@ -3289,6 +3420,10 @@
       "JoinPreview": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "already_enrolled": {
             "title": "Already Enrolled",
             "type": "boolean"
@@ -3327,7 +3462,8 @@
           "teacher_name",
           "already_enrolled",
           "default_display_name",
-          "open_activity_title"
+          "open_activity_title",
+          "allow_guest"
         ],
         "title": "JoinPreview",
         "type": "object"
@@ -3982,6 +4118,36 @@
         "title": "ProfileView",
         "type": "object"
       },
+      "PublicActivityPreview": {
+        "additionalProperties": false,
+        "description": "An activity link also says whether the activity is still on: an ended one offers no guest\njoin either.",
+        "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_name",
+          "allow_guest",
+          "status"
+        ],
+        "title": "PublicActivityPreview",
+        "type": "object"
+      },
       "PublicConfigView": {
         "properties": {
           "debug_mode": {
@@ -4024,13 +4190,18 @@
         "additionalProperties": false,
         "description": "What an anonymous visitor may learn from a code or activity link: the course name only.",
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "course_name": {
             "title": "Course Name",
             "type": "string"
           }
         },
         "required": [
-          "course_name"
+          "course_name",
+          "allow_guest"
         ],
         "title": "PublicJoinPreview",
         "type": "object"
@@ -6954,6 +7125,59 @@
         ]
       }
     },
+    "/api/v2/activities/{activity_id}/guest-join": {
+      "post": {
+        "description": "Become a guest from an activity link and join its course, in one transaction.",
+        "operationId": "guest_join_activity_api_v2_activities__activity_id__guest_join_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestActivityJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/api/v2/activities/{activity_id}/join": {
       "post": {
         "operationId": "join_activity_api_v2_activities__activity_id__join_post",
@@ -7067,7 +7291,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicJoinPreview"
+                  "$ref": "#/components/schemas/PublicActivityPreview"
                 }
               }
             },
@@ -8140,6 +8364,48 @@
           }
         },
         "summary": "Reaction"
+      }
+    },
+    "/api/v2/course-join/guest": {
+      "post": {
+        "description": "Become a guest and join the course in one transaction; the cookie only after it commits.",
+        "operationId": "guest_join_course_api_v2_course_join_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCourseJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Course",
+        "tags": [
+          "courses"
+        ]
       }
     },
     "/api/v2/course-join/preview": {

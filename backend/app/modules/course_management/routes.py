@@ -26,10 +26,21 @@ from app.modules.course_management.contracts import (
     CourseStudentView,
     CourseTeacherView,
     CourseUpdate,
+    GuestActivityJoin,
+    GuestCourseJoin,
+    GuestJoinResult,
     JoinPreview,
+    PublicActivityPreview,
     PublicJoinPreview,
 )
-from app.modules.identity_access.service import account
+from app.modules.identity_access.service import (
+    COOKIE,
+    account,
+    auth_limit,
+    display_name,
+    identity,
+    set_session_cookie,
+)
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
@@ -43,10 +54,22 @@ def _join_limit(request: Request, mutation: bool) -> None:
     """Counted in its own transaction: a wrong code raises 404, which would roll the count back."""
     host = request.client.host if request.client else "unknown"
     with transaction() as db:
-        current, _ = account(db, request, mutation=mutation)
+        current, _ = account(db, request, mutation=mutation, allow_guest=True)
         enforce_rate_limit(db, f"course-join:{current.id}", 20, 60, error_code="RATE_LIMITED")
         # A whole class often shares the school's address; 200/min lets ~40 students retry.
         enforce_rate_limit(db, f"course-join-ip:{host}", 200, 60, error_code="RATE_LIMITED")
+
+
+def _refuse_signed_in(db, request: Request) -> None:
+    """Becoming a guest needs a device that is not signed in. A retry whose first try already
+    made the guest, or a student who is logged in, would otherwise get a second account and
+    lose the first one's records: ALREADY_SIGNED_IN, and the page continues as that account.
+    An expired guest or a stale session counts as signed out."""
+    try:
+        identity(db, request.cookies.get(COOKIE), verified=False, allow_guest=True)
+    except DomainError:
+        return
+    raise DomainError("ALREADY_SIGNED_IN", 409)
 
 
 def _teacher_course(db, current, course_id: str):
@@ -58,7 +81,7 @@ def _teacher_course(db, current, course_id: str):
 @router.get("", response_model=CourseLists)
 def course_lists(request: Request):
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         return service.lists(db, current)
 
 
@@ -74,7 +97,7 @@ def create_course(body: CourseCreate, request: Request):
 def join_course(body: CourseJoin, request: Request):
     _join_limit(request, mutation=True)
     with transaction() as db:
-        current, _ = account(db, request, mutation=True)
+        current, _ = account(db, request, mutation=True, allow_guest=True)
         course = enrollment.find_by_code(db, body.code)
         row, _ = enrollment.enroll(db, current, course, body.display_name)
         return service.student_view(course, row)
@@ -84,15 +107,16 @@ def join_course(body: CourseJoin, request: Request):
 def preview_join(code: str, request: Request):
     _join_limit(request, mutation=False)
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         course = enrollment.find_by_code(db, code)
         return {
             "course_id": course.id,
             "name": course.name,
             "teacher_name": course.teacher_name,
             "already_enrolled": enrollment.existing(db, current, course) is not None,
-            "default_display_name": current.username,
+            "default_display_name": display_name(current),
             "open_activity_title": service.open_activity_title(db, course, activity_service.now()),
+            "allow_guest": course.allow_guest,
         }
 
 
@@ -101,7 +125,25 @@ def public_preview_join(code: str, request: Request):
     enrollment.public_preview_limit(request.client.host if request.client else "unknown")
     with transaction() as db:
         course = enrollment.find_by_code(db, code)
-        return {"course_name": course.name}
+        return {"course_name": course.name, "allow_guest": course.allow_guest}
+
+
+@preview_router.post("/guest", response_model=GuestJoinResult)
+def guest_join_course(body: GuestCourseJoin, request: Request, response: Response):
+    """Become a guest and join the course in one transaction; the cookie only after it commits."""
+    auth_limit(request, "guest")
+    with transaction() as db:
+        _refuse_signed_in(db, request)
+        course = enrollment.find_by_code(db, body.code)
+        token, view = enrollment.join_as_new_guest(db, course, body.nickname, body.locale)
+        result = {
+            "account": view,
+            "course_id": course.id,
+            "activity_id": None,
+            "activity_status": None,
+        }
+    set_session_cookie(response, token, guest=True)
+    return result
 
 
 @router.get(
@@ -114,7 +156,8 @@ def get_course(
     role: Literal["teacher", "student"] | None = None,
 ):
     with transaction() as db:
-        current, _ = account(db, request)
+        # A guest teaches nothing, so select_role only ever gives a guest the student view.
+        current, _ = account(db, request, allow_guest=True)
         access = service.access_for(db, current, course_id)
         selected = service.select_role(access, role)
         if selected == "teacher":
@@ -155,7 +198,7 @@ def list_activities(
     role: Literal["teacher", "student"] | None = None,
 ):
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         access = service.access_for(db, current, course_id)
         selected = service.select_role(access, role)
         at = activity_service.now()
@@ -202,22 +245,38 @@ def _teacher_activity(db, current, activity_id: str):
 @activities_router.get("/{activity_id}/join-preview", response_model=ActivityJoinPreview)
 def activity_join_preview(activity_id: str, request: Request):
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         activity = activity_service.get_activity(db, activity_id)
         return activity_service.join_preview(db, current, activity, activity_service.now())
 
 
-@activities_router.get("/{activity_id}/public-preview", response_model=PublicJoinPreview)
+@activities_router.get("/{activity_id}/public-preview", response_model=PublicActivityPreview)
 def activity_public_preview(activity_id: str, request: Request):
     enrollment.public_preview_limit(request.client.host if request.client else "unknown")
     with transaction() as db:
-        return {"course_name": activity_service.public_course_name(db, activity_id)}
+        return activity_service.public_preview(db, activity_id, activity_service.now())
+
+
+@activities_router.post("/{activity_id}/guest-join", response_model=GuestJoinResult)
+def guest_join_activity(
+    activity_id: str, body: GuestActivityJoin, request: Request, response: Response
+):
+    """Become a guest from an activity link and join its course, in one transaction."""
+    auth_limit(request, "guest")
+    with transaction() as db:
+        _refuse_signed_in(db, request)
+        activity = activity_service.get_activity(db, activity_id)
+        token, result = activity_service.join_as_new_guest(
+            db, activity, body.nickname, body.locale, activity_service.now()
+        )
+    set_session_cookie(response, token, guest=True)
+    return result
 
 
 @activities_router.post("/{activity_id}/join", response_model=ActivityJoinResult)
 def join_activity(activity_id: str, body: ActivityJoin, request: Request):
     with transaction() as db:
-        current, _ = account(db, request, mutation=True)
+        current, _ = account(db, request, mutation=True, allow_guest=True)
         activity = activity_service.get_activity(db, activity_id)
         return activity_service.join_by_activity(
             db, current, activity, body.display_name, activity_service.now()

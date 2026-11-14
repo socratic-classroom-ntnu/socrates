@@ -95,6 +95,7 @@ def teacher_view(db, course: Course) -> dict:
         "goals": course.goals,
         "code": course.code,
         "code_enabled": course.code_enabled,
+        "allow_guest": course.allow_guest,
         "student_count": student_count or 0,
         "activity_count": activity_count or 0,
         "available_actions": _available_actions(course),

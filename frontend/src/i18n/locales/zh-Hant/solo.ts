@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: '已完成', completedNext: '你已經完成這個活動，可以回頭看看最終統整。',
     back: '課程', breadcrumbLabel: '課程路徑', notFound: '找不到這個活動', home: '回到首頁',
     status: '狀態', openUntil: '開放到',
     statuses: { scheduled: '尚未開始', open: '進行中', ended: '已結束' },
@@ -66,6 +67,7 @@ export default {
     confirmedCard: '情境 {{number}} 的觀點已確認',
   },
   final: {
+    feedbackLabel: '你說哪裡不太對', feedback: '你說：「{{text}}」',
     writing: '蘇格拉底正在整理你整個思路⋯', failed: '這次沒能整理出你的思路', ownerMissing: '老師尚未設定 AI 連線，暫時無法整理',
     write: '整理我的思路', retry: '再試一次', finish: '先結束，不整理',
     title: '我試著整理你整個思路，這樣說對嗎？', subtitle: '蘇格拉底依你確認過的想法整理，是否正確由你決定',

@@ -17,7 +17,7 @@ from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.repositories import SoloAttempt
-from app.modules.solo_activity.service import REVIEW_STATES
+from app.modules.solo_activity.service import final_status
 
 
 def _student_view(enrollment: Enrollment, row: SoloAttempt) -> dict:
@@ -30,6 +30,7 @@ def _student_view(enrollment: Enrollment, row: SoloAttempt) -> dict:
         "current_position": summary.get("current_position", ""),
         "reason_summary": summary.get("reason_summary", ""),
         "relevant_conditions": list(summary.get("relevant_conditions") or []),
+        "final_status": final_status(row),
     }
 
 
@@ -62,7 +63,7 @@ def analysis_view(db, account: Account, activity_id: str, at: float) -> dict:
         else {}
     )
     started = [(e, attempts[e.account_id]) for e in enrolled if e.account_id in attempts]
-    done = sum(1 for _, row in started if row.state in REVIEW_STATES)
+    done = sum(1 for _, row in started if row.state == "completed")
 
     return {
         "activity_id": activity.id,

@@ -1353,3 +1353,22 @@ test('a summary turned down twice is kept and marked 未確認', async () => {
   expect(screen.getByText('你最後選擇不拉下拉桿。')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '對，這就是我的思路' })).toBeNull()
 })
+
+test('the sentence on the final summary sits in the review, not in the scenario dialogue', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...reflectingAttempt,
+      final_revised: true,
+      messages: [
+        ...reflectingAttempt.messages,
+        { id: 'm-fb', scenario_index: 0, role: 'student', text: '我其實有猶豫', created_at: 9, move: null, revise_hint: null, final_feedback: true },
+      ],
+    },
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  expect(within(timeline).queryByText('我其實有猶豫')).toBeNull()
+  expect(screen.getByRole('list', { name: '你說哪裡不太對' })).toHaveTextContent('你說：「我其實有猶豫」')
+})
+

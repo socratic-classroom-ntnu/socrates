@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: 'Completed', completedNext: 'You have completed this activity. You can look back at your final summary.',
     back: 'Courses', breadcrumbLabel: 'Course path', notFound: 'Activity not found', home: 'Back to home',
     status: 'Status', openUntil: 'Open until',
     statuses: { scheduled: 'Not open yet', open: 'In progress', ended: 'Ended' },
@@ -66,6 +67,7 @@ export default {
     confirmedCard: 'Scenario {{number}}: viewpoint confirmed',
   },
   final: {
+    feedbackLabel: 'What you said was off', feedback: 'You said: “{{text}}”',
     writing: 'Socrates is summing up your whole line of thought…', failed: 'Your line of thought could not be summed up this time', ownerMissing: 'Your teacher has not set up the AI connection yet, so it cannot be summed up for now',
     write: 'Sum up my thinking', retry: 'Try again', finish: 'Finish without a summary',
     title: 'I tried to sum up your whole line of thought. Is this right?', subtitle: 'Socrates wrote this from the views you confirmed; you decide whether it is right',

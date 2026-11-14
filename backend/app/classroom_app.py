@@ -12,7 +12,7 @@ from app.modules.app_shell.routes import include_classroom_routers
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.realtime import BUS
 from app.modules.platform.storage import engine
-from app.modules.app_shell.llm_workers import clock_loop, llm_loop, mail_loop
+from app.modules.app_shell.llm_workers import clock_loop, guest_expiry_loop, llm_loop, mail_loop
 from app.modules.platform.env import env_int
 
 
@@ -20,7 +20,8 @@ from app.modules.platform.env import env_int
 async def lifespan(app):
     engine()
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
-    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop] + [llm_loop] * worker_count
+    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop]
+    loops += [llm_loop] * worker_count
     tasks = [asyncio.create_task(fn()) for fn in loops]
     try:
         yield
@@ -34,6 +35,7 @@ async def lifespan(app):
 
 def create_app(legacy=False, background=True):
     prompts.validate_programs()
+    _wiring.check_guest_hooks()
     app = FastAPI(
         title="Socrates API",
         version="0.3.0",

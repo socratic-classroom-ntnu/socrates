@@ -45,10 +45,24 @@ def extend_account_view(extension: Callable[[Any, Any], dict]) -> None:
         ACCOUNT_VIEW_EXTENSIONS.append(extension)
 
 
+# A guest's username is the nickname, "-" and this many hex digits (secrets.token_hex(4)).
+GUEST_SUFFIX = 9
+
+
+def display_name(account) -> str:
+    """The name people see: a guest's nickname, a registered account's username."""
+    if account.kind == "guest":
+        return account.username[:-GUEST_SUFFIX]
+    if account.kind == "expired_guest":
+        return ""
+    return account.username
+
+
 def account_view(db, account, csrf=""):
     view = {
         "id": account.id,
         "username": account.username,
+        "display_name": display_name(account),
         "email": account.email or "",
         "email_masked": mask_recipient(account.email) if account.email else "",
         "verified": account.verified,
@@ -377,19 +391,27 @@ def verification_status(account_id: str) -> dict:
         }
 
 
+def create_guest(db, nickname: str, locale: str):
+    """A guest account and its session in the caller's transaction, which commits or rolls back
+    both together with whatever else it does. Returns (session token, account view).
+
+    The username is the nickname plus a random suffix, since two students in one class may pick
+    the same nickname; display_name gives the nickname back."""
+    account = Account(
+        username=f"{nickname}-{secrets.token_hex(4)}",
+        kind="guest",
+        locale=locale,
+        guest_expires_at=time.time() + GUEST_SECONDS,
+    )
+    db.add(account)
+    db.flush()
+    return _new_session(db, account)
+
+
 def join_as_guest(body):
-    """A guest account and its session; the username is the nickname plus a random suffix,
-    since two students in one class may pick the same nickname."""
+    """A guest account and its session, on its own."""
     with transaction() as db:
-        account = Account(
-            username=f"{body.nickname}-{secrets.token_hex(4)}",
-            kind="guest",
-            locale=body.locale,
-            guest_expires_at=time.time() + GUEST_SECONDS,
-        )
-        db.add(account)
-        db.flush()
-        return _new_session(db, account)
+        return create_guest(db, body.nickname, body.locale)
 
 
 def upgrade_guest(db, account, session, body):

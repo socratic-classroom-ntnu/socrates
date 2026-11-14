@@ -12,7 +12,7 @@ const DAY = 24 * HOUR
 export const account = {
   id: 'u-1', username: '林小華', email: 'student@example.org', email_masked: 's***@example.org', verified: true,
   authority_state: 'FULL_PRODUCT', csrf_token: 'csrf-baseline', points: 0, achievements: [], locale: 'zh-Hant',
-  kind: 'registered',
+  kind: 'registered', display_name: '林小華',
 } satisfies S['AccountView']
 
 export const unverifiedAccount = {

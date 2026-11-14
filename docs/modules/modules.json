@@ -158,7 +158,7 @@
         "group-dialogue"
       ],
       "todo": [
-        "雷達圖契約（依設計稿的教師分析六畫面）。"
+        "分組課雷達圖沿用 solo-activity 的共用契約（第二版）。"
       ]
     },
     {
@@ -237,9 +237,9 @@
     },
     {
       "name": "雷達圖",
-      "backend": "analytics",
-      "source": "待定",
-      "state": "等契約（設計稿）",
+      "backend": "solo-activity",
+      "source": "backend/app/modules/solo_activity/contracts.py",
+      "state": "後端 ViewModel 已定義；端點待實作",
       "consumer": "教師分析畫面",
       "frontend": [
         "teacher-analytics"

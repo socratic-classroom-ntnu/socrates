@@ -215,7 +215,11 @@ def contract_table(spec: dict) -> str:
 def module_doc(m: dict, side: str, spec: dict, current: dict[str, list[str]]) -> str:
     owner = spec["owners"][side]
     uses = "全部（組裝層）" if "*" in m["uses"] else ("、".join(m["uses"]) or "不依賴其他模組")
-    contracts = [c for c in spec["contracts"] if c["backend"] == m["id"] or m["id"] in c["frontend"]]
+    contracts = [
+        c
+        for c in spec["contracts"]
+        if (c["backend"] == m["id"] if side == "backend" else m["id"] in c["frontend"])
+    ]
     lines = [BEGIN, f"## Scope（由 docs/modules/modules.json 產生；邊界 {STATUS[m['status']]}）", "",
              f"- 端：{'後端' if side == 'backend' else '前端'}；default owner：{owner}" + ("；視覺：" + spec["owners"]["visual"] if side == "frontend" else ""),
              f"- 可依賴的模組：{uses}"]

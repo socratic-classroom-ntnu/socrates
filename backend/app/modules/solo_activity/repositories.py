@@ -29,6 +29,8 @@ class SoloAttempt(Base):
     pending_key: Mapped[str | None] = mapped_column(String(200), nullable=True)
     pending_since: Mapped[float | None] = mapped_column(Float, nullable=True)
     notice: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    # The final summary step (attempt_machine.FinalProgress); None until the review begins.
+    final: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
 

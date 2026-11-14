@@ -31,13 +31,23 @@ from app.modules.course_management.repositories import (
     Enrollment,
 )
 from app.modules.identity_access.repositories import Account
-from app.modules.llm_runtime.contracts import Citation, PersonalTutorTurn, ScenarioExtension
+from app.modules.llm_runtime.contracts import (
+    Citation,
+    FinalSummary,
+    PersonalTutorTurn,
+    ScenarioExtension,
+)
 from app.modules.llm_runtime.service import compile_program, guarded_generate, locate_citation
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
 from app.modules.solo_activity import attempt_machine as machine
-from app.modules.solo_activity.attempt_machine import AttemptState, Scenario, ScenarioProgress
+from app.modules.solo_activity.attempt_machine import (
+    AttemptState,
+    FinalProgress,
+    Scenario,
+    ScenarioProgress,
+)
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 
 if TYPE_CHECKING:
@@ -50,6 +60,8 @@ ROLE = "socratic_tutor"
 PROGRAM = "solo_tutor"
 # Writes the next scenario of a student's sequence; the first one is the teacher's text.
 EXTENSION_PROGRAM = "scenario_extension"
+# Writes the final summary of the whole attempt from its confirmed stages (O6).
+FINAL_PROGRAM = "final_summary"
 # The language a student's scenarios are written in when their account names none.
 DEFAULT_LOCALE = "zh-Hant"
 PROVIDER_TIMEOUT_SECONDS = 130
@@ -124,6 +136,7 @@ def _state(row: SoloAttempt) -> AttemptState:
         pending_key=row.pending_key,
         pending_since=row.pending_since,
         notice=cast(Any, row.notice),
+        final=FinalProgress(**(row.final or {})),
     )
 
 
@@ -135,6 +148,7 @@ def _store(row: SoloAttempt, a: AttemptState) -> None:
     row.pending_key = a.pending_key
     row.pending_since = a.pending_since
     row.notice = a.notice
+    row.final = asdict(a.final)
     row.updated_at = time.time()
 
 
@@ -191,6 +205,9 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
         )
     confirming = a.state == "confirming"
     label = a.current.principle_label
+    final = a.final
+    # The summary while it waits for 對／不太對, and the one kept once completed with one.
+    shown = final.summary if a.state == "reflecting" or final.status is not None else None
     return {
         "id": row.id,
         "activity_id": activity.id,
@@ -220,7 +237,25 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
         "revising": a.current.revising,
         "rejected_summary": a.current.rejected_summary if a.current.revising else None,
         "notice": a.notice,
+        "final_summary": _student_final(shown) if shown is not None else None,
+        "final_digest": final.digest if a.state == "reflecting" else None,
+        "final_status": final.status if a.state == "completed" else None,
+        "final_revised": final.rejections > 0,
         "available_actions": machine.actions_for(a, at),
+    }
+
+
+def _student_final(summary: dict) -> dict:
+    """What the student reads: never normalized_text (system comparisons only) or stance ids."""
+    return {
+        "points": summary["points"],
+        "trajectory": [
+            {key: step[key] for key in ("position", "shift_reason", "sources")}
+            for step in summary["trajectory"]
+        ],
+        "final_position": summary["final_position"],
+        "reasoning_style": summary["reasoning_style"],
+        "open_question": summary["open_question"],
     }
 
 
@@ -258,6 +293,15 @@ def activity_view(db, account: Account, activity_id: str, at: float) -> dict:
         "ends_at": activity.ends_at,
         "attempt": _attempt_brief(row) if row is not None else None,
     }
+
+
+def ensure_available(db, account: Account, attempt_id: str, action: str, at: float) -> None:
+    """SOLO_ACTION_UNAVAILABLE unless the attempt offers this action now."""
+    row = db.get(SoloAttempt, attempt_id)
+    if row is None or row.account_id != account.id:
+        raise DomainError("SOLO_ATTEMPT_NOT_FOUND", 404)
+    if action not in machine.actions_for(_state(row), at):
+        raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
 
 
 def attempt_view(db, account: Account, attempt_id: str, at: float) -> dict:
@@ -344,21 +388,48 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         return machine.next_scenario(a), None
     if action == "submit_review":
         return machine.submit_review(a), None
+    if action == "submit_reflection":
+        digest = cast("ConfirmViewpointBody", body).summary_digest
+        return machine.submit_reflection(a, digest), None
     if action in NOT_READY and action in machine.actions_for(a, at):
         raise DomainError("SOLO_STEP_NOT_READY", 501)
     raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
 
 
+def _final_transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
+    """The two final-summary actions that ask for a summary: they return a final pending call."""
+    if action == "retry_reflection_prompt":
+        enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
+        return machine.retry_reflection_prompt(a, at)
+    enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
+    message = cast("SendMessageBody", body)
+    if message.revise_hint is not None:
+        raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
+    new, pending = machine.continue_reflection(a, at)
+    # The sentence is the student's own words: kept, and quotable by the next summary.
+    _add_message(db, row, "student", message.text, meta={"final_feedback": True})
+    return new, pending
+
+
 def begin_action(db, account: Account, attempt_id: str, action: str, body, at: float) -> dict:
-    """Tx1. Returns either the final view or what finish_action needs to call the tutor."""
+    """Tx1. Returns either the final view or what finish_action needs to call the provider."""
     row = _locked_attempt(db, account, attempt_id)
+    if action in ("retry_reflection_prompt", "continue_reflection"):
+        new, final_pending = _final_transition(db, row, _state(row), action, body, at)
+        if final_pending is None:
+            _store(row, new)
+            return {"view": _attempt_view(db, row, at)}
+        return _prepare_final(db, row, new, final_pending, account, at)
     new, pending = _transition(db, row, _state(row), action, body, at)
     if pending is None:
         _store(row, new)
-        if action == "confirm_viewpoint" and machine.wants_extension(new):
-            prepared = _prepare_extension(db, row, new, account)
-            if prepared is not None:
-                return prepared
+        if action == "confirm_viewpoint" and new.state == "reviewing":
+            if machine.wants_extension(new):
+                prepared = _prepare_extension(db, row, new, account)
+                if prepared is not None:
+                    return prepared
+            waiting, final_pending = machine.start_final(new, at)
+            return _prepare_final(db, row, waiting, final_pending, account, at)
         return {"view": _attempt_view(db, row, at)}
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
@@ -419,8 +490,9 @@ def _prepare_extension(db, row: SoloAttempt, a: AttemptState, account: Account) 
     }
 
 
-async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | None:
-    """Each binding in order, every attempt audited; None when none of them wrote a usable one."""
+async def _call_program(prepared: dict, kind: str, schema, endpoint: str):
+    """Each binding in order, every attempt audited. Returns (validated result, binding), or None
+    when none of them gave a usable one: any failure is a missing result, never a stuck student."""
 
     async def no_delta(_):
         return None
@@ -434,13 +506,13 @@ async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | No
                     prepared["messages"],
                     prepared["schema"],
                     no_delta,
-                    kind=EXTENSION_PROGRAM,
+                    kind=kind,
                     context=prepared["context"],
                 ),
                 PROVIDER_TIMEOUT_SECONDS,
             )
-            extension = ScenarioExtension.model_validate(result)
-        except Exception as exc:  # noqa: BLE001 — any failure means no scenario, never a stuck student
+            validated = schema.model_validate(result)
+        except Exception as exc:  # noqa: BLE001 — see the docstring
             reason = (
                 getattr(exc, "reason", None)
                 or getattr(exc, "code", None)
@@ -448,7 +520,7 @@ async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | No
             )
             record_direct_call_audit(
                 actor_id=prepared["account_id"],
-                endpoint="solo.scenario_extension",
+                endpoint=endpoint,
                 role=ROLE,
                 binding=binding,
                 state="FAILED",
@@ -458,20 +530,20 @@ async def _call_extension(prepared: dict) -> tuple[ScenarioExtension, dict] | No
             continue
         record_direct_call_audit(
             actor_id=prepared["account_id"],
-            endpoint="solo.scenario_extension",
+            endpoint=endpoint,
             role=ROLE,
             binding=binding,
             state="READY",
             audit=audit,
         )
-        return extension, binding
+        return validated, binding
     return None
 
 
-def _located_sources(extension: ScenarioExtension, texts: dict) -> list[dict]:
+def _located(citations, texts: dict) -> list[dict]:
     """The citations that really sit in this student's messages, with where they sit."""
     located = []
-    for citation in extension.sources:
+    for citation in citations:
         message = texts.get(citation.message_ref)
         if message is None:
             continue
@@ -487,14 +559,16 @@ async def _finish_extension(prepared: dict) -> dict:
     The call ran between two transactions, so the attempt is read again: a student who has
     already moved on keeps what they have, and a scenario is stored at most once.
     """
-    called = await _call_extension(prepared)
+    called = await _call_program(
+        prepared, EXTENSION_PROGRAM, ScenarioExtension, "solo.scenario_extension"
+    )
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])
         row = _locked_attempt(db, account, prepared["attempt_id"])
         a = _state(row)
         if called is not None and machine.wants_extension(a):
             extension, binding = called
-            sources = _located_sources(extension, prepared["message_texts"])
+            sources = _located(extension.sources, prepared["message_texts"])
             if sources:  # a scenario that rests on none of the student's words is not written
                 made_by = {"provider": binding.get("adapter"), "model": binding.get("model")}
                 written = machine.extend(
@@ -506,7 +580,13 @@ async def _finish_extension(prepared: dict) -> dict:
                     made_by,
                 )
                 _store(row, written)
-        return _attempt_view(db, row, now())
+                return _attempt_view(db, row, now())
+        if a.state != "reviewing":  # moved on meanwhile, or another request started the summary
+            return _attempt_view(db, row, now())
+        # No next scenario: the review begins, and with it the final summary.
+        waiting, pending = machine.start_final(a, now())
+        follow = _prepare_final(db, row, waiting, pending, account, now())
+    return await finish_action(follow)
 
 
 async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
@@ -570,6 +650,8 @@ async def finish_action(prepared: dict) -> dict:
         return prepared["view"]
     if prepared.get("extension"):
         return await _finish_extension(prepared)
+    if prepared.get("final"):
+        return await _finish_final(prepared)
     called = await _call_tutor(prepared)
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])
@@ -598,3 +680,126 @@ async def finish_action(prepared: dict) -> dict:
         if new is not None:
             _store(row, new)
         return _attempt_view(db, row, now())
+
+
+# ---- the final summary (O6) ---------------------------------------------------------------
+
+
+def _for_model(summary: dict) -> dict:
+    """A stored summary as the model reads it back: its own words, without the located quotes."""
+    return {
+        "points": [point["text"] for point in summary["points"]],
+        "trajectory": [
+            {"position": step["position"], "shift_reason": step["shift_reason"]}
+            for step in summary["trajectory"]
+        ],
+        "final_position": summary["final_position"],
+        "reasoning_style": summary["reasoning_style"],
+        "open_question": summary["open_question"],
+    }
+
+
+def _prepare_final(
+    db, row: SoloAttempt, waiting: AttemptState, pending: machine.PendingTurn, account, at: float
+) -> dict:
+    """What writing the final summary needs, or the view when there is nobody to write it.
+
+    The material is every scenario the student reached with the summary they confirmed there,
+    and all of this student's own words in this attempt, each under a ref the model quotes by.
+    After 不太對 the summary turned down and the student's sentence on it go along as revision.
+    """
+    activity = db.get(Activity, row.activity_id)
+    course = db.get(Course, activity.course_id)
+    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    if not bindings:
+        _store(
+            row,
+            cast(
+                AttemptState, machine.final_failed(waiting, pending.key, "owner_provider_missing")
+            ),
+        )
+        return {"view": _attempt_view(db, row, at)}
+    _store(row, waiting)
+    said = [m for m in _messages(db, row.id) if m.role == "student"]
+    refs = {f"m{number}": m for number, m in enumerate(said, start=1)}
+    context: dict[str, Any] = {
+        # Each scenario is a teacher key (llm_runtime's TEACHER_KEYS), never screened as input.
+        "scenarios": [
+            {"scenario": item.text, "confirmed": item.confirmed_summary}
+            for item in waiting.progress[: waiting.scenario_index + 1]
+        ],
+        "student_messages": [{"ref": ref, "text": m.text} for ref, m in refs.items()],
+        "output_locale": account.locale or DEFAULT_LOCALE,
+    }
+    rejected = waiting.final.summary
+    if waiting.final.rejections and rejected is not None:
+        feedback = [m for m in said if (m.meta or {}).get("final_feedback")]
+        context["revision"] = {"rejected": _for_model(rejected), "student_says": feedback[-1].text}
+    messages, schema, _ = compile_program(db, FINAL_PROGRAM, context)
+    return {
+        "final": True,
+        "attempt_id": row.id,
+        "account_id": account.id,
+        "key": pending.key,
+        "bindings": bindings,
+        "messages": messages,
+        "schema": schema,
+        "context": context,
+        "message_texts": {ref: (m.id, m.text) for ref, m in refs.items()},
+    }
+
+
+def _stored_final(summary: FinalSummary, texts: dict) -> dict:
+    """The summary as kept: every quote replaced by where it sits; quotes not found are dropped."""
+    stored = summary.model_dump()
+    for point, written in zip(stored["points"], summary.points, strict=True):
+        point["sources"] = _located(written.sources, texts)
+    for step, written_step in zip(stored["trajectory"], summary.trajectory, strict=True):
+        step["sources"] = _located(written_step.sources, texts)
+    return stored
+
+
+async def _finish_final(prepared: dict) -> dict:
+    """Show the written summary if it is still awaited; a failure sends the student to the review."""
+    called = await _call_program(prepared, FINAL_PROGRAM, FinalSummary, "solo.final_summary")
+    with transaction() as db:
+        account = db.get(Account, prepared["account_id"])
+        row = _locked_attempt(db, account, prepared["attempt_id"])
+        a = _state(row)
+        key = prepared["key"]
+        if called is None:
+            new = machine.final_failed(a, key, "tutor_unavailable")
+        else:
+            new = machine.apply_final_summary(
+                a, key, _stored_final(called[0], prepared["message_texts"])
+            )
+        if new is not None:
+            _store(row, new)
+        return _attempt_view(db, row, now())
+
+
+def final_summaries(db, activity_id: str) -> list[dict]:
+    """Every completed attempt's kept final summary in this activity, for the radar.
+
+    status says whether the student confirmed it or turned it down twice (unconfirmed);
+    attempts finished without one are left out. Not a route: read inside solo-activity only.
+    """
+    rows = db.scalars(
+        select(SoloAttempt)
+        .where(SoloAttempt.activity_id == activity_id, SoloAttempt.state == "completed")
+        .order_by(SoloAttempt.created_at, SoloAttempt.id)
+    )
+    found = []
+    for row in rows:
+        final = FinalProgress(**(row.final or {}))
+        if final.status is None or final.summary is None:
+            continue
+        found.append(
+            {
+                "attempt_id": row.id,
+                "account_id": row.account_id,
+                "status": final.status,
+                "summary": final.summary,
+            }
+        )
+    return found

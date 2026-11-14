@@ -139,7 +139,7 @@ def test_the_student_sees_the_capped_summary_and_can_only_confirm(client, tutor)
     assert done["state"] == "reviewing"
     assert done["scenarios"][0]["status"] == "capped"
     assert done["scenarios"][0]["confirmed_summary"] is None
-    assert done["available_actions"] == ["submit_review"]
+    assert done["available_actions"] == ["retry_reflection_prompt", "submit_review"]
 
 
 def test_the_teacher_sees_a_capped_cell_and_no_confirmed_viewpoint(client, tutor):

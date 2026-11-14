@@ -2438,6 +2438,97 @@
         "title": "DiscoveredModel",
         "type": "object"
       },
+      "FinalSummaryPointView": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sources"
+        ],
+        "title": "FinalSummaryPointView",
+        "type": "object"
+      },
+      "FinalSummaryView": {
+        "additionalProperties": false,
+        "description": "The whole attempt's line of thought, written from the confirmed stages (O6).",
+        "properties": {
+          "final_position": {
+            "title": "Final Position",
+            "type": "string"
+          },
+          "open_question": {
+            "title": "Open Question",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/FinalSummaryPointView"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reasoning_style": {
+            "title": "Reasoning Style",
+            "type": "string"
+          },
+          "trajectory": {
+            "items": {
+              "$ref": "#/components/schemas/FinalTrajectoryStepView"
+            },
+            "title": "Trajectory",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points",
+          "trajectory",
+          "final_position",
+          "reasoning_style",
+          "open_question"
+        ],
+        "title": "FinalSummaryView",
+        "type": "object"
+      },
+      "FinalTrajectoryStepView": {
+        "additionalProperties": false,
+        "description": "The student's position in one scenario of the sequence, oldest first.",
+        "properties": {
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "shift_reason": {
+            "title": "Shift Reason",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "position",
+          "shift_reason",
+          "sources"
+        ],
+        "title": "FinalTrajectoryStepView",
+        "type": "object"
+      },
       "GroupActionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -5663,6 +5754,46 @@
             "title": "Display Name",
             "type": "string"
           },
+          "final_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Digest"
+          },
+          "final_revised": {
+            "title": "Final Revised",
+            "type": "boolean"
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "final_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -5776,6 +5907,10 @@
           "revising",
           "rejected_summary",
           "notice",
+          "final_summary",
+          "final_digest",
+          "final_status",
+          "final_revised",
           "available_actions"
         ],
         "title": "SoloAttemptView",

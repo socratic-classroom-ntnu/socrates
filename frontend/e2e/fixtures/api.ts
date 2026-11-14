@@ -114,6 +114,7 @@ const attempt = {
     { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null },
   ],
   candidate_summary: null, rejected_summary: null, summary_digest: null, principle_hint: null, notice: null,
+  final_summary: null, final_digest: null, final_status: null, final_revised: false,
   available_actions: ['send_message'],
 } satisfies S['SoloAttemptView']
 

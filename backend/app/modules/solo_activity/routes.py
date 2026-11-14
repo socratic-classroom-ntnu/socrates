@@ -58,6 +58,11 @@ async def act_on_attempt(
 ):
     expected = ACTION_BODIES.get(action)
     if (expected is None) != (body is None) or (expected and not isinstance(body, expected)):
+        if expected is not None and body is None:
+            # Without its body an action that is not offered now is refused as unavailable.
+            with transaction() as db:
+                current, _ = account(db, request)
+                service.ensure_available(db, current, attempt_id, action, service.now())
         raise RequestValidationError(
             [{"type": "body_mismatch", "loc": ("body",), "msg": f"{action} body", "input": None}]
         )

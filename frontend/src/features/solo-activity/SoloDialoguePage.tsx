@@ -6,12 +6,12 @@ import { errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
 import { ButtonLink } from '../../ui'
 import '../../styles/solo.css'
-import { ReviewPlaceholder } from './ReviewPlaceholder'
+import { FinalReview } from './FinalReview'
 import { ScenarioBoard } from './ScenarioBoard'
 import { SoloComposer } from './SoloComposer'
 import { SoloProgress } from './SoloProgress'
 import { SoloTimeline } from './SoloTimeline'
-import { can, currentScenario, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
+import { can, currentScenario, REVIEW_STATES, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { ViewpointCard } from './ViewpointCard'
 
 const SAVE_CHECK_MS = 1000
@@ -32,7 +32,7 @@ export function SoloDialoguePage() {
   const sendInFlight = useRef(false)
   useEffect(() => { if (attempt.data) setView(attempt.data) }, [attempt.data])
   useEffect(() => {
-    if (!view || view.state !== 'awaiting_tutor' || pendingAction) return
+    if (!view || !(view.state === 'awaiting_tutor' || view.state === 'awaiting_reflection_prompt') || pendingAction) return
     const timer = window.setInterval(() => { void attempt.reload() }, 3000)
     return () => window.clearInterval(timer)
   }, [attempt, pendingAction, view])
@@ -137,10 +137,10 @@ export function SoloDialoguePage() {
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
       />
       <section className="solo-conversation">
-        {view.state === 'reviewing'
+        {REVIEW_STATES.includes(view.state)
           ? <>
             <SoloTimeline view={view} />
-            <ReviewPlaceholder view={view} />
+            <FinalReview view={view} pending={pendingAction !== null} perform={perform} />
           </>
           : <>
             <SoloTimeline

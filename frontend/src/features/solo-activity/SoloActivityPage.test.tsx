@@ -145,7 +145,7 @@ test('reviewing card says every scenario is confirmed', async () => {
   renderPage()
 
   const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
-  expect(within(card).getByText('情境都確認了，下一步是觀點回顧')).toBeInTheDocument()
+  expect(within(card).getByText('情境都走完了，下一步是整理你的思路')).toBeInTheDocument()
   expect(within(card).queryByText(/輪對話/)).toBeNull()
   const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
   expect(rows[2]).toHaveTextContent('回顧與最後反思')

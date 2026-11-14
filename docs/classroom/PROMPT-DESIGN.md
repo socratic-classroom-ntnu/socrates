@@ -95,6 +95,7 @@ flags 只評**學生最新的那一則**，每個值都是 0 或 1。prompt 裡�
 - 後端驗證兩件事：message_ref 屬於這位學生、這次作答；quote 必須是原文的子字串。不合格的引用丟掉；整份統整沒有任何有效引用時，重新產生一次。
 - 上面是 LLM 輸出的格式。後端驗證通過後，把 `message_ref` 換成資料庫的 `message_id`，並算出 quote 在原文裡的起訖位置；對外 API 與共用型別用 `message_id`＋quote＋起訖位置（見 NEW-FEATURES 第 4 節）。
 - final_summary 另外帶：`trajectory`（各階段的立場、轉折原因、引用）、`final_position`、`reasoning_style`、`open_question`、`normalized_text`（轉成平台基準語言的統整全文，給 embedding 用）。
+- final_summary 的材料是各情境確認過的整理（`confirmed`）與學生的原話。停在訊息上限的情境只有學生看過、沒確認的整理（`capped_summary`），份量比 `confirmed` 輕。學生對上一版說「不太對」後，context 多帶 `revision`（`rejected` 是被退回的那一版、`student_says` 是他說的話），新版要回應他指出的問題。這兩種都是系統寫的，不能當成學生的原話引用。
 
 ## 6. 雷達
 - **主路線**：每位學生的 `normalized_text` → 後端本地多語模型（預設 multilingual-e5-small）取 embedding → PCA（學生數 ≥ 15）→ 每個軸取兩端各 5 位學生的統整 → radar_axis_naming 產生軸名與兩端描述（老師可以改名）→ 投影值換成活動內的百分位 → 0–4 分。

@@ -23,6 +23,11 @@ def register_guest_hook(module: str, hook: GuestRecordHook) -> None:
     GUEST_HOOKS[module] = hook
 
 
+def registered_guest_hooks() -> set[str]:
+    """The modules whose guest record hooks are registered now."""
+    return set(GUEST_HOOKS)
+
+
 def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -> None:
     """The device logging in still holds a live guest session: every module moves that guest's
     records to the account (on a conflict the hook keeps the account's), and the guest session

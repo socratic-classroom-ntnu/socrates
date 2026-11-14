@@ -1,8 +1,8 @@
 """Public contracts owned by Identity & Access."""
 
-from typing import Literal, Protocol
+from typing import Annotated, Literal, Protocol
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 from pydantic_core import PydanticCustomError
 from sqlalchemy.orm import Session
 
@@ -66,7 +66,8 @@ class Register(Strict):
 class GuestJoin(Strict):
     """Joining without registering: a nickname shown to the class and the interface language."""
 
-    nickname: str = Field(min_length=1, max_length=40)
+    # Surrounding spaces do not count: trimmed first, then 1–40 characters.
+    nickname: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
     locale: Locale
 
 
@@ -175,6 +176,9 @@ class AccountView(Strict):
     # Guests only: 168 hours after joining; the daily job then clears the name and marks the
     # account expired_guest.
     guest_expires_at: float | None = None
+    # The name to show: a guest's nickname (never the username's random suffix), otherwise the
+    # username; empty once a guest has expired.
+    display_name: str = ""
 
 
 class LocaleUpdate(Strict):

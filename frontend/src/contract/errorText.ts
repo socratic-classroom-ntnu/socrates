@@ -5,6 +5,7 @@ const CODES: Record<string, string> = {
   ACCOUNT_DATA_TAKEN: '帳號資料已經有人使用，請前往登入或重設密碼。',
   ACTION_ID_PAYLOAD_CONFLICT: '這個操作已經用不同內容送出過，請重新整理後再試。',
   ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
+  ALREADY_SIGNED_IN: '這個裝置已經登入了，會用目前的身分繼續加入。',
   ACTION_SCOPE_REQUIRED: '這個操作不適用於目前的對象。',
   ACTIVITY_ACTION_UNAVAILABLE: '活動狀態已更新，請重新整理後再試。',
   ACTIVITY_ENDED: '這個活動已經結束。',

@@ -192,6 +192,52 @@ def test_an_ended_or_closed_activity_leaves_no_guest(client):
     assert accounts() == before
 
 
+def test_sending_the_guest_join_twice_makes_one_guest(client):
+    """A retry after a lost response: the first join already signed this device in."""
+    _, course = teacher_course(client)
+    leave(client)
+    first = as_guest(guest_join(client, course["code"]))["account"]
+    before = accounts()
+    again = guest_join(client, course["code"], nickname="另一個名字")
+    assert (again.status_code, again.json()) == (409, {"detail": "ALREADY_SIGNED_IN"})
+    assert "set-cookie" not in again.headers
+    assert accounts() == before
+    assert client.get("/api/v2/auth/me").json()["id"] == first["id"]
+    with storage.transaction() as db:
+        names = db.scalars(
+            select(Enrollment.display_name).where(Enrollment.course_id == course["id"])
+        ).all()
+    assert names == ["安靜的貓頭鷹"]
+
+
+def test_a_signed_in_student_is_not_turned_into_a_guest(client):
+    _, course = teacher_course(client)
+    activity = open_activity(client, course["id"])
+    student = user(client, "student")
+    before = accounts()
+    for response in (
+        guest_join(client, course["code"]),
+        client.post(
+            f"/api/v2/activities/{activity['id']}/guest-join",
+            json={"nickname": "安靜的貓頭鷹", "locale": "en"},
+        ),
+    ):
+        assert (response.status_code, response.json()) == (409, {"detail": "ALREADY_SIGNED_IN"})
+        assert "set-cookie" not in response.headers
+    assert accounts() == before
+    assert client.get("/api/v2/auth/me").json()["id"] == student["id"]
+
+
+def test_an_expired_guest_may_join_again_as_a_new_guest(client):
+    _, course = teacher_course(client)
+    leave(client)
+    old = as_guest(guest_join(client, course["code"]))["account"]
+    with storage.transaction() as db:
+        db.get(Account, old["id"]).guest_expires_at = 1.0
+    fresh = as_guest(guest_join(client, course["code"], nickname="新的"))["account"]
+    assert fresh["id"] != old["id"]
+
+
 def test_a_guest_nickname_is_checked_like_any_name(client):
     _, course = teacher_course(client)
     leave(client)

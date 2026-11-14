@@ -247,9 +247,16 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
+# registered, a guest, or a guest past its 168 hours (shown as 匿名訪客 N, N = guest_number).
+StudentKind = Literal["registered", "guest", "expired_guest"]
+
+
 class SoloStudentProgressView(View):
     enrollment_id: str
-    display_name: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    # expired_guest only: its place among the course's expired guests, by joining order.
+    guest_number: int | None
     overall: Literal["not_started", "in_progress", "done"]
     cells: list[SoloProgressCellView]  # one per scenario of this student's sequence so far
     review_status: ReviewStatus
@@ -285,6 +292,8 @@ class SoloAnalysisSummaryView(View):
 class SoloAnalysisStudentView(View):
     enrollment_id: str
     display_name: str
+    kind: StudentKind
+    guest_number: int | None  # as in SoloStudentProgressView
     confirmed_scenarios: int  # scenarios whose summary the student confirmed
     # From the latest confirmed summary; empty before the first confirmation.
     current_position: str

@@ -17,15 +17,17 @@ from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.repositories import SoloAttempt
+from app.modules.solo_activity.guest_records import student_kinds
 from app.modules.solo_activity.service import final_status
 
 
-def _student_view(enrollment: Enrollment, row: SoloAttempt) -> dict:
+def _student_view(enrollment: Enrollment, row: SoloAttempt, kind: dict) -> dict:
     confirmed = [e for e in row.progress if e.get("confirmed_summary")]
     summary = confirmed[-1]["confirmed_summary"] if confirmed else {}
     return {
         "enrollment_id": enrollment.id,
         "display_name": enrollment.display_name,
+        **kind,
         "confirmed_scenarios": len(confirmed),
         "current_position": summary.get("current_position", ""),
         "reason_summary": summary.get("reason_summary", ""),
@@ -63,6 +65,8 @@ def analysis_view(db, account: Account, activity_id: str, at: float) -> dict:
         else {}
     )
     started = [(e, attempts[e.account_id]) for e in enrolled if e.account_id in attempts]
+    # Numbered over the whole course, not only those who started.
+    kinds = student_kinds(db, enrolled, at)
     done = sum(1 for _, row in started if row.state == "completed")
 
     return {
@@ -80,5 +84,7 @@ def analysis_view(db, account: Account, activity_id: str, at: float) -> dict:
             "done": done,
             "in_progress": len(started) - done,
         },
-        "students": [_student_view(enrollment, row) for enrollment, row in started],
+        "students": [
+            _student_view(enrollment, row, kinds[enrollment.id]) for enrollment, row in started
+        ],
     }

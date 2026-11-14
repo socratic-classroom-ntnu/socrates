@@ -14,6 +14,7 @@ from app.modules.course_management.contracts import ActivityTimes, status
 from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
+from app.modules.solo_activity.guest_records import student_kinds
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity.service import REVIEW_STATES, final_status, review_status
 
@@ -78,6 +79,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         ).all()
     )
 
+    kinds = student_kinds(db, enrolled, at)
     students = []
     for enrollment in enrolled:
         row = attempts.get(enrollment.account_id)
@@ -91,6 +93,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
             {
                 "enrollment_id": enrollment.id,
                 "display_name": enrollment.display_name,
+                **kinds[enrollment.id],
                 "overall": overall,
                 "cells": cells,
                 "review_status": review_status(row.state) if row is not None else "not_started",

@@ -14,6 +14,8 @@ const COMMON_CODES = new Set([
   // A stale tab (another login, a dev reload) loses its CSRF token; a reload fixes it.
   'SESSION_CSRF_REQUIRED',
   'RATE_LIMITED',
+  'GUEST_EXPIRED',
+  'GUEST_JOIN_DISABLED',
 ]);
 
 const SOLO_CODES = new Set([

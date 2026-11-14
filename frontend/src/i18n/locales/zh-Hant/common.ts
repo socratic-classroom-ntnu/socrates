@@ -19,6 +19,8 @@ export default {
     LOGIN_REQUIRED: '請先登入。',
     SESSION_CSRF_REQUIRED: '登入狀態已過期，請重新整理頁面。',
     RATE_LIMITED: '操作太頻繁，請稍候再試。',
+    GUEST_EXPIRED: '訪客身分已過期，請重新登入，或掃描 QR code 以新的訪客身分加入。',
+    GUEST_JOIN_DISABLED: '這門課目前不開放免註冊加入，請登入或註冊後再加入。',
     invalidInput: '有欄位內容不符合格式，請檢查後再試。',
     server: '伺服器暫時無法處理，請稍後再試。',
     generic: '操作沒有完成，請稍後再試。',

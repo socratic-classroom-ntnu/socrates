@@ -74,6 +74,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "GROUP_MEMBER_REQUIRED": ("group_dialogue",),
     "GROUP_RUN_REQUIRED": ("group_dialogue",),
     "GUEST_EXPIRED": ("identity_access",),
+    "GUEST_JOIN_DISABLED": ("course_management",),
     "GUEST_NOT_ALLOWED": ("identity_access",),
     "GUEST_ONLY": ("identity_access",),
     "KNOWN_ACTION_REQUIRED": ("classroom_core",),

@@ -177,6 +177,16 @@ class AccountView(Strict):
     guest_expires_at: float | None = None
 
 
+# What logging in did with a guest session on the same device: MERGED (its records moved to
+# this account), NONE (no live guest session, or a hook failed and the merge rolled back), or
+# REFUSED_TEACHER (teacher accounts keep the guest separate; sent once account_role exists).
+GuestMerge = Literal["MERGED", "NONE", "REFUSED_TEACHER"]
+
+
+class LoginView(AccountView):
+    guest_merge: GuestMerge
+
+
 class LocaleUpdate(Strict):
     locale: Locale
 

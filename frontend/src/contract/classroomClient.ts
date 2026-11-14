@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { components } from './classroomTypes'
 import { errorText } from './errorText'
+import { reportSessionLost } from './sessionEvents'
 
 // The adapter retains the established fetch(url, init) boundary used by resident tests.
 function fetchAdapter(credentials: RequestCredentials) {
@@ -164,7 +165,9 @@ http.interceptors.response.use(
       error.response?.data ??
       error.message
     const failure = new ApiError(status, detail)
-    recordApiError(failure, { method: error.config?.method, path: requestPath(error.config) })
+    const path = requestPath(error.config)
+    recordApiError(failure, { method: error.config?.method, path })
+    reportSessionLost(detail, path)
     return Promise.reject(failure)
   },
 )

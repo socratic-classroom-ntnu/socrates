@@ -2,6 +2,8 @@ import { Navigate, useSearchParams } from 'react-router-dom'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useAuth } from '../../auth/AuthContext'
+import { GuestHomeNotices } from '../../auth/GuestPanels'
+import { accountName } from '../../../shared/accountName'
 import { useIsPhone } from '../../../shared/useIsPhone'
 import { EmptyClassroomIllustration } from '../../../components/EmptyClassroomIllustration'
 import { greetingKey } from '../../../i18n/format'
@@ -40,7 +42,8 @@ export function HomePage() {
   const createButton = <Button variant="primary" onClick={openCreate}><span aria-hidden="true">+</span>{t('create')}</Button>
 
   return <main className={'home' + (phone ? ' home--phone' : '')}>
-    <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: account?.username ?? '' })}</h1>
+    <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: accountName(account) })}</h1>
+    <GuestHomeNotices account={account} />
     <section className="home__panel">
       <div className="home__bar">
         <div role="tablist" aria-label={t('tabs.label')} className="home__tabs">

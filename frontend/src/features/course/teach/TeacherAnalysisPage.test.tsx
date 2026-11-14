@@ -156,3 +156,18 @@ test.each(['en' as const, 'es' as const])('%s contains no Chinese interface text
   const page = await screen.findByTestId('teacher-analysis-page')
   expect(page.textContent).not.toMatch(/[㐀-鿿]/)
 })
+
+test('guest viewpoints carry a guest tag and expired guests show an anonymous number', async () => {
+  open({ view: { ...analysis, students: [
+    student(1),
+    student(2, { display_name: '阿明', kind: 'guest', guest_number: 1 }),
+    student(3, { display_name: '', kind: 'expired_guest', guest_number: 2 }),
+  ] } })
+  const page = await screen.findByTestId('teacher-analysis-page')
+  const registered = within(page).getByText('學生1').closest('.analysis-student') as HTMLElement
+  expect(within(registered).queryByText('訪客')).toBeNull()
+  const guest = within(page).getByText('阿明').closest('.analysis-student') as HTMLElement
+  expect(within(guest).getByText('訪客')).toBeInTheDocument()
+  const expired = within(page).getByText('匿名訪客 2').closest('.analysis-student') as HTMLElement
+  expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})

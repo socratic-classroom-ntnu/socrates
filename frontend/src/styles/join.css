@@ -84,6 +84,14 @@
 .join-login__card h1 { margin: 0; font-size: 22px; }
 .join-login__card .auth-field label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; }
 .join-login__card .auth-field input { min-height: 48px; box-sizing: border-box; padding: 0 14px; border: 1px solid var(--ui-color-border); border-radius: 10px; background: var(--ui-color-panel); font: inherit; font-size: 16px; font-weight: 400; }
+.join-login__actions { display: flex; flex-direction: column; gap: 10px; }
+.join-login__guest-note { margin: 0; color: var(--ui-color-muted); font-size: 13px; text-align: center; }
+.join-notice { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); line-height: 1.6; }
+.join-notice--warn { border-left: 4px solid var(--ui-color-ended-ink); }
+.join-guest__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.join-guest__head h1 { margin: 0; }
+.join-guest__row { display: flex; gap: 8px; align-items: stretch; }
+.join-guest__row input { flex: 1; }
 .join-login__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
 .join-login__links .join-link { margin: 0; padding: 0; color: var(--ui-color-primary); font-weight: 700; }
 .join-login__links .join-link--quiet { color: var(--ui-color-muted); font-weight: 400; }
@@ -95,3 +103,5 @@
 }
 @media (max-width: 767px) { .join-page__user span:last-child { display: none; } }
 .join-page { color-scheme: light; }
+
+.guest-closed__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }

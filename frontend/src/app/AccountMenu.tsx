@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from '../components/Avatar'
 import { Menu, type MenuItem } from '../components/Menu'
@@ -7,6 +7,8 @@ import { LANGUAGE_NAMES, LOCALES } from '../i18n/locale'
 import { useT } from '../i18n/useT'
 import { useAuth } from '../features/auth/AuthContext'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
+import { GuestLogoutDialog, useKeepUntil } from '../features/auth/GuestPanels'
+import { accountName } from '../shared/accountName'
 
 export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean }
 
@@ -17,8 +19,14 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
   const { account, signOut } = useAuth()
   const { changeLocale, failure } = useChangeLocale()
   const navigate = useNavigate()
-  const name = account?.username ?? ''
-  const email = account?.email ?? ''
+  const { t: tg } = useT('guest')
+  const [confirmingLogout, setConfirmingLogout] = useState(false)
+  // 訪客：名字是暱稱、下一行是「訪客 · 紀錄保留到 ○/○」，「設定」換成「註冊以保留紀錄」，登出前先確認（G14、G15）
+  const keep = useKeepUntil(account)
+  const guest = account?.kind === 'guest'
+  const name = accountName(account)
+  const email = keep ? tg('menu.status', { date: keep.date }) : account?.email ?? ''
+  const logout = () => void signOut().then(() => navigate('/login', { replace: true }))
 
   const items: MenuItem[] = [
     // 和側邊欄一樣：新路由器的頁面在路由器內切換，舊教師頁（fullLoad）在 render 時讀 window.location，整頁載入。
@@ -26,7 +34,9 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
       key: 'nav-' + item.key, label: item.label, icon: item.icon,
       onSelect: () => item.fullLoad ? window.location.assign(item.href) : navigate(item.href),
     })),
-    { key: 'settings', label: t('account.settings'), dividerBefore: navItems.length > 0, onSelect: () => navigate('/account') },
+    guest
+      ? { key: 'register', label: tg('menu.register'), dividerBefore: navItems.length > 0, onSelect: () => navigate('/guest/register') }
+      : { key: 'settings', label: t('account.settings'), dividerBefore: navItems.length > 0, onSelect: () => navigate('/account') },
     {
       key: 'language',
       label: t('account.language', { name: LANGUAGE_NAMES[locale] }),
@@ -37,7 +47,7 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
       key: 'logout',
       label: t('logout'),
       dividerBefore: true,
-      onSelect: () => void signOut().then(() => navigate('/login', { replace: true })),
+      onSelect: () => (guest ? setConfirmingLogout(true) : logout()),
     },
   ]
 
@@ -61,5 +71,6 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
       triggerClassName="account-menu__trigger"
     />
     {failure && <p role="alert" className="account-menu__error">{errorMessage(t, failure)}</p>}
+    {confirmingLogout && keep && <GuestLogoutDialog date={keep.date} onClose={() => setConfirmingLogout(false)} onLogout={() => { setConfirmingLogout(false); logout() }} />}
   </div>
 }

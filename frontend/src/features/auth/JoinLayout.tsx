@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Avatar } from '../../components/Avatar'
 import { useAuth } from './AuthContext'
+import { accountName } from '../../shared/accountName'
 import { useT } from '../../i18n/useT'
 import '../../styles/join.css'
 
@@ -12,7 +13,7 @@ export function JoinLayout({ children, scene = false }: { children: ReactNode; s
     {scene && <><div className="join-page__wainscot" aria-hidden="true" /><div className="join-page__floor" aria-hidden="true" /></>}
     <header className="join-page__header">
       <a className="join-page__brand" href="/"><span className="join-page__mark" aria-hidden="true">問</span>{t('brand')}</a>
-      {account && <span className="join-page__user"><Avatar name={account.username} /><span>{account.username}</span></span>}
+      {account && <span className="join-page__user"><Avatar name={accountName(account)} /><span>{accountName(account)}</span></span>}
     </header>
     <main className="join-page__main">{children}</main>
   </div>

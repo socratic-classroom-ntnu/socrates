@@ -37,3 +37,7 @@
   .teacher-live__head { align-items: flex-start; }
   .teacher-live__actions { width: 100%; }
 }
+
+/* 訪客的名字後面接一個小標籤；過期訪客的名字已由後端清掉，改顯示「匿名訪客 N」 */
+.student-name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.student-name__guest { padding: 1px 7px; border-radius: 999px; background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); font-size: 12px; font-weight: 600; line-height: 1.5; }

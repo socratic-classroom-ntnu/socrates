@@ -5,6 +5,7 @@ import '../styles/app-shell.css'
 import { AccountMenu, type NavEntry } from './AccountMenu'
 import { InsideAppShell, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useIsPhone } from '../shared/useIsPhone'
+import { useAuth } from '../features/auth/AuthContext'
 
 type NavKey = 'home' | 'groups' | 'bank' | 'store' | 'settings'
 
@@ -47,7 +48,9 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [back, setBack] = useState<ShellBack>(null)
   const active = activeItem(pathname, search)
-  const navItems: NavEntry[] = ITEMS.map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
+  const { account } = useAuth()
+  // 訪客沒有「設定」；其他導覽項目跟學生一樣
+  const navItems: NavEntry[] = ITEMS.filter(item => !(item.key === 'settings' && account?.kind === 'guest')).map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
 
   function toggleCollapsed() {
     setCollapsed(value => { writeCollapsed(!value); return !value })

@@ -152,6 +152,24 @@ test('reviewing card says every scenario is confirmed', async () => {
   expect(rows[2]).toHaveTextContent('進行中')
 })
 
+test('a completed attempt says so on the card and on the review step', async () => {
+  mockApi({
+    'GET /solo/activities/a-1': {
+      ...activity,
+      attempt: {
+        ...attempt, state: 'completed', scenario_index: 1, review_status: 'completed',
+        progress: [{ index: 0, status: 'confirmed' }, { index: 1, status: 'confirmed' }],
+      },
+    },
+  })
+  renderPage()
+
+  const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
+  expect(within(card).getByText('你已經完成這個活動，可以回頭看看最終統整。')).toBeInTheDocument()
+  const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
+  expect(rows[2]).toHaveTextContent('已完成')
+})
+
 test('start posts the attempt then opens the dialogue', async () => {
   let started = false
   const calls = mockApi({

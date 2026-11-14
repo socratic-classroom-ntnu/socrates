@@ -85,6 +85,9 @@ class ScenarioProgress:
     change: dict[str, str] | None = None
     sources: list[dict[str, Any]] | None = None
     generated_by: dict[str, Any] | None = None
+    # A capped scenario's summary the student saw and acknowledged: never a confirmed viewpoint,
+    # but the final summary may read it as such (O6).
+    capped_summary: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -312,6 +315,7 @@ def confirm_viewpoint(a: AttemptState, digest: str) -> AttemptState:
         a,
         status="capped" if capped else "goal_met",
         confirmed_summary=None if capped else current.candidate_summary,
+        capped_summary=current.candidate_summary if capped else None,
         candidate_summary=None,
         summary_digest=None,
     )

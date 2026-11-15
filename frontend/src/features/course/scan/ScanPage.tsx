@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../../../i18n/useT'
 import { Button, FormError } from '../../../ui'
+import { JoinCodeErrorText, useJoinCode } from '../home/useJoinCode'
 import { joinPathFor, parseScannedQr } from './parseScannedQr'
 import type { ScanNotice, ScanNoticeState } from './scanNotice'
 import { FOUND_DELAY_MS } from './scanTiming'
@@ -24,6 +25,13 @@ export function ScanPage() {
   const [phase, setPhase] = useState<Phase>('opening')
   const found = useRef(false)
   const [unknown, setUnknown] = useState(false)
+  // 改用輸入代碼：在原位展開輸入欄；輸入欄有焦點時暫停辨識，避免打到一半被掃到的 QR 帶走
+  const [typing, setTyping] = useState(false)
+  const [typingFocused, setTypingFocused] = useState(false)
+  const [code, setCode] = useState('')
+  const codeField = useRef<HTMLInputElement>(null)
+  const lookup = useJoinCode({ replace: true })
+  useEffect(() => { if (typing) codeField.current?.focus() }, [typing])
   const foundTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => () => clearTimeout(foundTimer.current), [])
 
@@ -49,7 +57,12 @@ export function ScanPage() {
     foundTimer.current = setTimeout(() => navigate(joinPathFor(qr), { replace: true }), FOUND_DELAY_MS)
   }
 
-  useQrScanner(video, frame, phase === 'scanning', onText, () => leave('unavailable'))
+  function submitCode(event: FormEvent) {
+    event.preventDefault()
+    void lookup.lookUp(code)
+  }
+
+  useQrScanner(video, frame, phase === 'scanning' && !typingFocused, onText, () => leave('unavailable'))
   const aiming = phase === 'scanning' || phase === 'found'
   const frameState = phase === 'found' ? 'found' : unknown ? 'unknown' : 'aiming'
 
@@ -84,10 +97,36 @@ export function ScanPage() {
     </div>
     <div className={styles.bottom}>
       <p className={styles.hint}>{t('scan.page.hint')}</p>
-      <Button className={styles.useCode}>
-        {t('scan.page.useCode')}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
-      </Button>
+      {lookup.failure && <FormError id="scan-code-error" role="alert" className={styles.codeError}>
+        <JoinCodeErrorText failure={lookup.failure} />
+      </FormError>}
+      {typing
+        ? <form className={styles.codeForm} onSubmit={submitCode} noValidate>
+          {/* S4 那半秒內輸入欄照樣顯示，但不能操作 */}
+          <fieldset className={styles.codeRow} disabled={phase === 'found'}>
+            <input
+              ref={codeField}
+              className={styles.codeInput}
+              value={code}
+              aria-label={t('join.label')}
+              placeholder={t('join.phonePlaceholder')}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={32}
+              aria-invalid={lookup.notFound ? true : undefined}
+              aria-describedby={lookup.failure ? 'scan-code-error' : undefined}
+              onFocus={() => setTypingFocused(true)}
+              onBlur={() => setTypingFocused(false)}
+              onChange={event => { setCode(event.target.value); lookup.clearFailure() }}
+            />
+            <Button type="submit" variant="primary" className={styles.codeSubmit} disabled={lookup.busy}>{t('join.phoneSubmit')}</Button>
+          </fieldset>
+        </form>
+        : <Button className={styles.useCode} aria-expanded={false} disabled={phase === 'found'} onClick={() => setTyping(true)}>
+          {t('scan.page.useCode')}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </Button>}
     </div>
   </main>
 }

@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
-import { Where } from '../../../testing/pageHarness'
+import { ApiError } from '../../../contract/classroomClient'
+import { Where, mockApi } from '../../../testing/pageHarness'
 import { loadQrDetector } from './qrDetector'
 import { PICTURE_TIMEOUT_MS } from './useCamera'
 import { FOUND_DELAY_MS } from './scanTiming'
@@ -8,6 +9,10 @@ import { SCAN_INTERVAL_MS } from './useQrScanner'
 import { ScanPage } from './ScanPage'
 
 jest.mock('./qrDetector', () => ({ loadQrDetector: jest.fn() }))
+jest.mock('../../../contract/classroomClient', () => {
+  const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
+  return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn() }
+})
 
 const originalMediaDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
 const getUserMedia = jest.fn()
@@ -400,4 +405,108 @@ test('the S5 notice stays while nothing new is read', async () => {
   await readOnce()
   await readOnce()
   expect(screen.getByRole('alert')).toHaveTextContent('這不是本站的課程或活動 QR')
+})
+
+// 改用輸入代碼
+async function typeCode(value: string) {
+  fireEvent.click(screen.getByRole('button', { name: /改用輸入代碼/ }))
+  const field = screen.getByLabelText('課程代碼')
+  fireEvent.change(field, { target: { value } })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '加入' })) })
+  return field
+}
+
+test('tapping the code button opens a code field in place and focuses it', async () => {
+  getUserMedia.mockReturnValue(new Promise(() => {}))
+  open()
+  await flush()
+  const button = screen.getByRole('button', { name: /改用輸入代碼/ })
+  expect(button).toHaveAttribute('aria-expanded', 'false')
+  fireEvent.click(button)
+  expect(screen.getByLabelText('課程代碼')).toHaveFocus()
+  expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
+  expect(where()).toHaveTextContent('/scan')
+})
+
+test('a correct code goes to the confirm page by replace and stops the camera', async () => {
+  mockApi({ 'GET /course-join/preview?code=KNB6ZE33': { course_id: 'c-9', already_enrolled: false } })
+  const { stream, track } = fakeStream()
+  getUserMedia.mockResolvedValue(stream)
+  render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
+    <Routes>
+      <Route path="/scan" element={<ScanPage />} />
+      <Route path="/join" element={<Home />} />
+      <Route path="*" element={<p>other-page</p>} />
+    </Routes>
+    <Where />
+  </MemoryRouter>)
+  await flush()
+  await typeCode(' knb6 ze33 ')
+  expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+  expect(JSON.parse(where().dataset.state!)).toEqual({ preview: { course_id: 'c-9', already_enrolled: false, code: 'KNB6ZE33' } })
+  expect(track.stop).toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'browser back' }))
+  expect(where()).toHaveTextContent('/elsewhere')
+})
+
+test('a code for a course already joined goes straight to the course page', async () => {
+  mockApi({ 'GET /course-join/preview?code=KNB6ZE33': { course_id: 'c-9', already_enrolled: true } })
+  getUserMedia.mockResolvedValue(fakeStream().stream)
+  open()
+  await flush()
+  await typeCode('KNB6ZE33')
+  expect(where()).toHaveTextContent('/learn/courses/c-9')
+})
+
+test('a wrong code shows the home page error above the field and keeps the camera on', async () => {
+  mockApi({ 'GET /course-join/preview?code=ZZZZZZZZ': () => { throw new ApiError(404, 'ENROLL_CODE_NOT_FOUND') } })
+  const { track } = await playing()
+  const field = await typeCode('zzzzzzzz')
+  const alert = screen.getByRole('alert')
+  expect(alert).toHaveTextContent('找不到這個課程代碼')
+  expect(alert).toHaveTextContent('請再對照一次老師給的 8 碼課程代碼。')
+  expect(alert.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(field).toHaveAttribute('aria-invalid', 'true')
+  expect(where()).toHaveTextContent('/scan')
+  expect(track.stop).not.toHaveBeenCalled()
+  fireEvent.change(field, { target: { value: 'A' } })
+  expect(screen.queryByRole('alert')).toBeNull()
+})
+
+test('while typing in the field, a QR in view does not take the student away', async () => {
+  jest.useFakeTimers()
+  await playing()
+  fireEvent.click(screen.getByRole('button', { name: /改用輸入代碼/ }))
+  const field = screen.getByLabelText('課程代碼')
+  expect(field).toHaveFocus()
+  detect.mockClear().mockResolvedValue(COURSE_QR)
+  await readOnce()
+  await readOnce()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 2) })
+  expect(detect).not.toHaveBeenCalled()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'aiming')
+  expect(where()).toHaveTextContent('/scan')
+  fireEvent.blur(field)
+  await readOnce()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'found')
+})
+
+test('during S4 the code field is shown but cannot be used', async () => {
+  jest.useFakeTimers()
+  await playing()
+  fireEvent.click(screen.getByRole('button', { name: /改用輸入代碼/ }))
+  fireEvent.blur(screen.getByLabelText('課程代碼'))
+  detect.mockResolvedValue(COURSE_QR)
+  await readOnce()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'found')
+  expect(screen.getByLabelText('課程代碼')).toBeDisabled()
+  expect(screen.getByRole('button', { name: '加入' })).toBeDisabled()
+})
+
+test('during S4 the code button is shown but cannot be used', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(COURSE_QR)
+  await playing()
+  await readOnce()
+  expect(screen.getByRole('button', { name: /改用輸入代碼/ })).toBeDisabled()
 })

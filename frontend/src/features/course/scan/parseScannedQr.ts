@@ -1,14 +1,11 @@
+import { normalizeCode } from '../home/useJoinCode'
+
 /** 掃到的 QR 是什麼：本站的課程（帶整理過的代碼）、本站的活動，或不認得。 */
 export type ScannedQr = { kind: 'course'; code: string } | { kind: 'activity'; id: string } | { kind: 'unknown' }
 
 const UNKNOWN: ScannedQr = { kind: 'unknown' }
 const COURSE_PATH = /^\/join\/?$/
 const ACTIVITY_PATH = /^\/activities\/([^/]+)\/join\/?$/
-
-/** 課程代碼的整理方式跟首頁代碼欄一樣：去掉所有空白、轉大寫。 */
-export function normalizeCode(value: string): string {
-  return value.replace(/\s+/g, '').toUpperCase()
-}
 
 /**
  * 判斷掃到的文字是不是本站的課程或活動 QR（格式跟老師端產生的一樣：`/join?code=…`、`/activities/<id>/join`）。

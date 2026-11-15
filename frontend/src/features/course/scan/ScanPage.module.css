@@ -32,6 +32,8 @@
 .middle { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0 24px 32px; container-type: size; }
 /* 掃描時不留左右邊距：框寬的 66% 要以整個螢幕寬來算 */
 .page:not([data-phase="opening"]) .middle { padding: 0; }
+/* 代碼錯誤、鍵盤彈出時下方變高：中間至少留這麼高，放得下框和 S5 的提示；再不夠就整頁捲動，不讓提示壓到框 */
+.page:not([data-phase="opening"]) .middle { min-height: 360px; }
 
 /* 對準框：寬是螢幕的 66%，空間不夠高時跟著縮，比例不變、保持置中（258×218 是設計稿 390 寬時的尺寸）。
    S5 的提示掛在框的下方，不佔版面，框才不會因為提示出現而跳動；框的上下各留 100px，兩行的提示（英文、西文）也放得下 */
@@ -71,3 +73,22 @@
   border: 0; border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-primary); font-size: 16px; font-weight: 700;
 }
 .useCode:hover { background: var(--ui-color-panel-hover); }
+.useCode:disabled { opacity: 1; cursor: default; }
+
+/* 改用輸入代碼：在按鈕的位置展開成輸入欄＋加入 */
+.codeForm { margin: 0; }
+.codeRow { display: flex; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.codeInput {
+  flex: 1 1 auto; min-width: 0; min-height: 50px; box-sizing: border-box; padding: 0 14px;
+  border: 2px solid transparent; border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-ink);
+  font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.codeInput::placeholder { color: var(--ui-color-muted); letter-spacing: normal; text-transform: none; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; }
+.codeInput:focus { outline: none; border-color: var(--ui-color-primary); }
+.codeInput[aria-invalid="true"] { border-color: var(--ui-color-danger); }
+.codeInput:disabled { opacity: 1; }
+.codeSubmit { flex-shrink: 0; min-height: 50px; padding: 0 20px; font-size: 16px; }
+
+/* 代碼查不到：放在輸入欄上方，跟首頁一樣的文字；淡紅底在深色畫面上也讀得清楚 */
+.codeError { display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.6; text-align: left; }
+.codeError strong { font-size: 14px; }

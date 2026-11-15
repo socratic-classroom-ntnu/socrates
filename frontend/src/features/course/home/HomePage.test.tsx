@@ -131,6 +131,22 @@ test('join code normalizes and goes to confirm', async () => {
   await waitFor(() => expect(where()).toBe('/join?code=3CKTGE7Q'))
 })
 
+test('the preview is handed to the confirm page so it is not fetched twice', async () => {
+  open({}, '/', { 'GET /course-join/preview?code=3CKTGE7Q': { course_id: 'c-9', already_enrolled: false, course_name: '哲學導論' } })
+  await typeCode('3cktge7q')
+  await waitFor(() => expect(where()).toBe('/join?code=3CKTGE7Q'))
+  expect(JSON.parse(screen.getByTestId('where').dataset.state!)).toEqual({
+    preview: { course_id: 'c-9', already_enrolled: false, course_name: '哲學導論', code: '3CKTGE7Q' },
+  })
+})
+
+test('a blank code does not look anything up', async () => {
+  const calls = open({})
+  await typeCode('   ')
+  expect(calls.some(call => call.key.startsWith('GET /course-join/preview'))).toBe(false)
+  expect(where()).toBe('/')
+})
+
 test('already enrolled code goes straight to course page', async () => {
   open({}, '/', { 'GET /course-join/preview?code=3CKTGE7Q': { course_id: 'c-9', already_enrolled: true } })
   await typeCode('3CKTGE7Q')

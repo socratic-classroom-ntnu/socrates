@@ -1,13 +1,15 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../../../i18n/useT'
 import { Button } from '../../../ui'
+import { joinPathFor, parseScannedQr } from './parseScannedQr'
 import type { ScanNotice, ScanNoticeState } from './scanNotice'
+import { FOUND_DELAY_MS } from './scanTiming'
 import { useCamera } from './useCamera'
 import { useQrScanner } from './useQrScanner'
 import styles from './ScanPage.module.css'
 
-type Phase = 'opening' | 'scanning'
+type Phase = 'opening' | 'scanning' | 'found'
 
 /**
  * 全螢幕掃描頁（S2–S5）。一打開就是 S2 並要相機；有畫面之後進入掃描。
@@ -20,28 +22,46 @@ export function ScanPage() {
   const video = useRef<HTMLVideoElement>(null)
   const frame = useRef<HTMLDivElement>(null)
   const [phase, setPhase] = useState<Phase>('opening')
+  const found = useRef(false)
+  const foundTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(foundTimer.current), [])
 
   function leave(notice?: ScanNotice) {
+    clearTimeout(foundTimer.current)
     const state: ScanNoticeState | undefined = notice ? { scanNotice: notice } : undefined
     navigate('/', { replace: true, state })
   }
 
   useCamera(video, () => setPhase('scanning'), leave)
-  useQrScanner(video, frame, phase === 'scanning', () => {}, () => leave('unavailable'))
+  // 掃到本站的 QR：停止辨識、顯示 S4，半秒後進加入畫面。同一個 QR 一直對著鏡頭也只導頁一次；S4 期間按關閉就不導頁
+  function onText(text: string) {
+    if (found.current) return
+    const qr = parseScannedQr(text, window.location.href)
+    if (qr.kind === 'unknown') return
+    found.current = true
+    setPhase('found')
+    foundTimer.current = setTimeout(() => navigate(joinPathFor(qr), { replace: true }), FOUND_DELAY_MS)
+  }
+
+  useQrScanner(video, frame, phase === 'scanning', onText, () => leave('unavailable'))
+  const aiming = phase === 'scanning' || phase === 'found'
 
   return <main className={styles.page} data-phase={phase}>
-    <video ref={video} className={styles.video} data-phase={phase} autoPlay playsInline muted aria-hidden="true" />
+    <video ref={video} className={styles.video} data-phase={phase === 'opening' ? 'opening' : 'live'} autoPlay playsInline muted aria-hidden="true" />
     <div className={styles.top}>
       <button type="button" className={styles.close} aria-label={tc('close')} onClick={() => leave()}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
     </div>
-    <div className={styles.heading}>
-      {phase === 'scanning' && <h1 className={styles.title}>{t('scan.page.aimTitle')}</h1>}
+    <div className={styles.heading} aria-live="polite">
+      {aiming && <h1 className={styles.title}>{t(phase === 'found' ? 'scan.page.foundTitle' : 'scan.page.aimTitle')}</h1>}
     </div>
     <div className={styles.middle}>
-      {phase === 'scanning' && <div ref={frame} className={styles.frame} data-testid="scan-frame" data-state="aiming" aria-hidden="true">
+      {aiming && <div ref={frame} className={styles.frame} data-testid="scan-frame" data-state={phase === 'found' ? 'found' : 'aiming'} aria-hidden="true">
         <span className={styles.corner} /><span className={styles.corner} /><span className={styles.corner} /><span className={styles.corner} />
+        {phase === 'found' && <span className={styles.check}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+        </span>}
       </div>}
       {phase === 'opening' && <div className={styles.opening} role="status">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10" /></svg>

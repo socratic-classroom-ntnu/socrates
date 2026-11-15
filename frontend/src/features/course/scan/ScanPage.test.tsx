@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import { Where } from '../../../testing/pageHarness'
 import { loadQrDetector } from './qrDetector'
 import { PICTURE_TIMEOUT_MS } from './useCamera'
+import { FOUND_DELAY_MS } from './scanTiming'
 import { SCAN_INTERVAL_MS } from './useQrScanner'
 import { ScanPage } from './ScanPage'
 
@@ -267,4 +268,92 @@ test('leaving stops reading frames', async () => {
   const reads = detect.mock.calls.length
   await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS * 5) })
   expect(detect.mock.calls.length).toBe(reads)
+})
+
+// S4：掃到本站的 QR。jsdom 的網址是 http://localhost/
+const COURSE_QR = 'http://localhost/join?code=knb6 ze33&utm=poster'
+const ACTIVITY_QR = 'https://localhost/activities/a-42/join'
+
+async function readOnce() {
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+}
+
+test('a course QR of this site shows S4, then goes to the course join page by replace', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(COURSE_QR)
+  await playing()
+  await readOnce()
+  expect(screen.getByRole('heading', { name: '已掃描' })).toBeInTheDocument()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'found')
+  expect(where()).toHaveTextContent('/scan')
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
+  expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+  expect(screen.getByText('other-page')).toBeInTheDocument()
+})
+
+test('an activity QR of this site goes to the activity join page by replace', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(ACTIVITY_QR)
+  await playing()
+  await readOnce()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'found')
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
+  expect(where()).toHaveTextContent('/activities/a-42/join')
+})
+
+test('after going to the join page, browser back does not return to the scan page', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(COURSE_QR)
+  getUserMedia.mockResolvedValue(fakeStream().stream)
+  render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
+    <Routes>
+      <Route path="/scan" element={<ScanPage />} />
+      <Route path="/join" element={<Home />} />
+      <Route path="*" element={<p>other-page</p>} />
+    </Routes>
+    <Where />
+  </MemoryRouter>)
+  await flush()
+  Object.defineProperty(video(), 'videoWidth', { configurable: true, value: 1280 })
+  Object.defineProperty(video(), 'videoHeight', { configurable: true, value: 720 })
+  fireEvent(video(), new Event('playing'))
+  await readOnce()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
+  expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+  fireEvent.click(screen.getByRole('button', { name: 'browser back' }))
+  expect(where()).toHaveTextContent('/elsewhere')
+})
+
+test('reading stops once a QR is found, and the same QR held in view navigates only once', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(COURSE_QR)
+  await playing()
+  await readOnce()
+  const reads = detect.mock.calls.length
+  await readOnce()
+  await readOnce()
+  expect(detect.mock.calls.length).toBe(reads)
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 4) })
+  expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+})
+
+test('closing during S4 cancels the navigation', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(COURSE_QR)
+  const { track } = await playing()
+  await readOnce()
+  fireEvent.click(screen.getByRole('button', { name: '關閉' }))
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 2) })
+  expect(where()).toHaveTextContent(/^\/$/)
+  expect(track.stop).toHaveBeenCalled()
+})
+
+test('going to the join page stops the camera', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(ACTIVITY_QR)
+  const { track } = await playing()
+  await readOnce()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
+  expect(track.stop).toHaveBeenCalled()
 })

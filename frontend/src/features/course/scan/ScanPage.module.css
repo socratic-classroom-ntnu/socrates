@@ -13,7 +13,7 @@
 .top, .heading, .middle, .bottom { position: relative; }
 
 /* 有畫面之後，上下加一層漸層，白字壓在亮的教室畫面上也讀得清楚 */
-.page[data-phase="scanning"]::before {
+.page:not([data-phase="opening"])::before {
   content: ''; position: fixed; inset: 0; pointer-events: none;
   background: linear-gradient(var(--ui-color-scrim), transparent 28%, transparent 68%, var(--ui-color-scrim));
 }
@@ -31,7 +31,7 @@
 /* 下方留白讓 S2 的說明比正中央略高，跟設計稿一樣 */
 .middle { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0 24px 32px; container-type: size; }
 /* 掃描時不留左右邊距：框寬的 66% 要以整個螢幕寬來算 */
-.page[data-phase="scanning"] .middle { padding: 0; }
+.page:not([data-phase="opening"]) .middle { padding: 0; }
 
 /* 對準框：寬是螢幕的 66%，空間不夠高時跟著縮，比例不變、保持置中（258×218 是設計稿 390 寬時的尺寸） */
 .frame { position: relative; aspect-ratio: 258 / 218; width: min(66cqw, 82cqh * 258 / 218); }
@@ -40,6 +40,14 @@
 .corner:nth-child(2) { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
 .corner:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; }
 .corner:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 4px; border-right-width: 4px; }
+
+/* S4：掃到本站的 QR，四角變綠、正中央打勾 */
+.frame[data-state="found"] .corner { border-color: var(--ui-color-success); }
+.check {
+  position: absolute; top: 50%; left: 50%; display: flex; align-items: center; justify-content: center;
+  width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; background: var(--ui-color-primary); color: var(--ui-color-on-dark);
+}
 .opening { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .opening svg { color: var(--ui-color-on-dark-soft); }
 .openingTitle { margin: 18px 0 0; font-size: 17px; font-weight: 700; line-height: 1.5; }

@@ -33,6 +33,7 @@ export default {
       openingBody: '相機畫面出現後，即可對準 QR。',
       hint: '將 QR 放入框內，即可自動掃描',
       aimTitle: '對準老師投影的 QR',
+      foundTitle: '已掃描',
       useCode: '改用輸入代碼',
     },
   },

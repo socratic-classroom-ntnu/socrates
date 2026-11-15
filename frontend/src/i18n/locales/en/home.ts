@@ -23,6 +23,15 @@ const home: Shape<typeof zhHant> = {
     notFoundTitle: 'Course code not found',
     notFoundBody: 'Check the 8-character code from your teacher again. If it is typed correctly, ask your teacher whether the code has changed.',
   },
+  scan: {
+    intro: {
+      title: "Scan your teacher's QR code",
+      question: "Camera access is needed to scan your teacher's course or activity QR code.",
+      body: 'After you tap Allow, your browser will ask for camera access.',
+      cancel: 'Cancel',
+      allow: 'Allow',
+    },
+  },
   create: 'Create course',
   phoneHint: 'Use a computer to manage courses and activities',
   empty: {

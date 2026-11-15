@@ -20,6 +20,15 @@ export default {
     notFoundTitle: '找不到這個課程代碼',
     notFoundBody: '請再對照一次老師給的 8 碼課程代碼。如果確定沒打錯，請向老師確認代碼是否有更換。',
   },
+  scan: {
+    intro: {
+      title: '掃描老師的 QR code',
+      question: '需要相機權限，才能掃描老師的課程或活動 QR。',
+      body: '按下允許後，瀏覽器才會詢問相機權限。',
+      cancel: '取消',
+      allow: '允許',
+    },
+  },
   create: '建立課程',
   phoneHint: '管理課程與活動請用電腦開啟',
   empty: {

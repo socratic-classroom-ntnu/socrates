@@ -23,6 +23,15 @@ const home: Shape<typeof zhHant> = {
     notFoundTitle: 'No encontramos este código',
     notFoundBody: 'Revisa otra vez el código de 8 caracteres que te dio tu docente. Si está bien escrito, pregúntale si el código cambió.',
   },
+  scan: {
+    intro: {
+      title: 'Escanea el código QR del profesor',
+      question: 'Se necesita acceso a la cámara para escanear el código QR del curso o la actividad.',
+      body: 'Cuando toques Permitir, el navegador te pedirá acceso a la cámara.',
+      cancel: 'Cancelar',
+      allow: 'Permitir',
+    },
+  },
   create: 'Crear curso',
   phoneHint: 'Usa una computadora para gestionar cursos y actividades',
   empty: {

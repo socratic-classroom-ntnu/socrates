@@ -23,6 +23,15 @@ const home: Shape<typeof zhHant> = {
     notFoundTitle: '找不到这个课程代码',
     notFoundBody: '请再对照一次老师给的 8 位课程代码。如果确定没输错，请向老师确认代码是否已更换。',
   },
+  scan: {
+    intro: {
+      title: '扫描老师的二维码',
+      question: '需要相机权限，才能扫描老师的课程或活动二维码。',
+      body: '按下允许后，浏览器才会询问相机权限。',
+      cancel: '取消',
+      allow: '允许',
+    },
+  },
   create: '创建课程',
   phoneHint: '管理课程与活动请用电脑打开',
   empty: {

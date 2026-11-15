@@ -4,7 +4,8 @@ import { api } from '../../../contract/classroomClient'
 import type { components } from '../../../contract/classroomTypes'
 import { errorCode, errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
-import { Button, ButtonLink } from '../../../ui'
+import { Button } from '../../../ui'
+import { ScanButton } from '../scan/ScanButton'
 
 type Preview = components['schemas']['JoinPreview']
 
@@ -37,10 +38,7 @@ export function JoinCodeForm({ variant }: { variant: 'inline' | 'phone' }) {
 
   return <form className={`join-code join-code--${variant}`} onSubmit={event => void submit(event)} noValidate>
     <div className="join-code__row">
-      {variant === 'phone' && <ButtonLink variant="dark" className="join-code__button join-code__scan" to="/scan">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><circle cx="12" cy="12" r="3" /></svg>
-        {t('join.scan')}
-      </ButtonLink>}
+      {variant === 'phone' && <ScanButton className="join-code__button join-code__scan" />}
       <label htmlFor={id} className="sr-only">{t('join.label')}</label>
       <input
         id={id}

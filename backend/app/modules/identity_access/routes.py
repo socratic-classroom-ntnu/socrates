@@ -17,6 +17,7 @@ from app.modules.identity_access.contracts import (
     GuestUpgrade,
     LocaleUpdate,
     Login,
+    LoginView,
     MailRequest,
     MailRequestView,
     PasswordResetView,
@@ -43,7 +44,7 @@ def register(body: Register, request: Request, response: Response):
     return result
 
 
-@router.post("/auth/login", response_model=AccountView)
+@router.post("/auth/login", response_model=LoginView)
 def login(body: Login, request: Request, response: Response):
     auth_limit(request, "login")
     # The session cookie may be a guest's, whose records then move to this account; the cookie

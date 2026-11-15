@@ -202,17 +202,20 @@ export function LoginPage() {
 
   if (join) return <JoinLayout>
     <div className="join-login">
-      <JoinLoginBanner courseName={courseName} />
+      <JoinLoginBanner courseName={courseName} kind={join.kind} />
       <form className="join-login__card" onSubmit={event => void submit(event)}>
-        <h1>{t('join:login.title')}</h1>
+        <h1>{join.kind === 'course' ? t('join:login.titleCourse') : t('join:login.titleActivity')}</h1>
         {fields}
-        {/* 方案 C：欄位在上，按鈕都在卡片底部；開放訪客時主要按鈕是「免註冊加入」 */}
+        {/* 方案 C：欄位在上；先是「登入並加入」，分隔線「不想註冊？」之後才是實心的「免註冊加入」 */}
         <div className="join-login__actions">
-          {guestAllowed && <ButtonLink variant="primary" className="join-login__guest" to={'/join/guest?next=' + encodeURIComponent(next)}>{t('guest:join.button')}<span aria-hidden="true">→</span></ButtonLink>}
-          <Button type="submit" variant={guestAllowed ? 'outline' : 'primary'} className="join-login__submit" disabled={busy} aria-busy={busy}>
+          <Button type="submit" variant="outline" className="join-login__submit" disabled={busy} aria-busy={busy}>
             {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
           </Button>
-          {guestAllowed && <p className="join-login__guest-note">{t('guest:join.keep')}</p>}
+          {guestAllowed && <>
+            <p className="join-login__divider" role="separator">{t('guest:join.divider')}</p>
+            <ButtonLink variant="primary" className="join-login__guest" to={'/join/guest?next=' + encodeURIComponent(next)}>{t('guest:join.button')}</ButtonLink>
+            <p className="join-login__guest-note">{t('guest:join.keep')}</p>
+          </>}
         </div>
         <div className="join-login__links">
           <button type="button" className="join-link" onClick={() => switchMode('register')}>{t('join:login.register')}</button>
@@ -221,7 +224,7 @@ export function LoginPage() {
         {demoButtons('join-login__links', 'join-link')}
         <p role="status" className="auth-card__note">{noteText}</p>
       </form>
-      <p className="join-login__note">{t('join:login.registerNote')}</p>
+      <p className="join-login__note">{join.kind === 'course' ? t('join:login.registerNote') : t('join:login.registerNoteActivity')}</p>
     </div>
   </JoinLayout>
 

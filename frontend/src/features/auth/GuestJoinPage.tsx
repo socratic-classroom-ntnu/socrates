@@ -10,7 +10,8 @@ import { useAuth } from './AuthContext'
 import { GUEST_NAME_MAX, guestName, nameLength } from './guestNames'
 import { JoinLayout } from './JoinLayout'
 import { JoinLoginBanner, usePublicPreview } from './JoinLoginCard'
-import { LanguageSwitcher } from './LanguageSwitcher'
+import { useChangeLocale } from './useChangeLocale'
+import { isLocale, LANGUAGE_NAMES, LOCALES } from '../../i18n/locale'
 
 type Result = components['schemas']['GuestJoinResult']
 type Problem = 'blank' | 'tooLong' | null
@@ -30,6 +31,7 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
   const { t, locale } = useT('guest')
   const { account, refresh, signIn } = useAuth()
   const { courseName } = usePublicPreview(target)
+  const { changeLocale, saving } = useChangeLocale()
   const [name, setName] = useState(() => guestName(locale))
   const [edited, setEdited] = useState(false)
   const [problem, setProblem] = useState<Problem>(null)
@@ -79,17 +81,16 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
 
   return <JoinLayout>
     <div className="join-login">
-      <JoinLoginBanner courseName={courseName} guest />
+      <JoinLoginBanner courseName={courseName} kind={target.kind} />
       <form className="join-login__card" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
-        <div className="join-guest__head">
-          <h1>{t(target.kind === 'course' ? 'name.titleCourse' : 'name.titleActivity')}</h1>
-          <LanguageSwitcher className="join-guest__language" />
-        </div>
+        <h1>{t('name.title')}</h1>
+        <p className="join-login__intro">{t('name.intro')}</p>
         {closed && <p className="join-notice join-notice--warn" role="alert">
           {t('name.closed')}{' '}
           <Link className="join-link" to={loginPath}>{t('name.login')}</Link>{' · '}
           <Link className="join-link" to={'/login?mode=register&next=' + encodeURIComponent(next)}>{t('name.register')}</Link>
         </p>}
+        <p className="join-alert join-alert--info">{t('name.notice')}</p>
         <Field id="guest-name" label={t('name.label')} invalid={problem !== null} className="join-field">
           <div className="join-guest__row">
             <input
@@ -101,21 +102,33 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
               aria-describedby="guest-name-hint"
               onChange={event => { setName(event.target.value); setEdited(true); setProblem(null) }}
             />
-            <Button variant="outline" disabled={busy} onClick={() => { setName(guestName(locale)); setEdited(false); setProblem(null) }}>{t('name.shuffle')}</Button>
+            <button type="button" className="join-guest__shuffle" disabled={busy} onClick={() => { setName(guestName(locale)); setEdited(false); setProblem(null) }}>
+              <span aria-hidden="true">↻</span>{t('name.shuffle')}
+            </button>
           </div>
           {problem
             ? <FieldError id="guest-name-hint">{t(`name.${problem}`)}</FieldError>
-            : <FieldHint id="guest-name-hint">{t('name.hint')}</FieldHint>}
+            : <FieldHint id="guest-name-hint" className="join-guest__hint">{t('name.hint')}</FieldHint>}
+        </Field>
+        <Field id="guest-language" label={t('name.language')} className="join-field">
+          <select
+            id="guest-language"
+            className="join-guest__select"
+            value={locale}
+            disabled={busy || saving}
+            aria-describedby="guest-language-hint"
+            onChange={event => { if (isLocale(event.target.value)) void changeLocale(event.target.value) }}
+          >
+            {LOCALES.map(code => <option key={code} value={code} lang={code}>{LANGUAGE_NAMES[code]}</option>)}
+          </select>
+          <p id="guest-language-hint" className="join-field-hint join-guest__hint">{t('name.languageHint')}</p>
         </Field>
         <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>
-          {busy ? t('name.submitting') : t('name.submit')}<span aria-hidden="true">→</span>
+          {busy ? t('name.submitting') : t(target.kind === 'course' ? 'name.submitCourse' : 'name.submitActivity')}
         </Button>
         {failure !== null && <FormError role="alert">{offline ? t('name.failed') : errorMessage(t, failure)}</FormError>}
-        <div className="join-login__links">
-          <Link className="join-link join-link--quiet" to={loginPath}>{t('name.back')}</Link>
-        </div>
       </form>
-      <p className="join-login__note">{t('name.keep')}</p>
+      <p className="join-login__note"><Link className="join-link join-link--inline" to={loginPath}>{t('name.back')}</Link></p>
     </div>
   </JoinLayout>
 }

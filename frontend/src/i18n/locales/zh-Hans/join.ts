@@ -2,15 +2,20 @@ import type zhHant from '../zh-Hant/join';
 import type { Shape } from '../../shape';
 
 const join: Shape<typeof zhHant> = {
+  banner: {
+    fromCourse: '由课程 QR Code 进入',
+    fromActivity: '由活动 QR Code 进入',
+    joining: '正在加入：{{name}}',
+  },
   login: {
-    noName: '登录后就会继续加入',
-    title: '登录',
     submitCourse: '登录并加入课程',
-    submitActivity: '登录并继续',
+    submitActivity: '登录并加入活动',
     register: '还没有账号？注册',
     forgot: '忘记密码',
     registerNote: '注册完成后，也会自动回到这门课。',
-    joining: '登录后就会加入',
+    titleCourse: '加入课程',
+    titleActivity: '加入活动',
+    registerNoteActivity: '注册完成后，也会自动回到这个活动。',
   },
   course: {
     phoneTitle: '要加入这门课吗？',

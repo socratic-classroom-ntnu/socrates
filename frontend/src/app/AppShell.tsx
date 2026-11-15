@@ -8,6 +8,8 @@ import { useIsPhone } from '../shared/useIsPhone'
 import { useAuth } from '../features/auth/AuthContext'
 
 type NavKey = 'home' | 'groups' | 'bank' | 'store' | 'settings'
+// 訪客的側欄只有首頁和個人題庫（設計稿 G14、VG-D14）；分組課、題庫商店、設定都不給訪客
+const GUEST_NAV: NavKey[] = ['home', 'bank']
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
@@ -50,7 +52,7 @@ export function AppShell() {
   const active = activeItem(pathname, search)
   const { account } = useAuth()
   // 訪客沒有「設定」；其他導覽項目跟學生一樣
-  const navItems: NavEntry[] = ITEMS.filter(item => !(item.key === 'settings' && account?.kind === 'guest')).map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
+  const navItems: NavEntry[] = ITEMS.filter(item => account?.kind !== 'guest' || GUEST_NAV.includes(item.key)).map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
 
   function toggleCollapsed() {
     setCollapsed(value => { writeCollapsed(!value); return !value })

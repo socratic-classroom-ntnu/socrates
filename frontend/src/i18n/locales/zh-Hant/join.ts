@@ -1,13 +1,18 @@
 export default {
+  banner: {
+    fromCourse: '由課程 QR Code 進入',
+    fromActivity: '由活動 QR Code 進入',
+    joining: '正在加入：{{name}}',
+  },
   login: {
-    noName: '登入後就會繼續加入',
-    title: '登入',
     submitCourse: '登入並加入課程',
-    submitActivity: '登入並繼續',
+    submitActivity: '登入並加入活動',
     register: '還沒有帳號？註冊',
     forgot: '忘記密碼',
     registerNote: '註冊完成後，也會自動回到這門課。',
-    joining: '登入後就會加入',
+    titleCourse: '加入課程',
+    titleActivity: '加入活動',
+    registerNoteActivity: '註冊完成後，也會自動回到這個活動。',
   },
   course: {
     phoneTitle: '要加入這門課嗎？',

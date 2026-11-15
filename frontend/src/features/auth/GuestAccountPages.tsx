@@ -4,10 +4,10 @@ import { api } from '../../contract/classroomClient'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
 import { safeNext } from '../../shared/next'
-import { Button, Field, FieldError, FormError } from '../../ui'
-import { AuthLayout, Screws } from './AuthLayout'
+import { Button, Field, FieldError, FieldHint, FormError } from '../../ui'
+import { JoinLayout } from './JoinLayout'
 import { useAuth } from './AuthContext'
-import { markUpgraded } from './GuestPanels'
+import { markUpgraded, useKeepUntil } from './GuestPanels'
 import { type Field as FormField, keepPasswordChars, LOGIN_PASSWORD_MAX, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
 
 type Issue = Problem | { field: FormField; code: string }
@@ -73,43 +73,41 @@ export function GuestUpgradePage() {
 
   const loginWithEmail = '/guest/login?' + new URLSearchParams({ email: values.email.trim(), next }).toString()
 
-  function input(field: FormField, label: string, type: string, autoComplete: string) {
+  function input(field: FormField, label: string, type: string, autoComplete: string, hint?: string) {
     const issue = issues[field]
-    return <Field id={`guest-${field}`} label={label} invalid={Boolean(issue)}>
+    return <Field id={`guest-${field}`} label={label} invalid={Boolean(issue)} className="join-field">
       <input id={`guest-${field}`} type={type} value={values[field]} autoComplete={autoComplete} disabled={busy}
         maxLength={REGISTER_LIMITS[field][1]} aria-invalid={issue ? true : undefined}
         onChange={event => set(field, event.target.value)} />
-      {issue && <FieldError>{issueText(issue)}</FieldError>}
+      {issue ? <FieldError>{issueText(issue)}</FieldError> : hint && <FieldHint>{hint}</FieldHint>}
     </Field>
   }
 
-  return <AuthLayout>
-    <main className="auth-main auth-main--center">
-      <form className="auth-card auth-card--wide" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
-        <Screws />
+  return <JoinLayout>
+    <div className="join-login">
+      <form className="join-login__card" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
         <h1>{t('upgrade.title')}</h1>
-        <p className="auth-card__hint">{t('upgrade.body')}</p>
-        {input('username', ta('fields.username'), 'text', 'username')}
+        <p className="join-login__lead">{t('upgrade.body')}</p>
+        <p className="join-alert join-alert--info">{t('upgrade.verifyNote')}</p>
+        {input('username', ta('fields.username'), 'text', 'username', t('upgrade.usernameHint'))}
         {input('email', ta('fields.email'), 'email', 'email')}
         {taken && <section className="join-notice join-notice--warn" role="alert">
           <strong>{t('upgrade.emailTakenTitle')}</strong>
           <p>{t('upgrade.emailTakenBody')}</p>
-          <Link className="auth-button auth-button--primary" to={loginWithEmail}>{t('upgrade.emailTakenLogin')}</Link>
+          <Link className="join-link join-link--inline" to={loginWithEmail}>{t('upgrade.emailTakenLogin')}</Link>
         </section>}
-        {input('password', ta('fields.password'), 'password', 'new-password')}
-        <small className="auth-field__hint">{ta('passwordRule')}</small>
-        <p className="auth-card__hint">{t('upgrade.verifyNote')}</p>
-        <button type="submit" className="auth-button auth-button--primary" disabled={busy}>
-          {busy ? t('upgrade.submitting') : t('upgrade.submit')}<span aria-hidden="true">→</span>
-        </button>
+        {input('password', ta('fields.password'), 'password', 'new-password', t('upgrade.passwordHint'))}
+        <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>
+          {busy ? t('upgrade.submitting') : t('upgrade.submit')}
+        </Button>
         {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
-        <div className="auth-card__links">
-          <Link className="auth-button auth-button--quiet" to={'/guest/login?next=' + encodeURIComponent(next)}>{t('upgrade.haveAccount')}</Link>
-          <Link className="auth-button auth-button--quiet" to="/">{t('upgrade.back')}</Link>
-        </div>
+        <p className="join-login__after">
+          <Link className="join-link join-link--inline" to={'/guest/login?next=' + encodeURIComponent(next)}>{t('upgrade.haveAccount')}</Link>
+        </p>
       </form>
-    </main>
-  </AuthLayout>
+      <p className="join-login__note"><Link className="join-link join-link--inline join-link--quiet" to="/">{t('upgrade.back')}</Link></p>
+    </div>
+  </JoinLayout>
 }
 
 /** A guest logs in to an existing account (the design's log-in-and-merge screens); the backend (Courecta's 5a) moves this device's
@@ -127,18 +125,18 @@ export function GuestLoginPage() {
   const [failure, setFailure] = useState<unknown>(null)
   const [refused, setRefused] = useState(false)
   const [done, setDone] = useState<string | null>(null)
+  const keep = useKeepUntil(account)
 
   if (done) return <Navigate to={done} replace />
-  if (refused) return <AuthLayout>
-    <main className="auth-main auth-main--center">
-      <section className="auth-card auth-card--wide join-notice join-notice--warn" role="status">
-        <Screws />
+  if (refused) return <JoinLayout>
+    <div className="join-login">
+      <section className="join-login__card" role="status">
         <h1>{t('merge.teacherTitle')}</h1>
-        <p className="auth-card__hint">{t('merge.teacherBody')}</p>
-        <Link className="auth-button auth-button--primary" to={next}>{t('merge.teacherContinue')}</Link>
+        <p className="join-alert join-alert--info">{t('merge.teacherBody')}</p>
+        <Link className="join-link join-link--inline" to={next}>{t('merge.teacherContinue')}</Link>
       </section>
-    </main>
-  </AuthLayout>
+    </div>
+  </JoinLayout>
   if (account && account.kind !== 'guest') return <Navigate to={next} replace />
 
   async function submit(event: FormEvent) {
@@ -161,25 +159,25 @@ export function GuestLoginPage() {
     }
   }
 
-  return <AuthLayout>
-    <main className="auth-main auth-main--center">
-      <form className="auth-card auth-card--wide" onSubmit={event => void submit(event)} aria-busy={busy}>
-        <Screws />
+  return <JoinLayout>
+    <div className="join-login">
+      <form className="join-login__card" onSubmit={event => void submit(event)} aria-busy={busy}>
         <h1>{t('merge.title')}</h1>
-        <p className="auth-card__hint">{t('merge.body')}</p>
-        <Field id="guest-login" label={ta('fields.identifier')}>
+        <p className="join-login__lead">{t('merge.body')}</p>
+        <Field id="guest-login" label={ta('fields.identifier')} className="join-field">
           <input id="guest-login" value={login} autoComplete="username" required disabled={busy} maxLength={REGISTER_LIMITS.email[1]} onChange={event => setLogin(event.target.value)} />
         </Field>
-        <Field id="guest-password" label={ta('fields.password')}>
+        <Field id="guest-password" label={ta('fields.password')} className="join-field">
           <input id="guest-password" type="password" value={password} autoComplete="current-password" required disabled={busy} maxLength={LOGIN_PASSWORD_MAX} onChange={event => setPassword(event.target.value)} />
         </Field>
-        <Button type="submit" variant="primary" disabled={busy}>{busy ? t('merge.submitting') : t('merge.submit')}</Button>
+        <p className="join-login__after"><Link className="join-link join-link--inline join-link--quiet" to="/login?mode=forgot">{t('merge.forgot')}</Link></p>
+        <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>{busy ? t('merge.submitting') : t('merge.submit')}</Button>
         {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
-        <div className="auth-card__links">
-          <Link className="auth-button auth-button--quiet" to={'/guest/register?next=' + encodeURIComponent(next)}>{t('merge.register')}</Link>
-          <Link className="auth-button auth-button--quiet" to="/">{t('upgrade.back')}</Link>
-        </div>
+        <p className="join-login__after">
+          <Link className="join-link join-link--inline" to={'/guest/register?next=' + encodeURIComponent(next)}>{t('merge.register')}</Link>
+        </p>
       </form>
-    </main>
-  </AuthLayout>
+      {keep && <p className="join-login__note">{t('merge.keep', { date: keep.date })}</p>}
+    </div>
+  </JoinLayout>
 }

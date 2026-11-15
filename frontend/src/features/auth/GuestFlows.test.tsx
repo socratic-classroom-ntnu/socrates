@@ -161,10 +161,31 @@ async function fillRegister(email = 'ming@example.org') {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: /^註冊/ })) })
 }
 
+test('a guest sees only 首頁 and 個人題庫 in the side navigation (G14, VG-D14)', async () => {
+  serve(guest())
+  openApp('/')
+  await screen.findByText('你目前是訪客')
+  const nav = screen.getAllByRole('navigation').find(item => within(item).queryByText('首頁')) as HTMLElement
+  expect(within(nav).getByText('個人題庫')).toBeInTheDocument()
+  expect(within(nav).queryByText('分組課')).toBeNull()
+  expect(within(nav).queryByText('題庫商店')).toBeNull()
+})
+
+test('the guest sign-up and sign-in pages use the join header with the 訪客 tag, not the old chalkboard', async () => {
+  serve(guest())
+  openApp('/guest/register')
+  expect(await screen.findByRole('heading', { name: '註冊以保留紀錄' })).toBeInTheDocument()
+  expect(screen.getByText('訪客')).toHaveClass('join-page__chip')
+  expect(screen.getByText('3～32 字')).toBeInTheDocument()
+  expect(screen.getByText('8～32 字')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '註冊並保留紀錄' })).toBeInTheDocument()
+  expect(document.querySelector('.auth-scene')).toBeNull()
+})
+
 test('registering keeps the guest records and goes to email verification first', async () => {
   const calls = serve(guest(), { 'POST /auth/guest/upgrade': { ...registered, verified: false } })
   openApp('/guest/register')
-  expect(await screen.findByText('送出後要先完成 Email 驗證，才能繼續上課。')).toBeInTheDocument()
+  expect(await screen.findByText('註冊後需先驗證 Email，才能繼續使用。')).toBeInTheDocument()
   await fillRegister()
   await waitFor(() => expect(window.location.pathname).toBe('/verify'))
   expect(calls).toContainEqual({ key: 'POST /auth/guest/upgrade', body: { username: 'ming', email: 'ming@example.org', password: 'Socratic-123' } })
@@ -203,7 +224,7 @@ test('after verifying, home says the guest records were kept (G26), once', async
 async function logIn(password = 'Socratic-123') {
   fireEvent.change(await screen.findByLabelText('使用者名稱或 Email'), { target: { value: 'ming' } })
   fireEvent.change(screen.getByLabelText('密碼'), { target: { value: password } })
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '登入' })) })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '登入並保留紀錄' })) })
 }
 
 test('logging in moves the guest records and home says so only when the backend moved them (G25)', async () => {

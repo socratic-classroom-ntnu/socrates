@@ -30,7 +30,7 @@ services:
       CLASSROOM_COOKIE_SECURE: 'false'
       SOCRATES_MAIL_TRANSPORT: fixture
       RESEND_FROM: Socratic Classroom <verify@mail.socrates.driseam.com>
-      CLASSROOM_LLM_DAILY_BUDGET: ${CLASSROOM_LLM_DAILY_BUDGET:-${RUN2_LLM_DAILY_BUDGET:-1000000}}
+      CLASSROOM_LLM_DAILY_BUDGET: ${CLASSROOM_LLM_DAILY_BUDGET:-1000000}
       LADDER_PATH: /data/ladders/trolley.yaml
     volumes:
       - ../../backend:/app

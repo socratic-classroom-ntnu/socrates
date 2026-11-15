@@ -27,6 +27,7 @@ from app.modules.app_shell.llm_workers import deterministic_result
 from tests.classroom.test_groups import classroom, start  # noqa: F401
 from app.modules.classroom_core.repositories import Membership, Room, persist_machine
 from app.modules.group_dialogue.contracts import GroupCommand
+from app.modules.llm_runtime.contracts import GroupTutorTurn, SoloFlags
 
 Q = {
     "id": "q1",
@@ -52,8 +53,17 @@ SUMMARY = {
 }
 
 
-def tutor(observations=MET, text="你說的成本指的是什麼？", summary=SUMMARY):
-    return {"reply_text": text, "observations": observations, "move": "probe", "summary": summary}
+FLAGS = {**dict.fromkeys(SoloFlags.model_fields, 0), "gave_reason": 1, "built_on_tutor": 1}
+
+
+def tutor(observations=MET, text="你說的成本指的是什麼？", summary=SUMMARY, flags=FLAGS):
+    return {
+        "reply_text": text,
+        "observations": observations,
+        "move": "probe",
+        "summary": summary,
+        "flags": flags,
+    }
 
 
 def room(members=("m1", "m2"), ai=(), **question):
@@ -151,6 +161,19 @@ def test_confirm_requires_answering_a_follow_up():
     assert baseline["reason_summary"] == SUMMARY["reason_summary"]
     assert baseline["conditions"] == ["沒有緊急需求時"]
     assert baseline["evidence"] == [0, 2] and baseline["source"] == "student_confirmed"
+
+
+def test_every_follow_up_stores_the_ten_flags():
+    assert GroupTutorTurn.model_validate(tutor()).flags.model_dump() == FLAGS
+    g = room()
+    answer(g, "m1")
+    finish(g, "m1", tutor())
+    reply(g, "m1")
+    off_topic = {**FLAGS, "off_topic": 1, "built_on_tutor": 0}
+    finish(g, "m1", tutor(flags=off_topic))
+    tutor_messages = [m for m in entry(g, "m1")["messages"] if m["role"] == "tutor"]
+    assert [m["flags"] for m in tutor_messages] == [FLAGS, off_topic]
+    assert all(set(m["flags"]) == set(SoloFlags.model_fields) for m in tutor_messages)
 
 
 def test_position_shifted_blocks_confirmation():
@@ -521,7 +544,10 @@ def test_views_keep_personal_dialogues_private(classroom):  # noqa: F811
     assert mine["personal_overview"] is None and mine["personal_progress"] is None
     with storage.transaction() as db:
         native = service.view(db, db.get(Room, gid), selected["id"])
-    assert "給乙的私密追問" not in json.dumps(native, ensure_ascii=False)
+    native_dump = json.dumps(native, ensure_ascii=False)
+    assert "給乙的私密追問" not in native_dump
+    # 旗標只給教師端：學生的兩種回應都不帶任何一個 flag
+    assert not [f for f in SoloFlags.model_fields if f in dumped or f in native_dump]
     with pytest.raises(DomainError, match="GROUP_COMMAND_REQUIRED"):
         group.command(
             gid,

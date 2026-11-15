@@ -44,6 +44,7 @@ export function SoloActivityPage() {
       note: t('activity.notStarted'),
     }]
   const reviewing = brief?.review_status === 'in_progress'
+  const completed = brief?.review_status === 'completed'
 
   async function start() {
     if (data.attempt) {
@@ -89,10 +90,10 @@ export function SoloActivityPage() {
               <span className="solo-activity__step-label">{row.label}</span>
               <span className="solo-activity__step-note">{row.note}</span>
             </li>)}
-            <li className={`solo-activity__step solo-activity__step--${reviewing ? 'in_dialogue' : 'not_started'}`}>
+            <li className={`solo-activity__step solo-activity__step--${completed ? 'confirmed' : reviewing ? 'in_dialogue' : 'not_started'}`}>
               <span className="solo-activity__number" aria-hidden="true">{rows.length + 1}</span>
               <span className="solo-activity__step-label">{t('activity.review')}</span>
-              <span className="solo-activity__step-note">{reviewing ? t('activity.inProgress') : t('activity.notStarted')}</span>
+              <span className="solo-activity__step-note">{completed ? t('activity.completed') : reviewing ? t('activity.inProgress') : t('activity.notStarted')}</span>
             </li>
           </ol>
         </section>
@@ -104,7 +105,9 @@ export function SoloActivityPage() {
           <b>{t('activity.startTitle')}</b>
           <p>{t('activity.startBody')}</p>
         </>}
-        {brief && (reviewing
+        {brief && (completed
+          ? <b>{t('activity.completedNext')}</b>
+          : reviewing
           ? <b>{t('activity.reviewNext')}</b>
           : <>
             <span className="solo-activity__card-label">{t('activity.lastStop')}</span>

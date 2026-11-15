@@ -10,7 +10,17 @@ from app.modules.llm_runtime import iron_rules, prompts
 INPUTS = {
     "activity_expansion": ("narrative", "output_locale"),
     "stance_classify": ("narrative", "stances", "student_text", "output_locale"),
-    "final_summary": ("scenarios", "confirmed", "student_messages", "stances", "output_locale"),
+    "final_summary": (
+        "scenarios",
+        "confirmed",
+        "capped_summary",
+        "student_messages",
+        "stances",
+        "output_locale",
+        "revision",
+        "rejected",
+        "student_says",
+    ),
     "radar_axis_naming": ("narrative", "axes", "low_end", "high_end", "output_locale"),
     "radar_dimensions": ("narrative", "stances", "output_locale"),
     "radar_scoring": ("dimensions", "final_summary", "student_messages"),

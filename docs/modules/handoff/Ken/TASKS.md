@@ -1,5 +1,13 @@
 # Ken 的工作清單（B 包：課程、單人活動與底層）
 
+## 11/14 起的順序（11/24 開放客戶）
+11/14 調整，這一段排在下面所有段落前面：
+1. **O6 最終確認**（**先做**，11/16 前完成；11/24 學生主流程一定要有，雷達、句子標記也在等它的最終統整）：依賴的 `final_summary` 已經在 develop。回顧階段 capped 的顯示照 #113 的討論，放進 F2 一起處理。
+2. **免註冊完整功能**（O6 做完接著做，同樣 **11/16 完成**，11/24 要上）：前後端都由你做，包含下面「全部工作」的 3、3a、7、7a、7b（前端），細節以 Discord 的「免註冊加入（全端）」需求為準；這份的 PR 全部由 Fizzy 審。
+3. 這一輪先不排：第 4（旗標與學生指標）、5（統整引用）項。第 6 項的「最終統整與確認迴圈」就是 O6；其中的雷達這一輪要做，但另開需求、由其他組員負責，你不用做。
+
+已完成：O1–O5（#77、#83、#85、#127）、O7（#113）、content-authoring 與 readiness 的 response_model（#109、#84）。#110 等 Arthur 確認 stage／dev 的環境變數已改用新名稱再合。
+
 ## 你的第一個 PR
 course-management 的敘述型活動：活動內容改成「敘述＋立場空間」，加 `POST`／`PUT /activities/{id}/expansion`，發布時把立場空間鎖進 ActivityRevision；用 migration 把舊的選項轉成立場空間。同一個 PR 改 `modules.json`（新增依賴 llm-runtime、ai-providers），請 Courecta 審。
 
@@ -35,12 +43,13 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 | 1 | course-management | 敘述型活動 | 上面的第一個 PR | Courecta 的 ActivityExpansion | 發布後改敘述，不影響已開始的作答 |
 | 2 | solo-activity | 敘述型活動、多語 | 拿掉選項流程，改成自由文字表態，再用 stance_classify 歸類；「我其實改變想法了」＝重新歸類，舊立場留在紀錄；每則訊息存 locale | Courecta 的 StanceClassification、SoloTutorTurn | 學生用英文作答時，逐字稿保留原文 |
 | 3 | course-management | 免註冊加入 | 課程設定加「允許免註冊」，預設開（含既有課程）；QR 連結；訪客可以選課；`GET /course-join/{code}` 與活動 QR 的預覽（`GET /activities/{id}/join-preview`）都回 `allow_guest`；訪客從活動 QR 進來同時加入那門課，建立訪客與加入課程在同一個交易，失敗時不留下訪客；老師關掉後只擋新加入，已加入的訪客照常參與；沒開時回 `GUEST_JOIN_DISABLED`（這個 code 在同一個 PR 加進 `REASON_CODES` 與前端文字，`EXPANSION_LOCKED`、`RADAR_NOT_READY` 也照這樣在第 1、6 項的 PR 加） | Courecta 的訪客帳號 migration（4、4a） | 訪客從掃碼到開始對話不需要 email；從活動 QR 進來的訪客同時出現在課程名單 |
-| 3a | course-management、solo-activity | 免註冊加入 | 學生名單（course-management）與即時狀況（solo-activity progress）的回應加 `kind`（`registered`／`guest`／`expired_guest`）；已過期的名字顯示「匿名訪客 N」，同一門課依加入順序（選課時間）編號，查詢時算、不另外存，名單換排序也不變編號；名單計數分成正式學生、訪客、匿名訪客（Figma VG-T05）；按註冊就轉正，所以還沒驗證 Email 的人顯示成正式學生 | Courecta 4a；Amethus 審契約 | 名單與即時狀況回 `kind`；兩位過期訪客依加入順序顯示「匿名訪客 1」「匿名訪客 2」，改排序後編號不變；重產型別後沒有 diff |
+| 3a | course-management、solo-activity | 免註冊加入 | （11/14 縮小：學生名單這一輪不做）即時狀況（solo-activity progress）與統計分析的回應加 `kind`（`registered`／`guest`／`expired_guest`）；過期以 `guest_expires_at` 為準，已過期的名字顯示「匿名訪客 N」，同一門課只在已過期的訪客之間依加入順序（選課時間）編號，查詢時算、不另外存，換排序也不變編號；按註冊就轉正，所以還沒驗證 Email 的人顯示成正式學生 | Courecta 4a | 即時狀況與統計分析回 `kind`；兩位過期訪客依加入順序顯示「匿名訪客 1」「匿名訪客 2」，改排序後編號不變；重產型別後沒有 diff |
 | 4 | solo-activity | 旗標與學生指標 | 每則訊息存 flags；指標寫成一個純函式檔；`GET /solo/activities/{id}/progress` 帶出指標、趨勢、標記，並即時更新 | Courecta 的 flags | 危險傾向或惡意離題＝1 時，教師 progress 回該學生的標記；學生端回應裡沒有 flags |
 | 5 | solo-activity | 統整引用 | 存放引用（新表 summary_sources），view 回傳 message id 與 quote 的起訖位置 | Courecta 的引用驗證；Amethus 的引用型別 | 每個 quote 都是該學生原句的子字串 |
 | 6 | solo-activity | 統整與雷達 | 最終統整與確認迴圈，取代 submit_review：連續兩次「不太對」就標記「未確認」並結束。學生 ≥15 人走 PCA＋百分位，<15 人走 LLM 維度；`GET /solo/activities/{id}/radar`、改軸名的 PATCH | Courecta 的 `embed()`、final_summary、radar_*；Amethus 的雷達契約 | 兩條路回同一個契約 |
 | 7 | app-shell | 免註冊加入 | 註冊 Courecta 提供的到期訪客清名字排程（每日一次），並把各模組的訪客紀錄 hook 註冊進去 | Courecta 5、5b | 少註冊一個 hook 時啟動就報錯；加入滿 168 小時的訪客，下一次排程後名字已清空、標成已過期，作答與對話都還在 |
 | 7a | course-management、solo-activity | 免註冊加入 | 實作訪客紀錄 hook：選課與單人作答（含訊息）的 `reassign`，以及清掉這兩個模組存的訪客名字（選課的課內名字等），紀錄本身不動；同一課／同一活動兩邊都有時留帳號那份、訪客那份刪掉 | Courecta 5、5b 的契約 | 每個衝突情境各一條測試；到期後名字清掉、作答還在、老師統計照算 |
+| 7b | 前端 | 免註冊加入 | 照 Figma「免註冊加入」頁：掃課程或活動 QR 後選免註冊加入、填暱稱與語言；訪客使用中的帳號選單與受限功能的邀請；保留紀錄 → 註冊升級或登入併入；老師端的「允許免註冊」開關與名單上的訪客標示。訪客過期（`GUEST_EXPIRED`）和沒登入一樣導到登入頁，不另做說明頁 | 3、3a；Courecta 5a | 頁面測試先紅再綠；電腦與手機都照設計稿 |
 | — | content-authoring | 現有待辦 | 5 個端點補 response_model（清單在 `RESPONSE_MODEL_PENDING`） | Amethus 審 | 重產型別後沒有 diff |
 | — | platform | 現有待辦 | 相容帳冊（`COMPATIBILITY-LEDGER.md`）裡的舊環境變數別名 | — | — |
 | — | app-shell | 現有待辦 | `GET /api/v2/readiness` 補 response_model | Amethus 審 | 重產型別後沒有 diff |
@@ -49,6 +58,9 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 - 學生確認最後一題後按「送出回顧」，目前作答直接進入 `completed`，這是過渡做法，第 6 項會取代它。
 - 舊單人對話的資料表已經搬到 `legacy_solo_dialogue` schema（migration 0017，issue #71）。要不要把舊資料帶進單人活動，等決定後再排，現在不用動。
 - migration 順序：Courecta 的 identity-access → 你的 course-management → 你的 solo-activity，每個 down_revision 接前一個。
+- migration 編號（11/14）：develop 已到 0020。你的「允許免註冊」（course-management）先做，用 0021、接 0020；「學生／老師角色」的 `account_role` 之後接在你後面。
+- 訪客的 `username` 是「暱稱-8 碼亂數」，加入課程時 `default_display_name` 直接用它，老師會看到亂碼；預設課內名字要是暱稱本身。
+- `errorText` 的 `GUEST_EXPIRED`「請重新掃描課程 QR code 加入」容易讓人以為能接回原本的對話；過期的訪客重新掃碼會是全新的訪客，舊紀錄只留給老師看，文字要改。
 
 ## 規則（repo 現行檢查會擋）
 - 只 import 其他模組的 contracts／service／repositories；route 不互相引用，也不動態 import。`python scripts/check_modules.py` 的違規數只能變少。

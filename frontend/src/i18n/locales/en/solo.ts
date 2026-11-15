@@ -1,5 +1,6 @@
 export default {
   activity: {
+    completed: 'Completed', completedNext: 'You have completed this activity. You can look back at your final summary.',
     back: 'Courses', breadcrumbLabel: 'Course path', notFound: 'Activity not found', home: 'Back to home',
     status: 'Status', openUntil: 'Open until',
     statuses: { scheduled: 'Not open yet', open: 'In progress', ended: 'Ended' },
@@ -8,7 +9,7 @@ export default {
     notStarted: 'Not started', inProgress: 'In progress', inDialogue: 'In dialogue', confirmed: 'Confirmed', capped: 'Not settled yet',
     progressHint: 'There is no time limit. You can leave and return at any time. A scenario stays hidden until you reach it.',
     startTitle: 'Read the scenario and answer in your own words',
-    lastStop: 'You stopped at', resumeAt: 'Scenario {{number}}, round {{turn}} of the dialogue', reviewNext: 'Every scenario is confirmed. Next comes the review of your viewpoints.',
+    lastStop: 'You stopped at', resumeAt: 'Scenario {{number}}, round {{turn}} of the dialogue', reviewNext: 'Every scenario is done. Next comes the summary of your line of thought.',
     startBody: 'Say what you would do and why, in your own words, by typing or by voice. Then Socrates will follow up. There are no right answers and no reply limit.',
     start: 'Start dialogue', continue: 'Continue dialogue', closed: 'This activity cannot be started right now.',
     saved: 'Your dialogue is saved automatically, so you can return to the same place later.',
@@ -61,9 +62,21 @@ export default {
     principles: { consequentialism: 'Consequentialism', deontology: 'Deontology', mixed: 'Mixed approach' },
   },
   review: {
-    closing: '{{name}}, you have explained your view in every scenario. Next, we will look back at these ideas.',
-    eyebrow: 'Your progress', title: 'All scenarios are confirmed', subtitle: 'Look back at what you thought today',
-    confirmedCard: 'Scenario {{number}}: viewpoint confirmed', start: 'Start review', comingSoon: 'Viewpoint review is under development',
+    closing: '{{name}}, you have worked through every scenario. Next, let us look back at your whole line of thought.',
+    eyebrow: 'Your progress', title: 'All scenarios are done', subtitle: 'Look back at what you thought today',
+    confirmedCard: 'Scenario {{number}}: viewpoint confirmed',
+  },
+  final: {
+    feedbackLabel: 'What you said was off', feedback: 'You said: “{{text}}”',
+    writing: 'Socrates is summing up your whole line of thought…', failed: 'Your line of thought could not be summed up this time', ownerMissing: 'Your teacher has not set up the AI connection yet, so it cannot be summed up for now',
+    write: 'Sum up my thinking', retry: 'Try again', finish: 'Finish without a summary',
+    title: 'I tried to sum up your whole line of thought. Is this right?', subtitle: 'Socrates wrote this from the views you confirmed; you decide whether it is right',
+    points: 'Summary', trajectory: 'Line of thought', step: 'Scenario {{number}}', shift: 'Why it changed: {{reason}}',
+    position: 'Your final position', style: 'What you often judge by', question: 'A question to take with you', quote: 'You said: “{{quote}}”',
+    confirm: 'Yes, this is my thinking', revise: 'Not quite',
+    reviseLabel: 'What is off? One sentence is enough', revisePlaceholder: 'For example: I am not that sure, actually', reviseSend: 'Ask Socrates to rewrite it', reviseCancel: 'Cancel',
+    lastChance: 'After this the activity ends, and this summary is marked “not confirmed”.', reviseEnd: 'Send and finish',
+    doneTitle: 'Your line of thought', confirmed: 'Confirmed', unconfirmed: 'Not confirmed', doneNoSummary: 'This activity is complete', back: 'Back to the activity',
   },
   errors: {
     SOLO_ATTEMPT_NOT_FOUND: 'This dialogue could not be found.', ACTIVITY_NOT_OPEN: 'This activity cannot be started right now.',

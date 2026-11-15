@@ -139,7 +139,7 @@ def test_the_student_sees_the_capped_summary_and_can_only_confirm(client, tutor)
     assert done["state"] == "reviewing"
     assert done["scenarios"][0]["status"] == "capped"
     assert done["scenarios"][0]["confirmed_summary"] is None
-    assert done["available_actions"] == ["submit_review"]
+    assert done["available_actions"] == ["retry_reflection_prompt", "submit_review"]
 
 
 def test_the_teacher_sees_a_capped_cell_and_no_confirmed_viewpoint(client, tutor):
@@ -152,3 +152,30 @@ def test_the_teacher_sees_a_capped_cell_and_no_confirmed_viewpoint(client, tutor
     assert [c["status"] for c in row["cells"]] == ["capped"]
     analysis = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/analysis"))
     assert student_row(analysis, "student同學")["confirmed_scenarios"] == 0
+
+
+def test_confirming_a_capped_summary_keeps_it_for_the_final_summary():
+    """Acknowledged, never confirmed: the final summary may still read it, marked capped (O6)."""
+    a = reply(talk_to_the_last_message(), reason_tested=False)
+    assert (a.state, a.current.status) == ("confirming", "capped")
+    shown = a.current.candidate_summary
+    done = sm.confirm_viewpoint(a, a.current.summary_digest or "")
+    entry = done.progress[0]
+    assert (entry.status, entry.confirmed_summary) == ("capped", None)
+    assert entry.capped_summary == shown is not None
+
+
+def test_the_final_summary_reads_a_capped_scenario_marked_as_capped(client, tutor):
+    from tests.solo_activity.test_solo_final_confirmation import FINAL, NO_SCENARIO, final_contexts
+
+    calls, replies = tutor
+    _, attempt_id, view = capped_attempt(client, replies)
+    replies.extend([NO_SCENARIO, FINAL])
+    confirm(client, attempt_id, view)
+    (context,) = final_contexts(calls)
+    (scenario,) = context["scenarios"]
+    assert scenario["confirmed"] is None
+    assert (
+        scenario["capped_summary"]["current_position"]
+        == view["candidate_summary"]["current_position"]
+    )

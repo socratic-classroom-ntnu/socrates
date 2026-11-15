@@ -256,7 +256,7 @@ def test_summary_counts_match_progress(client, tutor):
     add_scenario(review["id"], SECOND)
     set_attempt(talking["id"], "in_dialogue", 0, {})
     set_attempt(between["id"], "between_scenarios", 0, confirmed())
-    set_attempt(review["id"], "reviewing", 1, confirmed(), confirmed())
+    set_attempt(review["id"], "completed", 1, confirmed(), confirmed())
 
     view = teacher_view(client, s)
     assert view["summary"] == {"enrolled": 4, "started": 3, "done": 1, "in_progress": 2}
@@ -269,8 +269,8 @@ def test_other_revision_not_aggregated(client, tutor):
     s = setup(client)
     counted = ok(start(client, s["activity_id"]))
     stray = student(client, s, "stray")
-    set_attempt(counted["id"], "reviewing", 0, confirmed("算進來的理由"))
-    set_attempt(stray["id"], "reviewing", 0, confirmed("不該算的理由"))
+    set_attempt(counted["id"], "completed", 0, confirmed("算進來的理由"))
+    set_attempt(stray["id"], "completed", 0, confirmed("不該算的理由"))
     with storage.transaction() as db:
         current = db.get(ActivityRevision, db.get(Activity, s["activity_id"]).current_revision_id)
         other = ActivityRevision(

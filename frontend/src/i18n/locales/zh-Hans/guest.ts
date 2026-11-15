@@ -62,7 +62,8 @@ export default {
     submitting: '登录中⋯',
     register: '还没有账号？注册',
     teacherTitle: '教师账号不能并入访客记录',
-    teacherBody: '请改用学生账号登录，或注册一个新账号来保留记录。',
+    teacherBody: '你已经登录。访客身份的课程和对话不会并进老师账号，会保留到访客到期。',
+    teacherContinue: '继续',
   },
   closed: {
     courseTitle: '这门课不开放访客加入',

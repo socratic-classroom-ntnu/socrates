@@ -62,7 +62,8 @@ export default {
     submitting: 'Iniciando sesión…',
     register: '¿Aún no tienes cuenta? Regístrate',
     teacherTitle: 'Una cuenta docente no puede recibir registros de invitado',
-    teacherBody: 'Inicia sesión con una cuenta de estudiante o regístrate con una cuenta nueva para conservar tus registros.',
+    teacherBody: 'Ya iniciaste sesión. Los cursos y conversaciones de invitado no se pasan a una cuenta docente; se conservan hasta que expire la identidad de invitado.',
+    teacherContinue: 'Continuar',
   },
   closed: {
     courseTitle: 'Este curso no admite invitados',

@@ -62,7 +62,8 @@ export default {
     submitting: 'Logging in…',
     register: 'No account yet? Register',
     teacherTitle: 'A teacher account cannot take guest records',
-    teacherBody: 'Log in with a student account, or register a new account to keep your records.',
+    teacherBody: 'You are logged in. Your guest courses and conversations are not moved into a teacher account; they stay until the guest identity expires.',
+    teacherContinue: 'Continue',
   },
   closed: {
     courseTitle: 'This course does not take guests',

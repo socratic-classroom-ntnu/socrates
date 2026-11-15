@@ -62,7 +62,8 @@ export default {
     submitting: '登入中⋯',
     register: '還沒有帳號？註冊',
     teacherTitle: '老師帳號不能併入訪客紀錄',
-    teacherBody: '請改用學生帳號登入，或註冊一個新帳號來保留紀錄。',
+    teacherBody: '你已經登入。訪客身分的課程和對話不會併進老師帳號，會保留到訪客到期。',
+    teacherContinue: '繼續',
   },
   closed: {
     courseTitle: '這門課不開放訪客加入',

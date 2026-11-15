@@ -5,7 +5,6 @@ import { reportSessionLost } from '../../contract/sessionEvents'
 import { AppRoutes } from '../../app/routes'
 import { applyLocale } from '../../i18n'
 import { AuthProvider } from './AuthContext'
-import { TEACHER_MERGE_REFUSED } from './GuestAccountPages'
 import { UPGRADED_KEY } from './GuestPanels'
 import { guestKeepUntil } from './guestExpiry'
 
@@ -207,13 +206,22 @@ async function logIn(password = 'Socratic-123') {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '登入' })) })
 }
 
-test('logging in moves the guest records and home says so (G25)', async () => {
+test('logging in moves the guest records and home says so only when the backend moved them (G25)', async () => {
   let me: unknown = guest()
-  serve(() => me, { 'POST /auth/login': () => { me = registered; return registered } })
+  serve(() => me, { 'POST /auth/login': () => { me = registered; return { ...registered, guest_merge: 'MERGED' } } })
   openApp('/guest/login')
   await logIn()
   expect(await screen.findByText('訪客的課程和對話已經併入你的帳號。')).toBeInTheDocument()
   expect(where()).toBe('/?merged=1')
+})
+
+test('nothing was merged (expired guest, rolled back hook): login is plain, no G25', async () => {
+  let me: unknown = guest()
+  serve(() => me, { 'POST /auth/login': () => { me = registered; return { ...registered, guest_merge: 'NONE' } } })
+  openApp('/guest/login')
+  await logIn()
+  await waitFor(() => expect(where()).toBe('/'))
+  expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
 })
 
 test('a wrong password says so and stays (G22)', async () => {
@@ -224,11 +232,16 @@ test('a wrong password says so and stays (G22)', async () => {
   expect(window.location.pathname).toBe('/guest/login')
 })
 
-test('a teacher account is refused with its own panel (G24, faked until 5a has the code)', async () => {
-  serve(guest(), { 'POST /auth/login': () => { throw new ApiError(409, TEACHER_MERGE_REFUSED) } })
+test('a teacher logs in, nothing is merged, and the panel says so (G24)', async () => {
+  let me: unknown = guest()
+  serve(() => me, { 'POST /auth/login': () => { me = registered; return { ...registered, guest_merge: 'REFUSED_TEACHER' } } })
   openApp('/guest/login')
   await logIn()
   expect(await screen.findByText('老師帳號不能併入訪客紀錄')).toBeInTheDocument()
+  expect(screen.getByText('你已經登入。訪客身分的課程和對話不會併進老師帳號，會保留到訪客到期。')).toBeInTheDocument()
+  expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
+  fireEvent.click(screen.getByRole('link', { name: '繼續' }))
+  await waitFor(() => expect(where()).toBe('/'))
 })
 
 // ---- a guest scanning a course that does not take guests (G27, G28) -----------------------

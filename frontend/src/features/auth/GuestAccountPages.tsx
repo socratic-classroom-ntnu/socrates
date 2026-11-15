@@ -10,10 +10,6 @@ import { useAuth } from './AuthContext'
 import { markUpgraded } from './GuestPanels'
 import { type Field as FormField, keepPasswordChars, LOGIN_PASSWORD_MAX, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
 
-// Courecta's 5a will refuse merging a guest into a teacher account with this code once account_role
-// lands; until then G24 is reached only by a faked response in tests. Agree the name with Courecta.
-export const TEACHER_MERGE_REFUSED = 'GUEST_MERGE_TEACHER_REFUSED'
-
 type Issue = Problem | { field: FormField; code: string }
 
 function useIssueText() {
@@ -117,7 +113,8 @@ export function GuestUpgradePage() {
 }
 
 /** A guest logs in to an existing account (the design's log-in-and-merge screens); the backend (Courecta's 5a) moves this device's
- * guest records into it. Home then shows G25. A teacher account is refused (G24). */
+ * guest records into it. The login answer says what happened (guest_merge): only MERGED shows G25; a teacher account still logs
+ * in but nothing moves (REFUSED_TEACHER, G24); NONE (no guest cookie, expired, a hook rolled back) is a plain login. */
 export function GuestLoginPage() {
   const { t } = useT('guest')
   const { t: ta } = useT('auth')
@@ -128,25 +125,37 @@ export function GuestLoginPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<unknown>(null)
-  const [teacher, setTeacher] = useState(false)
+  const [refused, setRefused] = useState(false)
   const [done, setDone] = useState<string | null>(null)
 
   if (done) return <Navigate to={done} replace />
+  if (refused) return <AuthLayout>
+    <main className="auth-main auth-main--center">
+      <section className="auth-card auth-card--wide join-notice join-notice--warn" role="status">
+        <Screws />
+        <h1>{t('merge.teacherTitle')}</h1>
+        <p className="auth-card__hint">{t('merge.teacherBody')}</p>
+        <Link className="auth-button auth-button--primary" to={next}>{t('merge.teacherContinue')}</Link>
+      </section>
+    </main>
+  </AuthLayout>
   if (account && account.kind !== 'guest') return <Navigate to={next} replace />
 
   async function submit(event: FormEvent) {
     event.preventDefault()
     setBusy(true)
     setFailure(null)
-    setTeacher(false)
     try {
       const view = await api('/auth/login', 'POST', { login, password })
       signIn(view)
-      const target = next === '/' ? '/?merged=1' : next
+      if (view.guest_merge === 'REFUSED_TEACHER') {
+        setRefused(true)
+        return
+      }
+      const target = view.guest_merge === 'MERGED' && next === '/' ? '/?merged=1' : next
       setDone(view.verified ? target : '/verify?next=' + encodeURIComponent(target))
     } catch (error) {
-      if (errorCode(error) === TEACHER_MERGE_REFUSED) setTeacher(true)
-      else setFailure(error)
+      setFailure(error)
     } finally {
       setBusy(false)
     }
@@ -158,10 +167,6 @@ export function GuestLoginPage() {
         <Screws />
         <h1>{t('merge.title')}</h1>
         <p className="auth-card__hint">{t('merge.body')}</p>
-        {teacher && <section className="join-notice join-notice--warn" role="alert">
-          <strong>{t('merge.teacherTitle')}</strong>
-          <p>{t('merge.teacherBody')}</p>
-        </section>}
         <Field id="guest-login" label={ta('fields.identifier')}>
           <input id="guest-login" value={login} autoComplete="username" required disabled={busy} maxLength={REGISTER_LIMITS.email[1]} onChange={event => setLogin(event.target.value)} />
         </Field>

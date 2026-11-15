@@ -40,8 +40,10 @@ def client(monkeypatch):
     storage.configure(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://"), create=True)
     storage.Base.metadata.drop_all(storage.engine())
     storage.Base.metadata.create_all(storage.engine())
+    app = create_app(background=False)
+    # After the app is built: it refuses to start without the real hooks.
     monkeypatch.setattr(guests, "GUEST_HOOKS", {})
-    with TestClient(create_app(background=False)) as c:
+    with TestClient(app) as c:
         body = {"username": "ming", "email": "ming@example.org", "password": PASSWORD}
         c.account_id = c.post("/api/v2/auth/register", json=body).json()["id"]
         c.cookies.clear()

@@ -47,7 +47,7 @@ export function LoginPage() {
   // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
   const join = mode === 'login' ? joinTarget(next) : null
   const { courseName, guestAllowed, restricted } = usePublicPreview(join)
-  // G12: the guest name page found guests switched off; G06: the preview says so before anyone tries.
+  // Guests switched off: the name page found out at submit (closed), or the preview says so up front (restricted).
   const closed = params.get('closed') === '1'
   const demo = useDemoLogin()
 

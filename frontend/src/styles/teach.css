@@ -51,6 +51,17 @@
 .invite__code-value { font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 30px; font-weight: 700; letter-spacing: 0.12em; }
 .invite__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .invite__disabled { margin: 0; padding: 14px; border-radius: 8px; background: #FFF6E0; color: #6E5034; line-height: 1.7; }
+/* 免註冊加入的開關：代碼停用時也顯示 */
+.invite-guest { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--ui-color-line); }
+.invite-guest__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.invite-guest__label { font-size: 15px; font-weight: 700; color: var(--ui-color-ink); }
+.invite-guest__hint { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ui-color-muted); }
+.invite-guest__switch { position: relative; flex-shrink: 0; width: 44px; height: 24px; padding: 0; border: 1px solid var(--ui-color-border); border-radius: 999px; background: var(--ui-color-neutral-soft); cursor: pointer; transition: background-color 0.15s, border-color 0.15s; }
+.invite-guest__switch[aria-checked="true"] { border-color: var(--ui-color-primary); background: var(--ui-color-primary); }
+.invite-guest__switch:disabled { cursor: progress; opacity: 0.6; }
+.invite-guest__switch:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.invite-guest__knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--ui-color-panel); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform 0.15s; }
+.invite-guest__switch[aria-checked="true"] .invite-guest__knob { transform: translateX(20px); }
 
 @media (max-width: 767px) {
   .teach-page { padding: 20px 16px 32px; }

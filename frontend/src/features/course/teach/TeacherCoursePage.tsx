@@ -76,6 +76,7 @@ export function TeacherCoursePage() {
       url={`${window.location.origin}/join?code=${data.code}`}
       projectorTo={base + '/projector'}
       disabled={!data.code_enabled}
+      guest={{ courseId: data.id, allowed: data.allow_guest, onSaved: () => { void course.reload() } }}
       onClose={() => setInviting(false)}
     />}
   </main>

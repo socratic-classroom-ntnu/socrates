@@ -77,7 +77,7 @@ def reviewing() -> sm.AttemptState:
         (in_dialogue, ["send_message"]),
         (confirming, ["confirm_viewpoint", "revise_viewpoint"]),
         (between, ["next_scenario"]),
-        (reviewing, ["submit_review"]),
+        (reviewing, ["retry_reflection_prompt", "submit_review"]),
     ],
 )
 def test_actions_per_state(build, expected):
@@ -91,9 +91,7 @@ def test_awaiting_tutor_offers_retry_only_when_stale():
     assert sm.actions_for(a, T0 + 151) == ["retry"]
 
 
-@pytest.mark.parametrize(
-    "state", ["awaiting_reflection_prompt", "reflecting", "budget_exhausted", "completed"]
-)
+@pytest.mark.parametrize("state", ["awaiting_reflection_prompt", "budget_exhausted", "completed"])
 def test_unbuilt_states_offer_nothing(state):
     assert sm.actions_for(replace(fresh(), state=state), T0) == []
 
@@ -248,8 +246,14 @@ def test_message_limit_per_scenario():
         applied = sm.apply_tutor_turn(a, pending.key, turn(reason_tested=False))
         assert applied is not None
         a = applied
+    # The last reply left no message to send: the scenario is in confirmation, not stuck in dialogue.
+    assert a.state == "confirming"
     with pytest.raises(DomainError) as error:
         sm.send_message(a, "回覆", T0)
+    assert (error.value.code, error.value.status) == ("SOLO_ACTION_UNAVAILABLE", 409)
+    # The limit itself is still enforced for a dialogue that somehow reaches it.
+    with pytest.raises(DomainError) as error:
+        sm.send_message(replace(a, state="in_dialogue"), "回覆", T0)
     assert (error.value.code, error.value.status) == ("SOLO_MESSAGE_LIMIT", 409)
 
 

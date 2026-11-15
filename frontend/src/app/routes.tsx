@@ -30,6 +30,8 @@ import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPag
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
+import { GuestJoinPage } from '../features/auth/GuestJoinPage'
+import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
@@ -76,6 +78,7 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
+    <Route path="/join/guest" element={<GuestJoinPage />} />
     <Route element={<RequireAuth />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />
@@ -91,6 +94,9 @@ export function AppRoutes() {
         <Route path="/scan" element={<Placeholder kind="scan" />} />
         <Route path="/account" element={<Placeholder kind="account" />} />
       </Route>
+      {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}
+      <Route path="/guest/register" element={<GuestUpgradePage />} />
+      <Route path="/guest/login" element={<GuestLoginPage />} />
     </Route>
     <Route element={<RequireAuth verified />}>
       {/* 加入流程與投影是全螢幕，不包外框 */}

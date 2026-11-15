@@ -197,7 +197,7 @@ def test_a_failed_call_leaves_the_student_in_the_review(client, tutor):
     _, replies = tutor
     _, attempt_id, view = to_confirmed_view(client, replies, RuntimeError("provider down"))
     assert view["state"] == "reviewing"
-    assert view["available_actions"] == ["submit_review"]
+    assert view["available_actions"] == ["retry_reflection_prompt", "submit_review"]
     assert len(view["scenarios"]) == 1
     # The review was never taken away: nothing is left half-made.
     assert ok(client.get(f"/api/v2/solo/attempts/{attempt_id}"))["state"] == "reviewing"

@@ -96,3 +96,13 @@
 .join-code__input::placeholder { text-transform: none; }
 .join-code .join-code__button { flex-shrink: 0; white-space: nowrap; }
 @media (max-width: 767px) { .home__hint { background: #E9E9E4; } }
+
+/* 訪客（04、G13）與併入、驗證完成的提示（G25、G26）：顏色照「提示訊息」規則卡 */
+.guest-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding: 16px 20px; border-radius: 12px; background: var(--ui-color-info-soft); color: var(--ui-color-ink); }
+.guest-card h2 { margin: 0; font-size: 16px; }
+.guest-card p { margin: 4px 0 0; color: var(--ui-color-ink-soft); }
+.guest-card--last { background: var(--ui-color-danger-soft); }
+.guest-card__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.home-notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 16px; padding: 12px 16px; border-radius: 10px; }
+.home-notice--done { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.home-notice__dismiss { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }

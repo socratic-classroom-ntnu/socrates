@@ -25,6 +25,7 @@ from app.modules.course_management.contracts import (
 )
 from app.modules.course_management import enrollment
 from app.modules.course_management.repositories import Activity, ActivityRevision, Course
+from app.modules.identity_access import service as identity
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 
@@ -378,16 +379,39 @@ def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
         "ends_at": activity.ends_at,
         "status": _status(activity, at),
         "already_enrolled": enrollment.existing(db, account, course) is not None,
-        "default_display_name": account.username,
+        "default_display_name": identity.display_name(account),
+        "allow_guest": course.allow_guest,
     }
 
 
-def public_course_name(db, activity_id: str) -> str:
-    """Course name behind a published activity link; drafts and deleted ones are not found."""
+def public_preview(db, activity_id: str, at: float) -> dict:
+    """What a published activity link shows anyone; drafts and deleted ones are not found."""
     activity = get_activity(db, activity_id)
     _published(db, activity)
     course = db.get(Course, activity.course_id)
-    return course.name
+    return {
+        "course_name": course.name,
+        "allow_guest": course.allow_guest,
+        "status": _status(activity, at),
+    }
+
+
+def join_as_new_guest(
+    db, activity: Activity, nickname: str, locale: str, at: float
+) -> tuple[str, dict]:
+    """A new guest from an activity link joins its course; nothing is left when it cannot."""
+    _published(db, activity)
+    current: ActivityStatus = _status(activity, at)
+    if current == "ended":
+        raise DomainError("ACTIVITY_ENDED", 409)
+    course = db.get(Course, activity.course_id)
+    token, view = enrollment.join_as_new_guest(db, course, nickname, locale)
+    return token, {
+        "account": view,
+        "course_id": course.id,
+        "activity_id": activity.id,
+        "activity_status": current,
+    }
 
 
 def join_by_activity(

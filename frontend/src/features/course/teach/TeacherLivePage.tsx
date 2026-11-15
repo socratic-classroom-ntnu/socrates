@@ -8,6 +8,7 @@ import { Chip, FormError } from '../../../ui'
 import '../../../styles/teach.css'
 import '../../../styles/teacher-live.css'
 import { ActivityPageHeader } from './ActivityPageHeader'
+import { StudentName } from './StudentName'
 
 type ProgressView = components['schemas']['SoloActivityProgressView']
 type Student = components['schemas']['SoloStudentProgressView']
@@ -60,6 +61,7 @@ export function TeacherLivePage() {
     if (cell.status === 'confirmed') return t('live.cells.confirmed')
     if (cell.status === 'in_dialogue') return t('live.cells.inDialogue', { count: cell.turns ?? 0 })
     if (cell.status === 'confirming') return t('live.cells.confirming')
+    if (cell.status === 'capped') return t('live.cells.capped')
     return t('live.cells.answering')
   }
 
@@ -99,14 +101,14 @@ export function TeacherLivePage() {
           </tr></thead>
           <tbody>
             {shown.map(student => <tr key={student.enrollment_id} className={student.attention ? 'live-table__attention' : undefined}>
-              <th scope="row">{student.display_name}</th>
+              <th scope="row"><StudentName student={student} /></th>
               {scenarios.map(index => {
                 const cell = student.cells[index]
                 return <td key={index}>{cell
                   ? <span className={`live-cell live-cell--${cell.status}`}>{cellLabel(cell)}</span>
                   : <span className="live-cell live-cell--not_started">{t('live.cells.notStarted')}</span>}</td>
               })}
-              <td><span className="live-cell live-cell--review">{t(`live.review.${student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'}`)}</span></td>
+              <td><span className="live-cell live-cell--review">{t(`live.review.${reviewKey(student)}`)}</span></td>
               <td>{lastActivity(student)}</td>
             </tr>)}
             {shown.length === 0 && <tr><td colSpan={scenarios.length + 3} className="live-table__empty">{t('live.empty')}</td></tr>}
@@ -121,4 +123,10 @@ export function TeacherLivePage() {
     </footer>
 
   </main>
+}
+
+/** The review column: a completed review says whether its final summary was confirmed. */
+function reviewKey(student: { review_status: string; final_status: string | null }): string {
+  if (student.review_status === 'completed') return student.final_status === 'unconfirmed' ? 'unconfirmed' : 'completed'
+  return student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'
 }

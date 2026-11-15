@@ -10,12 +10,6 @@ allowed='socrates/run2-release/v1|socrates-run2-release-'
 
 # 只在特定檔案放行的字串（檔案:字串正則）。舊名 fallback 移除時，刪掉對應的列。
 file_allowed='
-backend/app/modules/platform/env.py:RUN2_|PORTAL_AI_
-backend/tests/classroom/test_env_fallback.py:RUN2_|PORTAL_AI_
-deploy/stage/compose.yml:RUN2_
-deploy/local/compose.yml:RUN2_
-deploy/stage/.env.example:RUN2_
-docs/CLASSROOM-ARCHITECTURE.md:RUN2_|PORTAL_AI_
 AGENTS.md:backend/app/run2/|frontend/src/run2/|`run2`、`Run 2`、`Round 1`、`round1`
 '
 # 前端組員負責的名稱，文件引用時照原樣寫；前端改名後刪掉對應的字串。
@@ -50,7 +44,6 @@ if [ "${1:-}" = "--self-test" ]; then
     "a.md:7:Round 1 的流程" \
     "a.py:8:kind = \"round1_tutor\"" \
     "a.md:9:runs: [round1-e2e]" \
-    "deploy/stage/compose.yml:18:      X: \${RUN2_A:-1}" \
     "backend/app/x.py:1:os.environ['RUN2_A']" \
     "AGENTS.md:9:old home was backend/app/run2/ and app.run2.storage" | violations | cut -d: -f1-2 | tr '\n' ' ')
   want="a.yml:2 a.yml:4 a.md:5 a.md:7 a.py:8 a.md:9 backend/app/x.py:1 AGENTS.md:9 "

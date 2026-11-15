@@ -19,6 +19,7 @@ from app.modules.identity_access.email_delivery import (
     queue_delivery,
 )
 from app.modules.platform.errors import DomainError
+from app.modules.identity_access.guests import merge_guest_records
 from app.modules.identity_access.repositories import Account, EmailToken, LoginSession, Mail
 from app.modules.platform.storage import digest, transaction
 
@@ -44,10 +45,24 @@ def extend_account_view(extension: Callable[[Any, Any], dict]) -> None:
         ACCOUNT_VIEW_EXTENSIONS.append(extension)
 
 
+# A guest's username is the nickname, "-" and this many hex digits (secrets.token_hex(4)).
+GUEST_SUFFIX = 9
+
+
+def display_name(account) -> str:
+    """The name people see: a guest's nickname, a registered account's username."""
+    if account.kind == "guest":
+        return account.username[:-GUEST_SUFFIX]
+    if account.kind == "expired_guest":
+        return ""
+    return account.username
+
+
 def account_view(db, account, csrf=""):
     view = {
         "id": account.id,
         "username": account.username,
+        "display_name": display_name(account),
         "email": account.email or "",
         "email_masked": mask_recipient(account.email) if account.email else "",
         "verified": account.verified,
@@ -258,7 +273,8 @@ def register(body):
         raise DomainError("ACCOUNT_DATA_TAKEN", 409) from exc
 
 
-def login(body):
+def login(body, guest_token=None):
+    """A session for the account; a guest session on the same device hands its records over."""
     with transaction() as db:
         account = db.scalar(
             select(Account).where(
@@ -274,7 +290,9 @@ def login(body):
             HASHER.verify(account.password_hash, body.password)
         except (VerifyMismatchError, InvalidHashError) as exc:
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401) from exc
-        return _new_session(db, account)
+        merged = merge_guest_records(db, guest_token, account.id)
+        token, view = _new_session(db, account)
+        return token, {**view, "guest_merge": merged}
 
 
 def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=False):
@@ -374,19 +392,27 @@ def verification_status(account_id: str) -> dict:
         }
 
 
+def create_guest(db, nickname: str, locale: str):
+    """A guest account and its session in the caller's transaction, which commits or rolls back
+    both together with whatever else it does. Returns (session token, account view).
+
+    The username is the nickname plus a random suffix, since two students in one class may pick
+    the same nickname; display_name gives the nickname back."""
+    account = Account(
+        username=f"{nickname}-{secrets.token_hex(4)}",
+        kind="guest",
+        locale=locale,
+        guest_expires_at=time.time() + GUEST_SECONDS,
+    )
+    db.add(account)
+    db.flush()
+    return _new_session(db, account)
+
+
 def join_as_guest(body):
-    """A guest account and its session; the username is the nickname plus a random suffix,
-    since two students in one class may pick the same nickname."""
+    """A guest account and its session, on its own."""
     with transaction() as db:
-        account = Account(
-            username=f"{body.nickname}-{secrets.token_hex(4)}",
-            kind="guest",
-            locale=body.locale,
-            guest_expires_at=time.time() + GUEST_SECONDS,
-        )
-        db.add(account)
-        db.flush()
-        return _new_session(db, account)
+        return create_guest(db, body.nickname, body.locale)
 
 
 def upgrade_guest(db, account, session, body):

@@ -71,6 +71,6 @@ export function AccountMenu({ variant, navItems = [] }: { variant: 'sidebar' | '
       triggerClassName="account-menu__trigger"
     />
     {failure && <p role="alert" className="account-menu__error">{errorMessage(t, failure)}</p>}
-    {confirmingLogout && keep && <GuestLogoutDialog date={keep.date} onClose={() => setConfirmingLogout(false)} onLogout={() => { setConfirmingLogout(false); logout() }} />}
+    {confirmingLogout && keep && <GuestLogoutDialog onClose={() => setConfirmingLogout(false)} onLogout={() => { setConfirmingLogout(false); logout() }} />}
   </div>
 }

@@ -184,7 +184,7 @@ test('returns to activity QR after login', async () => {
   mockSession(null)
   open('/activities/a-1/join?from=qr#confirm')
   // 活動 QR 的登入是 J0 版面
-  await login('登入並繼續')
+  await login('登入並加入活動')
   expect(where()).toBe('/activities/a-1/join?from=qr#confirm')
   expect(await screen.findByText('join-activity-page:a-1')).toBeInTheDocument()
 })

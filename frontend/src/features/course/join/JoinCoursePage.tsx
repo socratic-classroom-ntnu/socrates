@@ -53,7 +53,7 @@ function JoinCourse({ code }: { code: string }) {
   }
   if (data.already_enrolled) return null
   if (account?.kind === 'guest' && !data.allow_guest) {
-    return <JoinLayout><GuestClosedCard kind="course" next={'/join?code=' + encodeURIComponent(code)} account={account} /></JoinLayout>
+    return <JoinLayout><GuestClosedCard kind="course" next={'/join?code=' + encodeURIComponent(code)} account={account} courseName={data.name} /></JoinLayout>
   }
 
   const displayName = name ?? data.default_display_name

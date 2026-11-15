@@ -102,6 +102,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "QUESTION_OPTION_REQUIRED": ("classroom_core",),
     "QUESTION_REQUIRED": ("classroom_core", "content_authoring"),
     "QUOTED_VIEWPOINT_REQUIRED": ("group_dialogue",),
+    "RADAR_DIMENSION_NOT_FOUND": ("solo_activity",),
+    "RADAR_NOT_READY": ("solo_activity",),
     "RESEND_WEBHOOK_FRESHNESS": ("identity_access",),
     "RESEND_WEBHOOK_JSON": ("identity_access",),
     "RESEND_WEBHOOK_SECRET_FORMAT": ("identity_access",),

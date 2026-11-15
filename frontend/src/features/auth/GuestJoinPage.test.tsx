@@ -55,27 +55,42 @@ beforeEach(async () => {
 
 // ---- J0 -----------------------------------------------------------------------------------
 
-test('J0 offers 免註冊加入 first when the course allows guests (方案 C)', async () => {
+test('J0 puts 登入並加入課程 first, then 不想註冊？, then 免註冊加入 (方案 C)', async () => {
   anonymous({ 'GET /course-join/public-preview?code=AB12': { course_name: '哲學導論', allow_guest: true } })
   openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
   const guestLink = await screen.findByRole('link', { name: /免註冊加入/ })
   expect(guestLink).toHaveAttribute('href', '/join/guest?next=' + encodeURIComponent('/join?code=AB12'))
   const login = screen.getByRole('button', { name: '登入並加入課程' })
-  // Fields first, then every button at the bottom of the card, the guest one first.
-  expect(screen.getByLabelText('密碼').compareDocumentPosition(guestLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-  expect(guestLink.compareDocumentPosition(login) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  // Fields first, the outlined login, the divider, then the solid guest button (design 01).
+  const divider = screen.getByText('不想註冊？')
+  expect(screen.getByLabelText('密碼').compareDocumentPosition(login) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(login.compareDocumentPosition(divider) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(divider.compareDocumentPosition(guestLink) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByText('第一次來？不必填 Email，也能開始。')).toBeInTheDocument()
 })
 
 test.each([
-  ['a course that does not allow guests', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': { course_name: '哲學導論', allow_guest: false } }],
-  ['an activity that has ended', '/activities/a-1/join', { 'GET /activities/a-1/public-preview': { course_name: '哲學導論', allow_guest: true, status: 'ended' } }],
-  ['a preview that cannot be read', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': () => { throw new ApiError(429, 'RATE_LIMITED') } }],
-])('J0 is login only (G06) for %s', async (_, next, routes) => {
+  ['a course that does not allow guests', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': { course_name: '哲學導論', allow_guest: false } }, '登入以加入課程', '這門課需要登入或註冊學生帳號才能加入'],
+  ['an activity of a course that does not allow guests', '/activities/a-1/join', { 'GET /activities/a-1/public-preview': { course_name: '哲學導論', allow_guest: false, status: 'open' } }, '登入以加入活動', '這個活動的課程需要登入或註冊學生帳號才能加入'],
+])('J0 is login only with the G06 notice for %s', async (_, next, routes, heading, notice) => {
   anonymous(routes)
   openApp('/login?next=' + encodeURIComponent(next))
-  expect(await screen.findByRole('heading', { name: '登入' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
+  expect(screen.getByText(notice)).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /免註冊加入/ })).toBeNull()
+  expect(screen.queryByText('不想註冊？')).toBeNull()
+})
+
+test.each([
+  ['an activity that has ended', '/activities/a-1/join', { 'GET /activities/a-1/public-preview': { course_name: '哲學導論', allow_guest: true, status: 'ended' } }],
+  ['a preview that cannot be read', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': () => { throw new ApiError(429, 'RATE_LIMITED') } }],
+])('J0 is login only, without a claim about the course, for %s', async (_, next, routes) => {
+  anonymous(routes)
+  openApp('/login?next=' + encodeURIComponent(next))
+  expect(await screen.findByRole('heading', { name: /^加入(課程|活動)$/ })).toBeInTheDocument()
   await act(async () => { await Promise.resolve() })
   expect(screen.queryByRole('link', { name: /免註冊加入/ })).toBeNull()
+  expect(screen.queryByText(/需要登入或註冊/)).toBeNull()
 })
 
 // ---- the name page ------------------------------------------------------------------------
@@ -88,14 +103,13 @@ function openNamePage(next = '/join?code=AB12', routes: Routes = {}) {
 
 test('the banner on the name page says joining, not logging in', async () => {
   openNamePage()
-  const banner = await screen.findByText('取好名字就會加入')
-  expect(banner.closest('[role=status]')).toHaveTextContent('哲學導論')
-  expect(screen.queryByText('登入後就會加入')).toBeNull()
+  const banner = await screen.findByText('由課程 QR Code 進入')
+  expect(banner.closest('[role=status]')).toHaveTextContent('正在加入：哲學導論')
 })
 
 test('the name is pre-filled from the word lists and 換一個 picks another', async () => {
   openNamePage()
-  const input = await screen.findByLabelText('你的名字') as HTMLInputElement
+  const input = await screen.findByLabelText('訪客名字') as HTMLInputElement
   const first = input.value
   const words = GUEST_WORDS['zh-Hant']
   expect(words.adjectives.some(word => first.startsWith(word)) && words.nouns.some(word => first.endsWith(word))).toBe(true)
@@ -117,22 +131,23 @@ test('every locale has at least 20 adjectives and 20 nouns', () => {
 
 test('switching the language changes the page at once', async () => {
   openNamePage()
-  await screen.findByRole('heading', { name: '取個名字，就能加入課程' })
-  await act(async () => { fireEvent.change(screen.getByLabelText('語言'), { target: { value: 'en' } }) })
-  expect(await screen.findByLabelText('Your name')).toBeInTheDocument()
-  expect(screen.getByRole('heading', { name: 'Pick a name to join the course' })).toBeInTheDocument()
+  await screen.findByRole('heading', { name: '免註冊加入' })
+  await act(async () => { fireEvent.change(screen.getByLabelText('使用語言'), { target: { value: 'en' } }) })
+  expect(await screen.findByLabelText('Guest name')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Join without an account' })).toBeInTheDocument()
   await act(async () => { await applyLocale('zh-Hant') })
 })
 
 test('a blank name (G08) and one over 40 characters (G09) are stopped before sending', async () => {
   const calls = openNamePage()
-  const input = await screen.findByLabelText('你的名字')
+  const input = await screen.findByLabelText('訪客名字')
   fireEvent.change(input, { target: { value: '   ' } })
   fireEvent.click(screen.getByRole('button', { name: /^加入/ }))
-  expect(await screen.findByText('請取一個名字。')).toBeInTheDocument()
+  expect(await screen.findByText('請輸入名字（1～40 字）')).toBeInTheDocument()
   fireEvent.change(input, { target: { value: '字'.repeat(41) } })
   fireEvent.click(screen.getByRole('button', { name: /^加入/ }))
-  expect(await screen.findByText('名字最多 40 個字。')).toBeInTheDocument()
+  expect(await screen.findByText('名字最多 40 字，請縮短後再加入')).toBeInTheDocument()
+  expect(screen.getByText(/訪客名字 · 41\/40/)).toBeInTheDocument()
   expect(calls.some(call => call.key === 'POST /course-join/guest')).toBe(false)
 })
 
@@ -143,7 +158,7 @@ test('an emoji counts as one character, as the backend counts it', () => {
 
 test('joining a course goes straight to the course page with the chosen name and language', async () => {
   const calls = openNamePage('/join?code=AB12', { 'POST /course-join/guest': courseJoined })
-  const input = await screen.findByLabelText('你的名字')
+  const input = await screen.findByLabelText('訪客名字')
   fireEvent.change(input, { target: { value: '  小明  ' } })
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: /^加入/ })) })
   await waitFor(() => expect(where()).toBe('/learn/courses/c-1'))
@@ -179,7 +194,7 @@ test('a network failure (G11) keeps the name and lets the student send again', a
       return courseJoined
     },
   })
-  const input = await screen.findByLabelText('你的名字')
+  const input = await screen.findByLabelText('訪客名字')
   fireEvent.change(input, { target: { value: '小明' } })
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: /^加入/ })) })
   expect(await screen.findByText(/沒有連上網路/)).toBeInTheDocument()
@@ -188,12 +203,15 @@ test('a network failure (G11) keeps the name and lets the student send again', a
   await waitFor(() => expect(where()).toBe('/learn/courses/c-1'))
 })
 
-test('the teacher turning guests off meanwhile shows G12 in the card with login and register', async () => {
+test('the teacher turning guests off meanwhile continues on the login page with the G12 notice', async () => {
   openNamePage('/join?code=AB12', { 'POST /course-join/guest': () => { throw new ApiError(403, 'GUEST_JOIN_DISABLED') } })
   await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /^加入/ })) })
-  const notice = await screen.findByRole('alert')
-  expect(notice).toHaveTextContent('老師剛剛關閉了免註冊加入')
-  expect(screen.getByRole('link', { name: '登入' })).toHaveAttribute('href', '/login?next=' + encodeURIComponent('/join?code=AB12'))
+  expect(await screen.findByRole('heading', { name: '登入以加入課程' })).toBeInTheDocument()
+  expect(window.location.pathname).toBe('/login')
+  expect(screen.getByText('課程的加入方式已更新，請使用學生帳號繼續。')).toBeInTheDocument()
+  expect(screen.getByText('這門課目前需要登入或註冊才能加入')).toBeInTheDocument()
+  expect(screen.queryByText('不想註冊？')).toBeNull()
+  expect(new URLSearchParams(window.location.search).get('next')).toBe('/join?code=AB12')
 })
 
 test('the fields are disabled while sending (G10)', async () => {
@@ -201,7 +219,7 @@ test('the fields are disabled while sending (G10)', async () => {
   openNamePage('/join?code=AB12', { 'POST /course-join/guest': () => new Promise(resolve => { release = resolve }) })
   fireEvent.click(await screen.findByRole('button', { name: /^加入/ }))
   expect(await screen.findByRole('button', { name: /加入中/ })).toBeDisabled()
-  expect(screen.getByLabelText('你的名字')).toBeDisabled()
+  expect(screen.getByLabelText('訪客名字')).toBeDisabled()
   await act(async () => { release(courseJoined) })
 })
 

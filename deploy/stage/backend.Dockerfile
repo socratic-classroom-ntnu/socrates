@@ -6,6 +6,8 @@ ADD --chmod=644 --checksum=sha256:ca456c06b3a9505ddfd9131408916dd79290368331e7d7
     https://huggingface.co/intfloat/multilingual-e5-small/resolve/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/model.onnx /opt/models/multilingual-e5-small/model.onnx
 ADD --chmod=644 --checksum=sha256:0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39 \
     https://huggingface.co/intfloat/multilingual-e5-small/resolve/614241f622f53c4eeff9890bdc4f31cfecc418b3/onnx/tokenizer.json /opt/models/multilingual-e5-small/tokenizer.json
+# ADD --chmod 也套用到它建的目錄，少了 x 就只有 root 讀得到模型。
+RUN chmod 755 /opt/models /opt/models/multilingual-e5-small
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ ./

@@ -40,8 +40,8 @@ def _model() -> tuple[Tokenizer, Any]:
             tokenizer.enable_padding(pad_id=1, pad_token="<pad>")
             tokenizer.enable_truncation(MAX_TOKENS)
             options = onnxruntime.SessionOptions()
-            # A container's CPU limit is not what the library sees; 0 lets it use every core.
-            options.intra_op_num_threads = int(os.environ.get("EMBEDDING_THREADS", "0"))
+            # 0 would size the pool from the node's cores, not the container's CPU limit.
+            options.intra_op_num_threads = int(os.environ.get("EMBEDDING_THREADS", "1"))
             session = onnxruntime.InferenceSession(
                 str(directory / "model.onnx"), options, providers=["CPUExecutionProvider"]
             )

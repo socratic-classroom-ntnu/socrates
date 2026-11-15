@@ -7,7 +7,7 @@ import { safeNext } from '../../shared/next'
 import { Button, ButtonLink, Field, FieldError, FieldHint } from '../../ui'
 import { JoinLayout } from './JoinLayout'
 import { useAuth } from './AuthContext'
-import { markUpgraded, useKeepUntil } from './GuestPanels'
+import { leaveHomeNotice, useKeepUntil } from './GuestPanels'
 import { type Field as FormField, keepPasswordChars, LOGIN_PASSWORD_MAX, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
 
 type Issue = Problem | { field: FormField; code: string }
@@ -56,8 +56,9 @@ export function GuestUpgradePage() {
     setBusy(true)
     setFailure(null)
     try {
-      signIn(await api('/auth/guest/upgrade', 'POST', body))
-      markUpgraded()
+      const view = await api('/auth/guest/upgrade', 'POST', body)
+      signIn(view)
+      leaveHomeNotice('upgraded', view.id)
       setDone(true)
     } catch (error) {
       const code = errorCode(error)
@@ -161,8 +162,9 @@ export function GuestLoginPage() {
         setRefused(true)
         return
       }
-      const target = view.guest_merge === 'MERGED' && next === '/' ? '/?merged=1' : next
-      setDone(view.verified ? target : '/verify?next=' + encodeURIComponent(target))
+      // G25 waits for this account on home; it is not put in the address, where a later login's `next` could carry it.
+      if (view.guest_merge === 'MERGED' && next === '/') leaveHomeNotice('merged', view.id)
+      setDone(view.verified ? next : '/verify?next=' + encodeURIComponent(next))
     } catch (error) {
       setFailure(error)
     } finally {

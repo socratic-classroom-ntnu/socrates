@@ -5,7 +5,7 @@ import { reportSessionLost } from '../../contract/sessionEvents'
 import { AppRoutes } from '../../app/routes'
 import { applyLocale } from '../../i18n'
 import { AuthProvider } from './AuthContext'
-import { UPGRADED_KEY } from './GuestPanels'
+import { HOME_NOTICE_KEY } from './GuestPanels'
 import { guestKeepUntil } from './guestExpiry'
 
 jest.mock('../../contract/classroomClient', () => {
@@ -189,7 +189,7 @@ test('registering keeps the guest records and goes to email verification first',
   await fillRegister()
   await waitFor(() => expect(window.location.pathname).toBe('/verify'))
   expect(calls).toContainEqual({ key: 'POST /auth/guest/upgrade', body: { username: 'ming', email: 'ming@example.org', password: 'Socratic-123' } })
-  expect(localStorage.getItem(UPGRADED_KEY)).toBe('1')
+  expect(JSON.parse(localStorage.getItem(HOME_NOTICE_KEY) ?? 'null')).toEqual({ kind: 'upgraded', accountId: 'u-1' })
 })
 
 test('an email that is already registered shows only the G19 alert and the two ways out', async () => {
@@ -232,12 +232,28 @@ test('an email already registered offers logging in with it to keep the records 
 })
 
 test('after verifying, home says the guest records were kept (G26), once', async () => {
-  localStorage.setItem(UPGRADED_KEY, '1')
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'u-1' }))
   serve(registered)
   openApp('/')
   expect(await screen.findByText('Email 驗證完成，訪客時的紀錄都保留下來了。')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '知道了' }))
-  expect(localStorage.getItem(UPGRADED_KEY)).toBeNull()
+  expect(localStorage.getItem(HOME_NOTICE_KEY)).toBeNull()
+})
+
+test('a notice left for another account is not shown and is dropped', async () => {
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'someone-else' }))
+  serve(registered)
+  openApp('/')
+  expect(await screen.findByText('晚安，ming', { exact: false })).toBeInTheDocument()
+  expect(screen.queryByText('Email 驗證完成，訪客時的紀錄都保留下來了。')).toBeNull()
+  await waitFor(() => expect(localStorage.getItem(HOME_NOTICE_KEY)).toBeNull())
+})
+
+test('?merged=1 in the address (for example carried through a login next) shows nothing', async () => {
+  serve(registered)
+  openApp('/?merged=1')
+  await screen.findByText('晚安，ming', { exact: false })
+  expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
 })
 
 // ---- logging in to merge (G20–G25) --------------------------------------------------------
@@ -249,12 +265,15 @@ async function logIn(password = 'Socratic-123') {
 }
 
 test('logging in moves the guest records and home says so only when the backend moved them (G25)', async () => {
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'u-1' }))
   let me: unknown = guest()
   serve(() => me, { 'POST /auth/login': () => { me = registered; return { ...registered, guest_merge: 'MERGED' } } })
   openApp('/guest/login')
   await logIn()
   expect(await screen.findByText('訪客的課程和對話已經併入你的帳號。')).toBeInTheDocument()
-  expect(where()).toBe('/?merged=1')
+  expect(where()).toBe('/')
+  // One notice at a time: the merge replaces any notice still waiting.
+  expect(document.querySelectorAll('.home-notice')).toHaveLength(1)
 })
 
 test('nothing was merged (expired guest, rolled back hook): login is plain, no G25', async () => {

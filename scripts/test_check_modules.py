@@ -46,3 +46,34 @@ def test_violation_kind_ignores_paths():
 def test_dynamic_import_is_detected_by_call_not_by_text():
     assert check_modules.calls_import_module(ast.parse("import importlib\nimportlib.import_module('app.x')\n"))
     assert not check_modules.calls_import_module(ast.parse('"""不要用 import_module() 繞過檢查"""\n'))
+
+
+def test_module_doc_does_not_treat_same_id_on_other_side_as_contract_consumer():
+    spec = {
+        "owners": {"backend": "後端", "frontend": "前端", "visual": "視覺"},
+        "contracts": [
+            {
+                "name": "雷達圖",
+                "backend": "solo-activity",
+                "frontend": ["teacher-analytics"],
+                "state": "後端 ViewModel 已定義；端點待實作",
+            }
+        ],
+    }
+    frontend_solo = {
+        "id": "solo-activity",
+        "name": "單人活動",
+        "status": "ok",
+        "paths": ["frontend/src/features/solo-activity/"],
+        "uses": ["contract"],
+        "todo": [],
+    }
+
+    rendered = check_modules.module_doc(
+        frontend_solo,
+        "frontend",
+        spec,
+        {"backend": [], "frontend": []},
+    )
+
+    assert "雷達圖" not in rendered

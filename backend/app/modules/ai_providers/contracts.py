@@ -155,3 +155,13 @@ class RevisionView(Strict):
     provider_profiles: bool
     classroom_owner_routing: bool
     observed_at: float
+
+
+# --- Local embeddings (the radar's vector route) ---
+
+# multilingual-e5-small's output size.
+EMBEDDING_DIMENSIONS = 384
+
+
+class EmbeddingUnavailable(RuntimeError):
+    """The embedding model files are not present (a dev machine or an image built without them)."""

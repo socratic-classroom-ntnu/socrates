@@ -28,7 +28,6 @@
 
 契約：
 - 公開設定（/public-config）（✅）
-- 人像模型清單（/avatar-packs/catalog.json）（✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

@@ -60,6 +60,7 @@ def test_logging_in_moves_the_guest_records_and_ends_the_guest_session(client):
     guest_id, guest_cookie = join(client)
     r = client.post("/api/v2/auth/login", json=LOGIN)
     assert r.status_code == 200, r.text
+    assert r.json()["guest_merge"] == "MERGED"
     assert records.moves == [(guest_id, client.account_id)]
     assert client.get("/api/v2/auth/me").json()["id"] == client.account_id
     client.cookies.set("socrates_session", guest_cookie)
@@ -69,12 +70,12 @@ def test_logging_in_moves_the_guest_records_and_ends_the_guest_session(client):
 def test_nothing_moves_without_a_live_guest_session(client):
     records = Records()
     register_guest_hook("solo-activity", records)
-    assert client.post("/api/v2/auth/login", json=LOGIN).status_code == 200
+    assert client.post("/api/v2/auth/login", json=LOGIN).json()["guest_merge"] == "NONE"
     client.cookies.clear()
     guest_id, _ = join(client)
     with storage.transaction() as db:
         db.get(Account, guest_id).guest_expires_at = time.time() - 1
-    assert client.post("/api/v2/auth/login", json=LOGIN).status_code == 200
+    assert client.post("/api/v2/auth/login", json=LOGIN).json()["guest_merge"] == "NONE"
     bad = client.post("/api/v2/auth/login", json={**LOGIN, "password": "Wrong-123456"})
     assert bad.status_code == 401
     assert records.moves == []
@@ -87,6 +88,7 @@ def test_a_failing_hook_rolls_the_merge_back_but_not_the_login(client):
     guest_id, guest_cookie = join(client)
     r = client.post("/api/v2/auth/login", json=LOGIN)
     assert r.status_code == 200 and r.json()["id"] == client.account_id
+    assert r.json()["guest_merge"] == "NONE"
     # Rolled back with the hooks: the guest session was not ended either.
     client.cookies.set("socrates_session", guest_cookie)
     assert client.get("/api/v2/auth/me").json()["id"] == guest_id

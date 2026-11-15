@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, within } from '@testing-library/react'
 import { mockApi, renderAt } from '../../../testing/pageHarness'
 import { JoinCodeForm } from '../home/JoinCodeForm'
 import { INTRO_SEEN_KEY } from './introSeen'
@@ -168,23 +168,23 @@ test('coming back from a camera that cannot open shows S7 with the other ways in
   expect(screen.getByTestId('where').dataset.state).toBe('')
 })
 
+const closeWays = {
+  'the code button': (dialog: HTMLElement) => fireEvent.click(within(dialog).getByRole('button', { name: '改用輸入代碼' })),
+  'the close button': (dialog: HTMLElement) => fireEvent.click(within(dialog).getByRole('button', { name: '關閉' })),
+  'Escape': () => fireEvent.keyDown(document, { key: 'Escape' }),
+  'the backdrop': (dialog: HTMLElement) => fireEvent.mouseDown(dialog.parentElement!),
+}
+
 test.each([
-  ['S6', 'denied' as const, s6],
-  ['S7', 'unavailable' as const, s7],
-])('%s: every way of closing moves focus to the code field', async (_, notice, dialog) => {
-  for (const close of [
-    () => fireEvent.click(within(dialog()!).getByRole('button', { name: '改用輸入代碼' })),
-    () => fireEvent.click(within(dialog()!).getByRole('button', { name: '關閉' })),
-    () => fireEvent.keyDown(document, { key: 'Escape' }),
-    () => fireEvent.mouseDown(dialog()!.parentElement!),
-  ]) {
-    await arriveWith(notice)
-    close()
-    expect(dialog()).toBeNull()
-    expect(screen.getByLabelText('課程代碼')).toHaveFocus()
-    expect(where()).toBe('/')
-    cleanup()
-  }
+  ...Object.keys(closeWays).map(way => ['S6', way, 'denied']),
+  ...Object.keys(closeWays).map(way => ['S7', way, 'unavailable']),
+] as ['S6' | 'S7', keyof typeof closeWays, 'denied' | 'unavailable'][])('%s closed with %s moves focus to the code field', async (screenName, way, notice) => {
+  const dialog = screenName === 'S6' ? s6 : s7
+  await arriveWith(notice)
+  closeWays[way](dialog()!)
+  expect(dialog()).toBeNull()
+  expect(screen.getByLabelText('課程代碼')).toHaveFocus()
+  expect(where()).toBe('/')
 })
 
 test('S6 retry with the camera still refused shows S6 again', async () => {

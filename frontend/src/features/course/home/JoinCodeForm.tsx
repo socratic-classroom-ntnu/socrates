@@ -1,4 +1,4 @@
-import { type FormEvent, useId, useState } from 'react'
+import { type FormEvent, useId, useRef, useState } from 'react'
 import { useT } from '../../../i18n/useT'
 import { Button } from '../../../ui'
 import { ScanButton } from '../scan/ScanButton'
@@ -9,6 +9,7 @@ export function JoinCodeForm({ variant }: { variant: 'inline' | 'phone' }) {
   const { t } = useT('home')
   const id = useId()
   const [value, setValue] = useState('')
+  const codeField = useRef<HTMLInputElement>(null)
   const { lookUp, busy, failure, notFound, clearFailure } = useJoinCode()
 
   function submit(event: FormEvent) {
@@ -18,9 +19,10 @@ export function JoinCodeForm({ variant }: { variant: 'inline' | 'phone' }) {
 
   return <form className={`join-code join-code--${variant}`} onSubmit={submit} noValidate>
     <div className="join-code__row">
-      {variant === 'phone' && <ScanButton className="join-code__button join-code__scan" />}
+      {variant === 'phone' && <ScanButton className="join-code__button join-code__scan" codeField={codeField} />}
       <label htmlFor={id} className="sr-only">{t('join.label')}</label>
       <input
+        ref={codeField}
         id={id}
         className="join-code__input"
         value={value}

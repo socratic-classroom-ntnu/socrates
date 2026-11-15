@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { mockApi, renderAt } from '../../../testing/pageHarness'
 import { JoinCodeForm } from '../home/JoinCodeForm'
 import { INTRO_SEEN_KEY } from './introSeen'
@@ -124,4 +124,90 @@ test('the scan control is a button, not a link', async () => {
   cameraState('prompt')
   await openHome()
   expect(screen.queryByRole('link', { name: '掃描' })).toBeNull()
+})
+
+// S6、S7：首頁上的對話框
+const s6 = () => screen.queryByRole('dialog', { name: '需要相機權限' })
+const s7 = () => screen.queryByRole('dialog', { name: '相機暫時無法開啟' })
+
+async function arriveWith(scanNotice: 'denied' | 'unavailable') {
+  mockApi({})
+  renderAt({ pathname: '/', state: { scanNotice } }, '/', <JoinCodeForm variant="phone" />)
+  await screen.findByRole('button', { name: '掃描' })
+}
+
+test('a camera already refused stays home and shows S6 with the steps to allow it again', async () => {
+  cameraState('denied')
+  await tapScan()
+  const dialog = s6()
+  expect(dialog).not.toBeNull()
+  expect(dialog).toHaveTextContent('允許此網站使用相機，才能掃描老師提供的 QR。也可以改用輸入代碼。')
+  expect(dialog).toHaveTextContent('iPhone（Safari）')
+  expect(dialog).toHaveTextContent('網址列的網站選單 → 網站設定 → 相機 → 允許，再重新整理。')
+  expect(dialog).toHaveTextContent('Android（Chrome）')
+  expect(dialog).toHaveTextContent('網址列的網站資訊 → 權限 → 相機 → 允許，再重新整理。')
+  expect(where()).toBe('/')
+  expect(getUserMedia).not.toHaveBeenCalled()
+})
+
+test('coming back from a refused camera shows S6, and a reload does not show it again', async () => {
+  await arriveWith('denied')
+  expect(s6()).not.toBeNull()
+  expect(screen.getByTestId('where').dataset.state).toBe('')
+})
+
+test('coming back from a camera that cannot open shows S7 with the other ways in', async () => {
+  await arriveWith('unavailable')
+  const dialog = s7()
+  expect(dialog).not.toBeNull()
+  expect(dialog).toHaveTextContent('可能是裝置或瀏覽器不支援、被其他 App 占用，或等待 10 秒仍沒有畫面。')
+  expect(dialog).toHaveTextContent('用手機相機直接掃描')
+  expect(dialog).toHaveTextContent('開啟手機內建相機 App，對準老師提供的 QR。')
+  expect(dialog).toHaveTextContent('改用手機瀏覽器')
+  expect(dialog).toHaveTextContent('若從 LINE、Facebook 等 App 內開啟，改以 Safari 或 Chrome。')
+  expect(screen.getByTestId('where').dataset.state).toBe('')
+})
+
+test.each([
+  ['S6', 'denied' as const, s6],
+  ['S7', 'unavailable' as const, s7],
+])('%s: every way of closing moves focus to the code field', async (_, notice, dialog) => {
+  for (const close of [
+    () => fireEvent.click(within(dialog()!).getByRole('button', { name: '改用輸入代碼' })),
+    () => fireEvent.click(within(dialog()!).getByRole('button', { name: '關閉' })),
+    () => fireEvent.keyDown(document, { key: 'Escape' }),
+    () => fireEvent.mouseDown(dialog()!.parentElement!),
+  ]) {
+    await arriveWith(notice)
+    close()
+    expect(dialog()).toBeNull()
+    expect(screen.getByLabelText('課程代碼')).toHaveFocus()
+    expect(where()).toBe('/')
+    cleanup()
+  }
+})
+
+test('S6 retry with the camera still refused shows S6 again', async () => {
+  cameraState('denied')
+  await arriveWith('denied')
+  await act(async () => { fireEvent.click(within(s6()!).getByRole('button', { name: '重試' })) })
+  expect(s6()).not.toBeNull()
+  expect(where()).toBe('/')
+})
+
+test('S6 retry after allowing the camera in settings goes to the scan page', async () => {
+  cameraState('granted')
+  await arriveWith('denied')
+  await act(async () => { fireEvent.click(within(s6()!).getByRole('button', { name: '重試' })) })
+  expect(s6()).toBeNull()
+  expect(where()).toBe('/scan')
+})
+
+test('S7 retry goes back to the scan page', async () => {
+  cameraState('prompt')
+  localStorage.setItem(INTRO_SEEN_KEY, '1')
+  await arriveWith('unavailable')
+  await act(async () => { fireEvent.click(within(s7()!).getByRole('button', { name: '重試' })) })
+  expect(s7()).toBeNull()
+  expect(where()).toBe('/scan')
 })

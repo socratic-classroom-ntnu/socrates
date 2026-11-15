@@ -31,6 +31,26 @@ const home: Shape<typeof zhHant> = {
       cancel: '取消',
       allow: '允许',
     },
+    problem: {
+      useCode: '改用输入代码',
+      retry: '重试',
+    },
+    denied: {
+      title: '需要相机权限',
+      body: '允许此网站使用相机，才能扫描老师提供的二维码。也可以改用输入代码。',
+      iphoneTitle: 'iPhone（Safari）',
+      iphoneSteps: '地址栏的网站菜单 → 网站设置 → 相机 → 允许，然后刷新页面。',
+      androidTitle: 'Android（Chrome）',
+      androidSteps: '地址栏的查看网站信息 → 权限 → 相机 → 允许，然后刷新页面。',
+    },
+    unavailable: {
+      title: '相机暂时无法打开',
+      body: '可能是设备或浏览器不支持、被其他 App 占用，或等待 10 秒仍没有画面。',
+      cameraTitle: '用手机相机直接扫描',
+      cameraBody: '打开手机自带的相机 App，对准老师提供的二维码。',
+      browserTitle: '改用手机浏览器',
+      browserBody: '若从 LINE、Facebook 等 App 内打开，改用 Safari 或 Chrome。',
+    },
     page: {
       openingTitle: '正在打开相机…',
       openingBody: '相机画面出现后，即可对准二维码。',

@@ -31,6 +31,26 @@ const home: Shape<typeof zhHant> = {
       cancel: 'Cancel',
       allow: 'Allow',
     },
+    problem: {
+      useCode: 'Enter a code instead',
+      retry: 'Try again',
+    },
+    denied: {
+      title: 'Camera access needed',
+      body: 'Allow this site to use the camera to scan the QR code from your teacher. You can also enter a code instead.',
+      iphoneTitle: 'iPhone (Safari)',
+      iphoneSteps: 'In the address bar, tap the Page Menu button > Website Settings > Camera > Allow, then reload the page.',
+      androidTitle: 'Android (Chrome)',
+      androidSteps: 'In the address bar, tap View site information > Permissions > Camera > Allow, then reload the page.',
+    },
+    unavailable: {
+      title: "The camera can't open right now",
+      body: 'Your device or browser may not support it, another app may be using the camera, or there was no picture after 10 seconds.',
+      cameraTitle: "Scan with your phone's camera",
+      cameraBody: "Open your phone's built-in Camera app and point it at the QR code from your teacher.",
+      browserTitle: 'Use your phone browser',
+      browserBody: 'If you opened this inside an app such as LINE or Facebook, open it in Safari or Chrome instead.',
+    },
     page: {
       openingTitle: 'Opening the camera…',
       openingBody: 'Once the camera picture appears, point it at the QR code.',

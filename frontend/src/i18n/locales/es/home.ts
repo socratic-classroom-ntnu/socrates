@@ -31,6 +31,26 @@ const home: Shape<typeof zhHant> = {
       cancel: 'Cancelar',
       allow: 'Permitir',
     },
+    problem: {
+      useCode: 'Escribir un código',
+      retry: 'Reintentar',
+    },
+    denied: {
+      title: 'Se necesita acceso a la cámara',
+      body: 'Permite que este sitio use la cámara para escanear el código QR del profesor. También puedes escribir un código.',
+      iphoneTitle: 'iPhone (Safari)',
+      iphoneSteps: 'En la barra de direcciones, toca el botón Menú de la página > Configuración del sitio web > Cámara > Permitir y vuelve a cargar la página.',
+      androidTitle: 'Android (Chrome)',
+      androidSteps: 'En la barra de direcciones, toca Ver información del sitio > Permisos > Cámara > Permitir y vuelve a cargar la página.',
+    },
+    unavailable: {
+      title: 'No se puede abrir la cámara ahora',
+      body: 'Puede que el dispositivo o el navegador no lo admitan, que otra app esté usando la cámara o que no haya imagen después de 10 segundos.',
+      cameraTitle: 'Escanea con la cámara del teléfono',
+      cameraBody: 'Abre la app Cámara del teléfono y apunta al código QR del profesor.',
+      browserTitle: 'Usa el navegador del teléfono',
+      browserBody: 'Si lo abriste dentro de una app como LINE o Facebook, ábrelo en Safari o Chrome.',
+    },
     page: {
       openingTitle: 'Abriendo la cámara…',
       openingBody: 'Cuando aparezca la imagen de la cámara, apunta al código QR.',

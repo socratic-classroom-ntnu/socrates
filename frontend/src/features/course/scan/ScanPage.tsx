@@ -35,10 +35,11 @@ export function ScanPage() {
   const foundTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => () => clearTimeout(foundTimer.current), [])
 
+  // 回首頁一律回「我學的課」：掃描按鈕和 S6／S7 只在那個分頁，只教課的帳號預設會落在「我教的課」，對話框就跟著不見
   function leave(notice?: ScanNotice) {
     clearTimeout(foundTimer.current)
     const state: ScanNoticeState | undefined = notice ? { scanNotice: notice } : undefined
-    navigate('/', { replace: true, state })
+    navigate('/?tab=learn', { replace: true, state })
   }
 
   useCamera(video, () => setPhase('scanning'), leave)

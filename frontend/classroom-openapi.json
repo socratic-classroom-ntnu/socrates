@@ -2438,6 +2438,97 @@
         "title": "DiscoveredModel",
         "type": "object"
       },
+      "FinalSummaryPointView": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sources"
+        ],
+        "title": "FinalSummaryPointView",
+        "type": "object"
+      },
+      "FinalSummaryView": {
+        "additionalProperties": false,
+        "description": "The whole attempt's line of thought, written from the confirmed stages (O6).",
+        "properties": {
+          "final_position": {
+            "title": "Final Position",
+            "type": "string"
+          },
+          "open_question": {
+            "title": "Open Question",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/FinalSummaryPointView"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reasoning_style": {
+            "title": "Reasoning Style",
+            "type": "string"
+          },
+          "trajectory": {
+            "items": {
+              "$ref": "#/components/schemas/FinalTrajectoryStepView"
+            },
+            "title": "Trajectory",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points",
+          "trajectory",
+          "final_position",
+          "reasoning_style",
+          "open_question"
+        ],
+        "title": "FinalSummaryView",
+        "type": "object"
+      },
+      "FinalTrajectoryStepView": {
+        "additionalProperties": false,
+        "description": "The student's position in one scenario of the sequence, oldest first.",
+        "properties": {
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "shift_reason": {
+            "title": "Shift Reason",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "position",
+          "shift_reason",
+          "sources"
+        ],
+        "title": "FinalTrajectoryStepView",
+        "type": "object"
+      },
       "GroupActionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -5500,6 +5591,21 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
           "reason_summary": {
             "title": "Reason Summary",
             "type": "string"
@@ -5518,7 +5624,8 @@
           "confirmed_scenarios",
           "current_position",
           "reason_summary",
-          "relevant_conditions"
+          "relevant_conditions",
+          "final_status"
         ],
         "title": "SoloAnalysisStudentView",
         "type": "object"
@@ -5573,7 +5680,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -5662,6 +5770,46 @@
           "display_name": {
             "title": "Display Name",
             "type": "string"
+          },
+          "final_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Digest"
+          },
+          "final_revised": {
+            "title": "Final Revised",
+            "type": "boolean"
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "final_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "id": {
             "title": "Id",
@@ -5776,6 +5924,10 @@
           "revising",
           "rejected_summary",
           "notice",
+          "final_summary",
+          "final_digest",
+          "final_status",
+          "final_revised",
           "available_actions"
         ],
         "title": "SoloAttemptView",
@@ -5787,6 +5939,10 @@
           "created_at": {
             "title": "Created At",
             "type": "number"
+          },
+          "final_feedback": {
+            "title": "Final Feedback",
+            "type": "boolean"
           },
           "id": {
             "title": "Id",
@@ -5852,7 +6008,8 @@
           "text",
           "created_at",
           "move",
-          "revise_hint"
+          "revise_hint",
+          "final_feedback"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -6058,6 +6215,21 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
           "last_activity_at": {
             "anyOf": [
               {
@@ -6081,7 +6253,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -6093,6 +6266,7 @@
           "overall",
           "cells",
           "review_status",
+          "final_status",
           "last_activity_at",
           "attention"
         ],

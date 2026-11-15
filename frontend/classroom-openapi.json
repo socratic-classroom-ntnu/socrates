@@ -120,6 +120,11 @@
             "title": "Csrf Token",
             "type": "string"
           },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -3516,6 +3521,11 @@
           },
           "csrf_token": {
             "title": "Csrf Token",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
             "type": "string"
           },
           "email": {

@@ -37,6 +37,7 @@ const home: Shape<typeof zhHant> = {
       hint: 'Coloca el código QR dentro del marco para escanearlo automáticamente',
       aimTitle: 'Apunta al código QR que muestra el profesor',
       foundTitle: 'Escaneado',
+      unknown: 'Este no es un código QR de un curso o actividad de este sitio',
       useCode: 'Escribir un código',
     },
   },

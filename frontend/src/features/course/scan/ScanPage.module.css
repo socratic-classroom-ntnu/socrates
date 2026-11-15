@@ -33,8 +33,10 @@
 /* 掃描時不留左右邊距：框寬的 66% 要以整個螢幕寬來算 */
 .page:not([data-phase="opening"]) .middle { padding: 0; }
 
-/* 對準框：寬是螢幕的 66%，空間不夠高時跟著縮，比例不變、保持置中（258×218 是設計稿 390 寬時的尺寸） */
-.frame { position: relative; aspect-ratio: 258 / 218; width: min(66cqw, 82cqh * 258 / 218); }
+/* 對準框：寬是螢幕的 66%，空間不夠高時跟著縮，比例不變、保持置中（258×218 是設計稿 390 寬時的尺寸）。
+   S5 的提示掛在框的下方，不佔版面，框才不會因為提示出現而跳動；框的上下各留 100px，兩行的提示（英文、西文）也放得下 */
+.frameArea { position: relative; aspect-ratio: 258 / 218; width: min(66cqw, max(120px, 100cqh - 200px) * 258 / 218); }
+.frame { position: absolute; inset: 0; }
 .corner { position: absolute; width: 13%; aspect-ratio: 1; border: 0 solid var(--ui-color-on-dark); }
 .corner:nth-child(1) { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; }
 .corner:nth-child(2) { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
@@ -43,6 +45,15 @@
 
 /* S4：掃到本站的 QR，四角變綠、正中央打勾 */
 .frame[data-state="found"] .corner { border-color: var(--ui-color-success); }
+/* S5：不認得的 QR，四角變紅，框下方是「提示訊息・錯誤」 */
+.frame[data-state="unknown"] .corner { border-color: var(--ui-color-danger-on-dark); }
+.unknown {
+  position: absolute; top: calc(100% + 20px); left: 50%; transform: translateX(-50%);
+  /* 寬度照設計稿：390 寬時是 300（左右各留 45） */
+  display: flex; align-items: center; gap: 8px; width: calc(100cqw - 90px); box-sizing: border-box;
+  color: var(--ui-color-danger); font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.unknown svg { flex-shrink: 0; }
 .check {
   position: absolute; top: 50%; left: 50%; display: flex; align-items: center; justify-content: center;
   width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%);

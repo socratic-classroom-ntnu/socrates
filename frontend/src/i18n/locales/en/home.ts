@@ -37,6 +37,7 @@ const home: Shape<typeof zhHant> = {
       hint: 'Place the QR code inside the frame to scan it automatically',
       aimTitle: 'Point at the QR code your teacher is showing',
       foundTitle: 'Scanned',
+      unknown: 'This is not a course or activity QR code from this site',
       useCode: 'Enter a code instead',
     },
   },

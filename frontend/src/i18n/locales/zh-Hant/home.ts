@@ -34,6 +34,7 @@ export default {
       hint: '將 QR 放入框內，即可自動掃描',
       aimTitle: '對準老師投影的 QR',
       foundTitle: '已掃描',
+      unknown: '這不是本站的課程或活動 QR',
       useCode: '改用輸入代碼',
     },
   },

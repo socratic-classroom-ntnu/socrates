@@ -357,3 +357,47 @@ test('going to the join page stops the camera', async () => {
   act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
   expect(track.stop).toHaveBeenCalled()
 })
+
+// S5：掃到不認得的 QR
+test.each([
+  ['another site', 'https://example.com/join?code=KNB6ZE33'],
+  ['another environment', 'https://qa.localhost/join?code=KNB6ZE33'],
+  ['plain text', 'hello'],
+])('a QR from elsewhere (%s) shows S5 and keeps the camera on', async (_, text) => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue(text)
+  const { track } = await playing()
+  await readOnce()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'unknown')
+  expect(screen.getByRole('alert')).toHaveTextContent('這不是本站的課程或活動 QR')
+  expect(screen.getByRole('heading', { name: '對準老師投影的 QR' })).toBeInTheDocument()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 2) })
+  expect(where()).toHaveTextContent('/scan')
+  expect(track.stop).not.toHaveBeenCalled()
+})
+
+test('S5 keeps reading, and a QR of this site afterwards still goes through S4', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValue('https://example.com/whatever')
+  await playing()
+  await readOnce()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'unknown')
+  const reads = detect.mock.calls.length
+  detect.mockResolvedValue(COURSE_QR)
+  await readOnce()
+  expect(detect.mock.calls.length).toBeGreaterThan(reads)
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'found')
+  expect(screen.queryByRole('alert')).toBeNull()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS) })
+  expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+})
+
+test('the S5 notice stays while nothing new is read', async () => {
+  jest.useFakeTimers()
+  detect.mockResolvedValueOnce('https://example.com/whatever').mockResolvedValue(null)
+  await playing()
+  await readOnce()
+  await readOnce()
+  await readOnce()
+  expect(screen.getByRole('alert')).toHaveTextContent('這不是本站的課程或活動 QR')
+})

@@ -37,6 +37,7 @@ const home: Shape<typeof zhHant> = {
       hint: '将二维码放入框内，即可自动扫描',
       aimTitle: '对准老师投影的二维码',
       foundTitle: '已扫描',
+      unknown: '这不是本站的课程或活动二维码',
       useCode: '改用输入代码',
     },
   },

@@ -38,7 +38,7 @@ export function JoinActivityPage() {
 
   // 已經在那門課的訪客照常進課；還沒加入的訪客掃到不開放訪客的課，先看到 G28
   if (account?.kind === 'guest' && !data.allow_guest && !data.already_enrolled) {
-    return <JoinLayout><GuestClosedCard kind="activity" next={`/activities/${data.activity_id}/join`} account={account} /></JoinLayout>
+    return <JoinLayout><GuestClosedCard kind="activity" next={`/activities/${data.activity_id}/join`} account={account} courseName={data.course_name} activityTitle={data.title} /></JoinLayout>
   }
   const status = endedNow ? 'ended' : data.status
   const enrolled = data.already_enrolled

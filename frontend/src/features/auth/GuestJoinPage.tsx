@@ -37,7 +37,6 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
   const [problem, setProblem] = useState<Problem>(null)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<unknown>(null)
-  const [closed, setClosed] = useState(false)
   const [destination, setDestination] = useState<string | null>(null)
 
   // 換了語言、名字還沒改過：預填的名字也換成那個語言
@@ -54,7 +53,6 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
     if (length > GUEST_NAME_MAX) return setProblem('tooLong')
     setBusy(true)
     setFailure(null)
-    setClosed(false)
     try {
       const body = { nickname: name.trim(), locale }
       const result: Result = target.kind === 'course'
@@ -66,7 +64,8 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
         : `/learn/courses/${result.course_id}`)
     } catch (error) {
       const code = errorCode(error)
-      if (code === 'GUEST_JOIN_DISABLED') setClosed(true)
+      // The teacher turned guests off while this page was open: continue on the login page (G12).
+      if (code === 'GUEST_JOIN_DISABLED') setDestination('/login?closed=1&next=' + encodeURIComponent(next))
       // This device is signed in already (a retry whose first try went through, or a student):
       // read the account again and continue the normal join as it.
       else if (code === 'ALREADY_SIGNED_IN') await refresh()
@@ -85,13 +84,8 @@ function GuestJoin({ next, target }: { next: string; target: NonNullable<ReturnT
       <form className="join-login__card" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
         <h1>{t('name.title')}</h1>
         <p className="join-login__intro">{t('name.intro')}</p>
-        {closed && <p className="join-notice join-notice--warn" role="alert">
-          {t('name.closed')}{' '}
-          <Link className="join-link" to={loginPath}>{t('name.login')}</Link>{' · '}
-          <Link className="join-link" to={'/login?mode=register&next=' + encodeURIComponent(next)}>{t('name.register')}</Link>
-        </p>}
         <p className="join-alert join-alert--info">{t('name.notice')}</p>
-        <Field id="guest-name" label={t('name.label')} invalid={problem !== null} className="join-field">
+        <Field id="guest-name" label={problem === 'tooLong' ? `${t('name.label')} · ${nameLength(name)}/${GUEST_NAME_MAX}` : t('name.label')} invalid={problem !== null} className="join-field">
           <div className="join-guest__row">
             <input
               id="guest-name"

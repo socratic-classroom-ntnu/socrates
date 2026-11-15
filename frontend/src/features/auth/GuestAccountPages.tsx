@@ -4,7 +4,7 @@ import { api } from '../../contract/classroomClient'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
 import { safeNext } from '../../shared/next'
-import { Button, Field, FieldError, FieldHint, FormError } from '../../ui'
+import { Button, ButtonLink, Field, FieldError, FieldHint } from '../../ui'
 import { JoinLayout } from './JoinLayout'
 import { useAuth } from './AuthContext'
 import { markUpgraded, useKeepUntil } from './GuestPanels'
@@ -83,27 +83,38 @@ export function GuestUpgradePage() {
     </Field>
   }
 
+  // One message at a time (the design's rule): a failed check, an email that is taken, or the plain
+  // verification note, never two of them together.
+  const hasIssues = Object.values(issues).some(Boolean)
+  const banner = taken ? t('upgrade.emailTakenAlert')
+    : hasIssues ? t('upgrade.checkFields')
+      : failure !== null ? errorMessage(t, failure) : null
+
   return <JoinLayout>
     <div className="join-login">
       <form className="join-login__card" onSubmit={event => void submit(event)} noValidate aria-busy={busy}>
         <h1>{t('upgrade.title')}</h1>
         <p className="join-login__lead">{t('upgrade.body')}</p>
-        <p className="join-alert join-alert--info">{t('upgrade.verifyNote')}</p>
+        {banner !== null
+          ? <p className="join-alert join-alert--error" role="alert">{banner}</p>
+          : <p className="join-alert join-alert--info">{t('upgrade.verifyNote')}</p>}
         {input('username', ta('fields.username'), 'text', 'username', t('upgrade.usernameHint'))}
         {input('email', ta('fields.email'), 'email', 'email')}
-        {taken && <section className="join-notice join-notice--warn" role="alert">
-          <strong>{t('upgrade.emailTakenTitle')}</strong>
-          <p>{t('upgrade.emailTakenBody')}</p>
-          <Link className="join-link join-link--inline" to={loginWithEmail}>{t('upgrade.emailTakenLogin')}</Link>
-        </section>}
         {input('password', ta('fields.password'), 'password', 'new-password', t('upgrade.passwordHint'))}
-        <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>
-          {busy ? t('upgrade.submitting') : t('upgrade.submit')}
-        </Button>
-        {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
-        <p className="join-login__after">
-          <Link className="join-link join-link--inline" to={'/guest/login?next=' + encodeURIComponent(next)}>{t('upgrade.haveAccount')}</Link>
-        </p>
+        {taken
+          ? <>
+            <ButtonLink variant="primary" className="join-login__submit" to={loginWithEmail}>{t('upgrade.emailTakenLogin')}</ButtonLink>
+            <Button variant="outline" className="join-login__submit" onClick={() => setTaken(false)}>{t('upgrade.emailTakenOther')}</Button>
+          </>
+          : <>
+            {banner !== null && hasIssues && <p className="join-field-hint">{t('upgrade.verifyNote')}</p>}
+            <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>
+              {busy ? t('upgrade.submitting') : t('upgrade.submit')}
+            </Button>
+            <p className="join-login__after">
+              <Link className="join-link join-link--inline" to={'/guest/login?next=' + encodeURIComponent(next)}>{t('upgrade.haveAccount')}</Link>
+            </p>
+          </>}
       </form>
       <p className="join-login__note"><Link className="join-link join-link--inline join-link--quiet" to="/">{t('upgrade.back')}</Link></p>
     </div>
@@ -164,15 +175,15 @@ export function GuestLoginPage() {
       <form className="join-login__card" onSubmit={event => void submit(event)} aria-busy={busy}>
         <h1>{t('merge.title')}</h1>
         <p className="join-login__lead">{t('merge.body')}</p>
-        <Field id="guest-login" label={ta('fields.identifier')} className="join-field">
+        {failure !== null && <p className="join-alert join-alert--error" role="alert">{errorMessage(t, failure)}</p>}
+        <Field id="guest-login" label={ta('fields.identifier')} invalid={failure !== null} className="join-field">
           <input id="guest-login" value={login} autoComplete="username" required disabled={busy} maxLength={REGISTER_LIMITS.email[1]} onChange={event => setLogin(event.target.value)} />
         </Field>
-        <Field id="guest-password" label={ta('fields.password')} className="join-field">
+        <Field id="guest-password" label={ta('fields.password')} invalid={failure !== null} className="join-field">
           <input id="guest-password" type="password" value={password} autoComplete="current-password" required disabled={busy} maxLength={LOGIN_PASSWORD_MAX} onChange={event => setPassword(event.target.value)} />
         </Field>
         <p className="join-login__after"><Link className="join-link join-link--inline join-link--quiet" to="/login?mode=forgot">{t('merge.forgot')}</Link></p>
         <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>{busy ? t('merge.submitting') : t('merge.submit')}</Button>
-        {failure !== null && <FormError role="alert">{errorMessage(t, failure)}</FormError>}
         <p className="join-login__after">
           <Link className="join-link join-link--inline" to={'/guest/register?next=' + encodeURIComponent(next)}>{t('merge.register')}</Link>
         </p>

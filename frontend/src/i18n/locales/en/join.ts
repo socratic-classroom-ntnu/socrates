@@ -6,6 +6,7 @@ const join: Shape<typeof zhHant> = {
     fromCourse: 'Joined from a course QR code',
     fromActivity: 'Joined from an activity QR code',
     joining: 'Joining: {{name}}',
+    ofCourse: 'Course: {{name}}',
   },
   login: {
     submitCourse: 'Log in and join course',
@@ -16,6 +17,14 @@ const join: Shape<typeof zhHant> = {
     titleCourse: 'Join the course',
     titleActivity: 'Join the activity',
     registerNoteActivity: 'After registering, you also come back to this activity automatically.',
+    titleCourseLogin: 'Log in to join the course',
+    titleActivityLogin: 'Log in to join the activity',
+    restrictedCourse: 'This course needs a student account to join: log in or register',
+    restrictedActivity: 'This activity\'s course needs a student account to join: log in or register',
+    closedCourse: 'This course now needs you to log in or register to join',
+    closedActivity: 'This activity\'s course now needs you to log in or register to join',
+    closedIntroCourse: 'How to join this course has changed. Please continue with a student account.',
+    closedIntroActivity: 'How to join this activity has changed. Please continue with a student account.',
   },
   course: {
     phoneTitle: 'Join this course?',

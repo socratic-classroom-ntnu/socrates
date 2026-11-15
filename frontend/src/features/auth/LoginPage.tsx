@@ -46,7 +46,9 @@ export function LoginPage() {
   const refs = { username: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), password: useRef<HTMLInputElement>(null) }
   // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
   const join = mode === 'login' ? joinTarget(next) : null
-  const { courseName, guestAllowed } = usePublicPreview(join)
+  const { courseName, guestAllowed, restricted } = usePublicPreview(join)
+  // G12: the guest name page found guests switched off; G06: the preview says so before anyone tries.
+  const closed = params.get('closed') === '1'
   const demo = useDemoLogin()
 
   // 登入或註冊成功後 account 出現：已驗證回原網址，未驗證先到驗證頁（驗證完再回原網址）
@@ -204,14 +206,24 @@ export function LoginPage() {
     <div className="join-login">
       <JoinLoginBanner courseName={courseName} kind={join.kind} />
       <form className="join-login__card" onSubmit={event => void submit(event)}>
-        <h1>{join.kind === 'course' ? t('join:login.titleCourse') : t('join:login.titleActivity')}</h1>
+        {(() => {
+          const limited = closed || restricted
+          const course = join.kind === 'course'
+          return <>
+            <h1>{t(`join:login.${limited ? (course ? 'titleCourseLogin' : 'titleActivityLogin') : (course ? 'titleCourse' : 'titleActivity')}`)}</h1>
+            {closed && <p className="join-login__lead">{t(course ? 'join:login.closedIntroCourse' : 'join:login.closedIntroActivity')}</p>}
+            {limited && <p className="join-alert join-alert--warn" role="status">
+              {t(`join:login.${closed ? 'closed' : 'restricted'}${course ? 'Course' : 'Activity'}`)}
+            </p>}
+          </>
+        })()}
         {fields}
         {/* 方案 C：欄位在上；先是「登入並加入」，分隔線「不想註冊？」之後才是實心的「免註冊加入」 */}
         <div className="join-login__actions">
           <Button type="submit" variant="outline" className="join-login__submit" disabled={busy} aria-busy={busy}>
             {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
           </Button>
-          {guestAllowed && <>
+          {guestAllowed && !closed && <>
             <p className="join-login__divider" role="separator">{t('guest:join.divider')}</p>
             <ButtonLink variant="primary" className="join-login__guest" to={'/join/guest?next=' + encodeURIComponent(next)}>{t('guest:join.button')}</ButtonLink>
             <p className="join-login__guest-note">{t('guest:join.keep')}</p>

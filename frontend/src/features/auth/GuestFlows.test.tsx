@@ -192,6 +192,27 @@ test('registering keeps the guest records and goes to email verification first',
   expect(localStorage.getItem(UPGRADED_KEY)).toBe('1')
 })
 
+test('an email that is already registered shows only the G19 alert and the two ways out', async () => {
+  serve(guest(), { 'POST /auth/guest/upgrade': () => { throw new ApiError(409, 'EMAIL_TAKEN') } })
+  openApp('/guest/register')
+  await fillRegister()
+  expect(await screen.findByText('這個 Email 已註冊，登入即可保留紀錄')).toBeInTheDocument()
+  expect(screen.queryByText('註冊後需先驗證 Email，才能繼續使用。')).toBeNull()
+  expect(screen.getByRole('link', { name: '登入並保留訪客紀錄' })).toHaveAttribute('href', expect.stringContaining('/guest/login?email='))
+  expect(screen.queryByRole('button', { name: '註冊並保留紀錄' })).toBeNull()
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '改用其他 Email 註冊' })) })
+  expect(screen.getByRole('button', { name: '註冊並保留紀錄' })).toBeInTheDocument()
+})
+
+test('a failed check shows the G17 alert on top and moves the verification note down', async () => {
+  serve(guest())
+  openApp('/guest/register')
+  fireEvent.change(await screen.findByLabelText('使用者名稱'), { target: { value: 'm' } })
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '註冊並保留紀錄' })) })
+  expect(await screen.findByText('請檢查下方欄位，修改後再送出。')).toHaveAttribute('role', 'alert')
+  expect(screen.getAllByText('註冊後需先驗證 Email，才能繼續使用。')).toHaveLength(1)
+})
+
 test('field errors stay on the form (G17)', async () => {
   serve(guest())
   openApp('/guest/register')
@@ -273,9 +294,13 @@ test('a guest scanning a closed course sees G27, and registering keeps the way b
   serve(guest(), { 'GET /course-join/preview?code=AB12': coursePreview })
   openApp('/join?code=AB12')
   expect(await screen.findByRole('heading', { name: '這門課不開放訪客加入' })).toBeInTheDocument()
+  expect(screen.getByText('你目前是訪客。請註冊或登入學生帳號，再加入「哲學」。')).toBeInTheDocument()
   expect(screen.getByText(/你目前的課程與對話仍保留到/)).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '註冊' })).toHaveAttribute('href', '/guest/register?next=' + encodeURIComponent('/join?code=AB12'))
-  expect(screen.getByRole('link', { name: '登入' })).toHaveAttribute('href', '/guest/login?next=' + encodeURIComponent('/join?code=AB12'))
+  expect(screen.getByText('正在加入：哲學')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '註冊並加入' })).toHaveAttribute('href', '/guest/register?next=' + encodeURIComponent('/join?code=AB12'))
+  expect(screen.getByRole('link', { name: '已有帳號？登入並加入' })).toHaveAttribute('href', '/guest/login?next=' + encodeURIComponent('/join?code=AB12'))
+  expect(screen.getByRole('link', { name: '回首頁' })).toHaveAttribute('href', '/')
+  expect(screen.getByText('訪客身分：小-明')).toBeInTheDocument()
 })
 
 test('a guest already in that course goes straight in', async () => {
@@ -292,5 +317,8 @@ test('a guest scanning an activity of a closed course sees G28', async () => {
     },
   })
   openApp('/activities/a-9/join')
-  expect(await screen.findByRole('heading', { name: '這個活動的課程不開放訪客加入' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: '這個活動需要學生帳號' })).toBeInTheDocument()
+  expect(screen.getByText('電車')).toBeInTheDocument()
+  expect(screen.getByText('所屬課程：哲學')).toBeInTheDocument()
+  expect(screen.getByText('所屬課程「哲學」不接受訪客。請註冊或登入學生帳號，再加入活動。')).toBeInTheDocument()
 })

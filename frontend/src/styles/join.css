@@ -140,3 +140,9 @@
   .join-alert { padding: 10px 12px; font-size: 13px; }
   .join-guest__hint { display: none; }
 }
+.join-alert--warn { background: var(--ui-color-warn-soft); color: var(--ui-color-warn-ink); }
+.join-alert--warn::before { content: '!'; }
+.join-banner__text small + strong + small { margin-top: 2px; }
+.guest-logout__actions { display: flex; width: 100%; flex-direction: column; gap: 10px; }
+.guest-logout__actions > * { width: 100%; }
+.guest-logout__actions .guest-logout__leave { border-color: var(--ui-color-danger); background: var(--ui-color-panel); color: var(--ui-color-danger); }

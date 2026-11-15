@@ -6,6 +6,7 @@ const join: Shape<typeof zhHant> = {
     fromCourse: '由课程 QR Code 进入',
     fromActivity: '由活动 QR Code 进入',
     joining: '正在加入：{{name}}',
+    ofCourse: '所属课程：{{name}}',
   },
   login: {
     submitCourse: '登录并加入课程',
@@ -16,6 +17,14 @@ const join: Shape<typeof zhHant> = {
     titleCourse: '加入课程',
     titleActivity: '加入活动',
     registerNoteActivity: '注册完成后，也会自动回到这个活动。',
+    titleCourseLogin: '登录以加入课程',
+    titleActivityLogin: '登录以加入活动',
+    restrictedCourse: '这门课需要登录或注册学生账号才能加入',
+    restrictedActivity: '这个活动的课程需要登录或注册学生账号才能加入',
+    closedCourse: '这门课目前需要登录或注册才能加入',
+    closedActivity: '这个活动的课程目前需要登录或注册才能加入',
+    closedIntroCourse: '课程的加入方式已更新，请使用学生账号继续。',
+    closedIntroActivity: '活动的加入方式已更新，请使用学生账号继续。',
   },
   course: {
     phoneTitle: '要加入这门课吗？',

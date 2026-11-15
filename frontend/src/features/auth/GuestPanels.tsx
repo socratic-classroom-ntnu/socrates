@@ -4,7 +4,9 @@ import { Dialog } from '../../components/Dialog'
 import { useT } from '../../i18n/useT'
 import { Button, ButtonLink } from '../../ui'
 import type { Account } from './AuthContext'
+import { accountName } from '../../shared/accountName'
 import { guestKeepUntil } from './guestExpiry'
+import { JoinLoginBanner } from './JoinLoginCard'
 
 // G26 shows once on home after a guest who registered has verified their email.
 export const UPGRADED_KEY = 'socrates.guest.upgraded'
@@ -65,34 +67,40 @@ export function GuestHomeNotices({ account }: { account: Account | null }) {
   </>
 }
 
-/** Logging out as a guest: a guest who logs out cannot come back, so they confirm first; × keeps them where they are. */
-export function GuestLogoutDialog({ date, onClose, onLogout }: { date: string; onClose(): void; onLogout(): void }) {
+/** Logging out as a guest: a guest who logs out cannot come back, so they confirm first; × keeps them where they are.
+ * Registering comes first and is the main button (G15). */
+export function GuestLogoutDialog({ onClose, onLogout }: { date?: string; onClose(): void; onLogout(): void }) {
   const { t } = useT('guest')
   const navigate = useNavigate()
   return <Dialog
     title={t('logout.title')}
-    description={t('logout.body', { date })}
+    description={t('logout.body')}
     onClose={onClose}
-    footer={<>
-      <Button variant="outline" onClick={onLogout}>{t('logout.confirm')}</Button>
+    footer={<div className="guest-logout__actions">
       <Button variant="primary" data-autofocus onClick={() => { onClose(); navigate('/guest/register') }}>{t('logout.register')}</Button>
-    </>}
+      <Button variant="outline" className="guest-logout__leave" onClick={onLogout}>{t('logout.confirm')}</Button>
+    </div>}
   >{null}</Dialog>
 }
 
-/** Closed to guests: a guest scanned a course or activity that does not take guests. Registering or
+/** Closed to guests: a guest scanned a course or activity that does not take guests (G27 / G28). Registering or
  * logging in keeps `next`, so they come back to this join afterwards; home changes nothing. */
-export function GuestClosedCard({ kind, next, account }: { kind: 'course' | 'activity'; next: string; account: Account }) {
+export function GuestClosedCard({ kind, next, account, courseName, activityTitle = null }: {
+  kind: 'course' | 'activity'; next: string; account: Account; courseName: string; activityTitle?: string | null
+}) {
   const { t } = useT('guest')
   const keep = useKeepUntil(account)
   const back = encodeURIComponent(next)
-  return <section className="join-message guest-closed">
-    <h1>{t(kind === 'course' ? 'closed.courseTitle' : 'closed.activityTitle')}</h1>
-    <p className="join-notice">{t('closed.body', { date: keep?.date ?? '' })}</p>
-    <div className="guest-closed__actions">
-      <ButtonLink variant="primary" to={'/guest/register?next=' + back}>{t('closed.register')}</ButtonLink>
-      <ButtonLink variant="outline" to={'/guest/login?next=' + back}>{t('closed.login')}</ButtonLink>
-      <Link className="join-link" to="/">{t('closed.home')}</Link>
-    </div>
-  </section>
+  return <div className="join-login">
+    <JoinLoginBanner courseName={courseName} kind={kind} activityTitle={activityTitle} />
+    <section className="join-login__card">
+      <h1>{t(kind === 'course' ? 'closed.courseTitle' : 'closed.activityTitle')}</h1>
+      <p className="join-login__lead">{t(kind === 'course' ? 'closed.bodyCourse' : 'closed.bodyActivity', { name: courseName })}</p>
+      {keep && <p className="join-alert join-alert--info">{t('closed.keep', { date: keep.date })}</p>}
+      <ButtonLink variant="primary" className="join-login__submit" to={'/guest/register?next=' + back}>{t('closed.register')}</ButtonLink>
+      <ButtonLink variant="outline" className="join-login__submit" to="/">{t('closed.home')}</ButtonLink>
+      <p className="join-login__after"><Link className="join-link join-link--inline" to={'/guest/login?next=' + back}>{t('closed.login')}</Link></p>
+    </section>
+    <p className="join-login__note">{t('closed.who', { name: accountName(account) })}</p>
+  </div>
 }

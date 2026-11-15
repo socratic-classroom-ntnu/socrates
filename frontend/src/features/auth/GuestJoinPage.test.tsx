@@ -70,15 +70,27 @@ test('J0 puts 登入並加入課程 first, then 不想註冊？, then 免註冊�
 })
 
 test.each([
-  ['a course that does not allow guests', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': { course_name: '哲學導論', allow_guest: false } }],
+  ['a course that does not allow guests', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': { course_name: '哲學導論', allow_guest: false } }, '登入以加入課程', '這門課需要登入或註冊學生帳號才能加入'],
+  ['an activity of a course that does not allow guests', '/activities/a-1/join', { 'GET /activities/a-1/public-preview': { course_name: '哲學導論', allow_guest: false, status: 'open' } }, '登入以加入活動', '這個活動的課程需要登入或註冊學生帳號才能加入'],
+])('J0 is login only with the G06 notice for %s', async (_, next, routes, heading, notice) => {
+  anonymous(routes)
+  openApp('/login?next=' + encodeURIComponent(next))
+  expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
+  expect(screen.getByText(notice)).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /免註冊加入/ })).toBeNull()
+  expect(screen.queryByText('不想註冊？')).toBeNull()
+})
+
+test.each([
   ['an activity that has ended', '/activities/a-1/join', { 'GET /activities/a-1/public-preview': { course_name: '哲學導論', allow_guest: true, status: 'ended' } }],
   ['a preview that cannot be read', '/join?code=AB12', { 'GET /course-join/public-preview?code=AB12': () => { throw new ApiError(429, 'RATE_LIMITED') } }],
-])('J0 is login only (G06) for %s', async (_, next, routes) => {
+])('J0 is login only, without a claim about the course, for %s', async (_, next, routes) => {
   anonymous(routes)
   openApp('/login?next=' + encodeURIComponent(next))
   expect(await screen.findByRole('heading', { name: /^加入(課程|活動)$/ })).toBeInTheDocument()
   await act(async () => { await Promise.resolve() })
   expect(screen.queryByRole('link', { name: /免註冊加入/ })).toBeNull()
+  expect(screen.queryByText(/需要登入或註冊/)).toBeNull()
 })
 
 // ---- the name page ------------------------------------------------------------------------
@@ -131,10 +143,11 @@ test('a blank name (G08) and one over 40 characters (G09) are stopped before sen
   const input = await screen.findByLabelText('訪客名字')
   fireEvent.change(input, { target: { value: '   ' } })
   fireEvent.click(screen.getByRole('button', { name: /^加入/ }))
-  expect(await screen.findByText('請取一個名字。')).toBeInTheDocument()
+  expect(await screen.findByText('請輸入名字（1～40 字）')).toBeInTheDocument()
   fireEvent.change(input, { target: { value: '字'.repeat(41) } })
   fireEvent.click(screen.getByRole('button', { name: /^加入/ }))
-  expect(await screen.findByText('名字最多 40 個字。')).toBeInTheDocument()
+  expect(await screen.findByText('名字最多 40 字，請縮短後再加入')).toBeInTheDocument()
+  expect(screen.getByText(/訪客名字 · 41\/40/)).toBeInTheDocument()
   expect(calls.some(call => call.key === 'POST /course-join/guest')).toBe(false)
 })
 
@@ -190,12 +203,15 @@ test('a network failure (G11) keeps the name and lets the student send again', a
   await waitFor(() => expect(where()).toBe('/learn/courses/c-1'))
 })
 
-test('the teacher turning guests off meanwhile shows G12 in the card with login and register', async () => {
+test('the teacher turning guests off meanwhile continues on the login page with the G12 notice', async () => {
   openNamePage('/join?code=AB12', { 'POST /course-join/guest': () => { throw new ApiError(403, 'GUEST_JOIN_DISABLED') } })
   await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /^加入/ })) })
-  const notice = await screen.findByRole('alert')
-  expect(notice).toHaveTextContent('老師剛剛關閉了免註冊加入')
-  expect(screen.getByRole('link', { name: '登入' })).toHaveAttribute('href', '/login?next=' + encodeURIComponent('/join?code=AB12'))
+  expect(await screen.findByRole('heading', { name: '登入以加入課程' })).toBeInTheDocument()
+  expect(window.location.pathname).toBe('/login')
+  expect(screen.getByText('課程的加入方式已更新，請使用學生帳號繼續。')).toBeInTheDocument()
+  expect(screen.getByText('這門課目前需要登入或註冊才能加入')).toBeInTheDocument()
+  expect(screen.queryByText('不想註冊？')).toBeNull()
+  expect(new URLSearchParams(window.location.search).get('next')).toBe('/join?code=AB12')
 })
 
 test('the fields are disabled while sending (G10)', async () => {

@@ -161,12 +161,12 @@ async function fillRegister(email = 'ming@example.org') {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: /^註冊/ })) })
 }
 
-test('a guest sees only 首頁 and 個人題庫 in the side navigation (G14, VG-D14)', async () => {
+test('a guest sees only 首頁 in the side navigation: the other items are teacher pages that refuse guests', async () => {
   serve(guest())
   openApp('/')
   await screen.findByText('你目前是訪客')
   const nav = screen.getAllByRole('navigation').find(item => within(item).queryByText('首頁')) as HTMLElement
-  expect(within(nav).getByText('個人題庫')).toBeInTheDocument()
+  expect(within(nav).queryByText('個人題庫')).toBeNull()
   expect(within(nav).queryByText('分組課')).toBeNull()
   expect(within(nav).queryByText('題庫商店')).toBeNull()
 })

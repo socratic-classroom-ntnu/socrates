@@ -5906,6 +5906,26 @@
             ],
             "title": "Final Status"
           },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "reason_summary": {
             "title": "Reason Summary",
             "type": "string"
@@ -5921,6 +5941,8 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "confirmed_scenarios",
           "current_position",
           "reason_summary",
@@ -6530,6 +6552,26 @@
             ],
             "title": "Final Status"
           },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "last_activity_at": {
             "anyOf": [
               {
@@ -6563,6 +6605,8 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "overall",
           "cells",
           "review_status",

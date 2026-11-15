@@ -31,21 +31,21 @@ router = APIRouter(prefix="/solo", tags=["solo"])
 @router.get("/activities/{activity_id}", response_model=SoloActivityView)
 def get_solo_activity(activity_id: str, request: Request):
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         return service.activity_view(db, current, activity_id, service.now())
 
 
 @router.post("/activities/{activity_id}/attempt", response_model=SoloAttemptView)
 def start_attempt(activity_id: str, request: Request):
     with transaction() as db:
-        current, _ = account(db, request, mutation=True)
+        current, _ = account(db, request, mutation=True, allow_guest=True)
         return service.start(db, current, activity_id, service.now())
 
 
 @router.get("/attempts/{attempt_id}", response_model=SoloAttemptView)
 def get_attempt(attempt_id: str, request: Request):
     with transaction() as db:
-        current, _ = account(db, request)
+        current, _ = account(db, request, allow_guest=True)
         return service.attempt_view(db, current, attempt_id, service.now())
 
 
@@ -62,13 +62,13 @@ async def act_on_attempt(
         if expected is not None and body is None:
             # Without its body an action that is not offered now is refused as unavailable.
             with transaction() as db:
-                current, _ = account(db, request)
+                current, _ = account(db, request, allow_guest=True)
                 service.ensure_available(db, current, attempt_id, action, service.now())
         raise RequestValidationError(
             [{"type": "body_mismatch", "loc": ("body",), "msg": f"{action} body", "input": None}]
         )
     with transaction() as db:
-        current, _ = account(db, request, mutation=True)
+        current, _ = account(db, request, mutation=True, allow_guest=True)
         prepared = service.begin_action(db, current, attempt_id, action, body, service.now())
     return await service.finish_action(
         prepared, lambda final: background.add_task(service.write_final, final)

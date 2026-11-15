@@ -17,7 +17,8 @@ type Student = components['schemas']['SoloAnalysisStudentView']
 const student = (index: number, extra: Partial<Student> = {}): Student => ({
   enrollment_id: `e-${index}`,
   display_name: `學生${index}`,
-  final_status: null,
+  kind: 'registered',
+  guest_number: null, final_status: null,
   confirmed_scenarios: 1,
   current_position: `立場${index}`,
   reason_summary: `理由${index}`,

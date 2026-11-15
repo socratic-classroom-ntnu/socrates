@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Dialog } from '../../components/Dialog'
 import { useT } from '../../i18n/useT'
 import { Button, ButtonLink } from '../../ui'
@@ -8,19 +8,27 @@ import { accountName } from '../../shared/accountName'
 import { guestKeepUntil } from './guestExpiry'
 import { JoinLoginBanner } from './JoinLoginCard'
 
-// G26 shows once on home after a guest who registered has verified their email.
-export const UPGRADED_KEY = 'socrates.guest.upgraded'
+// G25 (records merged at login) and G26 (email verified after registering) show once on home, and only to the
+// account they were left for: another account logging in on the same device never sees them. One notice waits at
+// a time; a newer one replaces it.
+export const HOME_NOTICE_KEY = 'socrates.guest.homeNotice'
 
-export function markUpgraded(): void {
-  try { localStorage.setItem(UPGRADED_KEY, '1') } catch { /* the notice is a convenience */ }
+type HomeNotice = { kind: 'merged' | 'upgraded'; accountId: string }
+
+export function leaveHomeNotice(kind: HomeNotice['kind'], accountId: string): void {
+  try { localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind, accountId })) } catch { /* the notice is a convenience */ }
 }
 
-function takeUpgraded(): boolean {
-  try { return localStorage.getItem(UPGRADED_KEY) === '1' } catch { return false }
+function readHomeNotice(): HomeNotice | null {
+  try {
+    const value = JSON.parse(localStorage.getItem(HOME_NOTICE_KEY) ?? 'null') as Partial<HomeNotice> | null
+    return (value?.kind === 'merged' || value?.kind === 'upgraded') && typeof value.accountId === 'string'
+      ? { kind: value.kind, accountId: value.accountId } : null
+  } catch { return null }
 }
 
-function clearUpgraded(): void {
-  try { localStorage.removeItem(UPGRADED_KEY) } catch { /* the notice is a convenience */ }
+function clearHomeNotice(): void {
+  try { localStorage.removeItem(HOME_NOTICE_KEY) } catch { /* the notice is a convenience */ }
 }
 
 /** 「紀錄保留到 ○/○」 for this guest, in the current language and the browser's time zone. */
@@ -30,29 +38,24 @@ export function useKeepUntil(account: Account | null) {
   return guestKeepUntil(account.guest_expires_at, locale)
 }
 
-/** Home (04／G13, G25, G26): the guest reminder, and the notices after merging or verifying. */
+/** Home (04／G13, G25, G26): the guest reminder, and the one notice left after merging or verifying. */
 export function GuestHomeNotices({ account }: { account: Account | null }) {
   const { t } = useT('guest')
-  const [params, setParams] = useSearchParams()
-  const [upgraded, setUpgraded] = useState(takeUpgraded)
+  const [notice, setNotice] = useState(readHomeNotice)
   const keep = useKeepUntil(account)
-  const merged = params.get('merged') === '1'
-  const showUpgraded = upgraded && account?.kind === 'registered' && account.verified
+  const someoneElse = !!notice && !!account && notice.accountId !== account.id
 
-  function dismissMerged() {
-    const copy = new URLSearchParams(params)
-    copy.delete('merged')
-    setParams(copy, { replace: true })
-  }
+  useEffect(() => {
+    if (someoneElse) { clearHomeNotice(); setNotice(null) }
+  }, [someoneElse])
+
+  const mine = notice && account && notice.accountId === account.id ? notice.kind : null
+  const shown = mine === 'merged' || (mine === 'upgraded' && account?.kind === 'registered' && account.verified) ? mine : null
 
   return <>
-    {merged && <p className="home-notice home-notice--done" role="status">
-      {t('home.merged')}
-      <button type="button" className="home-notice__dismiss" onClick={dismissMerged}>{t('home.dismiss')}</button>
-    </p>}
-    {showUpgraded && <p className="home-notice home-notice--done" role="status">
-      {t('home.upgraded')}
-      <button type="button" className="home-notice__dismiss" onClick={() => { clearUpgraded(); setUpgraded(false) }}>{t('home.dismiss')}</button>
+    {shown && <p className="home-notice home-notice--done" role="status">
+      {t(shown === 'merged' ? 'home.merged' : 'home.upgraded')}
+      <button type="button" className="home-notice__dismiss" onClick={() => { clearHomeNotice(); setNotice(null) }}>{t('home.dismiss')}</button>
     </p>}
     {keep && <section className={'guest-card' + (keep.lastDay ? ' guest-card--last' : '')} aria-labelledby="guest-card-title">
       <div>

@@ -15,6 +15,10 @@
   --ui-color-primary-hover: #24413A;
   --ui-color-primary-soft: #E7EEEA;
   --ui-color-dark: #23332C;
+  /* 深色底（掃描頁的相機畫面）上的字與線 */
+  --ui-color-on-dark: #FFFFFF;
+  --ui-color-on-dark-soft: rgba(255, 255, 255, 0.86);
+  --ui-color-on-dark-line: rgba(255, 255, 255, 0.6);
 
   --ui-color-ink: #1F2421;
   --ui-color-ink-soft: #3F4642;

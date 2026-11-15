@@ -1,0 +1,34 @@
+/* 全螢幕掃描頁（S2–S5）：照「短手機版」排，說明貼上方、輸入貼下方，375×667 到 430×932 用同一套 */
+.page {
+  position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: auto 1fr auto; overflow-y: auto;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--ui-color-dark); color: var(--ui-color-on-dark);
+  font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+
+/* 相機畫面鋪滿整頁，S2 時還沒有畫面，先藏起來 */
+.video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.video[data-phase="opening"] { opacity: 0; }
+
+.top, .middle, .bottom { position: relative; }
+.top { padding: 20px 16px 0; }
+.close {
+  display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0;
+  border: 1.5px solid var(--ui-color-on-dark-line); border-radius: 50%; background: transparent; color: var(--ui-color-on-dark); cursor: pointer;
+}
+.close:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: 2px; }
+
+/* 下方留白讓 S2 的說明比正中央略高，跟設計稿一樣 */
+.middle { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0 24px 32px; }
+.opening { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.opening svg { color: var(--ui-color-on-dark-soft); }
+.openingTitle { margin: 18px 0 0; font-size: 17px; font-weight: 700; line-height: 1.5; }
+.openingBody { margin: 8px 0 0; color: var(--ui-color-on-dark-soft); font-size: 13px; line-height: 1.6; }
+
+.bottom { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 40px max(40px, 7vh); }
+.hint { margin: 0; color: var(--ui-color-on-dark-soft); font-size: 13px; line-height: 1.5; text-align: center; }
+.useCode {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px;
+  border: 0; border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-primary); font-size: 16px; font-weight: 700;
+}
+.useCode:hover { background: var(--ui-color-panel-hover); }

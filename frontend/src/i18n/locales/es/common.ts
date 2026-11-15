@@ -30,7 +30,6 @@ const common: Shape<typeof zhHant> = {
     title: 'Próximamente',
     body: 'Esta función todavía está en construcción y se abrirá más adelante.',
     back: 'Volver al inicio',
-    scan: 'Escanear un código QR con la cámara de este dispositivo todavía está en construcción. Por ahora, escanéalo con la cámara del teléfono o escribe el código del curso.',
     account: 'Aquí estarán los ajustes personales. Puedes cambiar el idioma desde el menú de la cuenta.',
     activity: 'La página de la actividad todavía está en construcción. Aquí empezará tu conversación con Sócrates.',
     live: 'Aquí estará el progreso en vivo: en qué pregunta va cada estudiante.',

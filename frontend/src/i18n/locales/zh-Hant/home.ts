@@ -28,6 +28,12 @@ export default {
       cancel: '取消',
       allow: '允許',
     },
+    page: {
+      openingTitle: '正在開啟相機…',
+      openingBody: '相機畫面出現後，即可對準 QR。',
+      hint: '將 QR 放入框內，即可自動掃描',
+      useCode: '改用輸入代碼',
+    },
   },
   create: '建立課程',
   phoneHint: '管理課程與活動請用電腦開啟',

@@ -37,6 +37,7 @@ jest.mock('../features/course/join/JoinActivityPage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { JoinActivityPage: () => { const { activityId } = useParams(); return <p>join-activity-page:{activityId}</p> } }
 })
+jest.mock('../features/course/scan/ScanPage', () => ({ ScanPage: () => <p>scan-page</p> }))
 jest.mock('../features/course/learn/StudentCoursePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { StudentCoursePage: () => { const { courseId } = useParams(); return <p>student-course-page:{courseId}</p> } }
@@ -134,7 +135,6 @@ test.each([
   ['/teach/activities/a1/analysis/ai', '功能開發中'],
   ['/teach/courses/c1/projector', '功能開發中'],
   ['/teach/activities/a1/projector', '功能開發中'],
-  ['/scan', '功能開發中'],
   ['/account', '功能開發中'],
 ])('renders each course route: %s', async (url, marker) => {
   mockSession(verified)
@@ -356,4 +356,25 @@ test('unknown path shows not found', async () => {
   mockSession(verified)
   open('/nope')
   expect(await screen.findByText('找不到這個頁面')).toBeInTheDocument()
+})
+
+test('scan page is full screen without the top bar or side navigation', async () => {
+  mockSession(verified)
+  open('/scan')
+  expect(await screen.findByText('scan-page')).toBeInTheDocument()
+  expect(screen.queryByRole('banner')).toBeNull()
+  expect(screen.queryByRole('navigation')).toBeNull()
+  expect(where()).toBe('/scan')
+})
+
+test('signed-out scan goes to login and comes back to scan', async () => {
+  mockSession(null)
+  open('/scan')
+  await waitFor(() => expect(where()).toBe('/login?next=' + encodeURIComponent('/scan')))
+})
+
+test('unverified scan goes to verify', async () => {
+  mockSession({ ...verified, verified: false })
+  open('/scan')
+  await waitFor(() => expect(where()).toBe('/verify?next=' + encodeURIComponent('/scan')))
 })

@@ -31,6 +31,12 @@ const home: Shape<typeof zhHant> = {
       cancel: '取消',
       allow: '允许',
     },
+    page: {
+      openingTitle: '正在打开相机…',
+      openingBody: '相机画面出现后，即可对准二维码。',
+      hint: '将二维码放入框内，即可自动扫描',
+      useCode: '改用输入代码',
+    },
   },
   create: '创建课程',
   phoneHint: '管理课程与活动请用电脑打开',

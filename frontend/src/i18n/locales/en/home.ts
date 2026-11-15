@@ -31,6 +31,12 @@ const home: Shape<typeof zhHant> = {
       cancel: 'Cancel',
       allow: 'Allow',
     },
+    page: {
+      openingTitle: 'Opening the camera…',
+      openingBody: 'Once the camera picture appears, point it at the QR code.',
+      hint: 'Place the QR code inside the frame to scan it automatically',
+      useCode: 'Enter a code instead',
+    },
   },
   create: 'Create course',
   phoneHint: 'Use a computer to manage courses and activities',

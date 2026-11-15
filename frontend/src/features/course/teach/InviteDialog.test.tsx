@@ -46,6 +46,7 @@ test('activity invite has no code row and encodes activity url', async () => {
   expect(screen.getByRole('dialog', { name: '邀請學生參加「第三週倫理討論」' })).toBeInTheDocument()
   expect(await screen.findByRole('img', { name: /QR code/ })).toHaveAttribute('src', 'data:http://localhost/activities/a-1/join')
   expect(screen.queryByText('課程代碼')).toBeNull()
+  expect(screen.queryByRole('switch')).toBeNull()
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '複製活動連結' })) })
   expect(writeText).toHaveBeenCalledWith('http://localhost/activities/a-1/join')
 })

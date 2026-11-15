@@ -7,9 +7,9 @@ import { joinTarget, safeNext } from '../../shared/next'
 import { JoinLayout } from './JoinLayout'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
-import { Button } from '../../ui'
+import { Button, ButtonLink } from '../../ui'
 import { AuthLayout, Screws } from './AuthLayout'
-import { JoinLoginBanner, usePublicCourseName } from './JoinLoginCard'
+import { JoinLoginBanner, usePublicPreview } from './JoinLoginCard'
 import { type Field, keepPasswordChars, LOGIN_PASSWORD_MAX, passwordProblem, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset'
@@ -46,12 +46,12 @@ export function LoginPage() {
   const refs = { username: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), password: useRef<HTMLInputElement>(null) }
   // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
   const join = mode === 'login' ? joinTarget(next) : null
-  const courseName = usePublicCourseName(join)
+  const { courseName, guestAllowed } = usePublicPreview(join)
   const demo = useDemoLogin()
 
   // 登入或註冊成功後 account 出現：已驗證回原網址，未驗證先到驗證頁（驗證完再回原網址）
   if (account && mode !== 'reset') {
-    const target = account.verified ? next : '/verify?next=' + encodeURIComponent(next)
+    const target = account.verified || account.kind === 'guest' ? next : '/verify?next=' + encodeURIComponent(next)
     return <Navigate to={target} replace />
   }
 
@@ -206,9 +206,14 @@ export function LoginPage() {
       <form className="join-login__card" onSubmit={event => void submit(event)}>
         <h1>{t('join:login.title')}</h1>
         {fields}
-        <Button type="submit" variant="primary" className="join-login__submit" disabled={busy} aria-busy={busy}>
-          {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
-        </Button>
+        {/* 方案 C：欄位在上，按鈕都在卡片底部；開放訪客時主要按鈕是「免註冊加入」 */}
+        <div className="join-login__actions">
+          {guestAllowed && <ButtonLink variant="primary" className="join-login__guest" to={'/join/guest?next=' + encodeURIComponent(next)}>{t('guest:join.button')}<span aria-hidden="true">→</span></ButtonLink>}
+          <Button type="submit" variant={guestAllowed ? 'outline' : 'primary'} className="join-login__submit" disabled={busy} aria-busy={busy}>
+            {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
+          </Button>
+          {guestAllowed && <p className="join-login__guest-note">{t('guest:join.keep')}</p>}
+        </div>
         <div className="join-login__links">
           <button type="button" className="join-link" onClick={() => switchMode('register')}>{t('join:login.register')}</button>
           <button type="button" className="join-link join-link--quiet" onClick={() => switchMode('forgot')}>{t('join:login.forgot')}</button>

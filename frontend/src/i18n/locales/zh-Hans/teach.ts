@@ -62,6 +62,9 @@ const teach: Shape<typeof zhHant> = {
     copyActivityLink: '复制活动链接',
     qrAlt: '「{{name}}」的 QR code',
     disabled: '课程代码已停用，学生暂时无法用代码或二维码加入。',
+    guestLabel: '允许免注册加入',
+    guestOn: '学生扫码后可以取个名字直接加入，记录保留 7 天。',
+    guestOff: '学生要登录或注册才能加入；已经加入的访客不受影响。',
   },
   status: {
     draft: '草稿',
@@ -140,6 +143,10 @@ const teach: Shape<typeof zhHant> = {
     conditions: '条件：{{conditions}}',
     showAll: '查看全部 {{count}} 人',
     empty: '还没有人确认过想法',
+  },
+  guest: {
+    tag: '访客',
+    anonymous: '匿名访客 {{number}}',
   },
   live: {
     breadcrumbLabel: '活动路径',

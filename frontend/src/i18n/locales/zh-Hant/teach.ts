@@ -59,6 +59,9 @@ export default {
     copyActivityLink: '複製活動連結',
     qrAlt: '「{{name}}」的 QR code',
     disabled: '課程代碼已停用，學生暫時無法用代碼或 QR code 加入。',
+    guestLabel: '允許免註冊加入',
+    guestOn: '學生掃碼後可以取個名字直接加入，紀錄保留 7 天。',
+    guestOff: '學生要登入或註冊才能加入；已經加入的訪客不受影響。',
   },
   status: {
     draft: '草稿',
@@ -137,6 +140,10 @@ export default {
     conditions: '條件：{{conditions}}',
     showAll: '看全部 {{count}} 人',
     empty: '還沒有人確認過想法',
+  },
+  guest: {
+    tag: '訪客',
+    anonymous: '匿名訪客 {{number}}',
   },
   live: {
     breadcrumbLabel: '活動路徑',

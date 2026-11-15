@@ -1,6 +1,15 @@
+import { useId, useState } from 'react'
 import { Dialog } from '../../../components/Dialog'
+import { api } from '../../../contract/classroomClient'
+import type { components } from '../../../contract/classroomTypes'
+import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
-import { ButtonLink, CopyButton, QrCode } from '../../../ui'
+import { ButtonLink, CopyButton, FormError, QrCode } from '../../../ui'
+
+type Course = components['schemas']['CourseTeacherView']
+
+/** The course invite's guest-join switch; only the course dialog gets one. */
+export type GuestJoin = { courseId: string; allowed: boolean; onSaved?(course: Course): void }
 
 type Props = {
   kind: 'course' | 'activity'
@@ -12,10 +21,11 @@ type Props = {
   onClose(): void
   /** Course code turned off: explain instead of showing a QR that would not work. */
   disabled?: boolean
+  guest?: GuestJoin
 }
 
 /** T2b: course or activity QR with the code and a copyable link. */
-export function InviteDialog({ kind, name, url, code, projectorTo, onClose, disabled = false }: Props) {
+export function InviteDialog({ kind, name, url, code, projectorTo, onClose, disabled = false, guest }: Props) {
   const { t } = useT('teach')
   const title = kind === 'course' ? t('invite.courseTitle', { name }) : t('invite.activityTitle', { name })
   // 代碼停用時不說「輸入課程代碼」，免得和停用提示互相矛盾
@@ -36,5 +46,44 @@ export function InviteDialog({ kind, name, url, code, projectorTo, onClose, disa
         <CopyButton text={url} label={kind === 'course' ? t('invite.copyCourseLink') : t('invite.copyActivityLink')} variant="outline" />
       </div>
     </div>}
+    {guest && <GuestJoinSwitch {...guest} />}
   </Dialog>
+}
+
+/** Saves on every flip, no confirmation; a failed save flips back and says why. */
+function GuestJoinSwitch({ courseId, allowed, onSaved }: GuestJoin) {
+  const { t } = useT('teach')
+  const id = useId()
+  const [on, setOn] = useState(allowed)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<unknown>(null)
+
+  async function toggle() {
+    const previous = on
+    setOn(!previous)
+    setSaving(true)
+    setError(null)
+    try {
+      const course: Course = await api(`/courses/${courseId}`, 'PATCH', { allow_guest: !previous })
+      setOn(course.allow_guest)
+      onSaved?.(course)
+    } catch (failure) {
+      setOn(previous)
+      setError(failure)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <div className="invite-guest">
+    <div className="invite-guest__row">
+      <span id={`${id}-label`} className="invite-guest__label">{t('invite.guestLabel')}</span>
+      <button type="button" role="switch" className="invite-guest__switch" aria-checked={on} aria-labelledby={`${id}-label`}
+        aria-describedby={`${id}-hint`} disabled={saving} onClick={() => void toggle()}>
+        <span className="invite-guest__knob" aria-hidden="true" />
+      </button>
+    </div>
+    <p id={`${id}-hint`} className="invite-guest__hint">{on ? t('invite.guestOn') : t('invite.guestOff')}</p>
+    {error !== null && <FormError role="alert">{errorMessage(t, error)}</FormError>}
+  </div>
 }

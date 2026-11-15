@@ -205,3 +205,19 @@ test.each([
   const page = await screen.findByTestId('teacher-live-page')
   expect(page.textContent).not.toMatch(/[\u3400-\u9fff]/)
 })
+
+test('guest rows carry a guest tag and expired guests show an anonymous number', async () => {
+  const [first, second, third] = progress.students
+  open({ view: { ...progress, students: [
+    first,
+    { ...second, display_name: '阿明', kind: 'guest', guest_number: 1 },
+    { ...third, display_name: '', kind: 'expired_guest', guest_number: 2 },
+  ] } })
+  const page = await screen.findByTestId('teacher-live-page')
+  const registered = within(page).getByRole('rowheader', { name: '小安' })
+  expect(within(registered).queryByText('訪客')).toBeNull()
+  const guest = within(page).getByText('阿明').closest('th')!
+  expect(within(guest).getByText('訪客')).toBeInTheDocument()
+  const expired = within(page).getByText('匿名訪客 2').closest('th')!
+  expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})

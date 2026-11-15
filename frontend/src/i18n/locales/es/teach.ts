@@ -64,6 +64,9 @@ const teach: Shape<typeof zhHant> = {
     copyActivityLink: 'Copiar enlace de la actividad',
     qrAlt: 'Código QR de «{{name}}»',
     disabled: 'El código del curso está desactivado, así que por ahora no se puede entrar con el código ni con el QR.',
+    guestLabel: 'Permitir unirse sin cuenta',
+    guestOn: 'Tras escanear, el estudiante puede elegir un nombre y entrar directamente. Su registro se guarda 7 días.',
+    guestOff: 'Hay que iniciar sesión o registrarse para unirse. Los invitados que ya entraron no se ven afectados.',
   },
   status: {
     draft: 'Borrador',
@@ -148,6 +151,10 @@ const teach: Shape<typeof zhHant> = {
     showAll_one: 'Ver {{count}} estudiante',
     showAll_other: 'Ver los {{count}} estudiantes',
     empty: 'Nadie ha confirmado un punto de vista todavía',
+  },
+  guest: {
+    tag: 'Invitado',
+    anonymous: 'Invitado anónimo {{number}}',
   },
   live: {
     breadcrumbLabel: 'Ruta de la actividad',

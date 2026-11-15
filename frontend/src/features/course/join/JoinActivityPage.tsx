@@ -7,6 +7,8 @@ import { errorCode, errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
 import { Button, ButtonLink, Field, FormError } from '../../../ui'
+import { useAuth } from '../../auth/AuthContext'
+import { GuestClosedCard } from '../../auth/GuestPanels'
 import { ChalkCard, JoinLayout } from '../../auth/JoinLayout'
 
 type Preview = components['schemas']['ActivityJoinPreview']
@@ -16,6 +18,7 @@ export function JoinActivityPage() {
   const { t, locale } = useT('join')
   const { activityId = '' } = useParams()
   const navigate = useNavigate()
+  const { account } = useAuth()
   const preview = useResource<Preview>(`/activities/${activityId}/join-preview`)
   const [name, setName] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -33,6 +36,10 @@ export function JoinActivityPage() {
     </section></JoinLayout>
   }
 
+  // 已經在那門課的訪客照常進課；還沒加入的訪客掃到不開放訪客的課，先看到 G28
+  if (account?.kind === 'guest' && !data.allow_guest && !data.already_enrolled) {
+    return <JoinLayout><GuestClosedCard kind="activity" next={`/activities/${data.activity_id}/join`} account={account} /></JoinLayout>
+  }
   const status = endedNow ? 'ended' : data.status
   const enrolled = data.already_enrolled
   const displayName = name ?? data.default_display_name

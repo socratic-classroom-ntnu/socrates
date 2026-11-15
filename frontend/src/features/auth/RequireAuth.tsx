@@ -10,12 +10,13 @@ export function LoadingScreen() {
 }
 
 // 未登入 → 登入頁並帶著原網址；要求驗證的頁面遇到未驗證帳號 → 驗證頁（驗證完再回來）。
+// 訪客沒有 Email 可驗證，後端也對開放訪客的端點直接放行，所以訪客一律通過。
 export function RequireAuth({ verified = false }: { verified?: boolean }) {
   const { status, account } = useAuth()
   const { pathname, search, hash } = useLocation()
   if (status === 'loading') return <LoadingScreen />
   if (!account) return <Navigate to={loginPath(pathname, search, hash)} replace />
-  if (verified && !account.verified) {
+  if (verified && !account.verified && account.kind !== 'guest') {
     return <Navigate to={'/verify?next=' + encodeURIComponent(deepLink(pathname, search, hash))} replace />
   }
   return <Outlet />

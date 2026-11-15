@@ -19,6 +19,7 @@
 - `frontend/src/shared/shellContext.ts`
 - `frontend/src/shared/useIsPhone.ts`
 - `frontend/src/shared/next.ts`
+- `frontend/src/shared/accountName.ts`
 - `frontend/src/i18n/`
 - `frontend/src/features/dev-console/`
 - `frontend/src/testkit.ts`

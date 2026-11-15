@@ -7,6 +7,8 @@ import { useIsPhone } from '../../../shared/useIsPhone'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
 import { Button, ButtonLink, CopyButton, Field, FieldError, FieldHint, FormError } from '../../../ui'
+import { useAuth } from '../../auth/AuthContext'
+import { GuestClosedCard } from '../../auth/GuestPanels'
 import { ChalkCard, JoinLayout } from '../../auth/JoinLayout'
 
 type Preview = components['schemas']['JoinPreview']
@@ -25,6 +27,7 @@ function JoinCourse({ code }: { code: string }) {
   const { t } = useT('join')
   const phone = useIsPhone()
   const navigate = useNavigate()
+  const { account } = useAuth()
   const handed = (useLocation().state as { preview?: HandedPreview } | null)?.preview
   const reused = handed?.code === code ? handed : null
   const fetched = useResource<Preview>(reused ? null : '/course-join/preview?code=' + encodeURIComponent(code))
@@ -49,6 +52,9 @@ function JoinCourse({ code }: { code: string }) {
     </section></JoinLayout>
   }
   if (data.already_enrolled) return null
+  if (account?.kind === 'guest' && !data.allow_guest) {
+    return <JoinLayout><GuestClosedCard kind="course" next={'/join?code=' + encodeURIComponent(code)} account={account} /></JoinLayout>
+  }
 
   const displayName = name ?? data.default_display_name
   async function submit(event: FormEvent) {

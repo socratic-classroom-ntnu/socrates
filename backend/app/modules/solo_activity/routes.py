@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.modules.identity_access.service import account
 from app.modules.platform.storage import transaction
-from app.modules.solo_activity import analysis, progress
+from app.modules.solo_activity import analysis, practice, progress
 from app.modules.solo_activity import service as service
 from app.modules.solo_activity.contracts import (
     ACTION_BODIES,
@@ -23,9 +23,35 @@ from app.modules.solo_activity.contracts import (
     SoloActivityView,
     SoloAttemptView,
     SoloAction,
+    PracticeList,
+    PracticeStart,
+    PracticeStarted,
+    PracticeTopic,
 )
 
 router = APIRouter(prefix="/solo", tags=["solo"])
+
+
+@router.get("/practice/bank", response_model=list[PracticeTopic])
+def get_practice_bank(request: Request):
+    """The main-flow bank; guests may read it (their 我的對話 page shows the topics locked)."""
+    with transaction() as db:
+        account(db, request, allow_guest=True)
+        return practice.bank_view()
+
+
+@router.get("/practice", response_model=PracticeList)
+def get_practice(request: Request):
+    with transaction() as db:
+        current, _ = account(db, request)
+        return practice.practice_list(db, current, service.now())
+
+
+@router.post("/practice", response_model=PracticeStarted, status_code=201)
+def start_practice(body: PracticeStart, request: Request):
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        return practice.start_practice(db, current, body.bank_item_id, service.now())
 
 
 @router.get("/activities/{activity_id}", response_model=SoloActivityView)

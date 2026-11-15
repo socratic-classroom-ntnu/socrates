@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../../contract/classroomClient'
 import { useResource } from '../../contract/useResource'
-import { useShellBack } from '../../shared/shellContext'
+import { useShellActive, useShellBack } from '../../shared/shellContext'
 import { errorMessage } from '../../i18n/errors'
 import { formatDateTime } from '../../i18n/format'
 import { useT } from '../../i18n/useT'
@@ -17,7 +17,13 @@ export function SoloActivityPage() {
   const activity = useResource<SoloActivityView>(`/solo/activities/${activityId}`)
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<unknown>(null)
-  useShellBack(activity.data ? `/learn/courses/${activity.data.course_id}` : '/', t('activity.back'))
+  // 我的對話的私人活動（spec §10 M16、M20）：沒有課程頁可回，所有返回都回「我的對話」，導覽也亮它
+  const practice = activity.data?.practice === true
+  useShellBack(
+    practice ? '/my-dialogues' : activity.data ? `/learn/courses/${activity.data.course_id}` : '/',
+    practice ? t('shell:nav.dialogues') : t('activity.back'),
+  )
+  useShellActive(practice ? 'dialogues' : null)
 
   if (activity.loading && !activity.data) return <main className="solo-activity" aria-busy="true" />
   if (!activity.data) {
@@ -63,11 +69,13 @@ export function SoloActivityPage() {
   return <main className="solo-activity">
     <header className="solo-activity__head">
       <nav className="solo-activity__crumb" aria-label={t('activity.breadcrumbLabel')}>
-        <Link to="/?tab=learn">{t('activity.back')}</Link><span aria-hidden="true">/</span>
-        <Link to={`/learn/courses/${data.course_id}`}>{data.course_name}</Link>
+        {practice
+          ? <Link to="/my-dialogues">{t('shell:nav.dialogues')}</Link>
+          : <><Link to="/?tab=learn">{t('activity.back')}</Link><span aria-hidden="true">/</span>
+            <Link to={`/learn/courses/${data.course_id}`}>{data.course_name}</Link></>}
       </nav>
       <div className="solo-activity__title">
-        <Link className="solo-activity__back" to={`/learn/courses/${data.course_id}`} aria-label={t('activity.backToCourse')} title={t('activity.backToCourse')}>
+        <Link className="solo-activity__back" to={practice ? '/my-dialogues' : `/learn/courses/${data.course_id}`} aria-label={t('activity.backToCourse')} title={t('activity.backToCourse')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </Link>
         <h1>{data.title}</h1>
@@ -77,7 +85,7 @@ export function SoloActivityPage() {
       <div className="solo-activity__main">
         <dl className="solo-activity__facts">
           <div><dt>{t('activity.status')}</dt><dd><span className={`solo-activity__status solo-activity__status--${data.status}`}>{t(`activity.statuses.${data.status}`)}</span></dd></div>
-          <div><dt>{t('activity.openUntil')}</dt><dd>{formatDateTime(data.ends_at, locale, 'weekdayDateTime')}</dd></div>
+          {!practice && <div><dt>{t('activity.openUntil')}</dt><dd>{formatDateTime(data.ends_at, locale, 'weekdayDateTime')}</dd></div>}
         </dl>
         <section className="solo-activity__progress" aria-labelledby="solo-activity-progress">
           <h2 id="solo-activity-progress">{t('activity.progress')}</h2>

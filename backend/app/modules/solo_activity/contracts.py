@@ -73,6 +73,8 @@ class SoloActivityView(View):
     status: Literal["scheduled", "open", "ended"]
     ends_at: float
     attempt: SoloAttemptBrief | None  # None until the student starts
+    # 學生「我的對話」的私人活動：沒有期限、返回「我的對話」、title 是題庫短標題
+    practice: bool
 
 
 class CitationSourceView(View):
@@ -258,3 +260,50 @@ class SoloActivityAnalysisView(View):
     revision_id: str | None  # the ActivityRevision these numbers belong to; None for a draft
     summary: SoloAnalysisSummaryView
     students: list[SoloAnalysisStudentView]  # every student who started, in enrollment order
+
+
+# ---- 學生「我的對話」：從主流程題庫自己練習（spec §10 M12、M15） ----
+
+PracticeCategory = Literal["life", "honesty", "self", "tech"]
+
+
+class PracticeTopic(View):
+    id: str
+    title: str
+    body: str
+    category: PracticeCategory
+    recommended: bool
+
+
+class PracticeDialogue(View):
+    activity_id: str
+    attempt_id: str
+    topic_id: str
+    title: str  # the topic's short title; for a topic since removed, a cut of `body`
+    body: str  # what the activity stored: the scenario the student actually discussed
+    category: PracticeCategory | None  # None once the topic is removed from the bank
+    status: Literal["in_progress", "completed"]  # completed only when the attempt is completed
+    created_at: float
+    updated_at: float  # the attempt's last update; the list is newest first
+
+
+class PracticeQuota(View):
+    limit: int
+    used_today: int
+    remaining: int
+
+
+class PracticeList(View):
+    dialogues: list[PracticeDialogue]
+    quota: PracticeQuota
+
+
+class PracticeStart(TrimmedModel):
+    model_config = ConfigDict(extra="forbid")
+
+    bank_item_id: str = Field(min_length=1, max_length=40)
+
+
+class PracticeStarted(View):
+    activity_id: str
+    attempt_id: str

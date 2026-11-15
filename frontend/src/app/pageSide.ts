@@ -2,7 +2,7 @@
 // 不在這裡的網址兩邊都能開（首頁、分組課、個人設定、示範頁……）。
 export type PageSide = 'student' | 'teacher'
 
-const STUDENT = [/^\/learn(\/|$)/, /^\/join\/?$/, /^\/activities\/[^/]+\/join\/?$/, /^\/scan\/?$/]
+const STUDENT = [/^\/learn(\/|$)/, /^\/join\/?$/, /^\/activities\/[^/]+\/join\/?$/, /^\/scan\/?$/, /^\/my-dialogues\/?$/]
 const TEACHER = [/^\/teach(\/|$)/, /^\/teacher(\/|$)/]
 
 export function pageSide(pathname: string): PageSide | null {

@@ -7,7 +7,7 @@ const home: Shape<typeof zhHant> = {
     afternoon: '下午好，{{name}}',
     evening: '晚上好，{{name}}',
   },
-  learn: { label: '学的课' },
+  learn: { title: '我学的课', count: '{{count}} 门' },
   join: {
     label: '课程代码',
     placeholder: '输入 8 位课程代码',
@@ -24,6 +24,8 @@ const home: Shape<typeof zhHant> = {
     learnTitle: '还没有加入任何课程',
     learnBody: '输入老师给的代码加入课程。',
     learnBodyPhone: '扫描二维码或输入代码加入课程。',
+    learnPractice: '也可以先到「我的对话」练习。',
+    toPractice: '去我的对话',
     teachTitle: '还没有任何课程',
     teachBody: '创建第一门课，邀请学生用代码或二维码加入，就可以开始出题，看见每位学生的想法。',
     teachCreate: '创建第一门课',

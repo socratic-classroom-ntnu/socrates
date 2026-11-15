@@ -7,7 +7,7 @@ const home: Shape<typeof zhHant> = {
     afternoon: 'Good afternoon, {{name}}',
     evening: 'Good evening, {{name}}',
   },
-  learn: { label: 'My courses' },
+  learn: { title: 'My courses', count: '{{count}}' },
   join: {
     label: 'Course code',
     placeholder: 'Enter the 8-character course code',
@@ -24,6 +24,8 @@ const home: Shape<typeof zhHant> = {
     learnTitle: 'You have not joined any course yet',
     learnBody: 'Enter the code from your teacher to join a course.',
     learnBodyPhone: 'Scan a QR code or enter a code to join a course.',
+    learnPractice: 'You can also practise in My dialogues first.',
+    toPractice: 'Go to My dialogues',
     teachTitle: 'No courses yet',
     teachBody: 'Create your first course and invite students with its code or QR code. Then add a question and see what each student thinks.',
     teachCreate: 'Create your first course',

@@ -16,7 +16,8 @@ from app.modules.platform.storage import transaction
 def find_by_code(db, raw_code: str) -> Course:
     """A wrong code and a disabled code fail the same way, so the response never reveals a course."""
     course = db.scalar(select(Course).where(Course.code == normalize(raw_code)))
-    if course is None or not course.code_enabled:
+    # 私人課程（我的對話）即使代碼被打開也不能用代碼找到
+    if course is None or not course.code_enabled or course.practice_account_id is not None:
         raise DomainError("ENROLL_CODE_NOT_FOUND", 404)
     return course
 

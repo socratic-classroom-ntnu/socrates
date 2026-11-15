@@ -41,6 +41,7 @@ jest.mock('../features/course/learn/StudentCoursePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { StudentCoursePage: () => { const { courseId } = useParams(); return <p>student-course-page:{courseId}</p> } }
 })
+jest.mock('../features/course/practice/MyDialoguesPage', () => ({ MyDialoguesPage: () => <p>my-dialogues-page</p> }))
 jest.mock('../features/course/home/HomePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { HomePage: () => { const { search } = loc(); return <p>home-page:{search}</p> } }
@@ -138,6 +139,7 @@ test.each([
   ['/scan', '功能開發中'],
   ['/account', '功能開發中'],
   // 訪客帳號面板的兩個入口：頁面由免註冊需求做，先接「開發中」（P27）
+  ['/my-dialogues', 'my-dialogues-page'],
   ['/guest/register', '功能開發中'],
   ['/guest/login', '功能開發中'],
 ])('renders each course route: %s', async (url, marker) => {
@@ -392,6 +394,7 @@ describe('pages of the other role', () => {
   })
 
   test.each([
+    ['/my-dialogues', false],
     ['/learn/courses/c1', false],
     ['/learn/activities/a1', false],
     ['/learn/activities/a1/dialogue', false],

@@ -103,6 +103,7 @@ const soloActivity = {
     id: attemptId, state: 'in_dialogue', scenario_index: 0, current_turn: 2, review_status: 'not_started',
     progress: [{ index: 0, status: 'in_dialogue' }],
   },
+  practice: false,
 } satisfies S['SoloActivityView']
 
 const attempt = {

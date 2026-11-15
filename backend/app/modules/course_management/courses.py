@@ -49,7 +49,8 @@ def create(db, owner: Account, data: CourseCreate) -> Course:
 
 def access_for(db, account: Account, course_id: str) -> CourseAccess:
     course = db.get(Course, course_id)
-    if course is None:
+    # 學生的私人課程（我的對話）不是一般課程：課程頁、活動列表、老師端都找不到它
+    if course is None or course.practice_account_id is not None:
         raise DomainError("COURSE_NOT_FOUND", 404)
     enrollment = db.scalar(
         select(Enrollment).where(
@@ -132,12 +133,14 @@ def lists(db, account: Account) -> dict:
     """Both home tabs in a fixed number of queries, however many courses the account has."""
     at = activity_service.now()
     teaching = db.scalars(
-        select(Course).where(Course.owner_id == account.id).order_by(Course.created_at, Course.id)
+        select(Course)
+        .where(Course.owner_id == account.id, Course.practice_account_id.is_(None))
+        .order_by(Course.created_at, Course.id)
     ).all()
     learning = db.scalars(
         select(Course)
         .join(Enrollment, Enrollment.course_id == Course.id)
-        .where(Enrollment.account_id == account.id)
+        .where(Enrollment.account_id == account.id, Course.practice_account_id.is_(None))
         .order_by(Enrollment.created_at, Course.id)
     ).all()
     summaries = activity_service.course_summaries(

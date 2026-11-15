@@ -166,6 +166,14 @@ def _messages(db, attempt_id: str) -> list[SoloMessage]:
 # ---- views ---------------------------------------------------------------------------------
 
 
+def _display_title(activity: Activity, course: Course) -> str:
+    """我的對話的私人活動存的是整段情境；畫面上顯示題庫的短標題（spec §10 M16）。"""
+    if course.practice_account_id is None:
+        return activity.title
+    item = activities.practice_bank_item(activity.bank_item_id or "")
+    return activities.practice_display_title(item, activity.title)
+
+
 def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     a = _state(row)
     activity = db.get(Activity, row.activity_id)
@@ -192,7 +200,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     return {
         "id": row.id,
         "activity_id": activity.id,
-        "activity_title": activity.title,
+        "activity_title": _display_title(activity, course),
         "course_id": course.id,
         "course_name": course.name,
         "display_name": enrolled.display_name if enrolled else "",
@@ -249,12 +257,13 @@ def activity_view(db, account: Account, activity_id: str, at: float) -> dict:
     row = _own_attempt(db, activity.id, account.id)
     return {
         "activity_id": activity.id,
-        "title": activity.title,
+        "title": _display_title(activity, course),
         "course_id": course.id,
         "course_name": course.name,
         "status": _status(activity, at),
         "ends_at": activity.ends_at,
         "attempt": _attempt_brief(row) if row is not None else None,
+        "practice": course.practice_account_id is not None,
     }
 
 

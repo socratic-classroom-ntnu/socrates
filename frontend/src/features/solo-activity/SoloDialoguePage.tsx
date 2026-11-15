@@ -119,7 +119,12 @@ export function SoloDialoguePage() {
 
   return <main className="solo-dialogue">
     <header className="solo-dialogue__topbar">
-      <Link className="solo-dialogue__brand" to={`/learn/activities/${activityId}`} aria-label={t('dialogue.back')}>
+      {/* 我的對話的私人活動直接回「我的對話」（spec §10 M16） */}
+      <Link
+        className="solo-dialogue__brand"
+        to={activity.data.practice ? '/my-dialogues' : `/learn/activities/${activityId}`}
+        aria-label={t(activity.data.practice ? 'dialogue.backToPractice' : 'dialogue.back')}
+      >
         <span aria-hidden="true">{t('dialogue.logo')}</span>
       </Link>
       <div className="solo-dialogue__course">

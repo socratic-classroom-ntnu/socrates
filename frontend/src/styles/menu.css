@@ -9,6 +9,8 @@
 .menu--above > .menu__panel { bottom: calc(100% + 6px); }
 .menu--start > .menu__panel { left: 0; }
 .menu--end > .menu__panel { right: 0; }
+/* 側欄底部的帳號選單：開在側欄外面、跟按鈕底部對齊往上長（Fizzy 11/16） */
+.menu--right > .menu__panel { left: calc(100% + 16px); right: auto; bottom: 0; }
 .menu__list { margin: 0; padding: 6px; list-style: none; }
 .menu__panel--sub { top: auto; bottom: 0; left: calc(100% + 8px); min-width: 176px; margin: 0; padding: 6px; list-style: none; border-radius: 12px; }
 .menu__item {

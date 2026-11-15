@@ -86,6 +86,12 @@ export interface components { schemas: {
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
   "PasswordResetView": { "status": "PASSWORD_RESET" };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string; "sources"?: Array<components["schemas"]["CitationSourceView"]> };
+  "PracticeDialogue": { "activity_id": string; "attempt_id": string; "topic_id": string; "title": string; "body": string; "category": ("life" | "honesty" | "self" | "tech" | null); "status": "in_progress" | "completed"; "created_at": number; "updated_at": number };
+  "PracticeList": { "dialogues": Array<components["schemas"]["PracticeDialogue"]>; "quota": components["schemas"]["PracticeQuota"] };
+  "PracticeQuota": { "limit": number; "used_today": number; "remaining": number };
+  "PracticeStart": { "bank_item_id": string };
+  "PracticeStarted": { "activity_id": string; "attempt_id": string };
+  "PracticeTopic": { "id": string; "title": string; "body": string; "category": "life" | "honesty" | "self" | "tech"; "recommended": boolean };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
@@ -117,7 +123,7 @@ export interface components { schemas: {
   "SignedOutView": { "status": "SIGNED_OUT" };
   "SoloActivityAnalysisView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended"; "ends_at": (number | null); "generated_at": number; "revision_id": (string | null); "summary": components["schemas"]["SoloAnalysisSummaryView"]; "students": Array<components["schemas"]["SoloAnalysisStudentView"]> };
   "SoloActivityProgressView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended"; "ends_at": (number | null); "generated_at": number; "summary": components["schemas"]["SoloProgressSummaryView"]; "students": Array<components["schemas"]["SoloStudentProgressView"]> };
-  "SoloActivityView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "scheduled" | "open" | "ended"; "ends_at": number; "attempt": (components["schemas"]["SoloAttemptBrief"] | null) };
+  "SoloActivityView": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "status": "scheduled" | "open" | "ended"; "ends_at": number; "attempt": (components["schemas"]["SoloAttemptBrief"] | null); "practice": boolean };
   "SoloAnalysisStudentView": { "enrollment_id": string; "display_name": string; "confirmed_scenarios": number; "current_position": string; "reason_summary": string; "relevant_conditions": Array<string> };
   "SoloAnalysisSummaryView": { "enrolled": number; "started": number; "done": number; "in_progress": number };
   "SoloAttemptBrief": { "id": string; "state": "answering" | "awaiting_tutor" | "tutor_unavailable" | "in_dialogue" | "confirming" | "between_scenarios" | "reviewing" | "awaiting_reflection_prompt" | "reflecting" | "budget_exhausted" | "completed"; "scenario_index": number; "progress": Array<components["schemas"]["SoloScenarioProgressView"]>; "review_status": "not_started" | "in_progress"; "current_turn": number };

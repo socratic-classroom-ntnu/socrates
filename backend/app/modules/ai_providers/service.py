@@ -5,6 +5,8 @@ import json
 import os
 import secrets
 import time
+from collections.abc import Mapping
+from dataclasses import dataclass
 from typing import Any, Callable
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from fastapi import Request
@@ -682,3 +684,121 @@ def update_account_ai_settings(db, account, session, body: SettingsUpdate):
     row.revision = int(row.revision or 0) + 1
     row.updated_at = time.time()
     return settings_view(row)
+
+
+# ---- 學生「我的對話」的平台連線（spec §10 M3） ----
+# 金鑰由部署的環境變數帶入，啟動時寫成系統帳號的一組 PERSISTENT 連線設定並設為預設；
+# 私人課程的擁有者是系統帳號，所以單人作答照舊走 resolve_owner_chain(course.owner_id)。
+
+PLATFORM_PROFILE_NAME = "我的對話平台連線"
+
+
+@dataclass(frozen=True)
+class PlatformConfig:
+    adapter: str
+    model: str
+    api_key: str
+    base_url: str | None
+
+
+def platform_profile_config(env: Mapping[str, str] | None = None) -> PlatformConfig | None:
+    """Read SOCRATES_PRACTICE_LLM_*: None without a key; any invalid value raises ValueError so
+    a misconfigured deploy fails at startup instead of at a student's first message."""
+    from pydantic import ValidationError
+
+    from app.modules.ai_providers.classroom_gateway import validate_base_url
+    from app.modules.ai_providers.contracts import CreateProfile
+
+    source = os.environ if env is None else env
+    key = (source.get("SOCRATES_PRACTICE_LLM_API_KEY") or "").strip()
+    if not key:
+        return None
+    base_url = (source.get("SOCRATES_PRACTICE_LLM_BASE_URL") or "").strip() or None
+    try:
+        body = CreateProfile(
+            name=PLATFORM_PROFILE_NAME,
+            adapter=(source.get("SOCRATES_PRACTICE_LLM_ADAPTER") or "openrouter"),
+            default_model=(source.get("SOCRATES_PRACTICE_LLM_MODEL") or ""),
+            credential=key,
+            base_url=base_url,
+        )
+    except ValidationError as exc:
+        raise ValueError(f"SOCRATES_PRACTICE_LLM_* 設定不合法：{exc}") from exc
+    if body.adapter == "openai-compatible":
+        if not body.base_url:
+            raise ValueError("SOCRATES_PRACTICE_LLM_BASE_URL：openai-compatible 一定要設")
+        try:
+            base_url = validate_base_url(body.adapter, body.base_url).strip()
+        except DomainError as exc:
+            raise ValueError(f"SOCRATES_PRACTICE_LLM_BASE_URL 不合法：{exc.code}") from exc
+    elif body.base_url:
+        raise ValueError("SOCRATES_PRACTICE_LLM_BASE_URL 只給 openai-compatible 用")
+    assert body.credential is not None
+    return PlatformConfig(
+        adapter=body.adapter,
+        model=body.default_model.strip(),
+        api_key=body.credential,
+        base_url=base_url if body.adapter == "openai-compatible" else None,
+    )
+
+
+def _find_platform_profile(db, owner_id: str) -> ProviderProfile | None:
+    return db.scalar(
+        select(ProviderProfile).where(
+            ProviderProfile.owner_id == owner_id, ProviderProfile.name == PLATFORM_PROFILE_NAME
+        )
+    )
+
+
+def upsert_platform_profile(db, owner_id: str, config: PlatformConfig) -> None:
+    """Create or update the platform connection and make it the owner's default. Needs no login
+    session (the system account cannot log in); a lost race with another worker re-reads."""
+    from sqlalchemy.exc import IntegrityError
+
+    row = _find_platform_profile(db, owner_id)
+    if row is None:
+        try:
+            with db.begin_nested():
+                row = ProviderProfile(
+                    owner_id=owner_id,
+                    name=PLATFORM_PROFILE_NAME,
+                    adapter=config.adapter,
+                    default_model=config.model,
+                    credential_mode="PERSISTENT",
+                )
+                db.add(row)
+        except IntegrityError:
+            row = _find_platform_profile(db, owner_id)
+            if row is None:
+                raise
+    row.adapter = config.adapter
+    row.base_url = config.base_url
+    row.default_model = config.model
+    row.enabled = True
+    row.credential_mode = "PERSISTENT"
+    encrypted, version = _seal(config.api_key, profile_id=row.id, owner_id=owner_id)
+    row.encrypted_secret = encrypted
+    row.secret_last4 = config.api_key[-4:]
+    row.key_version = version
+    row.updated_at = time.time()
+    settings = db.get(AccountAISettings, owner_id)
+    if settings is None:
+        try:
+            with db.begin_nested():
+                settings = AccountAISettings(owner_id=owner_id)
+                db.add(settings)
+        except IntegrityError:
+            settings = db.get(AccountAISettings, owner_id)
+            if settings is None:
+                raise
+    if settings.default_profile_id != row.id:
+        settings.default_profile_id = row.id
+        settings.revision = int(settings.revision or 0) + 1
+        settings.updated_at = time.time()
+
+
+def disable_platform_profile(db, owner_id: str) -> None:
+    row = _find_platform_profile(db, owner_id)
+    if row is not None and row.enabled:
+        row.enabled = False
+        row.updated_at = time.time()

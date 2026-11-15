@@ -1187,3 +1187,14 @@ test('review state shows the placeholder without submit', async () => {
   expect(screen.queryByLabelText('回答蘇格拉底')).toBeNull()
   expect(calls.some(call => call.key === 'POST /solo/attempts/attempt-1/submit_review')).toBe(false)
 })
+
+
+// 我的對話的私人活動（spec §10 M16）：左上返回直接回「我的對話」，頂欄是題目短標題
+test('a private practice dialogue goes back to my dialogues', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': { ...activity, title: '電車難題', practice: true },
+    'GET /solo/attempts/attempt-1': { ...attempt, activity_title: '電車難題' },
+  })
+  const back = await screen.findByRole('link', { name: '回到我的對話' })
+  expect(back).toHaveAttribute('href', '/my-dialogues')
+})

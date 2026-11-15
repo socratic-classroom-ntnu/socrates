@@ -5,6 +5,7 @@ const shell: Shape<typeof zhHant> = {
   nav: {
     label: 'Menú principal',
     home: 'Inicio',
+    dialogues: 'Mis diálogos',
     me: 'Yo',
     bank: 'Mi banco de preguntas',
     store: 'Tienda de preguntas',

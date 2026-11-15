@@ -12,6 +12,8 @@ describe('pageSide', () => {
     '/activities/a1/join',
     '/activities/a1/join/',
     '/scan',
+    '/my-dialogues',
+    '/my-dialogues/',
   ])('%s is a student page', path => {
     expect(pageSide(path)).toBe('student')
   })

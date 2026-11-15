@@ -54,10 +54,11 @@ test('a student account sees only the courses it learns, with no tabs', async ()
   expect(screen.queryByRole('button', { name: '建立課程' })).toBeNull()
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^(早安|午安|晚安)，Fizzy$/)
-  // 畫布 M2：加入課程跟問候語同一列（右邊），不在課程面板裡
-  const head = screen.getByRole('heading', { level: 1 }).parentElement!
-  expect(head).toContainElement(screen.getByLabelText('課程代碼'))
-  expect(screen.getByText('哲學導論').closest('section')).not.toContainElement(screen.getByLabelText('課程代碼'))
+  // Fizzy 11/16：面板頂端是「我學的課 N 門」標題列（跟老師的「我的課程」一樣），電腦版的加入課程放在這一列右邊
+  const panel = screen.getByRole('region', { name: /^我學的課/ })
+  expect(within(panel).getByRole('heading', { level: 2, name: '我學的課 1 門' })).toBeInTheDocument()
+  expect(panel).toContainElement(screen.getByLabelText('課程代碼'))
+  expect(panel).toContainElement(screen.getByText('哲學導論'))
 })
 
 test('a teacher account sees only the courses it teaches, with create course', async () => {
@@ -88,8 +89,15 @@ test('a student with no courses sees the empty state and the code form', async (
   open({})
   expect(await screen.findByRole('heading', { name: '還沒有加入任何課程' })).toBeInTheDocument()
   expect(screen.getByText('輸入老師給的代碼加入課程。')).toBeInTheDocument()
+  // 畫布 MyCoursesEmpty：也可以先到我的對話練習
+  expect(screen.getByText('也可以先到「我的對話」練習。')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /去我的對話/ })).toHaveAttribute('href', '/my-dialogues')
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: '掃描' })).toBeNull()
+  // 沒有課時標題不帶數量，加入課程照樣在標題列
+  const panel = screen.getByRole('region', { name: /^我學的課/ })
+  expect(within(panel).getByRole('heading', { level: 2, name: '我學的課' })).toBeInTheDocument()
+  expect(panel).toContainElement(screen.getByLabelText('課程代碼'))
 })
 
 test('a teacher with no courses sees the first-course steps and creates one', async () => {
@@ -119,6 +127,15 @@ test('phone student home has the scan and code join row', async () => {
   expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: '還沒有加入任何課程' })).toBeInTheDocument()
   expect(screen.getByText('掃描 QR 或輸入代碼加入課程。')).toBeInTheDocument()
+})
+
+test('phone student home keeps the join row under the greeting and titles the panel', async () => {
+  phone()
+  open({ learning: [learning(), learning({ id: 'c-2', name: '科技倫理' })] })
+  const panel = await screen.findByRole('region', { name: /^我學的課/ })
+  expect(await within(panel).findByRole('heading', { level: 2, name: '我學的課 2 門' })).toBeInTheDocument()
+  // 畫布 M2m：掃描＋代碼列仍在問候語下面，不進面板
+  expect(panel).not.toContainElement(screen.getByLabelText('課程代碼'))
 })
 
 test('phone teacher home asks for a computer and loads no courses', async () => {

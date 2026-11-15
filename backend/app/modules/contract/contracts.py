@@ -9,7 +9,7 @@ front/back seam so a check can say when one side drifts from the other.
 REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACCOUNT_DATA_TAKEN": ("identity_access",),
     "ACCOUNT_PENDING_VERIFICATION": ("identity_access",),
-    "ACCOUNT_ROLE_FORBIDDEN": ("course_management",),
+    "ACCOUNT_ROLE_FORBIDDEN": ("course_management", "solo_activity"),
     "ACTION_ID_PAYLOAD_CONFLICT": ("classroom_core", "content_authoring", "group_dialogue"),
     "ACTION_SCOPE_REQUIRED": ("content_authoring",),
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),
@@ -86,6 +86,9 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "PERSONAL_RETRY_REQUIRED": ("group_dialogue",),
     "PERSONAL_TURN_REQUIRED": ("group_dialogue",),
     "PERSONAL_WINDOW_CLOSED": ("group_dialogue",),
+    "PRACTICE_DAILY_LIMIT": ("course_management",),
+    "PRACTICE_TOPIC_NOT_FOUND": ("solo_activity",),
+    "PRACTICE_UNAVAILABLE": ("solo_activity",),
     "PREVIEW_REQUIRED": ("classroom_core",),
     "PROVIDER_BASE_URL_REQUIRED": ("ai_providers",),
     "PROVIDER_CREDENTIAL_DECRYPTION": ("ai_providers",),

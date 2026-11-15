@@ -185,3 +185,51 @@ test('unknown activity shows not found', async () => {
   expect(await screen.findByRole('heading', { name: '找不到這個活動' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
 })
+
+// 我的對話的私人活動（spec §10 M16、M20）：沒有期限，所有返回都回「我的對話」，導覽亮「我的對話」
+describe('a private practice activity', () => {
+  const practice = { ...activity, title: '電車難題', course_name: '我的對話', ends_at: 4102444800, practice: true }
+
+  test('shows no open-until date', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    expect(await screen.findByRole('heading', { level: 1, name: '電車難題' })).toBeInTheDocument()
+    expect(screen.queryByText('開放到')).toBeNull()
+    expect(document.body.textContent).not.toMatch(/2100|2099/)
+  })
+
+  test('the breadcrumb and back arrow go to my dialogues', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    const path = await screen.findByRole('navigation', { name: '課程路徑' }, { timeout: 5000 })
+    expect(within(path).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')]))
+      .toEqual([['我的對話', '/my-dialogues']])
+    expect(screen.getByRole('link', { name: '返回上一層' })).toHaveAttribute('href', '/my-dialogues')
+  })
+
+  test('the sidebar marks my dialogues, not home', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    await screen.findByRole('heading', { level: 1, name: '電車難題' })
+    const nav = screen.getByRole('navigation', { name: '主選單' })
+    expect(within(nav).getByRole('link', { name: '我的對話' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: '首頁' })).not.toHaveAttribute('aria-current')
+  })
+
+  test('on a phone the top bar goes back to my dialogues', async () => {
+    const desktop = window.matchMedia
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+      matches: query.includes('max-width: 767px'), media: query, onchange: null, addListener() {}, removeListener() {},
+      addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true },
+    }) })
+    try {
+      mockApi({ 'GET /solo/activities/a-1': practice })
+      renderPage()
+      await screen.findByRole('heading', { level: 1, name: '電車難題' })
+      const back = screen.getAllByRole('link', { name: '我的對話' }).find(link => link.closest('header'))
+      expect(back).toHaveAttribute('href', '/my-dialogues')
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktop })
+    }
+  })
+})

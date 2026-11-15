@@ -8,7 +8,7 @@ import { useIsPhone } from '../../../shared/useIsPhone'
 import { EmptyClassroomIllustration } from '../../../components/EmptyClassroomIllustration'
 import { greetingKey } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
-import { Button, FormError } from '../../../ui'
+import { Button, ButtonLink, FormError } from '../../../ui'
 import { CreateCourseDrawer } from '../teach/CreateCourseDrawer'
 import { LearningCard, TeachingCard } from './CourseCards'
 import { JoinCodeForm } from './JoinCodeForm'
@@ -17,7 +17,7 @@ import '../../../styles/home.css'
 type Lists = components['schemas']['CourseLists']
 
 /**
- * 帳號只有一個角色（P20、P21）：學生是 M1／M1m（學的課＋加入課程），老師是 H1t／H2t（教的課＋建立課程），
+ * 帳號只有一個角色（P20、P21）：學生是 M2／M2m（「我學的課」標題列＋加入課程），老師是 H1t／H2t（教的課＋建立課程），
  * 手機老師是 S4m-t（請用電腦）。沒有分頁，網址上的 ?tab= 一律忽略；?create=1 只對老師開抽屜。
  */
 export function HomePage() {
@@ -38,20 +38,30 @@ function StudentHome({ phone }: { phone: boolean }) {
   const { t } = useT('home')
   const lists = useResource<Lists>('/courses')
   const data = lists.data
+  const count = data?.learning.length ?? 0
   return <main className={'home' + (phone ? ' home--phone' : '')}>
-    {/* 畫布 M2：加入課程跟問候語同一列（電腦在右邊，手機排在問候語下面） */}
+    {/* 畫布 M2m：手機的掃描＋代碼列排在問候語下面；電腦版的加入課程在面板標題列右邊（Fizzy 11/16） */}
     <div className="home__head">
       <Greeting />
-      <JoinCodeForm variant={phone ? 'phone' : 'inline'} />
+      {phone && <JoinCodeForm variant="phone" />}
     </div>
-    <section className="home__panel" aria-label={t('learn.label')}>
+    <section className="home__panel" aria-labelledby="home-learning-title">
+      <div className="home__bar">
+        <h2 id="home-learning-title" className="home__title">
+          {t('learn.title')}{count > 0 && <span className="home__count"> {t('learn.count', { count })}</span>}
+        </h2>
+        {!phone && <JoinCodeForm variant="inline" />}
+      </div>
       {lists.loading && !data && <div aria-busy="true" className="home__loading" />}
       {!data && !lists.loading && <FormError role="alert">{t('loadFailed')}</FormError>}
       {data && (data.learning.length === 0
         ? <div className="home__empty">
           <EmptyClassroomIllustration />
-          <h2>{t('empty.learnTitle')}</h2>
+          <h3>{t('empty.learnTitle')}</h3>
           <p>{t(phone ? 'empty.learnBodyPhone' : 'empty.learnBody')}</p>
+          {/* 畫布 MyCoursesEmpty：也可以先到我的對話練習 */}
+          <p>{t('empty.learnPractice')}</p>
+          <ButtonLink variant="outline" className="home__practice" to="/my-dialogues">{t('empty.toPractice')}<span aria-hidden="true">→</span></ButtonLink>
         </div>
         : <div className="home__cards">
           {data.learning.map(course => <LearningCard key={course.id} course={course} phone={phone} />)}

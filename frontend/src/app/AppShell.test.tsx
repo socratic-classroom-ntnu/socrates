@@ -4,7 +4,7 @@ import { ApiError, api } from '../contract/classroomClient'
 import { TeacherShell } from '../features/authoring/TeacherDashboard'
 import { AppShell } from './AppShell'
 import { AuthProvider, useAuth } from '../features/auth/AuthContext'
-import { useShellBack } from '../shared/shellContext'
+import { useShellActive, useShellBack } from '../shared/shellContext'
 import { LanguageSwitcher } from '../features/auth/LanguageSwitcher'
 
 jest.mock('../contract/classroomClient', () => {
@@ -99,13 +99,34 @@ test('a teacher sidebar lists home, the two banks and AI settings', async () => 
   ])
 })
 
-test('a student sidebar lists only home', async () => {
+test('a student sidebar lists home and my dialogues', async () => {
   asStudent()
   open('/')
   const nav = await screen.findByRole('navigation', { name: '主選單' })
   expect(within(within(nav).getByRole('list')).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
     ['首頁', '/'],
+    ['我的對話', '/my-dialogues'],
   ])
+})
+
+test('my dialogues is marked on its own page', async () => {
+  asStudent()
+  open('/my-dialogues')
+  expect(await screen.findByRole('link', { name: '我的對話' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('link', { name: '首頁' })).not.toHaveAttribute('aria-current')
+})
+
+// M20：私人活動頁（網址還是 /learn/activities/…）由頁面告訴外框它屬於「我的對話」
+function PracticeActivity() {
+  useShellActive('dialogues')
+  return <p>practice-activity</p>
+}
+
+test('a page can mark my dialogues even under /learn', async () => {
+  asStudent()
+  open('/learn/activities/a-1', <PracticeActivity />)
+  expect(await screen.findByRole('link', { name: '我的對話' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('link', { name: '首頁' })).not.toHaveAttribute('aria-current')
 })
 
 // P23：側欄底部的帳號按鈕在名字旁標出角色
@@ -152,6 +173,14 @@ test('shows the signed-in user and the page body', async () => {
   expect(trigger).toHaveTextContent('Fizzy')
   expect(trigger).toHaveTextContent('fizzy@example.org')
   expect(screen.getByText('page-body')).toBeInTheDocument()
+})
+
+// Fizzy 11/16：側欄底部的帳號選單往右邊（側欄外）展開，不往上疊在側欄裡；收合後的頭像也一樣
+test('the sidebar account menu opens to the right of the sidebar', async () => {
+  open('/')
+  const menu = await openAccountMenu()
+  expect(menu.closest('.menu')).toHaveClass('menu--right')
+  expect(menu.closest('.menu')).not.toHaveClass('menu--above')
 })
 
 test('account menu switches language', async () => {
@@ -277,6 +306,10 @@ describe('student phone', () => {
   test('home has the brand on top, no avatar, and the bottom nav', async () => {
     open('/')
     const nav = await screen.findByRole('navigation', { name: '主選單' })
+    expect(within(nav).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
+      ['首頁', '/'],
+      ['我的對話', '/my-dialogues'],
+    ])
     expect(within(nav).getByRole('link', { name: '首頁' })).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('button', { name: '我' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('link', { name: 'Socrates Classroom' })).toBeInTheDocument()

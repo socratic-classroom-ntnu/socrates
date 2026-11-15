@@ -20,6 +20,7 @@ import '../ui'
 import { ComingSoonPage, NotFoundPage } from '../components/ComingSoonPage'
 import { GroupsPage } from '../features/student-classroom/GroupsPage'
 import { HomePage } from '../features/course/home/HomePage'
+import { MyDialoguesPage } from '../features/course/practice/MyDialoguesPage'
 import { JoinActivityPage } from '../features/course/join/JoinActivityPage'
 import { JoinCoursePage } from '../features/course/join/JoinCoursePage'
 import { StudentCoursePage } from '../features/course/learn/StudentCoursePage'
@@ -111,6 +112,8 @@ export function AppRoutes() {
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
+        {/* 學生「我的對話」：要求驗證；訪客要等免註冊讓 RequireAuth 放行訪客後才進得來 */}
+        <Route path="/my-dialogues" element={<MyDialoguesPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}

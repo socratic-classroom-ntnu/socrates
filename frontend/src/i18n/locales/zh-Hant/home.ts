@@ -4,7 +4,7 @@ export default {
     afternoon: '午安，{{name}}',
     evening: '晚安，{{name}}',
   },
-  learn: { label: '學的課' },
+  learn: { title: '我學的課', count: '{{count}} 門' },
   join: {
     label: '課程代碼',
     placeholder: '輸入 8 碼課程代碼',
@@ -21,6 +21,8 @@ export default {
     learnTitle: '還沒有加入任何課程',
     learnBody: '輸入老師給的代碼加入課程。',
     learnBodyPhone: '掃描 QR 或輸入代碼加入課程。',
+    learnPractice: '也可以先到「我的對話」練習。',
+    toPractice: '去我的對話',
     teachTitle: '還沒有任何課程',
     teachBody: '建立第一門課，邀請學生用代碼或 QR 加入，就可以開始出題，看見每位學生的想法。',
     teachCreate: '建立第一門課',

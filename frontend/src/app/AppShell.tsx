@@ -8,10 +8,10 @@ import { BottomNav } from '../ui'
 import { AccountMenu, type NavEntry } from './AccountMenu'
 import { AccountSheet } from './AccountSheet'
 import { useLogout } from './accountSummary'
-import { InsideAppShell, type ShellBack, ShellBackContext } from '../shared/shellContext'
+import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useIsPhone } from '../shared/useIsPhone'
 
-type NavKey = 'home' | 'bank' | 'store' | 'settings'
+type NavKey = 'home' | 'dialogues' | 'bank' | 'store' | 'settings'
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
@@ -19,15 +19,15 @@ const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24
 // 舊教師頁（/teacher/home?view=…）在 render 時讀 window.location 決定畫面，仍用一般連結整頁載入（fullLoad）。
 const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] = [
   { key: 'home', href: '/', icon: icon(<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />) },
+  { key: 'dialogues', href: '/my-dialogues', icon: icon(<><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></>) },
   { key: 'bank', href: '/teacher/home?view=bank', fullLoad: true, icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
   { key: 'store', href: '/teacher/home?view=store', fullLoad: true, icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
   { key: 'settings', href: '/teacher/home?view=settings', fullLoad: true, icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
 ]
 
 // 帳號只有一個角色（P22）：側欄依角色，兩邊都沒有「分組課」（路由不擋，只是沒有入口）。
-// 「我的對話」需求之後在學生這一行加一格。
 const NAV_BY_ROLE: Record<'student' | 'teacher', NavKey[]> = {
-  student: ['home'],
+  student: ['home', 'dialogues'],
   teacher: ['home', 'bank', 'store', 'settings'],
 }
 
@@ -42,6 +42,7 @@ function writeCollapsed(value: boolean): void {
 }
 
 export function activeItem(pathname: string, search: string): NavKey | null {
+  if (/^\/my-dialogues\/?$/.test(pathname)) return 'dialogues'
   if (pathname === '/' || pathname.startsWith('/learn/') || pathname.startsWith('/teach/')) return 'home'
   if (/^\/teacher\/home\/?$/.test(pathname)) {
     const view = new URLSearchParams(search).get('view')
@@ -59,7 +60,9 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [back, setBack] = useState<ShellBack>(null)
   // 直接包進來的一頁（跨角色說明頁）不屬於任何導覽項目，不標目前頁
-  const active = children ? null : activeItem(pathname, search)
+  // 頁面宣告的優先（例如我的對話的私人活動頁），否則依網址
+  const [declared, setDeclared] = useState<ShellActive>(null)
+  const active = children ? null : declared ?? activeItem(pathname, search)
   const role = account?.account_role === 'teacher' ? 'teacher' : 'student'
   const navItems: NavEntry[] = ITEMS
     .filter(item => NAV_BY_ROLE[role].includes(item.key))
@@ -70,9 +73,11 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   }
 
   const content = <div className="app-shell__content" id="app-content">
+    <ShellActiveContext.Provider value={setDeclared}>
     <ShellBackContext.Provider value={setBack}>
       <InsideAppShell.Provider value={true}>{children ?? <Outlet />}</InsideAppShell.Provider>
     </ShellBackContext.Provider>
+    </ShellActiveContext.Provider>
   </div>
 
   if (phone) {
@@ -151,6 +156,7 @@ function StudentPhoneShell({ top, active, name, children }: { top: ReactNode; ac
     {children}
     {!typing && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
       { key: 'home', label: t('nav.home'), icon: ITEMS[0].icon, to: '/', current: active === 'home' },
+      { key: 'dialogues', label: t('nav.dialogues'), icon: ITEMS[1].icon, to: '/my-dialogues', current: active === 'dialogues' },
       { key: 'me', label: t('nav.me'), icon: <Avatar name={name} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
     ]} />}
     {sheet && <AccountSheet onClose={() => setSheet(false)} onLogout={logout.request} />}

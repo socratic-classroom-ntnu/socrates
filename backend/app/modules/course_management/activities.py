@@ -365,9 +365,17 @@ def course_summaries(db, course_ids: list[str], at: float) -> dict[str, dict]:
     return summaries
 
 
+def _joinable_course(db, activity: Activity) -> Course:
+    """The course behind a join link; a private course's activity (我的對話) is not found."""
+    course = db.get(Course, activity.course_id)
+    if course.practice_account_id is not None:
+        raise DomainError("ACTIVITY_NOT_FOUND", 404)
+    return course
+
+
 def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
     _published(db, activity)
-    course = db.get(Course, activity.course_id)
+    course = _joinable_course(db, activity)
     return {
         "activity_id": activity.id,
         "title": activity.title,
@@ -386,17 +394,16 @@ def public_course_name(db, activity_id: str) -> str:
     """Course name behind a published activity link; drafts and deleted ones are not found."""
     activity = get_activity(db, activity_id)
     _published(db, activity)
-    course = db.get(Course, activity.course_id)
-    return course.name
+    return _joinable_course(db, activity).name
 
 
 def join_by_activity(
     db, account: Account, activity: Activity, display_name: str, at: float
 ) -> dict:
     _published(db, activity)
+    course = _joinable_course(db, activity)
     current: ActivityStatus = _status(activity, at)
     if current == "ended":
         raise DomainError("ACTIVITY_ENDED", 409)
-    course = db.get(Course, activity.course_id)
     _, created = enrollment.enroll(db, account, course, display_name)
     return {"course_id": course.id, "activity_id": activity.id, "enrolled_now": created}

@@ -55,7 +55,7 @@ export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 't
       items={items}
       header={header}
       align={variant === 'topbar' ? 'end' : 'start'}
-      placement={variant === 'topbar' ? 'below' : 'above'}
+      placement={variant === 'topbar' ? 'below' : 'right'}
       triggerClassName="account-menu__trigger"
     />
     {failure && <p role="alert" className="account-menu__error">{errorMessage(t, failure)}</p>}

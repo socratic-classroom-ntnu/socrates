@@ -35,6 +35,7 @@ const home: Shape<typeof zhHant> = {
       openingTitle: 'Abriendo la cámara…',
       openingBody: 'Cuando aparezca la imagen de la cámara, apunta al código QR.',
       hint: 'Coloca el código QR dentro del marco para escanearlo automáticamente',
+      aimTitle: 'Apunta al código QR que muestra el profesor',
       useCode: 'Escribir un código',
     },
   },

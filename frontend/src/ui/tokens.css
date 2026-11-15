@@ -19,6 +19,7 @@
   --ui-color-on-dark: #FFFFFF;
   --ui-color-on-dark-soft: rgba(255, 255, 255, 0.86);
   --ui-color-on-dark-line: rgba(255, 255, 255, 0.6);
+  --ui-color-scrim: rgba(0, 0, 0, 0.38);
 
   --ui-color-ink: #1F2421;
   --ui-color-ink-soft: #3F4642;

@@ -35,6 +35,7 @@ const home: Shape<typeof zhHant> = {
       openingTitle: 'Opening the camera…',
       openingBody: 'Once the camera picture appears, point it at the QR code.',
       hint: 'Place the QR code inside the frame to scan it automatically',
+      aimTitle: 'Point at the QR code your teacher is showing',
       useCode: 'Enter a code instead',
     },
   },

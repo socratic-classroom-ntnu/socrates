@@ -1,11 +1,16 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import { Where } from '../../../testing/pageHarness'
+import { loadQrDetector } from './qrDetector'
 import { PICTURE_TIMEOUT_MS } from './useCamera'
+import { SCAN_INTERVAL_MS } from './useQrScanner'
 import { ScanPage } from './ScanPage'
+
+jest.mock('./qrDetector', () => ({ loadQrDetector: jest.fn() }))
 
 const originalMediaDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
 const getUserMedia = jest.fn()
+const detect = jest.fn()
 
 function fakeStream() {
   const track = { stop: jest.fn() }
@@ -20,6 +25,8 @@ function deferred<T>() {
 
 beforeEach(() => {
   getUserMedia.mockReset()
+  detect.mockReset().mockResolvedValue(null)
+  jest.mocked(loadQrDetector).mockReset().mockResolvedValue({ detect })
   Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } })
   jest.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
 })
@@ -180,4 +187,84 @@ test('a camera that arrives after the page is gone is stopped at once', async ()
   pending.resolve(stream)
   await flush()
   expect(track.stop).toHaveBeenCalled()
+})
+
+// S3：有畫面之後
+async function playing() {
+  const camera = fakeStream()
+  getUserMedia.mockResolvedValue(camera.stream)
+  open()
+  await flush()
+  Object.defineProperty(video(), 'videoWidth', { configurable: true, value: 1280 })
+  Object.defineProperty(video(), 'videoHeight', { configurable: true, value: 720 })
+  fireEvent(video(), new Event('playing'))
+  return camera
+}
+
+test('with a picture, S3 asks to aim at the QR inside the frame', async () => {
+  await playing()
+  expect(screen.getByRole('heading', { name: '對準老師投影的 QR' })).toBeInTheDocument()
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'aiming')
+  expect(screen.getByText('將 QR 放入框內，即可自動掃描')).toBeInTheDocument()
+})
+
+test('S2 has no frame and no aiming title', async () => {
+  getUserMedia.mockReturnValue(new Promise(() => {}))
+  open()
+  await flush()
+  expect(screen.queryByTestId('scan-frame')).toBeNull()
+  expect(screen.queryByRole('heading', { name: '對準老師投影的 QR' })).toBeNull()
+})
+
+test('frames are read only once the picture plays, and keep being read', async () => {
+  jest.useFakeTimers()
+  getUserMedia.mockResolvedValue(fakeStream().stream)
+  open()
+  await flush()
+  act(() => { jest.advanceTimersByTime(SCAN_INTERVAL_MS * 3) })
+  expect(detect).not.toHaveBeenCalled()
+  Object.defineProperty(video(), 'videoWidth', { configurable: true, value: 1280 })
+  Object.defineProperty(video(), 'videoHeight', { configurable: true, value: 720 })
+  fireEvent(video(), new Event('playing'))
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+  expect(detect).toHaveBeenCalledWith(video(), expect.objectContaining({ width: 1280, height: 720 }))
+  const reads = detect.mock.calls.length
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+  expect(detect.mock.calls.length).toBeGreaterThan(reads)
+})
+
+test('a QR library that fails to load goes home with S7 and stops the camera', async () => {
+  jest.mocked(loadQrDetector).mockRejectedValue(new Error('chunk failed'))
+  const { stream, track } = fakeStream()
+  getUserMedia.mockResolvedValue(stream)
+  open()
+  await flush()
+  await flush()
+  expect(JSON.parse(where().dataset.state!)).toEqual({ scanNotice: 'unavailable' })
+  expect(track.stop).toHaveBeenCalled()
+})
+
+test('one unreadable frame does not stop the scanning', async () => {
+  jest.useFakeTimers()
+  detect.mockRejectedValueOnce(new Error('frame not ready')).mockResolvedValue(null)
+  await playing()
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+  expect(detect.mock.calls.length).toBeGreaterThanOrEqual(2)
+  expect(where()).toHaveTextContent('/scan')
+})
+
+test('leaving stops reading frames', async () => {
+  jest.useFakeTimers()
+  await playing()
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS) })
+  await flush()
+  fireEvent.click(screen.getByRole('button', { name: '關閉' }))
+  const reads = detect.mock.calls.length
+  await act(async () => { jest.advanceTimersByTime(SCAN_INTERVAL_MS * 5) })
+  expect(detect.mock.calls.length).toBe(reads)
 })

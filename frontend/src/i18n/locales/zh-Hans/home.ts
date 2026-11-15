@@ -35,6 +35,7 @@ const home: Shape<typeof zhHant> = {
       openingTitle: '正在打开相机…',
       openingBody: '相机画面出现后，即可对准二维码。',
       hint: '将二维码放入框内，即可自动扫描',
+      aimTitle: '对准老师投影的二维码',
       useCode: '改用输入代码',
     },
   },

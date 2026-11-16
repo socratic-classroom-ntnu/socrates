@@ -175,7 +175,7 @@ def test_ai_students_are_left_out():
         "members": {"m1": {"alias": "同學"}, "ai1": {"alias": "AI", "actor_type": "llm_student"}},
         "runs": [
             {
-                "id": "r1",
+                "id": "run-a",
                 "personal": {
                     "m1": personal_entry("student_confirmed"),
                     "ai1": personal_entry("ai_student"),
@@ -216,7 +216,7 @@ def prepared(count):
                     "reason_summary": "理由",
                     "relevant_conditions": [],
                 },
-                "refs": [("m1", (f"r1:p-{i}:1", "理由"))],
+                "refs": [("m1", (f"run-a:p-{i}:1", "理由"))],
             }
             for i in range(count)
         ],

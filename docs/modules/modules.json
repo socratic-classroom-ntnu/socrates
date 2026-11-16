@@ -237,7 +237,7 @@
       "name": "雷達圖",
       "backend": "solo-activity",
       "source": "backend/app/modules/solo_activity/contracts.py",
-      "state": "後端 ViewModel 已定義；端點待實作",
+      "state": "產生型別 ✅（GET／PATCH /solo/activities/{id}/radar）",
       "consumer": "教師分析畫面",
       "frontend": [
         "teacher-analytics"

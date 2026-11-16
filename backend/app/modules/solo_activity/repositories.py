@@ -51,3 +51,23 @@ class SoloMessage(Base):
     # Student: {revise_hint} after 不太對, kept for statistics. Tutor: {move}.
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
+
+
+class SoloRadar(Base):
+    """The teacher's radar for one activity, as last computed (NEW-FEATURES 3.4).
+
+    ``basis`` fingerprints the final summaries it was computed from (revision, attempts, their
+    kept summaries); a new or changed summary makes it stale and the next read computes it again,
+    which also drops the teacher's axis names. ``dimensions`` and ``students`` hold the RadarView
+    payload as served.
+    """
+
+    __tablename__ = "solo_radars"
+
+    activity_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("activities.id"), primary_key=True
+    )
+    basis: Mapped[str] = mapped_column(String(64))
+    dimensions: Mapped[list] = mapped_column(JSON)
+    students: Mapped[list] = mapped_column(JSON)
+    computed_at: Mapped[float] = mapped_column(Float, default=time.time)

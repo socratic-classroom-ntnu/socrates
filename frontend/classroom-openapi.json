@@ -4593,6 +4593,160 @@
         "title": "Question",
         "type": "object"
       },
+      "RadarDimensionUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RadarDimensionUpdate",
+        "type": "object"
+      },
+      "RadarDimensionView": {
+        "additionalProperties": false,
+        "properties": {
+          "high_pole": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "High Pole",
+            "type": "string"
+          },
+          "index": {
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "low_pole": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Low Pole",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "embedding",
+              "llm"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "name",
+          "low_pole",
+          "high_pole",
+          "source"
+        ],
+        "title": "RadarDimensionView",
+        "type": "object"
+      },
+      "RadarScoreView": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_index": {
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Dimension Index",
+            "type": "integer"
+          },
+          "score": {
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "maxItems": 3,
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dimension_index",
+          "score",
+          "sources"
+        ],
+        "title": "RadarScoreView",
+        "type": "object"
+      },
+      "RadarStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "scores": {
+            "items": {
+              "$ref": "#/components/schemas/RadarScoreView"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Scores",
+            "type": "array"
+          },
+          "student_id": {
+            "minLength": 1,
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "display_name",
+          "scores"
+        ],
+        "title": "RadarStudentView",
+        "type": "object"
+      },
+      "RadarView": {
+        "additionalProperties": false,
+        "properties": {
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/RadarDimensionView"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/RadarStudentView"
+            },
+            "minItems": 1,
+            "title": "Students",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dimensions",
+          "students"
+        ],
+        "title": "RadarView",
+        "type": "object"
+      },
       "Reaction": {
         "additionalProperties": false,
         "properties": {
@@ -10485,6 +10639,110 @@
           }
         },
         "summary": "Get Activity Progress",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/radar": {
+      "get": {
+        "description": "The kept radar, or a new one when a final summary was added or changed since.\n\nComputing calls the teacher's provider outside the transaction; RADAR_NOT_READY when no\nstudent has a kept final summary yet or no radar could be computed.",
+        "operationId": "get_activity_radar_api_v2_solo_activities__activity_id__radar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Radar",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/radar/dimensions/{index}": {
+      "patch": {
+        "operationId": "rename_radar_dimension_api_v2_solo_activities__activity_id__radar_dimensions__index__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadarDimensionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rename Radar Dimension",
         "tags": [
           "solo"
         ]

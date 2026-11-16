@@ -4,7 +4,9 @@ test_guest_merge covers the merge with stand-in hooks; this file checks that wha
 course arrives under the account that logs in, as the frontend's G25 notice claims.
 """
 
+from tests.course_management.conftest import client  # noqa: F401  the app fixture
 from tests.course_management.conftest import switch, user
+from tests.solo_activity.conftest import tutor  # noqa: F401  the scripted provider
 from tests.solo_activity.test_solo_attempts_api import OPENING, answer, ok, setup, start
 from tests.solo_activity.test_solo_guests import (
     attempts_of,
@@ -14,7 +16,7 @@ from tests.solo_activity.test_solo_guests import (
 )
 
 
-def test_a_guests_course_and_answers_move_to_the_account_that_logs_in(client, tutor):
+def test_a_guests_course_and_answers_move_to_the_account_that_logs_in(client, tutor):  # noqa: F811
     _, replies = tutor
     s = setup(client)
     ming = user(client, "ming")
@@ -32,7 +34,7 @@ def test_a_guests_course_and_answers_move_to_the_account_that_logs_in(client, tu
     assert ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))["id"] == attempt["id"]
 
 
-def test_when_both_answered_the_account_keeps_its_own(client, tutor):
+def test_when_both_answered_the_account_keeps_its_own(client, tutor):  # noqa: F811
     _, replies = tutor
     s = setup(client)
     kept = ok(start(client, s["activity_id"]))

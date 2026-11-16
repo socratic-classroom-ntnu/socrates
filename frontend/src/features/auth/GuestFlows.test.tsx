@@ -18,6 +18,8 @@ jest.mock('../ai-settings/ProviderSettings', () => ({ ProviderSettings: () => nu
 jest.mock('../course/learn/StudentCoursePage', () => ({ StudentCoursePage: () => <p>course-page</p> }))
 
 const WEEK = 7 * 86400
+// 首頁問候語跟著當下時間換（早安／午安／晚安），等首頁出現時三種都要接受，測試才不會隨 CI 的時間變紅。
+const HOME_GREETING = /(早安|午安|晚安)，ming/
 const now = () => Math.floor(Date.now() / 1000)
 const guest = (extra: Record<string, unknown> = {}) => ({
   id: 'g-1', username: '小-明-1a2b3c4d', display_name: '小-明', email: '', email_masked: '',
@@ -258,7 +260,7 @@ test('a notice left for another account is not shown and is dropped', async () =
   localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'someone-else' }))
   serve(registered)
   openApp('/')
-  expect(await screen.findByText('晚安，ming', { exact: false })).toBeInTheDocument()
+  expect(await screen.findByText(HOME_GREETING)).toBeInTheDocument()
   expect(screen.queryByText('Email 驗證完成，訪客時的紀錄都保留下來了。')).toBeNull()
   await waitFor(() => expect(localStorage.getItem(HOME_NOTICE_KEY)).toBeNull())
 })
@@ -266,7 +268,7 @@ test('a notice left for another account is not shown and is dropped', async () =
 test('?merged=1 in the address (for example carried through a login next) shows nothing', async () => {
   serve(registered)
   openApp('/?merged=1')
-  await screen.findByText('晚安，ming', { exact: false })
+  await screen.findByText(HOME_GREETING)
   expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
 })
 

@@ -1,4 +1,5 @@
-"""Joining a course by its enrollment code."""
+"""Joining a course by its enrollment code, and the registry of modules that delete a removed
+student's records."""
 
 from __future__ import annotations
 
@@ -6,12 +7,48 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.course_management.codes import normalize
+from app.modules.course_management.contracts import EnrollmentRecordHook
 from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.identity_access import service as identity
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
+
+# course-management cannot import the modules that keep a student's answers, so each registers
+# its hook here; the app shell wires them, as it does guest record hooks.
+ENROLLMENT_HOOKS: dict[str, EnrollmentRecordHook] = {}
+
+
+def register_enrollment_hook(module: str, hook: EnrollmentRecordHook) -> None:
+    ENROLLMENT_HOOKS[module] = hook
+
+
+def registered_enrollment_hooks() -> set[str]:
+    """The modules whose enrollment record hooks are registered now."""
+    return set(ENROLLMENT_HOOKS)
+
+
+def remove_student(db, course: Course, enrollment_id: str) -> None:
+    """Remove a student from the course for good: their answers in every module, then the
+    enrollment. The enrollment is locked first, so a student starting an activity at the same
+    moment either finishes first (and its new attempt is removed too) or finds no enrollment.
+    The course's owner is never one of its students."""
+    found = db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.id == enrollment_id,
+            Enrollment.course_id == course.id,
+            Enrollment.account_id != course.owner_id,
+        )
+        .with_for_update()
+    )
+    if found is None:
+        raise DomainError("ENROLLMENT_NOT_FOUND", 404)
+    for hook in ENROLLMENT_HOOKS.values():
+        hook.remove(db, course.id, found.account_id)
+    db.delete(found)
+    db.flush()
 
 
 def find_by_code(db, raw_code: str) -> Course:
@@ -29,6 +66,20 @@ def existing(db, account: Account, course: Course) -> Enrollment | None:
             Enrollment.course_id == course.id,
             Enrollment.account_id == account.id,
         )
+    )
+
+
+def locked(db, account: Account, course: Course) -> Enrollment | None:
+    """existing, holding a shared lock on the enrollment until the transaction ends: a removal
+    of this student (which locks the row for update) waits for it, or it waits for the removal
+    and then finds nothing."""
+    return db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.course_id == course.id,
+            Enrollment.account_id == account.id,
+        )
+        .with_for_update(read=True)
     )
 
 

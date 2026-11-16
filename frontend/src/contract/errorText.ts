@@ -58,6 +58,7 @@ const CODES: Record<string, string> = {
   DIALOGUE_PHASE_REQUIRED: '目前不在對話階段。',
   EMAIL_TAKEN: '這個 Email 已經註冊過了，請直接登入；忘記密碼可以重設。',
   EMAIL_VERIFICATION_REQUIRED: '請先完成 Email 驗證。',
+  ENROLLMENT_NOT_FOUND: '這位學生已經不在課程裡了。',
   ENROLL_CODE_NOT_FOUND: '找不到這個課程代碼，請確認後再輸入。',
   EXISTING_GROUP_ARGUMENT_REQUIRED: '要回應的那則原話已不存在，請重新選擇。',
   FOCUS_ID_REQUIRED: '找不到這段代表討論。',

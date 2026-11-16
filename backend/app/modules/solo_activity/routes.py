@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.modules.identity_access.service import account
 from app.modules.platform.storage import transaction
-from app.modules.solo_activity import analysis, practice, progress
+from app.modules.solo_activity import analysis, practice, progress, roster
 from app.modules.solo_activity import service as service
 from app.modules.solo_activity.contracts import (
     ACTION_BODIES,
@@ -27,6 +27,7 @@ from app.modules.solo_activity.contracts import (
     PracticeStart,
     PracticeStarted,
     PracticeTopic,
+    SoloCourseRosterView,
 )
 
 router = APIRouter(prefix="/solo", tags=["solo"])
@@ -113,3 +114,10 @@ def get_activity_analysis(activity_id: str, request: Request):
     with transaction() as db:
         current, _ = account(db, request)
         return analysis.analysis_view(db, current, activity_id, progress.now())
+
+
+@router.get("/courses/{course_id}/students", response_model=SoloCourseRosterView)
+def get_course_roster(course_id: str, request: Request):
+    with transaction() as db:
+        current, _ = account(db, request)
+        return roster.roster_view(db, current, course_id, progress.now())

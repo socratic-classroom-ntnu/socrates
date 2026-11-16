@@ -6484,6 +6484,47 @@
         "title": "SoloAttemptView",
         "type": "object"
       },
+      "SoloCourseRosterView": {
+        "additionalProperties": false,
+        "properties": {
+          "counted_activities": {
+            "title": "Counted Activities",
+            "type": "integer"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloRosterStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloRosterSummaryView"
+          }
+        },
+        "required": [
+          "course_id",
+          "course_name",
+          "generated_at",
+          "counted_activities",
+          "summary",
+          "students"
+        ],
+        "title": "SoloCourseRosterView",
+        "type": "object"
+      },
       "SoloMessageView": {
         "additionalProperties": false,
         "properties": {
@@ -6625,6 +6666,110 @@
           "attention"
         ],
         "title": "SoloProgressSummaryView",
+        "type": "object"
+      },
+      "SoloRosterStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_activities": {
+            "title": "Completed Activities",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "joined_at": {
+            "title": "Joined At",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "kind",
+          "guest_number",
+          "email",
+          "joined_at",
+          "last_activity_at",
+          "completed_activities"
+        ],
+        "title": "SoloRosterStudentView",
+        "type": "object"
+      },
+      "SoloRosterSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "expired_guests": {
+            "title": "Expired Guests",
+            "type": "integer"
+          },
+          "guests": {
+            "title": "Guests",
+            "type": "integer"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "registered",
+          "guests",
+          "expired_guests"
+        ],
+        "title": "SoloRosterSummaryView",
         "type": "object"
       },
       "SoloScenarioChangeView": {
@@ -9230,6 +9375,51 @@
         ]
       }
     },
+    "/api/v2/courses/{course_id}/students/{enrollment_id}": {
+      "delete": {
+        "description": "Remove a student from the course with every answer of theirs in it; there is no undo.",
+        "operationId": "remove_student_api_v2_courses__course_id__students__enrollment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Student",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
     "/api/v2/courses/{course_id}/{action}": {
       "post": {
         "operationId": "transition_course_api_v2_courses__course_id___action__post",
@@ -10839,6 +11029,48 @@
           }
         },
         "summary": "Act On Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/courses/{course_id}/students": {
+      "get": {
+        "operationId": "get_course_roster_api_v2_solo_courses__course_id__students_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloCourseRosterView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Course Roster",
         "tags": [
           "solo"
         ]

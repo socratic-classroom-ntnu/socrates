@@ -114,9 +114,13 @@ def _published_activity(db, activity_id: str) -> tuple[Activity, ActivityRevisio
     return activity, revision
 
 
-def _enrollment(db, account: Account, course: Course, missing: str) -> Enrollment:
-    """Only enrolled students; a course's teacher is not a student of it."""
-    found = activities.existing_enrollment(db, account, course)
+def _enrollment(
+    db, account: Account, course: Course, missing: str, lock: bool = False
+) -> Enrollment:
+    """Only enrolled students; a course's teacher is not a student of it. lock holds the
+    enrollment (shared) until the transaction ends, so a removal cannot slip in between."""
+    lookup = activities.locked_enrollment if lock else activities.existing_enrollment
+    found = lookup(db, account, course)
     if found is None or course.owner_id == account.id:
         raise DomainError(missing, 404)
     return found
@@ -353,7 +357,8 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
     """
     activity, _ = _published_activity(db, activity_id)
     course = db.get(Course, activity.course_id)
-    _enrollment(db, account, course, "ACTIVITY_NOT_FOUND")
+    # Locked: a removal at the same moment must not leave an attempt without an enrollment.
+    _enrollment(db, account, course, "ACTIVITY_NOT_FOUND", lock=True)
     row = _own_attempt(db, activity.id, account.id)
     if row is not None:
         return _attempt_view(db, row, at)

@@ -8,6 +8,7 @@ import { useT } from '../../../i18n/useT'
 import { Button, ButtonLink } from '../../../ui'
 import { ComingSoonPage } from '../../../components/ComingSoonPage'
 import { ActivityCards } from './ActivityCards'
+import { CourseStudentsPanel } from './CourseStudentsPanel'
 import { InviteDialog } from './InviteDialog'
 import '../../../styles/teach.css'
 
@@ -67,7 +68,7 @@ export function TeacherCoursePage() {
       </Link>)}
     </nav>
     {tab === 'activities' && <ActivityCards courseId={data.id} canCreate={data.available_actions.includes('create_activity')} />}
-    {tab === 'students' && <ComingSoonPage variant="panel" body={t('course.studentsSoon')} backTo={base} backLabel={t('course.backToActivities')} />}
+    {tab === 'students' && <CourseStudentsPanel courseId={data.id} onChanged={() => { void course.reload() }} />}
     {tab === 'settings' && <ComingSoonPage variant="panel" body={t('course.settingsSoon')} backTo={base} backLabel={t('course.backToActivities')} />}
     {inviting && <InviteDialog
       kind="course"

@@ -212,6 +212,16 @@ def list_activities(
         return {"role": "student", "items": activity_service.student_cards(db, access.course, at)}
 
 
+@router.delete("/{course_id}/students/{enrollment_id}", status_code=204, response_class=Response)
+def remove_student(course_id: str, enrollment_id: str, request: Request):
+    """Remove a student from the course with every answer of theirs in it; there is no undo."""
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        course = _teacher_course(db, current, course_id)
+        enrollment.remove_student(db, course, enrollment_id)
+    return Response(status_code=204)
+
+
 @router.post(
     "/{course_id}/{action}",
     response_model=CourseTeacherView,

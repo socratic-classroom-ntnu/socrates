@@ -41,6 +41,7 @@ async def lifespan(app):
 def create_app(legacy=False, background=True):
     prompts.validate_programs()
     _wiring.check_guest_hooks()
+    _wiring.check_enrollment_hooks()
     # 題庫壞掉就讓服務起不來，跟 programs 一樣在部署當下發現
     course_service.install_practice_bank(course_service.PRACTICE_BANK_PATH)
     course_service.check_practice_settings()

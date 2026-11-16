@@ -10,6 +10,7 @@ from app.modules.course_management.activities import (  # noqa: F401
     lock_current_revision as lock_current_revision,
 )
 from app.modules.course_management.enrollment import existing as existing_enrollment  # noqa: F401
+from app.modules.course_management.enrollment import locked as locked_enrollment  # noqa: F401
 from app.modules.course_management.practice import (  # noqa: F401
     BANK_PATH as PRACTICE_BANK_PATH,
     BankItem as BankItem,

@@ -345,13 +345,39 @@ test('activity that fails to load shows the error instead of loading forever', a
   expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
 })
 
-test('missing attempt shows the localized solo error', async () => {
+// P9：老師把學生移出課程後，這段對話已被刪除；學生被帶回首頁
+test('an attempt that is gone sends the student home', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': () => { throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND') },
   })
 
-  expect(await screen.findByText('找不到這段對話。')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/))
+})
+
+test('an action on an attempt removed meanwhile sends the student home', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => { throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND') },
+  })
+  fireEvent.change(await screen.findByLabelText('回答蘇格拉底'), { target: { value: '還想再說一句' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/))
+})
+
+test('another not-found on an action stays on the page with an error', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => { throw new ApiError(404, 'ACTIVITY_NOT_FOUND') },
+  })
+  fireEvent.change(await screen.findByLabelText('回答蘇格拉底'), { target: { value: '還想再說一句' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  expect(await screen.findByRole('alert')).toBeInTheDocument()
+  expect(screen.getByTestId('where')).toHaveTextContent('/learn/activities/a-1/dialogue')
 })
 
 test.each([
@@ -670,6 +696,25 @@ test('awaiting state polls until it changes', async () => {
   await act(async () => { jest.advanceTimersByTime(3000); await Promise.resolve(); await Promise.resolve() })
   expect(reads).toBe(2)
   expect(screen.getByLabelText('回答蘇格拉底')).toBeEnabled()
+})
+
+test('a removal noticed while polling for the reply sends the student home', async () => {
+  jest.useFakeTimers()
+  let reads = 0
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': () => {
+      reads += 1
+      if (reads === 1) return { ...dialogueAttempt, state: 'awaiting_tutor', available_actions: [] }
+      throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND')
+    },
+  })
+
+  await act(async () => { await Promise.resolve(); await Promise.resolve() })
+  expect(screen.getByTestId('where')).toHaveTextContent('/learn/activities/a-1/dialogue')
+  await act(async () => { jest.advanceTimersByTime(3000); await Promise.resolve(); await Promise.resolve() })
+  expect(reads).toBe(2)
+  expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/)
 })
 
 test('tutor unavailable shows the notice and retry inside the conversation (X2)', async () => {

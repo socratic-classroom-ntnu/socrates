@@ -54,11 +54,15 @@ test('header shows the course name under a course breadcrumb', async () => {
   expect(screen.getByRole('heading', { level: 1, name: '科技倫理' })).toBeInTheDocument()
 })
 
-test('students and settings tabs show coming soon inside the page', async () => {
-  open('/teach/courses/c-1/students')
-  expect(await screen.findByRole('heading', { name: '功能開發中' })).toBeInTheDocument()
-  expect(screen.getByText('學生名單和每個人的完成進度之後會放在這裡。現在可以先回到活動清單。')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '回到活動' })).toHaveAttribute('href', '/teach/courses/c-1')
+test('students tab shows the roster instead of coming soon', async () => {
+  open('/teach/courses/c-1/students', {}, 'zh-Hant', {
+    'GET /solo/courses/c-1/students': {
+      course_id: 'c-1', course_name: '科技倫理', generated_at: 1_800_000_000, counted_activities: 0,
+      summary: { total: 0, registered: 0, guests: 0, expired_guests: 0 }, students: [],
+    },
+  })
+  expect(await screen.findByText('還沒有學生加入這門課。')).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: '功能開發中' })).toBeNull()
   expect(screen.getAllByRole('main')).toHaveLength(1)
 })
 

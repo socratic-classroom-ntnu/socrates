@@ -297,7 +297,7 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
-# registered, a guest, or a guest past its 168 hours (shown as 匿名訪客 N, N = guest_number).
+# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
 StudentKind = Literal["registered", "guest", "expired_guest"]
 
 
@@ -327,6 +327,41 @@ class SoloActivityProgressView(View):
     generated_at: float
     summary: SoloProgressSummaryView
     students: list[SoloStudentProgressView]
+
+
+# ---- the course roster (the 學生 tab): who is in the course, and how far each has come -------
+
+
+class SoloRosterStudentView(View):
+    enrollment_id: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    # expired_guest only: its place among the course's expired guests, by joining order.
+    guest_number: int | None
+    email: str | None  # registered students only
+    joined_at: float
+    # The latest update or message of any of the student's attempts in the course; None before any.
+    last_activity_at: float | None
+    # Completed attempts among the activities counted in counted_activities.
+    completed_activities: int
+
+
+class SoloRosterSummaryView(View):
+    total: int
+    registered: int
+    guests: int
+    expired_guests: int
+
+
+class SoloCourseRosterView(View):
+    course_id: str
+    course_name: str
+    generated_at: float
+    # The course's activities that are open or ended now (drafts, scheduled and deleted ones not).
+    counted_activities: int
+    summary: SoloRosterSummaryView
+    # Newest last_activity_at first; students without any last, by joining order.
+    students: list[SoloRosterStudentView]
 
 
 # ---- T6: the teacher's statistics (the confirmed viewpoint's three fields; nothing else written)

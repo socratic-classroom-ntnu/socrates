@@ -1,7 +1,7 @@
 """Account role: whether an account registered as a student or a teacher.
 
-Existing accounts become students through the server default; accounts are wiped and recreated
-before release, so no role is inferred for them.
+Existing accounts become students through the server default; 0025 then gives the ones that were
+already teaching (course, script or classroom owners) the teacher role.
 """
 
 from typing import Sequence, Union

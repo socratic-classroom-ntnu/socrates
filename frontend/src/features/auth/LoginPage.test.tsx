@@ -248,6 +248,33 @@ test('reset shows the short password rule but not the verification-email note', 
   expect(screen.queryByText(VERIFY_NOTE_TEXT)).toBeNull()
 })
 
+describe('show password (eye button)', () => {
+  test.each([
+    ['login', '/login', '密碼'],
+    ['register', '/login?mode=register', '密碼'],
+    ['reset', '/login?mode=reset&token=tok-1', '新密碼'],
+  ])('%s: the eye button shows and hides what was typed', async (_mode, url, label) => {
+    anonymous()
+    openApp(url)
+    const field = await screen.findByLabelText(label)
+    expect(field).toHaveAttribute('type', 'password')
+    fireEvent.click(screen.getByRole('button', { name: '顯示密碼' }))
+    expect(field).toHaveAttribute('type', 'text')
+    fireEvent.click(screen.getByRole('button', { name: '隱藏密碼' }))
+    expect(field).toHaveAttribute('type', 'password')
+  })
+
+  // 登入時打開明碼，切到註冊不能還是明碼
+  test('switching between login and register hides the password again', async () => {
+    anonymous()
+    openApp('/login')
+    fireEvent.click(await screen.findByRole('button', { name: '顯示密碼' }))
+    fireEvent.click(screen.getByRole('button', { name: '註冊' }))
+    expect(screen.getByLabelText('密碼')).toHaveAttribute('type', 'password')
+    expect(screen.getByRole('button', { name: '顯示密碼' })).toHaveAttribute('aria-pressed', 'false')
+  })
+})
+
 test('a password_policy 422 from the server shows the password rule under the field', async () => {
   const f = await openRegister()
   anonymous(url => {

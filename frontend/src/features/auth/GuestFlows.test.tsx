@@ -301,6 +301,17 @@ test('nothing was merged (expired guest, rolled back hook): login is plain, no G
   expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
 })
 
+test.each(['/guest/register', '/guest/login'])('%s: the eye button shows and hides the password', async url => {
+  serve(guest())
+  openApp(url)
+  const field = await screen.findByLabelText('密碼')
+  expect(field).toHaveAttribute('type', 'password')
+  fireEvent.click(screen.getByRole('button', { name: '顯示密碼' }))
+  expect(field).toHaveAttribute('type', 'text')
+  fireEvent.click(screen.getByRole('button', { name: '隱藏密碼' }))
+  expect(field).toHaveAttribute('type', 'password')
+})
+
 test('a wrong password says so and stays (G22)', async () => {
   serve(guest(), { 'POST /auth/login': () => { throw new ApiError(401, 'AUTH_INVALID_CREDENTIALS') } })
   openApp('/guest/login')

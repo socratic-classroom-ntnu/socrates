@@ -4,6 +4,10 @@ export default {
   close: '關閉',
   copied: '已複製',
   copyFailed: '無法複製',
+  password: {
+    show: '顯示密碼',
+    hide: '隱藏密碼',
+  },
   notFound: {
     title: '找不到這個頁面',
     body: '網址可能打錯了，或這個頁面已經移除。',

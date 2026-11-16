@@ -1,10 +1,10 @@
-import { type FormEvent, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../contract/classroomClient'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
 import { safeNext } from '../../shared/next'
-import { Button, ButtonLink, Field, FieldError, FieldHint } from '../../ui'
+import { Button, ButtonLink, Field, FieldError, FieldHint, PasswordInput } from '../../ui'
 import { JoinLayout } from './JoinLayout'
 import { useAuth } from './AuthContext'
 import { leaveHomeNotice, useKeepUntil } from './GuestPanels'
@@ -76,10 +76,13 @@ export function GuestUpgradePage() {
 
   function input(field: FormField, label: string, type: string, autoComplete: string, hint?: string) {
     const issue = issues[field]
+    const control = {
+      id: `guest-${field}`, value: values[field], autoComplete, disabled: busy,
+      maxLength: REGISTER_LIMITS[field][1], 'aria-invalid': issue ? true : undefined,
+      onChange: (event: ChangeEvent<HTMLInputElement>) => set(field, event.target.value),
+    }
     return <Field id={`guest-${field}`} label={label} invalid={Boolean(issue)} className="join-field">
-      <input id={`guest-${field}`} type={type} value={values[field]} autoComplete={autoComplete} disabled={busy}
-        maxLength={REGISTER_LIMITS[field][1]} aria-invalid={issue ? true : undefined}
-        onChange={event => set(field, event.target.value)} />
+      {type === 'password' ? <PasswordInput {...control} /> : <input type={type} {...control} />}
       {issue ? <FieldError>{issueText(issue)}</FieldError> : hint && <FieldHint>{hint}</FieldHint>}
     </Field>
   }
@@ -182,7 +185,7 @@ export function GuestLoginPage() {
           <input id="guest-login" value={login} autoComplete="username" required disabled={busy} maxLength={REGISTER_LIMITS.email[1]} onChange={event => setLogin(event.target.value)} />
         </Field>
         <Field id="guest-password" label={ta('fields.password')} invalid={failure !== null} className="join-field">
-          <input id="guest-password" type="password" value={password} autoComplete="current-password" required disabled={busy} maxLength={LOGIN_PASSWORD_MAX} onChange={event => setPassword(event.target.value)} />
+          <PasswordInput id="guest-password" value={password} autoComplete="current-password" required disabled={busy} maxLength={LOGIN_PASSWORD_MAX} onChange={event => setPassword(event.target.value)} />
         </Field>
         <p className="join-login__after"><Link className="join-link join-link--inline join-link--quiet" to="/login?mode=forgot">{t('merge.forgot')}</Link></p>
         <Button type="submit" variant="primary" className="join-login__submit" disabled={busy}>{busy ? t('merge.submitting') : t('merge.submit')}</Button>

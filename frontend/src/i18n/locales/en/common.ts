@@ -7,6 +7,10 @@ const common: Shape<typeof zhHant> = {
   close: 'Close',
   copied: 'Copied',
   copyFailed: 'Couldn\'t copy',
+  password: {
+    show: 'Show password',
+    hide: 'Hide password',
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may be mistyped, or this page has been removed.',

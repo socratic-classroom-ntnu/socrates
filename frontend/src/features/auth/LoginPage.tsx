@@ -8,7 +8,7 @@ import { joinTarget, safeNext } from '../../shared/next'
 import { JoinLayout } from './JoinLayout'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
-import { Button, ButtonLink } from '../../ui'
+import { Button, ButtonLink, PasswordInput } from '../../ui'
 import { AuthLayout, Screws } from './AuthLayout'
 import { JoinLoginBanner, usePublicPreview } from './JoinLoginCard'
 import { type AccountRole, type Field, keepPasswordChars, LOGIN_PASSWORD_MAX, passwordProblem, problemsFrom422, type RegisterField, registerProblems, REGISTER_LIMITS, roleProblem, type Problem } from './registerChecks'
@@ -137,16 +137,18 @@ export function LoginPage() {
   function input(field: Field, label: string, props: Record<string, unknown>, hint?: { id?: string; body: ReactNode; after?: ReactNode }) {
     const issue = issues[field]
     const errorId = `register-${field}-error`
+    const control = {
+      ref: refs[field],
+      maxLength: REGISTER_LIMITS[field][1],
+      'aria-invalid': issue ? true : undefined,
+      'aria-describedby': [hint?.id, issue && errorId].filter(Boolean).join(' ') || undefined,
+      ...props,
+    }
     return <div className="auth-field">
       <label>
         {label}
-        <input
-          ref={refs[field]}
-          maxLength={REGISTER_LIMITS[field][1]}
-          aria-invalid={issue ? true : undefined}
-          aria-describedby={[hint?.id, issue && errorId].filter(Boolean).join(' ') || undefined}
-          {...props}
-        />
+        {/* 換模式就重新掛載，登入時打開的明碼不會帶到註冊或重設 */}
+        {field === 'password' ? <PasswordInput key={mode} {...control} /> : <input {...control} />}
       </label>
       {hint?.body}
       {issue && <small id={errorId} role="alert" className="auth-field__error">{issueText(issue)}</small>}
@@ -228,7 +230,7 @@ export function LoginPage() {
       onChange: event => { setEmail(event.target.value); clearIssue('email') },
     })}
     {mode !== 'forgot' && input('password', mode === 'reset' ? t('fields.newPassword') : t('fields.password'), {
-      type: 'password', value: password, required: true,
+      value: password, required: true,
       minLength: mode === 'login' ? 1 : REGISTER_LIMITS.password[0],
       maxLength: mode === 'login' ? LOGIN_PASSWORD_MAX : REGISTER_LIMITS.password[1],
       autoComplete: mode === 'login' ? 'current-password' : 'new-password',

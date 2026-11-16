@@ -452,8 +452,9 @@ describe('J0: login reached from an invite or activity QR', () => {
   test('join login shows course name from public preview', async () => {
     anonymous(url => (url === '/course-join/public-preview?code=AB12' ? { course_name: '哲學導論' } : []))
     openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
-    expect(await screen.findByText('哲學導論')).toBeInTheDocument()
-    expect(screen.getByText('登入後就會加入')).toBeInTheDocument()
+    expect(await screen.findByText('正在加入：哲學導論')).toBeInTheDocument()
+    expect(screen.getByText('由課程 QR Code 進入')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '加入課程' })).toBeInTheDocument()
     expect(screen.queryByText(/掃描成功/)).toBeNull()
     expect(screen.getByRole('button', { name: '登入並加入課程' })).toBeInTheDocument()
     expect(screen.getByText('註冊完成後，也會自動回到這門課。')).toBeInTheDocument()
@@ -462,8 +463,11 @@ describe('J0: login reached from an invite or activity QR', () => {
   test('activity QR uses the activity preview and a neutral button', async () => {
     anonymous(url => (url === '/activities/a-1/public-preview' ? { course_name: '哲學導論' } : []))
     openApp('/login?next=' + encodeURIComponent('/activities/a-1/join?from=qr'))
-    expect(await screen.findByText('哲學導論')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '登入並繼續' })).toBeInTheDocument()
+    expect(await screen.findByText('正在加入：哲學導論')).toBeInTheDocument()
+    expect(screen.getByText('由活動 QR Code 進入')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '加入活動' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '登入並加入活動' })).toBeInTheDocument()
+    expect(screen.getByText('註冊完成後，也會自動回到這個活動。')).toBeInTheDocument()
   })
 
   test('join login without course name still logs in', async () => {
@@ -474,7 +478,8 @@ describe('J0: login reached from an invite or activity QR', () => {
       return []
     })
     openApp('/login?next=' + encodeURIComponent('/join?code=AB12'))
-    expect(await screen.findByText('登入後就會繼續加入')).toBeInTheDocument()
+    expect(await screen.findByText('由課程 QR Code 進入')).toBeInTheDocument()
+    expect(screen.queryByText(/正在加入/)).toBeNull()
     fireEvent.change(screen.getByLabelText('使用者名稱或 Email'), { target: { value: 'Fizzy' } })
     fireEvent.change(screen.getByLabelText('密碼'), { target: { value: 'secret' } })
     await submit('登入並加入課程')
@@ -494,7 +499,7 @@ describe('J0: login reached from an invite or activity QR', () => {
     anonymous()
     openApp('/login?next=' + encodeURIComponent('/teacher/home'))
     expect(await screen.findByRole('button', { name: '登入' })).toBeInTheDocument()
-    expect(screen.queryByText('登入後就會加入')).toBeNull()
+    expect(screen.queryByText('由課程 QR Code 進入')).toBeNull()
   })
 })
 

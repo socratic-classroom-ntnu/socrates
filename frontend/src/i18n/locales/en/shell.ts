@@ -44,12 +44,5 @@ const shell: Shape<typeof zhHant> = {
       body2: 'To take part as a student, log out, sign in or sign up with a student account, and scan again.',
     },
   },
-  // 訪客登出前先確認（組員 Figma「免註冊加入」G15）：先註冊、仍要登出、✕ 取消
-  guestLogout: {
-    title: 'Log out of this guest session?',
-    body: 'After you log out, this guest and its records cannot be recovered. Sign up first to keep your courses and conversations.',
-    anyway: 'Log out anyway',
-    register: 'Sign up first',
-  },
 };
 export default shell;

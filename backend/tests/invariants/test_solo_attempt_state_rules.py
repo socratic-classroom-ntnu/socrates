@@ -1,8 +1,8 @@
 """單人活動狀態機的兩條底線（solo_activity/attempt_machine.py）。
 
 - 設計規格 §8：結束（completed）之後任何動作一律拒絕。
-- 設計規格 §4.5：問到上限仍未達成，不得假裝達成。單人活動沒有 capped 狀態：
-  到了訊息上限就不能再送，情境維持 in_progress；只有學生自己確認整理卡才標 goal_met。
+- 設計規格 §4.5：問到上限仍未達成，不得假裝達成。到了訊息上限就不能再送：目前的整理送進確認、
+  情境標 capped（issue #111）；只有學生自己確認整理卡才標 goal_met，確認 capped 的整理不算。
 """
 
 from typing import get_args
@@ -104,20 +104,22 @@ def test_the_api_rejects_every_action_after_completion(client, tutor):
 
 def test_the_message_limit_never_marks_the_scenario_goal_met():
     a = in_dialogue()
-    while True:
-        try:
-            a, pending = sm.send_message(a, "回覆", T0)
-        except DomainError as error:
-            assert error.code == "SOLO_MESSAGE_LIMIT"
-            break
+    while "send_message" in sm.actions_for(a, T0):
+        a, pending = sm.send_message(a, "回覆", T0)
         # The tutor never finds the goal met, however long the dialogue runs.
         result = sm.apply_tutor_turn(a, pending.key, turn(reason_tested=False))
         assert result is not None
         a = result
+    # Out of messages: the current summary is shown, the scenario is capped, not met.
     assert a.current.turn_index + 1 == sm.MESSAGE_LIMIT
-    assert a.state == "in_dialogue"
-    assert a.current.status == "in_progress"
+    assert a.state == "confirming"
+    assert a.current.status == "capped"
     assert a.current.confirmed_summary is None
+    assert sm.actions_for(a, T0) == ["confirm_viewpoint"]
+    # Seeing it is not agreeing with it: confirming leaves it capped and unconfirmed.
+    done = sm.confirm_viewpoint(a, a.current.summary_digest or "")
+    assert done.current.status == "capped"
+    assert done.current.confirmed_summary is None
 
 
 def test_only_the_students_confirmation_marks_goal_met():

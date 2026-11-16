@@ -398,7 +398,8 @@ describe('student phone', () => {
   })
 })
 
-// P27、P34：訪客的帳號面板（手機 S2gm）與帳號選單（電腦 G14）：沒有個人設定，入口先接「開發中」，登出先確認（G15）
+// P27、P34：訪客的帳號面板（手機 S2gm）與帳號選單（電腦 G14）：沒有個人設定，登出先確認（G15）。
+// 電腦選單照 Ken 的 G14 只有「註冊以保留紀錄」；已有帳號的登入入口在首頁的訪客卡片與註冊頁
 describe('guest account', () => {
   beforeEach(() => { asGuest() })
 
@@ -452,13 +453,13 @@ describe('guest account', () => {
     await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/login'))
   })
 
-  test('the desktop menu has the same guest entries and no personal settings', async () => {
+  test('the desktop menu offers register instead of personal settings', async () => {
     open('/')
     const trigger = await screen.findByRole('button', { name: '帳號選單' })
     expect(within(trigger).getByText('訪客')).toBeInTheDocument()
     const menu = await openAccountMenu()
     expect(within(menu).getAllByRole('menuitem').map(item => item.textContent?.replace(/ — .*/, '')))
-      .toEqual(['註冊以保留紀錄', '已有帳號？登入', '語言', '登出'])
+      .toEqual(['註冊以保留紀錄', '語言', '登出'])
     expect(screen.getAllByText('保留到 11/20').length).toBeGreaterThan(0)
     await act(async () => { fireEvent.click(within(menu).getByRole('menuitem', { name: '註冊以保留紀錄' })) })
     expect(screen.getByTestId('where')).toHaveTextContent('/guest/register')

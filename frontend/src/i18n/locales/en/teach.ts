@@ -64,6 +64,9 @@ const teach: Shape<typeof zhHant> = {
     copyActivityLink: 'Copy activity link',
     qrAlt: 'QR code for "{{name}}"',
     disabled: 'The course code is turned off, so students cannot join with the code or QR code for now.',
+    guestLabel: 'Allow joining without an account',
+    guestOn: 'After scanning, students can pick a name and join right away. Their records are kept for 7 days.',
+    guestOff: 'Students must sign in or sign up to join. Guests who already joined are not affected.',
   },
   status: {
     draft: 'Draft',
@@ -149,6 +152,10 @@ const teach: Shape<typeof zhHant> = {
     showAll_other: 'Show all {{count}} students',
     empty: 'No one has confirmed a viewpoint yet',
   },
+  guest: {
+    tag: 'Guest',
+    anonymous: 'Anonymous guest {{number}}',
+  },
   live: {
     breadcrumbLabel: 'Activity path',
     meta: 'Open until {{end}} · live updates',
@@ -171,10 +178,11 @@ const teach: Shape<typeof zhHant> = {
       inDialogue_one: 'In dialogue · {{count}} turn',
       inDialogue_other: 'In dialogue · {{count}} turns',
       confirming: 'Confirming viewpoint',
+      capped: 'Not settled yet',
       answering: 'Writing the first answer',
       notStarted: 'Not started',
     },
-    review: { notStarted: 'Not started', inProgress: 'In progress' },
+    review: { notStarted: 'Not started', inProgress: 'In progress', completed: 'Completed', unconfirmed: 'Completed · not confirmed' },
     time: {
       now: 'Just now',
       minutes: '{{count}} minutes ago',

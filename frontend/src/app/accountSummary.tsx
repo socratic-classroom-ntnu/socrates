@@ -1,34 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dialog } from '../components/Dialog'
 import { useAuth } from '../features/auth/AuthContext'
-import { formatDateTime } from '../i18n/format'
+import { GuestLogoutDialog, useKeepUntil } from '../features/auth/GuestPanels'
+import { accountName } from '../shared/accountName'
 import { useT } from '../i18n/useT'
-import { Button } from '../ui'
 
-// 訪客的兩個入口：真正的頁面由免註冊需求做，這一份先接「開發中」（P27、P34）
+// 訪客的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24），頁面在 features/auth
 export const GUEST_REGISTER = '/guest/register'
 export const GUEST_LOGIN = '/guest/login'
 
 export type AccountTag = 'student' | 'teacher' | 'guest'
 
-/** 帳號選單（電腦）與帳號面板（手機）共用：名字、角色標籤、第二行（Email 或訪客保留日期）。 */
+/** 帳號選單（電腦）與帳號面板（手機）共用：名字、角色標籤、第二行（Email 或訪客的保留日期）。 */
 export function useAccountSummary() {
-  const { t, locale } = useT('shell')
+  const { t } = useT('shell')
   const { account } = useAuth()
   const guest = account?.kind === 'guest'
+  const keep = useKeepUntil(account)
   const tag: AccountTag = guest ? 'guest' : account?.account_role === 'teacher' ? 'teacher' : 'student'
-  // guest_expires_at 是 Unix 秒、可能沒有：不是數字就不寫日期（P27）
-  const expires = guest && typeof account?.guest_expires_at === 'number'
-    ? t('account.guestUntil', { date: formatDateTime(account.guest_expires_at, locale, 'date') })
-    : ''
   return {
-    // 訪客的顯示名稱欄位由免註冊需求加（P28）；之前先用 username
-    name: account?.username ?? '',
+    // 訪客是暱稱（不含使用者名稱後面的亂碼）
+    name: accountName(account),
     tag,
     tagLabel: t(`account.tag.${tag}`),
     guest,
-    secondLine: guest ? expires : account?.email ?? '',
+    // 名字旁已有「訪客」標籤，第二行只寫保留日期（瀏覽器時區、只到日）
+    secondLine: keep ? t('account.guestUntil', { date: keep.date }) : guest ? '' : account?.email ?? '',
   }
 }
 
@@ -38,7 +35,6 @@ export function RoleTag({ tag, label }: { tag: AccountTag; label: string }) {
 
 /** 登出：訪客先確認（G15），其他帳號直接登出。回傳的 confirm 要 render 在畫面上。 */
 export function useLogout() {
-  const { t } = useT('shell')
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const { guest } = useAccountSummary()
@@ -47,16 +43,7 @@ export function useLogout() {
   const logout = () => void signOut().then(() => navigate('/login', { replace: true }))
   const request = () => (guest ? setAsking(true) : logout())
   const confirm = asking
-    ? <Dialog
-      title={t('guestLogout.title')}
-      onClose={() => setAsking(false)}
-      footer={<div className="guest-logout__actions">
-        <Button variant="primary" data-autofocus onClick={() => { setAsking(false); navigate(GUEST_REGISTER) }}>{t('guestLogout.register')}</Button>
-        <Button variant="outline" className="guest-logout__anyway" onClick={() => { setAsking(false); logout() }}>{t('guestLogout.anyway')}</Button>
-      </div>}
-    >
-      <p className="dialog__text">{t('guestLogout.body')}</p>
-    </Dialog>
+    ? <GuestLogoutDialog onClose={() => setAsking(false)} onLogout={() => { setAsking(false); logout() }} />
     : null
   return { request, confirm }
 }

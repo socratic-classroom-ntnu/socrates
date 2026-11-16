@@ -1,10 +1,11 @@
 """Public course-management contracts: activity status from server time, the teacher actions each
 status allows, and the request/response models."""
 
-from typing import Literal, Protocol
+from typing import Annotated, Literal, Protocol
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, StringConstraints, field_validator, model_validator
 
+from app.modules.identity_access.contracts import AccountView, Locale
 from app.modules.platform.contracts import Strict
 
 ActivityStatus = Literal["draft", "scheduled", "open", "ended"]
@@ -71,10 +72,11 @@ class CourseUpdate(Strict):
     teacher_name: str | None = Field(default=None, min_length=1, max_length=64)
     intro: str | None = Field(default=None, max_length=4000)
     goals: str | None = Field(default=None, max_length=4000)
+    allow_guest: bool | None = None
 
-    @field_validator("name", "teacher_name", "intro", "goals")
+    @field_validator("name", "teacher_name", "intro", "goals", "allow_guest")
     @classmethod
-    def reject_null(cls, value: str | None) -> str:
+    def reject_null(cls, value):
         if value is None:
             raise ValueError("field cannot be null")
         return value
@@ -98,6 +100,7 @@ class CourseTeacherView(Strict):
     goals: str
     code: str
     code_enabled: bool
+    allow_guest: bool  # students may join without registering
     student_count: int
     activity_count: int
     available_actions: list[CourseAction]
@@ -125,12 +128,47 @@ class JoinPreview(Strict):
     already_enrolled: bool
     default_display_name: str
     open_activity_title: str | None
+    allow_guest: bool
 
 
 class PublicJoinPreview(Strict):
     """What an anonymous visitor may learn from a code or activity link: the course name only."""
 
     course_name: str
+    allow_guest: bool  # whether J0 offers 免註冊加入
+
+
+class PublicActivityPreview(PublicJoinPreview):
+    """An activity link also says whether the activity is still on: an ended one offers no guest
+    join either."""
+
+    status: Literal["scheduled", "open", "ended"]
+
+
+Nickname = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+
+
+class GuestCourseJoin(Strict):
+    """Becoming a guest and joining a course by its code, in one step."""
+
+    code: str = Field(min_length=1, max_length=32)
+    nickname: Nickname  # also the name in this course
+    locale: Locale
+
+
+class GuestActivityJoin(Strict):
+    """Becoming a guest from an activity link: the guest joins that activity's course."""
+
+    nickname: Nickname
+    locale: Locale
+
+
+class GuestJoinResult(Strict):
+    account: AccountView  # the new guest; its session cookie is set with this response
+    course_id: str
+    # Only for an activity link: where the student goes next (open → the activity).
+    activity_id: str | None
+    activity_status: Literal["scheduled", "open", "ended"] | None
 
 
 class ActivityDraft(Strict):
@@ -215,6 +253,7 @@ class ActivityJoinPreview(Strict):
     status: Literal["scheduled", "open", "ended"]
     already_enrolled: bool
     default_display_name: str
+    allow_guest: bool
 
 
 class ActivityJoin(Strict):

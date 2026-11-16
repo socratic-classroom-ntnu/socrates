@@ -23,6 +23,8 @@ export default {
     LOGIN_REQUIRED: '請先登入。',
     SESSION_CSRF_REQUIRED: '登入狀態已過期，請重新整理頁面。',
     RATE_LIMITED: '操作太頻繁，請稍候再試。',
+    GUEST_EXPIRED: '訪客身分已過期，請重新登入，或掃描 QR code 以新的訪客身分加入。',
+    GUEST_JOIN_DISABLED: '這門課目前不開放免註冊加入，請登入或註冊後再加入。',
     invalidInput: '有欄位內容不符合格式，請檢查後再試。',
     server: '伺服器暫時無法處理，請稍後再試。',
     generic: '操作沒有完成，請稍後再試。',
@@ -39,8 +41,6 @@ export default {
     aiAnalysis: 'AI 分析還在開發中，之後會從已確認的想法整理班級層級的脈絡。',
     toCourse: '回到課程',
     projector: '全螢幕投影還在施工。現在可以先用邀請視窗裡的 QR code。',
-    guestRegister: '訪客註冊之後會放在這裡：用同一個帳號保留現在的紀錄。',
-    guestLogin: '用已有的帳號登入並把訪客紀錄併進去，之後會放在這裡。',
   },
   dateTime: {
     chooseDate: '選擇日期',

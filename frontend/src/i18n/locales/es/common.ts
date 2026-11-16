@@ -26,6 +26,8 @@ const common: Shape<typeof zhHant> = {
     LOGIN_REQUIRED: 'Primero inicia sesión.',
     SESSION_CSRF_REQUIRED: 'Tu sesión ha caducado. Vuelve a cargar la página.',
     RATE_LIMITED: 'Demasiados intentos. Espera un momento y vuelve a intentarlo.',
+    GUEST_EXPIRED: 'Tu acceso de invitado caducó. Vuelve a iniciar sesión o escanea el código QR para unirte como un nuevo invitado.',
+    GUEST_JOIN_DISABLED: 'Este curso no permite unirse sin cuenta por ahora. Inicia sesión o regístrate para unirte.',
     invalidInput: 'Algunos campos no tienen el formato correcto. Revísalos e inténtalo de nuevo.',
     server: 'El servidor no puede procesar esto ahora. Inténtalo más tarde.',
     generic: 'No se pudo completar. Inténtalo más tarde.',
@@ -42,8 +44,6 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'El análisis con IA todavía está en desarrollo. Más adelante organizará patrones de la clase a partir de posturas confirmadas.',
     toCourse: 'Volver al curso',
     projector: 'La proyección a pantalla completa todavía está en construcción. Por ahora, usa el código QR de la ventana de invitación.',
-    guestRegister: 'Aquí podrás registrarte como invitado y conservar tus registros en la misma cuenta.',
-    guestLogin: 'Aquí podrás iniciar sesión con una cuenta existente y llevar tus registros de invitado.',
   },
   dateTime: {
     chooseDate: 'Elige una fecha',

@@ -62,6 +62,9 @@ const teach: Shape<typeof zhHant> = {
     copyActivityLink: '复制活动链接',
     qrAlt: '「{{name}}」的 QR code',
     disabled: '课程代码已停用，学生暂时无法用代码或二维码加入。',
+    guestLabel: '允许免注册加入',
+    guestOn: '学生扫码后可以取个名字直接加入，记录保留 7 天。',
+    guestOff: '学生要登录或注册才能加入；已经加入的访客不受影响。',
   },
   status: {
     draft: '草稿',
@@ -141,6 +144,10 @@ const teach: Shape<typeof zhHant> = {
     showAll: '查看全部 {{count}} 人',
     empty: '还没有人确认过想法',
   },
+  guest: {
+    tag: '访客',
+    anonymous: '匿名访客 {{number}}',
+  },
   live: {
     breadcrumbLabel: '活动路径',
     meta: '开放到 {{end}} · 实时更新',
@@ -155,8 +162,8 @@ const teach: Shape<typeof zhHant> = {
     filterLabel: '筛选学生',
     filters: { all: '全部', inProgress: '对话中', attention: '需要留意', done: '已完成', notStarted: '还没开始' },
     table: { student: '学生', scenario: '情境 {{number}}', review: '回顾与反思', lastActivity: '最后动作' },
-    cells: { confirmed: '已确认', inDialogue: '对话中 · {{count}} 轮', confirming: '确认观点中', answering: '写第一个回答中', notStarted: '未开始' },
-    review: { notStarted: '未开始', inProgress: '进行中' },
+    cells: { confirmed: '已确认', inDialogue: '对话中 · {{count}} 轮', confirming: '确认观点中', capped: '尚未厘清', answering: '写第一个回答中', notStarted: '未开始' },
+    review: { notStarted: '未开始', inProgress: '进行中', completed: '已完成', unconfirmed: '已完成・未确认' },
     time: { now: '刚刚', minutes: '{{count}} 分钟前', none: '—', attention: '⏸ {{count}} 分钟没有动作' },
     empty: '目前没有学生',
     updating: '每 10 秒自动更新',

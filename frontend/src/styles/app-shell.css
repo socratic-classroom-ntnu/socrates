@@ -147,8 +147,3 @@
 .account-sheet__languages button { min-height: 44px; font-size: 15px; }
 .account-sheet__languages [aria-checked="true"] { color: var(--ui-color-primary); font-weight: 700; }
 .account-sheet button:focus-visible, .account-sheet a:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
-
-/* 訪客登出確認（G15）：兩顆按鈕上下排滿寬，先註冊在上；仍要登出是紅字外框 */
-.guest-logout__actions { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
-.guest-logout__actions > * { width: 100%; min-height: 48px; }
-.guest-logout__anyway { color: var(--ui-color-danger); border-color: var(--ui-color-danger); }

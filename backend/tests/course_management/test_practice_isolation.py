@@ -66,6 +66,19 @@ def test_nobody_can_join_or_preview_a_private_activity(client):
     assert joined.status_code == 404
 
 
+def test_nobody_can_become_a_guest_of_a_private_course(client):
+    """The guest entry points look the course up the same way: by code, or by activity link."""
+    _, _, code, activity_id = private_course(client)
+    client.cookies.clear()
+    client.headers.pop("X-CSRF-Token", None)
+    guest = {"nickname": "安靜的貓頭鷹", "locale": "zh-Hant"}
+    by_code = client.post("/api/v2/course-join/guest", json={"code": code, **guest})
+    assert by_code.status_code == 404
+    by_link = client.post(f"/api/v2/activities/{activity_id}/guest-join", json=guest)
+    assert by_link.status_code == 404
+    assert "socrates_session" not in client.cookies
+
+
 def test_teacher_side_apis_do_not_see_a_private_activity(client):
     _, _, _, activity_id = private_course(client)
     user(client, "owner", account_role="teacher")

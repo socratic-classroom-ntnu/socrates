@@ -44,12 +44,5 @@ const shell: Shape<typeof zhHant> = {
       body2: 'Para participar como estudiante, cierra sesión, entra o regístrate con una cuenta de estudiante y vuelve a escanear.',
     },
   },
-  // 訪客登出前先確認（組員 Figma「免註冊加入」G15）：先註冊、仍要登出、✕ 取消
-  guestLogout: {
-    title: '¿Cerrar la sesión de invitado?',
-    body: 'Al cerrar sesión, este invitado y sus registros no se podrán recuperar. Regístrate primero para conservar tus cursos y conversaciones.',
-    anyway: 'Cerrar sesión igualmente',
-    register: 'Registrarme primero',
-  },
 };
 export default shell;

@@ -128,6 +128,11 @@
             "title": "Csrf Token",
             "type": "string"
           },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -303,6 +308,10 @@
             "title": "Activity Id",
             "type": "string"
           },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "already_enrolled": {
             "title": "Already Enrolled",
             "type": "boolean"
@@ -355,7 +364,8 @@
           "ends_at",
           "status",
           "already_enrolled",
-          "default_display_name"
+          "default_display_name",
+          "allow_guest"
         ],
         "title": "ActivityJoinPreview",
         "type": "object"
@@ -1996,6 +2006,10 @@
             "title": "Activity Count",
             "type": "integer"
           },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "available_actions": {
             "items": {
               "enum": [
@@ -2057,6 +2071,7 @@
           "goals",
           "code",
           "code_enabled",
+          "allow_guest",
           "student_count",
           "activity_count",
           "available_actions"
@@ -2116,6 +2131,17 @@
       "CourseUpdate": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Guest"
+          },
           "goals": {
             "anyOf": [
               {
@@ -2445,6 +2471,97 @@
           "reasoning"
         ],
         "title": "DiscoveredModel",
+        "type": "object"
+      },
+      "FinalSummaryPointView": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sources"
+        ],
+        "title": "FinalSummaryPointView",
+        "type": "object"
+      },
+      "FinalSummaryView": {
+        "additionalProperties": false,
+        "description": "The whole attempt's line of thought, written from the confirmed stages (O6).",
+        "properties": {
+          "final_position": {
+            "title": "Final Position",
+            "type": "string"
+          },
+          "open_question": {
+            "title": "Open Question",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/FinalSummaryPointView"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reasoning_style": {
+            "title": "Reasoning Style",
+            "type": "string"
+          },
+          "trajectory": {
+            "items": {
+              "$ref": "#/components/schemas/FinalTrajectoryStepView"
+            },
+            "title": "Trajectory",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points",
+          "trajectory",
+          "final_position",
+          "reasoning_style",
+          "open_question"
+        ],
+        "title": "FinalSummaryView",
+        "type": "object"
+      },
+      "FinalTrajectoryStepView": {
+        "additionalProperties": false,
+        "description": "The student's position in one scenario of the sequence, oldest first.",
+        "properties": {
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "shift_reason": {
+            "title": "Shift Reason",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "position",
+          "shift_reason",
+          "sources"
+        ],
+        "title": "FinalTrajectoryStepView",
         "type": "object"
       },
       "GroupActionReceipt": {
@@ -3103,6 +3220,69 @@
         "title": "GroupStartReceipt",
         "type": "object"
       },
+      "GuestActivityJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest from an activity link: the guest joins that activity's course.",
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestActivityJoin",
+        "type": "object"
+      },
+      "GuestCourseJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest and joining a course by its code, in one step.",
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestCourseJoin",
+        "type": "object"
+      },
       "GuestJoin": {
         "additionalProperties": false,
         "description": "Joining without registering: a nickname shown to the class and the interface language.",
@@ -3129,6 +3309,53 @@
           "locale"
         ],
         "title": "GuestJoin",
+        "type": "object"
+      },
+      "GuestJoinResult": {
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountView"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "activity_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "scheduled",
+                  "open",
+                  "ended"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Status"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "course_id",
+          "activity_id",
+          "activity_status"
+        ],
+        "title": "GuestJoinResult",
         "type": "object"
       },
       "GuestUpgrade": {
@@ -3202,6 +3429,10 @@
       "JoinPreview": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "already_enrolled": {
             "title": "Already Enrolled",
             "type": "boolean"
@@ -3240,7 +3471,8 @@
           "teacher_name",
           "already_enrolled",
           "default_display_name",
-          "open_activity_title"
+          "open_activity_title",
+          "allow_guest"
         ],
         "title": "JoinPreview",
         "type": "object"
@@ -3411,6 +3643,139 @@
           "password"
         ],
         "title": "Login",
+        "type": "object"
+      },
+      "LoginView": {
+        "additionalProperties": false,
+        "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
+          "achievements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Achievements",
+            "type": "array"
+          },
+          "authority_state": {
+            "default": "EMAIL_VERIFICATION",
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_masked": {
+            "default": "",
+            "title": "Email Masked",
+            "type": "string"
+          },
+          "guest_expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Expires At"
+          },
+          "guest_merge": {
+            "enum": [
+              "MERGED",
+              "NONE",
+              "REFUSED_TEACHER"
+            ],
+            "title": "Guest Merge",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "registered",
+            "enum": [
+              "guest",
+              "expired_guest",
+              "registered"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "zh-Hant",
+                  "zh-Hans",
+                  "en",
+                  "es"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "verification_delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "verified",
+          "csrf_token",
+          "points",
+          "achievements",
+          "account_role",
+          "guest_merge"
+        ],
+        "title": "LoginView",
         "type": "object"
       },
       "MailRequest": {
@@ -4086,6 +4451,36 @@
         "title": "ProfileView",
         "type": "object"
       },
+      "PublicActivityPreview": {
+        "additionalProperties": false,
+        "description": "An activity link also says whether the activity is still on: an ended one offers no guest\njoin either.",
+        "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_name",
+          "allow_guest",
+          "status"
+        ],
+        "title": "PublicActivityPreview",
+        "type": "object"
+      },
       "PublicConfigView": {
         "properties": {
           "debug_mode": {
@@ -4128,13 +4523,18 @@
         "additionalProperties": false,
         "description": "What an anonymous visitor may learn from a code or activity link: the course name only.",
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "course_name": {
             "title": "Course Name",
             "type": "string"
           }
         },
         "required": [
-          "course_name"
+          "course_name",
+          "allow_guest"
         ],
         "title": "PublicJoinPreview",
         "type": "object"
@@ -4473,8 +4873,8 @@
             "anyOf": [
               {
                 "enum": [
-                  "teacher",
-                  "student"
+                  "student",
+                  "teacher"
                 ],
                 "type": "string"
               },
@@ -5720,6 +6120,41 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "reason_summary": {
             "title": "Reason Summary",
             "type": "string"
@@ -5735,10 +6170,13 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "confirmed_scenarios",
           "current_position",
           "reason_summary",
-          "relevant_conditions"
+          "relevant_conditions",
+          "final_status"
         ],
         "title": "SoloAnalysisStudentView",
         "type": "object"
@@ -5793,7 +6231,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -5882,6 +6321,46 @@
           "display_name": {
             "title": "Display Name",
             "type": "string"
+          },
+          "final_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Digest"
+          },
+          "final_revised": {
+            "title": "Final Revised",
+            "type": "boolean"
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "final_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "id": {
             "title": "Id",
@@ -5996,6 +6475,10 @@
           "revising",
           "rejected_summary",
           "notice",
+          "final_summary",
+          "final_digest",
+          "final_status",
+          "final_revised",
           "available_actions"
         ],
         "title": "SoloAttemptView",
@@ -6007,6 +6490,10 @@
           "created_at": {
             "title": "Created At",
             "type": "number"
+          },
+          "final_feedback": {
+            "title": "Final Feedback",
+            "type": "boolean"
           },
           "id": {
             "title": "Id",
@@ -6072,7 +6559,8 @@
           "text",
           "created_at",
           "move",
-          "revise_hint"
+          "revise_hint",
+          "final_feedback"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -6085,7 +6573,8 @@
               "answering",
               "in_dialogue",
               "confirming",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -6173,7 +6662,8 @@
           "status": {
             "enum": [
               "in_dialogue",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -6231,7 +6721,8 @@
           "status": {
             "enum": [
               "in_progress",
-              "goal_met"
+              "goal_met",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -6275,6 +6766,41 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "last_activity_at": {
             "anyOf": [
               {
@@ -6298,7 +6824,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -6307,9 +6834,12 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "overall",
           "cells",
           "review_status",
+          "final_status",
           "last_activity_at",
           "attention"
         ],
@@ -6992,6 +7522,59 @@
         ]
       }
     },
+    "/api/v2/activities/{activity_id}/guest-join": {
+      "post": {
+        "description": "Become a guest from an activity link and join its course, in one transaction.",
+        "operationId": "guest_join_activity_api_v2_activities__activity_id__guest_join_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestActivityJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/api/v2/activities/{activity_id}/join": {
       "post": {
         "operationId": "join_activity_api_v2_activities__activity_id__join_post",
@@ -7105,7 +7688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicJoinPreview"
+                  "$ref": "#/components/schemas/PublicActivityPreview"
                 }
               }
             },
@@ -7370,7 +7953,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountView"
+                  "$ref": "#/components/schemas/LoginView"
                 }
               }
             },
@@ -8180,6 +8763,48 @@
         "summary": "Reaction"
       }
     },
+    "/api/v2/course-join/guest": {
+      "post": {
+        "description": "Become a guest and join the course in one transaction; the cookie only after it commits.",
+        "operationId": "guest_join_course_api_v2_course_join_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCourseJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Course",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
     "/api/v2/course-join/preview": {
       "get": {
         "operationId": "preview_join_api_v2_course_join_preview_get",
@@ -8386,8 +9011,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },
@@ -8506,8 +9131,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },

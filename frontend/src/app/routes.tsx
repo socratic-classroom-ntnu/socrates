@@ -31,6 +31,8 @@ import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPag
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
+import { GuestJoinPage } from '../features/auth/GuestJoinPage'
+import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
@@ -50,7 +52,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector' | 'guestRegister' | 'guestLogin'
+type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
 
 // 這一批不做的入口：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -78,6 +80,7 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
+    <Route path="/join/guest" element={<GuestJoinPage />} />
     <Route element={<RequireAuth />}>
       {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
       <Route element={<RoleGate />}>
@@ -94,11 +97,11 @@ export function AppRoutes() {
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/scan" element={<Placeholder kind="scan" />} />
         <Route path="/account" element={<Placeholder kind="account" />} />
-        {/* 訪客帳號面板的兩個入口：真正的頁面由免註冊需求做（P27） */}
-        <Route path="/guest/register" element={<Placeholder kind="guestRegister" />} />
-        <Route path="/guest/login" element={<Placeholder kind="guestLogin" />} />
       </Route>
       </Route>
+      {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}
+      <Route path="/guest/register" element={<GuestUpgradePage />} />
+      <Route path="/guest/login" element={<GuestLoginPage />} />
     </Route>
     <Route element={<RequireAuth verified />}>
       <Route element={<RoleGate />}>
@@ -112,7 +115,7 @@ export function AppRoutes() {
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
-        {/* 學生「我的對話」：要求驗證；訪客要等免註冊讓 RequireAuth 放行訪客後才進得來 */}
+        {/* 學生「我的對話」：要求驗證；訪客由 RequireAuth 放行，頁面畫訪客版（註冊邀請＋鎖住的題目） */}
         <Route path="/my-dialogues" element={<MyDialoguesPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />

@@ -44,12 +44,5 @@ const shell: Shape<typeof zhHant> = {
       body2: '要以学生身份参加，请退出后用学生账号登录或注册，再重新扫描。',
     },
   },
-  // 訪客登出前先確認（組員 Figma「免註冊加入」G15）：先註冊、仍要登出、✕ 取消
-  guestLogout: {
-    title: '要退出访客身份吗？',
-    body: '退出后，这个访客身份与记录将无法找回。建议先注册，保留课程和对话。',
-    anyway: '仍要退出',
-    register: '先注册',
-  },
 };
 export default shell;

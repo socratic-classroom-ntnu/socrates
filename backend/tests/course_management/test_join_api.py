@@ -1,6 +1,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +13,7 @@ from app.classroom_app import create_app
 from app.modules.identity_access import auth as auth
 from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.platform.env import env_str
-from app.modules.platform import storage as storage
+from app.modules.platform import rate_limit, storage as storage
 from app.modules.classroom_core.repositories import Membership, Room
 from tests.course_management.conftest import switch, user
 from tests.course_management.test_courses_api import create_course
@@ -155,7 +156,15 @@ def test_course_and_room_code_namespaces_are_independent(client):
         )
 
 
-def test_join_rate_limited(client):
+@pytest.fixture
+def one_window(monkeypatch):
+    """Freeze the limiter's clock: its windows are fixed minutes, and a test that crosses a
+    minute boundary would start counting again from zero."""
+    now = time.time()
+    monkeypatch.setattr(rate_limit, "time", SimpleNamespace(time=lambda: now))
+
+
+def test_join_rate_limited(client, one_window):
     user(client, "student")
 
     responses = [join(client, "XXXXXXXX") for _ in range(21)]
@@ -165,7 +174,7 @@ def test_join_rate_limited(client):
     assert responses[20].json() == {"detail": "RATE_LIMITED"}
 
 
-def test_join_ip_limit_allows_a_classroom_behind_one_address(client):
+def test_join_ip_limit_allows_a_classroom_behind_one_address(client, one_window):
     """A whole class shares the school's address: 10 students × 20 tries all get through."""
     for index in range(10):
         user(client, f"student{index:02d}")

@@ -26,6 +26,8 @@ const common: Shape<typeof zhHant> = {
     LOGIN_REQUIRED: '请先登录。',
     SESSION_CSRF_REQUIRED: '登录状态已过期，请刷新页面。',
     RATE_LIMITED: '操作太频繁，请稍后再试。',
+    GUEST_EXPIRED: '访客身份已过期，请重新登录，或扫描 QR code 以新的访客身份加入。',
+    GUEST_JOIN_DISABLED: '这门课目前不开放免注册加入，请登录或注册后再加入。',
     invalidInput: '有字段内容不符合格式，请检查后再试。',
     server: '服务器暂时无法处理，请稍后再试。',
     generic: '操作没有完成，请稍后再试。',
@@ -42,8 +44,6 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'AI 分析还在开发中，之后会从已确认的想法整理班级层级的脉络。',
     toCourse: '回到课程',
     projector: '全屏投影还在建设中。现在可以先用邀请窗口里的二维码。',
-    guestRegister: '访客注册之后会放在这里：用同一个账号保留现在的记录。',
-    guestLogin: '用已有的账号登录并把访客记录并进去，之后会放在这里。',
   },
   dateTime: {
     chooseDate: '选择日期',

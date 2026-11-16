@@ -26,6 +26,7 @@ const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] =
 ]
 
 // 帳號只有一個角色（P22）：側欄依角色，兩邊都沒有「分組課」（路由不擋，只是沒有入口）。
+// 訪客的角色一律是學生，側欄跟學生一樣：「我的對話」點進去是註冊後才能使用的說明頁。
 const NAV_BY_ROLE: Record<'student' | 'teacher', NavKey[]> = {
   student: ['home', 'dialogues'],
   teacher: ['home', 'bank', 'store', 'settings'],

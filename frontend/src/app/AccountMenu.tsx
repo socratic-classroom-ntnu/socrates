@@ -6,17 +6,18 @@ import { errorMessage } from '../i18n/errors'
 import { LANGUAGE_NAMES, LOCALES } from '../i18n/locale'
 import { useT } from '../i18n/useT'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
-import { GUEST_LOGIN, GUEST_REGISTER, RoleTag, useAccountSummary, useLogout } from './accountSummary'
+import { GUEST_REGISTER, RoleTag, useAccountSummary, useLogout } from './accountSummary'
 
 export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean }
 
 /**
  * S2：帳號選單（電腦側欄底部、老師手機的頂部列）。名字旁標角色（P23）。
- * 訪客（G14、P34）：沒有個人設定，換成「註冊以保留紀錄」「已有帳號？登入」，登出先確認（G15）。
+ * 訪客（G14）：名字是暱稱、下一行是保留日期，「個人設定」換成「註冊以保留紀錄」，登出先確認（G15）。
  */
 export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 'topbar' }) {
   const compact = variant !== 'sidebar'
   const { t, locale } = useT('shell')
+  const { t: tg } = useT('guest')
   const { changeLocale, failure } = useChangeLocale()
   const navigate = useNavigate()
   const { name, tag, tagLabel, guest, secondLine } = useAccountSummary()
@@ -29,12 +30,9 @@ export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 't
     submenu: LOCALES.map(code => ({ key: code, label: LANGUAGE_NAMES[code], checked: code === locale, onSelect: () => void changeLocale(code) })),
   }
   const items: MenuItem[] = [
-    ...(guest
-      ? [
-        { key: 'guest-register', label: t('account.guestRegister'), onSelect: () => navigate(GUEST_REGISTER) },
-        { key: 'guest-login', label: t('account.guestLogin'), onSelect: () => navigate(GUEST_LOGIN) },
-      ]
-      : [{ key: 'settings', label: t('account.settings'), onSelect: () => navigate('/account') }]),
+    guest
+      ? { key: 'register', label: tg('menu.register'), onSelect: () => navigate(GUEST_REGISTER) }
+      : { key: 'settings', label: t('account.settings'), onSelect: () => navigate('/account') },
     language,
     { key: 'logout', label: t('logout'), dividerBefore: true, onSelect: logout.request },
   ]

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useT } from '../../i18n/useT'
-import { can, currentScenario, type SoloAttemptView, type SoloScenario } from './soloView'
+import { can, currentScenario, REVIEW_STATES, type SoloAttemptView, type SoloScenario } from './soloView'
 
 const FOLLOW_LATEST_THRESHOLD = 96
 
@@ -118,7 +118,7 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
     </>}
     {/* The confirmed viewpoint closes this scenario's part of the conversation. */}
     {scenario && confirmedCard(scenario)}
-    {view.state === 'reviewing' && <article className="solo-message solo-message--tutor">
+    {REVIEW_STATES.includes(view.state) && <article className="solo-message solo-message--tutor">
       <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
       <div><strong>{t('timeline.socrates')}</strong><p>{t('review.closing', { name: view.display_name })}</p></div>
     </article>}
@@ -137,13 +137,14 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   </section>
 }
 
-const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', 'reviewing']
+const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', ...REVIEW_STATES]
 
 /** This scenario's messages. Once the backend decides to confirm (and after it, between scenarios and in review),
  * the tutor's reply to that turn is left out: its new question would ask the student two
  * things at once (the designs put the summary right after the student's last message). */
 function withoutConfirmingFollowUp(view: SoloAttemptView) {
-  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index)
+  // 對最終統整說「不太對」的那句屬於回顧，不是這個情境的對話
+  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index && !message.final_feedback)
   const last = messages[messages.length - 1]
   if ((SETTLED.includes(view.state) || view.revising) && last?.role === 'tutor') return messages.slice(0, -1)
   return messages

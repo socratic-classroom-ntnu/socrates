@@ -26,6 +26,8 @@ const common: Shape<typeof zhHant> = {
     LOGIN_REQUIRED: 'Please log in first.',
     SESSION_CSRF_REQUIRED: 'Your session has expired. Please reload the page.',
     RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
+    GUEST_EXPIRED: 'Your guest pass has expired. Log in again, or scan the QR code to join as a new guest.',
+    GUEST_JOIN_DISABLED: 'This course does not allow joining without an account right now. Log in or register to join.',
     invalidInput: 'Some fields are not in the right format. Please check and try again.',
     server: 'The server cannot handle this right now. Please try again later.',
     generic: 'That did not go through. Please try again later.',
@@ -42,8 +44,6 @@ const common: Shape<typeof zhHant> = {
     aiAnalysis: 'AI analysis is still being built. It will later organize class-level patterns from confirmed viewpoints.',
     toCourse: 'Back to the course',
     projector: 'Full-screen projection is still being built. For now, use the QR code in the invite window.',
-    guestRegister: 'Signing up as a guest will be here: the same account keeps your records.',
-    guestLogin: 'Logging in to an existing account and bringing your guest records along will be here.',
   },
   dateTime: {
     chooseDate: 'Choose a date',

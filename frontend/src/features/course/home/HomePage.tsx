@@ -4,6 +4,8 @@ import { DesktopOnlyIllustration } from '../../../components/DesktopOnlyIllustra
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { useAuth } from '../../auth/AuthContext'
+import { GuestHomeNotices } from '../../auth/GuestPanels'
+import { accountName } from '../../../shared/accountName'
 import { useIsPhone } from '../../../shared/useIsPhone'
 import { EmptyClassroomIllustration } from '../../../components/EmptyClassroomIllustration'
 import { greetingKey } from '../../../i18n/format'
@@ -31,11 +33,12 @@ export function HomePage() {
 function Greeting() {
   const { t } = useT('home')
   const { account } = useAuth()
-  return <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: account?.username ?? '' })}</h1>
+  return <h1 className="home__greeting">{t(`greeting.${greetingKey(new Date())}`, { name: accountName(account) })}</h1>
 }
 
 function StudentHome({ phone }: { phone: boolean }) {
   const { t } = useT('home')
+  const { account } = useAuth()
   const lists = useResource<Lists>('/courses')
   const data = lists.data
   const count = data?.learning.length ?? 0
@@ -45,6 +48,7 @@ function StudentHome({ phone }: { phone: boolean }) {
       <Greeting />
       {phone && <JoinCodeForm variant="phone" />}
     </div>
+    <GuestHomeNotices account={account} />
     <section className="home__panel" aria-labelledby="home-learning-title">
       <div className="home__bar">
         <h2 id="home-learning-title" className="home__title">
@@ -127,7 +131,7 @@ function TeacherPhoneHome() {
   const { account } = useAuth()
   const [params] = useSearchParams()
   if (params.get('create') === '1') return <Navigate to="/teach/create-course" replace />
-  const name = account?.username ?? ''
+  const name = accountName(account)
   return <main className="home home--phone home--teacher-phone">
     <DesktopOnlyIllustration />
     <h1>{t('teacherPhone.title')}</h1>

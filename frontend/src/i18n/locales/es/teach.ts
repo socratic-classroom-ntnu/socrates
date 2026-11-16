@@ -64,6 +64,9 @@ const teach: Shape<typeof zhHant> = {
     copyActivityLink: 'Copiar enlace de la actividad',
     qrAlt: 'Código QR de «{{name}}»',
     disabled: 'El código del curso está desactivado, así que por ahora no se puede entrar con el código ni con el QR.',
+    guestLabel: 'Permitir unirse sin cuenta',
+    guestOn: 'Tras escanear, el estudiante puede elegir un nombre y entrar directamente. Su registro se guarda 7 días.',
+    guestOff: 'Hay que iniciar sesión o registrarse para unirse. Los invitados que ya entraron no se ven afectados.',
   },
   status: {
     draft: 'Borrador',
@@ -149,6 +152,10 @@ const teach: Shape<typeof zhHant> = {
     showAll_other: 'Ver los {{count}} estudiantes',
     empty: 'Nadie ha confirmado un punto de vista todavía',
   },
+  guest: {
+    tag: 'Invitado',
+    anonymous: 'Invitado anónimo {{number}}',
+  },
   live: {
     breadcrumbLabel: 'Ruta de la actividad',
     meta: 'Abierta hasta {{end}} · actualización en directo',
@@ -171,10 +178,11 @@ const teach: Shape<typeof zhHant> = {
       inDialogue_one: 'En diálogo · {{count}} turno',
       inDialogue_other: 'En diálogo · {{count}} turnos',
       confirming: 'Confirmando su punto de vista',
+      capped: 'Sin definir',
       answering: 'Escribiendo la primera respuesta',
       notStarted: 'Sin empezar',
     },
-    review: { notStarted: 'Sin empezar', inProgress: 'En curso' },
+    review: { notStarted: 'Sin empezar', inProgress: 'En curso', completed: 'Completado', unconfirmed: 'Completado · sin confirmar' },
     time: {
       now: 'Ahora mismo',
       minutes: 'Hace {{count}} minutos',

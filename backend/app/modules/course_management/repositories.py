@@ -13,6 +13,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     false,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,6 +34,10 @@ class Course(Base):
     goals: Mapped[str] = mapped_column(Text, default="")
     code: Mapped[str] = mapped_column(String(8), unique=True)
     code_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Students may join without registering (as guests); off only stops guests not yet in.
+    allow_guest: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=true()
+    )
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
     # 學生「我的對話」的私人課程：屬於哪位學生（每人最多一門）；一般課程是 None。

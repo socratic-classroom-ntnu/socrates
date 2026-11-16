@@ -42,6 +42,10 @@ jest.mock('../features/course/learn/StudentCoursePage', () => {
   return { StudentCoursePage: () => { const { courseId } = useParams(); return <p>student-course-page:{courseId}</p> } }
 })
 jest.mock('../features/course/practice/MyDialoguesPage', () => ({ MyDialoguesPage: () => <p>my-dialogues-page</p> }))
+jest.mock('../features/auth/GuestAccountPages', () => ({
+  GuestUpgradePage: () => <p>guest-upgrade-page</p>,
+  GuestLoginPage: () => <p>guest-login-page</p>,
+}))
 jest.mock('../features/course/home/HomePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { HomePage: () => { const { search } = loc(); return <p>home-page:{search}</p> } }
@@ -138,10 +142,10 @@ test.each([
   ['/teach/activities/a1/projector', '功能開發中'],
   ['/scan', '功能開發中'],
   ['/account', '功能開發中'],
-  // 訪客帳號面板的兩個入口：頁面由免註冊需求做，先接「開發中」（P27）
   ['/my-dialogues', 'my-dialogues-page'],
-  ['/guest/register', '功能開發中'],
-  ['/guest/login', '功能開發中'],
+  // 訪客帳號面板的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24）
+  ['/guest/register', 'guest-upgrade-page'],
+  ['/guest/login', 'guest-login-page'],
 ])('renders each course route: %s', async (url, marker) => {
   mockSession(url.startsWith('/teach') ? teacher : verified)
   open(url)
@@ -190,7 +194,7 @@ test('returns to activity QR after login', async () => {
   mockSession(null)
   open('/activities/a-1/join?from=qr#confirm')
   // 活動 QR 的登入是 J0 版面
-  await login('登入並繼續')
+  await login('登入並加入活動')
   expect(where()).toBe('/activities/a-1/join?from=qr#confirm')
   expect(await screen.findByText('join-activity-page:a-1')).toBeInTheDocument()
 })

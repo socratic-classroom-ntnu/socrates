@@ -362,17 +362,18 @@
   // ---------- 版面：文字模式（浮動視窗）／全螢幕 dev／全螢幕 demo ----------
   const DEMO_PALETTE = { main: '#5FA596', light: '#4F9384', node: '#3E8072', dark: '#2E6B5E', glow: '#A9D8CB' };
   const DEMO_TEXT = { Listening: '正在聆聽…', Thinking: '蘇格拉底正在思考…', Speaking: '蘇格拉底正在說話…' };
-  const view = { name: store.get('voice.view', 'text'), mode: store.get('voice.mode', 'dev') };
+  const view = { name: store.get('voice.view', 'text'), mode: store.get('voice.mode', 'dev'), theme: store.get('voice.theme', 'light') };
   function place(sel, slot) { const el = $(sel), to = $(slot); if (el && to && el.parentNode !== to) to.append(el); }
   function demoStatus() { const el = $('#demo-status'); if (el) el.textContent = session ? (DEMO_TEXT[sphere.state] || '') : '點一下球體開始對話'; }
   function applyView() {
     const full = view.name === 'full', demo = full && view.mode === 'demo';
-    document.body.dataset.view = view.name; document.body.dataset.mode = view.mode;
-    $('#mode-toggle').checked = view.mode === 'demo';
+    document.body.dataset.view = view.name; document.body.dataset.mode = view.mode; document.body.dataset.theme = view.theme;
+    $('#mode-toggle').checked = view.mode === 'demo'; $('#theme-toggle').checked = view.theme === 'dark';
     place('#sphere', !full ? '#slot-float' : demo ? '#slot-demo' : '#slot-dev');
     place('#logwrap', full ? '#slot-log-dev' : '#slot-log-text');
     place('#composer', full ? '#slot-composer-dev' : '#slot-composer-text');
-    sphere.setPalette(demo ? DEMO_PALETTE : null);
+    // 淺色 demo 在白底上用加深的綠；深色 demo 用球體原色（Figma 的 Dark 底），一樣保留 demo 外環的最低亮度。
+    sphere.setPalette(!demo ? null : view.theme === 'dark' ? { ...SphereGeometry.COLORS } : DEMO_PALETTE);
     requestAnimationFrame(() => sphere.resize());
     demoStatus();
   }
@@ -380,6 +381,7 @@
   $('#float').onclick = () => setView('full');
   $('#exit-full').onclick = () => setView('text');
   $('#mode-toggle').onchange = e => { view.mode = e.target.checked ? 'demo' : 'dev'; store.set('voice.mode', view.mode); applyView(); };
+  $('#theme-toggle').onchange = e => { view.theme = e.target.checked ? 'dark' : 'light'; store.set('voice.theme', view.theme); applyView(); };
   $('#sphere').addEventListener('click', () => { if (view.name === 'full' && view.mode === 'demo') { unlockAudio(); session ? stopSession() : startSession(); } });
   addEventListener('keydown', e => { if (e.key === 'Escape' && view.name === 'full') setView('text'); });
   applyView();

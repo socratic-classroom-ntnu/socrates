@@ -6,11 +6,11 @@
 <title>Voice · 語音方案比較</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&display=swap">
-<link rel="stylesheet" href="/static/voice.css?v=11">
+<link rel="stylesheet" href="/static/voice.css?v=12">
 </head>
 <body data-view="text" data-mode="dev">
 
-<!-- 全螢幕右上角：切回文字模式＋dev／demo 滑動開關 -->
+<!-- 全螢幕右上角：切回文字模式＋dev／demo 滑動開關＋demo 的淺／深色開關 -->
 <div class="fullbar">
   <button id="exit-full" class="fullbar__exit" type="button" aria-label="切回文字模式" title="切回文字模式">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg>
@@ -20,6 +20,12 @@
     <input id="mode-toggle" type="checkbox" role="switch" aria-label="切換 demo 模式">
     <span class="mode-switch__track" aria-hidden="true"><span class="mode-switch__thumb"></span></span>
     <span class="mode-switch__label" data-k="demo">demo</span>
+  </label>
+  <label class="mode-switch theme-switch">
+    <span class="mode-switch__label" data-k="light">淺</span>
+    <input id="theme-toggle" type="checkbox" role="switch" aria-label="切換深色模式">
+    <span class="mode-switch__track" aria-hidden="true"><span class="mode-switch__thumb"></span></span>
+    <span class="mode-switch__label" data-k="dark">深</span>
   </label>
 </div>
 
@@ -110,8 +116,8 @@
   </section>
 </div>
 
-<script src="/static/sphere-lib.js?v=11"></script>
-<script src="/static/live-sphere.js?v=11"></script>
-<script src="/static/voice.js?v=11"></script>
+<script src="/static/sphere-lib.js?v=12"></script>
+<script src="/static/live-sphere.js?v=12"></script>
+<script src="/static/voice.js?v=12"></script>
 </body>
 </html>

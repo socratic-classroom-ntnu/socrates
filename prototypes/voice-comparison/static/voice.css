@@ -127,6 +127,20 @@ body[data-mode="dev"] .mode-switch__label[data-k="dev"], body[data-mode="demo"] 
 .demo-status { position: absolute; top: 80%; left: 0; right: 0; margin: 0; text-align: center; color: #8b8b8b; font: 15px 'Noto Sans TC', sans-serif; letter-spacing: .08em; }
 .demo-notice { position: absolute; top: calc(80% + 32px); left: 10%; right: 10%; margin: 0; text-align: center; color: #a83c15; font-size: 13px; }
 
+/* demo 深色：Figma「Hoberman / 三狀態提案 · 淺深背景」的 Dark 底 #123F37，球體用原色，文字用 HB Prototype 的 #BFECE1／#DDF8F1 */
+.theme-switch { display: none; }
+body[data-mode="demo"] .theme-switch { display: flex; }
+body[data-theme="light"] .mode-switch__label[data-k="light"], body[data-theme="dark"] .mode-switch__label[data-k="dark"] { color: var(--ink); font-weight: 700; }
+body[data-view="full"][data-mode="demo"][data-theme="dark"], body[data-theme="dark"] .demomode { background: var(--orb); }
+body[data-mode="demo"][data-theme="dark"] .demo-status { color: #BFECE1; }
+body[data-mode="demo"][data-theme="dark"] .demo-notice { color: #F2B59A; }
+body[data-mode="demo"][data-theme="dark"] .fullbar__exit { background: rgb(221 248 241 / 12%); color: #DDF8F1; }
+body[data-mode="demo"][data-theme="dark"] .fullbar__exit:hover { background: rgb(221 248 241 / 20%); }
+body[data-mode="demo"][data-theme="dark"] .mode-switch { color: #80B4A9; }
+body[data-mode="demo"][data-theme="dark"] .mode-switch__track { background: rgb(221 248 241 / 22%); }
+body[data-mode="demo"][data-theme="dark"] .mode-switch input:checked + .mode-switch__track { background: #508C81; }
+body[data-mode="demo"][data-theme="dark"] .mode-switch__label[data-k="demo"], body[data-mode="demo"][data-theme="dark"] .mode-switch__label[data-k="dark"] { color: #DDF8F1; }
+
 body[data-view="text"] { min-width: 1100px; }
 
 /* dev：三個金鑰輸入處（臨時；部署後讓使用者填自己的） */

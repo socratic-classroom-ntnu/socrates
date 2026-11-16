@@ -42,7 +42,7 @@
 ## Scope（由 docs/modules/modules.json 產生；邊界 ⚠️）
 
 - 端：後端；default owner：後端開發團隊
-- 可依賴的模組：platform、classroom-core、group-dialogue
+- 可依賴的模組：platform、classroom-core、group-dialogue、solo-activity、llm-runtime、ai-providers
 
 檔案範圍：
 - `backend/app/modules/analytics/`
@@ -56,5 +56,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 分組課雷達圖沿用 solo-activity 的共用契約（第二版）。
+- 無
 <!-- module-map:end -->

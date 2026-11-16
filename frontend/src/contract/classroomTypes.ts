@@ -451,6 +451,9 @@ export interface paths {
   "/groups/classrooms/{rid}/configure": {
     "post": { body: requestComponents["schemas"]["Configure"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["GroupActionReceipt"]; responseMedia: "application/json"; path: { "rid": string }; query: never };
   };
+  "/groups/classrooms/{rid}/questions/{index}/radar": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["RadarView"]; responseMedia: "application/json"; path: { "rid": string; "index": number }; query: never };
+  };
   "/groups/classrooms/{rid}/start": {
     "post": { body: requestComponents["schemas"]["Start"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["GroupStartReceipt"]; responseMedia: "application/json"; path: { "rid": string }; query: never };
   };

@@ -46,6 +46,7 @@ def test_every_provider_call_goes_through_the_iron_rules():
         if "guarded_generate(" in path.read_text(encoding="utf-8") and path.name != "iron_rules.py"
     }
     assert wired == {
+        "modules/analytics/radar.py",
         "modules/app_shell/llm_workers.py",
         "modules/content_authoring/service.py",
         "modules/group_dialogue/service.py",

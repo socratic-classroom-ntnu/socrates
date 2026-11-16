@@ -146,18 +146,19 @@
       "id": "analytics",
       "name": "Analytics",
       "status": "warn",
-      "about": "教師分析：分組課的證據投影（/groups/classrooms/{id}/analysis）。",
+      "about": "教師分析：分組課的證據投影（/groups/classrooms/{id}/analysis）與每題雷達（/groups/classrooms/{id}/questions/{index}/radar）。",
       "paths": [
         "backend/app/modules/analytics/"
       ],
       "uses": [
         "platform",
         "classroom-core",
-        "group-dialogue"
+        "group-dialogue",
+        "solo-activity",
+        "llm-runtime",
+        "ai-providers"
       ],
-      "todo": [
-        "分組課雷達圖沿用 solo-activity 的共用契約（第二版）。"
-      ]
+      "todo": []
     },
     {
       "id": "course-management",
@@ -237,7 +238,7 @@
       "name": "雷達圖",
       "backend": "solo-activity",
       "source": "backend/app/modules/solo_activity/contracts.py",
-      "state": "產生型別 ✅（GET／PATCH /solo/activities/{id}/radar）",
+      "state": "產生型別 ✅（GET／PATCH /solo/activities/{id}/radar；分組課 GET /groups/classrooms/{id}/questions/{index}/radar）",
       "consumer": "教師分析畫面",
       "frontend": [
         "teacher-analytics"

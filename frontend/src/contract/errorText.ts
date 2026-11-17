@@ -113,6 +113,8 @@ const CODES: Record<string, string> = {
   QUESTION_OPTION_REQUIRED: '請先選擇一個選項。',
   QUESTION_REQUIRED: '找不到這一題。',
   QUOTED_VIEWPOINT_REQUIRED: '請先寫下你的原話，再確認觀點。',
+  RADAR_DIMENSION_NOT_FOUND: '找不到這個雷達維度，請重新整理雷達圖。',
+  RADAR_NOT_READY: '雷達圖還沒辦法產生：要等至少一位學生完成最終統整，並確認 AI 連線可用。',
   RATE_LIMITED: '操作太頻繁，請稍候再試。',
   SCENARIO_AI_PROFILE_REQUIRED: '有題目指定的 AI 連線已不存在或不是你建立的，請重新選擇，或改回「沿用課堂設定」。',
   SCRIPT_ASSIST_DRAFT_SIZE: '目前劇本內容太長，請精簡後再請 AI 協助。',

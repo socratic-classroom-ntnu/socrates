@@ -5,6 +5,12 @@
 - **接著做 5a**（登入時併入訪客紀錄，11/24 要上）：只依賴 #125 的 hook 契約，不用等 Ken 的 7a，先用假的 hook 寫測試（像 #125 那樣），Ken 的 7a 合進來後再接起來跑一次。兩件事先跟 Ken 對好：登入回應加一個「有沒有併入」的欄位（前端靠它顯示併入完成）；「學生／老師角色」的 `account_role` 合進去後，老師帳號拒絕併入，回一個錯誤碼（前端顯示「老師帳號無法併入」）。Ken 做免註冊時發現帳號模組的問題，也由你修。他這份的 PR（含帳號模組的部分）由 Fizzy 審。
 - 雷達這一輪要做：6（embedding）照原本的規格繼續（#142 已開）。8（TTS）這一輪先不排，語音模式下一輪。
 
+## 11/17 新增（雷達用真的模型實測後發現，11/24 前要進）
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 9 | ai-providers | 所有 LLM 功能（緊急） | Gemini 3 的思考會吃掉 `maxOutputTokens`：`_gemini_generate` 給 2048，但 gemini-3-flash-preview 光思考就用掉 1700–2600 token，回應被截斷（`finishReason` 是 `MAX_TOKENS`），變成 `PROVIDER_SCHEMA_MISMATCH`。實測 radar_scoring 16 次失敗 8 次；老師用 Gemini 3 時，單人導師、統整這些結構化輸出也會隨機失敗。照 OpenAI 那條路改：`maxOutputTokens` 用輸出額度加推理額度（`CLASSROOM_MAX_OUTPUT_TOKENS`＋`CLASSROOM_REASONING_MAX_TOKENS`），並帶 `thinkingConfig.thinkingBudget`＝推理額度（實測 3072／1024 連跑 4 次都合格） | — | 測試確認 Gemini 的請求帶 `thinkingConfig`、`maxOutputTokens` 是兩個額度相加；`finishReason` 是 `MAX_TOKENS` 時回一個能分辨的錯誤碼（例如 `PROVIDER_OUTPUT_TRUNCATED`），不要和 schema 不合混在一起 |
+| 10 | llm-runtime | 雷達 | `radar_dimensions` 現在只看活動敘述，定出的維度彼此高度相關（實測 5 個都是「義務還是後果」的變體），分數幾乎全 0 或全 4，雷達圖不是滿的就是空的。改成也看匿名的學生統整（`final_position`、`reasoning_style`，做法同 `radar_axis_naming`），並要求維度能把學生分開、彼此不重複。`solo_activity/radar.py` 的 `_scoring_route` 要把統整傳進 context，那一側由後端組長這邊配合改 | 9 | 用 15 人以下、理由分散的測試統整跑一次：維度兩兩不同，每個維度的分數不是全班都在同一端 |
+
 ## 你的第一個 PR
 在 `llm_runtime/contracts.py` 定義 7 個新 schema 的型別：SoloTutorTurn（含 10 個 flags）、ActivityExpansion、StanceClassification、FinalSummary、RadarAxisNames、RadarDimensions、RadarScores。每個 schema 附一個合格、一個不合格的測試樣本。這個 PR 只放型別，不放 prompt；Ken 會等這份型別才開始接，請最先做。
 

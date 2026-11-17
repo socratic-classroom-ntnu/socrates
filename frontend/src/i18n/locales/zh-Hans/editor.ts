@@ -47,8 +47,9 @@ const editor: Shape<typeof zhHant> = {
   },
   fields: {
     required: '（必填）',
-    title: '题目',
-    titleHint: '写一段话，苏格拉底会以它为起点，替每位学生写出第一个情境。这段话也是活动名称。',
+    title: '活动名称',
+    scenario: '情境描述',
+    scenarioHint: '苏格拉底会以这段描述为起点，替每位学生写出第一个情境。',
     start: '开始时间',
     startNow: '创建后立刻开放',
     startAt: '指定时间',
@@ -58,7 +59,8 @@ const editor: Shape<typeof zhHant> = {
     lockedWindowHint: '可以延后结束时间，让还没做完的学生继续；提前结束请在活动页操作。',
   },
   errors: {
-    title: '请填题目',
+    title: '请填活动名称',
+    scenario: '请填情境描述',
     start: '请填开始时间',
     end: '请填结束时间',
     endBeforeStart: '结束时间要晚于开始时间',

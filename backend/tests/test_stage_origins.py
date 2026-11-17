@@ -34,3 +34,24 @@ def test_stage_env_example_matches_compose_default(key):
     match = re.search(rf"^{key}=(.*)$", example, re.MULTILINE)
     assert match
     assert match.group(1).strip() == TEAM_ORIGIN
+
+
+def test_stage_compose_passes_every_practice_setting_the_backend_reads():
+    """我的對話的設定都要能從 stage `.env` 帶進容器，否則設了不會生效、錯的值也擋不下來（M3、M11）。"""
+    app = Path(__file__).resolve().parents[1] / "app"
+    read = set()
+    for source in app.rglob("*.py"):
+        read |= set(
+            re.findall(
+                r"SOCRATES_PRACTICE_[A-Z]+(?:_[A-Z]+)*\b", source.read_text(encoding="utf-8")
+            )
+        )
+    read = {name for name in read if not name.endswith("_")}
+    compose = _stage_file("compose.yml")
+    example = _stage_file(".env.example")
+    assert read, "no practice settings found"
+    for name in sorted(read):
+        assert re.search(
+            rf"^\s+{name}: \$\{{{name}", compose, re.M
+        ), f"{name} missing from compose.yml"
+        assert re.search(rf"^{name}=", example, re.M), f"{name} missing from .env.example"

@@ -44,7 +44,7 @@
 |---|---|---|---|---|
 | [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/app/`<br>`frontend/src/testing/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./frontend/contract.md) | ✅ | `frontend/src/contract/` | — | 0 |
-| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/ui/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
+| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/ui/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/shared/accountName.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
 | [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
 | [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/` | platform、contract | 0 |
 | [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform、contract | 0 |
@@ -63,7 +63,7 @@
 | 教室房間（/classrooms/*） | classroom-core | student-classroom | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
 | 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 產生型別 ✅ |
 | AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 產生型別 ✅ |
-| 雷達圖 | analytics | teacher-analytics | 待定 | 等契約（設計稿） |
+| 雷達圖 | solo-activity | teacher-analytics | backend/app/modules/solo_activity/contracts.py | 後端 ViewModel 已定義；端點待實作 |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |

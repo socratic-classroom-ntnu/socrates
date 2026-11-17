@@ -47,8 +47,9 @@ const editor: Shape<typeof zhHant> = {
   },
   fields: {
     required: '(required)',
-    title: 'Topic',
-    titleHint: 'Write a few sentences. Socrates starts from it to write a first scenario for each student. It is also the activity name.',
+    title: 'Activity name',
+    scenario: 'Scenario',
+    scenarioHint: 'Socrates starts from this description to write a first scenario for each student.',
     start: 'Start',
     startNow: 'Open as soon as it is created',
     startAt: 'At a set time',
@@ -58,7 +59,8 @@ const editor: Shape<typeof zhHant> = {
     lockedWindowHint: 'You can extend the end time so students who are not finished can continue; end it early from the activity page.',
   },
   errors: {
-    title: 'Enter the topic',
+    title: 'Enter the activity name',
+    scenario: 'Enter the scenario',
     start: 'Enter a start time',
     end: 'Enter an end time',
     endBeforeStart: 'The end must be after the start',

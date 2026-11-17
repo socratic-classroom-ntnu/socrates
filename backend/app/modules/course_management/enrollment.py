@@ -1,4 +1,5 @@
-"""Joining a course by its enrollment code."""
+"""Joining a course by its enrollment code, and the registry of modules that delete a removed
+student's records."""
 
 from __future__ import annotations
 
@@ -6,17 +7,55 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.course_management.codes import normalize
+from app.modules.course_management.contracts import EnrollmentRecordHook
 from app.modules.course_management.repositories import Course, Enrollment
+from app.modules.identity_access import service as identity
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.storage import transaction
 
+# course-management cannot import the modules that keep a student's answers, so each registers
+# its hook here; the app shell wires them, as it does guest record hooks.
+ENROLLMENT_HOOKS: dict[str, EnrollmentRecordHook] = {}
+
+
+def register_enrollment_hook(module: str, hook: EnrollmentRecordHook) -> None:
+    ENROLLMENT_HOOKS[module] = hook
+
+
+def registered_enrollment_hooks() -> set[str]:
+    """The modules whose enrollment record hooks are registered now."""
+    return set(ENROLLMENT_HOOKS)
+
+
+def remove_student(db, course: Course, enrollment_id: str) -> None:
+    """Remove a student from the course for good: their answers in every module, then the
+    enrollment. The enrollment is locked first, so a student starting an activity at the same
+    moment either finishes first (and its new attempt is removed too) or finds no enrollment.
+    The course's owner is never one of its students."""
+    found = db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.id == enrollment_id,
+            Enrollment.course_id == course.id,
+            Enrollment.account_id != course.owner_id,
+        )
+        .with_for_update()
+    )
+    if found is None:
+        raise DomainError("ENROLLMENT_NOT_FOUND", 404)
+    for hook in ENROLLMENT_HOOKS.values():
+        hook.remove(db, course.id, found.account_id)
+    db.delete(found)
+    db.flush()
+
 
 def find_by_code(db, raw_code: str) -> Course:
     """A wrong code and a disabled code fail the same way, so the response never reveals a course."""
     course = db.scalar(select(Course).where(Course.code == normalize(raw_code)))
-    if course is None or not course.code_enabled:
+    # 私人課程（我的對話）即使代碼被打開也不能用代碼找到
+    if course is None or not course.code_enabled or course.practice_account_id is not None:
         raise DomainError("ENROLL_CODE_NOT_FOUND", 404)
     return course
 
@@ -30,11 +69,29 @@ def existing(db, account: Account, course: Course) -> Enrollment | None:
     )
 
 
+def locked(db, account: Account, course: Course) -> Enrollment | None:
+    """existing, holding a shared lock on the enrollment until the transaction ends: a removal
+    of this student (which locks the row for update) waits for it, or it waits for the removal
+    and then finds nothing."""
+    return db.scalar(
+        select(Enrollment)
+        .where(
+            Enrollment.course_id == course.id,
+            Enrollment.account_id == account.id,
+        )
+        .with_for_update(read=True)
+    )
+
+
 def enroll(db, account: Account, course: Course, display_name: str) -> tuple[Enrollment, bool]:
-    """Idempotent: returns (enrollment, created_now); a repeat keeps the first display name."""
+    """Idempotent: returns (enrollment, created_now); a repeat keeps the first display name.
+
+    A guest joins only a course that allows guests; one already in stays in when it stops."""
     found = existing(db, account, course)
     if found is not None:
         return found, False
+    if account.kind == "guest":
+        require_guests_allowed(course)
     try:
         with db.begin_nested():
             enrollment = Enrollment(
@@ -49,6 +106,20 @@ def enroll(db, account: Account, course: Course, display_name: str) -> tuple[Enr
         if winner is None:
             raise
         return winner, False
+
+
+def require_guests_allowed(course: Course) -> None:
+    if not course.allow_guest:
+        raise DomainError("GUEST_JOIN_DISABLED", 403)
+
+
+def join_as_new_guest(db, course: Course, nickname: str, locale: str) -> tuple[str, dict]:
+    """A new guest enrolled in the course, in the caller's transaction: if anything fails, there
+    is no guest either (enroll refuses a course that takes no guests, and the rollback takes the
+    new guest with it). Returns the session token and the guest's account view."""
+    token, view = identity.create_guest(db, nickname, locale)
+    enroll(db, db.get(Account, view["id"]), course, nickname)
+    return token, view
 
 
 def public_preview_limit(host: str) -> None:

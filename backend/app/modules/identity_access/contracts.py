@@ -1,13 +1,17 @@
 """Public contracts owned by Identity & Access."""
 
-from typing import Literal
+from typing import Annotated, Literal, Protocol
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 from pydantic_core import PydanticCustomError
+from sqlalchemy.orm import Session
+
 from app.modules.platform.contracts import Strict
 
 # Interface languages an account can choose; the frontend owns the translations.
 Locale = Literal["zh-Hant", "zh-Hans", "en", "es"]
+# Chosen at registration and fixed; not the role a course or classroom membership carries.
+AccountRole = Literal["student", "teacher"]
 
 USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
 
@@ -45,7 +49,7 @@ def email_shape(value: str) -> str:
     return value
 
 
-class Register(Strict):
+class Credentials(Strict):
     username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=8, max_length=32)
@@ -61,15 +65,22 @@ class Register(Strict):
         return email_shape(v)
 
 
+class Register(Credentials):
+    # Optional so other callers (the dev console) still register; the sign-up form always sends
+    # it. Missing or null makes a student.
+    account_role: AccountRole | None = None
+
+
 class GuestJoin(Strict):
     """Joining without registering: a nickname shown to the class and the interface language."""
 
-    nickname: str = Field(min_length=1, max_length=40)
+    # Surrounding spaces do not count: trimmed first, then 1–40 characters.
+    nickname: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
     locale: Locale
 
 
-class GuestUpgrade(Register):
-    """A guest registering keeps its account id; it sends exactly what a registration does."""
+class GuestUpgrade(Credentials):
+    """A guest registering keeps its account id and stays a student, so it sends no role."""
 
 
 class Login(Strict):
@@ -170,10 +181,40 @@ class AccountView(Strict):
     achievements: list[str]
     locale: Locale | None = None
     kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    account_role: AccountRole
     # Guests only: 168 hours after joining; the daily job then clears the name and marks the
     # account expired_guest.
     guest_expires_at: float | None = None
+    # The name to show: a guest's nickname (never the username's random suffix), otherwise the
+    # username; empty once a guest has expired.
+    display_name: str = ""
+
+
+# What logging in did with a guest session on the same device: MERGED (its records moved to
+# this account), NONE (no live guest session, or a hook failed and the merge rolled back), or
+# REFUSED_TEACHER (a teacher account logged in; the guest keeps its records and session).
+GuestMerge = Literal["MERGED", "NONE", "REFUSED_TEACHER"]
+
+
+class LoginView(AccountView):
+    guest_merge: GuestMerge
 
 
 class LocaleUpdate(Strict):
     locale: Locale
+
+
+class GuestRecordHook(Protocol):
+    """What every module that keeps student records provides for guests (the app shell registers
+    it with service.register_guest_hook). Both run in the caller's transaction and never commit.
+
+    reassign: move the guest's records to the account the device just logged in as. When the same
+    course or activity has records under both, keep the account's and delete the guest's.
+    forget_name: clear the guest's name wherever the module stores it (no soft delete); the
+    records themselves stay, so teacher statistics still count them. Called when the guest
+    expires.
+    """
+
+    def reassign(self, db: Session, guest_id: str, account_id: str) -> None: ...
+
+    def forget_name(self, db: Session, guest_id: str) -> None: ...

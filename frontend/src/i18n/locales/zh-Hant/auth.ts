@@ -28,7 +28,19 @@ export default {
     submit: '設定新密碼',
     done: '密碼已經更新，請用新密碼登入。',
   },
+  role: {
+    legend: '身分',
+    student: '我是學生',
+    teacher: '我是老師',
+    desktopOnly: '限電腦使用',
+    note: '註冊後不能更改。',
+    teacherPhoneNote: '老師功能請用電腦登入使用；註冊後不能更改。',
+    studentOnly: '從課程 QR 或邀請連結註冊的是學生帳號。',
+  },
   fieldErrors: {
+    account_role: {
+      missing: '請選擇身分',
+    },
     username: {
       missing: '請填寫使用者名稱。',
       tooShort: '使用者名稱至少要 {{min}} 個字元，請重新輸入。',
@@ -53,7 +65,7 @@ export default {
     },
   },
   busy: '處理中…',
-  passwordRule: '密碼需 8–32 個字元，並包含大寫字母、小寫字母、數字與特殊字元（可用 ! @ # $ % ^ & * _ - + = . ? ~），不能有空白或其他符號。',
+  passwordRule: '密碼 8–32 個字元，需含大寫、小寫字母、數字和符號。',
   blocked: '已擋下不允許的字元：{{chars}}',
   space: '空白',
   links: { login: '回到登入', register: '註冊', forgot: '忘記密碼' },

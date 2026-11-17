@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { useT } from '../../i18n/useT'
-import { can, currentScenario, type SoloAttemptView, type SoloScenario } from './soloView'
+import { can, currentScenario, REVIEW_STATES, type SoloAttemptView, type SoloScenario } from './soloView'
 
 const FOLLOW_LATEST_THRESHOLD = 96
+// Matches the phone breakpoint in solo.css, where the whole conversation scrolls instead of the timeline.
+const PHONE_QUERY = '(max-width: 767px)'
 
 type Props = {
   view: SoloAttemptView
@@ -19,11 +21,18 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   const messages = withoutConfirmingFollowUp(view)
   const scenario = currentScenario(view)
   const contentKey = `${messages.map(message => message.id).join(':')}|${pendingStudent?.text ?? ''}|${waiting}`
+  /** Desktop scrolls the timeline; a phone (A1m) scrolls the whole conversation under the header. */
+  function scroller(): HTMLElement | null {
+    const timeline = timelineRef.current
+    const phone = typeof window.matchMedia === 'function' && window.matchMedia(PHONE_QUERY).matches
+    return phone ? timeline?.closest<HTMLElement>('.solo-conversation') ?? timeline : timeline
+  }
+
   // Instant, not smooth: a smooth scroll is dropped when the layout changes mid-animation.
   function showLatest() {
-    const timeline = timelineRef.current
-    if (timeline && followLatest.current && typeof timeline.scrollTo === 'function') {
-      timeline.scrollTo({ top: timeline.scrollHeight, behavior: 'auto' })
+    const target = scroller()
+    if (target && followLatest.current && typeof target.scrollTo === 'function') {
+      target.scrollTo({ top: target.scrollHeight, behavior: 'auto' })
     }
   }
 
@@ -40,11 +49,20 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   }, [])
 
   function trackScroll() {
-    const timeline = timelineRef.current
-    if (!timeline) return
-    const distanceFromBottom = timeline.scrollHeight - timeline.scrollTop - timeline.clientHeight
+    const target = scroller()
+    if (!target) return
+    const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight
     followLatest.current = distanceFromBottom <= FOLLOW_LATEST_THRESHOLD
   }
+
+  // On a phone the scroll happens on the conversation, which onScroll below never sees.
+  useEffect(() => {
+    const conversation = timelineRef.current?.closest<HTMLElement>('.solo-conversation')
+    if (!conversation) return
+    const onScroll = () => { if (scroller() === conversation) trackScroll() }
+    conversation.addEventListener('scroll', onScroll)
+    return () => conversation.removeEventListener('scroll', onScroll)
+  }, [])
 
   // A1w／X2: only the message still waiting for a reply carries 已保存 (it reached the server).
   const awaitingReply = view.state === 'awaiting_tutor' || view.state === 'tutor_unavailable'
@@ -118,7 +136,7 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
     </>}
     {/* The confirmed viewpoint closes this scenario's part of the conversation. */}
     {scenario && confirmedCard(scenario)}
-    {view.state === 'reviewing' && <article className="solo-message solo-message--tutor">
+    {REVIEW_STATES.includes(view.state) && <article className="solo-message solo-message--tutor">
       <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
       <div><strong>{t('timeline.socrates')}</strong><p>{t('review.closing', { name: view.display_name })}</p></div>
     </article>}
@@ -137,13 +155,14 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   </section>
 }
 
-const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', 'reviewing']
+const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', ...REVIEW_STATES]
 
 /** This scenario's messages. Once the backend decides to confirm (and after it, between scenarios and in review),
  * the tutor's reply to that turn is left out: its new question would ask the student two
  * things at once (the designs put the summary right after the student's last message). */
 function withoutConfirmingFollowUp(view: SoloAttemptView) {
-  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index)
+  // 對最終統整說「不太對」的那句屬於回顧，不是這個情境的對話
+  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index && !message.final_feedback)
   const last = messages[messages.length - 1]
   if ((SETTLED.includes(view.state) || view.revising) && last?.role === 'tutor') return messages.slice(0, -1)
   return messages

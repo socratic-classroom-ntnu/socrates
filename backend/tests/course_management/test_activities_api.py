@@ -20,6 +20,7 @@ TEST_DIALECT = make_url(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://")).get
 def draft(**overrides):
     body = {
         "title": "第三週倫理討論",
+        "scenario": "一輛失控的電車正駛向五名工人，你站在拉桿旁。",
         "ends_at": time.time() + 3600,
     }
     body.update(overrides)
@@ -27,7 +28,7 @@ def draft(**overrides):
 
 
 def teacher_with_course(client):
-    teacher = user(client, "owner")
+    teacher = user(client, "owner", account_role="teacher")
     course = create_course(client)
     return teacher, course
 
@@ -78,7 +79,10 @@ def test_draft_hidden_from_students(client):
     "broken",
     [
         {"title": ""},
-        {"title": "x" * 301},
+        {"title": "x" * 41},
+        {"scenario": ""},
+        {"scenario": None},
+        {"scenario": "x" * 301},
         {"ends_at": None},
         {"questions": [{"id": "q1", "title": "多題", "scenario": "x", "options": []}]},
         {"topic_direction": "已移除的欄位"},
@@ -363,9 +367,10 @@ def test_activity_join_static_route_precedes_teacher_action_route(client):
     teacher, course = teacher_with_course(client)
     activity = create_activity(client, course["id"])
     act(client, activity["id"], "publish")
+    user(client, "student")
 
     response = client.post(
-        f"/api/v2/activities/{activity['id']}/join", json={"display_name": "老師"}
+        f"/api/v2/activities/{activity['id']}/join", json={"display_name": "學生"}
     )
 
     assert response.status_code == 200
@@ -462,9 +467,11 @@ def test_published_revision_has_no_option_or_question_fields(client):
         ).one()
         assert set(revision.content) == {
             "title",
+            "scenario",
             "starts_at",
             "ends_at",
             "course_intro",
             "course_goals",
         }
         assert revision.content["title"] == draft()["title"]
+        assert revision.content["scenario"] == draft()["scenario"]

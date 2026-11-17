@@ -46,3 +46,128 @@ def test_object_property_descriptions_become_safe_jsdoc():
     rendered = _generator_module().ts(schema)
 
     assert rendered == '{ /** UTF-16 code units; inclusive. *\\/ */ "start": number }'
+
+
+def test_operation_types_include_body_success_and_empty_response():
+    spec = {
+        "paths": {
+            "/api/v2/items/{item_id}": {
+                "post": {
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/ItemInput"}
+                            }
+                        },
+                    },
+                    "responses": {
+                        "201": {
+                            "content": {
+                                "application/json": {
+                                    "schema": {"$ref": "#/components/schemas/ItemView"}
+                                }
+                            }
+                        }
+                    },
+                },
+                "delete": {"responses": {"204": {"description": "No Content"}}},
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert '"/items/{item_id}"' in rendered
+    assert (
+        '"post": { body: requestComponents["schemas"]["ItemInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["ItemView"]'
+        in rendered
+    )
+    assert (
+        '"delete": { body: never; bodyRequired: false; requestMedia: "none"; response: null'
+        in rendered
+    )
+
+
+def test_operation_types_keep_query_and_non_json_media():
+    spec = {
+        "paths": {
+            "/api/v2/items": {
+                "get": {
+                    "parameters": [
+                        {
+                            "name": "offset",
+                            "in": "query",
+                            "required": False,
+                            "schema": {"type": "integer"},
+                        }
+                    ],
+                    "responses": {
+                        "200": {"content": {"application/yaml": {"schema": {"type": "string"}}}}
+                    },
+                }
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert 'query: { "offset"?: number }' in rendered
+    assert "response: string" in rendered
+
+
+def test_reason_codes_are_read_from_literal_catalog_without_importing_backend(tmp_path):
+    catalog = tmp_path / "contracts.py"
+    catalog.write_text(
+        'REASON_CODES = {"VISIBLE": ("owner",), "PRIVATE": ("owner",)}\n'
+        'DYNAMIC_REASON_CODES = ("DYNAMIC",)\n'
+        'SERVER_ONLY_REASON_CODES = ("PRIVATE",)\n'
+    )
+    assert _generator_module().render_reason_codes(catalog) == (
+        "// Generated from backend/app/modules/contract/contracts.py.\n"
+        'export type ClassroomReasonCode = "DYNAMIC" | "VISIBLE";\n'
+    )
+
+
+def test_reason_code_type_is_part_of_existing_generated_contract(tmp_path):
+    generator = _generator_module()
+    generator.ROOT = tmp_path
+    catalog = tmp_path / "backend/app/modules/contract/contracts.py"
+    catalog.parent.mkdir(parents=True)
+    catalog.write_text(
+        'REASON_CODES = {"VISIBLE": ("owner",)}\n'
+        "DYNAMIC_REASON_CODES = ()\n"
+        "SERVER_ONLY_REASON_CODES = ()\n"
+    )
+    generator.write_contracts({"components": {"schemas": {}}, "paths": {}})
+    output = (tmp_path / "frontend/src/contract/classroomTypes.ts").read_text()
+    assert 'export type ClassroomReasonCode = "VISIBLE";' in output
+    assert not (tmp_path / "frontend/src/contract/classroomReasonCodes.ts").exists()
+
+
+def test_input_schema_keeps_defaulted_field_optional():
+    schema = {
+        "type": "object",
+        "properties": {"code": {"type": "string"}, "avatar": {"type": "string", "default": "owl"}},
+        "required": ["code"],
+    }
+    rendered = _generator_module().ts(schema, input_type=True)
+    assert '"code": string' in rendered
+    assert '"avatar"?: string' in rendered
+
+
+def test_operation_keeps_optional_body_and_success_media():
+    spec = {
+        "paths": {
+            "/api/v2/retry": {
+                "post": {
+                    "requestBody": {
+                        "required": False,
+                        "content": {"application/json": {"schema": {"type": "object"}}},
+                    },
+                    "responses": {
+                        "200": {"content": {"application/yaml": {"schema": {"type": "string"}}}}
+                    },
+                }
+            }
+        }
+    }
+    rendered = _generator_module().render_paths(spec)
+    assert "bodyRequired: false" in rendered
+    assert 'responseMedia: "application/yaml"' in rendered

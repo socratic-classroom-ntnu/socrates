@@ -1,6 +1,7 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,7 +13,7 @@ from app.classroom_app import create_app
 from app.modules.identity_access import auth as auth
 from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.platform.env import env_str
-from app.modules.platform import storage as storage
+from app.modules.platform import rate_limit, storage as storage
 from app.modules.classroom_core.repositories import Membership, Room
 from tests.course_management.conftest import switch, user
 from tests.course_management.test_courses_api import create_course
@@ -28,7 +29,7 @@ def join(client, code: str, display_name: str = "學生"):
 
 
 def test_join_twice_is_idempotent(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     user(client, "student")
 
@@ -44,7 +45,7 @@ def test_join_twice_is_idempotent(client):
 
 @pytest.mark.skipif(TEST_DIALECT != "postgresql", reason="requires PostgreSQL transactions")
 def test_concurrent_join_is_idempotent(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     account = user(client, "student")
     cookie = client.cookies.get(auth.COOKIE)
@@ -82,7 +83,7 @@ def test_concurrent_join_is_idempotent(client):
 
 
 def test_join_normalizes_code(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     with storage.transaction() as db:
         db.get(Course, course["id"]).code = "3CKTGE7Q"
@@ -95,7 +96,7 @@ def test_join_normalizes_code(client):
 
 
 def test_wrong_or_disabled_code_same_error(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     client.post(f"/api/v2/courses/{course['id']}/disable_code")
     user(client, "student")
@@ -109,7 +110,7 @@ def test_wrong_or_disabled_code_same_error(client):
 
 
 def test_course_and_room_code_namespaces_are_independent(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     script = client.post(
         "/api/v2/scripts",
@@ -155,7 +156,15 @@ def test_course_and_room_code_namespaces_are_independent(client):
         )
 
 
-def test_join_rate_limited(client):
+@pytest.fixture
+def one_window(monkeypatch):
+    """Freeze the limiter's clock: its windows are fixed minutes, and a test that crosses a
+    minute boundary would start counting again from zero."""
+    now = time.time()
+    monkeypatch.setattr(rate_limit, "time", SimpleNamespace(time=lambda: now))
+
+
+def test_join_rate_limited(client, one_window):
     user(client, "student")
 
     responses = [join(client, "XXXXXXXX") for _ in range(21)]
@@ -165,7 +174,7 @@ def test_join_rate_limited(client):
     assert responses[20].json() == {"detail": "RATE_LIMITED"}
 
 
-def test_join_ip_limit_allows_a_classroom_behind_one_address(client):
+def test_join_ip_limit_allows_a_classroom_behind_one_address(client, one_window):
     """A whole class shares the school's address: 10 students × 20 tries all get through."""
     for index in range(10):
         user(client, f"student{index:02d}")
@@ -180,7 +189,7 @@ def test_join_ip_limit_allows_a_classroom_behind_one_address(client):
 
 
 def test_preview_shows_course_without_enrolling(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     account = user(client, "student")
 
@@ -193,27 +202,29 @@ def test_preview_shows_course_without_enrolling(client):
         assert db.scalar(select(func.count()).select_from(Enrollment)) == 0
 
 
-def test_owner_can_enroll_as_student(client):
-    user(client, "owner")
+def test_owner_cannot_enroll_in_their_own_course(client):
+    # A teacher who wants the student view registers a separate student account this round.
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
 
     joined = join(client, course["code"], "老師的學生視角")
 
-    assert joined.status_code == 200
-    assert joined.json()["role"] == "student"
+    assert (joined.status_code, joined.json()) == (403, {"detail": "ACCOUNT_ROLE_FORBIDDEN"})
     lists = client.get("/api/v2/courses").json()
     assert [item["id"] for item in lists["teaching"]] == [course["id"]]
-    assert [item["id"] for item in lists["learning"]] == [course["id"]]
-    assert client.get(f"/api/v2/courses/{course['id']}").json()["role"] == "teacher"
-    assert client.get(f"/api/v2/courses/{course['id']}?role=student").json()["role"] == "student"
+    assert lists["learning"] == []
     with storage.transaction() as db:
-        assert db.scalar(select(func.count()).select_from(Enrollment)) == 1
+        assert db.scalar(select(func.count()).select_from(Enrollment)) == 0
 
 
 def test_join_preview_open_activity_title(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
-    draft_payload = {"title": "第三週倫理討論", "ends_at": time.time() + 3600}
+    draft_payload = {
+        "title": "第三週倫理討論",
+        "scenario": "電車難題",
+        "ends_at": time.time() + 3600,
+    }
     user(client, "student")
     preview = client.get("/api/v2/course-join/preview", params={"code": course["code"]})
     assert preview.json()["open_activity_title"] is None

@@ -40,7 +40,7 @@ def fixtures():
     pw=HASHER.hash('Fixture-password-2026')
     with storage.transaction() as db:
         for ri in range(2):
-            a=Account(id=str(uuid4()),username=f'load-teacher-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True)
+            a=Account(id=str(uuid4()),username=f'load-teacher-{uuid4().hex}',email=f'{uuid4().hex}@example.invalid',password_hash=pw,verified=True,account_role='teacher')
             db.add(a);db.flush()
             s=Script(id=str(uuid4()),owner_id=a.id,document=DOC,revision=1);db.add(s);db.flush()
             room=service.create_room(db,a,s.id);room_ids.append(room['id'])

@@ -85,11 +85,13 @@ SCENARIO = (
 def setup(client, *, scenario=SCENARIO, ai=True, **activity):
     """Teacher with a published, open activity and one enrolled student (logged in).
 
-    The teacher's single input is the activity's title and the first scenario's text."""
-    teacher = user(client, "owner")
+    The activity's name is only a label; the first scenario is written from its scenario text."""
+    teacher = user(client, "owner", account_role="teacher")
     profile_id = configure_ai(client) if ai else None
     course = create_course(client)
-    body = create_activity(client, course["id"], title=scenario, **activity)
+    body = create_activity(
+        client, course["id"], **{"title": "電車難題", "scenario": scenario, **activity}
+    )
     assert act(client, body["id"], "publish").status_code == 200
     student = join(client, course, "student")
     return {
@@ -160,7 +162,7 @@ def test_activity_view_shows_own_attempt(client, tutor):
 
 
 def test_draft_activity_is_not_found(client, tutor):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     draft = create_activity(client, course["id"])
     join(client, course, "student")
@@ -261,7 +263,7 @@ def test_full_single_scenario_flow(client, tutor):
     calls, replies = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
-    # The teacher's text is the first scenario, shown verbatim before any provider call.
+    # The teacher's scenario text is the first scenario, shown verbatim before any provider call.
     assert [x["text"] for x in attempt["scenarios"]] == [SCENARIO]
     assert attempt["scenarios"][0]["answer"] is None
 
@@ -303,11 +305,9 @@ def test_full_single_scenario_flow(client, tutor):
     view = ok(do(client, attempt["id"], "send_message", {"text": "親手造成的就是不一樣"}))
     assert view["state"] == "confirming"
 
-    view = ok(
-        do(client, attempt["id"], "confirm_viewpoint", {"summary_digest": view["summary_digest"]})
-    )
+    view = confirm(client, attempt["id"], view)
     assert view["state"] == "reviewing"
-    assert view["available_actions"] == ["submit_review"]
+    assert view["available_actions"] == ["retry_reflection_prompt", "submit_review"]
     assert view["scenarios"][0]["status"] == "goal_met"
     assert view["scenarios"][0]["confirmed_summary"] == {**MET["summary"], "sources": []}
     assert view["candidate_summary"] is None
@@ -465,10 +465,19 @@ def to_confirming(client, attempt_id, replies):
     return view
 
 
+def settled(client, attempt_id, view):
+    """What the page shows once it re-reads: the final summary is written after the response
+    (O6), and the page keeps reading the attempt while it is awaiting_reflection_prompt."""
+    if view["state"] != "awaiting_reflection_prompt":
+        return view
+    return ok(client.get(f"/api/v2/solo/attempts/{attempt_id}"))
+
+
 def confirm(client, attempt_id, view):
-    return ok(
+    confirmed = ok(
         do(client, attempt_id, "confirm_viewpoint", {"summary_digest": view["summary_digest"]})
     )
+    return settled(client, attempt_id, confirmed)
 
 
 def test_multi_scenario_flow(client, tutor):
@@ -512,7 +521,7 @@ def test_multi_scenario_flow(client, tutor):
     assert view["state"] == "confirming"
     view = confirm(client, attempt["id"], view)
     assert view["state"] == "reviewing"
-    assert view["available_actions"] == ["submit_review"]
+    assert view["available_actions"] == ["retry_reflection_prompt", "submit_review"]
 
 
 def test_next_scenario_not_after_the_last_scenario(client, tutor):

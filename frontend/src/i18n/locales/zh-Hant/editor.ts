@@ -44,8 +44,9 @@ export default {
   },
   fields: {
     required: '（必填）',
-    title: '題目',
-    titleHint: '寫一段話，蘇格拉底會以它為起點，替每位學生寫出第一個情境。這段話也是活動名稱。',
+    title: '活動名稱',
+    scenario: '情境描述',
+    scenarioHint: '蘇格拉底會以這段描述為起點，替每位學生寫出第一個情境。',
     start: '開始時間',
     startNow: '建立後立刻開放',
     startAt: '指定時間',
@@ -55,7 +56,8 @@ export default {
     lockedWindowHint: '可以延後結束時間，讓還沒做完的學生繼續；提早結束請在活動頁操作。',
   },
   errors: {
-    title: '請填題目',
+    title: '請填活動名稱',
+    scenario: '請填情境描述',
     start: '請填開始時間',
     end: '請填結束時間',
     endBeforeStart: '結束時間要晚於開始時間',

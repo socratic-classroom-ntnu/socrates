@@ -82,7 +82,7 @@
 .app-shell--collapsed .app-shell__footer { align-self: stretch; align-items: center; }
 .app-shell--collapsed .app-shell__collapse { justify-content: center; width: 44px; padding: 0; }
 
-/* 手機：側邊欄換成頂部列（品牌或返回＋頭像），導覽項目放進帳號選單 */
+/* 手機：側邊欄換成頂部列。老師是品牌＋頭像選單；學生頂部列沒有頭像，導覽在底部（見最下方） */
 .app-shell--phone { display: block; }
 .app-shell__topbar {
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -101,3 +101,49 @@
 .app-shell { color-scheme: light; }
 /* 側邊欄的選單（語言子選單開在側欄右側）要蓋過內容區的卡片與按鈕 */
 .app-shell__nav { z-index: 20; }
+
+/* 帳號的角色標籤（P23）：學生 primary-soft、老師 info-soft、訪客 warning-soft（畫布 RoleStudentMenu／RoleTeacherMenu／S2gm） */
+.account-menu__name-row, .account-sheet__name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.account-menu__header-name { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+.account-tag {
+  flex-shrink: 0; height: 20px; padding: 0 7px; border-radius: 999px; display: inline-flex; align-items: center;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.account-tag--student { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.account-tag--teacher { background: var(--ui-color-info-soft); color: var(--ui-color-info); }
+.account-tag--guest { background: var(--ui-color-warning-soft); color: var(--ui-color-warning-ink); }
+.app-shell--collapsed .account-tag { display: none; }
+
+/* 學生手機（S2sm／S5m）：底部導覽固定在最下方，內容留出它的高度與 iPhone 安全區 */
+.app-shell--bottom-nav .app-shell__content { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+.app-shell__bottom-nav .app-shell__avatar { width: 24px; height: 24px; font-size: 12px; }
+.app-shell__bottom-nav [aria-expanded="true"] .app-shell__avatar { box-shadow: 0 0 0 2px var(--ui-color-panel), 0 0 0 4px var(--ui-color-primary); }
+
+/* 帳號面板（從下方滑出） */
+.account-sheet { display: flex; flex-direction: column; gap: 8px; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; }
+.account-sheet__who { display: flex; align-items: center; gap: 12px; padding: 10px 8px 14px; border-bottom: 1px solid var(--ui-color-line); }
+.account-sheet__who .app-shell__avatar { width: 44px; height: 44px; font-size: 18px; }
+.account-sheet__lines { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.account-sheet__name-row b { font-size: 17px; overflow-wrap: anywhere; }
+.account-sheet__second { font-size: 13px; color: var(--ui-color-muted); overflow-wrap: anywhere; }
+.account-sheet__guest { display: flex; flex-direction: column; gap: 10px; padding: 4px 8px 14px; border-bottom: 1px solid var(--ui-color-line); }
+.account-sheet__guest p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ui-color-muted); }
+.account-sheet__register {
+  min-height: 52px; border-radius: 10px; background: var(--ui-color-primary); color: var(--ui-color-panel);
+  display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; text-decoration: none;
+}
+.account-sheet__login { align-self: center; min-height: 44px; display: flex; align-items: center; color: var(--ui-color-primary); font-size: 14px; font-weight: 700; text-decoration: none; }
+.account-sheet__items, .account-sheet__languages { margin: 0; padding: 0; list-style: none; }
+.account-sheet__items button {
+  width: 100%; min-height: 52px; padding: 0 8px; border: 0; border-radius: 8px; background: transparent;
+  display: flex; align-items: center; gap: 14px; color: var(--ui-color-ink); font: inherit; font-size: 16px; text-align: left; cursor: pointer;
+}
+.account-sheet__items button > span:first-of-type { flex-grow: 1; }
+.account-sheet__value { font-size: 14px; color: var(--ui-color-muted); }
+/* 語言列右邊的箭頭（畫布 S2sm）：展開時轉向下 */
+.account-sheet__chevron { flex-shrink: 0; color: var(--ui-color-muted); transition: transform 0.15s; }
+.account-sheet__items [aria-expanded="true"] .account-sheet__chevron { transform: rotate(90deg); }
+.account-sheet__languages { padding-left: 34px; }
+.account-sheet__languages button { min-height: 44px; font-size: 15px; }
+.account-sheet__languages [aria-checked="true"] { color: var(--ui-color-primary); font-weight: 700; }
+.account-sheet button:focus-visible, .account-sheet a:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }

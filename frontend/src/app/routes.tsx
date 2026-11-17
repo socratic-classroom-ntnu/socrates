@@ -20,6 +20,7 @@ import '../ui'
 import { ComingSoonPage, NotFoundPage } from '../components/ComingSoonPage'
 import { GroupsPage } from '../features/student-classroom/GroupsPage'
 import { HomePage } from '../features/course/home/HomePage'
+import { MyDialoguesPage } from '../features/course/practice/MyDialoguesPage'
 import { JoinActivityPage } from '../features/course/join/JoinActivityPage'
 import { JoinCoursePage } from '../features/course/join/JoinCoursePage'
 import { ScanPage } from '../features/course/scan/ScanPage'
@@ -31,11 +32,14 @@ import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPag
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
+import { GuestJoinPage } from '../features/auth/GuestJoinPage'
+import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
+import { RoleGate } from './RoleGate'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -77,7 +81,10 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
+    <Route path="/join/guest" element={<GuestJoinPage />} />
     <Route element={<RequireAuth />}>
+      {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
+      <Route element={<RoleGate />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />
       {/* 寫死資料的示範頁：要登入才看得到，外框標明「示範資料」 */}
@@ -91,8 +98,13 @@ export function AppRoutes() {
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/account" element={<Placeholder kind="account" />} />
       </Route>
+      </Route>
+      {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}
+      <Route path="/guest/register" element={<GuestUpgradePage />} />
+      <Route path="/guest/login" element={<GuestLoginPage />} />
     </Route>
     <Route element={<RequireAuth verified />}>
+      <Route element={<RoleGate />}>
       {/* 加入流程與投影是全螢幕，不包外框 */}
       <Route path="/join" element={<JoinCoursePage />} />
       <Route path="/scan" element={<ScanPage />} />
@@ -104,6 +116,8 @@ export function AppRoutes() {
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
+        {/* 學生「我的對話」：要求驗證；訪客由 RequireAuth 放行，頁面畫訪客版（註冊邀請＋鎖住的題目） */}
+        <Route path="/my-dialogues" element={<MyDialoguesPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}
@@ -118,8 +132,11 @@ export function AppRoutes() {
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>
-        <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
-        <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+        <Route element={<TeacherDesktopOnly />}>
+          <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
+          <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+        </Route>
+      </Route>
       </Route>
     </Route>
     <Route path="*" element={<NotFoundPage />} />

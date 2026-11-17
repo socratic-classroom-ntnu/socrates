@@ -100,6 +100,14 @@
       "AccountView": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
           "achievements": {
             "items": {
               "type": "string"
@@ -118,6 +126,11 @@
           },
           "csrf_token": {
             "title": "Csrf Token",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
             "type": "string"
           },
           "email": {
@@ -201,7 +214,8 @@
           "verified",
           "csrf_token",
           "points",
-          "achievements"
+          "achievements",
+          "account_role"
         ],
         "title": "AccountView",
         "type": "object"
@@ -224,7 +238,7 @@
           "title": {
             "anyOf": [
               {
-                "maxLength": 300,
+                "maxLength": 40,
                 "minLength": 1,
                 "type": "string"
               },
@@ -240,11 +254,17 @@
       },
       "ActivityDraft": {
         "additionalProperties": false,
-        "description": "The teacher's single input: one text that is both the activity name and the material the\nfirst scenario is written from. Incomplete drafts are rejected, never stored.",
+        "description": "The activity's name (what cards and students see) and the scenario text the first\nscenario is written from. Incomplete drafts are rejected, never stored.",
         "properties": {
           "ends_at": {
             "title": "Ends At",
             "type": "number"
+          },
+          "scenario": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
           },
           "starts_at": {
             "anyOf": [
@@ -258,7 +278,7 @@
             "title": "Starts At"
           },
           "title": {
-            "maxLength": 300,
+            "maxLength": 40,
             "minLength": 1,
             "title": "Title",
             "type": "string"
@@ -266,6 +286,7 @@
         },
         "required": [
           "title",
+          "scenario",
           "ends_at"
         ],
         "title": "ActivityDraft",
@@ -293,6 +314,10 @@
           "activity_id": {
             "title": "Activity Id",
             "type": "string"
+          },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
           },
           "already_enrolled": {
             "title": "Already Enrolled",
@@ -346,7 +371,8 @@
           "ends_at",
           "status",
           "already_enrolled",
-          "default_display_name"
+          "default_display_name",
+          "allow_guest"
         ],
         "title": "ActivityJoinPreview",
         "type": "object"
@@ -1987,6 +2013,10 @@
             "title": "Activity Count",
             "type": "integer"
           },
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "available_actions": {
             "items": {
               "enum": [
@@ -2048,6 +2078,7 @@
           "goals",
           "code",
           "code_enabled",
+          "allow_guest",
           "student_count",
           "activity_count",
           "available_actions"
@@ -2107,6 +2138,17 @@
       "CourseUpdate": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Guest"
+          },
           "goals": {
             "anyOf": [
               {
@@ -2436,6 +2478,97 @@
           "reasoning"
         ],
         "title": "DiscoveredModel",
+        "type": "object"
+      },
+      "FinalSummaryPointView": {
+        "additionalProperties": false,
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "sources"
+        ],
+        "title": "FinalSummaryPointView",
+        "type": "object"
+      },
+      "FinalSummaryView": {
+        "additionalProperties": false,
+        "description": "The whole attempt's line of thought, written from the confirmed stages (O6).",
+        "properties": {
+          "final_position": {
+            "title": "Final Position",
+            "type": "string"
+          },
+          "open_question": {
+            "title": "Open Question",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/FinalSummaryPointView"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "reasoning_style": {
+            "title": "Reasoning Style",
+            "type": "string"
+          },
+          "trajectory": {
+            "items": {
+              "$ref": "#/components/schemas/FinalTrajectoryStepView"
+            },
+            "title": "Trajectory",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points",
+          "trajectory",
+          "final_position",
+          "reasoning_style",
+          "open_question"
+        ],
+        "title": "FinalSummaryView",
+        "type": "object"
+      },
+      "FinalTrajectoryStepView": {
+        "additionalProperties": false,
+        "description": "The student's position in one scenario of the sequence, oldest first.",
+        "properties": {
+          "position": {
+            "title": "Position",
+            "type": "string"
+          },
+          "shift_reason": {
+            "title": "Shift Reason",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "position",
+          "shift_reason",
+          "sources"
+        ],
+        "title": "FinalTrajectoryStepView",
         "type": "object"
       },
       "GroupActionReceipt": {
@@ -3094,6 +3227,69 @@
         "title": "GroupStartReceipt",
         "type": "object"
       },
+      "GuestActivityJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest from an activity link: the guest joins that activity's course.",
+        "properties": {
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestActivityJoin",
+        "type": "object"
+      },
+      "GuestCourseJoin": {
+        "additionalProperties": false,
+        "description": "Becoming a guest and joining a course by its code, in one step.",
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "locale": {
+            "enum": [
+              "zh-Hant",
+              "zh-Hans",
+              "en",
+              "es"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
+          "nickname": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nickname",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nickname",
+          "locale"
+        ],
+        "title": "GuestCourseJoin",
+        "type": "object"
+      },
       "GuestJoin": {
         "additionalProperties": false,
         "description": "Joining without registering: a nickname shown to the class and the interface language.",
@@ -3122,9 +3318,56 @@
         "title": "GuestJoin",
         "type": "object"
       },
+      "GuestJoinResult": {
+        "additionalProperties": false,
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/AccountView"
+          },
+          "activity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Id"
+          },
+          "activity_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "scheduled",
+                  "open",
+                  "ended"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity Status"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "course_id",
+          "activity_id",
+          "activity_status"
+        ],
+        "title": "GuestJoinResult",
+        "type": "object"
+      },
       "GuestUpgrade": {
         "additionalProperties": false,
-        "description": "A guest registering keeps its account id; it sends exactly what a registration does.",
+        "description": "A guest registering keeps its account id and stays a student, so it sends no role.",
         "properties": {
           "email": {
             "maxLength": 254,
@@ -3193,6 +3436,10 @@
       "JoinPreview": {
         "additionalProperties": false,
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "already_enrolled": {
             "title": "Already Enrolled",
             "type": "boolean"
@@ -3231,7 +3478,8 @@
           "teacher_name",
           "already_enrolled",
           "default_display_name",
-          "open_activity_title"
+          "open_activity_title",
+          "allow_guest"
         ],
         "title": "JoinPreview",
         "type": "object"
@@ -3402,6 +3650,139 @@
           "password"
         ],
         "title": "Login",
+        "type": "object"
+      },
+      "LoginView": {
+        "additionalProperties": false,
+        "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
+          "achievements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Achievements",
+            "type": "array"
+          },
+          "authority_state": {
+            "default": "EMAIL_VERIFICATION",
+            "enum": [
+              "EMAIL_VERIFICATION",
+              "FULL_PRODUCT"
+            ],
+            "title": "Authority State",
+            "type": "string"
+          },
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "display_name": {
+            "default": "",
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_masked": {
+            "default": "",
+            "title": "Email Masked",
+            "type": "string"
+          },
+          "guest_expires_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Expires At"
+          },
+          "guest_merge": {
+            "enum": [
+              "MERGED",
+              "NONE",
+              "REFUSED_TEACHER"
+            ],
+            "title": "Guest Merge",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "registered",
+            "enum": [
+              "guest",
+              "expired_guest",
+              "registered"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "enum": [
+                  "zh-Hant",
+                  "zh-Hans",
+                  "en",
+                  "es"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
+          "points": {
+            "title": "Points",
+            "type": "integer"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          },
+          "verification_delivery": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationDelivery"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "verified",
+          "csrf_token",
+          "points",
+          "achievements",
+          "account_role",
+          "guest_merge"
+        ],
+        "title": "LoginView",
         "type": "object"
       },
       "MailRequest": {
@@ -3752,6 +4133,197 @@
         "title": "PersonalSummaryView",
         "type": "object"
       },
+      "PracticeDialogue": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "life",
+                  "honesty",
+                  "self",
+                  "tech"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "topic_id": {
+            "title": "Topic Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          }
+        },
+        "required": [
+          "activity_id",
+          "attempt_id",
+          "topic_id",
+          "title",
+          "body",
+          "category",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PracticeDialogue",
+        "type": "object"
+      },
+      "PracticeList": {
+        "additionalProperties": false,
+        "properties": {
+          "dialogues": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeDialogue"
+            },
+            "title": "Dialogues",
+            "type": "array"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/PracticeQuota"
+          }
+        },
+        "required": [
+          "dialogues",
+          "quota"
+        ],
+        "title": "PracticeList",
+        "type": "object"
+      },
+      "PracticeQuota": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "remaining": {
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "used_today": {
+            "title": "Used Today",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit",
+          "used_today",
+          "remaining"
+        ],
+        "title": "PracticeQuota",
+        "type": "object"
+      },
+      "PracticeStart": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_item_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Bank Item Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bank_item_id"
+        ],
+        "title": "PracticeStart",
+        "type": "object"
+      },
+      "PracticeStarted": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "title": "Attempt Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "attempt_id"
+        ],
+        "title": "PracticeStarted",
+        "type": "object"
+      },
+      "PracticeTopic": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "life",
+              "honesty",
+              "self",
+              "tech"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "recommended": {
+            "title": "Recommended",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "category",
+          "recommended"
+        ],
+        "title": "PracticeTopic",
+        "type": "object"
+      },
       "ProfileDeletedView": {
         "additionalProperties": false,
         "properties": {
@@ -3886,6 +4458,36 @@
         "title": "ProfileView",
         "type": "object"
       },
+      "PublicActivityPreview": {
+        "additionalProperties": false,
+        "description": "An activity link also says whether the activity is still on: an ended one offers no guest\njoin either.",
+        "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scheduled",
+              "open",
+              "ended"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_name",
+          "allow_guest",
+          "status"
+        ],
+        "title": "PublicActivityPreview",
+        "type": "object"
+      },
       "PublicConfigView": {
         "properties": {
           "debug_mode": {
@@ -3928,13 +4530,18 @@
         "additionalProperties": false,
         "description": "What an anonymous visitor may learn from a code or activity link: the course name only.",
         "properties": {
+          "allow_guest": {
+            "title": "Allow Guest",
+            "type": "boolean"
+          },
           "course_name": {
             "title": "Course Name",
             "type": "string"
           }
         },
         "required": [
-          "course_name"
+          "course_name",
+          "allow_guest"
         ],
         "title": "PublicJoinPreview",
         "type": "object"
@@ -4202,6 +4809,160 @@
         "title": "Question",
         "type": "object"
       },
+      "RadarDimensionUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RadarDimensionUpdate",
+        "type": "object"
+      },
+      "RadarDimensionView": {
+        "additionalProperties": false,
+        "properties": {
+          "high_pole": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "High Pole",
+            "type": "string"
+          },
+          "index": {
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "low_pole": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Low Pole",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "embedding",
+              "llm"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "name",
+          "low_pole",
+          "high_pole",
+          "source"
+        ],
+        "title": "RadarDimensionView",
+        "type": "object"
+      },
+      "RadarScoreView": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_index": {
+            "maximum": 5.0,
+            "minimum": 0.0,
+            "title": "Dimension Index",
+            "type": "integer"
+          },
+          "score": {
+            "maximum": 4.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CitationSourceView"
+            },
+            "maxItems": 3,
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dimension_index",
+          "score",
+          "sources"
+        ],
+        "title": "RadarScoreView",
+        "type": "object"
+      },
+      "RadarStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "scores": {
+            "items": {
+              "$ref": "#/components/schemas/RadarScoreView"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Scores",
+            "type": "array"
+          },
+          "student_id": {
+            "minLength": 1,
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "display_name",
+          "scores"
+        ],
+        "title": "RadarStudentView",
+        "type": "object"
+      },
+      "RadarView": {
+        "additionalProperties": false,
+        "properties": {
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/RadarDimensionView"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/RadarStudentView"
+            },
+            "minItems": 1,
+            "title": "Students",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dimensions",
+          "students"
+        ],
+        "title": "RadarView",
+        "type": "object"
+      },
       "Reaction": {
         "additionalProperties": false,
         "properties": {
@@ -4269,6 +5030,21 @@
       "Register": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "student",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Role"
+          },
           "email": {
             "maxLength": 254,
             "minLength": 3,
@@ -5455,6 +6231,10 @@
             "title": "Ends At",
             "type": "number"
           },
+          "practice": {
+            "title": "Practice",
+            "type": "boolean"
+          },
           "status": {
             "enum": [
               "scheduled",
@@ -5476,7 +6256,8 @@
           "course_name",
           "status",
           "ends_at",
-          "attempt"
+          "attempt",
+          "practice"
         ],
         "title": "SoloActivityView",
         "type": "object"
@@ -5500,6 +6281,41 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "reason_summary": {
             "title": "Reason Summary",
             "type": "string"
@@ -5515,10 +6331,13 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "confirmed_scenarios",
           "current_position",
           "reason_summary",
-          "relevant_conditions"
+          "relevant_conditions",
+          "final_status"
         ],
         "title": "SoloAnalysisStudentView",
         "type": "object"
@@ -5573,7 +6392,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -5662,6 +6482,46 @@
           "display_name": {
             "title": "Display Name",
             "type": "string"
+          },
+          "final_digest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Digest"
+          },
+          "final_revised": {
+            "title": "Final Revised",
+            "type": "boolean"
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "final_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "id": {
             "title": "Id",
@@ -5776,9 +6636,54 @@
           "revising",
           "rejected_summary",
           "notice",
+          "final_summary",
+          "final_digest",
+          "final_status",
+          "final_revised",
           "available_actions"
         ],
         "title": "SoloAttemptView",
+        "type": "object"
+      },
+      "SoloCourseRosterView": {
+        "additionalProperties": false,
+        "properties": {
+          "counted_activities": {
+            "title": "Counted Activities",
+            "type": "integer"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloRosterStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloRosterSummaryView"
+          }
+        },
+        "required": [
+          "course_id",
+          "course_name",
+          "generated_at",
+          "counted_activities",
+          "summary",
+          "students"
+        ],
+        "title": "SoloCourseRosterView",
         "type": "object"
       },
       "SoloMessageView": {
@@ -5787,6 +6692,10 @@
           "created_at": {
             "title": "Created At",
             "type": "number"
+          },
+          "final_feedback": {
+            "title": "Final Feedback",
+            "type": "boolean"
           },
           "id": {
             "title": "Id",
@@ -5852,7 +6761,8 @@
           "text",
           "created_at",
           "move",
-          "revise_hint"
+          "revise_hint",
+          "final_feedback"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -5865,7 +6775,8 @@
               "answering",
               "in_dialogue",
               "confirming",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -5918,6 +6829,110 @@
         "title": "SoloProgressSummaryView",
         "type": "object"
       },
+      "SoloRosterStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_activities": {
+            "title": "Completed Activities",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "joined_at": {
+            "title": "Joined At",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "kind",
+          "guest_number",
+          "email",
+          "joined_at",
+          "last_activity_at",
+          "completed_activities"
+        ],
+        "title": "SoloRosterStudentView",
+        "type": "object"
+      },
+      "SoloRosterSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "expired_guests": {
+            "title": "Expired Guests",
+            "type": "integer"
+          },
+          "guests": {
+            "title": "Guests",
+            "type": "integer"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "registered",
+          "guests",
+          "expired_guests"
+        ],
+        "title": "SoloRosterSummaryView",
+        "type": "object"
+      },
       "SoloScenarioChangeView": {
         "additionalProperties": false,
         "description": "The one condition a written scenario changed, shown as before → after.",
@@ -5953,7 +6968,8 @@
           "status": {
             "enum": [
               "in_dialogue",
-              "confirmed"
+              "confirmed",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -6011,7 +7027,8 @@
           "status": {
             "enum": [
               "in_progress",
-              "goal_met"
+              "goal_met",
+              "capped"
             ],
             "title": "Status",
             "type": "string"
@@ -6055,6 +7072,41 @@
             "title": "Enrollment Id",
             "type": "string"
           },
+          "final_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "confirmed",
+                  "unconfirmed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
           "last_activity_at": {
             "anyOf": [
               {
@@ -6078,7 +7130,8 @@
           "review_status": {
             "enum": [
               "not_started",
-              "in_progress"
+              "in_progress",
+              "completed"
             ],
             "title": "Review Status",
             "type": "string"
@@ -6087,9 +7140,12 @@
         "required": [
           "enrollment_id",
           "display_name",
+          "kind",
+          "guest_number",
           "overall",
           "cells",
           "review_status",
+          "final_status",
           "last_activity_at",
           "attention"
         ],
@@ -6772,6 +7828,59 @@
         ]
       }
     },
+    "/api/v2/activities/{activity_id}/guest-join": {
+      "post": {
+        "description": "Become a guest from an activity link and join its course, in one transaction.",
+        "operationId": "guest_join_activity_api_v2_activities__activity_id__guest_join_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestActivityJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/api/v2/activities/{activity_id}/join": {
       "post": {
         "operationId": "join_activity_api_v2_activities__activity_id__join_post",
@@ -6885,7 +7994,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicJoinPreview"
+                  "$ref": "#/components/schemas/PublicActivityPreview"
                 }
               }
             },
@@ -7150,7 +8259,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountView"
+                  "$ref": "#/components/schemas/LoginView"
                 }
               }
             },
@@ -7960,6 +9069,48 @@
         "summary": "Reaction"
       }
     },
+    "/api/v2/course-join/guest": {
+      "post": {
+        "description": "Become a guest and join the course in one transaction; the cookie only after it commits.",
+        "operationId": "guest_join_course_api_v2_course_join_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCourseJoin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestJoinResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Guest Join Course",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
     "/api/v2/course-join/preview": {
       "get": {
         "operationId": "preview_join_api_v2_course_join_preview_get",
@@ -8166,8 +9317,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },
@@ -8286,8 +9437,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },
@@ -8380,6 +9531,51 @@
           }
         },
         "summary": "Create Activity",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/{course_id}/students/{enrollment_id}": {
+      "delete": {
+        "description": "Remove a student from the course with every answer of theirs in it; there is no undo.",
+        "operationId": "remove_student_api_v2_courses__course_id__students__enrollment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Student",
         "tags": [
           "courses"
         ]
@@ -9874,6 +11070,110 @@
         ]
       }
     },
+    "/api/v2/solo/activities/{activity_id}/radar": {
+      "get": {
+        "description": "The kept radar, or a new one when a final summary was added or changed since.\n\nComputing calls the teacher's provider outside the transaction; RADAR_NOT_READY when no\nstudent has a kept final summary yet or no radar could be computed.",
+        "operationId": "get_activity_radar_api_v2_solo_activities__activity_id__radar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Activity Radar",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/activities/{activity_id}/radar/dimensions/{index}": {
+      "patch": {
+        "operationId": "rename_radar_dimension_api_v2_solo_activities__activity_id__radar_dimensions__index__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "title": "Index",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadarDimensionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rename Radar Dimension",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
     "/api/v2/solo/attempts/{attempt_id}": {
       "get": {
         "operationId": "get_attempt_api_v2_solo_attempts__attempt_id__get",
@@ -9994,6 +11294,134 @@
           }
         },
         "summary": "Act On Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/courses/{course_id}/students": {
+      "get": {
+        "operationId": "get_course_roster_api_v2_solo_courses__course_id__students_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloCourseRosterView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Course Roster",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/practice": {
+      "get": {
+        "operationId": "get_practice_api_v2_solo_practice_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Practice",
+        "tags": [
+          "solo"
+        ]
+      },
+      "post": {
+        "operationId": "start_practice_api_v2_solo_practice_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PracticeStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Practice",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/practice/bank": {
+      "get": {
+        "description": "The main-flow bank; guests may read it (their 我的對話 page shows the topics locked).",
+        "operationId": "get_practice_bank_api_v2_solo_practice_bank_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PracticeTopic"
+                  },
+                  "title": "Response Get Practice Bank Api V2 Solo Practice Bank Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Practice Bank",
         "tags": [
           "solo"
         ]

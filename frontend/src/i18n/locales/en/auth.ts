@@ -31,7 +31,19 @@ const auth: Shape<typeof zhHant> = {
     submit: 'Set new password',
     done: 'Your password has been updated. Log in with the new one.',
   },
+  role: {
+    legend: 'I am',
+    student: 'A student',
+    teacher: 'A teacher',
+    desktopOnly: 'Computer only',
+    note: 'This cannot be changed after you sign up.',
+    teacherPhoneNote: 'Teacher features work on a computer; sign in there. This cannot be changed after you sign up.',
+    studentOnly: 'Signing up from a course QR code or invite link creates a student account.',
+  },
   fieldErrors: {
+    account_role: {
+      missing: 'Choose student or teacher.',
+    },
     username: {
       missing: 'Please enter a username.',
       tooShort: 'The username needs at least {{min}} characters.',
@@ -56,7 +68,7 @@ const auth: Shape<typeof zhHant> = {
     },
   },
   busy: 'Working…',
-  passwordRule: 'Use 8–32 characters with an uppercase letter, a lowercase letter, a number and a special character (! @ # $ % ^ & * _ - + = . ? ~). No spaces or other symbols.',
+  passwordRule: '8–32 characters, with uppercase and lowercase letters, a number and a symbol.',
   blocked: 'Blocked characters that are not allowed: {{chars}}',
   space: 'space',
   links: { login: 'Back to log in', register: 'Sign up', forgot: 'Forgot password' },

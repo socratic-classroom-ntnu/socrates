@@ -42,6 +42,11 @@ jest.mock('../features/course/learn/StudentCoursePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { StudentCoursePage: () => { const { courseId } = useParams(); return <p>student-course-page:{courseId}</p> } }
 })
+jest.mock('../features/course/practice/MyDialoguesPage', () => ({ MyDialoguesPage: () => <p>my-dialogues-page</p> }))
+jest.mock('../features/auth/GuestAccountPages', () => ({
+  GuestUpgradePage: () => <p>guest-upgrade-page</p>,
+  GuestLoginPage: () => <p>guest-login-page</p>,
+}))
 jest.mock('../features/course/home/HomePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { HomePage: () => { const { search } = loc(); return <p>home-page:{search}</p> } }
@@ -68,20 +73,21 @@ jest.mock('../features/group-dialogue/GroupClassroom', () => ({ GroupClassroomGa
 jest.mock('../features/ai-settings/ProviderSettings', () => ({ ProviderSettings: () => null }))
 jest.mock('../features/danmaku/Danmaku', () => ({ __esModule: true, default: () => <p>如果說謊能讓一個人免於痛苦，說謊是對的嗎？</p> }))
 
-const verified = { id: 'u-1', username: 'Fizzy', verified: true, csrf_token: 'c', locale: 'zh-Hant' }
+const verified = { id: 'u-1', username: 'Fizzy', verified: true, csrf_token: 'c', locale: 'zh-Hant', account_role: 'student' }
+const teacher = { ...verified, account_role: 'teacher' }
 
 function Where() {
   const { pathname, search, hash } = useLocation()
   return <output data-testid="where">{pathname + search + hash}</output>
 }
 
-function mockSession(account: object | null) {
+function mockSession(account: object | null, loggedIn: object = verified) {
   jest.mocked(api).mockImplementation(async (url: string) => {
     if (url === '/auth/me') {
       if (!account) throw new ApiError(401, 'LOGIN_REQUIRED')
       return account
     }
-    if (url === '/auth/login') return verified
+    if (url === '/auth/login') return loggedIn
     if (url === '/auth/verify') return { verified: true }
     return []
   })
@@ -111,7 +117,7 @@ test.each([
   ['/teacher/home?view=store', 'teacher-home:?view=store'],
   ['/teacher/courses/c1', 'teacher-course:c1'],
 ])('renders each legacy route: %s', async (url, marker) => {
-  mockSession(verified)
+  mockSession(url.startsWith('/teacher') ? teacher : verified)
   open(url)
   expect(await screen.findByText(marker)).toBeInTheDocument()
   expect(where()).toBe(url)
@@ -136,8 +142,12 @@ test.each([
   ['/teach/courses/c1/projector', '功能開發中'],
   ['/teach/activities/a1/projector', '功能開發中'],
   ['/account', '功能開發中'],
+  ['/my-dialogues', 'my-dialogues-page'],
+  // 訪客帳號面板的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24）
+  ['/guest/register', 'guest-upgrade-page'],
+  ['/guest/login', 'guest-login-page'],
 ])('renders each course route: %s', async (url, marker) => {
-  mockSession(verified)
+  mockSession(url.startsWith('/teach') ? teacher : verified)
   open(url)
   expect(await screen.findByText(marker)).toBeInTheDocument()
   expect(where()).toBe(url)
@@ -163,7 +173,7 @@ test('anonymous course invite link goes to login and keeps the code', async () =
 })
 
 test('returns to deep link after login', async () => {
-  mockSession(null)
+  mockSession(null, teacher)
   open('/teacher/home?view=bank#teacher-content')
   await waitFor(() => expect(where()).toBe('/login?next=' + encodeURIComponent('/teacher/home?view=bank#teacher-content')))
   await login()
@@ -172,7 +182,7 @@ test('returns to deep link after login', async () => {
 })
 
 test('signed-out deep link returns after login with query and hash', async () => {
-  mockSession(null)
+  mockSession(null, teacher)
   open('/teacher/courses/c1?view=bank#top')
   await waitFor(() => expect(where()).toBe('/login?next=' + encodeURIComponent('/teacher/courses/c1?view=bank#top')))
   await login()
@@ -184,7 +194,7 @@ test('returns to activity QR after login', async () => {
   mockSession(null)
   open('/activities/a-1/join?from=qr#confirm')
   // 活動 QR 的登入是 J0 版面
-  await login('登入並繼續')
+  await login('登入並加入活動')
   expect(where()).toBe('/activities/a-1/join?from=qr#confirm')
   expect(await screen.findByText('join-activity-page:a-1')).toBeInTheDocument()
 })
@@ -224,7 +234,7 @@ test.each(['https://evil.example', '//evil.example'])('rejects external next: %s
 })
 
 test('signed-in visitors skip the login page', async () => {
-  mockSession(verified)
+  mockSession(teacher)
   open('/login?next=' + encodeURIComponent('/teacher/home'))
   await waitFor(() => expect(where()).toBe('/teacher/home'))
 })
@@ -303,18 +313,23 @@ describe('teacher pages on a phone', () => {
     '/teach/activities/a1/edit',
     '/teach/courses/c1/projector',
     '/teach/create-course',
+    '/teacher/home?view=bank',
+    '/teacher/courses/c1',
   ])('%s shows S4m', async (url) => {
     phone()
-    mockSession(verified)
+    mockSession(teacher)
     open(url)
     expect(await screen.findByText('暫時不支援手機操作')).toBeInTheDocument()
     expect(screen.queryByText(/teacher-course-page/)).toBeNull()
     expect(where()).toBe(url)
+    // 首頁已經沒有「我教的課」分頁：頂部列與按鈕都回首頁
+    expect(screen.getByRole('link', { name: '回首頁' })).toHaveAttribute('href', '/')
+    expect(screen.queryByText(/我教的課/)).toBeNull()
   })
 })
 
 test('create-course on a desktop opens the drawer on the home page', async () => {
-  mockSession(verified)
+  mockSession(teacher)
   open('/teach/create-course')
   await waitFor(() => expect(where()).toBe('/?tab=teach&create=1'))
 })
@@ -322,7 +337,7 @@ test('create-course on a desktop opens the drawer on the home page', async () =>
 describe('teacher placeholders go back to their course', () => {
   function withActivity() {
     jest.mocked(api).mockImplementation(async (url: string) => {
-      if (url === '/auth/me') return verified
+      if (url === '/auth/me') return teacher
       if (url === '/activities/a1') return { id: 'a1', course_id: 'c9' }
       return []
     })
@@ -336,14 +351,14 @@ describe('teacher placeholders go back to their course', () => {
   })
 
   test('course projector goes back to its course', async () => {
-    mockSession(verified)
+    mockSession(teacher)
     open('/teach/courses/c1/projector')
     expect(await screen.findByRole('link', { name: /回到課程/ })).toHaveAttribute('href', '/teach/courses/c1')
   })
 
   test('an unknown activity falls back to my teaching', async () => {
     jest.mocked(api).mockImplementation(async (url: string) => {
-      if (url === '/auth/me') return verified
+      if (url === '/auth/me') return teacher
       if (url === '/activities/a1') throw new ApiError(404, 'ACTIVITY_NOT_FOUND')
       return []
     })
@@ -356,6 +371,139 @@ test('unknown path shows not found', async () => {
   mockSession(verified)
   open('/nope')
   expect(await screen.findByText('找不到這個頁面')).toBeInTheDocument()
+})
+
+// 帳號只有一個角色：打開另一邊的頁面，在原網址、外框裡顯示說明頁，頁面本身不 render、不發 API（P14–P19）
+describe('pages of the other role', () => {
+  const desktopMatchMedia = window.matchMedia
+  afterEach(() => { Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktopMatchMedia }) })
+  const calls = () => jest.mocked(api).mock.calls.map(([url]) => url)
+
+  test.each([
+    ['/teach/courses/c1', false],
+    ['/teach/activities/a1/projector', false],
+    ['/teacher/home?view=bank', false],
+    ['/teacher/courses/c1', false],
+    ['/teach/courses/c1', true],
+    ['/teacher/home', true],
+  ])('a student opening %s (phone: %s) sees the teacher-page explanation', async (url, onPhone) => {
+    if (onPhone) phone()
+    mockSession(verified)
+    open(url)
+    expect(await screen.findByRole('heading', { name: '這是老師的頁面' })).toBeInTheDocument()
+    expect(screen.getByText('你現在登入的是學生帳號。')).toBeInTheDocument()
+    expect(screen.queryByText(/teacher-|editor-page|功能開發中|暫時不支援手機操作/)).toBeNull()
+    expect(where()).toBe(url)
+    expect(calls().every(called => called === '/auth/me')).toBe(true)
+  })
+
+  test.each([
+    ['/my-dialogues', false],
+    ['/learn/courses/c1', false],
+    ['/learn/activities/a1', false],
+    ['/learn/activities/a1/dialogue', false],
+    ['/scan', false],
+    ['/learn/courses/c1', true],
+  ])('a teacher opening %s (phone: %s) sees the student-page explanation', async (url, onPhone) => {
+    if (onPhone) phone()
+    mockSession(teacher)
+    open(url)
+    expect(await screen.findByRole('heading', { name: '這是學生的頁面' })).toBeInTheDocument()
+    expect(screen.getByText('學生的頁面要用學生帳號開啟。')).toBeInTheDocument()
+    expect(screen.queryByText(/student-course-page|solo-|功能開發中/)).toBeNull()
+    expect(calls().every(called => called === '/auth/me')).toBe(true)
+  })
+
+  test('no nav item is marked current on the explanation page', async () => {
+    mockSession(verified)
+    open('/teach/courses/c1')
+    await screen.findByRole('heading', { name: '這是老師的頁面' })
+    expect(screen.getByRole('link', { name: '首頁' })).not.toHaveAttribute('aria-current')
+  })
+
+  test('the explanation sits inside the app shell, even for a full-screen page', async () => {
+    mockSession(teacher)
+    open('/learn/activities/a1/dialogue')
+    expect(await screen.findByRole('heading', { name: '這是學生的頁面' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: '主選單' })).toBeInTheDocument()
+  })
+
+  test.each([
+    ['/join?code=AB12', '/course-join/preview?code=AB12', { name: '哲學導論' }, '你掃描的是課程 QR'],
+    ['/activities/a1/join?from=qr', '/activities/a1/join-preview', { course_name: '哲學導論' }, '你掃描的是活動 QR'],
+  ])('a teacher scanning %s is told to use a student account, with the course name', async (url, preview, body, scanned) => {
+    jest.mocked(api).mockImplementation(async (called: string) => {
+      if (called === '/auth/me') return teacher
+      if (called === preview) return body
+      throw new Error('unexpected ' + called)
+    })
+    open(url)
+    expect(await screen.findByRole('heading', { name: '要用學生帳號才能加入' })).toBeInTheDocument()
+    expect(await screen.findByText('哲學導論')).toBeInTheDocument()
+    expect(screen.getByText(scanned)).toBeInTheDocument()
+    expect(screen.queryByText(/join-course-page|join-activity-page/)).toBeNull()
+    expect(calls().filter(called => called !== '/auth/me')).toEqual([preview])
+  })
+
+  test('a teacher opening /join without a code gets the explanation without a course name', async () => {
+    mockSession(teacher)
+    open('/join')
+    expect(await screen.findByRole('heading', { name: '要用學生帳號才能加入' })).toBeInTheDocument()
+    expect(screen.queryByText(/你掃描的是/)).toBeNull()
+    expect(calls().every(called => called === '/auth/me')).toBe(true)
+  })
+
+  test('a failed preview leaves the course name out', async () => {
+    jest.mocked(api).mockImplementation(async (called: string) => {
+      if (called === '/auth/me') return teacher
+      throw new ApiError(404, 'ENROLL_CODE_NOT_FOUND')
+    })
+    open('/join?code=NOPE')
+    expect(await screen.findByRole('heading', { name: '要用學生帳號才能加入' })).toBeInTheDocument()
+    await waitFor(() => expect(calls()).toContain('/course-join/preview?code=NOPE'))
+    expect(screen.queryByText(/你掃描的是/)).toBeNull()
+  })
+
+  test('back home goes to the home page; signing out goes to the login page', async () => {
+    mockSession(verified)
+    open('/teach/courses/c1')
+    expect(await screen.findByRole('link', { name: '回首頁' })).toHaveAttribute('href', '/')
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '登出，改用老師帳號' })) })
+    expect(api).toHaveBeenCalledWith('/auth/logout', 'POST')
+    await waitFor(() => expect(where()).toBe('/login'))
+  })
+
+  test('a guest switching accounts from the explanation is asked first (G15)', async () => {
+    mockSession({ ...verified, kind: 'guest', guest_expires_at: null })
+    open('/teach/courses/c1')
+    const button = await screen.findByRole('button', { name: '登出，改用老師帳號' })
+    await act(async () => { fireEvent.click(button) })
+    expect(screen.getByRole('dialog', { name: '要登出訪客身分嗎？' })).toBeInTheDocument()
+    expect(api).not.toHaveBeenCalledWith('/auth/logout', 'POST')
+  })
+
+  test('an unverified student still goes to verification before the role is checked', async () => {
+    mockSession({ ...verified, verified: false })
+    open('/teach/courses/c1')
+    expect(await screen.findByRole('heading', { name: '確認你的 Email' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '這是老師的頁面' })).toBeNull()
+  })
+
+  test('an unknown teacher path is still not found', async () => {
+    mockSession(verified)
+    open('/teach/nope/nope/nope')
+    expect(await screen.findByText('找不到這個頁面')).toBeInTheDocument()
+  })
+
+  test.each(['/', '/groups', '/account', '/classrooms/r1'])('%s opens for both roles', async (url) => {
+    for (const who of [verified, teacher]) {
+      mockSession(who)
+      const { unmount } = render(<MemoryRouter initialEntries={[url]}><AuthProvider><AppRoutes /></AuthProvider></MemoryRouter>)
+      await waitFor(() => expect(screen.queryByText(/這是(老師|學生)的頁面/)).toBeNull())
+      expect(await screen.findByText(/home-page|groups-page|功能開發中|room:r1/)).toBeInTheDocument()
+      unmount()
+    }
+  })
 })
 
 test('scan page is full screen without the top bar or side navigation', async () => {

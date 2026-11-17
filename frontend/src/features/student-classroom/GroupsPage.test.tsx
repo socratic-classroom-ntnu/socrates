@@ -1,7 +1,7 @@
 import { act, fireEvent, screen } from '@testing-library/react'
 import { Route } from 'react-router-dom'
 import { AppShell } from '../../app/AppShell'
-import { mockApi, renderAt } from '../../testing/pageHarness'
+import { mockApi, renderAt, signedIn, signedInTeacher } from '../../testing/pageHarness'
 import { GroupsPage } from './GroupsPage'
 
 jest.mock('../../contract/classroomClient', () => {
@@ -43,6 +43,18 @@ test('inside the shell the AI settings view has no second top bar', async () => 
 })
 
 test('teachers reach the group-class desk from the groups page', async () => {
+  mockApi({ 'GET /classrooms': [], 'GET /auth/me': signedInTeacher })
   openGroups()
   expect(await screen.findByRole('link', { name: '管理分組課（教師端）' })).toHaveAttribute('href', '/teacher/home')
+})
+
+// P30：分組課頁上方的教師端連結只給老師帳號
+test.each([
+  [signedInTeacher, true],
+  [signedIn, false],
+])('the teacher link shows only for a teacher account', async (account, shown) => {
+  mockApi({ 'GET /classrooms': [], 'GET /auth/me': account })
+  openGroups()
+  expect(await screen.findByRole('form', { name: '加入課堂' })).toBeInTheDocument()
+  expect(!!screen.queryByRole('link', { name: '管理分組課（教師端）' })).toBe(shown)
 })

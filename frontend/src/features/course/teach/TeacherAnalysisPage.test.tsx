@@ -17,6 +17,8 @@ type Student = components['schemas']['SoloAnalysisStudentView']
 const student = (index: number, extra: Partial<Student> = {}): Student => ({
   enrollment_id: `e-${index}`,
   display_name: `學生${index}`,
+  kind: 'registered',
+  guest_number: null, final_status: null,
   confirmed_scenarios: 1,
   current_position: `立場${index}`,
   reason_summary: `理由${index}`,
@@ -38,7 +40,7 @@ const analysis: Analysis = {
 function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
-    revision: 1, draft: { title: analysis.title, ends_at: analysis.ends_at! },
+    revision: 1, draft: { title: analysis.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: analysis.ends_at! },
     starts_at: 1_799_999_000, ends_at: analysis.ends_at, available_actions: actions,
   }
 }
@@ -153,4 +155,19 @@ test.each(['en' as const, 'es' as const])('%s contains no Chinese interface text
   } })
   const page = await screen.findByTestId('teacher-analysis-page')
   expect(page.textContent).not.toMatch(/[㐀-鿿]/)
+})
+
+test('guest viewpoints carry a guest tag and expired guests show an anonymous number', async () => {
+  open({ view: { ...analysis, students: [
+    student(1),
+    student(2, { display_name: '阿明', kind: 'guest', guest_number: 1 }),
+    student(3, { display_name: '', kind: 'expired_guest', guest_number: 2 }),
+  ] } })
+  const page = await screen.findByTestId('teacher-analysis-page')
+  const registered = within(page).getByText('學生1').closest('.analysis-student') as HTMLElement
+  expect(within(registered).queryByText('訪客')).toBeNull()
+  const guest = within(page).getByText('阿明').closest('.analysis-student') as HTMLElement
+  expect(within(guest).getByText('訪客')).toBeInTheDocument()
+  const expired = within(page).getByText('過期訪客 2').closest('.analysis-student') as HTMLElement
+  expect(within(expired).getByText('訪客')).toBeInTheDocument()
 })

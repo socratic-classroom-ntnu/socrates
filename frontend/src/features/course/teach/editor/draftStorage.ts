@@ -49,10 +49,10 @@ export function activityDraftKey(accountId: string, target: DraftTarget): string
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 
-// 舊版表單（有多題與選項）暫存的內容不再相容，直接當作沒有
+// 舊版表單（有多題與選項，或只有單一輸入、沒有情境描述）暫存的內容不再相容，直接當作沒有
 function isForm(value: unknown): value is ActivityForm {
   const f = value as ActivityForm
-  return !!f && isString(f.title) && !('questions' in f)
+  return !!f && isString(f.title) && isString(f.scenario) && !('questions' in f)
     && !!f.start && (f.start.mode === 'now' || (f.start.mode === 'at' && isString(f.start.date) && isString(f.start.time)))
     && !!f.end && isString(f.end.date) && isString(f.end.time)
 }

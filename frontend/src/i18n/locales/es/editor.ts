@@ -47,8 +47,9 @@ const editor: Shape<typeof zhHant> = {
   },
   fields: {
     required: '(obligatorio)',
-    title: 'Tema',
-    titleHint: 'Escribe unas frases. Sócrates parte de ellas para redactar un primer escenario para cada estudiante. También es el nombre de la actividad.',
+    title: 'Nombre de la actividad',
+    scenario: 'Escenario',
+    scenarioHint: 'Sócrates parte de esta descripción para redactar un primer escenario para cada estudiante.',
     start: 'Inicio',
     startNow: 'Abrir al crearla',
     startAt: 'A una hora fija',
@@ -58,7 +59,8 @@ const editor: Shape<typeof zhHant> = {
     lockedWindowHint: 'Puedes retrasar el cierre para que quienes no terminaron sigan; para terminarla antes, usa la página de la actividad.',
   },
   errors: {
-    title: 'Escribe el tema',
+    title: 'Escribe el nombre de la actividad',
+    scenario: 'Escribe el escenario',
     start: 'Indica la hora de inicio',
     end: 'Indica la hora de cierre',
     endBeforeStart: 'El cierre debe ser posterior al inicio',

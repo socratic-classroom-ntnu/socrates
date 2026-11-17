@@ -72,6 +72,7 @@ def account_view(db, account, csrf=""):
         "achievements": [],
         "locale": account.locale,
         "kind": account.kind,
+        "account_role": account.account_role,
         "guest_expires_at": account.guest_expires_at,
     }
     for extension in ACCOUNT_VIEW_EXTENSIONS:
@@ -261,6 +262,7 @@ def register(body):
                 username=username,
                 email=email,
                 password_hash=HASHER.hash(body.password),
+                account_role=body.account_role or "student",
             )
             db.add(account)
             db.flush()

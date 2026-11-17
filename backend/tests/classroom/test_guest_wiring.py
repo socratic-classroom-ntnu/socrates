@@ -14,6 +14,7 @@ from sqlalchemy import select
 from app.classroom_app import create_app
 from app.modules.app_shell import llm_workers
 from app.modules.app_shell import wiring
+from app.modules.course_management import enrollment
 from app.modules.course_management.repositories import Enrollment
 from app.modules.identity_access import guests
 from app.modules.identity_access.auth import GUEST_SECONDS
@@ -41,6 +42,19 @@ def test_the_app_refuses_to_start_without_one(monkeypatch):
     hooks = dict(guests.GUEST_HOOKS)
     hooks.pop("solo-activity")
     monkeypatch.setattr(guests, "GUEST_HOOKS", hooks)
+    with pytest.raises(RuntimeError, match="solo-activity"):
+        create_app(background=False)
+
+
+def test_solo_activity_is_wired_to_enrollment_removal():
+    assert set(enrollment.registered_enrollment_hooks()) >= wiring.REQUIRED_ENROLLMENT_HOOKS
+    assert wiring.REQUIRED_ENROLLMENT_HOOKS == {"solo-activity"}
+
+
+def test_the_app_refuses_to_start_without_the_enrollment_hook(monkeypatch):
+    hooks = dict(enrollment.ENROLLMENT_HOOKS)
+    hooks.pop("solo-activity")
+    monkeypatch.setattr(enrollment, "ENROLLMENT_HOOKS", hooks)
     with pytest.raises(RuntimeError, match="solo-activity"):
         create_app(background=False)
 

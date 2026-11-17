@@ -80,6 +80,8 @@ class SoloActivityView(View):
     status: Literal["scheduled", "open", "ended"]
     ends_at: float
     attempt: SoloAttemptBrief | None  # None until the student starts
+    # 學生「我的對話」的私人活動：沒有期限、返回「我的對話」、title 是題庫短標題
+    practice: bool
 
 
 class CitationSourceView(View):
@@ -295,7 +297,7 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
-# registered, a guest, or a guest past its 168 hours (shown as 匿名訪客 N, N = guest_number).
+# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
 StudentKind = Literal["registered", "guest", "expired_guest"]
 
 
@@ -325,6 +327,41 @@ class SoloActivityProgressView(View):
     generated_at: float
     summary: SoloProgressSummaryView
     students: list[SoloStudentProgressView]
+
+
+# ---- the course roster (the 學生 tab): who is in the course, and how far each has come -------
+
+
+class SoloRosterStudentView(View):
+    enrollment_id: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    # expired_guest only: its place among the course's expired guests, by joining order.
+    guest_number: int | None
+    email: str | None  # registered students only
+    joined_at: float
+    # The latest update or message of any of the student's attempts in the course; None before any.
+    last_activity_at: float | None
+    # Completed attempts among the activities counted in counted_activities.
+    completed_activities: int
+
+
+class SoloRosterSummaryView(View):
+    total: int
+    registered: int
+    guests: int
+    expired_guests: int
+
+
+class SoloCourseRosterView(View):
+    course_id: str
+    course_name: str
+    generated_at: float
+    # The course's activities that are open or ended now (drafts, scheduled and deleted ones not).
+    counted_activities: int
+    summary: SoloRosterSummaryView
+    # Newest last_activity_at first; students without any last, by joining order.
+    students: list[SoloRosterStudentView]
 
 
 # ---- T6: the teacher's statistics (the confirmed viewpoint's three fields; nothing else written)
@@ -361,3 +398,50 @@ class SoloActivityAnalysisView(View):
     revision_id: str | None  # the ActivityRevision these numbers belong to; None for a draft
     summary: SoloAnalysisSummaryView
     students: list[SoloAnalysisStudentView]  # every student who started, in enrollment order
+
+
+# ---- 學生「我的對話」：從主流程題庫自己練習（spec §10 M12、M15） ----
+
+PracticeCategory = Literal["life", "honesty", "self", "tech"]
+
+
+class PracticeTopic(View):
+    id: str
+    title: str
+    body: str
+    category: PracticeCategory
+    recommended: bool
+
+
+class PracticeDialogue(View):
+    activity_id: str
+    attempt_id: str
+    topic_id: str
+    title: str  # the topic's short title; for a topic since removed, a cut of `body`
+    body: str  # what the activity stored: the scenario the student actually discussed
+    category: PracticeCategory | None  # None once the topic is removed from the bank
+    status: Literal["in_progress", "completed"]  # completed only when the attempt is completed
+    created_at: float
+    updated_at: float  # the attempt's last update; the list is newest first
+
+
+class PracticeQuota(View):
+    limit: int
+    used_today: int
+    remaining: int
+
+
+class PracticeList(View):
+    dialogues: list[PracticeDialogue]
+    quota: PracticeQuota
+
+
+class PracticeStart(TrimmedModel):
+    model_config = ConfigDict(extra="forbid")
+
+    bank_item_id: str = Field(min_length=1, max_length=40)
+
+
+class PracticeStarted(View):
+    activity_id: str
+    attempt_id: str

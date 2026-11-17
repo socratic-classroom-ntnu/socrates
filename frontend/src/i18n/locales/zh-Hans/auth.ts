@@ -31,7 +31,19 @@ const auth: Shape<typeof zhHant> = {
     submit: '设置新密码',
     done: '密码已经更新，请用新密码登录。',
   },
+  role: {
+    legend: '身份',
+    student: '我是学生',
+    teacher: '我是老师',
+    desktopOnly: '仅限电脑使用',
+    note: '注册后不能更改。',
+    teacherPhoneNote: '老师功能请用电脑登录使用；注册后不能更改。',
+    studentOnly: '从课程二维码或邀请链接注册的是学生账号。',
+  },
   fieldErrors: {
+    account_role: {
+      missing: '请选择身份',
+    },
     username: {
       missing: '请填写用户名。',
       tooShort: '用户名至少要 {{min}} 个字符，请重新输入。',
@@ -56,7 +68,7 @@ const auth: Shape<typeof zhHant> = {
     },
   },
   busy: '处理中…',
-  passwordRule: '密码需 8–32 个字符，并包含大写字母、小写字母、数字与特殊字符（可用 ! @ # $ % ^ & * _ - + = . ? ~），不能有空格或其他符号。',
+  passwordRule: '密码 8–32 个字符，需含大写、小写字母、数字和符号。',
   blocked: '已拦下不允许的字符：{{chars}}',
   space: '空格',
   links: { login: '返回登录', register: '注册', forgot: '忘记密码' },

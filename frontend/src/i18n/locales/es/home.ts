@@ -7,11 +7,7 @@ const home: Shape<typeof zhHant> = {
     afternoon: 'Buenas tardes, {{name}}',
     evening: 'Buenas noches, {{name}}',
   },
-  tabs: {
-    label: 'Secciones de inicio',
-    learn: 'Mis cursos',
-    teach: 'Mis clases',
-  },
+  learn: { title: 'Mis cursos', count: '{{count}}' },
   join: {
     label: 'Código del curso',
     placeholder: 'Escribe el código de 8 caracteres',
@@ -24,12 +20,28 @@ const home: Shape<typeof zhHant> = {
     notFoundBody: 'Revisa otra vez el código de 8 caracteres que te dio tu docente. Si está bien escrito, pregúntale si el código cambió.',
   },
   create: 'Crear curso',
-  phoneHint: 'Usa una computadora para gestionar cursos y actividades',
   empty: {
     learnTitle: 'Todavía no te uniste a ningún curso',
-    learnBody: 'Los cursos a los que te unas aparecerán aquí',
-    teachTitle: 'Todavía no enseñas ningún curso',
-    teachBody: 'Los cursos que crees aparecerán aquí',
+    learnBody: 'Escribe el código que te dio tu docente para unirte a un curso.',
+    learnBodyPhone: 'Escanea un código QR o escribe un código para unirte a un curso.',
+    learnPractice: 'También puedes practicar primero en Mis diálogos.',
+    toPractice: 'Ir a Mis diálogos',
+    teachTitle: 'Todavía no tienes cursos',
+    teachBody: 'Crea tu primer curso e invita a tus estudiantes con el código o el QR. Luego agrega una actividad y conoce lo que piensa cada estudiante.',
+    teachCreate: 'Crear mi primer curso',
+    stepsLabel: 'Tres pasos para empezar',
+    steps: {
+      create: { title: 'Crea un curso', body: 'Ponle un nombre y se genera un código de curso.' },
+      invite: { title: 'Invita a tus estudiantes', body: 'Proyecta el QR o comparte el código; se unen desde el teléfono.' },
+      activity: { title: 'Agrega una actividad', body: 'Escribe una situación. Después de conversar con Sócrates, verás lo que piensa la clase.' },
+    },
+  },
+  teach: { title: 'Mis cursos', count: '{{count}}' },
+  teacherPhone: {
+    title: 'Las funciones de docente requieren una computadora',
+    body: 'Crear cursos, escribir preguntas y ver lo que piensan tus estudiantes solo funciona en una computadora por ahora. Inicia sesión allí con la misma cuenta.',
+    signedIn: 'Sesión iniciada: {{name}}',
+    role: 'Docente',
   },
   teaching: {
     live: 'En clase',
@@ -55,6 +67,7 @@ const home: Shape<typeof zhHant> = {
     endedAt: 'Terminó el {{end}}',
     nothing: 'Tu docente todavía no abrió ninguna actividad',
     start: 'Empezar',
+    enter: 'Abrir curso',
   },
   loadFailed: 'No se pudo cargar la lista de cursos.',
 };

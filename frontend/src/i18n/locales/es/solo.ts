@@ -14,7 +14,7 @@ export default {
     start: 'Iniciar diálogo', continue: 'Continuar diálogo', closed: 'Esta actividad no se puede iniciar ahora.',
     saved: 'El diálogo se guarda automáticamente para que puedas volver al mismo punto.',
   },
-  dialogue: { back: 'Volver a la actividad', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}' },
+  dialogue: { back: 'Volver a la actividad', backToPractice: 'Volver a Mis diálogos', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}' },
   scenarioTitle: 'Escenario {{number}}', teacherSource: 'Tu docente estableció este escenario. Sócrates no lo reescribirá.',
   myAnswer: 'Mi respuesta', answerPending: 'Tu primera respuesta aparecerá aquí cuando la envíes.',
   aboutTitle: 'Qué hace este diálogo',

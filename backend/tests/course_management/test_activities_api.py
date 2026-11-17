@@ -27,7 +27,7 @@ def draft(**overrides):
 
 
 def teacher_with_course(client):
-    teacher = user(client, "owner")
+    teacher = user(client, "owner", account_role="teacher")
     course = create_course(client)
     return teacher, course
 
@@ -363,9 +363,10 @@ def test_activity_join_static_route_precedes_teacher_action_route(client):
     teacher, course = teacher_with_course(client)
     activity = create_activity(client, course["id"])
     act(client, activity["id"], "publish")
+    user(client, "student")
 
     response = client.post(
-        f"/api/v2/activities/{activity['id']}/join", json={"display_name": "老師"}
+        f"/api/v2/activities/{activity['id']}/join", json={"display_name": "學生"}
     )
 
     assert response.status_code == 200

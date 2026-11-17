@@ -100,6 +100,14 @@
       "AccountView": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
           "achievements": {
             "items": {
               "type": "string"
@@ -206,7 +214,8 @@
           "verified",
           "csrf_token",
           "points",
-          "achievements"
+          "achievements",
+          "account_role"
         ],
         "title": "AccountView",
         "type": "object"
@@ -3351,7 +3360,7 @@
       },
       "GuestUpgrade": {
         "additionalProperties": false,
-        "description": "A guest registering keeps its account id; it sends exactly what a registration does.",
+        "description": "A guest registering keeps its account id and stays a student, so it sends no role.",
         "properties": {
           "email": {
             "maxLength": 254,
@@ -3639,6 +3648,14 @@
       "LoginView": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "enum": [
+              "student",
+              "teacher"
+            ],
+            "title": "Account Role",
+            "type": "string"
+          },
           "achievements": {
             "items": {
               "type": "string"
@@ -3755,6 +3772,7 @@
           "csrf_token",
           "points",
           "achievements",
+          "account_role",
           "guest_merge"
         ],
         "title": "LoginView",
@@ -4106,6 +4124,197 @@
           "unresolved_issue"
         ],
         "title": "PersonalSummaryView",
+        "type": "object"
+      },
+      "PracticeDialogue": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "life",
+                  "honesty",
+                  "self",
+                  "tech"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "topic_id": {
+            "title": "Topic Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "number"
+          }
+        },
+        "required": [
+          "activity_id",
+          "attempt_id",
+          "topic_id",
+          "title",
+          "body",
+          "category",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PracticeDialogue",
+        "type": "object"
+      },
+      "PracticeList": {
+        "additionalProperties": false,
+        "properties": {
+          "dialogues": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeDialogue"
+            },
+            "title": "Dialogues",
+            "type": "array"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/PracticeQuota"
+          }
+        },
+        "required": [
+          "dialogues",
+          "quota"
+        ],
+        "title": "PracticeList",
+        "type": "object"
+      },
+      "PracticeQuota": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "remaining": {
+            "title": "Remaining",
+            "type": "integer"
+          },
+          "used_today": {
+            "title": "Used Today",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit",
+          "used_today",
+          "remaining"
+        ],
+        "title": "PracticeQuota",
+        "type": "object"
+      },
+      "PracticeStart": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_item_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Bank Item Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bank_item_id"
+        ],
+        "title": "PracticeStart",
+        "type": "object"
+      },
+      "PracticeStarted": {
+        "additionalProperties": false,
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "title": "Attempt Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activity_id",
+          "attempt_id"
+        ],
+        "title": "PracticeStarted",
+        "type": "object"
+      },
+      "PracticeTopic": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "category": {
+            "enum": [
+              "life",
+              "honesty",
+              "self",
+              "tech"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "recommended": {
+            "title": "Recommended",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "category",
+          "recommended"
+        ],
+        "title": "PracticeTopic",
         "type": "object"
       },
       "ProfileDeletedView": {
@@ -4814,6 +5023,21 @@
       "Register": {
         "additionalProperties": false,
         "properties": {
+          "account_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "student",
+                  "teacher"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Role"
+          },
           "email": {
             "maxLength": 254,
             "minLength": 3,
@@ -6000,6 +6224,10 @@
             "title": "Ends At",
             "type": "number"
           },
+          "practice": {
+            "title": "Practice",
+            "type": "boolean"
+          },
           "status": {
             "enum": [
               "scheduled",
@@ -6021,7 +6249,8 @@
           "course_name",
           "status",
           "ends_at",
-          "attempt"
+          "attempt",
+          "practice"
         ],
         "title": "SoloActivityView",
         "type": "object"
@@ -6409,6 +6638,47 @@
         "title": "SoloAttemptView",
         "type": "object"
       },
+      "SoloCourseRosterView": {
+        "additionalProperties": false,
+        "properties": {
+          "counted_activities": {
+            "title": "Counted Activities",
+            "type": "integer"
+          },
+          "course_id": {
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "number"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SoloRosterStudentView"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/SoloRosterSummaryView"
+          }
+        },
+        "required": [
+          "course_id",
+          "course_name",
+          "generated_at",
+          "counted_activities",
+          "summary",
+          "students"
+        ],
+        "title": "SoloCourseRosterView",
+        "type": "object"
+      },
       "SoloMessageView": {
         "additionalProperties": false,
         "properties": {
@@ -6550,6 +6820,110 @@
           "attention"
         ],
         "title": "SoloProgressSummaryView",
+        "type": "object"
+      },
+      "SoloRosterStudentView": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_activities": {
+            "title": "Completed Activities",
+            "type": "integer"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "enrollment_id": {
+            "title": "Enrollment Id",
+            "type": "string"
+          },
+          "guest_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guest Number"
+          },
+          "joined_at": {
+            "title": "Joined At",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "registered",
+              "guest",
+              "expired_guest"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_activity_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Activity At"
+          }
+        },
+        "required": [
+          "enrollment_id",
+          "display_name",
+          "kind",
+          "guest_number",
+          "email",
+          "joined_at",
+          "last_activity_at",
+          "completed_activities"
+        ],
+        "title": "SoloRosterStudentView",
+        "type": "object"
+      },
+      "SoloRosterSummaryView": {
+        "additionalProperties": false,
+        "properties": {
+          "expired_guests": {
+            "title": "Expired Guests",
+            "type": "integer"
+          },
+          "guests": {
+            "title": "Guests",
+            "type": "integer"
+          },
+          "registered": {
+            "title": "Registered",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "registered",
+          "guests",
+          "expired_guests"
+        ],
+        "title": "SoloRosterSummaryView",
         "type": "object"
       },
       "SoloScenarioChangeView": {
@@ -8936,8 +9310,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },
@@ -9056,8 +9430,8 @@
               "anyOf": [
                 {
                   "enum": [
-                    "teacher",
-                    "student"
+                    "student",
+                    "teacher"
                   ],
                   "type": "string"
                 },
@@ -9150,6 +9524,51 @@
           }
         },
         "summary": "Create Activity",
+        "tags": [
+          "courses"
+        ]
+      }
+    },
+    "/api/v2/courses/{course_id}/students/{enrollment_id}": {
+      "delete": {
+        "description": "Remove a student from the course with every answer of theirs in it; there is no undo.",
+        "operationId": "remove_student_api_v2_courses__course_id__students__enrollment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "enrollment_id",
+            "required": true,
+            "schema": {
+              "title": "Enrollment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Student",
         "tags": [
           "courses"
         ]
@@ -10868,6 +11287,134 @@
           }
         },
         "summary": "Act On Attempt",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/courses/{course_id}/students": {
+      "get": {
+        "operationId": "get_course_roster_api_v2_solo_courses__course_id__students_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoloCourseRosterView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Course Roster",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/practice": {
+      "get": {
+        "operationId": "get_practice_api_v2_solo_practice_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Practice",
+        "tags": [
+          "solo"
+        ]
+      },
+      "post": {
+        "operationId": "start_practice_api_v2_solo_practice_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PracticeStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PracticeStarted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Practice",
+        "tags": [
+          "solo"
+        ]
+      }
+    },
+    "/api/v2/solo/practice/bank": {
+      "get": {
+        "description": "The main-flow bank; guests may read it (their 我的對話 page shows the topics locked).",
+        "operationId": "get_practice_bank_api_v2_solo_practice_bank_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PracticeTopic"
+                  },
+                  "title": "Response Get Practice Bank Api V2 Solo Practice Bank Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Practice Bank",
         "tags": [
           "solo"
         ]

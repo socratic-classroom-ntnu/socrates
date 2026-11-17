@@ -14,7 +14,7 @@ export default {
     start: 'Start dialogue', continue: 'Continue dialogue', closed: 'This activity cannot be started right now.',
     saved: 'Your dialogue is saved automatically, so you can return to the same place later.',
   },
-  dialogue: { back: 'Back to activity', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}' },
+  dialogue: { back: 'Back to activity', backToPractice: 'Back to My dialogues', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}' },
   scenarioTitle: 'Scenario {{number}}', teacherSource: 'Your teacher set this scenario. Socrates will not rewrite it.',
   myAnswer: 'My answer', answerPending: 'Your first answer will appear here after you submit it.',
   aboutTitle: 'What this dialogue does',

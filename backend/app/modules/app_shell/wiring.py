@@ -17,13 +17,21 @@ from app.modules.content_authoring.service import script_profile_check
 from app.modules.group_dialogue.ai_students import extend as extend_with_ai_students
 from app.modules.group_dialogue.group_run import extend as extend_with_group_runs
 from app.modules.group_dialogue.service import ai_student_profile_check, update_ai_student_profiles
+from app.modules.course_management.enrollment import (
+    register_enrollment_hook,
+    registered_enrollment_hooks,
+)
 from app.modules.course_management.guest_records import HOOK as course_guest_records
 from app.modules.identity_access.service import register_guest_hook, registered_guest_hooks
+from app.modules.solo_activity.enrollment_records import HOOK as solo_enrollment_records
 from app.modules.solo_activity.guest_records import HOOK as solo_guest_records
 
 # Every module that keeps a guest's records. Without one, logging in would leave that module's
 # records with the guest, and expiry would keep the guest's name there.
 REQUIRED_GUEST_HOOKS = frozenset({"course-management", "solo-activity"})
+# Every module that keeps a student's answers in a course's activities. Without one, removing a
+# student from a course would leave that module's answers behind.
+REQUIRED_ENROLLMENT_HOOKS = frozenset({"solo-activity"})
 
 
 def install() -> None:
@@ -38,6 +46,7 @@ def install() -> None:
     extend_account_view(account_classroom_progress)
     register_guest_hook("course-management", course_guest_records)
     register_guest_hook("solo-activity", solo_guest_records)
+    register_enrollment_hook("solo-activity", solo_enrollment_records)
 
 
 def check_guest_hooks() -> None:
@@ -45,6 +54,13 @@ def check_guest_hooks() -> None:
     missing = REQUIRED_GUEST_HOOKS - registered_guest_hooks()
     if missing:
         raise RuntimeError("guest record hooks not registered: " + ", ".join(sorted(missing)))
+
+
+def check_enrollment_hooks() -> None:
+    """Refuse to start when a module that keeps students' answers has not registered its hook."""
+    missing = REQUIRED_ENROLLMENT_HOOKS - registered_enrollment_hooks()
+    if missing:
+        raise RuntimeError("enrollment record hooks not registered: " + ", ".join(sorted(missing)))
 
 
 install()

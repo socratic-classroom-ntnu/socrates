@@ -14,7 +14,7 @@ export default {
     start: '开始对话', continue: '继续对话', closed: '这个活动目前不能开始。',
     saved: '对话会自动保存，离开后回来会接着上次的地方。',
   },
-  dialogue: { back: '回到活动页', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}' },
+  dialogue: { back: '回到活动页', backToPractice: '回到我的对话', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}' },
   scenarioTitle: '情境 {{number}}', teacherSource: '情境由老师设置，苏格拉底不会改写它',
   myAnswer: '我的回答', answerPending: '送出第一个回答后会出现在这里。',
   aboutTitle: '这段对话在做什么',

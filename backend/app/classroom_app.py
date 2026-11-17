@@ -5,13 +5,16 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
+from app.modules.course_management import service as course_service
+from app.modules.ai_providers import service as ai_service
+from app.modules.app_shell import practice_startup
 from app.modules.app_shell import models as _models  # noqa: F401  註冊所有模組的 ORM
 from app.modules.app_shell import wiring as _wiring  # noqa: F401  接上跨模組的 hook
 from app.modules.app_shell.contracts import ReadinessView
 from app.modules.app_shell.routes import include_classroom_routers
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.realtime import BUS
-from app.modules.platform.storage import engine
+from app.modules.platform.storage import engine, transaction
 from app.modules.app_shell.llm_workers import clock_loop, guest_expiry_loop, llm_loop, mail_loop
 from app.modules.platform.env import env_int
 
@@ -19,6 +22,8 @@ from app.modules.platform.env import env_int
 @asynccontextmanager
 async def lifespan(app):
     engine()
+    with transaction() as db:
+        practice_startup.prepare_practice(db, app.state.practice_config)
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
     loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop]
     loops += [llm_loop] * worker_count
@@ -36,12 +41,19 @@ async def lifespan(app):
 def create_app(legacy=False, background=True):
     prompts.validate_programs()
     _wiring.check_guest_hooks()
+    _wiring.check_enrollment_hooks()
+    # 題庫壞掉就讓服務起不來，跟 programs 一樣在部署當下發現
+    course_service.install_practice_bank(course_service.PRACTICE_BANK_PATH)
+    course_service.check_practice_settings()
+    # 平台金鑰設定錯誤同樣讓服務起不來；寫進資料庫的部分在 lifespan（practice_startup）
+    practice_config = ai_service.platform_profile_config()
     app = FastAPI(
         title="Socrates API",
         version="0.3.0",
         lifespan=lifespan if background else None,
         separate_input_output_schemas=False,
     )
+    app.state.practice_config = practice_config
     if legacy:
         from app.main import app as first_run
 

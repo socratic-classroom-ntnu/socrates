@@ -15,7 +15,7 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     script = _script()
 
     # 單一 head：分岔會讓 `alembic upgrade head` 在部署時失敗。
-    assert script.get_heads() == ["0023"]
+    assert script.get_heads() == ["0026"]
     # 教室的 schema 接在單人對話的最後一支上，而不是另起一條鏈。
     assert script.get_revision("0010").down_revision == "9a0c1d2e3f42"
     # 題庫商店（issue #17）接在教室 schema 之後。
@@ -40,8 +40,14 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     assert script.get_revision("0021").down_revision == "0020"
     # 課程的「允許免註冊」只加一個欄位，既有課程預設開。
     assert script.get_revision("0022").down_revision == "0021"
-    # 單人活動的雷達：一張新表，每個活動一列，存最後一次算出的結果。
+    # 帳號的學生／老師角色（account_role），和課程、教室裡的 role 是兩件事。
     assert script.get_revision("0023").down_revision == "0022"
+    # 學生「我的對話」：私人課程屬於哪位學生、活動來自題庫哪一題。
+    assert script.get_revision("0024").down_revision == "0023"
+    # 0023 讓既有帳號都成了學生；擁有課程、劇本或開過教室的帳號補回老師。
+    assert script.get_revision("0025").down_revision == "0024"
+    # 單人活動的雷達：一張新表，每個活動一列，存最後一次算出的結果。
+    assert script.get_revision("0026").down_revision == "0025"
 
 
 @pytest.mark.parametrize("revision", SQUASHED)

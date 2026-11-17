@@ -25,8 +25,13 @@ def client():
         yield test_client
 
 
-def user(client: TestClient, name: str = "teacher") -> dict:
-    body = {"username": name, "email": f"{name}@example.org", "password": PASSWORD}
+def user(client: TestClient, name: str = "teacher", account_role: str = "student") -> dict:
+    body = {
+        "username": name,
+        "email": f"{name}@example.org",
+        "password": PASSWORD,
+        "account_role": account_role,
+    }
     assert client.post("/api/v2/auth/register", json=body).status_code == 200
     with storage.transaction() as db:
         mail = db.scalars(select(Mail)).all()[-1]

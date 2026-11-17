@@ -1,7 +1,7 @@
 """Guests in solo activities: they answer like students, the teacher sees who is a guest, and
 their attempts move to the account they log in as.
 
-An expired guest is shown as 匿名訪客 N: numbered only among the expired guests of the course,
+An expired guest is shown as 過期訪客 N: numbered only among the expired guests of the course,
 in the order they joined it (ties by enrollment id), worked out when asked and never stored.
 Expiry is read from guest_expires_at, so a guest past it counts as expired before the daily job.
 """

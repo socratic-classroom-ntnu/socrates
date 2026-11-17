@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useT } from '../../../i18n/useT'
-import { Button, FormError } from '../../../ui'
+import { Button, FormError, IconButton } from '../../../ui'
 import { JoinCodeErrorText, useJoinCode } from '../home/useJoinCode'
 import { joinPathFor, parseScannedQr } from './parseScannedQr'
 import type { ScanNotice, ScanNoticeState } from './scanNotice'
@@ -25,7 +25,7 @@ export function ScanPage() {
   const [phase, setPhase] = useState<Phase>('opening')
   const found = useRef(false)
   const [unknown, setUnknown] = useState(false)
-  // 改用輸入代碼：在原位展開輸入欄；輸入欄有焦點時暫停辨識，避免打到一半被掃到的 QR 帶走
+  // 改用輸入代碼：在原位展開輸入欄；輸入欄有焦點、或代碼正在查的時候暫停辨識，避免被掃到的 QR 帶走
   const [typing, setTyping] = useState(false)
   const [typingFocused, setTypingFocused] = useState(false)
   const [code, setCode] = useState('')
@@ -35,18 +35,19 @@ export function ScanPage() {
   const foundTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   useEffect(() => () => clearTimeout(foundTimer.current), [])
 
-  // 回首頁一律回「我學的課」：掃描按鈕和 S6／S7 只在那個分頁，只教課的帳號預設會落在「我教的課」，對話框就跟著不見
+  // 回首頁：S6／S7 由首頁的掃描按鈕顯示
   function leave(notice?: ScanNotice) {
     clearTimeout(foundTimer.current)
     const state: ScanNoticeState | undefined = notice ? { scanNotice: notice } : undefined
-    navigate('/?tab=learn', { replace: true, state })
+    navigate('/', { replace: true, state })
   }
 
   useCamera(video, () => setPhase('scanning'), leave)
   // 掃到本站的 QR：停止辨識、顯示 S4，半秒後進加入畫面。同一個 QR 一直對著鏡頭也只導頁一次；S4 期間按關閉就不導頁。
   // 不認得的 QR：S5，相機繼續開著、繼續掃，提示留到掃到本站的 QR 為止
   function onText(text: string) {
-    if (found.current) return
+    // 手打的代碼正在查：讓查詢的結果決定去哪，不然兩邊會各導一次頁
+    if (found.current || lookup.busy) return
     const qr = parseScannedQr(text, window.location.href)
     if (qr.kind === 'unknown') {
       setUnknown(true)
@@ -63,16 +64,17 @@ export function ScanPage() {
     void lookup.lookUp(code)
   }
 
-  useQrScanner(video, frame, phase === 'scanning' && !typingFocused, onText, () => leave('unavailable'))
+  // 點「加入」送出時輸入欄會失去焦點，所以查詢進行中也要暫停辨識
+  useQrScanner(video, frame, phase === 'scanning' && !typingFocused && !lookup.busy, onText, () => leave('unavailable'))
   const aiming = phase === 'scanning' || phase === 'found'
   const frameState = phase === 'found' ? 'found' : unknown ? 'unknown' : 'aiming'
 
   return <main className={styles.page} data-phase={phase}>
     <video ref={video} className={styles.video} data-phase={phase === 'opening' ? 'opening' : 'live'} autoPlay playsInline muted aria-hidden="true" />
     <div className={styles.top}>
-      <button type="button" className={styles.close} aria-label={tc('close')} onClick={() => leave()}>
+      <IconButton label={tc('close')} className={styles.close} onClick={() => leave()}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-      </button>
+      </IconButton>
     </div>
     <div className={styles.heading} aria-live="polite">
       {aiming && <h1 className={styles.title}>{t(phase === 'found' ? 'scan.page.foundTitle' : 'scan.page.aimTitle')}</h1>}
@@ -124,7 +126,7 @@ export function ScanPage() {
             <Button type="submit" variant="primary" className={styles.codeSubmit} disabled={lookup.busy}>{t('join.phoneSubmit')}</Button>
           </fieldset>
         </form>
-        : <Button className={styles.useCode} aria-expanded={false} disabled={phase === 'found'} onClick={() => setTyping(true)}>
+        : <Button className={styles.useCode} disabled={phase === 'found'} onClick={() => setTyping(true)}>
           {t('scan.page.useCode')}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
         </Button>}

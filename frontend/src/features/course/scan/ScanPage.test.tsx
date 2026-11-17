@@ -9,6 +9,22 @@ import { SCAN_INTERVAL_MS } from './useQrScanner'
 import { ScanPage } from './ScanPage'
 
 jest.mock('./qrDetector', () => ({ loadQrDetector: jest.fn() }))
+// 記下每一次換頁的呼叫：同一個 tick 裡換兩次頁，React 只會 render 最後一次，從畫面上的網址數不出來
+const mockNavigations: unknown[][] = []
+jest.mock('react-router-dom', () => {
+  const actual = jest.requireActual<typeof import('react-router-dom')>('react-router-dom')
+  const { useCallback } = jest.requireActual<typeof import('react')>('react')
+  return {
+    ...actual,
+    useNavigate() {
+      const navigate = actual.useNavigate()
+      return useCallback((...args: Parameters<typeof navigate>) => {
+        mockNavigations.push(args)
+        return navigate(...(args as [never]))
+      }, [navigate])
+    },
+  }
+})
 jest.mock('../../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
   return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn() }
@@ -48,6 +64,7 @@ function Home() {
 }
 
 function open() {
+  mockNavigations.length = 0
   return render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
     <Routes>
       <Route path="/scan" element={<ScanPage />} />
@@ -101,7 +118,7 @@ test('a refused camera goes home with S6 and leaves no scan page in history', as
   getUserMedia.mockRejectedValue(new DOMException('Permission denied', 'NotAllowedError'))
   open()
   await flush()
-  expect(where()).toHaveTextContent(/^\/\?tab=learn$/)
+  expect(where()).toHaveTextContent(/^\/$/)
   expect(JSON.parse(where().dataset.state!)).toEqual({ scanNotice: 'denied' })
   fireEvent.click(screen.getByRole('button', { name: 'browser back' }))
   expect(where()).toHaveTextContent('/elsewhere')
@@ -116,7 +133,7 @@ test.each([
   setup()
   open()
   await flush()
-  expect(where()).toHaveTextContent(/^\/\?tab=learn$/)
+  expect(where()).toHaveTextContent(/^\/$/)
   expect(JSON.parse(where().dataset.state!)).toEqual({ scanNotice: 'unavailable' })
   fireEvent.click(screen.getByRole('button', { name: 'browser back' }))
   expect(where()).toHaveTextContent('/elsewhere')
@@ -165,7 +182,7 @@ test('close goes home without a notice, replaces history and stops the camera', 
   open()
   await flush()
   fireEvent.click(screen.getByRole('button', { name: '關閉' }))
-  expect(where()).toHaveTextContent(/^\/\?tab=learn$/)
+  expect(where()).toHaveTextContent(/^\/$/)
   expect(where().dataset.state).toBe('')
   expect(track.stop).toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'browser back' }))
@@ -341,6 +358,8 @@ test('reading stops once a QR is found, and the same QR held in view navigates o
   expect(detect.mock.calls.length).toBe(reads)
   act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 4) })
   expect(where()).toHaveTextContent('/join?code=KNB6ZE33')
+  // 換到同一個網址兩次，網址看起來一樣，要數換頁的呼叫才看得出導了幾次
+  expect(mockNavigations).toEqual([['/join?code=KNB6ZE33', { replace: true }]])
 })
 
 test('closing during S4 cancels the navigation', async () => {
@@ -350,7 +369,7 @@ test('closing during S4 cancels the navigation', async () => {
   await readOnce()
   fireEvent.click(screen.getByRole('button', { name: '關閉' }))
   act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 2) })
-  expect(where()).toHaveTextContent(/^\/\?tab=learn$/)
+  expect(where()).toHaveTextContent(/^\/$/)
   expect(track.stop).toHaveBeenCalled()
 })
 
@@ -421,7 +440,6 @@ test('tapping the code button opens a code field in place and focuses it', async
   open()
   await flush()
   const button = screen.getByRole('button', { name: /改用輸入代碼/ })
-  expect(button).toHaveAttribute('aria-expanded', 'false')
   fireEvent.click(button)
   expect(screen.getByLabelText('課程代碼')).toHaveFocus()
   expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
@@ -509,4 +527,35 @@ test('during S4 the code button is shown but cannot be used', async () => {
   await playing()
   await readOnce()
   expect(screen.getByRole('button', { name: /改用輸入代碼/ })).toBeDisabled()
+})
+
+test('leaving while a typed code is still being looked up does not go to the join page later', async () => {
+  const pending = deferred<unknown>()
+  mockApi({ 'GET /course-join/preview?code=TYPED123': () => pending.promise })
+  await playing()
+  await typeCode('TYPED123')
+  fireEvent.click(screen.getByRole('button', { name: '關閉' }))
+  const home = where().textContent
+  await act(async () => { pending.resolve({ course_id: 'c-1', already_enrolled: false }) })
+  await flush()
+  expect(where().textContent).toBe(home)
+})
+
+test('while a typed code is being looked up, a QR in view does not take the student away', async () => {
+  jest.useFakeTimers()
+  const pending = deferred<unknown>()
+  mockApi({ 'GET /course-join/preview?code=TYPED123': () => pending.promise })
+  await playing()
+  const field = await typeCode('TYPED123')
+  // 點「加入」時輸入欄會失去焦點（Android 的按鈕會拿到焦點）
+  fireEvent.blur(field)
+  detect.mockClear().mockResolvedValue(COURSE_QR)
+  await readOnce()
+  await readOnce()
+  act(() => { jest.advanceTimersByTime(FOUND_DELAY_MS * 2) })
+  expect(screen.getByTestId('scan-frame')).toHaveAttribute('data-state', 'aiming')
+  expect(where()).toHaveTextContent('/scan')
+  await act(async () => { pending.resolve({ course_id: 'c-1', already_enrolled: false }) })
+  await flush()
+  expect(where()).toHaveTextContent('/join?code=TYPED123')
 })

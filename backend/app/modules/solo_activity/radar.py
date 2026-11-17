@@ -48,6 +48,8 @@ from app.modules.solo_activity.repositories import SoloAttempt, SoloRadar
 
 EMBEDDING_MIN_STUDENTS = 15
 MAX_AXES = 5
+# A radar needs three axes to draw a shape; with fewer the class is scored by the model instead.
+MIN_AXES = 3
 # An axis must explain this share of the variance between the students' summaries.
 MIN_AXIS_SHARE = 0.10
 POLE_STUDENTS = 5
@@ -228,7 +230,7 @@ async def _vector_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
     except EmbeddingUnavailable:
         return None
     axes = principal_axes(vectors, MAX_AXES, MIN_AXIS_SHARE)
-    if not axes:
+    if len(axes) < MIN_AXES:
         return None
     context = {
         **prepared["activity_context"],

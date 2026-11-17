@@ -20,6 +20,11 @@
   --ui-color-on-dark-soft: rgba(255, 255, 255, 0.86);
   --ui-color-on-dark-line: rgba(255, 255, 255, 0.6);
   --ui-color-scrim: rgba(0, 0, 0, 0.38);
+  /* 深色底上的半透明欄（掃描頁的「改用輸入代碼」）：底、框線、分隔線、字 */
+  --ui-color-on-dark-field: rgba(23, 37, 31, 0.87);
+  --ui-color-on-dark-field-line: rgba(255, 255, 255, 0.44);
+  --ui-color-on-dark-divider: rgba(255, 255, 255, 0.25);
+  --ui-color-on-dark-muted: rgba(255, 255, 255, 0.7);
   /* 深色底上的紅色線條（S5 的對準框）：--ui-color-danger 壓在深色上不到 3:1，看不清楚 */
   --ui-color-danger-on-dark: #E5534B;
 

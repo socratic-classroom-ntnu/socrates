@@ -123,12 +123,16 @@ export function ScanPage() {
               onBlur={() => setTypingFocused(false)}
               onChange={event => { setCode(event.target.value); lookup.clearFailure() }}
             />
-            <Button type="submit" variant="primary" className={styles.codeSubmit} disabled={lookup.busy}>{t('join.phoneSubmit')}</Button>
+            <Button type="submit" className={styles.codeSubmit} disabled={lookup.busy}>{t('join.phoneSubmit')}</Button>
           </fieldset>
         </form>
         : <Button className={styles.useCode} disabled={phase === 'found'} onClick={() => setTyping(true)}>
-          {t('scan.page.useCode')}
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          {/* Figma S3「輸入代碼欄」：半透明深色欄，左邊鉛筆、右邊隔一條線的箭頭方塊 */}
+          <svg className={styles.useCodeEdit} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" /></svg>
+          <span className={styles.useCodeText}>{t('scan.page.useCode')}</span>
+          <span className={styles.useCodeGo} aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </span>
         </Button>}
     </div>
   </main>

@@ -68,26 +68,45 @@
 
 .bottom { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 40px max(40px, 7vh); }
 .hint { margin: 0; color: var(--ui-color-on-dark-soft); font-size: 13px; line-height: 1.5; text-align: center; }
+/* Figma S3「輸入代碼欄」（縮圖 144 寬 → 375，約 ×2.6）：高 48、圓角 9、左距 16、圖示 18、字 15 */
 .useCode {
-  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px;
-  border: 0; border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-primary); font-size: 16px; font-weight: 700;
+  display: flex; align-items: stretch; justify-content: flex-start; gap: 8px; width: 100%; min-height: 48px; padding: 0 0 0 16px; overflow: hidden;
+  border: 1px solid var(--ui-color-on-dark-field-line); border-radius: 9px; background: var(--ui-color-on-dark-field);
+  color: var(--ui-color-on-dark-muted); font-size: 15px; font-weight: 400; text-align: left;
 }
-.useCode:hover { background: var(--ui-color-panel-hover); }
+.useCode:hover { border-color: var(--ui-color-on-dark-line); color: var(--ui-color-on-dark); }
+.useCode:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: 2px; }
 .useCode:disabled { opacity: 1; cursor: default; }
+.useCodeEdit { flex-shrink: 0; align-self: center; }
+.useCodeText { flex: 1 1 auto; align-self: center; }
+.useCodeGo {
+  display: flex; flex-shrink: 0; align-items: center; justify-content: center; padding: 0 12px;
+  border-left: 1px solid var(--ui-color-on-dark-divider); color: var(--ui-color-on-dark);
+}
 
-/* 改用輸入代碼：在按鈕的位置展開成輸入欄＋加入 */
+/* 改用輸入代碼：在原位展開成同一條深色欄，左邊輸入、右邊方塊換成「加入」（Fizzy 11/18：展開前後同一條欄） */
 .codeForm { margin: 0; }
-.codeRow { display: flex; gap: 8px; margin: 0; padding: 0; border: 0; min-width: 0; }
+/* fieldset 當 flex 容器時，min-height 傳不到裡面那層，所以高度給在輸入欄和「加入」上（48 − 上下框線） */
+.codeRow {
+  display: flex; align-items: stretch; min-width: 0; margin: 0; padding: 0; overflow: hidden;
+  border: 1px solid var(--ui-color-on-dark-field-line); border-radius: 9px; background: var(--ui-color-on-dark-field);
+}
+.codeRow:focus-within { border-color: var(--ui-color-on-dark); }
+.codeRow:has(.codeInput[aria-invalid="true"]) { border-color: var(--ui-color-danger-on-dark); }
 .codeInput {
-  flex: 1 1 auto; min-width: 0; min-height: 50px; box-sizing: border-box; padding: 0 14px;
-  border: 2px solid transparent; border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-ink);
+  flex: 1 1 auto; min-width: 0; height: 46px; box-sizing: border-box; padding: 0 16px;
+  border: 0; background: transparent; color: var(--ui-color-on-dark);
   font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase;
 }
-.codeInput::placeholder { color: var(--ui-color-muted); letter-spacing: normal; text-transform: none; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; }
-.codeInput:focus { outline: none; border-color: var(--ui-color-primary); }
-.codeInput[aria-invalid="true"] { border-color: var(--ui-color-danger); }
+.codeInput::placeholder { color: var(--ui-color-on-dark-muted); letter-spacing: normal; text-transform: none; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; }
+.codeInput:focus { outline: none; }
 .codeInput:disabled { opacity: 1; }
-.codeSubmit { flex-shrink: 0; min-height: 50px; padding: 0 20px; font-size: 16px; }
+.codeSubmit {
+  flex-shrink: 0; height: 46px; min-height: 0; padding: 0 16px; border: 0; border-left: 1px solid var(--ui-color-on-dark-divider); border-radius: 0;
+  background: transparent; color: var(--ui-color-on-dark); font-size: 15px; font-weight: 700;
+}
+.codeSubmit:hover:not(:disabled) { background: var(--ui-color-on-dark-divider); }
+.codeSubmit:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: -4px; }
 
 /* 代碼查不到：放在輸入欄上方，跟首頁一樣的文字；淡紅底在深色畫面上也讀得清楚 */
 .codeError { display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.6; text-align: left; }

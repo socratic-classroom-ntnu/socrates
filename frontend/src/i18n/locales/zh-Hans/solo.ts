@@ -16,6 +16,7 @@ export default {
   },
   dialogue: { back: '回到活动页', backToPractice: '回到我的对话', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}' },
   scenarioTitle: '情境 {{number}}', teacherSource: '情境由老师设置，苏格拉底不会改写它',
+  board: { expand: '展开情境', collapse: '收起情境' },
   myAnswer: '我的回答', answerPending: '送出第一个回答后会出现在这里。',
   aboutTitle: '这段对话在做什么',
   aboutBody: '苏格拉底不评断对错，只会一直问你“为什么”，帮你把理由和例外说清楚。你准备好时，它会整理你的想法，请你确认。',
@@ -54,11 +55,11 @@ export default {
     label: '说说哪里不对', hint: '说完后，苏格拉底可能再问你一两句，然后重新整理给你确认。',
   },
   viewpoint: {
-    title: '我试着整理你的想法，这样说对吗？', subtitle: '苏格拉底整理，是否正确由你决定',
+    title: '我试着整理你的想法，这样说对吗？',
     reason: '理由', conditions: '条件',
     principle: '接近的想法：{{principle}}', principleNote: '这只是参考，不是你的标签。',
     confirm: '对，这就是我的想法', revise: '不太对，我想再说清楚',
-    cappedTitle: '消息已达上限，这是到目前为止的整理', cappedSubtitle: '苏格拉底整理；这个情境不会标成“已确认”', cappedConfirm: '好，我知道了',
+    cappedTitle: '消息已达上限，这是到目前为止的整理。这个情境不会标成“已确认”。', cappedConfirm: '好，我知道了',
     principles: { consequentialism: '后果主义', deontology: '义务论', mixed: '混合' },
   },
   review: {

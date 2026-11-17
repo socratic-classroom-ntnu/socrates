@@ -37,6 +37,14 @@ test('expired and invalid snapshots are removed', async () => {
   expect(kv.data.size).toBe(0)
 })
 
+test('a snapshot from the single-input form (no scenario) is dropped', async () => {
+  const single = activityDraftKey('u-1', { kind: 'new', courseId: 'c-1' })
+  const { scenario: _dropped, ...withoutScenario } = emptyForm()
+  void _dropped
+  kv.data.set(single, { version: 1, form: { ...withoutScenario, title: '舊的單一輸入' }, updatedAt: new Date().toISOString() })
+  expect(await loadActivityDraft(single)).toBeNull()
+})
+
 test('purge removes only expired snapshots', async () => {
   const fresh = activityDraftKey('u-1', { kind: 'new', courseId: 'c-1' })
   const stale = activityDraftKey('u-1', { kind: 'new', courseId: 'c-2' })

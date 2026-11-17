@@ -26,12 +26,22 @@
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px;
   padding: 16px 28px; border-top: 1px solid #ECECE8;
 }
+.dialog__panel--wide { width: 820px; }
 .dialog__panel--danger .dialog__header { border-bottom: 1px solid #ECECE8; padding-bottom: 16px; }
 .dialog--right { align-items: stretch; justify-content: flex-end; padding: 0; }
 .dialog--right .dialog__panel { width: 460px; max-height: none; height: 100%; border-radius: 0; box-shadow: -12px 0 32px rgba(0, 0, 0, 0.16); }
 .dialog--right .dialog__header { padding: 22px 28px 14px; }
 .dialog--right .dialog__header h2 { font-size: 22px; }
 .dialog--right .dialog__body { flex-grow: 1; padding: 4px 28px 20px; }
+.dialog--bottom { align-items: flex-end; padding: 0; }
+.dialog--bottom .dialog__panel {
+  width: 100%; max-height: 90dvh; border-radius: 18px 18px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.16);
+  padding: 8px 16px calc(28px + env(safe-area-inset-bottom)); animation: dialog-sheet-up 0.2s ease-out;
+}
+.dialog--bottom .dialog__body { padding: 0; }
+.dialog__handle { align-self: center; width: 40px; height: 5px; margin-bottom: 8px; border-radius: 3px; background: var(--ui-color-border); }
+@keyframes dialog-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .dialog--bottom .dialog__panel { animation: none; } }
 .dialog button:focus-visible, .dialog a:focus-visible, .dialog input:focus-visible, .dialog textarea:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
 @media (max-width: 767px) {
   .dialog__header, .dialog__description, .dialog__body, .dialog__footer { padding-left: 20px; padding-right: 20px; }

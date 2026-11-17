@@ -19,8 +19,8 @@ type Props = {
   trigger: ReactNode
   items: MenuItem[]
   align?: 'start' | 'end'
-  /** Where the menu opens relative to the trigger. */
-  placement?: 'below' | 'above'
+  /** Where the menu opens relative to the trigger; `right` sits beside it, bottoms aligned (sidebar account menu). */
+  placement?: 'below' | 'above' | 'right'
   triggerClassName?: string
   /** Extra content at the top of the menu, such as the account header in S2. */
   header?: ReactNode

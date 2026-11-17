@@ -79,7 +79,7 @@ def test_learning_card_highlight_order(client, monkeypatch):
     assert card["highlight"]["id"] == sooner["id"]
     assert card["highlight"]["status"] == "open"
     assert card["highlight"]["title"] == "早結束"
-    assert card["highlight"]["question_count"] == 1
+    assert "question_count" not in card["highlight"]
 
     switch(client, teacher)
     clock[0] = start + 3
@@ -128,13 +128,16 @@ def test_deleted_activity_is_excluded_everywhere(client):
     teacher, course = teacher_with_course(client)
     kept = publish(client, course["id"], title="留下的")
     gone = publish(client, course["id"], title="刪掉的", ends_at=time.time() + 600)
+    student = user(client, "learner")
     join(client, course["code"])
+    switch(client, teacher)
     assert client.delete(f"/api/v2/activities/{gone['id']}").status_code == 204
 
-    both = lists(client)
-    teaching, learning = both["teaching"][0], both["learning"][0]
+    teaching = lists(client)["teaching"][0]
     assert teaching["activity_count"] == 1
     assert teaching["open_activity_count"] == 1
+    switch(client, student)
+    learning = lists(client)["learning"][0]
     assert learning["open_activity_count"] == 1
     assert learning["highlight"]["id"] == kept["id"]
     preview = client.get(f"/api/v2/course-join/preview?code={course['code']}")
@@ -148,13 +151,20 @@ def test_deleted_activity_is_excluded_everywhere(client):
         assert response.json() == {"detail": "ACTIVITY_NOT_FOUND"}
 
 
-def _account_with_courses(client, name, how_many):
-    user(client, name)
+def _teacher_and_student_with_courses(client, name, how_many):
+    """A teacher account owning how_many courses, and a student account enrolled in all of them;
+    one account cannot be both."""
+    teacher = user(client, f"{name}-teacher", account_role="teacher")
+    codes = []
     for index in range(how_many):
         course = create_course(client, name=f"{name}-{index}")
         publish(client, course["id"])
         create_activity(client, course["id"])
-        join(client, course["code"])
+        codes.append(course["code"])
+    student = user(client, f"{name}-student")
+    for code in codes:
+        join(client, code)
+    return teacher, student
 
 
 def _queries_for_course_lists(client):
@@ -173,11 +183,16 @@ def _queries_for_course_lists(client):
 
 
 def test_home_cards_use_bounded_queries(client):
-    _account_with_courses(client, "one", 1)
-    one, one_body = _queries_for_course_lists(client)
-    _account_with_courses(client, "five", 5)
-    five, five_body = _queries_for_course_lists(client)
+    counts = {}
+    bodies = {}
+    for name, how_many in (("one", 1), ("five", 5)):
+        teacher, _ = _teacher_and_student_with_courses(client, name, how_many)
+        counts[name, "learning"], bodies[name, "learning"] = _queries_for_course_lists(client)
+        switch(client, teacher)
+        counts[name, "teaching"], bodies[name, "teaching"] = _queries_for_course_lists(client)
 
-    assert len(one_body["teaching"]) == 1 and len(five_body["learning"]) == 5
-    assert all(card["highlight"] is not None for card in five_body["learning"])
-    assert one == five
+    assert len(bodies["five", "teaching"]["teaching"]) == 5
+    assert len(bodies["five", "learning"]["learning"]) == 5
+    assert all(card["highlight"] is not None for card in bodies["five", "learning"]["learning"])
+    assert counts["one", "learning"] == counts["five", "learning"]
+    assert counts["one", "teaching"] == counts["five", "teaching"]

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useT } from '../../i18n/useT'
 import { clearSoloDraft, readSoloDraft, soloDraftKey, writeSoloDraft } from './soloDraft'
-import { can, optionLetter, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
+import { can, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { useSoloSpeechInput } from './useSoloSpeechInput'
 
 type Props = {
@@ -13,14 +13,11 @@ type Props = {
 
 export function SoloComposer({ view, pending, sending = false, onSend }: Props) {
   const { t, locale } = useT('solo')
-  const draftKey = soloDraftKey(view.id, view.question_index, 'composer')
+  const draftKey = soloDraftKey(view.id, view.scenario_index)
   const [text, setText] = useState(() => readSoloDraft(draftKey))
   const [reviseHint, setReviseHint] = useState<NonNullable<SoloSendMessageBody['revise_hint']> | null>(null)
-  const [newOptionId, setNewOptionId] = useState<string | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const canSend = can(view, 'send_message')
-  const question = view.questions.find(item => item.index === view.question_index)
-  const currentOptionId = question?.stance?.current_option_id ?? null
   const speech = useSoloSpeechInput(locale, transcript => {
     const next = text.trimEnd() ? `${text.trimEnd()} ${transcript}` : transcript
     updateText(next)
@@ -28,6 +25,8 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
 
   // A1w: while the tutor is thinking the composer stays, disabled, saying the message is stored.
   const awaiting = view.state === 'awaiting_tutor'
+  // The first message of a scenario is the student's own answer, in the same box.
+  const answering = view.state === 'answering'
   // X2: the retry lives in the conversation; here only a note that answering resumes later.
   if (view.state === 'tutor_unavailable') {
     return <section className="solo-composer"><p className="solo-composer__paused">{t('composer.unavailablePlaceholder')}</p></section>
@@ -38,17 +37,15 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
   const disabled = pending || !canSend
   async function submit() {
     const message = text.trim()
-    if (!message || disabled || (reviseHint === 'changed_mind' && !newOptionId)) return
+    if (!message || disabled) return
     const body: SoloSendMessageBody = { text: message }
     if (view.revising && reviseHint) body.revise_hint = reviseHint
-    if (view.revising && reviseHint === 'changed_mind' && newOptionId) body.new_option_id = newOptionId
     const sent = await onSend(body)
     if (sent) {
       clearSoloDraft(draftKey)
       setText('')
       // The composer outlives the confirmation that follows; a later 不太對 starts fresh.
       setReviseHint(null)
-      setNewOptionId(null)
     }
   }
 
@@ -66,7 +63,6 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
   function chooseHint(value: NonNullable<SoloSendMessageBody['revise_hint']>) {
     const next = reviseHint === value ? null : value
     setReviseHint(next)
-    setNewOptionId(null)
     // A quick option only adds structured metadata. Keep the student's own words intact and
     // put the cursor back where they were writing.
     window.requestAnimationFrame(() => {
@@ -77,10 +73,8 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
     })
   }
 
-  const changedMind = reviseHint === 'changed_mind'
-  const newOptions = question?.options.filter(option => option.id !== currentOptionId) ?? []
   const selectedHint = quick.find(option => option.value === reviseHint)?.label
-  const sendDisabled = disabled || !text.trim() || (changedMind && !newOptionId)
+  const sendDisabled = disabled || !text.trim()
 
   return <section className="solo-composer">
     {view.revising && canSend && <div className="solo-composer__quick" role="group" aria-label={t('revise.quickLabel')}>
@@ -94,24 +88,7 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
         onClick={() => chooseHint(option.value)}
       >{reviseHint === option.value && <span aria-hidden="true">✓</span>}{option.label}</button>)}
     </div>}
-    {view.revising && canSend && changedMind && question && <fieldset className="solo-composer__new-stance" disabled={disabled}>
-      <legend>{t('revise.newStance')}</legend>
-      <p>{t('revise.originalStance')}</p>
-      <div className="solo-stance__options">
-        {newOptions.map(option => {
-          const index = question.options.findIndex(item => item.id === option.id)
-          return <button
-            key={option.id}
-            type="button"
-            className="solo-stance__option"
-            data-option={optionLetter(index)}
-            aria-pressed={newOptionId === option.id}
-            onClick={() => setNewOptionId(option.id)}
-          ><span>{optionLetter(index)}</span>{option.text}</button>
-        })}
-      </div>
-    </fieldset>}
-    <label htmlFor="solo-answer">{view.revising ? t('revise.label') : t('composer.label')}</label>
+    <label htmlFor="solo-answer">{view.revising ? t('revise.label') : answering ? t('composer.answerLabel') : t('composer.label')}</label>
     <div className="solo-composer__entry">
       <textarea
         ref={inputRef}
@@ -119,7 +96,7 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
         value={text}
         maxLength={4000}
         disabled={disabled}
-        placeholder={disabled ? t('composer.waitingPlaceholder') : t('composer.placeholder')}
+        placeholder={disabled ? t('composer.waitingPlaceholder') : answering ? t('composer.answerPlaceholder') : t('composer.placeholder')}
         onChange={event => updateText(event.target.value)}
       />
       {speech.supported && <button
@@ -140,10 +117,8 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
       ? t('composer.sendingHint')
       : pending || awaiting
         ? t('composer.savedHint')
-        : changedMind && !newOptionId
-          ? t('revise.chooseNewHint')
-          : selectedHint
-            ? t('revise.selectedHint', { option: selectedHint })
-            : view.revising ? t('revise.hint') : t('composer.hint')}</p>
+        : selectedHint
+          ? t('revise.selectedHint', { option: selectedHint })
+          : view.revising ? t('revise.hint') : answering ? t('composer.answerHint') : t('composer.hint')}</p>
   </section>
 }

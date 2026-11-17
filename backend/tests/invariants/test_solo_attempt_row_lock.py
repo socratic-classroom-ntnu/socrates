@@ -3,9 +3,9 @@
 solo_activity/service.py 的 _locked_attempt 用 SELECT … FOR UPDATE 鎖住 attempt 列，每個動作的
 Tx1 都從這裡開始。SQLite 沒有列鎖，所以這裡用真的 Postgres、兩條獨立連線、各自一個交易：
 第一條線拿到鎖後先不 commit，確認第二條線的同一個動作「還沒」拿到鎖；第一條線 commit 後，
-第二條線才拿到鎖，而且看到的是第一條線寫下的狀態——它的 submit_stance 已不在 available_actions
+第二條線才拿到鎖，而且看到的是第一條線寫下的狀態——它的 send_message 已不在 available_actions
 裡，被拒絕，不會再存一則學生訊息。這個順序本身就是證據；把 .with_for_update() 拿掉，
-第二條線會立刻拿到舊狀態、也送出立場，這個測試就會失敗。
+第二條線會立刻拿到舊狀態、也送出回答，這個測試就會失敗。
 """
 
 import os
@@ -24,7 +24,7 @@ from app.modules.identity_access.repositories import Account
 from app.modules.platform import storage
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity import service
-from app.modules.solo_activity.contracts import SubmitStanceBody
+from app.modules.solo_activity.contracts import SendMessageBody
 from app.modules.solo_activity.repositories import SoloMessage
 from tests.solo_activity.test_solo_attempts_api import ok, setup, start
 
@@ -75,10 +75,10 @@ def test_a_second_action_waits_for_the_first_to_commit(postgres_client):
         try:
             with storage.transaction() as db:
                 account = db.get(Account, student_id)
-                body = SubmitStanceBody(option_id="o1", reason=f"{name} 的理由")
+                body = SendMessageBody(text=f"{name} 的理由")
                 try:
                     service.begin_action(
-                        db, account, attempt_id, "submit_stance", body, service.now()
+                        db, account, attempt_id, "send_message", body, service.now()
                     )
                     order.append(f"{name}_acted")
                 except DomainError as error:

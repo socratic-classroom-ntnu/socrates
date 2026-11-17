@@ -20,6 +20,7 @@
 | `ai_script_authoring` | 教師出題助手（`app/modules/content_authoring/routes/script_assist.py`） |
 | `other_suggestion` | 其他觀點建議（`app/modules/group_dialogue/routes/ai_students.py`） |
 | `solo_tutor` | 單人活動的導師（`app/modules/solo_activity/service.py`） |
+| `scenario_extension` | 單人活動的延伸情境（由 solo-activity 呼叫；失敗時由它的後備做法接手） |
 
 ## 每次呼叫做什麼
 
@@ -28,7 +29,9 @@
 3. **送出前檢查**：
    - `no_leak`：回應不得逐字包含鐵則或程式模板（連續 14 個字以上相同即算）。
    - `pull_back`（導師）：`guard` 不是 `on_topic`，或前處理有命中時，回應要有一個與本題有關的提問。
-4. **不合格**：附上原因重新產生一次；仍不合格，把可見文字換成路由指定的拉回句。摘要與出題沒有拉回句，改為這次呼叫失敗，交給既有的後備流程。
+   - `language`：context 有 `output_locale` 時，模型寫給人看的文字要是這個語言（只比對文字系統；引用的原話、`normalized_text`、id 與列舉值不算）。
+   - `citations`：引用的 `quote` 必須逐字出現在 context `student_messages` 裡同一個 `ref` 的那一則；找不到的引用直接丟掉，模型給了引用卻沒有一個有效時算不合格。
+4. **不合格**：附上原因重新產生一次；仍不合格，把可見文字換成路由指定的拉回句。語言或引用仍不合格時一律回 `IronRuleCheckFailed`（`reason` 是 `WRONG_LANGUAGE`／`NO_VALID_CITATION`），因為拉回句是固定的中文、沒有引用，修不好這兩種。摘要與出題沒有拉回句，改為這次呼叫失敗，交給既有的後備流程。
 5. 可見文字只有在檢查通過後才串流給教室；重新產生的那次呼叫也算進用量與費用。每次呼叫的 audit 帶 `iron_rules`（版本、前處理結果、guard、結果 `pass`／`regenerated`／`fallback`、原因）。
 
 ## 測試

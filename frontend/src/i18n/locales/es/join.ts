@@ -2,15 +2,29 @@ import type zhHant from '../zh-Hant/join';
 import type { Shape } from '../../shape';
 
 const join: Shape<typeof zhHant> = {
+  banner: {
+    fromCourse: 'Entrada por código QR del curso',
+    fromActivity: 'Entrada por código QR de la actividad',
+    joining: 'Te estás uniendo a: {{name}}',
+    ofCourse: 'Curso: {{name}}',
+  },
   login: {
-    noName: 'Inicia sesión para seguir',
-    title: 'Iniciar sesión',
     submitCourse: 'Iniciar sesión y unirme',
-    submitActivity: 'Iniciar sesión y continuar',
+    submitActivity: 'Iniciar sesión y unirme a la actividad',
     register: '¿No tienes cuenta? Regístrate',
     forgot: 'Olvidé mi contraseña',
     registerNote: 'Después de registrarte también volverás a este curso.',
-    joining: 'Inicia sesión para unirte',
+    titleCourse: 'Unirse al curso',
+    titleActivity: 'Unirse a la actividad',
+    registerNoteActivity: 'Al terminar el registro, volverás automáticamente a esta actividad.',
+    titleCourseLogin: 'Inicia sesión para unirte al curso',
+    titleActivityLogin: 'Inicia sesión para unirte a la actividad',
+    restrictedCourse: 'Este curso requiere una cuenta de estudiante: inicia sesión o regístrate',
+    restrictedActivity: 'El curso de esta actividad requiere una cuenta de estudiante: inicia sesión o regístrate',
+    closedCourse: 'Este curso ahora requiere iniciar sesión o registrarte para unirte',
+    closedActivity: 'El curso de esta actividad ahora requiere iniciar sesión o registrarte para unirte',
+    closedIntroCourse: 'La forma de unirse a este curso cambió. Continúa con una cuenta de estudiante.',
+    closedIntroActivity: 'La forma de unirse a esta actividad cambió. Continúa con una cuenta de estudiante.',
   },
   course: {
     phoneTitle: '¿Unirte a este curso?',
@@ -41,8 +55,6 @@ const join: Shape<typeof zhHant> = {
     notFoundTitle: 'No encontramos esta actividad',
     notFoundBody: 'Puede que el enlace haya caducado o que tu docente haya eliminado la actividad.',
     byline: '{{course}} · Docente: {{teacher}}',
-    questions: 'Preguntas',
-    questionCount: '{{count}}',
     openUntil: 'Abierta hasta',
     opens: 'Se abre',
     opensAt: 'desde el {{start}}',

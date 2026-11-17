@@ -1,4 +1,6 @@
 import { act, fireEvent, screen, within } from '@testing-library/react'
+import { Route } from 'react-router-dom'
+import { AppShell } from '../../../app/AppShell'
 import { ApiError } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
 import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
@@ -13,7 +15,7 @@ jest.mock('../../../contract/classroomClient', () => {
 const now = Math.floor(Date.now() / 1000)
 const course = { role: 'student', id: 'c-1', name: '哲學導論', teacher_name: '王思齊', intro: '', code: '3CKTGE7Q', display_name: '小美' }
 const card = (id: string, status: 'open' | 'scheduled' | 'ended', title: string) => ({
-  id, title, status, question_count: 2,
+  id, title, status, 
   starts_at: status === 'scheduled' ? now + 3600 : now - 7200,
   ends_at: status === 'ended' ? now - 60 : now + 86400,
 })
@@ -74,7 +76,6 @@ test('desktop open card is a whole-card link and keeps the start button', async 
   expect(card).toHaveAttribute('href', '/learn/activities/o1')
   expect(card).toHaveClass('learn-card__stretch')
   expect(within(article).getAllByRole('link')).toHaveLength(2)
-  expect(article).toHaveTextContent('2 題')
   expect(article).toHaveTextContent('開放到')
 })
 
@@ -83,7 +84,7 @@ test('phone open card is a whole-card link without buttons', async () => {
   open()
   const link = await screen.findByRole('link', { name: /第三週倫理討論/ })
   expect(link).toHaveAttribute('href', '/learn/activities/o1')
-  expect(link).toHaveTextContent('2 題 ・ 開放到')
+  expect(link).toHaveTextContent('開放到')
   expect(screen.queryByRole('link', { name: /^開始/ })).toBeNull()
   expect(screen.queryAllByRole('button').filter(button => button.closest('article'))).toHaveLength(0)
 })
@@ -155,4 +156,13 @@ test('es locale renders without Chinese', async () => {
 test('empty filter explains itself', async () => {
   open({}, [card('o1', 'open', '第三週倫理討論')], '/learn/courses/c-1?filter=ended')
   expect(await screen.findByText('沒有符合的活動')).toBeInTheDocument()
+})
+
+// P33：手機頂部列是「‹ 首頁」（畫布 S5m）：首頁已經沒有「我學的課」分頁
+test('the phone top bar goes back to home', async () => {
+  phone()
+  mockApi({ 'GET /courses/c-1?role=student': course, 'GET /courses/c-1/activities?role=student': { role: 'student', items } })
+  renderAt('/learn/courses/c-1', '/unused', null, <Route element={<AppShell />}><Route path="/learn/courses/:courseId" element={<StudentCoursePage />} /></Route>)
+  const back = (await screen.findAllByRole('link', { name: '首頁' })).find(link => link.closest('header'))
+  expect(back).toHaveAttribute('href', '/')
 })

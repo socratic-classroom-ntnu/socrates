@@ -1,7 +1,5 @@
-export type SoloDraftKind = 'stance' | 'composer'
-
-export function soloDraftKey(attemptId: string, questionIndex: number, kind: SoloDraftKind) {
-  return `solo:draft:${attemptId}:question:${questionIndex}:${kind}`
+export function soloDraftKey(attemptId: string, scenarioIndex: number) {
+  return `solo:draft:${attemptId}:scenario:${scenarioIndex}:composer`
 }
 
 export function readSoloDraft(key: string): string {

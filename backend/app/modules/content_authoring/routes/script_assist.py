@@ -14,6 +14,7 @@ from fastapi import APIRouter, Request
 from app.modules.content_authoring.contracts import (
     SampleQuestionSet,
     ScriptAssistRequest,
+    ScriptAssistView,
 )
 from app.modules.platform.storage import transaction
 from app.modules.content_authoring.service import (
@@ -25,7 +26,7 @@ from app.modules.content_authoring.service import assist_script
 router = APIRouter()
 
 
-@router.post("/scripts/assist")
+@router.post("/scripts/assist", response_model=ScriptAssistView)
 async def script_assist(body: ScriptAssistRequest, request: Request):
     from app.modules.identity_access.service import account
 

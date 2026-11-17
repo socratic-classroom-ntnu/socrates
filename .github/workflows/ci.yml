@@ -228,11 +228,15 @@ jobs:
   # Every push to stage/develop/master publishes <channel>-<UTC ts>-<sha> images.
   # Flux deploys each channel to its own host (flux-k8s, apps/base/socrates):
   # master -> socrates.driseam.com, stage -> -qa, develop -> -dev.
+  # backend/main publishes too, as channel backend-main (a tag cannot hold "/").
+  # No real environment follows that prefix; only the standing preview
+  # https://preview-backend-main.socrates.driseam.com uses its sha-<sha> tag
+  # (flux-k8s apps/base/socrates-preview/branches.yaml).
   release:
-    if: github.event_name == 'push' && contains(fromJSON('["stage","develop","master"]'), github.ref_name)
+    if: github.event_name == 'push' && contains(fromJSON('["stage","develop","master","backend/main"]'), github.ref_name)
     needs: [ci-required]
     permissions: {contents: read, packages: write}
     uses: ./.github/workflows/stage-release.yml
     with:
       source_sha: '${{ github.sha }}'
-      channel: '${{ github.ref_name }}'
+      channel: "${{ github.ref_name == 'backend/main' && 'backend-main' || github.ref_name }}"

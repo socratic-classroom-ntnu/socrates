@@ -19,3 +19,16 @@ export function useShellBack(to: string | null, label?: string): void {
     return () => setBack(null)
   }, [setBack, to, label])
 }
+
+// 外框導覽標哪一格，平常依網址判斷；網址判斷不出來時由頁面宣告
+// （例如「我的對話」的私人活動頁網址是 /learn/activities/…，但屬於「我的對話」，spec M20）。
+export type ShellActive = 'home' | 'dialogues' | null
+export const ShellActiveContext = createContext<(active: ShellActive) => void>(() => {})
+
+export function useShellActive(active: ShellActive): void {
+  const setActive = useContext(ShellActiveContext)
+  useEffect(() => {
+    setActive(active)
+    return () => setActive(null)
+  }, [setActive, active])
+}

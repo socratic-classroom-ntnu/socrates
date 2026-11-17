@@ -14,7 +14,6 @@ from tests.course_management.test_activities_api import (
     create_activity,
     draft,
     enrolled_student,
-    question,
     student_items,
     teacher_with_course,
 )
@@ -200,7 +199,7 @@ def test_unpublished_change_flag_tracks_revision(client):
     assert view(client, activity["id"])["has_unpublished_changes"] is False
     assert teacher_card(client, course["id"], activity["id"])["has_unpublished_changes"] is False
 
-    changed = draft(questions=[question(title="天橋上的陌生人")])
+    changed = draft(title="天橋上的陌生人")
     assert client.put(f"/api/v2/activities/{activity['id']}", json=changed).status_code == 200
     assert view(client, activity["id"])["has_unpublished_changes"] is True
     assert teacher_card(client, course["id"], activity["id"])["has_unpublished_changes"] is True
@@ -214,6 +213,30 @@ def test_unpublished_change_flag_tracks_revision(client):
     assert response.json()["has_unpublished_changes"] is False
 
 
+def test_scenario_edit_on_published_activity_is_pending_until_publish(client):
+    teacher, course = teacher_with_course(client)
+    activity = published(client, course["id"])
+
+    changed = draft(scenario="你站在天橋上，旁邊有一位陌生人。")
+    assert client.put(f"/api/v2/activities/{activity['id']}", json=changed).status_code == 200
+
+    assert view(client, activity["id"])["has_unpublished_changes"] is True
+    with storage.transaction() as db:
+        revision = db.scalars(
+            select(ActivityRevision).where(ActivityRevision.activity_id == activity["id"])
+        ).one()
+        assert revision.content["scenario"] == draft()["scenario"]
+
+
+def test_patch_details_rejects_a_name_over_40_characters(client):
+    teacher, course = teacher_with_course(client)
+    activity = published(client, course["id"])
+    lock(activity["id"])
+
+    assert patch(client, activity["id"], {"title": "x" * 41}).status_code == 422
+    assert patch(client, activity["id"], {"title": "x" * 40}).status_code == 200
+
+
 def test_unpublished_change_flag_for_drafts_is_false(client):
     teacher, course = teacher_with_course(client)
     activity = create_activity(client, course["id"])
@@ -224,24 +247,39 @@ def test_unpublished_change_flag_for_drafts_is_false(client):
 def test_lock_between_update_and_publish_keeps_pending_flag(client):
     teacher, course = teacher_with_course(client)
     activity = published(client, course["id"])
-    changed = draft(questions=[question(title="天橋上的陌生人")])
+    changed = draft(title="天橋上的陌生人")
     assert client.put(f"/api/v2/activities/{activity['id']}", json=changed).status_code == 200
     lock(activity["id"])
 
     publish = act(client, activity["id"], "publish")
     assert publish.status_code == 409
     assert view(client, activity["id"])["has_unpublished_changes"] is True
-    patched = patch(client, activity["id"], {"title": "改名", "ends_at": time.time() + 9000})
-    assert patched.status_code == 200
-    assert patched.json()["has_unpublished_changes"] is True
     copy = act(client, activity["id"], "copy")
     assert copy.status_code == 201
-    assert copy.json()["draft"]["questions"][0]["title"] == "天橋上的陌生人"
+    assert copy.json()["draft"]["title"] == "天橋上的陌生人"
     with storage.transaction() as db:
         revision = db.scalars(
             select(ActivityRevision).where(ActivityRevision.activity_id == activity["id"])
         ).one()
-        assert revision.content["questions"][0]["title"] == "岔道上的選擇"
+        assert revision.content["title"] == draft()["title"]
+
+
+def test_rename_after_lock_leaves_the_locked_material_alone(client):
+    teacher, course = teacher_with_course(client)
+    activity = published(client, course["id"])
+    lock(activity["id"])
+
+    patched = patch(client, activity["id"], {"title": "改名", "ends_at": time.time() + 9000})
+
+    assert patched.status_code == 200
+    assert patched.json()["has_unpublished_changes"] is False
+    with storage.transaction() as db:
+        revision = db.scalars(
+            select(ActivityRevision).where(ActivityRevision.activity_id == activity["id"])
+        ).one()
+        assert revision.content["title"] == draft()["title"]
+        assert revision.content["scenario"] == draft()["scenario"]
+    assert view(client, activity["id"])["draft"]["scenario"] == draft()["scenario"]
 
 
 def test_start_and_end_now_do_not_flag_pending(client):

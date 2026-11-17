@@ -1,13 +1,17 @@
 """Public contracts owned by Identity & Access."""
 
-from typing import Literal
+from typing import Annotated, Literal, Protocol
 
-from pydantic import Field, field_validator
+from pydantic import Field, StringConstraints, field_validator
 from pydantic_core import PydanticCustomError
+from sqlalchemy.orm import Session
+
 from app.modules.platform.contracts import Strict
 
 # Interface languages an account can choose; the frontend owns the translations.
 Locale = Literal["zh-Hant", "zh-Hans", "en", "es"]
+# Chosen at registration and fixed; not the role a course or classroom membership carries.
+AccountRole = Literal["student", "teacher"]
 
 USERNAME_PATTERN = r"^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$"
 
@@ -38,7 +42,14 @@ def password_policy(value: str) -> str:
     return value
 
 
-class Register(Strict):
+def email_shape(value: str) -> str:
+    value = value.strip().casefold()
+    if "@" not in value or "." not in value.rsplit("@", 1)[1]:
+        raise ValueError("請填入可收信的 email")
+    return value
+
+
+class Credentials(Strict):
     username: str = Field(min_length=3, max_length=32, pattern=USERNAME_PATTERN)
     email: str = Field(min_length=3, max_length=254)
     password: str = Field(min_length=8, max_length=32)
@@ -51,10 +62,25 @@ class Register(Strict):
     @field_validator("email")
     @classmethod
     def email_shape(cls, v: str) -> str:
-        v = v.strip().casefold()
-        if "@" not in v or "." not in v.rsplit("@", 1)[1]:
-            raise ValueError("請填入可收信的 email")
-        return v
+        return email_shape(v)
+
+
+class Register(Credentials):
+    # Optional so other callers (the dev console) still register; the sign-up form always sends
+    # it. Missing or null makes a student.
+    account_role: AccountRole | None = None
+
+
+class GuestJoin(Strict):
+    """Joining without registering: a nickname shown to the class and the interface language."""
+
+    # Surrounding spaces do not count: trimmed first, then 1–40 characters.
+    nickname: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+    locale: Locale
+
+
+class GuestUpgrade(Credentials):
+    """A guest registering keeps its account id and stays a student, so it sends no role."""
 
 
 class Login(Strict):
@@ -83,6 +109,42 @@ class VerificationDelivery(Strict):
     mail_id: str
     delivery_state: str
     expires_at: float
+
+
+class SignedOutView(Strict):
+    status: Literal["SIGNED_OUT"]
+
+
+class VerifiedView(Strict):
+    status: Literal["VERIFIED"]
+
+
+class PasswordResetView(Strict):
+    status: Literal["PASSWORD_RESET"]
+
+
+class MailRequestView(Strict):
+    """POST /auth/forgot-password: the same answer whether or not the email has an account, so
+    the endpoint cannot be used to learn which emails are registered."""
+
+    status: Literal["REQUEST_RECORDED"]
+    message: str
+
+
+class VerificationMailView(Strict):
+    """POST /auth/verification-email: the signed-in account's own verification mail."""
+
+    status: Literal["REQUEST_RECORDED", "ALREADY_VERIFIED"]
+    message: str
+    # Absent (not null) when no mail was queued; the route excludes unset fields.
+    delivery: VerificationDelivery | None = None
+
+
+class ResendWebhookView(Strict):
+    status: Literal["RECORDED"]
+    matched: bool
+    # Absent (not null) when no delivery matched; the route excludes unset fields.
+    provider_status: str | None = None
 
 
 class VerificationStatusDelivery(Strict):
@@ -118,7 +180,41 @@ class AccountView(Strict):
     points: int
     achievements: list[str]
     locale: Locale | None = None
+    kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    account_role: AccountRole
+    # Guests only: 168 hours after joining; the daily job then clears the name and marks the
+    # account expired_guest.
+    guest_expires_at: float | None = None
+    # The name to show: a guest's nickname (never the username's random suffix), otherwise the
+    # username; empty once a guest has expired.
+    display_name: str = ""
+
+
+# What logging in did with a guest session on the same device: MERGED (its records moved to
+# this account), NONE (no live guest session, or a hook failed and the merge rolled back), or
+# REFUSED_TEACHER (a teacher account logged in; the guest keeps its records and session).
+GuestMerge = Literal["MERGED", "NONE", "REFUSED_TEACHER"]
+
+
+class LoginView(AccountView):
+    guest_merge: GuestMerge
 
 
 class LocaleUpdate(Strict):
     locale: Locale
+
+
+class GuestRecordHook(Protocol):
+    """What every module that keeps student records provides for guests (the app shell registers
+    it with service.register_guest_hook). Both run in the caller's transaction and never commit.
+
+    reassign: move the guest's records to the account the device just logged in as. When the same
+    course or activity has records under both, keep the account's and delete the guest's.
+    forget_name: clear the guest's name wherever the module stores it (no soft delete); the
+    records themselves stay, so teacher statistics still count them. Called when the guest
+    expires.
+    """
+
+    def reassign(self, db: Session, guest_id: str, account_id: str) -> None: ...
+
+    def forget_name(self, db: Session, guest_id: str) -> None: ...

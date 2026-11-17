@@ -100,7 +100,7 @@ test('a snapshot equal to the blank form is cleared silently, ignoring ids', asy
   await saveActivityDraft(KEY, emptyForm(), new Date().toISOString())
   const { result } = renderHook(() => {
     const [form, setForm] = useState(emptyForm())
-    return useActivityDraftRecovery({ key: KEY, form, setForm, dirty: false, baseline: form, ignoreIds: true })
+    return useActivityDraftRecovery({ key: KEY, form, setForm, dirty: false, baseline: form })
   })
   await settle()
   expect(result.current.restoreOpen).toBe(false)

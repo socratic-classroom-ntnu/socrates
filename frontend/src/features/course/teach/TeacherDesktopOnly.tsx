@@ -12,13 +12,13 @@ export function TeacherDesktopOnly() {
 
 function TeacherPhoneUnsupported() {
   const { t } = useT('teach')
-  // 頂部列用「我教的課」而不是課名：這一頁不載入課程資料
-  useShellBack('/?tab=teach', t('course.breadcrumb'))
+  // 頂部列回首頁：這一頁不載入課程資料，首頁也已經沒有「我教的課」分頁
+  useShellBack('/', t('shell:nav.home'))
   return <ComingSoonPage
     illustration="desktopOnly"
     title={t('phone.title')}
     body={t('phone.body')}
-    backTo="/?tab=teach"
+    backTo="/"
     backLabel={t('phone.back')}
   />
 }

@@ -2,7 +2,7 @@ import { act, fireEvent, screen, within } from '@testing-library/react'
 import { ApiError } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
 import { readableText } from '../../auth/testText'
-import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
+import { mockApi, renderAt, signedIn, type ApiRoutes } from '../../../testing/pageHarness'
 import { TeacherCoursePage } from './TeacherCoursePage'
 
 jest.mock('../../../contract/classroomClient', () => {
@@ -13,18 +13,20 @@ jest.mock('qrcode', () => ({ toDataURL: jest.fn(async (value: string) => 'data:'
 
 const course = {
   role: 'teacher', id: 'c-1', name: '科技倫理', teacher_name: 'Fizzy', intro: '', goals: '',
-  code: '3CKTGE7Q', code_enabled: true, student_count: 35, activity_count: 0,
+  code: '3CKTGE7Q', code_enabled: true, allow_guest: false, student_count: 35, activity_count: 0,
   available_actions: ['update', 'rotate_code', 'disable_code', 'create_activity'],
 }
 const empty = { role: 'teacher', items: [] }
 
-function open(url = '/teach/courses/c-1', overrides: Record<string, unknown> = {}, locale = 'zh-Hant') {
-  mockApi({
+function open(url = '/teach/courses/c-1', overrides: Record<string, unknown> = {}, locale = 'zh-Hant', extra: ApiRoutes = {}) {
+  const calls = mockApi({
     'GET /auth/me': { ...signedIn, locale },
     'GET /courses/c-1?role=teacher': { ...course, ...overrides },
     'GET /courses/c-1/activities?role=teacher': empty,
+    ...extra,
   })
   renderAt(url, '/teach/courses/:courseId/*', <TeacherCoursePage />)
+  return calls
 }
 
 test('empty course shows T2 and new-activity link', async () => {
@@ -52,11 +54,15 @@ test('header shows the course name under a course breadcrumb', async () => {
   expect(screen.getByRole('heading', { level: 1, name: '科技倫理' })).toBeInTheDocument()
 })
 
-test('students and settings tabs show coming soon inside the page', async () => {
-  open('/teach/courses/c-1/students')
-  expect(await screen.findByRole('heading', { name: '功能開發中' })).toBeInTheDocument()
-  expect(screen.getByText('學生名單和每個人的完成進度之後會放在這裡。現在可以先回到活動清單。')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: '回到活動' })).toHaveAttribute('href', '/teach/courses/c-1')
+test('students tab shows the roster instead of coming soon', async () => {
+  open('/teach/courses/c-1/students', {}, 'zh-Hant', {
+    'GET /solo/courses/c-1/students': {
+      course_id: 'c-1', course_name: '科技倫理', generated_at: 1_800_000_000, counted_activities: 0,
+      summary: { total: 0, registered: 0, guests: 0, expired_guests: 0 }, students: [],
+    },
+  })
+  expect(await screen.findByText('還沒有學生加入這門課。')).toBeInTheDocument()
+  expect(screen.queryByRole('heading', { name: '功能開發中' })).toBeNull()
   expect(screen.getAllByRole('main')).toHaveLength(1)
 })
 
@@ -108,9 +114,56 @@ test('new activity link follows create_activity', async () => {
 test('new activity link also follows create_activity when there are activities', async () => {
   mockApi({
     'GET /courses/c-1?role=teacher': { ...course, available_actions: ['update'] },
-    'GET /courses/c-1/activities?role=teacher': { role: 'teacher', items: [{ id: 'a1', title: '活動一', status: 'draft', locked: false, has_unpublished_changes: false, question_count: 1, starts_at: null, ends_at: 2_000_000_000, available_actions: ['update', 'publish', 'copy', 'delete'] }] },
+    'GET /courses/c-1/activities?role=teacher': { role: 'teacher', items: [{ id: 'a1', title: '活動一', status: 'draft', locked: false, has_unpublished_changes: false, starts_at: null, ends_at: 2_000_000_000, available_actions: ['update', 'publish', 'copy', 'delete'] }] },
   })
   renderAt('/teach/courses/c-1', '/teach/courses/:courseId/*', <TeacherCoursePage />)
   expect(await screen.findByText('活動一')).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: '新增活動' })).toBeNull()
+})
+
+async function openInvite(overrides: Record<string, unknown>, patch: ApiRoutes[string]) {
+  const calls = open('/teach/courses/c-1', overrides, 'zh-Hant', { 'PATCH /courses/c-1': patch })
+  const invite = await screen.findByRole('button', { name: '邀請學生' })
+  await act(async () => { fireEvent.click(invite) })
+  return calls
+}
+
+test('guest switch turns guest join on with PATCH and disables while saving', async () => {
+  let finish: (value: unknown) => void = () => {}
+  const calls = await openInvite({ allow_guest: false }, (body: Record<string, unknown>) => new Promise(resolve => { finish = () => resolve({ ...course, allow_guest: body.allow_guest }) }))
+  const toggle = screen.getByRole('switch', { name: '允許免註冊加入' })
+  expect(toggle).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByText('學生要登入或註冊才能加入；已經加入的訪客不受影響。')).toBeInTheDocument()
+  await act(async () => { fireEvent.click(toggle) })
+  expect(toggle).toBeDisabled()
+  expect(calls.filter(call => call.key === 'PATCH /courses/c-1')).toEqual([{ key: 'PATCH /courses/c-1', body: { allow_guest: true } }])
+  await act(async () => { finish(undefined) })
+  expect(toggle).toBeEnabled()
+  expect(toggle).toHaveAttribute('aria-checked', 'true')
+  expect(screen.getByText('學生掃碼後可以取個名字直接加入，紀錄保留 7 天。')).toBeInTheDocument()
+})
+
+test('guest switch turns guest join off with PATCH', async () => {
+  const calls = await openInvite({ allow_guest: true }, (body: Record<string, unknown>) => ({ ...course, allow_guest: body.allow_guest }))
+  const toggle = screen.getByRole('switch', { name: '允許免註冊加入' })
+  expect(toggle).toHaveAttribute('aria-checked', 'true')
+  await act(async () => { fireEvent.click(toggle) })
+  expect(calls.filter(call => call.key === 'PATCH /courses/c-1')).toEqual([{ key: 'PATCH /courses/c-1', body: { allow_guest: false } }])
+  expect(toggle).toHaveAttribute('aria-checked', 'false')
+  expect(screen.getByText('學生要登入或註冊才能加入；已經加入的訪客不受影響。')).toBeInTheDocument()
+})
+
+test('failed guest switch save reverts and shows the error', async () => {
+  await openInvite({ allow_guest: false }, () => { throw new ApiError(500, 'BOOM') })
+  const toggle = screen.getByRole('switch', { name: '允許免註冊加入' })
+  await act(async () => { fireEvent.click(toggle) })
+  expect(toggle).toHaveAttribute('aria-checked', 'false')
+  expect(toggle).toBeEnabled()
+  expect(screen.getByRole('alert')).toHaveTextContent('伺服器暫時無法處理，請稍後再試。')
+})
+
+test('guest switch is still shown when the course code is disabled', async () => {
+  await openInvite({ code_enabled: false, allow_guest: true }, {})
+  expect(screen.queryByRole('img', { name: /QR code/ })).toBeNull()
+  expect(screen.getByRole('switch', { name: '允許免註冊加入' })).toHaveAttribute('aria-checked', 'true')
 })

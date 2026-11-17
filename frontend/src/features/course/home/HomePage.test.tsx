@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { Route, useNavigate } from 'react-router-dom'
 import { ApiError } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
-import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
+import { mockApi, renderAt, signedIn, signedInTeacher } from '../../../testing/pageHarness'
 import { readableText } from '../../auth/testText'
 import { HomePage } from './HomePage'
 
@@ -17,7 +17,7 @@ const teaching = {
   student_count: 35, activity_count: 3, open_activity_count: 1,
 }
 const highlight = (status: 'open' | 'scheduled' | 'ended', title = '第三週倫理討論') => ({
-  id: 'a-1', title, status, question_count: 2, starts_at: now - 60, ends_at: now + 3600,
+  id: 'a-1', title, status, starts_at: now - 60, ends_at: now + 3600,
 })
 const learning = (extra: Record<string, unknown> = {}) => ({
   id: 'c-1', name: '哲學導論', teacher_name: '王思齊', open_activity_count: 1, highlight: highlight('open'), ...extra,
@@ -45,70 +45,107 @@ async function typeCode(value: string, button = '加入課程') {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: button })) })
 }
 
-test('defaults to learn tab when learning courses exist', async () => {
+// 帳號只有一個角色（P20、P21）：學生只有學的課＋加入課程，老師只有教的課＋建立課程；沒有分頁，?tab= 一律忽略
+test('a student account sees only the courses it learns, with no tabs', async () => {
   open({ teaching: [teaching], learning: [learning()] })
   expect(await screen.findByText('哲學導論')).toBeInTheDocument()
-  expect(screen.getByRole('tab', { name: '我學的課' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.queryByText('科技系統與社會發展 A')).toBeNull()
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByRole('button', { name: '建立課程' })).toBeNull()
+  expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^(早安|午安|晚安)，Fizzy$/)
+  // Fizzy 11/16：面板頂端是「我學的課 N 門」標題列（跟老師的「我的課程」一樣），電腦版的加入課程放在這一列右邊
+  const panel = screen.getByRole('region', { name: /^我學的課/ })
+  expect(within(panel).getByRole('heading', { level: 2, name: '我學的課 1 門' })).toBeInTheDocument()
+  expect(panel).toContainElement(screen.getByLabelText('課程代碼'))
+  expect(panel).toContainElement(screen.getByText('哲學導論'))
 })
 
-test('defaults to teach tab when only teaching', async () => {
-  open({ teaching: [teaching] })
+test('a teacher account sees only the courses it teaches, with create course', async () => {
+  open({ teaching: [teaching], learning: [learning()] }, '/', { 'GET /auth/me': signedInTeacher })
   expect(await screen.findByText('科技系統與社會發展 A')).toBeInTheDocument()
-  expect(screen.getByRole('tab', { name: '我教的課' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.queryByText('哲學導論')).toBeNull()
+  expect(screen.queryByRole('tab')).toBeNull()
+  expect(screen.queryByLabelText('課程代碼')).toBeNull()
+  expect(screen.getByRole('heading', { name: '我的課程 1 門' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '建立課程' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^(早安|午安|晚安)，Wang$/)
 })
 
-test('tab is kept in the URL', async () => {
-  open({ teaching: [teaching], learning: [learning()] })
-  fireEvent.click(await screen.findByRole('tab', { name: '我教的課' }))
-  expect(where()).toBe('/?tab=teach')
+test.each(['/?tab=teach', '/?tab=learn'])('%s is ignored for both roles', async (url) => {
+  open({ teaching: [teaching], learning: [learning()] }, url)
+  expect(await screen.findByText('哲學導論')).toBeInTheDocument()
+  expect(screen.queryByText('科技系統與社會發展 A')).toBeNull()
+  expect(where()).toBe(url)
+})
+
+test('a teacher account ignores ?tab=learn', async () => {
+  open({ teaching: [teaching], learning: [learning()] }, '/?tab=learn', { 'GET /auth/me': signedInTeacher })
   expect(await screen.findByText('科技系統與社會發展 A')).toBeInTheDocument()
+  expect(screen.queryByText('哲學導論')).toBeNull()
 })
 
-test('no courses shows learn tab with empty state and code form', async () => {
+test('a student with no courses sees the empty state and the code form', async () => {
   open({})
-  expect(await screen.findByRole('heading', { name: '暫無已加入課程' })).toBeInTheDocument()
-  expect(screen.getByRole('tab', { name: '我學的課' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.getByText('加入老師的課程後，將在此處顯示')).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: '還沒有加入任何課程' })).toBeInTheDocument()
+  expect(screen.getByText('輸入老師給的代碼加入課程。')).toBeInTheDocument()
+  // 畫布 MyCoursesEmpty：也可以先到我的對話練習
+  expect(screen.getByText('也可以先到「我的對話」練習。')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /去我的對話/ })).toHaveAttribute('href', '/my-dialogues')
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: '掃描' })).toBeNull()
-  fireEvent.click(screen.getByRole('tab', { name: '我教的課' }))
-  expect(screen.getByRole('heading', { name: '暫無任教課程' })).toBeInTheDocument()
-  expect(screen.getByText('建立課程後，將在此處顯示')).toBeInTheDocument()
-  expect(screen.queryByText('管理課程與活動請用電腦開啟')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '建立課程' }))
-  expect(where()).toBe('/?tab=teach&create=1')
+  // 沒有課時標題不帶數量，加入課程照樣在標題列
+  const panel = screen.getByRole('region', { name: /^我學的課/ })
+  expect(within(panel).getByRole('heading', { level: 2, name: '我學的課' })).toBeInTheDocument()
+  expect(panel).toContainElement(screen.getByLabelText('課程代碼'))
+})
+
+test('a teacher with no courses sees the first-course steps and creates one', async () => {
+  open({}, '/', { 'GET /auth/me': signedInTeacher })
+  expect(await screen.findByRole('heading', { name: '還沒有任何課程' })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: '我的課程' })).toBeInTheDocument()
+  const steps = screen.getByRole('list', { name: '開始的三個步驟' })
+  expect(within(steps).getAllByRole('listitem')).toHaveLength(3)
+  // 畫布 H2t：建立第一門課是大按鈕（頁面自己的 class 調尺寸，共用 Button 不加尺寸）
+  expect(screen.getByRole('button', { name: '建立第一門課' })).toHaveClass('home__create-first')
+  fireEvent.click(screen.getByRole('button', { name: '建立第一門課' }))
+  expect(where()).toBe('/?create=1')
   expect(screen.getByRole('dialog', { name: '建立課程' })).toBeInTheDocument()
 })
 
-test('phone learn tab has scan code join row', async () => {
+test('a student account ignores ?create=1', async () => {
+  open({ learning: [learning()] }, '/?create=1')
+  expect(await screen.findByText('哲學導論')).toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
+test('phone student home has the scan and code join row', async () => {
   phone()
   open({})
   expect(await screen.findByRole('link', { name: '掃描' })).toHaveAttribute('href', '/scan')
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
-  expect(await screen.findByRole('heading', { name: '暫無已加入課程' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: '還沒有加入任何課程' })).toBeInTheDocument()
+  expect(screen.getByText('掃描 QR 或輸入代碼加入課程。')).toBeInTheDocument()
 })
 
-test('phone teach tab swaps the row for create course', async () => {
+test('phone student home keeps the join row under the greeting and titles the panel', async () => {
   phone()
-  open({}, '/?tab=teach')
-  expect(await screen.findByRole('link', { name: '建立課程' })).toHaveAttribute('href', '/teach/create-course')
-  expect(screen.queryByLabelText('課程代碼')).toBeNull()
-  expect(await screen.findByRole('heading', { name: '暫無任教課程' })).toBeInTheDocument()
-  expect(screen.queryByText('管理課程與活動請用電腦開啟')).toBeNull()
+  open({ learning: [learning(), learning({ id: 'c-2', name: '科技倫理' })] })
+  const panel = await screen.findByRole('region', { name: /^我學的課/ })
+  expect(await within(panel).findByRole('heading', { level: 2, name: '我學的課 2 門' })).toBeInTheDocument()
+  // 畫布 M2m：掃描＋代碼列仍在問候語下面，不進面板
+  expect(panel).not.toContainElement(screen.getByLabelText('課程代碼'))
 })
 
-test('phone teach tab with courses shows the computer hint and plain cards', async () => {
+test('phone teacher home asks for a computer and loads no courses', async () => {
   phone()
-  open({ teaching: [teaching] }, '/?tab=teach')
-  expect(await screen.findByText('管理課程與活動請用電腦開啟')).toBeInTheDocument()
-  const card = screen.getByRole('link', { name: /科技系統與社會發展 A/ })
-  expect(card).toHaveAttribute('href', '/teach/courses/t-1')
-  expect(card).toHaveTextContent('上課中')
-  expect(card).toHaveTextContent('學生 35 人 ・ 活動 3 個')
-  expect(screen.queryByText('#3CKTGE7Q')).toBeNull()
-  expect(screen.queryByRole('button', { name: /複製/ })).toBeNull()
+  const calls = open({ teaching: [teaching] }, '/', { 'GET /auth/me': signedInTeacher })
+  expect(await screen.findByRole('heading', { name: '老師的功能請用電腦開啟' })).toBeInTheDocument()
+  expect(screen.getByText('建立課程、出題和查看學生的想法，目前只能在電腦上使用。請用電腦登入同一個帳號。')).toBeInTheDocument()
+  expect(screen.getByText('目前登入：Wang')).toBeInTheDocument()
+  expect(screen.queryByText('科技系統與社會發展 A')).toBeNull()
+  expect(calls.some(call => call.key === 'GET /courses')).toBe(false)
 })
 
 test('phone wrong code shows the error under the row', async () => {
@@ -119,7 +156,7 @@ test('phone wrong code shows the error under the row', async () => {
   expect(alert).toHaveTextContent('找不到這個課程代碼')
   expect(alert).toHaveTextContent('請再對照一次老師給的 8 碼課程代碼。如果確定沒打錯，請向老師確認代碼是否有更換。')
   expect(screen.getByLabelText('課程代碼')).toHaveAttribute('aria-invalid', 'true')
-  const empty = screen.getByRole('heading', { name: '暫無已加入課程' })
+  const empty = screen.getByRole('heading', { name: '還沒有加入任何課程' })
   expect(screen.getByRole('link', { name: '掃描' }).compareDocumentPosition(alert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(alert.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
@@ -155,7 +192,7 @@ test('rate limit is explained', async () => {
 test('teaching card shows counts and code', async () => {
   const writeText = jest.fn(async () => {})
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
-  open({ teaching: [teaching] }, '/?tab=teach')
+  open({ teaching: [teaching] }, '/', { 'GET /auth/me': signedInTeacher })
   const link = await screen.findByRole('link', { name: '科技系統與社會發展 A' })
   expect(link).toHaveAttribute('href', '/teach/courses/t-1')
   const card = link.closest('article') as HTMLElement
@@ -166,11 +203,11 @@ test('teaching card shows counts and code', async () => {
   expect(within(card).getByText('#3CKTGE7Q')).toBeInTheDocument()
   await act(async () => { fireEvent.click(within(card).getByRole('button', { name: '複製課程代碼' })) })
   expect(writeText).toHaveBeenCalledWith('3CKTGE7Q')
-  expect(where()).toBe('/?tab=teach')
+  expect(where()).toBe('/')
 })
 
 test('teaching card hides disabled code', async () => {
-  open({ teaching: [{ ...teaching, code_enabled: false, open_activity_count: 0 }] }, '/?tab=teach')
+  open({ teaching: [{ ...teaching, code_enabled: false, open_activity_count: 0 }] }, '/', { 'GET /auth/me': signedInTeacher })
   const card = (await screen.findByRole('link', { name: '科技系統與社會發展 A' })).closest('article') as HTMLElement
   expect(within(card).queryByText('#3CKTGE7Q')).toBeNull()
   expect(card).not.toHaveTextContent('上課中')
@@ -197,7 +234,7 @@ test('learning card shows highlight by status', async () => {
   const card = async (name: string) => (await screen.findByRole('link', { name })).closest('article') as HTMLElement
   expect(await card('哲學導論')).toHaveTextContent('進行中')
   expect(await card('哲學導論')).toHaveTextContent('第三週倫理討論')
-  expect(await card('哲學導論')).toHaveTextContent('2 題 ・ 開放到')
+  expect(await card('哲學導論')).toHaveTextContent('開放到')
   expect(await card('排程課')).toHaveTextContent('下一個：器官該分給誰？')
   expect(await card('排程課')).toHaveTextContent('開放')
   expect(await card('排程課')).toHaveTextContent('沒有進行中的活動')
@@ -218,7 +255,11 @@ test('desktop open highlight has a start button', async () => {
     const other = (await screen.findByRole('link', { name })).closest('article') as HTMLElement
     expect(within(other).queryByRole('link', { name: /開始/ })).toBeNull()
     expect(within(other).queryByRole('button')).toBeNull()
+    // 畫布 M2：沒有進行中活動的卡片右下是「進入課程 →」
+    expect(within(other).getByRole('link', { name: '進入課程' })).toHaveAttribute('href', expect.stringMatching(/^\/learn\/courses\/c-/))
   }
+  // 進行中的卡片只有「開始」，不重複「進入課程」
+  expect(within(card).queryByRole('link', { name: '進入課程' })).toBeNull()
 })
 
 test('phone learning cards are whole-card links without buttons', async () => {
@@ -229,10 +270,11 @@ test('phone learning cards are whole-card links without buttons', async () => {
   expect(card).toHaveTextContent('第三週倫理討論')
   expect(within(card).queryByRole('button')).toBeNull()
   expect(screen.queryByRole('link', { name: /開始/ })).toBeNull()
+  expect(screen.queryByRole('link', { name: '進入課程' })).toBeNull()
 })
 
-test('create=1 opens the create-course drawer and closing removes it', async () => {
-  open({ teaching: [teaching] }, '/?tab=teach&create=1')
+test('create=1 opens the create-course drawer for a teacher and closing removes it', async () => {
+  open({ teaching: [teaching] }, '/?tab=teach&create=1', { 'GET /auth/me': signedInTeacher })
   const dialog = await screen.findByRole('dialog', { name: '建立課程' })
   fireEvent.click(within(dialog).getByRole('button', { name: '取消' }))
   expect(screen.queryByRole('dialog')).toBeNull()
@@ -248,10 +290,8 @@ test('scan goes to placeholder', async () => {
 
 test('es locale renders without Chinese', async () => {
   await applyLocale('es')
-  mockApi({ 'GET /auth/me': { ...signedIn, locale: 'es' }, 'GET /courses': { teaching: [{ ...teaching, name: 'Ética' }], learning: [] } })
+  mockApi({ 'GET /auth/me': { ...signedInTeacher, locale: 'es' }, 'GET /courses': { teaching: [{ ...teaching, name: 'Ética' }], learning: [] } })
   renderAt('/', '/', <HomePage />)
-  expect(await screen.findByRole('tab', { name: 'Mis cursos' })).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('tab', { name: 'Mis clases' }))
   expect(await screen.findByText('Ética')).toBeInTheDocument()
   expect(readableText(document.body)).not.toMatch(/[\u3400-\u9fff\u3000-\u303f\u30fb\uff00-\uffef]/)
 })
@@ -259,17 +299,16 @@ test('es locale renders without Chinese', async () => {
 test('es phone card has no fullwidth punctuation', async () => {
   phone()
   await applyLocale('es')
-  mockApi({ 'GET /auth/me': { ...signedIn, locale: 'es' }, 'GET /courses': { teaching: [{ ...teaching, name: 'Ética' }], learning: [] } })
-  renderAt('/?tab=teach', '/', <HomePage />)
+  mockApi({ 'GET /auth/me': { ...signedIn, locale: 'es' }, 'GET /courses': { teaching: [], learning: [learning({ name: 'Ética' })] } })
+  renderAt('/', '/', <HomePage />)
   expect(await screen.findByText('Ética')).toBeInTheDocument()
-  expect(readableText(document.body)).toContain('35 estudiantes')
   expect(readableText(document.body)).not.toMatch(/[\u3000-\u303f\u30fb\uff00-\uffef]/)
 })
 
 
 test('phone create=1 shows S4m instead of the drawer', async () => {
   phone()
-  open({}, '/?tab=teach&create=1')
+  open({}, '/?tab=teach&create=1', { 'GET /auth/me': signedInTeacher })
   await waitFor(() => expect(where()).toBe('/teach/create-course'))
   expect(screen.queryByRole('dialog')).toBeNull()
 })
@@ -280,7 +319,7 @@ function GoBack() {
 }
 
 test('back after creating does not reopen the drawer', async () => {
-  mockApi({ 'GET /courses': { teaching: [], learning: [] }, 'POST /courses': { id: 'c-1' } })
+  mockApi({ 'GET /auth/me': signedInTeacher, 'GET /courses': { teaching: [], learning: [] }, 'POST /courses': { id: 'c-1' } })
   renderAt('/?tab=teach&create=1', '/', <HomePage />, <Route path="/teach/courses/:courseId" element={<GoBack />} />)
   fireEvent.change(await screen.findByLabelText(/課程名稱/), { target: { value: '科技倫理' } })
   await act(async () => { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: '建立課程' })) })

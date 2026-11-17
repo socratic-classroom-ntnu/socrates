@@ -9,14 +9,9 @@ type Options = {
   dirty: boolean
   /** What the page loaded; a snapshot equal to it is cleared without asking. */
   baseline?: ActivityForm
-  /** Compare without ids: a blank form gets fresh ids every time it is created. */
-  ignoreIds?: boolean
 }
 
-function comparable(form: ActivityForm, ignoreIds: boolean): string {
-  if (!ignoreIds) return JSON.stringify(form)
-  return JSON.stringify({ ...form, questions: form.questions.map(q => ({ title: q.title, scenario: q.scenario, follow_up_direction: q.follow_up_direction, options: q.options.map(o => o.text) })) })
-}
+const comparable = (form: ActivityForm): string => JSON.stringify(form)
 
 const DEBOUNCE_MS = 300
 
@@ -24,13 +19,13 @@ const DEBOUNCE_MS = 300
  * Keeps an unfinished form on this device: saves 300ms after the last change, flushes when the
  * page hides, unloads or the editor unmounts, and on load offers what it found without overwriting the server copy.
  */
-export function useActivityDraftRecovery({ key, form, setForm, dirty, baseline, ignoreIds = false }: Options) {
+export function useActivityDraftRecovery({ key, form, setForm, dirty, baseline }: Options) {
   const [found, setFound] = useState<ActivityDraftSnapshot | null>(null)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latest = useRef({ key, form, dirty, choosing: false })
   const compareWith = useRef<string | null>(null)
-  compareWith.current = baseline ? comparable(baseline, ignoreIds) : null
+  compareWith.current = baseline ? comparable(baseline) : null
   latest.current = { key, form, dirty, choosing: found !== null }
 
   const cancel = () => {
@@ -56,7 +51,7 @@ export function useActivityDraftRecovery({ key, form, setForm, dirty, baseline, 
     void purgeExpiredActivityDrafts(new Date()).then(() => loadActivityDraft(key)).then(async snapshot => {
       if (!live) return
       // 和剛載入的內容一樣：沒什麼好恢復的，靜靜清掉
-      if (snapshot && compareWith.current !== null && comparable(snapshot.form, ignoreIds) === compareWith.current) {
+      if (snapshot && compareWith.current !== null && comparable(snapshot.form) === compareWith.current) {
         await clearActivityDraft(key)
         return
       }

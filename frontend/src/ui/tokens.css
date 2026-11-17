@@ -27,6 +27,11 @@
   --ui-color-success: #2F8F5B;
   --ui-color-info: #2D4B8E;
   --ui-color-info-soft: #E8EDF7;
+  /* 需要注意（Figma 變數 warning-soft／warning-ink）：訪客標籤（畫布 S2gm） */
+  --ui-color-warning-soft: #FFF7E0;
+  --ui-color-warning-ink: #76540E;
   --ui-color-neutral-soft: #EFEFEA;
   --ui-color-ended-ink: #A3311A;
+  --ui-color-warn-soft: #FFF3D4;
+  --ui-color-warn-ink: #6E4B0B;
 }

@@ -23,6 +23,7 @@ import { HomePage } from '../features/course/home/HomePage'
 import { MyDialoguesPage } from '../features/course/practice/MyDialoguesPage'
 import { JoinActivityPage } from '../features/course/join/JoinActivityPage'
 import { JoinCoursePage } from '../features/course/join/JoinCoursePage'
+import { ScanPage } from '../features/course/scan/ScanPage'
 import { StudentCoursePage } from '../features/course/learn/StudentCoursePage'
 import { SoloActivityPage } from '../features/solo-activity/SoloActivityPage'
 import { SoloDialoguePage } from '../features/solo-activity/SoloDialoguePage'
@@ -52,7 +53,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
+type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
 
 // 這一批不做的入口：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -95,7 +96,6 @@ export function AppRoutes() {
       <Route path="/activity-form" element={<DemoSurface title="教師出題表單"><ActivityFormModal onClose={() => location.assign('/')} onSubmit={() => location.assign('/')} /></DemoSurface>} />
       <Route element={<AppShell />}>
         <Route path="/groups" element={<GroupsPage />} />
-        <Route path="/scan" element={<Placeholder kind="scan" />} />
         <Route path="/account" element={<Placeholder kind="account" />} />
       </Route>
       </Route>
@@ -107,6 +107,7 @@ export function AppRoutes() {
       <Route element={<RoleGate />}>
       {/* 加入流程與投影是全螢幕，不包外框 */}
       <Route path="/join" element={<JoinCoursePage />} />
+      <Route path="/scan" element={<ScanPage />} />
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
       <Route path="/learn/activities/:activityId/dialogue" element={<SoloDialoguePage />} />
       <Route element={<TeacherDesktopOnly />}>

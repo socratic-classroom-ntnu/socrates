@@ -177,7 +177,7 @@ describe('phone', () => {
   test('the scan / code / join row sits on top of the page', async () => {
     phone()
     open([dialogue()], 1)
-    expect(await screen.findByRole('link', { name: '掃描' })).toHaveAttribute('href', '/scan')
+    expect(await screen.findByRole('button', { name: '掃描' })).toBeInTheDocument()
     expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
   })

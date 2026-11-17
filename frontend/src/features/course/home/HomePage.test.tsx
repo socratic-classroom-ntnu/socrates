@@ -93,7 +93,7 @@ test('a student with no courses sees the empty state and the code form', async (
   expect(screen.getByText('也可以先到「我的對話」練習。')).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /去我的對話/ })).toHaveAttribute('href', '/my-dialogues')
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
-  expect(screen.queryByRole('link', { name: '掃描' })).toBeNull()
+  expect(screen.queryByRole('button', { name: '掃描' })).toBeNull()
   // 沒有課時標題不帶數量，加入課程照樣在標題列
   const panel = screen.getByRole('region', { name: /^我學的課/ })
   expect(within(panel).getByRole('heading', { level: 2, name: '我學的課' })).toBeInTheDocument()
@@ -122,7 +122,7 @@ test('a student account ignores ?create=1', async () => {
 test('phone student home has the scan and code join row', async () => {
   phone()
   open({})
-  expect(await screen.findByRole('link', { name: '掃描' })).toHaveAttribute('href', '/scan')
+  expect(await screen.findByRole('button', { name: '掃描' })).toBeInTheDocument()
   expect(screen.getByLabelText('課程代碼')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
   expect(await screen.findByRole('heading', { name: '還沒有加入任何課程' })).toBeInTheDocument()
@@ -157,7 +157,7 @@ test('phone wrong code shows the error under the row', async () => {
   expect(alert).toHaveTextContent('請再對照一次老師給的 8 碼課程代碼。如果確定沒打錯，請向老師確認代碼是否有更換。')
   expect(screen.getByLabelText('課程代碼')).toHaveAttribute('aria-invalid', 'true')
   const empty = screen.getByRole('heading', { name: '還沒有加入任何課程' })
-  expect(screen.getByRole('link', { name: '掃描' }).compareDocumentPosition(alert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByRole('button', { name: '掃描' }).compareDocumentPosition(alert) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(alert.compareDocumentPosition(empty) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
 
@@ -166,6 +166,22 @@ test('join code normalizes and goes to confirm', async () => {
   await typeCode(' 3cktge7q ')
   expect(calls.some(call => call.key === 'GET /course-join/preview?code=3CKTGE7Q')).toBe(true)
   await waitFor(() => expect(where()).toBe('/join?code=3CKTGE7Q'))
+})
+
+test('the preview is handed to the confirm page so it is not fetched twice', async () => {
+  open({}, '/', { 'GET /course-join/preview?code=3CKTGE7Q': { course_id: 'c-9', already_enrolled: false, course_name: '哲學導論' } })
+  await typeCode('3cktge7q')
+  await waitFor(() => expect(where()).toBe('/join?code=3CKTGE7Q'))
+  expect(JSON.parse(screen.getByTestId('where').dataset.state!)).toEqual({
+    preview: { course_id: 'c-9', already_enrolled: false, course_name: '哲學導論', code: '3CKTGE7Q' },
+  })
+})
+
+test('a blank code does not look anything up', async () => {
+  const calls = open({})
+  await typeCode('   ')
+  expect(calls.some(call => call.key.startsWith('GET /course-join/preview'))).toBe(false)
+  expect(where()).toBe('/')
 })
 
 test('already enrolled code goes straight to course page', async () => {
@@ -281,11 +297,17 @@ test('create=1 opens the create-course drawer for a teacher and closing removes 
   expect(where()).toBe('/?tab=teach')
 })
 
-test('scan goes to placeholder', async () => {
+test('scan with camera already allowed goes to the scan page', async () => {
   phone()
-  open({})
-  fireEvent.click(await screen.findByRole('link', { name: '掃描' }))
-  expect(where()).toBe('/scan')
+  Object.defineProperty(navigator, 'permissions', { configurable: true, value: { query: async () => ({ state: 'granted' }) } })
+  try {
+    open({})
+    const scan = await screen.findByRole('button', { name: '掃描' })
+    await act(async () => { fireEvent.click(scan) })
+    expect(where()).toBe('/scan')
+  } finally {
+    delete (navigator as { permissions?: unknown }).permissions
+  }
 })
 
 test('es locale renders without Chinese', async () => {

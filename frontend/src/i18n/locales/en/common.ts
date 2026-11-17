@@ -40,7 +40,6 @@ const common: Shape<typeof zhHant> = {
     title: 'Coming soon',
     body: 'This feature is still being built and will open later.',
     back: 'Back to home',
-    scan: 'Scanning a QR code with this device\'s camera is still being built. For now, scan with your phone camera or enter the course code.',
     account: 'Personal settings will live here. You can switch the language from the account menu.',
     activity: 'The activity page is still being built. Your conversation with Socrates will start here.',
     live: 'Live progress will live here: where each student is on each question.',

@@ -1167,6 +1167,106 @@
       "syncedAt": "2026-11-17",
       "status": "synced",
       "adjustNote": null
+    },
+    "Feedback.dc.html": {
+      "code": "FB1",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:325",
+      "canvasSha": "05776736bbb39bbd7e61a81a046d9c1cbb1fea7966b826a7ad2c55d7285c5ea8",
+      "figmaFingerprint": "a033fa0c2c01fe06ea3eb2538d67511d54a8a7d7089c82994cf0340f03d3ab89",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackOpen.dc.html": {
+      "code": "FB2",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:618",
+      "canvasSha": "4115fd2903c49740eb8258be40fba06867cdc9dcda8e9a34fb18e0c9c0b3dfe7",
+      "figmaFingerprint": "89e7a67aae101f01f949e040b373533acf80654f2e7198ef72b8a8c97d18a341",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackSending.dc.html": {
+      "code": "FB3",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:726",
+      "canvasSha": "5fefb6de09d0540d0a9d3c06bdc7da3c1c13f1b9f17ad504cb765c24b48082ec",
+      "figmaFingerprint": "69055cbd701835e1b1539e7983c0c5daf72558c88a5d4a47654467f656527022",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackSent.dc.html": {
+      "code": "FB4",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:828",
+      "canvasSha": "4e4cc10b70ca2bb6d56c561da749bb87114c037ce4d6ef6fbefaf198a9caa227",
+      "figmaFingerprint": "7d741e7eee6e46a7e32654e535916d1ccf1c229c10167d9fd6203633c50a5311",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackFailed.dc.html": {
+      "code": "FB5",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:902",
+      "canvasSha": "06f570caf755190b6548e043875ae292f2191df83597d6f8914b6245a2d53887",
+      "figmaFingerprint": "a8684ded36ff47c41b99b44bf248dbf90cbe5376e57a41f175221392c6980297",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackLogin.dc.html": {
+      "code": "FB6",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:1011",
+      "canvasSha": "364f12d785da41932b5d92408482f45726677cf7fa9fa62f7ea2f71ca03a751b",
+      "figmaFingerprint": "845d53cc3f57be97c17756ed1d089c1f1c196b02c223f7bdbfd5cc5f4b10f753",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackPhone.dc.html": {
+      "code": "FB1m",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:1086",
+      "canvasSha": "38128fa99dfa8626d4b01a3152208494eb11ba7b11be127647a0715787db0091",
+      "figmaFingerprint": "aee8f750a423d1f57683c9d91cdea142d84c57f7ac48dcc21ffaddfc6643939a",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackChatPhone.dc.html": {
+      "code": "FB2m",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:1161",
+      "canvasSha": "0e83aafce45277735fd8737b591a25d8ebbffd6ea5bee8474527225a52467c2f",
+      "figmaFingerprint": "1fae5a62370e78b0ab49aab98f7e2e2379507674b61186e00b0f51d0ea04a54e",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackOpenPhone.dc.html": {
+      "code": "FB3m",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:1225",
+      "canvasSha": "e9c8903c246d5463cb7098742705aae37c17170973628e3eba71715ef1f347d3",
+      "figmaFingerprint": "f044b24e5d4af31656758d5d149b6930a20a5b07e82199cafc7316bfb765ef94",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "FeedbackLoginPhone.dc.html": {
+      "code": "FB4m",
+      "figmaPage": "共用畫面",
+      "nodeId": "1124:1281",
+      "canvasSha": "570896277cc629fb8462ddfac81b8a8426f4fb18676010b3b84781ba2dd2f6a6",
+      "figmaFingerprint": "b5d4ba4c5a7eab17e36679ae898d4468ed2906c00bb207e21dcdf57b46fbc63c",
+      "syncedAt": "2026-11-18",
+      "status": "superseded",
+      "adjustNote": null
     }
   },
   "unregistered": [

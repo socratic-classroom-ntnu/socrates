@@ -4,8 +4,8 @@
 The backend image runs this after `alembic upgrade head` on every start
 (deploy/stage/backend.Dockerfile). It creates the same predictable people every time:
 
-    teacher001..teacher003   each owns a script and a lobby room (code PREVIEW1..3)
-    user001..user030         students; user001..user010 already sit in PREVIEW1
+    teacher001..teacher003   teacher accounts; each owns a script and a lobby room (code PREVIEW1..3)
+    user001..user030         student accounts; user001..user010 already sit in PREVIEW1
     demo course              owned by teacher001, user001..user010 enrolled, one activity
                              open for 30 days from the first run
 
@@ -88,12 +88,13 @@ DOCUMENT = ScriptDocument.model_validate(
 ).model_dump()
 
 
-def account(db, username):
+def account(db, username, account_role="student"):
     row = Account(
         username=username,
         email=f"{username}@preview.invalid",
         password_hash=HASHER.hash(DEMO_PASSWORD),
         verified=True,
+        account_role=account_role,
     )
     db.add(row)
     db.flush()
@@ -103,7 +104,7 @@ def account(db, username):
 def _accounts(db):
     codes = []
     for n in range(1, TEACHERS + 1):
-        teacher = account(db, f"teacher{n:03d}")
+        teacher = account(db, f"teacher{n:03d}", "teacher")
         script = Script(owner_id=teacher.id, document=DOCUMENT, revision=1)
         db.add(script)
         db.flush()

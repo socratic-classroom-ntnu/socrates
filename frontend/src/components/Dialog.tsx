@@ -10,10 +10,13 @@ type Props = {
   /** Short explanation under the title (T2b). */
   description?: ReactNode
   tone?: 'default' | 'danger'
-  /** `right` is the T1 drawer; `center` the T2b/T4b dialogs. */
-  placement?: 'center' | 'right'
+  /** `right` is the T1 drawer; `center` the T2b/T4b dialogs; `bottom` the phone account sheet
+   * (S2sm): the title is only for screen readers and there is no ×, Esc and the backdrop close it. */
+  placement?: 'center' | 'right' | 'bottom'
   /** `false` keeps the dialog open when the dimmed backdrop is clicked (T1: typed content survives). */
   closeOnBackdrop?: boolean
+  /** `wide` is 820px for two-column content (M3 topic picker); phones still get the full width. */
+  size?: 'default' | 'wide'
 }
 
 // 開著的對話框；鍵盤只交給最上面那一個。序號在 render 時就決定，巢狀時父層先拿到較小的號碼
@@ -27,7 +30,7 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), texta
  * Modal dialog: dims the page, keeps Tab inside, closes on Esc and ×, and gives focus back to
  * whatever opened it. An element marked `data-autofocus` gets the first focus.
  */
-export function Dialog({ title, onClose, children, footer, description, tone = 'default', placement = 'center', closeOnBackdrop = true }: Props) {
+export function Dialog({ title, onClose, children, footer, description, tone = 'default', placement = 'center', closeOnBackdrop = true, size = 'default' }: Props) {
   const { t } = useT('common')
   const panel = useRef<HTMLDivElement>(null)
   const titleId = useId()
@@ -75,13 +78,15 @@ export function Dialog({ title, onClose, children, footer, description, tone = '
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
-      className={`dialog__panel dialog__panel--${tone}`}
+      className={`dialog__panel dialog__panel--${tone}${size === 'wide' ? ' dialog__panel--wide' : ''}`}
     >
-      <header className="dialog__header">
-        {tone === 'danger' && <span className="dialog__alert" aria-hidden="true">!</span>}
-        <h2 id={titleId}>{title}</h2>
-        <button type="button" className="dialog__close" aria-label={t('close')} onClick={onClose}>×</button>
-      </header>
+      {placement === 'bottom'
+        ? <><span className="dialog__handle" aria-hidden="true" /><h2 id={titleId} className="sr-only">{title}</h2></>
+        : <header className="dialog__header">
+          {tone === 'danger' && <span className="dialog__alert" aria-hidden="true">!</span>}
+          <h2 id={titleId}>{title}</h2>
+          <button type="button" className="dialog__close" aria-label={t('close')} onClick={onClose}>×</button>
+        </header>}
       {description && <div className="dialog__description">{description}</div>}
       <div className="dialog__body">{children}</div>
       {footer && <footer className="dialog__footer">{footer}</footer>}

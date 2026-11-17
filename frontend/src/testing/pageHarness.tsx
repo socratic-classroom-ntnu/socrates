@@ -10,7 +10,11 @@ import { RequireAuth } from '../features/auth/RequireAuth'
 export const signedIn = {
   id: 'u-1', username: 'Fizzy', email: 'fizzy@example.org', email_masked: 'f***@example.org',
   verified: true, authority_state: 'FULL_PRODUCT', csrf_token: 'c', points: 0, achievements: [], locale: 'zh-Hant',
+  kind: 'registered', account_role: 'student',
 }
+
+// 帳號只有一個角色：開老師頁（/teach、/teacher）要用老師帳號，學生帳號會看到跨角色說明頁
+export const signedInTeacher = { ...signedIn, id: 'u-2', username: 'Wang', account_role: 'teacher' }
 
 type Handler = unknown | ((body: Record<string, unknown> | undefined) => unknown)
 export type ApiRoutes = Record<string, Handler>

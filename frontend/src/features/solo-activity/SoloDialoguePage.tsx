@@ -16,6 +16,11 @@ import { ViewpointCard } from './ViewpointCard'
 
 const SAVE_CHECK_MS = 1000
 
+/** P9: the teacher removed the student from the course, and this attempt with it. */
+function attemptGone(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 404 && error.detail === 'SOLO_ATTEMPT_NOT_FOUND'
+}
+
 export function SoloDialoguePage() {
   const { t } = useT('solo')
   const { activityId = '' } = useParams()
@@ -37,6 +42,7 @@ export function SoloDialoguePage() {
     return () => window.clearInterval(timer)
   }, [attempt, pendingAction, view])
 
+  if (attemptGone(attempt.error) || attemptGone(actionError)) return <Navigate to="/" replace />
   if (activity.loading && !activity.data) return <main className="solo-dialogue" aria-busy="true" />
   if (!activity.data) {
     const notFound = activity.error instanceof ApiError && activity.error.status === 404
@@ -119,7 +125,12 @@ export function SoloDialoguePage() {
 
   return <main className="solo-dialogue">
     <header className="solo-dialogue__topbar">
-      <Link className="solo-dialogue__brand" to={`/learn/activities/${activityId}`} aria-label={t('dialogue.back')}>
+      {/* 我的對話的私人活動直接回「我的對話」（spec §10 M16） */}
+      <Link
+        className="solo-dialogue__brand"
+        to={activity.data.practice ? '/my-dialogues' : `/learn/activities/${activityId}`}
+        aria-label={t(activity.data.practice ? 'dialogue.backToPractice' : 'dialogue.back')}
+      >
         <span aria-hidden="true">{t('dialogue.logo')}</span>
       </Link>
       <div className="solo-dialogue__course">

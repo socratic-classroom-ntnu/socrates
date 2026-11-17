@@ -218,6 +218,6 @@ test('guest rows carry a guest tag and expired guests show an anonymous number',
   expect(within(registered).queryByText('訪客')).toBeNull()
   const guest = within(page).getByText('阿明').closest('th')!
   expect(within(guest).getByText('訪客')).toBeInTheDocument()
-  const expired = within(page).getByText('匿名訪客 2').closest('th')!
+  const expired = within(page).getByText('過期訪客 2').closest('th')!
   expect(within(expired).getByText('訪客')).toBeInTheDocument()
 })

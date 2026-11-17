@@ -7,7 +7,7 @@ type Student = Pick<components['schemas']['SoloStudentProgressView'], 'display_n
 export function StudentName({ student }: { student: Student }) {
   const { t } = useT('teach')
   if (student.kind === 'registered') return <>{student.display_name}</>
-  const name = student.kind === 'expired_guest' ? t('guest.anonymous', { number: student.guest_number ?? '' }) : student.display_name
+  const name = student.kind === 'expired_guest' ? t('guest.expired', { number: student.guest_number ?? '' }) : student.display_name
   return <span className="student-name">
     <span>{name}</span>
     <span className="student-name__guest">{t('guest.tag')}</span>

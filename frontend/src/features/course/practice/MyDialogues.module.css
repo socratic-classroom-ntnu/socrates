@@ -1,0 +1,118 @@
+/* 學生「我的對話」（畫布 MyDialogFirst／List／Quota／Picker／Guest＋Phone） */
+.page { box-sizing: border-box; padding: 32px 40px 48px; display: flex; flex-direction: column; gap: 22px; }
+.phone { padding: 18px 16px 24px; gap: 14px; }
+.title { margin: 0; font-size: 30px; font-weight: 700; color: var(--ui-color-ink); }
+.phone .title { font-size: 24px; }
+.panel {
+  flex-grow: 1; display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 16px;
+  background: var(--ui-color-panel); border: 1px solid var(--ui-color-line);
+}
+.phone .panel { padding: 0; border: 0; background: transparent; gap: 14px; }
+.loading { min-height: 200px; }
+
+/* 第一次：黑板條 */
+.board {
+  display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 12px;
+  background: var(--ui-color-dark); color: var(--ui-color-panel);
+}
+.board h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.seal {
+  flex-shrink: 0; width: 40px; height: 40px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--ui-color-warning-soft);
+  color: var(--ui-color-warning-soft); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px;
+}
+
+.grid { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.phone .grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.row { display: flex; gap: 12px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 4px; }
+.row > * { flex: 0 0 240px; }
+
+/* 卡片：頂端色條依分類（借用既有 token，11/14 元件庫決定） */
+.card {
+  box-sizing: border-box; min-width: 0; width: 100%; display: flex; flex-direction: column; gap: 12px; padding: 20px 22px 14px;
+  border-radius: 12px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line); border-top: 5px solid var(--ui-color-border);
+  color: var(--ui-color-ink); font: inherit; text-align: left;
+}
+.topic { cursor: pointer; }
+.topic:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.cat-tech { border-top-color: var(--ui-color-info); }
+.cat-life { border-top-color: var(--ui-color-ended-ink); }
+.cat-honesty { border-top-color: var(--ui-color-warning-ink); }
+.cat-self { border-top-color: var(--ui-color-primary); }
+.cat-none { border-top-color: var(--ui-color-border); }
+.disabledCard { background: var(--ui-color-panel-hover); cursor: not-allowed; }
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cardHead h3, .cardHead b { margin: 0; min-width: 0; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.cardBody { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid var(--ui-color-line); min-width: 0; }
+.excerpt { font-size: 14px; color: var(--ui-color-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.date { font-size: 14px; color: var(--ui-color-muted); }
+.start { align-self: flex-end; display: flex; align-items: center; gap: 6px; min-height: 40px; font-size: 15px; font-weight: 700; color: var(--ui-color-primary); }
+.waiting { align-self: flex-end; display: flex; align-items: center; min-height: 40px; font-size: 14px; color: var(--ui-color-muted); }
+.action { align-self: flex-end; }
+
+.categoryPill { flex-shrink: 0; height: 26px; padding: 0 10px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; }
+.pill-tech { background: var(--ui-color-info-soft); color: var(--ui-color-info); }
+.pill-life { background: var(--ui-color-danger-soft); color: var(--ui-color-ended-ink); }
+.pill-honesty { background: var(--ui-color-warning-soft); color: var(--ui-color-warning-ink); }
+.pill-self { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.pillOpen, .pillDone { flex-shrink: 0; height: 22px; padding: 0 8px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 700; }
+.pillOpen { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.pillDone { background: var(--ui-color-neutral-soft); color: var(--ui-color-muted); }
+
+/* 有對話 */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.recentTitle { margin: 0; font-size: 18px; font-weight: 700; }
+.count { font-weight: 400; color: var(--ui-color-muted); }
+.barEnd { display: flex; align-items: center; gap: 12px; }
+.remaining { font-size: 13px; color: var(--ui-color-muted); }
+.quota {
+  margin: 0; display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 10px;
+  background: var(--ui-color-warning-soft); color: var(--ui-color-warning-ink); font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.more { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+.more h3 { margin: 0; font-size: 16px; font-weight: 700; }
+.moreBar { display: flex; align-items: center; justify-content: space-between; }
+.linkButton { border: 0; background: transparent; padding: 0; min-height: 40px; color: var(--ui-color-primary); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.linkButton:disabled { color: var(--ui-color-muted); cursor: not-allowed; }
+
+/* 訪客 */
+.guest {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; padding: 26px 28px; border-radius: 14px;
+  background: var(--ui-color-dark); color: var(--ui-color-panel);
+}
+.guestIcon {
+  flex-shrink: 0; width: 64px; height: 64px; border-radius: 16px; background: var(--ui-color-ink-soft);
+  color: var(--ui-color-warning-soft); display: flex; align-items: center; justify-content: center;
+}
+.guestText { flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; }
+.guestText b { font-size: 20px; }
+.guestText span { font-size: 15px; line-height: 1.7; color: var(--ui-color-line); }
+.guestButton { flex-shrink: 0; }
+
+/* 挑題視窗（Figma M3：820×600，清單 321 寬、右邊預覽；body 的內距由這裡吃掉，讓分隔線貼齊視窗邊） */
+.picker {
+  display: grid; grid-template-columns: 321px minmax(0, 1fr); box-sizing: content-box; height: 436px; margin: 0 -28px -24px;
+  border-top: 1px solid var(--ui-color-line);
+}
+.pickerList {
+  margin: 0; padding: 10px 11px 10px 10px; list-style: none; display: flex; flex-direction: column; gap: 4px;
+  border-right: 1px solid var(--ui-color-line); overflow-y: auto;
+}
+.pickerOption { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: 8px; cursor: pointer; }
+.pickerOption b { font-size: 15px; font-weight: 700; }
+.pickerOption:hover { background: var(--ui-color-panel-hover); }
+.pickerOption[aria-selected="true"] { background: var(--ui-color-primary-soft); box-shadow: inset 3px 0 0 var(--ui-color-primary); }
+.pickerOption:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: -2px; }
+.optionCategory { font-size: 12px; color: var(--ui-color-muted); }
+.preview { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 24px 28px; overflow-y: auto; }
+.preview h3 { margin: 0; font-size: 20px; }
+.previewBody { margin: 0; font-size: 16px; line-height: 1.8; color: var(--ui-color-ink); }
+.previewHint { margin: auto 0 0; align-self: stretch; padding: 12px 14px; border-radius: 8px; background: var(--ui-color-bg); font-size: 13px; color: var(--ui-color-muted); }
+.accordion { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.accordionHead {
+  width: 100%; min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px;
+  border-radius: 10px; border: 1px solid var(--ui-color-line); background: var(--ui-color-panel); color: var(--ui-color-ink); font: inherit; text-align: left; cursor: pointer;
+}
+.accordionHead[aria-expanded="true"] { border-color: var(--ui-color-primary); }
+.accordionBody { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 4px; }
+.accordionBody p { margin: 0; font-size: 15px; line-height: 1.7; }
+

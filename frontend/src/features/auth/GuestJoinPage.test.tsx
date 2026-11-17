@@ -19,7 +19,7 @@ jest.mock('../solo-activity/SoloActivityPage', () => ({ SoloActivityPage: () => 
 const guest = {
   id: 'g-1', username: '安靜的貓頭鷹-1a2b3c4d', display_name: '安靜的貓頭鷹', email: '', email_masked: '',
   verified: false, authority_state: 'EMAIL_VERIFICATION', csrf_token: 'csrf', points: 0, achievements: [],
-  locale: 'zh-Hant', kind: 'guest', guest_expires_at: 2_000_000_000,
+  locale: 'zh-Hant', kind: 'guest', account_role: 'student', guest_expires_at: 2_000_000_000,
 }
 const courseJoined = { account: guest, course_id: 'c-1', activity_id: null, activity_status: null }
 

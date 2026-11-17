@@ -4,6 +4,10 @@ export default {
   close: '關閉',
   copied: '已複製',
   copyFailed: '無法複製',
+  password: {
+    show: '顯示密碼',
+    hide: '隱藏密碼',
+  },
   notFound: {
     title: '找不到這個頁面',
     body: '網址可能打錯了，或這個頁面已經移除。',
@@ -16,6 +20,10 @@ export default {
     USERNAME_TAKEN: '這個使用者名稱已經有人使用，請換一個。',
     EMAIL_TAKEN: '這個 Email 已經註冊過了，請直接登入；忘記密碼可以重設。',
     ACCOUNT_PENDING_VERIFICATION: '這個使用者名稱或 Email 已註冊，正在等待 Email 驗證。如果是你的帳號，請直接登入並重新寄送驗證信；如果不是，等驗證連結過期（最後一次寄出後 24 小時）就會釋出，屆時可以再註冊。',
+    ACCOUNT_ROLE_FORBIDDEN: '這個動作需要另一種帳號：建立課程要用老師帳號，加入課程或活動要用學生帳號。',
+    PRACTICE_DAILY_LIMIT: '今天的新對話次數用完了，明天再來。之前的對話可以繼續。',
+    PRACTICE_TOPIC_NOT_FOUND: '找不到這個題目，請重新整理後再選一次。',
+    PRACTICE_UNAVAILABLE: '練習暫時無法使用，請稍後再試。',
     LOGIN_REQUIRED: '請先登入。',
     SESSION_CSRF_REQUIRED: '登入狀態已過期，請重新整理頁面。',
     RATE_LIMITED: '操作太頻繁，請稍候再試。',

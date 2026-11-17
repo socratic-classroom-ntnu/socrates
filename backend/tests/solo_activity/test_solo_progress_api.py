@@ -60,7 +60,7 @@ def test_only_course_owner_can_read(client, tutor):
     response = progress(client, s["activity_id"])
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
 
-    user(client, "other")
+    user(client, "other", account_role="teacher")
     create_course(client)
     response = progress(client, s["activity_id"])
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
@@ -234,7 +234,7 @@ def test_enrolled_without_attempt_is_not_started(client, tutor):
 
 
 def test_draft_activity_reads_as_draft(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     body = create_activity(client, course["id"])
 

@@ -10,30 +10,31 @@ import { NOW, classroomRoutes } from './fixtures/api'
 
 type Auth = 'signedIn' | 'signedOut' | 'unverified'
 // open 在哪些寬度打開；沒寫就是每個寬度都開
-type Surface = { name: string; url: string; auth?: Auth; open?: (page: Page) => Promise<void>; openAt?: number[] }
+// role：用哪一種帳號開（沒寫是學生）；老師頁要用老師帳號，不然量到的是跨角色說明頁
+type Surface = { name: string; url: string; auth?: Auth; role?: 'teacher'; open?: (page: Page) => Promise<void>; openAt?: number[] }
 
 const SURFACES: Surface[] = [
   // 課程與外框
   { name: 'login', url: '/login', auth: 'signedOut' },
   { name: 'verify', url: '/verify', auth: 'unverified' },
   { name: 'home-learn', url: '/' },
-  { name: 'home-teach', url: '/?tab=teach' },
+  { name: 'home-teach', url: '/?tab=teach', role: 'teacher' },
   { name: 'join-course', url: '/join?code=3CKTGE7Q' },
   { name: 'join-activity', url: '/activities/a-open/join' },
   { name: 'learn-course', url: '/learn/courses/c-1' },
   { name: 'learn-activity', url: '/learn/activities/a-open' },
   { name: 'learn-dialogue', url: '/learn/activities/a-open/dialogue' },
-  { name: 'teach-course', url: '/teach/courses/c-1' },
-  { name: 'teach-editor', url: '/teach/activities/a-draft/edit' },
-  { name: 'teach-live', url: '/teach/activities/a-open' },
-  { name: 'teach-analysis', url: '/teach/activities/a-ended/analysis' },
+  { name: 'teach-course', url: '/teach/courses/c-1', role: 'teacher' },
+  { name: 'teach-editor', url: '/teach/activities/a-draft/edit', role: 'teacher' },
+  { name: 'teach-live', url: '/teach/activities/a-open', role: 'teacher' },
+  { name: 'teach-analysis', url: '/teach/activities/a-ended/analysis', role: 'teacher' },
   // 教師端在 375 只顯示請改用電腦的插圖，沒有邀請按鈕
-  { name: 'invite-dialog', url: '/teach/courses/c-1', open: page => page.getByRole('button', { name: '邀請學生' }).click(), openAt: [1280] },
+  { name: 'invite-dialog', url: '/teach/courses/c-1', role: 'teacher', open: page => page.getByRole('button', { name: '邀請學生' }).click(), openAt: [1280] },
   { name: 'account-menu', url: '/', open: page => page.getByRole('button', { name: '帳號選單' }).first().click() },
   // 分組課（/classrooms/:id 要 WebSocket 的教室狀態，等 PR D 再補）
   { name: 'groups', url: '/groups' },
-  { name: 'teacher-home', url: '/teacher/home' },
-  { name: 'teacher-course', url: '/teacher/courses/c-1' },
+  { name: 'teacher-home', url: '/teacher/home', role: 'teacher' },
+  { name: 'teacher-course', url: '/teacher/courses/c-1', role: 'teacher' },
   { name: 'demo-question-bank', url: '/question-bank' },
   { name: 'demo-danmaku', url: '/danmaku' },
   { name: 'demo-waiting-room', url: '/waiting-room' },
@@ -74,8 +75,8 @@ const STATES = ['hover', 'focus', 'focus-visible', 'focus-within', 'active']
 
 const FREEZE = '*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }'
 
-async function mockNetwork(page: Page, auth: Auth, unmocked: string[]) {
-  const routes = classroomRoutes({ signedIn: auth !== 'signedOut', verified: auth !== 'unverified' })
+async function mockNetwork(page: Page, auth: Auth, unmocked: string[], role?: 'teacher') {
+  const routes = classroomRoutes({ signedIn: auth !== 'signedOut', verified: auth !== 'unverified', role })
   const origin = new URL(test.info().project.use.baseURL!).origin
   await page.routeWebSocket(/\/api\//, () => {}) // 不連到伺服器、也不送訊息：教室畫面停在初始狀態
   await page.route('**/*', async route => {
@@ -302,7 +303,7 @@ for (const surface of SURFACES) {
     const unmocked: string[] = []
     const errors: string[] = []
     page.on('pageerror', error => errors.push(String(error)))
-    await mockNetwork(page, surface.auth ?? 'signedIn', unmocked)
+    await mockNetwork(page, surface.auth ?? 'signedIn', unmocked, surface.role)
     await page.clock.setFixedTime(NOW)
     await page.addInitScript(`window.__activeStyleRules = ${activeStyleRules.toString()}`)
     const cdp = await page.context().newCDPSession(page)

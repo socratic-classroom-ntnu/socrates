@@ -7,6 +7,10 @@ const common: Shape<typeof zhHant> = {
   close: 'Close',
   copied: 'Copied',
   copyFailed: 'Couldn\'t copy',
+  password: {
+    show: 'Show password',
+    hide: 'Hide password',
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may be mistyped, or this page has been removed.',
@@ -19,6 +23,10 @@ const common: Shape<typeof zhHant> = {
     USERNAME_TAKEN: 'That username is taken. Please choose another.',
     EMAIL_TAKEN: 'That email is already registered. Log in instead, or reset your password if you forgot it.',
     ACCOUNT_PENDING_VERIFICATION: 'That username or email is registered and waiting for email verification. If it is yours, log in and resend the verification email. If not, it is released once the link expires (24 hours after the last email), and you can sign up then.',
+    ACCOUNT_ROLE_FORBIDDEN: 'This needs the other kind of account: creating a course takes a teacher account, and joining a course or activity takes a student account.',
+    PRACTICE_DAILY_LIMIT: 'You have used today\'s new conversations. Come back tomorrow; your earlier conversations can continue.',
+    PRACTICE_TOPIC_NOT_FOUND: 'That topic was not found. Reload the page and pick again.',
+    PRACTICE_UNAVAILABLE: 'Practice is unavailable right now. Please try again later.',
     LOGIN_REQUIRED: 'Please log in first.',
     SESSION_CSRF_REQUIRED: 'Your session has expired. Please reload the page.',
     RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',

@@ -186,10 +186,11 @@ class GuestJoinResult(Strict):
 
 
 class ActivityDraft(Strict):
-    """The teacher's single input: one text that is both the activity name and the material the
-    first scenario is written from. Incomplete drafts are rejected, never stored."""
+    """The activity's name (what cards and students see) and the scenario text the first
+    scenario is written from. Incomplete drafts are rejected, never stored."""
 
-    title: str = Field(min_length=1, max_length=300)
+    title: str = Field(min_length=1, max_length=40)
+    scenario: str = Field(min_length=1, max_length=300)
     starts_at: float | None = None
     ends_at: float
 
@@ -197,7 +198,7 @@ class ActivityDraft(Strict):
 class ActivityDetailsUpdate(Strict):
     """Operational fields a teacher may still change after the content locks."""
 
-    title: str | None = Field(default=None, min_length=1, max_length=300)
+    title: str | None = Field(default=None, min_length=1, max_length=40)
     ends_at: float | None = None
 
     @field_validator("title", "ends_at")

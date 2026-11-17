@@ -85,11 +85,13 @@ SCENARIO = (
 def setup(client, *, scenario=SCENARIO, ai=True, **activity):
     """Teacher with a published, open activity and one enrolled student (logged in).
 
-    The teacher's single input is the activity's title and the first scenario's text."""
+    The activity's name is only a label; the first scenario is written from its scenario text."""
     teacher = user(client, "owner", account_role="teacher")
     profile_id = configure_ai(client) if ai else None
     course = create_course(client)
-    body = create_activity(client, course["id"], title=scenario, **activity)
+    body = create_activity(
+        client, course["id"], **{"title": "電車難題", "scenario": scenario, **activity}
+    )
     assert act(client, body["id"], "publish").status_code == 200
     student = join(client, course, "student")
     return {
@@ -261,7 +263,7 @@ def test_full_single_scenario_flow(client, tutor):
     calls, replies = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
-    # The teacher's text is the first scenario, shown verbatim before any provider call.
+    # The teacher's scenario text is the first scenario, shown verbatim before any provider call.
     assert [x["text"] for x in attempt["scenarios"]] == [SCENARIO]
     assert attempt["scenarios"][0]["answer"] is None
 

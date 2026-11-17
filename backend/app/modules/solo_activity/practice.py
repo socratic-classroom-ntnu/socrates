@@ -62,7 +62,7 @@ def practice_list(db: Session, account: Account, at: float) -> dict:
                 "attempt_id": attempt.id,
                 "topic_id": activity.bank_item_id or "",
                 "title": courses.practice_display_title(item, activity.title),
-                "body": activity.title,
+                "body": activity.draft["scenario"],
                 "category": item.category if item is not None else None,
                 "status": "completed" if attempt.state == "completed" else "in_progress",
                 "created_at": activity.created_at,

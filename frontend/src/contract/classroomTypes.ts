@@ -4,7 +4,7 @@ export interface components { schemas: {
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
   "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name": string };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
-  "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
+  "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
   "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string; "allow_guest": boolean };
   "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };
@@ -168,7 +168,7 @@ export interface requestComponents { schemas: {
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
   "AccountView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name"?: string };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
-  "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
+  "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
   "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string; "allow_guest": boolean };
   "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };

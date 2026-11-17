@@ -90,7 +90,8 @@ def test_starting_builds_a_private_course_an_open_activity_and_an_attempt(client
         enrollment = db.scalar(select(Enrollment).where(Enrollment.course_id == course.id))
         assert (enrollment.account_id, enrollment.display_name) == (student["id"], "ming")
         assert activity.bank_item_id == "trolley"
-        assert activity.title.startswith("一輛失控的電車")
+        assert activity.title == "電車難題"
+        assert activity.draft["scenario"].startswith("一輛失控的電車")
         assert (activity.starts_at, activity.ends_at, activity.created_at) == (
             TAIPEI_LATE,
             4102444800,
@@ -259,7 +260,7 @@ def test_only_a_completed_attempt_counts_as_completed(client, student, at):
     assert listing(client)["dialogues"][0]["status"] == "completed"
 
 
-def test_a_removed_topic_still_lists_with_a_fallback_title(client, student, at, monkeypatch):
+def test_a_removed_topic_still_lists_with_the_stored_name(client, student, at, monkeypatch):
     start(client, "trolley")
     monkeypatch.setattr(
         course_practice, "_bank", tuple(i for i in course_practice.bank() if i.id != "trolley")
@@ -267,7 +268,7 @@ def test_a_removed_topic_still_lists_with_a_fallback_title(client, student, at, 
     (row,) = listing(client)["dialogues"]
     assert row["category"] is None
     assert row["body"].startswith("一輛失控的電車")
-    assert row["title"] == row["body"][:20] + "…"
+    assert row["title"] == "電車難題"
 
 
 def test_editing_a_topic_does_not_rewrite_what_was_discussed(client, student, at, monkeypatch):
@@ -318,3 +319,4 @@ def test_the_activity_and_attempt_views_show_the_short_title(client, student, at
     assert (view["title"], view["practice"]) == ("電車難題", True)
     attempt = client.get(f"/api/v2/solo/attempts/{started['attempt_id']}").json()
     assert attempt["activity_title"] == "電車難題"
+    assert attempt["scenarios"][0]["text"].startswith("一輛失控的電車")

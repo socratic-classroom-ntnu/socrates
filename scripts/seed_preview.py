@@ -137,7 +137,8 @@ def _demo_course(db, now):
     for n in range(1, SEATED_IN_FIRST_ROOM + 1):
         enrollment.enroll(db, _by_name(db, f"user{n:03d}"), course, f"同學{n:02d}")
     draft = ActivityDraft(
-        title="岔道上的選擇：主動造成傷害與不作為，在道德上有沒有差別",
+        title="岔道上的選擇",
+        scenario="岔道上的選擇：主動造成傷害與不作為，在道德上有沒有差別",
         ends_at=now + DEMO_ACTIVITY_DAYS * 86400,
     )
     activities.publish(db, activities.create_draft(db, course, draft), now)

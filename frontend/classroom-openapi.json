@@ -238,7 +238,7 @@
           "title": {
             "anyOf": [
               {
-                "maxLength": 300,
+                "maxLength": 40,
                 "minLength": 1,
                 "type": "string"
               },
@@ -254,11 +254,17 @@
       },
       "ActivityDraft": {
         "additionalProperties": false,
-        "description": "The teacher's single input: one text that is both the activity name and the material the\nfirst scenario is written from. Incomplete drafts are rejected, never stored.",
+        "description": "The activity's name (what cards and students see) and the scenario text the first\nscenario is written from. Incomplete drafts are rejected, never stored.",
         "properties": {
           "ends_at": {
             "title": "Ends At",
             "type": "number"
+          },
+          "scenario": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Scenario",
+            "type": "string"
           },
           "starts_at": {
             "anyOf": [
@@ -272,7 +278,7 @@
             "title": "Starts At"
           },
           "title": {
-            "maxLength": 300,
+            "maxLength": 40,
             "minLength": 1,
             "title": "Title",
             "type": "string"
@@ -280,6 +286,7 @@
         },
         "required": [
           "title",
+          "scenario",
           "ends_at"
         ],
         "title": "ActivityDraft",

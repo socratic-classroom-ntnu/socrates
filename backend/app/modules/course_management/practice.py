@@ -201,7 +201,9 @@ def create_practice_activity(db: Session, course: Course, item: BankItem, at: fl
     db.scalar(select(Course).where(Course.id == course.id).with_for_update())
     if created_today(db, course, at) >= daily_limit():
         raise DomainError("PRACTICE_DAILY_LIMIT", 429)
-    draft = ActivityDraft(title=item.body, starts_at=at, ends_at=PRACTICE_ENDS_AT)
+    draft = ActivityDraft(
+        title=item.title, scenario=item.body, starts_at=at, ends_at=PRACTICE_ENDS_AT
+    )
     activity = activities.create_draft(db, course, draft)
     activity.bank_item_id = item.id
     activity.created_at = at

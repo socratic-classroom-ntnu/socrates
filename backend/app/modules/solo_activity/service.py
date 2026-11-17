@@ -371,7 +371,7 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
     row = SoloAttempt(
         id=str(uuid4()), activity_id=activity.id, revision_id=revision.id, account_id=account.id
     )
-    first = Scenario(FIRST_SCENARIO_ID, revision.content["title"])
+    first = Scenario(FIRST_SCENARIO_ID, revision.content["scenario"])
     _store(row, machine.new_attempt(row.id, [first]))
     db.add(row)
     db.flush()

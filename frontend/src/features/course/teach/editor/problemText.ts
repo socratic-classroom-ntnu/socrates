@@ -8,6 +8,7 @@ export type Located = { section: 'basics'; where: string; field: string; state: 
 export function locate(problem: Problem, t: Translate): Located {
   const basics = t('sections.basics')
   if (problem.field === 'title') return { section: 'basics', where: basics, field: t('fields.title'), state: t('errors.missing'), message: t('errors.title') }
+  if (problem.field === 'scenario') return { section: 'basics', where: basics, field: t('fields.scenario'), state: t('errors.missing'), message: t('errors.scenario') }
   if (problem.field === 'start') {
     const past = problem.kind === 'startPast'
     return { section: 'basics', where: basics, field: t('fields.start'), state: past ? t('errors.past') : t('errors.missing'), message: past ? t('errors.startPast') : t('errors.start') }

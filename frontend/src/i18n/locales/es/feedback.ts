@@ -47,5 +47,11 @@ export default {
     expiredGuest: 'Invitado vencido',
     nowAccount: 'ahora {{name}}',
     noKind: '—',
+    openDetail: 'Ver detalles',
+    detailTitle: 'Detalles del comentario',
+    purgeNote: 'Se borra automáticamente a los 90 días',
+    screenshotAlt: 'Captura',
+    screenshotUnavailable: 'No se pudo cargar la captura (puede que se haya borrado tras 90 días)',
+    loadFailed: 'No se pudieron cargar los comentarios. Recarga la página.',
   },
 }

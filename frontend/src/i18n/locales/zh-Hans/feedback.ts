@@ -47,5 +47,11 @@ export default {
     expiredGuest: '过期访客',
     nowAccount: '现在是 {{name}}',
     noKind: '—',
+    openDetail: '查看详情',
+    detailTitle: '反馈详情',
+    purgeNote: '90 天后自动删除',
+    screenshotAlt: '截图',
+    screenshotUnavailable: '无法读取截图（可能已超过 90 天被删除）',
+    loadFailed: '无法读取意见反馈，请刷新页面。',
   },
 }

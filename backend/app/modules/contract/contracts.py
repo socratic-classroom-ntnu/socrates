@@ -15,6 +15,13 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),
     "ACTIVITY_ENDED": ("course_management",),
     "ACTIVITY_LOCKED": ("course_management",),
+    "ADMIN_ACCOUNT_NOT_FOUND": ("identity_access",),
+    "ADMIN_ALREADY": ("identity_access",),
+    "ADMIN_CANNOT_REMOVE_SELF": ("identity_access",),
+    "ADMIN_GUEST_NOT_ALLOWED": ("identity_access",),
+    "ADMIN_NOT_FOUND": ("admin", "identity_access"),
+    "ADMIN_TOGGLE_NOT_FOUND": ("admin",),
+    "ADMIN_UNVERIFIED": ("identity_access",),
     "ACTIVITY_NOT_FOUND": (
         "course_management",
         "solo_activity",
@@ -144,6 +151,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
 
 DYNAMIC_REASON_CODES: tuple[str, ...] = (
     "API_ROUTE_JSON_REQUIRED",
+    "GROUP_MODE_DISABLED",
     "EMAIL_TAKEN",
     "PROVIDER_ADAPTER_REQUIRED",
     "PROVIDER_AVAILABILITY",

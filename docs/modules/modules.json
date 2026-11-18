@@ -203,6 +203,20 @@
         "identity-access"
       ],
       "todo": []
+    },
+    {
+      "id": "admin",
+      "name": "Admin（後台）",
+      "status": "ok",
+      "about": "後台：平台管理員的增減與功能開關（資料庫存值）；啟動時套用第一批管理員。",
+      "paths": [
+        "backend/app/modules/admin/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access"
+      ],
+      "todo": []
     }
   ],
   "contracts": [
@@ -338,6 +352,16 @@
       "frontend": [
         "feedback"
       ]
+    },
+    {
+      "name": "後台（/admin）",
+      "backend": "admin",
+      "source": "backend/app/modules/admin/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "後台：功能開關、意見回饋、管理員",
+      "frontend": [
+        "admin"
+      ]
     }
   ],
   "frontend": [
@@ -390,7 +414,10 @@
         "frontend/src/testkit.ts",
         "frontend/src/setupTests.ts",
         "frontend/src/types/window-globals.d.ts",
-        "frontend/src/vite-env.d.ts"
+        "frontend/src/vite-env.d.ts",
+        "frontend/src/shared/publicConfig.tsx",
+        "frontend/src/shared/GroupModeGate.tsx",
+        "frontend/src/shared/GroupModeGate.test.tsx"
       ],
       "uses": [
         "contract"
@@ -574,7 +601,7 @@
       "id": "feedback",
       "name": "意見回饋",
       "status": "ok",
-      "about": "每一頁右下角的回饋按鈕與對話框（類型、說明、截圖、聯絡方式），以及名單上帳號看的回饋列表頁。",
+      "about": "每一頁右下角的回饋按鈕與對話框（類型、說明、截圖、聯絡方式），以及給後台用的回饋列表與詳情。",
       "paths": [
         "frontend/src/features/feedback/"
       ],
@@ -582,6 +609,22 @@
         "platform",
         "contract",
         "auth"
+      ],
+      "todo": []
+    },
+    {
+      "id": "admin",
+      "name": "後台",
+      "status": "ok",
+      "about": "平台管理員的後台：功能開關、意見回饋列表與詳情、管理員增減（只做電腦版，非管理員一律找不到頁面）。",
+      "paths": [
+        "frontend/src/features/admin/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth",
+        "feedback"
       ],
       "todo": []
     }

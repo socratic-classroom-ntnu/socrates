@@ -47,5 +47,11 @@ export default {
     expiredGuest: '過期訪客',
     nowAccount: '現在是 {{name}}',
     noKind: '—',
+    openDetail: '看詳情',
+    detailTitle: '回饋詳情',
+    purgeNote: '90 天後自動刪除',
+    screenshotAlt: '截圖',
+    screenshotUnavailable: '讀不到截圖（可能已超過 90 天被刪除）',
+    loadFailed: '讀不到意見回饋，請重新整理頁面。',
   },
 }

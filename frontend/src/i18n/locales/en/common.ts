@@ -11,6 +11,10 @@ const common: Shape<typeof zhHant> = {
     show: 'Show password',
     hide: 'Hide password',
   },
+  groupModeOff: {
+    title: "Group mode isn't available right now",
+    body: "Group classes are paused for now. We'll let you know when they're back.",
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may be mistyped, or this page has been removed.',

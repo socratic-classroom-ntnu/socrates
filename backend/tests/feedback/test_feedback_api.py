@@ -230,15 +230,15 @@ def test_signed_out_senders_share_sixty_in_a_window(client):
     assert send(client).status_code == 429
 
 
-# ---- 讀取（P8、P18）------------------------------------------------------------------------
+# ---- 讀取：只有平台管理員（後台 spec P11）--------------------------------------------------
 
 
-def readers(monkeypatch, value=" Fizzy , ,qatester"):
-    monkeypatch.setenv("SOCRATES_FEEDBACK_READERS", value)
+def make_admin(username: str) -> None:
+    with storage.transaction() as db:
+        db.scalar(select(Account).where(Account.username == username)).platform_role = "admin"
 
 
-def test_a_reader_sees_newest_first_with_who_sent_it(client, monkeypatch):
-    readers(monkeypatch)
+def test_an_admin_sees_newest_first_with_who_sent_it(client):
     assert send(client, contact="anon@example.edu", screenshot=shot(PNG)).status_code == 201
     _, course = teacher_course(client)
     leave(client)
@@ -246,6 +246,7 @@ def test_a_reader_sees_newest_first_with_who_sent_it(client, monkeypatch):
     assert send(client, contact="0912").status_code == 201
     leave(client)
     user(client, "fizzy", account_role="teacher")
+    make_admin("fizzy")
     assert send(client, message="老師的回饋").status_code == 201
 
     page = client.get("/api/v2/feedback")
@@ -274,8 +275,7 @@ def test_a_reader_sees_newest_first_with_who_sent_it(client, monkeypatch):
     assert "screenshot" not in third
 
 
-def test_an_expired_guest_has_no_name_in_the_list(client, monkeypatch):
-    readers(monkeypatch)
+def test_an_expired_guest_has_no_name_in_the_list(client):
     _, course = teacher_course(client)
     leave(client)
     guest = guest_join(client, course["code"]).json()["account"]
@@ -285,12 +285,12 @@ def test_an_expired_guest_has_no_name_in_the_list(client, monkeypatch):
         row.kind = "expired_guest"
     leave(client)
     user(client, "qatester", account_role="student")
+    make_admin("qatester")
     [item] = client.get("/api/v2/feedback").json()["items"]
     assert (item["account_kind"], item["account_name"]) == ("expired_guest", None)
 
 
-def test_pages_hold_fifty(client, monkeypatch):
-    readers(monkeypatch)
+def test_pages_hold_fifty(client):
     with storage.transaction() as db:
         for index in range(51):
             db.add(
@@ -309,6 +309,7 @@ def test_pages_hold_fifty(client, monkeypatch):
                 )
             )
     user(client, "fizzy")
+    make_admin("fizzy")
     first = client.get("/api/v2/feedback?page=1").json()
     assert len(first["items"]) == 50 and first["has_more"] is True
     assert first["items"][0]["message"] == "#50"
@@ -317,21 +318,17 @@ def test_pages_hold_fifty(client, monkeypatch):
     assert client.get("/api/v2/feedback?page=0").status_code == 422
 
 
-def test_people_off_the_list_get_not_found(client, monkeypatch):
+def test_accounts_that_are_not_admins_get_not_found(client):
     assert send(client, screenshot=shot(PNG)).status_code == 201
     [row] = rows()
     user(client, "mei")
-    monkeypatch.delenv("SOCRATES_FEEDBACK_READERS", raising=False)
     for path in ("/api/v2/feedback", f"/api/v2/feedback/{row.id}/screenshot"):
         response = client.get(path)
         assert response.status_code == 404, path
         assert response.json()["detail"] == "FEEDBACK_NOT_FOUND"
-    readers(monkeypatch, "qa")
-    assert client.get("/api/v2/feedback").status_code == 404
 
 
-def test_signed_out_people_and_guests_see_nothing_either(client, monkeypatch):
-    readers(monkeypatch)
+def test_signed_out_people_and_guests_see_nothing_either(client):
     assert send(client, screenshot=shot(PNG)).status_code == 201
     [row] = rows()
     paths = ("/api/v2/feedback", f"/api/v2/feedback/{row.id}/screenshot")
@@ -346,12 +343,12 @@ def test_signed_out_people_and_guests_see_nothing_either(client, monkeypatch):
         assert (response.status_code, response.json()["detail"]) == (404, "FEEDBACK_NOT_FOUND")
 
 
-def test_a_reader_gets_the_screenshot_bytes(client, monkeypatch):
-    readers(monkeypatch)
+def test_an_admin_gets_the_screenshot(client):
     assert send(client, screenshot=shot(JPEG, "image/jpeg")).status_code == 201
     assert send(client).status_code == 201
     with_shot, without = rows()
-    user(client, "FIZZY")
+    user(client, "fizzy")
+    make_admin("fizzy")
     response = client.get(f"/api/v2/feedback/{with_shot.id}/screenshot")
     assert response.status_code == 200
     assert response.json() == {"mime": "image/jpeg", "data_base64": base64.b64encode(JPEG).decode()}

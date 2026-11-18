@@ -37,11 +37,13 @@ import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountP
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
-import { RequireAuth } from '../features/auth/RequireAuth'
+import { LoadingScreen, RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
 import { RoleGate } from './RoleGate'
-// 回饋列表用 src/ui 元件：要在 import '../ui' 與課程頁之後（styleOrder.test.ts）
-import { FeedbackListPage } from '../features/feedback/FeedbackListPage'
+// 後台用 src/ui 元件：要在 import '../ui' 與課程頁之後（styleOrder.test.ts）
+import { AdminGate } from '../features/admin/AdminGate'
+import { AdminPage } from '../features/admin/AdminPage'
+import { GroupModeGate } from '../shared/GroupModeGate'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -84,12 +86,21 @@ export function AppRoutes() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/join/guest" element={<GuestJoinPage />} />
-    {/* 意見回饋列表：不經登入守門，名單以外的人（含未登入）一律看到找不到頁面（意見回饋 spec P8） */}
-    <Route path="/feedback" element={<FeedbackListPage />} />
+    {/* 回饋列表搬進後台（後台 spec P11）；後台不經登入守門，非管理員（含未登入）一律看到找不到頁面（P15） */}
+    <Route path="/feedback" element={<Navigate to="/admin/feedback" replace />} />
+    <Route element={<AdminGate />}>
+      <Route element={<AppShell />}>
+        <Route path="/admin" element={<AdminPage tab="toggles" />} />
+        <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
+        <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
+      </Route>
+    </Route>
     <Route element={<RequireAuth />}>
       {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
       <Route element={<RoleGate />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
+      {/* 多人模式關閉時，分組課與它的示範頁都換成「多人模式目前沒有開放」（後台 spec P8、P19） */}
+      <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />
       {/* 寫死資料的示範頁：要登入才看得到，外框標明「示範資料」 */}
       <Route path="/question-bank" element={<DemoSurface title="教師題庫畫面"><QuestionBank /></DemoSurface>} />
@@ -98,8 +109,12 @@ export function AppRoutes() {
       <Route path="/group-result" element={<DemoSurface title="分組結果"><GroupResult /></DemoSurface>} />
       <Route path="/poll-result" element={<DemoSurface title="選項占比"><PollResult /></DemoSurface>} />
       <Route path="/activity-form" element={<DemoSurface title="教師出題表單"><ActivityFormModal onClose={() => location.assign('/')} onSubmit={() => location.assign('/')} /></DemoSurface>} />
+      </Route>
       <Route element={<AppShell />}>
-        <Route path="/groups" element={<GroupsPage />} />
+        {/* /groups?view=providers 是舊的 AI 連線設定入口，GroupModeGate 放行（P20） */}
+        <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
+          <Route path="/groups" element={<GroupsPage />} />
+        </Route>
         <Route path="/account" element={<Placeholder kind="account" />} />
       </Route>
       </Route>
@@ -137,8 +152,11 @@ export function AppRoutes() {
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>
         <Route element={<TeacherDesktopOnly />}>
-          <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
-          <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+          {/* 舊教師頁：個人題庫、題庫商店、AI 連線設定（?view=）放行，多人課程首頁與課程頁要多人模式（P8） */}
+          <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
+            <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
+            <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+          </Route>
         </Route>
       </Route>
       </Route>

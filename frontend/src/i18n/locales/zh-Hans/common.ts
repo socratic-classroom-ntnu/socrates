@@ -11,6 +11,10 @@ const common: Shape<typeof zhHant> = {
     show: '显示密码',
     hide: '隐藏密码',
   },
+  groupModeOff: {
+    title: '多人模式目前没有开放',
+    body: '分组课这段时间暂停使用，之后开放会再通知。',
+  },
   notFound: {
     title: '找不到这个页面',
     body: '网址可能输错了，或者这个页面已经移除。',

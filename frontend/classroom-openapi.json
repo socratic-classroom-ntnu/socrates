@@ -157,6 +157,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_admin": {
+            "default": false,
+            "title": "Is Admin",
+            "type": "boolean"
+          },
           "kind": {
             "default": "registered",
             "enum": [
@@ -746,6 +751,53 @@
           "roster_digest"
         ],
         "title": "AddAIStudentsReceipt",
+        "type": "object"
+      },
+      "AdminCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "title": "AdminCreate",
+        "type": "object"
+      },
+      "AdminView": {
+        "properties": {
+          "account_id": {
+            "title": "Account Id",
+            "type": "string"
+          },
+          "account_role": {
+            "title": "Account Role",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "is_you": {
+            "title": "Is You",
+            "type": "boolean"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "username",
+          "display_name",
+          "account_role",
+          "is_you"
+        ],
+        "title": "AdminView",
         "type": "object"
       },
       "AnalysisEdgeView": {
@@ -2480,6 +2532,20 @@
         "title": "DiscoveredModel",
         "type": "object"
       },
+      "FeaturesView": {
+        "description": "後台的功能開關目前的狀態（spec P9）。",
+        "properties": {
+          "group_mode": {
+            "title": "Group Mode",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "group_mode"
+        ],
+        "title": "FeaturesView",
+        "type": "object"
+      },
       "FeedbackCreate": {
         "additionalProperties": false,
         "properties": {
@@ -3977,6 +4043,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_admin": {
+            "default": false,
+            "title": "Is Admin",
+            "type": "boolean"
+          },
           "kind": {
             "default": "registered",
             "enum": [
@@ -4760,6 +4831,9 @@
               }
             ]
           },
+          "features": {
+            "$ref": "#/components/schemas/FeaturesView"
+          },
           "google_cse_id": {
             "title": "Google Cse Id",
             "type": "string"
@@ -4777,7 +4851,8 @@
           "google_cse_id",
           "search_scope",
           "search_state",
-          "debug_mode"
+          "debug_mode",
+          "features"
         ],
         "title": "PublicConfigView",
         "type": "object"
@@ -7483,6 +7558,72 @@
         "title": "Start",
         "type": "object"
       },
+      "ToggleUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "ToggleUpdate",
+        "type": "object"
+      },
+      "ToggleView": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "updated_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Name"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "enabled",
+          "updated_at",
+          "updated_by_name"
+        ],
+        "title": "ToggleView",
+        "type": "object"
+      },
       "TokenRequest": {
         "additionalProperties": false,
         "properties": {
@@ -8368,6 +8509,182 @@
         "summary": "Transition Activity",
         "tags": [
           "activities"
+        ]
+      }
+    },
+    "/api/v2/admin/admins": {
+      "get": {
+        "operationId": "list_admins_api_v2_admin_admins_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminView"
+                  },
+                  "title": "Response List Admins Api V2 Admin Admins Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Admins",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "add_admin_api_v2_admin_admins_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/admins/{account_id}": {
+      "delete": {
+        "operationId": "remove_admin_api_v2_admin_admins__account_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": true,
+            "schema": {
+              "title": "Account Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/toggles": {
+      "get": {
+        "operationId": "list_toggles_api_v2_admin_toggles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ToggleView"
+                  },
+                  "title": "Response List Toggles Api V2 Admin Toggles Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Toggles",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/toggles/{key}": {
+      "put": {
+        "operationId": "put_toggle_api_v2_admin_toggles__key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToggleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToggleView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Toggle",
+        "tags": [
+          "admin"
         ]
       }
     },

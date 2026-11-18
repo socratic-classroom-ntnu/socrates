@@ -1,5 +1,6 @@
 export default {
   nav: {
+    admin: '後台',
     label: '主選單',
     home: '首頁',
     dialogues: '我的對話',

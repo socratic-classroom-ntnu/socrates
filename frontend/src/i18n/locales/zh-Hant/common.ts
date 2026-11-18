@@ -8,6 +8,10 @@ export default {
     show: '顯示密碼',
     hide: '隱藏密碼',
   },
+  groupModeOff: {
+    title: '多人模式目前沒有開放',
+    body: '分組課這段時間暫停使用，之後開放會再通知。',
+  },
   notFound: {
     title: '找不到這個頁面',
     body: '網址可能打錯了，或這個頁面已經移除。',

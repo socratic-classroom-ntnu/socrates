@@ -1267,6 +1267,96 @@
       "syncedAt": "2026-11-18",
       "status": "superseded",
       "adjustNote": null
+    },
+    "AdminNavTeacher.dc.html": {
+      "code": "AD1",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:325",
+      "canvasSha": "967ff582728e1cdeb4ecf5e6ede41def601949aa4a546f39f4b04b6187e1754c",
+      "figmaFingerprint": "07d9cb42d9e1116d3d652c2df92b4a7a9aa5f6b8ac079359997e4d0e45a1d753",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminNavStudent.dc.html": {
+      "code": "AD2",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:771",
+      "canvasSha": "178b4f4cdb2c1c1f59078ea58a8cba544a0038a7e4de5045586f9a498bc4023a",
+      "figmaFingerprint": "40caf31e954ba4ebc8bf0b4a64134c4d52fe53c6fe8056c58217594376b1b99e",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminToggles.dc.html": {
+      "code": "AD3",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:818",
+      "canvasSha": "0b79a00d30bb376755151715155d42671bdf005c38c96ba801c80c9b63c53fad",
+      "figmaFingerprint": "6eb44c660f262500077ccc6672c6abce296703fb9d44e796e6675752c656c076",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminToggleOff.dc.html": {
+      "code": "AD4",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:893",
+      "canvasSha": "0aa33dd626f96fee05dc08dadf22ea0765df7a5ef6dd6debc79ae57d50ce8a69",
+      "figmaFingerprint": "4a1e848d3229fc297c5c680fa188565e82a5fe88b5814b23698e7476ed66c113",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminFeedback.dc.html": {
+      "code": "AD5",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:2523",
+      "canvasSha": "01a43ec0a54791eb92630f03e77fd1cfebab453d6b2c685ddd7f818367c844bc",
+      "figmaFingerprint": "03f6f4fb7e50786852b2b479b6c394024e29706ded2401a9f97da942fdf035e7",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminAdmins.dc.html": {
+      "code": "AD6",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:1134",
+      "canvasSha": "515aab4180b75ccde27025fe28837543965f4595c888016690794395c9a1dc33",
+      "figmaFingerprint": "2e4649cd6a2171cb6ce4f3a0ed66130163263441fcb44b5765c366083abb2075",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminAddError.dc.html": {
+      "code": "AD7",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:1249",
+      "canvasSha": "6096ea236811679fdaa4a6cb4f866df76ec7a629057bc3b3339a5b2d73f794a7",
+      "figmaFingerprint": "bbf3d30549e8788b552d012fe09062486908b7cdd697a30e790215da5d26f065",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminRemove.dc.html": {
+      "code": "AD8",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:1366",
+      "canvasSha": "ebf51af07b53dcd88b7b14b8f04c505c32e7cb25eba0fe3ad4446a3e1996c68e",
+      "figmaFingerprint": "81979d029dbe1389c56e871aee68ce7ff0245c0fc63b8ccc801ace17db30f127",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
+    },
+    "AdminFeedbackDetail.dc.html": {
+      "code": "AD5b",
+      "figmaPage": "共用畫面",
+      "nodeId": "1198:2646",
+      "canvasSha": "01e4e1a883ab0f89003e179c51da39fa8af55717c56248d072f24dfd90e10275",
+      "figmaFingerprint": "13f406fc26699cc5b1e5d4c94aa24d0e6e1c6377df5f9d278d2a5b288adfac03",
+      "syncedAt": "2026-11-19",
+      "status": "superseded",
+      "adjustNote": null
     }
   },
   "unregistered": [

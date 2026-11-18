@@ -3,7 +3,7 @@
 import base64
 from typing import cast
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from app.modules.feedback import service
 from app.modules.feedback.contracts import (
@@ -31,6 +31,12 @@ def _reader(db, request: Request) -> Account:
     return current
 
 
+def reader_guard(request: Request) -> None:
+    """Runs before query validation: non-admins get FEEDBACK_NOT_FOUND, never a 422 (後台 spec P15)."""
+    with transaction() as db:
+        _reader(db, request)
+
+
 @router.post("", response_model=FeedbackCreated, status_code=201)
 def send_feedback(body: FeedbackCreate, request: Request) -> FeedbackCreated:
     same_origin(request)
@@ -46,14 +52,18 @@ def send_feedback(body: FeedbackCreate, request: Request) -> FeedbackCreated:
     return FeedbackCreated(id=feedback_id)
 
 
-@router.get("", response_model=FeedbackPage)
+@router.get("", response_model=FeedbackPage, dependencies=[Depends(reader_guard)])
 def list_feedback(request: Request, page: int = Query(1, ge=1)) -> FeedbackPage:
     with transaction() as db:
         _reader(db, request)
         return service.list_page(db, page)
 
 
-@router.get("/{feedback_id}/screenshot", response_model=FeedbackScreenshot)
+@router.get(
+    "/{feedback_id}/screenshot",
+    response_model=FeedbackScreenshot,
+    dependencies=[Depends(reader_guard)],
+)
 def feedback_screenshot(
     feedback_id: str, request: Request, response: Response
 ) -> FeedbackScreenshot:

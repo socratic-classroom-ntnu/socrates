@@ -3,6 +3,7 @@ import { AppRoutes } from './app/routes'
 import { DevConsole } from './features/dev-console/DevConsole'
 import { AuthProvider } from './features/auth/AuthContext'
 import { FeedbackLayer } from './features/feedback/FeedbackLayer'
+import { PublicConfigProvider } from './shared/publicConfig'
 
 // 整個前端只有這一個路由器：課程頁、分組課與示範頁都掛在 src/app/routes.tsx。
 // DevConsole 只在後端 debug_mode 為 true 時出現。
@@ -10,8 +11,10 @@ import { FeedbackLayer } from './features/feedback/FeedbackLayer'
 export default function App() {
   return <BrowserRouter>
     <AuthProvider>
-      <AppRoutes />
-      <FeedbackLayer />
+      <PublicConfigProvider>
+        <AppRoutes />
+        <FeedbackLayer />
+      </PublicConfigProvider>
       <DevConsole />
     </AuthProvider>
   </BrowserRouter>

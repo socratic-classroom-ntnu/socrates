@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from app.modules.admin import routes as admin
 from app.modules.ai_providers import routes as ai_providers
 from app.modules.analytics import routes as analytics
 from app.modules.classroom_core import library_routes as classroom_library
@@ -31,6 +32,7 @@ CLASSROOM_ROUTERS = (
     course_management.activities_router,
     solo_activity.router,
     feedback.router,
+    admin.router,
 )
 
 

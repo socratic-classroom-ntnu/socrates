@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
 from app.modules.course_management import service as course_service
 from app.modules.ai_providers import service as ai_service
+from app.modules.admin import service as admin_service
 from app.modules.app_shell import practice_startup
 from app.modules.app_shell import models as _models  # noqa: F401  註冊所有模組的 ORM
 from app.modules.app_shell import wiring as _wiring  # noqa: F401  接上跨模組的 hook
@@ -30,6 +31,7 @@ async def lifespan(app):
     engine()
     with transaction() as db:
         practice_startup.prepare_practice(db, app.state.practice_config)
+        admin_service.bootstrap_from_env(db)  # 第一批平台管理員（後台 spec P3）
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
     loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop, feedback_purge_loop]
     loops += [llm_loop] * worker_count

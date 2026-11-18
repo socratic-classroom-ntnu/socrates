@@ -47,5 +47,11 @@ export default {
     expiredGuest: 'Expired guest',
     nowAccount: 'now {{name}}',
     noKind: '—',
+    openDetail: 'View details',
+    detailTitle: 'Feedback details',
+    purgeNote: 'Deleted automatically after 90 days',
+    screenshotAlt: 'Screenshot',
+    screenshotUnavailable: "Couldn't load the screenshot (it may have been deleted after 90 days)",
+    loadFailed: "Couldn't load the feedback. Please reload the page.",
   },
 }

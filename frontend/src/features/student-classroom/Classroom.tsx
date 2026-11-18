@@ -10,7 +10,10 @@ import { GroupClassroomGate } from '../group-dialogue/GroupClassroom';
 import { FocusNotice } from '../../components/FocusNotice';
 import { TeacherRecords } from '../teacher-records/TeacherRecords';
 import { JOIN_ALIAS_MAX_LENGTH } from '../../contract/limits';
+import { useFeatures } from '../../shared/publicConfig';
+import { closedByGroupMode } from './socketClose';
 function useRoom(id, mode) {
+    const { refresh: refreshFeatures } = useFeatures();
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');
     const [barrage, setBarrage] = useState([]);
     useDevView('教室畫面 /classrooms/:id', room);
@@ -88,7 +91,10 @@ function useRoom(id, mode) {
                 if (refreshTimer === undefined)
                     refreshTimer = window.setTimeout(() => { refreshTimer = undefined; void refresh(); }, 16);
             };
-            ws.onclose = () => { if (!stopped) {
+            ws.onclose = event => {
+                // 4403：多人模式被關掉（或沒權限）——不再重連，重讀設定；GroupModeGate 會換成停用頁（後台 spec P27）
+                if (closedByGroupMode(event?.code)) { stopped = true; void refreshFeatures(); return; }
+                if (!stopped) {
                 window.setTimeout(reconnect, backoff);
                 backoff = Math.min(5000, backoff * 2);
             } };

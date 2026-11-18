@@ -312,6 +312,30 @@ export async function feedbackScreenshot(id: string): Promise<Blob> {
   return new Blob([bytes], { type: shot.mime })
 }
 
+export type ToggleView = components['schemas']['ToggleView']
+export type AdminView = components['schemas']['AdminView']
+
+/** 後台（後台 spec 〈介面〉）：非管理員一律 404 ADMIN_NOT_FOUND。 */
+export function listToggles() {
+  return typedApi('/admin/toggles', 'GET')
+}
+
+export function updateToggle(key: string, enabled: boolean) {
+  return typedApi('/admin/toggles/{key}', 'PUT', { path: { key }, body: { enabled } })
+}
+
+export function listAdmins() {
+  return typedApi('/admin/admins', 'GET')
+}
+
+export function addAdmin(username: string) {
+  return typedApi('/admin/admins', 'POST', { body: { username } })
+}
+
+export function removeAdmin(accountId: string) {
+  return typedApi('/admin/admins/{account_id}', 'DELETE', { path: { account_id: accountId } })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

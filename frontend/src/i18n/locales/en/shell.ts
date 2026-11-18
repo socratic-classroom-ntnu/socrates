@@ -3,6 +3,7 @@ import type { Shape } from '../../shape';
 
 const shell: Shape<typeof zhHant> = {
   nav: {
+    admin: 'Admin',
     label: 'Main menu',
     home: 'Home',
     dialogues: 'My dialogues',

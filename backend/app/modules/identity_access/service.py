@@ -7,6 +7,13 @@ from app.modules.identity_access.auth import (  # noqa: E402
     display_name as display_name,
     identity as identity,
 )
+from app.modules.identity_access.admins import (  # noqa: E402
+    bootstrap_admins as bootstrap_admins,
+    grant_admin as grant_admin,
+    is_admin as is_admin,
+    list_admins as list_admins,
+    revoke_admin as revoke_admin,
+)
 from app.modules.identity_access.dependencies import (  # noqa: E402
     account as account,
     auth_limit as auth_limit,

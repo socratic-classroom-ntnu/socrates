@@ -1,12 +1,11 @@
 """意見回饋：送出、名單上的人讀取、清掉 90 天前的截圖。
 
 誰都能送（spec P1）：有效的 session 照常驗 CSRF；只有 session 失效或訪客過期才當成未登入
-（P14）。讀取只開給 `SOCRATES_FEEDBACK_READERS` 列出的使用者名稱，其他人一律當成不存在（P8、P18）。
+（P14）。讀取只開給平台管理員（後台 spec P11），其他人一律當成不存在。
 """
 
 import base64
 import binascii
-import os
 from dataclasses import dataclass
 from typing import cast
 
@@ -23,7 +22,7 @@ from app.modules.feedback.contracts import (
 )
 from app.modules.feedback.repositories import Feedback
 from app.modules.identity_access.repositories import Account
-from app.modules.identity_access.service import identity
+from app.modules.identity_access.service import identity, is_admin
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.platform.release import release_snapshot
@@ -136,13 +135,9 @@ def submit(
     return row.id
 
 
-def readers() -> set[str]:
-    raw = os.environ.get("SOCRATES_FEEDBACK_READERS", "")
-    return {name.strip().casefold() for name in raw.split(",") if name.strip()}
-
-
 def require_reader(account: Account) -> None:
-    if account.username.casefold() not in readers():
+    """Only platform admins read feedback (後台 spec P11); everyone else sees nothing."""
+    if not is_admin(account):
         raise DomainError("FEEDBACK_NOT_FOUND", 404)
 
 

@@ -59,6 +59,9 @@ class Account(Base):
     account_role: Mapped[str] = mapped_column(
         String(16), default="student", server_default="student"
     )
+    # "admin" for platform admins (the 後台), otherwise null. Independent of account_role: a
+    # teacher or a student may be an admin; guests never are.
+    platform_role: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
 
 class LoginSession(Base):

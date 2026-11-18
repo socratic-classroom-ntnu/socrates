@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import { ROUTER_FUTURE } from '../../../app/routerFuture'
 import { ApiError } from '../../../contract/classroomClient'
 import { Where, mockApi } from '../../../testing/pageHarness'
 import { loadQrDetector } from './qrDetector'
@@ -9,6 +10,7 @@ import { SCAN_INTERVAL_MS } from './useQrScanner'
 import { ScanPage } from './ScanPage'
 
 jest.mock('./qrDetector', () => ({ loadQrDetector: jest.fn() }))
+// 這裡自己 mock react-router-dom，蓋掉 setupTests 的預設，所以 MemoryRouter 要自己帶 future。
 // 記下每一次換頁的呼叫：同一個 tick 裡換兩次頁，React 只會 render 最後一次，從畫面上的網址數不出來
 const mockNavigations: unknown[][] = []
 jest.mock('react-router-dom', () => {
@@ -65,7 +67,7 @@ function Home() {
 
 function open() {
   mockNavigations.length = 0
-  return render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
+  return render(<MemoryRouter future={ROUTER_FUTURE} initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
     <Routes>
       <Route path="/scan" element={<ScanPage />} />
       <Route path="/" element={<Home />} />
@@ -328,7 +330,7 @@ test('after going to the join page, browser back does not return to the scan pag
   jest.useFakeTimers()
   detect.mockResolvedValue(COURSE_QR)
   getUserMedia.mockResolvedValue(fakeStream().stream)
-  render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
+  render(<MemoryRouter future={ROUTER_FUTURE} initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
     <Routes>
       <Route path="/scan" element={<ScanPage />} />
       <Route path="/join" element={<Home />} />
@@ -450,7 +452,7 @@ test('a correct code goes to the confirm page by replace and stops the camera', 
   mockApi({ 'GET /course-join/preview?code=KNB6ZE33': { course_id: 'c-9', already_enrolled: false } })
   const { stream, track } = fakeStream()
   getUserMedia.mockResolvedValue(stream)
-  render(<MemoryRouter initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
+  render(<MemoryRouter future={ROUTER_FUTURE} initialEntries={['/elsewhere', '/scan']} initialIndex={1}>
     <Routes>
       <Route path="/scan" element={<ScanPage />} />
       <Route path="/join" element={<Home />} />

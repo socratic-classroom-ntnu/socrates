@@ -40,6 +40,8 @@ import { AppShell } from './AppShell'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
 import { RoleGate } from './RoleGate'
+// 回饋列表用 src/ui 元件：要在 import '../ui' 與課程頁之後（styleOrder.test.ts）
+import { FeedbackListPage } from '../features/feedback/FeedbackListPage'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -82,6 +84,8 @@ export function AppRoutes() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/join/guest" element={<GuestJoinPage />} />
+    {/* 意見回饋列表：不經登入守門，名單以外的人（含未登入）一律看到找不到頁面（意見回饋 spec P8） */}
+    <Route path="/feedback" element={<FeedbackListPage />} />
     <Route element={<RequireAuth />}>
       {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
       <Route element={<RoleGate />}>

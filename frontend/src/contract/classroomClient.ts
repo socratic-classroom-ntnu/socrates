@@ -285,6 +285,33 @@ export function getPublicConfig() {
   return api('/public-config')
 }
 
+export type FeedbackCreate = components['schemas']['FeedbackCreate']
+export type FeedbackPage = components['schemas']['FeedbackPage']
+export type FeedbackItem = components['schemas']['FeedbackItem']
+
+/** 意見回饋：誰都能送；30 秒沒回應就放棄（spec P17），呼叫端保留使用者寫的內容。 */
+export async function sendFeedback(body: FeedbackCreate, timeoutMs = 30_000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await typedApi('/feedback', 'POST', { body, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** 回饋列表（只有名單上的帳號看得到，其他人一律 404）。 */
+export function listFeedback(page: number) {
+  return typedApi('/feedback', 'GET', { query: { page } })
+}
+
+/** 一則回饋的截圖，轉成 blob 給新分頁看（端點回 JSON，spec P16）。 */
+export async function feedbackScreenshot(id: string): Promise<Blob> {
+  const shot = await typedApi('/feedback/{feedback_id}/screenshot', 'GET', { path: { feedback_id: id } })
+  const bytes = Uint8Array.from(atob(shot.data_base64), char => char.charCodeAt(0))
+  return new Blob([bytes], { type: shot.mime })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

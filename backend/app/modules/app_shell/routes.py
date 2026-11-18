@@ -8,6 +8,7 @@ from app.modules.classroom_core import library_routes as classroom_library
 from app.modules.classroom_core import routes as classroom
 from app.modules.content_authoring.routes import question_bank, script_assist, scripts
 from app.modules.course_management import routes as course_management
+from app.modules.feedback import routes as feedback
 from app.modules.group_dialogue.routes import ai_students, groups
 from app.modules.identity_access import routes as identity
 from app.modules.platform import routes as platform
@@ -29,6 +30,7 @@ CLASSROOM_ROUTERS = (
     course_management.preview_router,
     course_management.activities_router,
     solo_activity.router,
+    feedback.router,
 )
 
 

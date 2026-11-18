@@ -29,7 +29,7 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
   const answering = view.state === 'answering'
   // X2: the retry lives in the conversation; here only a note that answering resumes later.
   if (view.state === 'tutor_unavailable') {
-    return <section className="solo-composer"><p className="solo-composer__paused">{t('composer.unavailablePlaceholder')}</p></section>
+    return <section className="solo-composer" data-feedback-avoid=""><p className="solo-composer__paused">{t('composer.unavailablePlaceholder')}</p></section>
   }
 
   if (!canSend && !awaiting) return null
@@ -76,7 +76,8 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
   const selectedHint = quick.find(option => option.value === reviseHint)?.label
   const sendDisabled = disabled || !text.trim()
 
-  return <section className="solo-composer">
+  // data-feedback-avoid：意見回饋按鈕浮在輸入區上方
+  return <section className="solo-composer" data-feedback-avoid="">
     {view.revising && canSend && <div className="solo-composer__quick" role="group" aria-label={t('revise.quickLabel')}>
       <strong>{t('revise.quickPrompt')}</strong>
       {quick.map(option => <button

@@ -2480,6 +2480,262 @@
         "title": "DiscoveredModel",
         "type": "object"
       },
+      "FeedbackCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "problem",
+                  "suggestion",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "locale": {
+            "maxLength": 16,
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "pattern": "^/([^/].*)?$",
+            "title": "Page",
+            "type": "string"
+          },
+          "screenshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScreenshotUpload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "viewport": {
+            "$ref": "#/components/schemas/Viewport"
+          }
+        },
+        "required": [
+          "message",
+          "page",
+          "viewport",
+          "locale"
+        ],
+        "title": "FeedbackCreate",
+        "type": "object"
+      },
+      "FeedbackCreated": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "FeedbackCreated",
+        "type": "object"
+      },
+      "FeedbackItem": {
+        "properties": {
+          "account_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "registered",
+                  "guest",
+                  "expired_guest"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Kind"
+          },
+          "account_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Name"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "number"
+          },
+          "has_screenshot": {
+            "title": "Has Screenshot",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "identity": {
+            "enum": [
+              "teacher",
+              "student",
+              "guest",
+              "anonymous"
+            ],
+            "title": "Identity",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "problem",
+                  "suggestion",
+                  "other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "page": {
+            "title": "Page",
+            "type": "string"
+          },
+          "release_id": {
+            "title": "Release Id",
+            "type": "string"
+          },
+          "user_agent": {
+            "title": "User Agent",
+            "type": "string"
+          },
+          "viewport_h": {
+            "title": "Viewport H",
+            "type": "integer"
+          },
+          "viewport_w": {
+            "title": "Viewport W",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "kind",
+          "message",
+          "contact",
+          "page",
+          "viewport_w",
+          "viewport_h",
+          "locale",
+          "user_agent",
+          "release_id",
+          "identity",
+          "account_kind",
+          "account_name",
+          "has_screenshot"
+        ],
+        "title": "FeedbackItem",
+        "type": "object"
+      },
+      "FeedbackPage": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "has_more"
+        ],
+        "title": "FeedbackPage",
+        "type": "object"
+      },
+      "FeedbackScreenshot": {
+        "properties": {
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "mime": {
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ],
+            "title": "Mime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mime",
+          "data_base64"
+        ],
+        "title": "FeedbackScreenshot",
+        "type": "object"
+      },
       "FinalSummaryPointView": {
         "additionalProperties": false,
         "properties": {
@@ -5585,6 +5841,25 @@
         "title": "ScenarioAI",
         "type": "object"
       },
+      "ScreenshotUpload": {
+        "additionalProperties": false,
+        "properties": {
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "mime": {
+            "title": "Mime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mime",
+          "data_base64"
+        ],
+        "title": "ScreenshotUpload",
+        "type": "object"
+      },
       "ScriptAssistRequest": {
         "additionalProperties": false,
         "description": "Teacher's AI-assisted design request against the draft currently in the editor.",
@@ -7563,6 +7838,29 @@
           "status"
         ],
         "title": "VerifiedView",
+        "type": "object"
+      },
+      "Viewport": {
+        "additionalProperties": false,
+        "properties": {
+          "h": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "H",
+            "type": "integer"
+          },
+          "w": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "W",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "w",
+          "h"
+        ],
+        "title": "Viewport",
         "type": "object"
       }
     }
@@ -9634,6 +9932,132 @@
         "summary": "Transition Course",
         "tags": [
           "courses"
+        ]
+      }
+    },
+    "/api/v2/feedback": {
+      "get": {
+        "operationId": "list_feedback_api_v2_feedback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Feedback",
+        "tags": [
+          "feedback"
+        ]
+      },
+      "post": {
+        "operationId": "send_feedback_api_v2_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackCreated"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send Feedback",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
+    "/api/v2/feedback/{feedback_id}/screenshot": {
+      "get": {
+        "description": "JSON rather than raw bytes: every classroom endpoint has a typed response (contract gate).",
+        "operationId": "feedback_screenshot_api_v2_feedback__feedback_id__screenshot_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "feedback_id",
+            "required": true,
+            "schema": {
+              "title": "Feedback Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackScreenshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Feedback Screenshot",
+        "tags": [
+          "feedback"
         ]
       }
     },

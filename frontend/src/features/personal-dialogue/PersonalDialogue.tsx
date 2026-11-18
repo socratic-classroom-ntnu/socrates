@@ -76,7 +76,7 @@ export function PersonalPanel({ question, personal, actions, send, busy = false,
     </div>
     {personal.status === 'unavailable' && personal.notice && <p role="status" className="personal-notice">{personal.notice}</p>}
     {can('personal_retry') && <button onClick={() => void send('personal_retry')} disabled={busy}>重試</button>}
-    {can('personal_message') && <div className="personal-compose"><label>回覆導師<textarea rows={3} maxLength={12000} value={text} onChange={e => setText(e.target.value)} placeholder="說說你現在的想法…" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
+    {can('personal_message') && <div className="personal-compose" data-feedback-avoid=""><label>回覆導師<textarea rows={3} maxLength={12000} value={text} onChange={e => setText(e.target.value)} placeholder="說說你現在的想法…" onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !e.nativeEvent.isComposing) {
             e.preventDefault();
             void reply();
         } }}/></label><button disabled={busy || !text.trim()} onClick={() => void reply()}>送出</button><small>已回覆 {personal.completed_turns} / {personal.max_turns} 次</small></div>}
@@ -84,7 +84,7 @@ export function PersonalPanel({ question, personal, actions, send, busy = false,
       <div className="sc-row"><button disabled={busy} onClick={() => void send('personal_confirm', { summary_digest: personal.summary_digest })}>符合我的想法</button>
         {can('personal_revise') && <button className="quiet" disabled={busy} aria-expanded={revising} onClick={() => setRevising(!revising)}>我要修正</button>}
         {can('personal_unclear') && <button className="quiet" disabled={busy} onClick={() => void send('personal_unclear')}>暫時無法釐清</button>}</div>
-      {revising && can('personal_revise') && <div className="personal-compose"><label>哪裡不符合？請寫下你的修正<textarea rows={3} maxLength={12000} value={revision} onChange={e => setRevision(e.target.value)}/></label><button disabled={busy || !revision.trim()} onClick={() => void revise()}>送出修正</button></div>}
+      {revising && can('personal_revise') && <div className="personal-compose" data-feedback-avoid=""><label>哪裡不符合？請寫下你的修正<textarea rows={3} maxLength={12000} value={revision} onChange={e => setRevision(e.target.value)}/></label><button disabled={busy || !revision.trim()} onClick={() => void revise()}>送出修正</button></div>}
     </div>}
     {OUTCOME_TEXT[personal.status] && <div className="sc-card personal-outcome"><p role="status">{OUTCOME_TEXT[personal.status]}</p>{personal.status === 'confirmed' && personal.baseline && <SummaryCard summary={{ current_position: personal.baseline.position, reason_summary: personal.baseline.reason_summary, relevant_conditions: personal.baseline.conditions, unresolved_issue: '' }}/>}{personal.status === 'capped' && personal.summary && <SummaryCard summary={personal.summary}/>}</div>}
     {note && <p role="status">{note}</p>}

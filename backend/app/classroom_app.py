@@ -15,7 +15,13 @@ from app.modules.app_shell.routes import include_classroom_routers
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.realtime import BUS
 from app.modules.platform.storage import engine, transaction
-from app.modules.app_shell.llm_workers import clock_loop, guest_expiry_loop, llm_loop, mail_loop
+from app.modules.app_shell.llm_workers import (
+    clock_loop,
+    feedback_purge_loop,
+    guest_expiry_loop,
+    llm_loop,
+    mail_loop,
+)
 from app.modules.platform.env import env_int
 
 
@@ -25,7 +31,7 @@ async def lifespan(app):
     with transaction() as db:
         practice_startup.prepare_practice(db, app.state.practice_config)
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
-    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop]
+    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop, feedback_purge_loop]
     loops += [llm_loop] * worker_count
     tasks = [asyncio.create_task(fn()) for fn in loops]
     try:

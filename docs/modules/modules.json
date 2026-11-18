@@ -189,6 +189,20 @@
         "llm-runtime"
       ],
       "todo": []
+    },
+    {
+      "id": "feedback",
+      "name": "Feedback（意見回饋）",
+      "status": "ok",
+      "about": "試用使用者與 QA 從右下角按鈕送來的回饋與截圖；名單上的帳號讀列表；截圖 90 天後清掉。",
+      "paths": [
+        "backend/app/modules/feedback/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access"
+      ],
+      "todo": []
     }
   ],
   "contracts": [
@@ -313,6 +327,16 @@
       "frontend": [
         "solo-activity",
         "course"
+      ]
+    },
+    {
+      "name": "意見回饋（/feedback）",
+      "backend": "feedback",
+      "source": "backend/app/modules/feedback/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "右下角回饋按鈕與對話框、回饋列表頁",
+      "frontend": [
+        "feedback"
       ]
     }
   ],
@@ -543,6 +567,21 @@
       "uses": [
         "platform",
         "contract"
+      ],
+      "todo": []
+    },
+    {
+      "id": "feedback",
+      "name": "意見回饋",
+      "status": "ok",
+      "about": "每一頁右下角的回饋按鈕與對話框（類型、說明、截圖、聯絡方式），以及名單上帳號看的回饋列表頁。",
+      "paths": [
+        "frontend/src/features/feedback/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth"
       ],
       "todo": []
     }

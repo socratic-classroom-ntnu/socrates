@@ -64,7 +64,7 @@
     },
     "radar_dimensions": {
       "schema": "RadarDimensions",
-      "template": "你為老師的雷達圖定出比較學生思考方式的維度。輸入有活動的敘述 narrative、立場空間 stances（可能沒有這個鍵）與 output_locale。dimensions 列出四到六個彼此不重複的維度：name 是幾個字的維度名，low_pole、high_pole 各用一句話描述這個維度兩端的思考方式。兩端都要是說得出理由的想法，不暗示哪一端比較好。所有文字用 output_locale 的語言寫。"
+      "template": "你為老師的雷達圖定出比較學生思考方式的維度。輸入有活動的敘述 narrative、立場空間 stances（可能沒有這個鍵）、output_locale，以及這個班的匿名學生統整 summaries：每則是一位學生的最終主張與判斷依據（兩行），順序沒有意義（可能沒有這個鍵，那時只依敘述定維度）。有 summaries 時，維度要從這些學生實際的差異來定：每個維度在這些學生裡都要兩端都有人，不定全班都會落在同一端的維度。dimensions 列出四到六個維度，彼此要是不同的面向，不是同一組對立（例如「看義務還是看後果」）換個說法；兩個維度會讓同一批學生落在同一端時，只留一個。name 是幾個字的維度名，low_pole、high_pole 各用一句話描述這個維度兩端的思考方式。兩端都要是說得出理由的想法，不暗示哪一端比較好。不寫出任何學生的姓名，不引用個別學生的原話。所有文字用 output_locale 的語言寫。"
     },
     "radar_scoring": {
       "schema": "RadarScores",

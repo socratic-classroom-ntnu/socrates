@@ -4,6 +4,7 @@ export default {
     label: '主選單',
     home: '首頁',
     dialogues: '我的對話',
+    groups: '分組課',
     me: '我',
     bank: '個人題庫',
     store: '題庫商店',

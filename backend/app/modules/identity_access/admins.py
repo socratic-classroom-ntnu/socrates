@@ -6,6 +6,7 @@ each other at once cannot leave nobody: the second finds it is no longer an admi
 """
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.identity_access.repositories import Account
@@ -54,6 +55,28 @@ def revoke_admin(db: Session, actor_id: str, account_id: str) -> None:
     if target is None:
         raise DomainError("ADMIN_ACCOUNT_NOT_FOUND", 404)
     target.platform_role = None
+
+
+def ensure_builtin_admin(db: Session, username: str, password_hash: str) -> bool:
+    """Creates the built-in admin while no account has its username; an existing account, whoever
+    registered it and whatever its role now, is never touched. Several workers may start at once:
+    the one that loses the race on the unique username leaves the winner's row alone."""
+    if db.scalar(select(Account.id).where(Account.username == username)):
+        return False
+    try:
+        with db.begin_nested():
+            db.add(
+                Account(
+                    username=username,
+                    password_hash=password_hash,
+                    verified=True,
+                    account_role="teacher",
+                    platform_role=ADMIN,
+                )
+            )
+    except IntegrityError:
+        return False
+    return True
 
 
 def bootstrap_admins(db: Session, usernames: list[str]) -> int:

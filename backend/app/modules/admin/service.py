@@ -17,6 +17,12 @@ from app.modules.platform.errors import DomainError
 from app.modules.platform import toggles
 from app.modules.platform.storage import transaction
 
+# 內建管理員：每個環境（本機、dev、QA、預覽、正式）啟動時都會有的同一個管理員，不必請叢集設環境變數。
+# repo 是公開的，這裡只放 argon2id 雜湊；密碼是隨機產生的，由專案負責人保管。
+# 換密碼就換這裡的雜湊（已經建好的帳號保留原本的密碼）。
+BUILTIN_ADMIN_USERNAME = "socrates-admin"
+BUILTIN_ADMIN_PASSWORD_HASH = "$argon2id$v=19$m=19456,t=2,p=1$Owgmfe3mPQmvN+3QK/VFgg$oKpxsuAMqcg6Eh6+NNrKIkMqlxZwph4MY19Os6fWS88"
+
 
 def admin_account(db: Session, request: Request, mutation: bool = False) -> Account:
     try:
@@ -77,6 +83,11 @@ def admin_view(account: Account, actor: Account) -> AdminView:
 
 def admin_views(db: Session, actor: Account) -> list[AdminView]:
     return [admin_view(account, actor) for account in identity.list_admins(db)]
+
+
+def ensure_builtin_admin(db: Session) -> bool:
+    """The same admin account in every environment, created at startup when its username is free."""
+    return identity.ensure_builtin_admin(db, BUILTIN_ADMIN_USERNAME, BUILTIN_ADMIN_PASSWORD_HASH)
 
 
 def bootstrap_from_env(db: Session) -> int:

@@ -234,7 +234,8 @@ def test_a_switched_account_sees_its_own_admin_state(client):
 
 
 def test_starting_the_app_applies_the_first_admins(client, monkeypatch):
-    """The startup really calls the bootstrap, not only the function on its own (spec P3)."""
+    """The startup really calls the bootstrap, not only the function on its own (spec P3), and
+    before it adds the built-in admin: otherwise the variable would never find an empty list."""
     import asyncio
 
     from app import classroom_app
@@ -256,4 +257,4 @@ def test_starting_the_app_applies_the_first_admins(client, monkeypatch):
             pass
 
     asyncio.run(start_and_stop())
-    assert admins() == {"fizzy"}
+    assert admins() == {"fizzy", "socrates-admin"}

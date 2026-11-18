@@ -32,6 +32,8 @@ async def lifespan(app):
     with transaction() as db:
         practice_startup.prepare_practice(db, app.state.practice_config)
         admin_service.bootstrap_from_env(db)  # 第一批平台管理員（後台 spec P3）
+        # 放在環境變數之後：先建內建管理員的話，資料庫就不再是「沒有管理員」，環境變數永遠不會套用
+        admin_service.ensure_builtin_admin(db)
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
     loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop, feedback_purge_loop]
     loops += [llm_loop] * worker_count

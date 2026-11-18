@@ -9,6 +9,7 @@ from app.modules.identity_access.auth import (  # noqa: E402
 )
 from app.modules.identity_access.admins import (  # noqa: E402
     bootstrap_admins as bootstrap_admins,
+    ensure_builtin_admin as ensure_builtin_admin,
     grant_admin as grant_admin,
     is_admin as is_admin,
     list_admins as list_admins,

@@ -6,7 +6,7 @@
   const VAD = { on: 34, off: 20, bargeIn: 62, hangMs: 650, preRollMs: 300 };
   const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
-  const ui = { plan: store.get('voice.plan', 'cascade'), models: {}, status: null, busy: false };
+  const ui = { plan: store.get('voice.plan', 'cascade'), models: {}, status: null, busy: false, gate: store.get('voice.gemini.gate', '0') === '1' };
   const sphere = new LiveSphere.View($('#sphere'));
   sphere.onState = s => { $('#state-label').textContent = session ? LABEL[s] : '待機'; demoStatus(); };
 
@@ -62,6 +62,14 @@
       sel.value = ui.models[plan]; sel.disabled = !!session;
       sel.onchange = () => { ui.models[plan] = sel.value; store.set('voice.model.' + plan, sel.value); };
       sel.onclick = e => e.stopPropagation();
+      if (plan === 'gemini') {
+        // 先檢查再開口：學生說完先跑鐵則檢查（Cloud STT＋screen_input），抓到就附提醒，檢查完才讓模型回答。
+        const mode = document.createElement('select'); mode.setAttribute('aria-label', 'Gemini 回答方式');
+        for (const [v, t] of [['0', '自動回答'], ['1', '先檢查再開口']]) { const o = document.createElement('option'); o.value = v; o.textContent = t; mode.append(o); }
+        mode.value = ui.gate ? '1' : '0'; mode.disabled = !!session;
+        mode.onchange = () => { ui.gate = mode.value === '1'; store.set('voice.gemini.gate', mode.value); };
+        mode.onclick = e => e.stopPropagation(); sel.after(mode);
+      }
       card.querySelector('[data-k=spent]').textContent = money(p.spent_usd);
       card.querySelector('[data-k=lat]').textContent = p.avg_latency_ms == null ? '—' : (p.avg_latency_ms / 1000).toFixed(2) + 's';
       card.title = `${p.turns} 次量測`;
@@ -257,11 +265,15 @@
   // ---------- 方案三：Gemini Live（WebSocket） ----------
   async function geminiSession(model) {
     const { token, instructions } = await api('/api/gemini/token', { model });
-    const s = { plan: 'gemini', model, ready: false, latency: null, lastUsage: null };
+    const gate = ui.gate;
+    const s = { plan: 'gemini', model, gate, ready: false, latency: null, lastUsage: null, utter: null, checking: false, later: null };
     const url = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=' + encodeURIComponent(token);
     const ws = s.ws = new WebSocket(url);
+    const setup = { model: 'models/' + model, generationConfig: { responseModalities: ['AUDIO'] }, systemInstruction: { parts: [{ text: instructions }] }, inputAudioTranscription: {}, outputAudioTranscription: {} };
+    // 先檢查再開口：關掉 Gemini 的自動輪替，由我們決定學生何時說完（activityStart／activityEnd）。
+    if (gate) setup.realtimeInputConfig = { automaticActivityDetection: { disabled: true } };
     await new Promise((ok, fail) => {
-      ws.onopen = () => ws.send(JSON.stringify({ setup: { model: 'models/' + model, generationConfig: { responseModalities: ['AUDIO'] }, systemInstruction: { parts: [{ text: instructions }] }, inputAudioTranscription: {}, outputAudioTranscription: {} } }));
+      ws.onopen = () => ws.send(JSON.stringify({ setup }));
       ws.onerror = () => fail(new Error('Gemini Live 連線失敗'));
       ws.onclose = e => { if (!s.ready) fail(new Error('Gemini Live 關閉連線 · ' + e.code + ' ' + (e.reason || ''))); else if (session === s) { notice('Gemini Live 連線結束 · ' + e.code + ' ' + (e.reason || '')); stopSession(); } };
       ws.onmessage = async e => {
@@ -287,11 +299,36 @@
         if (!usage.text_in && !usage.audio_in && u.promptTokenCount) usage.audio_in = u.promptTokenCount;
         if (!usage.text_out && !usage.audio_out && u.responseTokenCount) usage.audio_out = u.responseTokenCount;
         s.lastUsage = null;
-        api('/api/usage', { plan: 'gemini', model, usage, latency_ms: s.latency }).then(refresh).catch(e => notice(e.message)); s.latency = null;
+        api('/api/usage', { plan: 'gemini', model, usage, latency_ms: s.latency, variant: gate ? 'gate' : 'auto' }).then(refresh).catch(e => notice(e.message)); s.latency = null;
       }
     }
-    s.onPcm = pcm => { if (s.ready && ws.readyState === 1) ws.send(JSON.stringify({ realtimeInput: { audio: { data: b64(new Uint8Array(pcm.buffer)), mimeType: 'audio/pcm;rate=16000' } } })); };
-    s.sendText = text => { log('user', text); ws.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true } })); markAwaiting('text'); };
+    const send = obj => { if (s.ready && ws.readyState === 1) ws.send(JSON.stringify(obj)); };
+    const sendAudio = pcm => send({ realtimeInput: { audio: { data: b64(new Uint8Array(pcm.buffer)), mimeType: 'audio/pcm;rate=16000' } } });
+    // 一句話開始：送 activityStart（模型正在說話時這會打斷它），補上說話前 300 ms 的錄音。
+    function begin(pre) { send({ realtimeInput: { activityStart: {} } }); s.utter = []; for (const p of pre) { sendAudio(p); s.utter.push(p); } }
+    s.onSpeechStart = pre => { if (!gate) return; if (s.checking) { s.later = pre; return; } begin(pre); };
+    s.onPcm = pcm => {
+      if (!gate) { sendAudio(pcm); return; }
+      if (s.utter) { sendAudio(pcm); s.utter.push(pcm); } else if (s.later) s.later.push(pcm);
+    };
+    // 一句話結束：先檢查再放行。檢查失敗不擋學生，直接放行並在畫面註記。
+    s.onSpeechEnd = async () => {
+      if (!gate || !s.utter) return;
+      const chunks = s.utter; s.utter = null; s.checking = true;
+      const n = chunks.reduce((a, c) => a + c.length, 0), all = new Int16Array(n); let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
+      try {
+        const r = await api('/api/gemini/screen', { audio_b64: b64(new Uint8Array(all.buffer)) });
+        trace('gate', { hit: r.hit, stt_ms: r.stt_ms });
+        if (r.hit) { send({ realtimeInput: { text: r.reminder } }); log('system', `鐵則檢查：「${r.transcript}」要求換角色、忽略規則或索取設定，已附提醒（轉寫 ${secs(r.stt_ms)}）`); }
+      } catch (e) { notice('鐵則檢查失敗，直接放行：' + e.message); }
+      send({ realtimeInput: { activityEnd: {} } }); s.checking = false;
+      if (s.later) { const pre = s.later; s.later = null; begin(pre); }
+    };
+    s.sendText = async text => {
+      log('user', text); const parts = [{ text }];
+      if (gate) { try { const r = await api('/api/gemini/screen', { text }); if (r.hit) { parts.push({ text: r.reminder }); log('system', '鐵則檢查：抓到要求換角色、忽略規則或索取設定，已附提醒'); } } catch (e) { notice('鐵則檢查失敗，直接放行：' + e.message); } }
+      send({ clientContent: { turns: [{ role: 'user', parts }], turnComplete: true } }); markAwaiting('text');
+    };
     s.firstAudio = ms => { s.latency = ms; };
     s.bargeIn = flushPlayback;
     s.stop = () => { s.ready = false; try { ws.close(); } catch {} flushPlayback(); };
@@ -308,7 +345,7 @@
       await ensureAudio();
       const model = ui.models[ui.plan];
       session = ui.plan === 'openai' ? await openaiSession(model) : ui.plan === 'gemini' ? await geminiSession(model) : cascadeSession(model);
-      log('system', `開始 · ${({ cascade: 'Google 串接', openai: 'OpenAI Realtime', gemini: 'Gemini Live' })[ui.plan]} · ${model}`);
+      log('system', `開始 · ${({ cascade: 'Google 串接', openai: 'OpenAI Realtime', gemini: 'Gemini Live' })[ui.plan]} · ${model}${session.plan === 'gemini' ? (session.gate ? ' · 先檢查再開口' : ' · 自動回答') : ''}`);
       sphere.setState('Listening'); $('#state-label').textContent = LABEL.Listening; demoStatus();
       $('#voice').setAttribute('aria-pressed', 'true'); $('#voice').setAttribute('aria-label', '結束語音對話');
     } catch (e) { session = null; notice(e.message); }

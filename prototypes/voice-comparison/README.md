@@ -8,7 +8,16 @@
 | Gemini Live | 語音進、語音出，單一模型 |
 | Google 語音串接 | Cloud Speech-to-Text → Gemini 文字模型 → Cloud Text-to-Speech |
 
-它不接教室後端與前端，題目固定為電車難題。前兩個方案由模型直接開口，教室後端的鐵則、語言與引用檢查不會在回話前生效；只有串接方案的中段可以換成教室後端的 LLM 流程。
+它不接教室後端與前端，題目固定為電車難題。OpenAI Realtime 由模型直接開口，教室後端的鐵則檢查不會在回話前生效；串接方案的中段可以換成教室後端的 LLM 流程。Gemini Live 的開場指示用教室後端 `solo_tutor` 的鐵則（`iron_rules.rules_for`，拿掉語音用不到的 guard 欄位那一行），並可切成「先檢查再開口」。
+
+## Gemini Live 的兩種回答方式
+
+在 dev 的 Gemini 方案卡選：
+
+- **自動回答**：Gemini 自己判斷學生說完，立刻開口。
+- **先檢查再開口**：關掉 Gemini 的自動輪替，由頁面判斷學生說完（靜音 650 ms），先把這一句錄音送 Cloud Speech-to-Text 轉成文字，跑教室後端的 `screen_input`；抓到要求換角色、忽略規則或索取設定時，在這一輪附一句提醒，檢查完才送「說完了」讓模型回答。學生在模型說話時開口一樣會打斷它。
+
+Gemini Live 在「說完了」送出之前不給輸入逐字稿（實測等 4 秒都沒有），所以檢查要另外轉一份文字，這一步需要 Google Cloud 金鑰。Gemini 自己的逐字稿常是簡體，檢查前會把規則用到的字轉回繁體。教室後端的位置預設是同一個 repo 的 `backend/`，拷到別處跑時用環境變數 `VOICE_BACKEND_DIR` 指過去。
 
 ## 啟動
 

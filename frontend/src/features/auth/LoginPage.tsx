@@ -1,21 +1,22 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../../contract/classroomClient'
 import type { components } from '../../contract/classroomTypes'
 import { useAuth } from './AuthContext'
+import { useIsPhone } from '../../shared/useIsPhone'
 import { joinTarget, safeNext } from '../../shared/next'
 import { JoinLayout } from './JoinLayout'
 import { errorCode, errorMessage } from '../../i18n/errors'
 import { useT } from '../../i18n/useT'
-import { Button } from '../../ui'
+import { Button, ButtonLink, PasswordInput } from '../../ui'
 import { AuthLayout, Screws } from './AuthLayout'
-import { JoinLoginBanner, usePublicCourseName } from './JoinLoginCard'
-import { type Field, keepPasswordChars, LOGIN_PASSWORD_MAX, passwordProblem, problemsFrom422, registerProblems, REGISTER_LIMITS, type Problem } from './registerChecks'
+import { JoinLoginBanner, usePublicPreview } from './JoinLoginCard'
+import { type AccountRole, type Field, keepPasswordChars, LOGIN_PASSWORD_MAX, passwordProblem, problemsFrom422, type RegisterField, registerProblems, REGISTER_LIMITS, roleProblem, type Problem } from './registerChecks'
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset'
 type Note = { key: string } | { error: unknown } | null
 // 欄位錯誤存「描述」而不是句子：切換語言時會用新語言重新顯示
-type FieldIssue = Problem | { field: Field; code: string }
+type FieldIssue = Problem | { field: RegisterField; code: string }
 type DemoLogin = components['schemas']['DemoLoginView']
 
 const TAKEN: Record<string, Field> = { USERNAME_TAKEN: 'username', EMAIL_TAKEN: 'email' }
@@ -42,16 +43,26 @@ export function LoginPage() {
   const [blocked, setBlocked] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<Note>(null)
-  const [issues, setIssues] = useState<Partial<Record<Field, FieldIssue>>>({})
-  const refs = { username: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), password: useRef<HTMLInputElement>(null) }
+  const [issues, setIssues] = useState<Partial<Record<RegisterField, FieldIssue>>>({})
+  // 身分跟使用者名稱、Email 一樣，切到登入、忘記密碼再切回來仍保留（同一個元件，不重設）
+  const [role, setRole] = useState<AccountRole | null>(null)
+  const refs: Record<RegisterField, RefObject<HTMLInputElement | null>> = {
+    username: useRef<HTMLInputElement>(null), email: useRef<HTMLInputElement>(null), password: useRef<HTMLInputElement>(null),
+    account_role: useRef<HTMLInputElement>(null),
+  }
+  const phone = useIsPhone()
+  // 從課程邀請或活動 QR 來的註冊一律是學生、不給選；看 next 本身，不看現在是不是 J0 版面
+  const studentOnly = joinTarget(next) !== null
   // 從課程邀請或活動 QR 來的登入：換成 J0 版面（只有登入模式；註冊、忘記密碼照 E1）
   const join = mode === 'login' ? joinTarget(next) : null
-  const courseName = usePublicCourseName(join)
+  const { courseName, guestAllowed, restricted } = usePublicPreview(join)
+  // Guests switched off: the name page found out at submit (closed), or the preview says so up front (restricted).
+  const closed = params.get('closed') === '1'
   const demo = useDemoLogin()
 
   // 登入或註冊成功後 account 出現：已驗證回原網址，未驗證先到驗證頁（驗證完再回原網址）
   if (account && mode !== 'reset') {
-    const target = account.verified ? next : '/verify?next=' + encodeURIComponent(next)
+    const target = account.verified || account.kind === 'guest' ? next : '/verify?next=' + encodeURIComponent(next)
     return <Navigate to={target} replace />
   }
 
@@ -71,7 +82,7 @@ export function LoginPage() {
     refs[list[0].field].current?.focus()
   }
 
-  function clearIssue(field: Field) {
+  function clearIssue(field: RegisterField) {
     setIssues(current => {
       if (!current[field]) return current
       const copy = { ...current }
@@ -87,10 +98,13 @@ export function LoginPage() {
       if (mode === 'login') {
         signIn(await api('/auth/login', 'POST', { login: name, password }))
       } else if (mode === 'register') {
-        const problems = registerProblems({ username: name, email: email.trim(), password })
+        const missingRole = studentOnly ? null : roleProblem(role)
+        const problems = [...registerProblems({ username: name, email: email.trim(), password }), ...(missingRole ? [missingRole] : [])]
         if (problems.length) return showIssues(problems)
         setIssues({})
-        signIn(await api('/auth/register', 'POST', { username: name, email: email.trim(), password }))
+        signIn(await api('/auth/register', 'POST', {
+          username: name, email: email.trim(), password, account_role: studentOnly ? 'student' : role,
+        }))
       } else if (mode === 'forgot') {
         await api('/auth/forgot-password', 'POST', { email })
         // 不論 Email 是否存在都說同一句；後端回的 message 不顯示
@@ -120,33 +134,38 @@ export function LoginPage() {
     ? t(`common:errors.${issue.code}`)
     : t(`fieldErrors.${issue.field}.${issue.kind}`, { min: issue.min, max: issue.max })
 
-  function input(field: Field, label: string, props: Record<string, unknown>, hint?: { id: string; body: ReactNode }) {
+  function input(field: Field, label: string, props: Record<string, unknown>, hint?: { id?: string; body: ReactNode; after?: ReactNode }) {
     const issue = issues[field]
     const errorId = `register-${field}-error`
+    const control = {
+      ref: refs[field],
+      maxLength: REGISTER_LIMITS[field][1],
+      'aria-invalid': issue ? true : undefined,
+      'aria-describedby': [hint?.id, issue && errorId].filter(Boolean).join(' ') || undefined,
+      ...props,
+    }
     return <div className="auth-field">
       <label>
         {label}
-        <input
-          ref={refs[field]}
-          maxLength={REGISTER_LIMITS[field][1]}
-          aria-invalid={issue ? true : undefined}
-          aria-describedby={[hint?.id, issue && errorId].filter(Boolean).join(' ') || undefined}
-          {...props}
-        />
+        {/* 換模式就重新掛載，登入時打開的明碼不會帶到註冊或重設 */}
+        {field === 'password' ? <PasswordInput key={mode} {...control} /> : <input {...control} />}
       </label>
       {hint?.body}
       {issue && <small id={errorId} role="alert" className="auth-field__error">{issueText(issue)}</small>}
+      {hint?.after}
     </div>
   }
 
   // 註冊與重設的新密碼照後端規則：欄位下說明規則，不允許的字元打不進去並說明擋下了哪些
+  // 送出不符時，完整規則的錯誤取代精簡說明，同一段規則不出現兩次（跟身分欄一樣）；驗證信說明接在密碼說明後（畫布 RoleRegister*）
   const newPassword = mode === 'register' || mode === 'reset'
   const passwordHint = newPassword ? {
-    id: 'password-rule',
+    id: issues.password ? undefined : 'password-rule',
     body: <>
-      <small id="password-rule" className="auth-field__hint">{t('passwordRule')}</small>
+      {!issues.password && <small id="password-rule" className="auth-field__hint">{t('passwordRule')}</small>}
       {blocked.length > 0 && <small role="status" className="auth-field__hint">{t('blocked', { chars: blocked.map(c => (c === ' ' ? t('space') : c)).join(' ') })}</small>}
     </>,
+    after: mode === 'register' && <small className="auth-field__hint">{t('register.hint')}</small>,
   } : undefined
 
   function fillDemo(username: string) {
@@ -170,7 +189,35 @@ export function LoginPage() {
     : null
 
   const noteText = note === null ? '' : 'key' in note ? t(note.key) : errorMessage(t, note.error)
-  const hint = mode === 'register' ? t('register.hint') : mode === 'forgot' ? t('forgot.hint') : ''
+  const hint = mode === 'forgot' ? t('forgot.hint') : ''
+
+  const roleIssue = issues.account_role
+  const roleChoice = mode !== 'register' ? null : studentOnly
+    ? <p className="auth-role__fixed">{t('role.studentOnly')}</p>
+    : <fieldset className="auth-role" aria-invalid={roleIssue ? true : undefined} aria-describedby={roleIssue ? 'register-account_role-error' : 'register-account_role-note'}>
+      <legend>{t('role.legend')}<span className="auth-role__required" aria-hidden="true"> *</span></legend>
+      <div className="auth-role__options">
+        {(['student', 'teacher'] as const).map((value, index) => <label key={value} className={'auth-role__option' + (role === value ? ' auth-role__option--checked' : '')}>
+          <input
+            ref={index === 0 ? refs.account_role : undefined}
+            type="radio"
+            name="account_role"
+            value={value}
+            checked={role === value}
+            onChange={() => { setRole(value); clearIssue('account_role') }}
+          />
+          <span className="auth-role__dot" aria-hidden="true" />
+          <PersonIcon role={value} />
+          <span className="auth-role__text">
+            <b>{t(`role.${value}`)}</b>
+            {value === 'teacher' && phone && <span className="auth-role__desktop">{t('role.desktopOnly')}</span>}
+          </span>
+        </label>)}
+      </div>
+      {roleIssue
+        ? <small id="register-account_role-error" role="alert" className="auth-field__error">{issueText(roleIssue)}</small>
+        : <small id="register-account_role-note" className="auth-field__hint">{t(phone && role === 'teacher' ? 'role.teacherPhoneNote' : 'role.note')}</small>}
+    </fieldset>
 
   const fields = <>
     {(mode === 'login' || mode === 'register') && input('username', mode === 'login' ? t('fields.identifier') : t('fields.username'), {
@@ -183,7 +230,7 @@ export function LoginPage() {
       onChange: event => { setEmail(event.target.value); clearIssue('email') },
     })}
     {mode !== 'forgot' && input('password', mode === 'reset' ? t('fields.newPassword') : t('fields.password'), {
-      type: 'password', value: password, required: true,
+      value: password, required: true,
       minLength: mode === 'login' ? 1 : REGISTER_LIMITS.password[0],
       maxLength: mode === 'login' ? LOGIN_PASSWORD_MAX : REGISTER_LIMITS.password[1],
       autoComplete: mode === 'login' ? 'current-password' : 'new-password',
@@ -198,17 +245,36 @@ export function LoginPage() {
         clearIssue('password')
       },
     }, passwordHint)}
+    {roleChoice}
   </>
 
   if (join) return <JoinLayout>
     <div className="join-login">
-      <JoinLoginBanner courseName={courseName} />
+      <JoinLoginBanner courseName={courseName} kind={join.kind} />
       <form className="join-login__card" onSubmit={event => void submit(event)}>
-        <h1>{t('join:login.title')}</h1>
+        {(() => {
+          const limited = closed || restricted
+          const course = join.kind === 'course'
+          return <>
+            <h1>{t(`join:login.${limited ? (course ? 'titleCourseLogin' : 'titleActivityLogin') : (course ? 'titleCourse' : 'titleActivity')}`)}</h1>
+            {closed && <p className="join-login__lead">{t(course ? 'join:login.closedIntroCourse' : 'join:login.closedIntroActivity')}</p>}
+            {limited && <p className="join-alert join-alert--warn" role="status">
+              {t(`join:login.${closed ? 'closed' : 'restricted'}${course ? 'Course' : 'Activity'}`)}
+            </p>}
+          </>
+        })()}
         {fields}
-        <Button type="submit" variant="primary" className="join-login__submit" disabled={busy} aria-busy={busy}>
-          {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
-        </Button>
+        {/* 方案 C：欄位在上；先是「登入並加入」，分隔線「不想註冊？」之後才是實心的「免註冊加入」 */}
+        <div className="join-login__actions">
+          <Button type="submit" variant="outline" className="join-login__submit" disabled={busy} aria-busy={busy}>
+            {join.kind === 'course' ? t('join:login.submitCourse') : t('join:login.submitActivity')}
+          </Button>
+          {guestAllowed && !closed && <>
+            <p className="join-login__divider" role="separator">{t('guest:join.divider')}</p>
+            <ButtonLink variant="primary" className="join-login__guest" to={'/join/guest?next=' + encodeURIComponent(next)}>{t('guest:join.button')}</ButtonLink>
+            <p className="join-login__guest-note">{t('guest:join.keep')}</p>
+          </>}
+        </div>
         <div className="join-login__links">
           <button type="button" className="join-link" onClick={() => switchMode('register')}>{t('join:login.register')}</button>
           <button type="button" className="join-link join-link--quiet" onClick={() => switchMode('forgot')}>{t('join:login.forgot')}</button>
@@ -216,7 +282,7 @@ export function LoginPage() {
         {demoButtons('join-login__links', 'join-link')}
         <p role="status" className="auth-card__note">{noteText}</p>
       </form>
-      <p className="join-login__note">{t('join:login.registerNote')}</p>
+      <p className="join-login__note">{join.kind === 'course' ? t('join:login.registerNote') : t('join:login.registerNoteActivity')}</p>
     </div>
   </JoinLayout>
 
@@ -243,6 +309,13 @@ export function LoginPage() {
       </form>
     </main>
   </AuthLayout>
+}
+
+/** 身分選項的人形圖示：學生主色、老師資訊色（畫布 RoleRegister*） */
+function PersonIcon({ role }: { role: AccountRole }) {
+  return <svg className={`auth-role__icon auth-role__icon--${role}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="7.5" r="3.5" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+  </svg>
 }
 
 /** 後端 /public-config 的 demo_login；沒有或讀不到都當作沒有。 */

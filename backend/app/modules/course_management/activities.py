@@ -13,7 +13,6 @@ import time
 from collections import defaultdict
 from copy import deepcopy
 from typing import TYPE_CHECKING, cast
-from uuid import uuid4
 
 from sqlalchemy import select
 
@@ -26,6 +25,7 @@ from app.modules.course_management.contracts import (
 )
 from app.modules.course_management import enrollment
 from app.modules.course_management.repositories import Activity, ActivityRevision, Course
+from app.modules.identity_access import service as identity
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 
@@ -172,7 +172,7 @@ def end_now(db, activity: Activity, at: float) -> Activity:
 
 
 def update_details(db, activity: Activity, data: ActivityDetailsUpdate, at: float) -> Activity:
-    """Rename or move the end time; allowed after locking because neither changes the questions."""
+    """Rename or move the end time; allowed after locking because neither changes the material the scenarios are written from."""
     row = _lock_row(db, activity.id)
     changes: dict = {}
     if "ends_at" in data.model_fields_set:
@@ -223,13 +223,10 @@ def has_unpublished_changes(db, activity: Activity) -> bool:
 
 
 def copy(db, activity: Activity) -> Activity:
-    """A fresh draft with new question and option ids; the title is copied unchanged."""
-    draft = deepcopy(activity.draft)
-    for question in draft["questions"]:
-        question["id"] = uuid4().hex
-        for option in question["options"]:
-            option["id"] = uuid4().hex
-    duplicate = Activity(course_id=activity.course_id, title=activity.title, draft=draft)
+    """A fresh draft with the same content; the title is copied unchanged."""
+    duplicate = Activity(
+        course_id=activity.course_id, title=activity.title, draft=deepcopy(activity.draft)
+    )
     db.add(duplicate)
     db.flush()
     return duplicate
@@ -286,7 +283,6 @@ def teacher_cards(db, course: Course, at: float) -> list[dict]:
                 "status": view["status"],
                 "locked": view["locked"],
                 "has_unpublished_changes": view["has_unpublished_changes"],
-                "question_count": len(activity.draft["questions"]),
                 "starts_at": view["starts_at"],
                 "ends_at": view["ends_at"],
                 "available_actions": view["available_actions"],
@@ -308,23 +304,23 @@ def student_cards(db, course: Course, at: float) -> list[dict]:
     for activity in _course_activities(db, course):
         if activity.published_at is None:
             continue
-        cards.append(_student_card(activity, _published(db, activity), _status(activity, at)))
+        _published(db, activity)
+        cards.append(_student_card(activity, _status(activity, at)))
     return sorted(cards, key=lambda card: (card["starts_at"], card["id"]))
 
 
-def _student_card(activity: Activity, revision: ActivityRevision, current: ActivityStatus) -> dict:
+def _student_card(activity: Activity, current: ActivityStatus) -> dict:
     return {
         "id": activity.id,
         "title": activity.title,
         "status": current,
-        "question_count": len(revision.content["questions"]),
         "starts_at": activity.starts_at,
         "ends_at": activity.ends_at,
     }
 
 
 def course_summaries(db, course_ids: list[str], at: float) -> dict[str, dict]:
-    """Home-card numbers for many courses at once: one activity query and one revision query.
+    """Home-card numbers for many courses at once, from one activity query.
 
     The highlight is the open activity ending soonest, else the next scheduled one, else the
     latest ended one; ties go to the smaller id. Drafts and deleted activities never count.
@@ -365,53 +361,74 @@ def course_summaries(db, course_ids: list[str], at: float) -> dict[str, dict]:
             picks[course_id] = ("scheduled", scheduled[0])
         elif ended:
             picks[course_id] = ("ended", ended[0])
-    if picks:
-        revision_ids = [activity.current_revision_id for _, activity in picks.values()]
-        revisions = {
-            revision.id: revision
-            for revision in db.scalars(
-                select(ActivityRevision).where(ActivityRevision.id.in_(revision_ids))
-            )
-        }
-        for course_id, (current, activity) in picks.items():
-            revision = revisions[cast(str, activity.current_revision_id)]
-            summaries[course_id]["highlight"] = _student_card(activity, revision, current)
+    for course_id, (current, activity) in picks.items():
+        summaries[course_id]["highlight"] = _student_card(activity, current)
     return summaries
 
 
-def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
-    content = _published(db, activity).content
+def _joinable_course(db, activity: Activity) -> Course:
+    """The course behind a join link; a private course's activity (我的對話) is not found."""
     course = db.get(Course, activity.course_id)
+    if course.practice_account_id is not None:
+        raise DomainError("ACTIVITY_NOT_FOUND", 404)
+    return course
+
+
+def join_preview(db, account: Account, activity: Activity, at: float) -> dict:
+    _published(db, activity)
+    course = _joinable_course(db, activity)
     return {
         "activity_id": activity.id,
         "title": activity.title,
         "course_id": course.id,
         "course_name": course.name,
         "teacher_name": course.teacher_name,
-        "question_count": len(content["questions"]),
         "starts_at": activity.starts_at,
         "ends_at": activity.ends_at,
         "status": _status(activity, at),
         "already_enrolled": enrollment.existing(db, account, course) is not None,
-        "default_display_name": account.username,
+        "default_display_name": identity.display_name(account),
+        "allow_guest": course.allow_guest,
     }
 
 
-def public_course_name(db, activity_id: str) -> str:
-    """Course name behind a published activity link; drafts and deleted ones are not found."""
+def public_preview(db, activity_id: str, at: float) -> dict:
+    """What a published activity link shows anyone; drafts and deleted ones are not found."""
     activity = get_activity(db, activity_id)
     _published(db, activity)
-    course = db.get(Course, activity.course_id)
-    return course.name
+    course = _joinable_course(db, activity)
+    return {
+        "course_name": course.name,
+        "allow_guest": course.allow_guest,
+        "status": _status(activity, at),
+    }
+
+
+def join_as_new_guest(
+    db, activity: Activity, nickname: str, locale: str, at: float
+) -> tuple[str, dict]:
+    """A new guest from an activity link joins its course; nothing is left when it cannot."""
+    _published(db, activity)
+    course = _joinable_course(db, activity)
+    current: ActivityStatus = _status(activity, at)
+    if current == "ended":
+        raise DomainError("ACTIVITY_ENDED", 409)
+    token, view = enrollment.join_as_new_guest(db, course, nickname, locale)
+    return token, {
+        "account": view,
+        "course_id": course.id,
+        "activity_id": activity.id,
+        "activity_status": current,
+    }
 
 
 def join_by_activity(
     db, account: Account, activity: Activity, display_name: str, at: float
 ) -> dict:
     _published(db, activity)
+    course = _joinable_course(db, activity)
     current: ActivityStatus = _status(activity, at)
     if current == "ended":
         raise DomainError("ACTIVITY_ENDED", 409)
-    course = db.get(Course, activity.course_id)
     _, created = enrollment.enroll(db, account, course, display_name)
     return {"course_id": course.id, "activity_id": activity.id, "enrolled_now": created}

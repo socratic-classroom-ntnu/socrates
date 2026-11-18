@@ -4,8 +4,8 @@
 The backend image runs this after `alembic upgrade head` on every start
 (deploy/stage/backend.Dockerfile). It creates the same predictable people every time:
 
-    teacher001..teacher003   each owns a script and a lobby room (code PREVIEW1..3)
-    user001..user030         students; user001..user010 already sit in PREVIEW1
+    teacher001..teacher003   teacher accounts; each owns a script and a lobby room (code PREVIEW1..3)
+    user001..user030         student accounts; user001..user010 already sit in PREVIEW1
     demo course              owned by teacher001, user001..user010 enrolled, one activity
                              open for 30 days from the first run
 
@@ -88,12 +88,13 @@ DOCUMENT = ScriptDocument.model_validate(
 ).model_dump()
 
 
-def account(db, username):
+def account(db, username, account_role="student"):
     row = Account(
         username=username,
         email=f"{username}@preview.invalid",
         password_hash=HASHER.hash(DEMO_PASSWORD),
         verified=True,
+        account_role=account_role,
     )
     db.add(row)
     db.flush()
@@ -103,7 +104,7 @@ def account(db, username):
 def _accounts(db):
     codes = []
     for n in range(1, TEACHERS + 1):
-        teacher = account(db, f"teacher{n:03d}")
+        teacher = account(db, f"teacher{n:03d}", "teacher")
         script = Script(owner_id=teacher.id, document=DOCUMENT, revision=1)
         db.add(script)
         db.flush()
@@ -135,12 +136,10 @@ def _demo_course(db, now):
     )
     for n in range(1, SEATED_IN_FIRST_ROOM + 1):
         enrollment.enroll(db, _by_name(db, f"user{n:03d}"), course, f"同學{n:02d}")
-    question = DOCUMENT["questions"][0]
     draft = ActivityDraft(
         title="岔道上的選擇",
-        topic_direction="主動造成傷害與不作為，在道德上有沒有差別",
+        scenario="岔道上的選擇：主動造成傷害與不作為，在道德上有沒有差別",
         ends_at=now + DEMO_ACTIVITY_DAYS * 86400,
-        questions=[{key: question[key] for key in ("id", "title", "scenario", "options")}],
     )
     activities.publish(db, activities.create_draft(db, course, draft), now)
     return course.code

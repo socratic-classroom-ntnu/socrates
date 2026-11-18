@@ -1,1 +1,1 @@
-"""Course solo activity: one student, one Socratic tutor, question by question."""
+"""Course solo activity: one student, one Socratic tutor, scenario by scenario."""

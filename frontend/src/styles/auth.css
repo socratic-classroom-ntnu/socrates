@@ -106,6 +106,34 @@
 .auth-field__error { font-size: 13px; line-height: 1.5; color: var(--auth-error); }
 .auth-field__hint { font-size: 13px; line-height: 1.5; color: var(--auth-muted); }
 
+/* 註冊的「身分」：兩個選項並排，選中是深色粗框＋白底；沒選就送出是紅框（畫布 RoleRegister*） */
+.auth-role { margin: 0; padding: 0; border: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.auth-role legend { padding: 0 0 4px; font-size: 14px; font-weight: 700; }
+.auth-role__required { color: var(--auth-error); }
+.auth-role__options { display: flex; gap: 10px; }
+.auth-role__option {
+  position: relative; flex: 1 1 0; min-width: 0; min-height: 46px; box-sizing: border-box; padding: 6px 12px;
+  display: flex; align-items: center; gap: 8px; border: 1px solid var(--auth-field-edge); border-radius: 4px;
+  background: var(--auth-field); cursor: pointer;
+}
+.auth-role__option input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.auth-role__dot {
+  flex-shrink: 0; width: 18px; height: 18px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--auth-quiet-edge);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-role__option--checked { border: 2px solid var(--auth-ink); padding: 5px 11px; background: var(--ui-color-panel); }
+.auth-role__option--checked .auth-role__dot { border-color: var(--auth-ink); }
+.auth-role__option--checked .auth-role__dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--auth-ink); }
+.auth-role[aria-invalid="true"] .auth-role__option { border: 2px solid var(--auth-error); padding: 5px 11px; }
+/* 焦點框畫在圓鈕上（樣式基準工具量不到括號內的狀態，所以不用 :has） */
+.auth-role__option input:focus-visible + .auth-role__dot { outline: 3px solid var(--auth-gold); outline-offset: 2px; }
+.auth-role__icon { flex-shrink: 0; }
+.auth-role__icon--student { color: var(--ui-color-primary); }
+.auth-role__icon--teacher { color: var(--ui-color-info); }
+.auth-role__text { display: flex; flex-direction: column; line-height: 1.25; font-size: 15px; }
+.auth-role__desktop { font-size: 11px; font-weight: 700; color: var(--auth-muted); }
+.auth-role__fixed { margin: 0; font-size: 13px; line-height: 1.5; color: var(--auth-muted); }
+
 /* 西班牙文的按鈕字很長：一律允許換行，不寫死高度 */
 .auth-button {
   min-height: 44px; box-sizing: border-box; padding: 8px 14px; border-radius: 6px;

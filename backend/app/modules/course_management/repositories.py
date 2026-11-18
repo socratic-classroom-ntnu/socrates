@@ -13,6 +13,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     false,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -21,6 +22,9 @@ from app.modules.platform.storage import Base
 
 class Course(Base):
     __tablename__ = "courses"
+    __table_args__ = (
+        UniqueConstraint("practice_account_id", name="uq_courses_practice_account_id"),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     owner_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), index=True)
@@ -30,8 +34,19 @@ class Course(Base):
     goals: Mapped[str] = mapped_column(Text, default="")
     code: Mapped[str] = mapped_column(String(8), unique=True)
     code_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Students may join without registering (as guests); off only stops guests not yet in.
+    allow_guest: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=true()
+    )
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
+    # 學生「我的對話」的私人課程：屬於哪位學生（每人最多一門）；一般課程是 None。
+    # 擁有者是系統帳號，所以老師端 API 對它本來就找不到；清單、代碼、預覽另外排除它。
+    practice_account_id: Mapped[str | None] = mapped_column(
+        String(36),
+        ForeignKey("accounts.id", name="fk_courses_practice_account_id"),
+        nullable=True,
+    )
 
 
 class Enrollment(Base):
@@ -72,6 +87,8 @@ class Activity(Base):
     )
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time)
+    # 私人課程的活動來自題庫哪一題（practice_bank.yaml 的 id）；一般活動是 None。
+    bank_item_id: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class ActivityRevision(Base):

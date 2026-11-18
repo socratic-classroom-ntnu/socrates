@@ -4,7 +4,10 @@ export const REGISTER_LIMITS = { username: [3, 32], email: [3, 254], password: [
 // 登入不套新規則：舊規則設定的長密碼（最多 256 字）仍要能登入。
 export const LOGIN_PASSWORD_MAX = 256;
 export type Field = keyof typeof REGISTER_LIMITS;
-export type Problem = { field: Field; kind: 'missing' | 'tooShort' | 'tooLong' | 'format' | 'pattern' | 'policy'; min?: number; max?: number };
+// 註冊另有「身分」：不是文字欄位、沒有長度限制，所以不放進 REGISTER_LIMITS。
+export type AccountRole = 'student' | 'teacher';
+export type RegisterField = Field | 'account_role';
+export type Problem = { field: RegisterField; kind: 'missing' | 'tooShort' | 'tooLong' | 'format' | 'pattern' | 'policy'; min?: number; max?: number };
 
 // 後端 USERNAME_PATTERN：英文字母開頭，字母或數字結尾，中間可用數字、底線、點、連字號。
 const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_.-]*[A-Za-z0-9]$/;
@@ -13,7 +16,7 @@ export const PASSWORD_SPECIALS = '!@#$%^&*_-+=.?~';
 const passwordChar = (c: string) => /[A-Za-z0-9]/.test(c) || PASSWORD_SPECIALS.includes(c);
 // 後端只要求 @ 後面有點；這裡同樣要求網域有點（123@g 會被擋下），也不允許空白。
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const FIELDS: readonly Field[] = ['username', 'email', 'password'];
+const FIELDS: readonly RegisterField[] = ['username', 'email', 'password', 'account_role'];
 const chars = (value: string) => Array.from(value).length;
 
 export function passwordOk(value: string): boolean {
@@ -58,6 +61,11 @@ export function registerProblems(values: Record<Field, string>): Problem[] {
   return problems;
 }
 
+/** 註冊的身分必選（從課程邀請或活動 QR 來的註冊固定是學生，不會呼叫這裡）。 */
+export function roleProblem(role: AccountRole | null): Problem | null {
+  return role ? null : { field: 'account_role', kind: 'missing' };
+}
+
 /** FastAPI 422 detail → 每個認得的欄位留第一個問題。 */
 export function problemsFrom422(detail: unknown): Problem[] {
   if (!Array.isArray(detail)) return [];
@@ -66,8 +74,9 @@ export function problemsFrom422(detail: unknown): Problem[] {
     const { loc, type, ctx } = (issue ?? {}) as { loc?: unknown; type?: unknown; ctx?: Record<string, unknown> };
     const field = Array.isArray(loc) ? loc[loc.length - 1] : undefined;
     if (!FIELDS.includes(field as Field) || found.some(p => p.field === field)) continue;
-    const f = field as Field;
-    if (type === 'missing') found.push({ field: f, kind: 'missing' });
+    const f = field as RegisterField;
+    if (f === 'account_role') found.push({ field: f, kind: 'missing' });
+    else if (type === 'missing') found.push({ field: f, kind: 'missing' });
     else if (type === 'string_too_long') found.push({ field: f, kind: 'tooLong', max: Number(ctx?.max_length) });
     else if (type === 'string_too_short' && f !== 'email') found.push({ field: f, kind: 'tooShort', min: Number(ctx?.min_length) });
     else if (type === 'string_pattern_mismatch' && f === 'username') found.push({ field: f, kind: 'pattern' });

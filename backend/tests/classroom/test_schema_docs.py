@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.modules.llm_runtime import contracts as llm_contracts
 from app.modules.llm_runtime.contracts import (
     DynamicResult,
+    GroupTutorTurn,
     LLMStudentTurn,
     Observations,
     OtherSuggestionResult,
@@ -51,6 +52,7 @@ LLM_MODELS = (
     TutorTurn,
     Observations,
     PersonalTutorTurn,
+    GroupTutorTurn,
     PersonalSummary,
     SummaryResult,
     DynamicResult,

@@ -18,15 +18,12 @@ jest.mock('../../app/legacyRoutes', () => ({
 
 const activity = {
   activity_id: 'a-1', title: '第三週倫理討論', course_id: 'c-1', course_name: '哲學導論',
-  status: 'open', question_count: 2, ends_at: 1_782_317_940, attempt: null,
+  status: 'open', ends_at: 1_782_317_940, attempt: null,
 }
 
 const attempt = {
-  id: 'attempt-1', state: 'in_dialogue', question_index: 0, current_turn: 0, review_status: 'not_started',
-  progress: [
-    { index: 0, status: 'in_dialogue', title: '岔道上的選擇', option_label: null },
-    { index: 1, status: 'not_started', title: null, option_label: null },
-  ],
+  id: 'attempt-1', state: 'in_dialogue', scenario_index: 0, current_turn: 0, review_status: 'not_started',
+  progress: [{ index: 0, status: 'in_dialogue' }],
 }
 
 function renderPage() {
@@ -39,16 +36,19 @@ beforeEach(async () => {
   await applyLocale('zh-Hant')
 })
 
-test('activity page lists question numbers without titles', async () => {
+test('before an attempt the page shows one scenario that has not started and no question count', async () => {
   mockApi({ 'GET /solo/activities/a-1': activity })
   renderPage()
 
   expect(await screen.findByRole('heading', { level: 1, name: '第三週倫理討論' })).toBeInTheDocument()
   const progress = screen.getByRole('region', { name: '你的進度' })
-  expect(within(progress).getByText('題目 1')).toBeInTheDocument()
-  expect(within(progress).getByText('題目 2')).toBeInTheDocument()
-  expect(within(progress).getByText('回顧與最後反思')).toBeInTheDocument()
-  expect(within(progress).queryByText('岔道上的選擇')).toBeNull()
+  const rows = within(progress).getAllByRole('listitem')
+  expect(rows).toHaveLength(2)
+  expect(rows[0]).toHaveTextContent('情境 1')
+  expect(rows[0]).toHaveTextContent('還沒開始')
+  expect(rows[1]).toHaveTextContent('回顧與最後反思')
+  expect(screen.queryByText('題目')).toBeNull()
+  expect(screen.getByText('先讀情境，用自己的話回答')).toBeInTheDocument()
 })
 
 test('breadcrumb: 課程 goes home, the course name goes to the course', async () => {
@@ -67,16 +67,15 @@ test('back arrow returns to the course', async () => {
   expect(await screen.findByRole('link', { name: '返回上一層' }, { timeout: 3000 })).toHaveAttribute('href', '/learn/courses/c-1')
 })
 
-test('activity page shows progress from attempt', async () => {
+test('activity page shows the scenarios reached so far', async () => {
   mockApi({
     'GET /solo/activities/a-1': {
-      ...activity, question_count: 3,
+      ...activity,
       attempt: {
-        ...attempt, question_index: 1,
+        ...attempt, scenario_index: 1,
         progress: [
-          { index: 0, status: 'confirmed', title: '岔道上的選擇', option_label: '不拉' },
-          { index: 1, status: 'in_dialogue', title: '救生艇', option_label: null },
-          { index: 2, status: 'not_started', title: null, option_label: null },
+          { index: 0, status: 'confirmed' },
+          { index: 1, status: 'in_dialogue' },
         ],
       },
     },
@@ -85,39 +84,60 @@ test('activity page shows progress from attempt', async () => {
 
   const progress = await screen.findByRole('region', { name: '你的進度' }, { timeout: 5000 })
   const rows = within(progress).getAllByRole('listitem')
-  expect(rows).toHaveLength(4)
-  expect(rows[0]).toHaveTextContent('題目 1 · 岔道上的選擇')
-  expect(rows[0]).toHaveTextContent('已確認 · 不拉')
-  expect(rows[1]).toHaveTextContent('題目 2 · 救生艇')
+  expect(rows).toHaveLength(3)
+  expect(rows[0]).toHaveTextContent('情境 1')
+  expect(rows[0]).toHaveTextContent('已確認')
+  expect(rows[1]).toHaveTextContent('情境 2')
   expect(rows[1]).toHaveTextContent('對話中')
-  expect(rows[2]).toHaveTextContent('題目 3')
+  expect(rows[2]).toHaveTextContent('回顧與最後反思')
   expect(rows[2]).toHaveTextContent('還沒開始')
-  expect(rows[2]).not.toHaveTextContent('·')
-  expect(rows[3]).toHaveTextContent('回顧與最後反思')
-  expect(rows[3]).toHaveTextContent('還沒開始')
 })
 
-test('continue card shows question and turn', async () => {
-  // current_turn is the question's turn_index: the stance is turn 0, so turn 2 is the third round.
-  mockApi({ 'GET /solo/activities/a-1': { ...activity, attempt: { ...attempt, question_index: 1, current_turn: 2 } } })
-  renderPage()
-
-  const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
-  expect(within(card).getByText('上次停在')).toBeInTheDocument()
-  expect(within(card).getByText('題目 2，第 3 輪對話')).toBeInTheDocument()
-  expect(within(card).getByRole('button', { name: '繼續對話' })).toBeInTheDocument()
-  expect(within(card).queryByText('接著蘇格拉底會問你為什麼。沒有對錯，也不限回覆次數。')).toBeNull()
-})
-
-test('reviewing card says every question is confirmed', async () => {
+test('activity page does not call a capped scenario confirmed or in dialogue', async () => {
   mockApi({
     'GET /solo/activities/a-1': {
       ...activity,
       attempt: {
-        ...attempt, state: 'reviewing', question_index: 1, review_status: 'in_progress',
+        ...attempt, scenario_index: 1,
         progress: [
-          { index: 0, status: 'confirmed', title: '岔道上的選擇', option_label: '不拉' },
-          { index: 1, status: 'confirmed', title: '救生艇', option_label: '抽籤' },
+          { index: 0, status: 'capped' },
+          { index: 1, status: 'in_dialogue' },
+        ],
+      },
+    },
+  })
+  renderPage()
+
+  const progress = await screen.findByRole('region', { name: '你的進度' }, { timeout: 5000 })
+  const rows = within(progress).getAllByRole('listitem')
+  expect(rows[0]).toHaveTextContent('情境 1')
+  expect(rows[0]).toHaveTextContent('尚未釐清')
+  expect(rows[0]).not.toHaveTextContent('已確認')
+  expect(rows[0]).not.toHaveTextContent('對話中')
+  expect(rows[1]).toHaveTextContent('對話中')
+})
+
+test('continue card shows scenario and turn', async () => {
+  // current_turn is the scenario's turn_index: the first answer is turn 0, so turn 2 is the third round.
+  mockApi({ 'GET /solo/activities/a-1': { ...activity, attempt: { ...attempt, scenario_index: 1, current_turn: 2 } } })
+  renderPage()
+
+  const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
+  expect(within(card).getByText('上次停在')).toBeInTheDocument()
+  expect(within(card).getByText('情境 2，第 3 輪對話')).toBeInTheDocument()
+  expect(within(card).getByRole('button', { name: '繼續對話' })).toBeInTheDocument()
+  expect(within(card).queryByText(/用你自己的話說你會怎麼做/)).toBeNull()
+})
+
+test('reviewing card says every scenario is confirmed', async () => {
+  mockApi({
+    'GET /solo/activities/a-1': {
+      ...activity,
+      attempt: {
+        ...attempt, state: 'reviewing', scenario_index: 1, review_status: 'in_progress',
+        progress: [
+          { index: 0, status: 'confirmed' },
+          { index: 1, status: 'confirmed' },
         ],
       },
     },
@@ -125,18 +145,36 @@ test('reviewing card says every question is confirmed', async () => {
   renderPage()
 
   const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
-  expect(within(card).getByText('題目都確認了，下一步是觀點回顧')).toBeInTheDocument()
+  expect(within(card).getByText('情境都走完了，下一步是整理你的思路')).toBeInTheDocument()
   expect(within(card).queryByText(/輪對話/)).toBeNull()
   const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
   expect(rows[2]).toHaveTextContent('回顧與最後反思')
   expect(rows[2]).toHaveTextContent('進行中')
 })
 
+test('a completed attempt says so on the card and on the review step', async () => {
+  mockApi({
+    'GET /solo/activities/a-1': {
+      ...activity,
+      attempt: {
+        ...attempt, state: 'completed', scenario_index: 1, review_status: 'completed',
+        progress: [{ index: 0, status: 'confirmed' }, { index: 1, status: 'confirmed' }],
+      },
+    },
+  })
+  renderPage()
+
+  const card = await screen.findByRole('complementary', {}, { timeout: 5000 })
+  expect(within(card).getByText('你已經完成這個活動，可以回頭看看最終統整。')).toBeInTheDocument()
+  const rows = within(screen.getByRole('region', { name: '你的進度' })).getAllByRole('listitem')
+  expect(rows[2]).toHaveTextContent('已完成')
+})
+
 test('start posts the attempt then opens the dialogue', async () => {
   let started = false
   const calls = mockApi({
     'GET /solo/activities/a-1': () => started
-      ? { ...activity, attempt: { ...attempt, state: 'choosing_stance' } }
+      ? { ...activity, attempt: { ...attempt, state: 'answering' } }
       : activity,
     'POST /solo/activities/a-1/attempt': () => { started = true; return { id: 'attempt-1' } },
   })
@@ -188,4 +226,52 @@ test('unknown activity shows not found', async () => {
 
   expect(await screen.findByRole('heading', { name: '找不到這個活動' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
+})
+
+// 我的對話的私人活動（spec §10 M16、M20）：沒有期限，所有返回都回「我的對話」，導覽亮「我的對話」
+describe('a private practice activity', () => {
+  const practice = { ...activity, title: '電車難題', course_name: '我的對話', ends_at: 4102444800, practice: true }
+
+  test('shows no open-until date', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    expect(await screen.findByRole('heading', { level: 1, name: '電車難題' })).toBeInTheDocument()
+    expect(screen.queryByText('開放到')).toBeNull()
+    expect(document.body.textContent).not.toMatch(/2100|2099/)
+  })
+
+  test('the breadcrumb and back arrow go to my dialogues', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    const path = await screen.findByRole('navigation', { name: '課程路徑' }, { timeout: 5000 })
+    expect(within(path).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')]))
+      .toEqual([['我的對話', '/my-dialogues']])
+    expect(screen.getByRole('link', { name: '返回上一層' })).toHaveAttribute('href', '/my-dialogues')
+  })
+
+  test('the sidebar marks my dialogues, not home', async () => {
+    mockApi({ 'GET /solo/activities/a-1': practice })
+    renderPage()
+    await screen.findByRole('heading', { level: 1, name: '電車難題' })
+    const nav = screen.getByRole('navigation', { name: '主選單' })
+    expect(within(nav).getByRole('link', { name: '我的對話' })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: '首頁' })).not.toHaveAttribute('aria-current')
+  })
+
+  test('on a phone the top bar goes back to my dialogues', async () => {
+    const desktop = window.matchMedia
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query: string) => ({
+      matches: query.includes('max-width: 767px'), media: query, onchange: null, addListener() {}, removeListener() {},
+      addEventListener() {}, removeEventListener() {}, dispatchEvent() { return true },
+    }) })
+    try {
+      mockApi({ 'GET /solo/activities/a-1': practice })
+      renderPage()
+      await screen.findByRole('heading', { level: 1, name: '電車難題' })
+      const back = screen.getAllByRole('link', { name: '我的對話' }).find(link => link.closest('header'))
+      expect(back).toHaveAttribute('href', '/my-dialogues')
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktop })
+    }
+  })
 })

@@ -48,7 +48,7 @@
 - `backend/app/modules/analytics/`
 
 契約：
-- 雷達圖（等契約（設計稿））
+- —
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 
@@ -56,6 +56,5 @@
 
 ## 待清項（源頭修正，做完從這裡刪掉）
 
-- 1 個端點還沒有 response_model（前端只能手寫型別），清單在 app/modules/contract/contracts.py 的 RESPONSE_MODEL_PENDING：GET /api/v2/groups/classrooms/{rid}/analysis
-- 雷達圖契約（依設計稿的教師分析六畫面）。
+- 分組課雷達圖沿用 solo-activity 的共用契約（第二版）。
 <!-- module-map:end -->

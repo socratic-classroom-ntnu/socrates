@@ -19,16 +19,19 @@
 - `frontend/src/shared/shellContext.ts`
 - `frontend/src/shared/useIsPhone.ts`
 - `frontend/src/shared/next.ts`
+- `frontend/src/shared/accountName.ts`
 - `frontend/src/i18n/`
 - `frontend/src/features/dev-console/`
 - `frontend/src/testkit.ts`
 - `frontend/src/setupTests.ts`
 - `frontend/src/types/window-globals.d.ts`
 - `frontend/src/vite-env.d.ts`
+- `frontend/src/shared/publicConfig.tsx`
+- `frontend/src/shared/GroupModeGate.tsx`
+- `frontend/src/shared/GroupModeGate.test.tsx`
 
 契約：
 - 公開設定（/public-config）（✅）
-- 人像模型清單（/avatar-packs/catalog.json）（✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

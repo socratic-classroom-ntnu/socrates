@@ -2,15 +2,29 @@ import type zhHant from '../zh-Hant/join';
 import type { Shape } from '../../shape';
 
 const join: Shape<typeof zhHant> = {
+  banner: {
+    fromCourse: 'Joined from a course QR code',
+    fromActivity: 'Joined from an activity QR code',
+    joining: 'Joining: {{name}}',
+    ofCourse: 'Course: {{name}}',
+  },
   login: {
-    noName: 'Log in to continue joining',
-    title: 'Log in',
     submitCourse: 'Log in and join course',
-    submitActivity: 'Log in and continue',
+    submitActivity: 'Log in and join the activity',
     register: 'No account yet? Sign up',
     forgot: 'Forgot password',
     registerNote: 'After signing up you will come back to this course too.',
-    joining: 'Log in to join',
+    titleCourse: 'Join the course',
+    titleActivity: 'Join the activity',
+    registerNoteActivity: 'After registering, you also come back to this activity automatically.',
+    titleCourseLogin: 'Log in to join the course',
+    titleActivityLogin: 'Log in to join the activity',
+    restrictedCourse: 'This course needs a student account to join: log in or register',
+    restrictedActivity: 'This activity\'s course needs a student account to join: log in or register',
+    closedCourse: 'This course now needs you to log in or register to join',
+    closedActivity: 'This activity\'s course now needs you to log in or register to join',
+    closedIntroCourse: 'How to join this course has changed. Please continue with a student account.',
+    closedIntroActivity: 'How to join this activity has changed. Please continue with a student account.',
   },
   course: {
     phoneTitle: 'Join this course?',
@@ -41,8 +55,6 @@ const join: Shape<typeof zhHant> = {
     notFoundTitle: 'Activity not found',
     notFoundBody: 'The link may have expired, or your teacher deleted this activity.',
     byline: '{{course}} · Teacher: {{teacher}}',
-    questions: 'Questions',
-    questionCount: '{{count}}',
     openUntil: 'Open until',
     opens: 'Opens',
     opensAt: 'from {{start}}',

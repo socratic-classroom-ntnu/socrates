@@ -1,9 +1,8 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { readFileSync } from 'node:fs'
 import { ApiError } from '../../../contract/classroomClient'
-import { applyLocale } from '../../../i18n'
 import { formatDateTime } from '../../../i18n/format'
-import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
+import { mockApi, renderAt } from '../../../testing/pageHarness'
 import { ActivityCards } from './ActivityCards'
 
 jest.mock('../../../contract/classroomClient', () => {
@@ -15,7 +14,7 @@ jest.mock('qrcode', () => ({ toDataURL: jest.fn(async (value: string) => 'data:'
 const now = Math.floor(Date.now() / 1000)
 type Card = {
   id: string; title: string; status: 'draft' | 'scheduled' | 'open' | 'ended'; locked: boolean
-  has_unpublished_changes: boolean; question_count: number; starts_at: number | null; ends_at: number | null
+  has_unpublished_changes: boolean; starts_at: number | null; ends_at: number | null
   available_actions: string[]
 }
 function card(id: string, status: Card['status'], extra: Partial<Card> = {}): Card {
@@ -29,7 +28,7 @@ function card(id: string, status: Card['status'], extra: Partial<Card> = {}): Ca
     draft: [null, now + 86400], scheduled: [now + 3600, now + 7200], open: [now - 60, now + 3600], ended: [now - 7200, now - 60],
   }
   return {
-    id, title: `活動${id}`, status, locked: false, has_unpublished_changes: false, question_count: 2,
+    id, title: `活動${id}`, status, locked: false, has_unpublished_changes: false, 
     starts_at: times[status][0], ends_at: times[status][1], available_actions: actions[status], ...extra,
   }
 }
@@ -191,7 +190,7 @@ test('draft card shows planned end and students cannot see it', async () => {
   const draft = card('a', 'draft')
   open([draft])
   const article = (await screen.findByText('活動a')).closest('article') as HTMLElement
-  expect(article).toHaveTextContent(`2 題 ・ 預定到 ${at(draft.ends_at, 'dateTime')}`)
+  expect(article).toHaveTextContent(`預定到 ${at(draft.ends_at, 'dateTime')}`)
   expect(article).toHaveTextContent('學生看不到')
   expect(within(article).getByText('草稿')).toBeInTheDocument()
 })
@@ -200,7 +199,7 @@ test('scheduled, open and ended cards describe their window', async () => {
   open(four)
   const text = async (title: string) => (((await screen.findByText(title)).closest('article') as HTMLElement).textContent ?? '').replace(/\s+/g, ' ')
   const [o, s, , e] = four
-  expect(await text('活動open')).toContain(`2 題 ・ 開放到 ${at(o.ends_at, 'weekdayDateTime')}`)
+  expect(await text('活動open')).toContain(`開放到 ${at(o.ends_at, 'weekdayDateTime')}`)
   expect(await text('活動sched')).toContain(`${at(s.starts_at, 'weekdayDateTime')} 自動開放 ・ 到 ${at(s.ends_at, 'dateTime')}`)
   expect(await text('活動sched')).toContain('還沒開放')
   expect(await text('活動ended')).toContain(`${at(e.ends_at, 'weekdayDate')} 結束`)
@@ -287,11 +286,4 @@ test('ended cards show the weekday', async () => {
   open([ended])
   const article = (await screen.findByText('活動e')).closest('article') as HTMLElement
   expect(article.textContent?.replace(/\s+/g, ' ')).toContain(`${at(ended.ends_at, 'weekdayDate')} 結束`)
-})
-
-test('english counts one question in the singular', async () => {
-  await applyLocale('en')
-  open([card('one', 'draft', { question_count: 1 }), card('two', 'draft', { question_count: 2 })], { 'GET /auth/me': { ...signedIn, locale: 'en' } })
-  expect(await screen.findByText(/^1 question ·/)).toBeInTheDocument()
-  expect(screen.getByText(/^2 questions ·/)).toBeInTheDocument()
 })

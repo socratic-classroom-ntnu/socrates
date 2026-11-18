@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../../../contract/classroomClient'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
-import { QrCode } from '../../../ui'
+import { Button, QrCode } from '../../../ui'
+import { useT } from '../../../i18n/useT'
 import styles from './projector.module.css'
 
 type Course = components['schemas']['CourseTeacherView']
@@ -14,20 +15,30 @@ const cx = (...names: string[]) => names.map(name => styles[name]).join(' ')
 function useEscapeToCourse(courseId: string) {
   const navigate = useNavigate()
   useEffect(() => {
+    let fallback: ReturnType<typeof setTimeout> | undefined
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') navigate(courseId ? `/teach/courses/${courseId}` : '/?tab=teach')
+      if (event.key !== 'Escape') return
+      window.close()
+      fallback = setTimeout(() => {
+        if (!window.closed) navigate(courseId ? `/teach/courses/${courseId}` : '/?tab=teach', { replace: true })
+      }, 500)
     }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      if (fallback) clearTimeout(fallback)
+    }
   }, [courseId, navigate])
 }
 
 function EscapeHint() {
-  return <div className={cx('escapeHint')}>按 <kbd>Esc</kbd> 離開投影</div>
+  const { t } = useT('teach')
+  return <div className={cx('escapeHint')}>{t('projectorPage.escapeHintBefore')} <kbd>Esc</kbd> {t('projectorPage.escapeHintAfter')}</div>
 }
 
 function LoadingScreen() {
-  return <main className={cx('page')} aria-label="載入投影畫面" aria-busy="true">
+  const { t } = useT('teach')
+  return <main className={cx('page')} aria-label={t('projectorPage.loading')} aria-busy="true">
     <div className={cx('join', 'loading')}>
       <section className={cx('qrColumn')}><div className={cx('qrSkeleton')}><span /></div></section>
       <section className={cx('copy')}>
@@ -44,21 +55,23 @@ function StatusScreen({
   title,
   description,
   action,
+  icon = '!',
   busy = false,
 }: {
   eyebrow: string
   title: string
   description: string
+  icon?: string
   action?: { label: string; onClick(): void; disabled?: boolean }
   busy?: boolean
 }) {
   return <main className={cx('page', 'statusPage')} aria-busy={busy}>
     <section className={cx('statusCard')} role={action ? undefined : 'status'}>
-      <div className={cx('statusIcon')} aria-hidden="true">{eyebrow === '活動狀態' ? '✓' : eyebrow === '課程狀態' ? '▤' : '!'}</div>
+      <div className={cx('statusIcon')} aria-hidden="true">{icon}</div>
       <div className={cx('eyebrow')}>{eyebrow}</div>
       <h1>{title}</h1>
       <p>{description}</p>
-      {action && <button type="button" className={cx('retry')} onClick={action.onClick} disabled={action.disabled}>{action.label}</button>}
+      {action && <Button className={cx('retry')} onClick={action.onClick} disabled={action.disabled}>{action.label}</Button>}
     </section>
     <EscapeHint />
   </main>
@@ -66,24 +79,26 @@ function StatusScreen({
 
 function LoadError({
   error,
-  resourceName,
+  resource,
   reload,
 }: {
   error: unknown
-  resourceName: string
+  resource: 'course' | 'activity' | 'parentCourse'
   reload(): Promise<void>
 }) {
+  const { t } = useT('teach')
   const notFound = error instanceof ApiError && error.status === 404
+  const resourceName = t(`projectorPage.resources.${resource}`)
   const [retrying, setRetrying] = useState(false)
   const retry = () => {
     setRetrying(true)
     void reload().finally(() => setRetrying(false))
   }
   return <StatusScreen
-    eyebrow="載入失敗"
-    title={notFound ? `找不到${resourceName}` : '無法顯示加入資訊'}
-    description={notFound ? `請確認${resourceName}網址是否正確。` : '請確認網路連線，或重新載入投影畫面。'}
-    action={{ label: retrying ? '正在重新載入…' : '重新載入', onClick: retry, disabled: retrying }}
+    eyebrow={t('projectorPage.loadError')}
+    title={notFound ? t('projectorPage.notFoundTitle', { resource: resourceName }) : t('projectorPage.loadErrorTitle')}
+    description={notFound ? t('projectorPage.notFoundDescription', { resource: resourceName }) : t('projectorPage.loadErrorDescription')}
+    action={{ label: retrying ? t('projectorPage.retrying') : t('projectorPage.retry'), onClick: retry, disabled: retrying }}
     busy={retrying}
   />
 }
@@ -101,26 +116,25 @@ function JoinScreen({
   code?: string
   upcoming?: boolean
 }) {
+  const { t } = useT('teach')
   const isActivity = parentCourse !== undefined
   return <main className={cx('page')}>
     <div className={cx('join')}>
       <section className={cx('qrColumn')}>
-        <div className={cx('qr')}><QrCode value={url} alt={`加入「${name}」的 QR Code`} size={480} /></div>
+        <div className={cx('qr')}><QrCode value={url} alt={t('projectorPage.qrAlt', { name })} size={480} /></div>
       </section>
       <section className={cx('copy')}>
         <div>
-          <div className={cx('eyebrow')}>{isActivity ? '課堂活動' : upcoming ? '即將開始' : '加入課程'}</div>
+          <div className={cx('eyebrow')}>{isActivity ? t('projectorPage.activity') : t('projectorPage.joinCourse')}</div>
           {isActivity && <div className={cx('parentCourse')}>{parentCourse}</div>}
           <h1>{name}</h1>
           <p className={cx('description')}>{isActivity
-            ? upcoming ? '活動即將開始，你可以先掃描 QR Code，準備加入。' : '使用手機掃描 QR Code，加入這個課堂活動。'
-            : upcoming
-              ? '課程尚未開始，你可以先掃描 QR Code 或輸入代碼加入。'
-              : '使用手機掃描 QR Code，或輸入課程代碼加入。'}</p>
+            ? upcoming ? t('projectorPage.activityUpcoming') : t('projectorPage.activityJoin')
+            : t('projectorPage.courseJoin')}</p>
         </div>
         {code
-          ? <div className={cx('codeBlock')}><span>課程代碼</span><strong>{code}</strong></div>
-          : <div className={cx('scanNote')}>掃描後即可參與活動</div>}
+          ? <div className={cx('codeBlock')}><span>{t('projectorPage.courseCode')}</span><strong>{code}</strong></div>
+          : <div className={cx('scanNote')}>{t('projectorPage.scanToJoin')}</div>}
       </section>
     </div>
     <EscapeHint />
@@ -128,15 +142,17 @@ function JoinScreen({
 }
 
 function CourseDisabled({ name }: { name: string }) {
-  return <StatusScreen eyebrow="課程代碼" title="此課程代碼已停用" description={`目前無法使用課程代碼加入「${name}」。`} />
+  const { t } = useT('teach')
+  return <StatusScreen eyebrow={t('projectorPage.courseCode')} title={t('projectorPage.courseDisabled')} description={t('projectorPage.courseDisabledDescription', { name })} icon="▤" />
 }
 
 function ActivityScreen({ activity, courseName }: { activity: Activity; courseName: string }) {
+  const { t } = useT('teach')
   if (activity.status === 'ended') {
-    return <StatusScreen eyebrow="活動狀態" title="活動已結束" description={`「${activity.draft.title}」已經結束，現在無法加入。`} />
+    return <StatusScreen eyebrow={t('projectorPage.activityStatus')} title={t('projectorPage.activityEnded')} description={t('projectorPage.activityEndedDescription', { name: activity.draft.title })} icon="✓" />
   }
   if (activity.status === 'draft') {
-    return <StatusScreen eyebrow="活動狀態" title="活動尚未開放" description={`「${activity.draft.title}」目前仍是草稿，發布後學生才能加入。`} />
+    return <StatusScreen eyebrow={t('projectorPage.activityStatus')} title={t('projectorPage.activityDraft')} description={t('projectorPage.activityDraftDescription', { name: activity.draft.title })} icon="▤" />
   }
   return <JoinScreen
     name={activity.draft.title}
@@ -152,7 +168,7 @@ export function CourseProjectorPage() {
   const course = useResource<Course>(courseId ? `/courses/${courseId}?role=teacher` : null)
 
   if (course.loading && !course.data) return <LoadingScreen />
-  if (!course.data) return <LoadError error={course.error} resourceName="課程" reload={course.reload} />
+  if (!course.data) return <LoadError error={course.error} resource="course" reload={course.reload} />
   if (!course.data.code_enabled) return <CourseDisabled name={course.data.name} />
 
   return <JoinScreen
@@ -169,9 +185,9 @@ export function ActivityProjectorPage() {
   useEscapeToCourse(activity.data?.course_id ?? '')
 
   if (activity.loading && !activity.data) return <LoadingScreen />
-  if (!activity.data) return <LoadError error={activity.error} resourceName="活動" reload={activity.reload} />
+  if (!activity.data) return <LoadError error={activity.error} resource="activity" reload={activity.reload} />
   if (course.loading && !course.data) return <LoadingScreen />
-  if (!course.data) return <LoadError error={course.error} resourceName="所屬課程" reload={course.reload} />
+  if (!course.data) return <LoadError error={course.error} resource="parentCourse" reload={course.reload} />
 
   return <ActivityScreen activity={activity.data} courseName={course.data.name} />
 }

@@ -15,10 +15,10 @@ def test_another_account_cannot_read_or_act_on_an_attempt(client, tutor):
         if account is not None:
             switch(client, account)
         read = client.get(f"/api/v2/solo/attempts/{attempt_id}")
-        act = do(client, attempt_id, "submit_stance", {"option_id": "o1", "reason": "冒名"})
+        act = do(client, attempt_id, "send_message", {"text": "冒名"})
         assert (read.status_code, read.json()) == NOT_FOUND
         assert (act.status_code, act.json()) == NOT_FOUND
     assert calls == []
     switch(client, s["student"])
     view = ok(client.get(f"/api/v2/solo/attempts/{attempt_id}"))
-    assert (view["state"], view["messages"]) == ("choosing_stance", [])
+    assert (view["state"], view["messages"]) == ("answering", [])

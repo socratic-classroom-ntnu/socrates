@@ -31,7 +31,7 @@
 | 工作 | 輸出模型 | provider 角色 | 何時排入 | 結果寫到哪裡 |
 |---|---|---|---|---|
 | `focused_tutor` | `TutorTurn` | `socratic_tutor` | 代表討論（`focus`）每一輪：選出代表時與代表回覆後 | 該 focus 的 `messages`、`last_observations`、`micro_summary` |
-| `personal_tutor` | `PersonalTutorTurn` | `socratic_tutor` | 分組課堂的個人對話：作答被接受時、學生回覆／修正後、重試時 | `run["personal"][member_id]` 的 `messages`、`last_observations`、`summary` |
+| `personal_tutor` | `GroupTutorTurn` | `socratic_tutor` | 分組課堂的個人對話：作答被接受時、學生回覆／修正後、重試時 | `run["personal"][member_id]` 的 `messages`、`last_observations`、`summary` |
 | `question_summary` | `SummaryResult` | `question_summary` | 每題結束（`finish_question`） | `summaries.questions[題號]` |
 | `class_summary` | `SummaryResult` | `class_summary` | 全班課堂進入 `summary` 且逐題摘要都已完成 | `summaries.class` |
 | `personal_summary` | `SummaryResult` | `personal_summary` | 學生在 `summary` 階段送 `personal_summary` 指令 | `summaries.personal[member_id 或 member_id:題號]` |
@@ -44,7 +44,7 @@
 
 `ai_script_authoring`（AI 協助出題）不經工作佇列：`POST /scripts/assist` 在請求內直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型是下方的 `ScriptAssistResult`，後端再組成完整題目放進教師尚未存檔的草稿。
 
-`solo_tutor`（課程活動的單人對話）也不經工作佇列：單人活動在請求內經 `guarded_generate` 直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型與 `personal_tutor` 相同，是 `PersonalTutorTurn`。
+`solo_tutor`（課程活動的單人對話）也不經工作佇列：單人活動在請求內經 `guarded_generate` 直接呼叫，program 在 `programs.json`（`prompts.REQUEST_PROGRAMS`），輸出模型是 `PersonalTutorTurn`（分組課的 `personal_tutor` 是它加上 `flags` 的 `GroupTutorTurn`）。
 
 ### 個人對話的 `PersonalSummary` 與 `personal_summary` 工作不同
 
@@ -140,6 +140,53 @@
     "reason_summary": "先到的人承擔了等待的成本，打破順序要有更強的理由",
     "relevant_conditions": ["沒有緊急需求時"],
     "unresolved_issue": "誰有權認定緊急"
+  }
+}
+```
+
+### `GroupTutorTurn`
+
+`personal_tutor` 在分組課的輸出：`PersonalTutorTurn` 的全部欄位，再加上和單人活動同一套的 `flags`（`SoloFlags`，十個 0／1，定義見 PROMPT-DESIGN 第 3 節），group-dialogue 用它算學生指標。`solo_tutor` 不用這個模型。
+
+| 欄位 | 型別 | 必填 | 預設 | 限制 | 說明 |
+|---|---|---|---|---|---|
+| `reply_text` | `string` | 是 | — | `min_length=1`、`max_length=16000` | 導師對這位學生說的話；附在個人對話的 `messages`。 |
+| `observations` | `Observations` | 是 | — | — | 本輪觀察；存進該則訊息與 `last_observations`，交給 `stage_goal` 判斷能否進入待確認。 |
+| `move` | `enum(probe, clarify, challenge, reflect, summarize, hypothetical)` | 否 | `"probe"` | — | 這則回覆的追問方式，只記錄在訊息上。`hypothetical` 表示追問提出了原題沒有的延伸情境（單人活動的 `solo_tutor` 使用；`personal_tutor` 的 prompt 不要求）。 |
+| `summary` | `PersonalSummary` | 是 | — | — | 依目前對話整理的候選摘要；每輪覆寫 `summary`。進入 `awaiting_confirm` 時連同 `summary_digest` 給學生確認，確認後成為基準（`baseline`）。 |
+| `guard` | `enum(on_topic, off_topic, instruction_override)` | 否 | `"on_topic"` | — | 鐵則的守題判定（docs/IRON-RULES.md）：這一則輸入與本題相關／無關／要求改寫規則。不是 `on_topic` 時，送出前檢查要求回應帶一個與本題有關的提問；不合格重新產生一次，仍不合格換成固定拉回句。 |
+| `flags` | `SoloFlags` | 是 | — | — | 只評學生最新的那一則；給教師端的指標，學生看不到，回覆裡也不提到。 |
+
+```json
+{
+  "reply_text": "你提到「沒有緊急需求時」才先到先取。那由誰來判斷什麼算緊急？",
+  "observations": {
+    "has_position": true,
+    "has_reason": true,
+    "reason_tested": true,
+    "position_shifted": false,
+    "principle_label": "混合"
+  },
+  "move": "probe",
+  "summary": {
+    "current_position": "原則上先到先取，但緊急需求可以優先",
+    "reason_summary": "先到的人承擔了等待的成本，打破順序要有更強的理由",
+    "relevant_conditions": [
+      "沒有緊急需求時"
+    ],
+    "unresolved_issue": "誰有權認定緊急"
+  },
+  "flags": {
+    "off_topic": 0,
+    "malicious_off_topic": 0,
+    "danger_tendency": 0,
+    "low_effort": 0,
+    "gave_reason": 1,
+    "used_example": 0,
+    "considered_counterpoint": 0,
+    "built_on_tutor": 1,
+    "asked_question": 0,
+    "self_corrected": 0
   }
 }
 ```

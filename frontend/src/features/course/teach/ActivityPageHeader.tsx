@@ -7,10 +7,11 @@ import { Dialog } from '../../../components/Dialog'
 import { errorMessage } from '../../../i18n/errors'
 import { formatDateTime } from '../../../i18n/format'
 import { useT } from '../../../i18n/useT'
-import { Button, ButtonLink, FormError, StatusPill } from '../../../ui'
+import { Button, FormError, StatusPill } from '../../../ui'
+import { InviteDialog } from './InviteDialog'
 
 type Activity = Pick<components['schemas']['SoloActivityProgressView'],
-  'activity_id' | 'title' | 'course_id' | 'course_name' | 'status' | 'question_count' | 'ends_at'>
+  'activity_id' | 'title' | 'course_id' | 'course_name' | 'status' | 'ends_at'>
 type ActivityView = components['schemas']['ActivityTeacherView']
 
 export function ActivityPageHeader({ activity, current, onEnded }: {
@@ -20,13 +21,13 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
 }) {
   const { t, locale } = useT('teach')
   const detail = useResource<ActivityView>(`/activities/${activity.activity_id}`)
+  const [inviting, setInviting] = useState(false)
   const [confirmEnd, setConfirmEnd] = useState(false)
   const [working, setWorking] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const questions = t('live.questions', { count: activity.question_count })
   const meta = activity.ends_at === null
-    ? t('live.metaNoEnd', { questions })
-    : t('live.meta', { questions, end: formatDateTime(activity.ends_at, locale, 'weekdayDateTime') })
+    ? t('live.metaNoEnd')
+    : t('live.meta', { end: formatDateTime(activity.ends_at, locale, 'weekdayDateTime') })
   const canEnd = detail.data?.available_actions.includes('end_now') ?? false
 
   async function endActivity() {
@@ -59,7 +60,7 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
         <span className="teach-head__meta">{meta}</span>
       </div>
       <div className="teacher-live__actions">
-        <ButtonLink variant="quiet" to={`/teach/activities/${activity.activity_id}/projector`}>{t('live.qr')}</ButtonLink>
+        <Button variant="quiet" onClick={() => setInviting(true)}>{t('live.qr')}</Button>
         {canEnd && <Button variant="dark" disabled={working} onClick={() => setConfirmEnd(true)}>{t('live.endEarly')}</Button>}
       </div>
     </header>
@@ -70,6 +71,14 @@ export function ActivityPageHeader({ activity, current, onEnded }: {
     </nav>
 
     {notice && <FormError role="alert">{notice}</FormError>}
+
+    {inviting && <InviteDialog
+      kind="activity"
+      name={activity.title}
+      url={`${window.location.origin}/activities/${activity.activity_id}/join`}
+      projectorTo={`/teach/activities/${activity.activity_id}/projector`}
+      onClose={() => setInviting(false)}
+    />}
 
     {confirmEnd && <Dialog
       title={t('live.endDialog.title')}

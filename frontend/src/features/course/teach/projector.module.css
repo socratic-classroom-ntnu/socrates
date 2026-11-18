@@ -1,9 +1,12 @@
 .page {
   position: relative;
   display: grid;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   min-width: 320px;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 0;
   place-items: center;
   overflow: hidden;
   padding: 4.8vh 5.2vw 6.6vh;
@@ -14,8 +17,10 @@
 
 .join {
   container-type: size;
-  width: min(100vw, 177.7778vh);
-  height: min(100vh, 56.25vw);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: 177.7778vh;
   display: grid;
   grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr);
   align-items: center;
@@ -86,10 +91,15 @@
 }
 
 .parentCourse {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
   margin-bottom: 1.2cqh;
   color: #6e7773;
   font-size: clamp(10px, 1.25cqw, 22px);
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .copy h1 {
@@ -100,6 +110,10 @@
   font-weight: 700;
   letter-spacing: -.045em;
   line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
 }
 
@@ -223,6 +237,11 @@
 
 .statusCard p {
   max-width: 40vw;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow-wrap: anywhere;
   margin: 2.2vh 0 0;
   color: #68716e;
   font-size: clamp(11px, 1.35vw, 24px);
@@ -279,7 +298,7 @@
 @keyframes projector-spin { to { transform: rotate(360deg); } }
 
 @media (max-aspect-ratio: 4 / 3) {
-  .join { width: 100vw; height: 100dvh; gap: 4vw; padding: 5vw; }
+  .join { width: 100%; height: 100%; gap: 4vw; padding: 5vw; }
   .statusCard { width: min(84vw, 840px); min-height: 52vh; }
 }
 

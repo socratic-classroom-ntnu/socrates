@@ -8,7 +8,7 @@ from app.modules.group_dialogue.contracts import AddAIStudents, OtherSuggestionR
 from app.modules.classroom_core.contracts import CreateClassroom
 from app.modules.group_dialogue.contracts import GroupCommand
 from app.modules.ai_providers.contracts import CreateProfile
-from app.modules.solo_activity.contracts import SendMessageBody, SubmitStanceBody
+from app.modules.solo_activity.contracts import SendMessageBody
 
 
 def test_classroom_contracts_trim_before_length_validation():
@@ -48,10 +48,6 @@ def test_provider_and_solo_inputs_trim_consistently():
         "gpt-test",
     )
     assert SendMessageBody(text="  speech  ").text == "speech"
-    assert SubmitStanceBody(option_id="  o1  ", reason="  理由  ").model_dump() == {
-        "option_id": "o1",
-        "reason": "理由",
-    }
 
 
 def test_whitespace_only_values_fail_min_length_after_trim():

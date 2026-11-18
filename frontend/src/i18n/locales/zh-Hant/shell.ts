@@ -1,8 +1,11 @@
 export default {
   nav: {
+    admin: '後台',
     label: '主選單',
     home: '首頁',
+    dialogues: '我的對話',
     groups: '分組課',
+    me: '我',
     bank: '個人題庫',
     store: '題庫商店',
     settings: 'AI 連線設定',
@@ -12,6 +15,12 @@ export default {
   logout: '登出',
   account: {
     menu: '帳號選單',
+    sheet: '帳號',
+    tag: { student: '學生', teacher: '老師', guest: '訪客' },
+    guestUntil: '保留到 {{date}}',
+    guestNote: '訪客只在這個瀏覽器有效；換裝置或清除瀏覽器資料後，紀錄無法找回。',
+    guestRegister: '註冊以保留紀錄',
+    guestLogin: '已有帳號？登入',
     settings: '個人設定',
     language: '語言 — {{name}}',
   },
@@ -19,5 +28,19 @@ export default {
   expand: '展開側邊欄',
   groups: {
     teacherLink: '管理分組課（教師端）',
+  },
+  crossRole: {
+    illustration: '兩扇門，其中一扇上鎖',
+    home: '回首頁',
+    switch: { teacher: '登出，改用老師帳號', student: '登出，改用學生帳號' },
+    teacherPage: { title: '這是老師的頁面', body1: '你現在登入的是學生帳號。', body2: '如果你是老師，請登出後改用老師帳號登入。' },
+    studentPage: { title: '這是學生的頁面', body1: '你現在登入的是老師帳號。', body2: '學生的頁面要用學生帳號開啟。' },
+    join: {
+      title: '要用學生帳號才能加入',
+      scannedCourse: '你掃描的是課程 QR',
+      scannedActivity: '你掃描的是活動 QR',
+      body1: '老師帳號不能加入課程或活動。',
+      body2: '要以學生身分參加，請登出後用學生帳號登入或註冊，再重新掃描。',
+    },
   },
 };

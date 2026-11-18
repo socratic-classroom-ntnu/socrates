@@ -15,14 +15,15 @@ from tests.course_management.test_courses_api import create_course
 from tests.solo_activity.test_solo_attempts_api import (
     MET,
     OPENING,
+    SECOND,
+    add_scenario,
+    answer,
     confirm,
     join,
     ok,
     setup,
-    stance,
     start,
     to_confirming,
-    two_questions,
 )
 
 
@@ -30,14 +31,20 @@ def progress(client, activity_id):
     return client.get(f"/api/v2/solo/activities/{activity_id}/progress")
 
 
-def set_attempt(attempt_id, state, question_index, turn=0, updated_at=None):
+def start_with_two_scenarios(client, activity_id):
+    attempt = ok(start(client, activity_id))
+    add_scenario(attempt["id"], SECOND)
+    return attempt
+
+
+def set_attempt(attempt_id, state, scenario_index, turn=0, updated_at=None):
     """Put an attempt straight into a state; the state machine has its own tests."""
     with storage.transaction() as db:
         row = db.get(SoloAttempt, attempt_id)
         row.state = state
-        row.question_index = question_index
+        row.scenario_index = scenario_index
         entries = [dict(entry) for entry in row.progress]
-        entries[question_index]["turn_index"] = turn
+        entries[scenario_index]["turn_index"] = turn
         row.progress = entries
         if updated_at is not None:
             row.updated_at = updated_at
@@ -48,12 +55,12 @@ def student_row(view, display_name):
 
 
 def test_only_course_owner_can_read(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     ok(start(client, s["activity_id"]))
     response = progress(client, s["activity_id"])
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
 
-    user(client, "other")
+    user(client, "other", account_role="teacher")
     create_course(client)
     response = progress(client, s["activity_id"])
     assert (response.status_code, response.json()) == (404, {"detail": "ACTIVITY_NOT_FOUND"})
@@ -70,12 +77,12 @@ def test_only_course_owner_can_read(client, tutor):
 
 def test_no_message_text_or_summary_leaks(client, tutor):
     _, replies = tutor
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
+    s = setup(client)
+    attempt = start_with_two_scenarios(client, s["activity_id"])
     confirm(client, attempt["id"], to_confirming(client, attempt["id"], replies))
-    ok(client.post(f"/api/v2/solo/attempts/{attempt['id']}/next_question"))
+    ok(client.post(f"/api/v2/solo/attempts/{attempt['id']}/next_scenario"))
     replies.append(OPENING)
-    stance(client, attempt["id"], option_id="o0", reason="五個人比一個人多")
+    answer(client, attempt["id"], "五個人比一個人多")
 
     switch(client, s["teacher"])
     body = ok(progress(client, s["activity_id"]))
@@ -101,54 +108,56 @@ def test_no_message_text_or_summary_leaks(client, tutor):
         "text",
         "messages",
         "observations",
-        "reason",
-        "stance",
+        "answer",
         "candidate_summary",
         "confirmed_summary",
         "principle_note",
-        "option_label",
     }
     assert leaked == set()
 
 
 CELL_CASES = [
-    ("choosing_stance", 0, 0, [("choosing_stance", None), ("not_started", None)], "in_progress"),
-    ("awaiting_tutor", 0, 2, [("in_dialogue", 2), ("not_started", None)], "in_progress"),
-    ("tutor_unavailable", 0, 1, [("in_dialogue", 1), ("not_started", None)], "in_progress"),
-    ("in_dialogue", 0, 3, [("in_dialogue", 3), ("not_started", None)], "in_progress"),
-    ("confirming", 0, 2, [("confirming", None), ("not_started", None)], "in_progress"),
-    ("between_questions", 0, 2, [("confirmed", None), ("not_started", None)], "in_progress"),
-    ("choosing_stance", 1, 0, [("confirmed", None), ("choosing_stance", None)], "in_progress"),
+    ("answering", 0, 0, [("answering", None)], "in_progress"),
+    ("awaiting_tutor", 0, 2, [("in_dialogue", 2)], "in_progress"),
+    ("tutor_unavailable", 0, 1, [("in_dialogue", 1)], "in_progress"),
+    ("in_dialogue", 0, 3, [("in_dialogue", 3)], "in_progress"),
+    ("confirming", 0, 2, [("confirming", None)], "in_progress"),
+    ("between_scenarios", 0, 2, [("confirmed", None)], "in_progress"),
+    ("answering", 1, 0, [("confirmed", None), ("answering", None)], "in_progress"),
     ("in_dialogue", 1, 4, [("confirmed", None), ("in_dialogue", 4)], "in_progress"),
     ("confirming", 1, 2, [("confirmed", None), ("confirming", None)], "in_progress"),
-    ("reviewing", 1, 2, [("confirmed", None), ("confirmed", None)], "done"),
+    # The review has begun but the attempt is not completed: still in progress (O6).
+    ("reviewing", 1, 2, [("confirmed", None), ("confirmed", None)], "in_progress"),
+    ("reflecting", 1, 2, [("confirmed", None), ("confirmed", None)], "in_progress"),
+    ("completed", 1, 2, [("confirmed", None), ("confirmed", None)], "done"),
 ]
 
 
 @pytest.mark.parametrize(("state", "index", "turn", "cells", "overall"), CELL_CASES)
 def test_cells_follow_attempt_state(client, tutor, state, index, turn, cells, overall):
-    s = setup(client, questions=two_questions())
-    attempt = ok(start(client, s["activity_id"]))
+    s = setup(client)
+    attempt = start_with_two_scenarios(client, s["activity_id"])
     set_attempt(attempt["id"], state, index, turn=turn)
 
     switch(client, s["teacher"])
     row = ok(progress(client, s["activity_id"]))["students"][0]
     assert [(c["status"], c["turns"]) for c in row["cells"]] == cells
     assert row["overall"] == overall
-    assert row["review_status"] == ("in_progress" if state == "reviewing" else "not_started")
+    expected = {"reviewing": "in_progress", "reflecting": "in_progress", "completed": "completed"}
+    assert row["review_status"] == expected.get(state, "not_started")
 
 
 def test_summary_counts(client, tutor):
-    s = setup(client, questions=two_questions())
-    dialogue = ok(start(client, s["activity_id"]))
+    s = setup(client)
+    dialogue = start_with_two_scenarios(client, s["activity_id"])
     join(client, s["course"], "between")
-    between_attempt = ok(start(client, s["activity_id"]))
+    between_attempt = start_with_two_scenarios(client, s["activity_id"])
     join(client, s["course"], "review")
-    review_attempt = ok(start(client, s["activity_id"]))
+    review_attempt = start_with_two_scenarios(client, s["activity_id"])
     join(client, s["course"], "idle")
     set_attempt(dialogue["id"], "in_dialogue", 0, turn=2)
-    set_attempt(between_attempt["id"], "between_questions", 0)
-    set_attempt(review_attempt["id"], "reviewing", 1)
+    set_attempt(between_attempt["id"], "between_scenarios", 0)
+    set_attempt(review_attempt["id"], "completed", 1)
 
     switch(client, s["teacher"])
     view = ok(progress(client, s["activity_id"]))
@@ -156,8 +165,6 @@ def test_summary_counts(client, tutor):
         "enrolled": 4,
         "started": 3,
         "done": 1,
-        # q1: only the one still talking; q2: everyone started but not past it, review excepted.
-        "unconfirmed_by_question": [1, 2],
         "attention": 0,
     }
     assert [s["display_name"] for s in view["students"]] == [
@@ -176,13 +183,13 @@ def test_summary_counts(client, tutor):
 
 def test_attention_after_300_seconds(client, tutor, monkeypatch):
     _, replies = tutor
-    s = setup(client, questions=two_questions())
+    s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     join(client, s["course"], "review")
-    review_attempt = ok(start(client, s["activity_id"]))
-    set_attempt(review_attempt["id"], "reviewing", 1, updated_at=time.time() - 3600)
+    review_attempt = start_with_two_scenarios(client, s["activity_id"])
+    set_attempt(review_attempt["id"], "completed", 1, updated_at=time.time() - 3600)
     with storage.transaction() as db:
         last_message = max(db.scalars(select(SoloMessage.created_at)))
         row = db.get(SoloAttempt, attempt["id"])
@@ -207,7 +214,7 @@ def test_attention_after_300_seconds(client, tutor, monkeypatch):
 
 
 def test_enrolled_without_attempt_is_not_started(client, tutor):
-    s = setup(client, questions=two_questions())
+    s = setup(client)
 
     switch(client, s["teacher"])
     view = ok(progress(client, s["activity_id"]))
@@ -215,37 +222,22 @@ def test_enrolled_without_attempt_is_not_started(client, tutor):
     assert view["course_id"] == s["course"]["id"]
     assert view["course_name"] == s["course"]["name"]
     assert view["status"] == "open"
-    assert view["question_count"] == 2
-    assert view["questions"] == [
-        {"index": 0, "title": "岔道上的選擇"},
-        {"index": 1, "title": "天橋上的胖子"},
-    ]
-    assert view["summary"] == {
-        "enrolled": 1,
-        "started": 0,
-        "done": 0,
-        "unconfirmed_by_question": [0, 0],
-        "attention": 0,
-    }
+    assert view["summary"] == {"enrolled": 1, "started": 0, "done": 0, "attention": 0}
     (row,) = view["students"]
     assert row["display_name"] == "student同學"
     assert row["enrollment_id"]
     assert row["overall"] == "not_started"
-    assert row["cells"] == [
-        {"status": "not_started", "turns": None},
-        {"status": "not_started", "turns": None},
-    ]
+    assert row["cells"] == []
     assert row["review_status"] == "not_started"
     assert row["last_activity_at"] is None
     assert row["attention"] is False
 
 
 def test_draft_activity_reads_as_draft(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
-    body = create_activity(client, course["id"], questions=two_questions())
+    body = create_activity(client, course["id"])
 
     view = ok(progress(client, body["id"]))
     assert view["status"] == "draft"
-    assert [q["title"] for q in view["questions"]] == ["岔道上的選擇", "天橋上的胖子"]
     assert view["students"] == []

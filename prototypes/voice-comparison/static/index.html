@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voice · 語音方案比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&display=swap">
+<link rel="stylesheet" href="/static/voice.css?v=12">
+</head>
+<body data-view="text" data-mode="dev">
+
+<!-- 全螢幕右上角：切回文字模式＋dev／demo 滑動開關＋demo 的淺／深色開關 -->
+<div class="fullbar">
+  <button id="exit-full" class="fullbar__exit" type="button" aria-label="切回文字模式" title="切回文字模式">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg>
+  </button>
+  <label class="mode-switch">
+    <span class="mode-switch__label" data-k="dev">dev</span>
+    <input id="mode-toggle" type="checkbox" role="switch" aria-label="切換 demo 模式">
+    <span class="mode-switch__track" aria-hidden="true"><span class="mode-switch__thumb"></span></span>
+    <span class="mode-switch__label" data-k="demo">demo</span>
+  </label>
+  <label class="mode-switch theme-switch">
+    <span class="mode-switch__label" data-k="light">淺</span>
+    <input id="theme-toggle" type="checkbox" role="switch" aria-label="切換深色模式">
+    <span class="mode-switch__track" aria-hidden="true"><span class="mode-switch__thumb"></span></span>
+    <span class="mode-switch__label" data-k="dark">深</span>
+  </label>
+</div>
+
+<!-- 文字模式：蘇格拉底浮動視窗，點一下進全螢幕 -->
+<section class="textmode" aria-label="文字模式">
+  <header class="tm-head">
+    <span class="tm-badge" aria-hidden="true">問</span>
+    <div class="tm-title"><small id="tm-plan">Voice</small><strong>和蘇格拉底談談你的想法</strong></div>
+  </header>
+  <div class="tm-body">
+    <aside class="tm-side">
+      <article class="board">
+        <p class="board__k">題目・岔道上的選擇</p>
+        <p class="board__q">一輛失控的電車正駛向五名工人。你站在轉轍器旁，拉下拉桿，電車會轉向另一條軌道，那裡有一名工人。</p>
+      </article>
+      <button id="float" class="float" type="button" aria-label="蘇格拉底語音視窗，點一下切到全螢幕">
+        <span class="float__head"><b>蘇格拉底</b><span>↗ 全螢幕</span></span>
+        <span id="slot-float" class="slot slot--float"></span>
+      </button>
+      <article class="explain">
+        <b>這段對話在做什麼</b>
+        <p>蘇格拉底不評斷對錯，只會一直問你「為什麼」，幫你把理由和例外說清楚。</p>
+      </article>
+    </aside>
+    <section class="tm-chat" aria-label="對話">
+      <div id="slot-log-text" class="slot slot--log"></div>
+      <div id="slot-composer-text" class="slot"></div>
+    </section>
+  </div>
+</section>
+
+<!-- 全螢幕 dev：方案、花費、延遲、紀錄都在 -->
+<section class="devmode" aria-label="全螢幕 dev">
+  <header class="top">
+    <div class="title">
+      <h1>Voice</h1>
+      <p>蘇格拉底語音對話 · 三種方案比較 <span id="budget" class="budget">讀取中…</span></p>
+    </div>
+    <div id="plans" class="plans" role="radiogroup" aria-label="語音方案"></div>
+  </header>
+  <section class="keys" aria-label="金鑰（臨時）">
+    <span class="keys__title">金鑰<small>只寫入、不顯示，存在這台主機</small></span>
+    <form class="key" data-name="openai"><label>OpenAI <input type="password" autocomplete="off" spellcheck="false" placeholder="OpenAI API key"></label><button type="submit">儲存</button><span class="chip" data-ready="false">未設定</span></form>
+    <form class="key" data-name="gemini"><label>Gemini <input type="password" autocomplete="off" spellcheck="false" placeholder="Gemini API key（AI Studio）"></label><button type="submit">儲存</button><span class="chip" data-ready="false">未設定</span></form>
+    <form class="key" data-name="google"><label>Google Cloud <textarea rows="1" autocomplete="off" spellcheck="false" placeholder="服務帳戶 JSON 整份貼上"></textarea></label><button type="submit">儲存</button><span class="chip" data-ready="false">未設定</span></form>
+  </section>
+  <main class="stage">
+    <section class="orb-card" aria-label="語音球體">
+      <div id="slot-dev" class="slot slot--dev"></div>
+      <div class="orb-meta">
+        <strong id="state-label">待機</strong>
+        <span id="turn-latency"></span>
+        <span id="mic-meter" class="mic-meter">麥克風 ▯▯▯▯▯▯▯▯▯▯</span>
+        <label class="mic-pick">輸入裝置 <select id="mic-device" aria-label="麥克風輸入裝置"><option value="">系統預設</option></select></label>
+      </div>
+    </section>
+    <section id="slot-log-dev" class="log" aria-label="對話紀錄"></section>
+  </main>
+  <div id="slot-composer-dev" class="slot"></div>
+</section>
+
+<!-- 全螢幕 demo：只有球體和一行狀態，點球體開始／結束 -->
+<section class="demomode" aria-label="全螢幕 demo">
+  <div id="slot-demo" class="slot slot--demo"></div>
+  <p id="demo-status" class="demo-status" aria-live="polite">點一下球體開始對話</p>
+  <p id="demo-notice" class="demo-notice" role="status"></p>
+</section>
+
+<!-- 共用元件：依版面搬到對應的位置 -->
+<div class="parts">
+  <canvas id="sphere" aria-label="語音狀態球體"></canvas>
+  <div id="logwrap" class="logwrap">
+    <ol id="log"></ol>
+    <p id="notice" class="notice" role="status" aria-live="polite"></p>
+  </div>
+  <section id="composer" class="solo-composer" aria-label="輸入">
+    <label for="answer">對蘇格拉底說話</label>
+    <div class="solo-composer__entry">
+      <textarea id="answer" maxlength="4000" placeholder="按右邊的麥克風開始語音對話；也可以直接打字送出…"></textarea>
+      <button id="voice" class="solo-composer__voice" type="button" aria-label="開始語音對話" aria-pressed="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <button id="send" class="solo-composer__send" type="button" aria-label="送出" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+      </button>
+    </div>
+    <p id="hint" class="solo-composer__hint">按麥克風開始。首字延遲＝你停止說話（或按送出）到聽到第一個聲音。</p>
+  </section>
+</div>
+
+<script src="/static/sphere-lib.js?v=12"></script>
+<script src="/static/live-sphere.js?v=12"></script>
+<script src="/static/voice.js?v=12"></script>
+</body>
+</html>

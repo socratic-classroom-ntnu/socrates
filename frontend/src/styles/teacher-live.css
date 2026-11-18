@@ -26,6 +26,7 @@
 .live-cell { display: inline-flex; align-items: center; min-height: 24px; padding: 2px 9px; border-radius: 999px; background: #F0F1EF; color: #4B514D; font-size: 12px; white-space: nowrap; }
 .live-cell--confirmed { background: #E5F0EA; color: #285344; }
 .live-cell--in_dialogue { background: #EAF0F5; color: #31526B; }
+.live-cell--answering { background: #F4F0E9; color: #594C3B; }
 .live-cell--confirming { background: #FFF1CF; color: #6E5034; }
 .live-cell--review { background: #F4F0E9; color: #594C3B; }
 .live-time { display: flex; flex-direction: column; gap: 4px; color: var(--ui-color-muted); white-space: nowrap; }
@@ -36,3 +37,7 @@
   .teacher-live__head { align-items: flex-start; }
   .teacher-live__actions { width: 100%; }
 }
+
+/* 訪客的名字後面接一個小標籤；過期訪客的名字已由後端清掉，改顯示「過期訪客 N」 */
+.student-name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.student-name__guest { padding: 1px 7px; border-radius: 999px; background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); font-size: 12px; font-weight: 600; line-height: 1.5; }

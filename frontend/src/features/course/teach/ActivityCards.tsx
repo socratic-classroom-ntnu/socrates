@@ -111,11 +111,10 @@ export function ActivityCards({ courseId, canCreate }: { courseId: string; canCr
   }
 
   function meta(card: Card) {
-    const questions = t('cards.questions', { count: card.question_count })
-    if (card.status === 'draft') return t('cards.draftMeta', { questions, end: when(card.ends_at, 'dateTime') })
-    if (card.status === 'scheduled') return t('cards.scheduledMeta', { questions, start: when(card.starts_at, 'weekdayDateTime'), end: when(card.ends_at, 'dateTime') })
-    if (card.status === 'open') return t('cards.openMeta', { questions, end: when(card.ends_at, 'weekdayDateTime') })
-    return t('cards.endedMeta', { questions, end: when(card.ends_at, 'weekdayDate') })
+    if (card.status === 'draft') return t('cards.draftMeta', { end: when(card.ends_at, 'dateTime') })
+    if (card.status === 'scheduled') return t('cards.scheduledMeta', { start: when(card.starts_at, 'weekdayDateTime'), end: when(card.ends_at, 'dateTime') })
+    if (card.status === 'open') return t('cards.openMeta', { end: when(card.ends_at, 'weekdayDateTime') })
+    return t('cards.endedMeta', { end: when(card.ends_at, 'weekdayDate') })
   }
 
   const counts = (Object.keys(FILTERS) as Filter[]).map(key => [key, items.filter(card => FILTERS[key](card.status)).length] as const)

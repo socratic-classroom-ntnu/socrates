@@ -7,7 +7,8 @@ export function GroupsPage() {
   const { t } = useT('shell')
   const { account } = useAuth()
   return <>
-    <p className="groups-page__teacher"><a href="/teacher/home">{t('groups.teacherLink')}</a></p>
+    {/* 教師端連結只給老師帳號（P30） */}
+    {account?.account_role === 'teacher' && <p className="groups-page__teacher"><a href="/teacher/home">{t('groups.teacherLink')}</a></p>}
     <Home user={account} />
   </>
 }

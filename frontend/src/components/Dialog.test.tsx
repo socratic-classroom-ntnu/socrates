@@ -88,3 +88,11 @@ test('Escape only closes the topmost dialog', () => {
   expect(screen.queryByRole('dialog', { name: '上層對話框' })).toBeNull()
   expect(screen.getByRole('dialog', { name: '測試對話框' })).toBeInTheDocument()
 })
+
+test('size="wide" widens the panel; the default size stays narrow', () => {
+  const { unmount } = render(<Dialog title="寬" size="wide" onClose={() => {}}><p>內容</p></Dialog>)
+  expect(screen.getByRole('dialog')).toHaveClass('dialog__panel--wide')
+  unmount()
+  render(<Dialog title="窄" onClose={() => {}}><p>內容</p></Dialog>)
+  expect(screen.getByRole('dialog')).not.toHaveClass('dialog__panel--wide')
+})

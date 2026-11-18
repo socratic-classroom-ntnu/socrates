@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../../contract/classroomClient'
 import { useResource } from '../../contract/useResource'
-import { useShellBack } from '../../shared/shellContext'
+import { useShellActive, useShellBack } from '../../shared/shellContext'
 import { errorMessage } from '../../i18n/errors'
 import { formatDateTime } from '../../i18n/format'
 import { useT } from '../../i18n/useT'
 import { ButtonLink } from '../../ui'
 import '../../styles/solo.css'
 import type { SoloActivityView } from './soloView'
+
+const SCENARIO_NOTE = { confirmed: 'confirmed', capped: 'capped', in_dialogue: 'inDialogue' } as const
 
 export function SoloActivityPage() {
   const { t, locale } = useT('solo')
@@ -17,7 +19,13 @@ export function SoloActivityPage() {
   const activity = useResource<SoloActivityView>(`/solo/activities/${activityId}`)
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState<unknown>(null)
-  useShellBack(activity.data ? `/learn/courses/${activity.data.course_id}` : '/', t('activity.back'))
+  // 我的對話的私人活動（spec §10 M16、M20）：沒有課程頁可回，所有返回都回「我的對話」，導覽也亮它
+  const practice = activity.data?.practice === true
+  useShellBack(
+    practice ? '/my-dialogues' : activity.data ? `/learn/courses/${activity.data.course_id}` : '/',
+    practice ? t('shell:nav.dialogues') : t('activity.back'),
+  )
+  useShellActive(practice ? 'dialogues' : null)
 
   if (activity.loading && !activity.data) return <main className="solo-activity" aria-busy="true" />
   if (!activity.data) {
@@ -31,21 +39,18 @@ export function SoloActivityPage() {
   const data = activity.data
   const brief = data.attempt
   const rows = brief
-    ? brief.progress.map(question => ({
-      status: question.status,
-      label: question.title
-        ? t('activity.questionTitle', { number: question.index + 1, title: question.title })
-        : t('activity.questionNumber', { number: question.index + 1 }),
-      note: question.status === 'confirmed'
-        ? t('activity.confirmed', { option: question.option_label ?? '' })
-        : question.status === 'in_dialogue' ? t('activity.inDialogue') : t('activity.notStarted'),
+    ? brief.progress.map(scenario => ({
+      status: scenario.status,
+      label: t('activity.scenarioNumber', { number: scenario.index + 1 }),
+      note: t(`activity.${SCENARIO_NOTE[scenario.status]}`),
     }))
-    : Array.from({ length: data.question_count }, (_, index) => ({
+    : [{
       status: 'not_started' as const,
-      label: t('activity.questionNumber', { number: index + 1 }),
+      label: t('activity.scenarioNumber', { number: 1 }),
       note: t('activity.notStarted'),
-    }))
+    }]
   const reviewing = brief?.review_status === 'in_progress'
+  const completed = brief?.review_status === 'completed'
 
   async function start() {
     if (data.attempt) {
@@ -67,11 +72,13 @@ export function SoloActivityPage() {
   return <main className="solo-activity">
     <header className="solo-activity__head">
       <nav className="solo-activity__crumb" aria-label={t('activity.breadcrumbLabel')}>
-        <Link to="/?tab=learn">{t('activity.back')}</Link><span aria-hidden="true">/</span>
-        <Link to={`/learn/courses/${data.course_id}`}>{data.course_name}</Link>
+        {practice
+          ? <Link to="/my-dialogues">{t('shell:nav.dialogues')}</Link>
+          : <><Link to="/?tab=learn">{t('activity.back')}</Link><span aria-hidden="true">/</span>
+            <Link to={`/learn/courses/${data.course_id}`}>{data.course_name}</Link></>}
       </nav>
       <div className="solo-activity__title">
-        <Link className="solo-activity__back" to={`/learn/courses/${data.course_id}`} aria-label={t('activity.backToCourse')} title={t('activity.backToCourse')}>
+        <Link className="solo-activity__back" to={practice ? '/my-dialogues' : `/learn/courses/${data.course_id}`} aria-label={t('activity.backToCourse')} title={t('activity.backToCourse')}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
         </Link>
         <h1>{data.title}</h1>
@@ -81,8 +88,7 @@ export function SoloActivityPage() {
       <div className="solo-activity__main">
         <dl className="solo-activity__facts">
           <div><dt>{t('activity.status')}</dt><dd><span className={`solo-activity__status solo-activity__status--${data.status}`}>{t(`activity.statuses.${data.status}`)}</span></dd></div>
-          <div><dt>{t('activity.questions')}</dt><dd>{t('activity.questionCount', { count: data.question_count })}</dd></div>
-          <div><dt>{t('activity.openUntil')}</dt><dd>{formatDateTime(data.ends_at, locale, 'weekdayDateTime')}</dd></div>
+          {!practice && <div><dt>{t('activity.openUntil')}</dt><dd>{formatDateTime(data.ends_at, locale, 'weekdayDateTime')}</dd></div>}
         </dl>
         <section className="solo-activity__progress" aria-labelledby="solo-activity-progress">
           <h2 id="solo-activity-progress">{t('activity.progress')}</h2>
@@ -92,10 +98,10 @@ export function SoloActivityPage() {
               <span className="solo-activity__step-label">{row.label}</span>
               <span className="solo-activity__step-note">{row.note}</span>
             </li>)}
-            <li className={`solo-activity__step solo-activity__step--${reviewing ? 'in_dialogue' : 'not_started'}`}>
+            <li className={`solo-activity__step solo-activity__step--${completed ? 'confirmed' : reviewing ? 'in_dialogue' : 'not_started'}`}>
               <span className="solo-activity__number" aria-hidden="true">{rows.length + 1}</span>
               <span className="solo-activity__step-label">{t('activity.review')}</span>
-              <span className="solo-activity__step-note">{reviewing ? t('activity.inProgress') : t('activity.notStarted')}</span>
+              <span className="solo-activity__step-note">{completed ? t('activity.completed') : reviewing ? t('activity.inProgress') : t('activity.notStarted')}</span>
             </li>
           </ol>
         </section>
@@ -107,12 +113,14 @@ export function SoloActivityPage() {
           <b>{t('activity.startTitle')}</b>
           <p>{t('activity.startBody')}</p>
         </>}
-        {brief && (reviewing
+        {brief && (completed
+          ? <b>{t('activity.completedNext')}</b>
+          : reviewing
           ? <b>{t('activity.reviewNext')}</b>
           : <>
             <span className="solo-activity__card-label">{t('activity.lastStop')}</span>
-            {/* current_turn is the question's turn_index, and the stance itself is turn 0. */}
-            <b>{t('activity.resumeAt', { number: brief.question_index + 1, turn: brief.current_turn + 1 })}</b>
+            {/* current_turn is the scenario's turn_index, and the first answer is turn 0. */}
+            <b>{t('activity.resumeAt', { number: brief.scenario_index + 1, turn: brief.current_turn + 1 })}</b>
           </>)}
         {(brief || data.status === 'open')
           ? <button className="solo-activity__cta" type="button" disabled={starting} onClick={start}>

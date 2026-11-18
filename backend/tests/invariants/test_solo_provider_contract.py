@@ -7,7 +7,7 @@
 
 import pytest
 
-from tests.solo_activity.test_solo_attempts_api import MET, OPENING, do, ok, setup, stance, start
+from tests.solo_activity.test_solo_attempts_api import MET, OPENING, answer, do, ok, setup, start
 
 MISSING_OBSERVATIONS = {key: value for key, value in MET.items() if key != "observations"}
 MISSING_FIELD = {
@@ -25,7 +25,7 @@ def test_a_bad_reply_is_a_failure_not_a_turn(client, tutor, reply):
     _, replies = tutor
     attempt = ok(start(client, setup(client)["activity_id"]))
     replies.append(OPENING)
-    stance(client, attempt["id"])
+    answer(client, attempt["id"])
     # Enough copies that every regeneration the iron rules may ask for gets the same bad reply.
     replies.extend([reply] * 4)
 

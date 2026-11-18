@@ -11,8 +11,7 @@ afterEach(() => setDraftBackend(null))
 test('editing while saving preserves the newer unsaved draft', async () => {
   setDraftBackend(memoryKV())
   const end = Math.floor(Date.now() / 1000) + 86400
-  const draft = { title: 'Original', topic_direction: 'Topic', analysis_focus: '', starts_at: null, ends_at: end,
-    questions: [{ id: 'q1', title: 'Question', scenario: 'Scenario', options: [{ id: 'o1', text: 'A' }, { id: 'o2', text: 'B' }], follow_up_direction: '' }] }
+  const draft = { title: 'Original', scenario: 'A trolley', starts_at: null, ends_at: end }
   const activity = { id: 'a-1', course_id: 'c-1', status: 'draft', locked: false, draft, starts_at: null, ends_at: end, available_actions: ['update', 'publish', 'copy', 'delete'] }
   const course = { id: 'c-1', name: 'Course', role: 'teacher', available_actions: [] }
   let finish!: (value: unknown) => void

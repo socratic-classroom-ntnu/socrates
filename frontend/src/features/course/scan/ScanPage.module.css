@@ -1,0 +1,113 @@
+/* 全螢幕掃描頁（S2–S5）：照「短手機版」排，說明貼上方、輸入貼下方，375×667 到 430×932 用同一套 */
+.page {
+  position: fixed; inset: 0; z-index: 10; display: grid; grid-template-rows: auto auto 1fr auto; overflow-y: auto;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--ui-color-dark); color: var(--ui-color-on-dark);
+  font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+
+/* 相機畫面鋪滿整頁，S2 時還沒有畫面，先藏起來 */
+.video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.video[data-phase="opening"] { opacity: 0; }
+
+.top, .heading, .middle, .bottom { position: relative; }
+
+/* 有畫面之後，上下加一層漸層，白字壓在亮的教室畫面上也讀得清楚 */
+.page:not([data-phase="opening"])::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none;
+  background: linear-gradient(var(--ui-color-scrim), transparent 28%, transparent 68%, var(--ui-color-scrim));
+}
+.top { padding: 20px 16px 0; }
+.close {
+  display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0;
+  border: 1.5px solid var(--ui-color-on-dark-line); border-radius: 50%; background: transparent; color: var(--ui-color-on-dark); cursor: pointer;
+}
+.close:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: 2px; }
+
+/* S3–S5 的說明貼著上方，關閉鈕下方 */
+.heading { padding: 0 24px; text-align: center; }
+.title { margin: 8px 0 0; font-size: 17px; font-weight: 700; line-height: 1.5; text-shadow: 0 1px 4px var(--ui-color-scrim); }
+
+/* 下方留白讓 S2 的說明比正中央略高，跟設計稿一樣 */
+.middle { display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0 24px 32px; container-type: size; }
+/* 掃描時不留左右邊距：框寬的 66% 要以整個螢幕寬來算 */
+.page:not([data-phase="opening"]) .middle { padding: 0; }
+/* 代碼錯誤、鍵盤彈出時下方變高：中間至少留這麼高，放得下框和 S5 的提示；再不夠就整頁捲動，不讓提示壓到框 */
+.page:not([data-phase="opening"]) .middle { min-height: 360px; }
+
+/* 對準框：寬是螢幕的 66%，空間不夠高時跟著縮，比例不變、保持置中（258×218 是設計稿 390 寬時的尺寸）。
+   S5 的提示掛在框的下方，不佔版面，框才不會因為提示出現而跳動；框的上下各留 100px，兩行的提示（英文、西文）也放得下 */
+.frameArea { position: relative; aspect-ratio: 258 / 218; width: min(66cqw, max(120px, 100cqh - 200px) * 258 / 218); }
+.frame { position: absolute; inset: 0; }
+.corner { position: absolute; width: 13%; aspect-ratio: 1; border: 0 solid var(--ui-color-on-dark); }
+.corner:nth-child(1) { top: 0; left: 0; border-top-width: 4px; border-left-width: 4px; }
+.corner:nth-child(2) { top: 0; right: 0; border-top-width: 4px; border-right-width: 4px; }
+.corner:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 4px; border-left-width: 4px; }
+.corner:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 4px; border-right-width: 4px; }
+
+/* S4：掃到本站的 QR，四角變綠、正中央打勾 */
+.frame[data-state="found"] .corner { border-color: var(--ui-color-success); }
+/* S5：不認得的 QR，四角變紅，框下方是「提示訊息・錯誤」 */
+.frame[data-state="unknown"] .corner { border-color: var(--ui-color-danger-on-dark); }
+.unknown {
+  position: absolute; top: calc(100% + 20px); left: 50%; transform: translateX(-50%);
+  /* 寬度照設計稿：390 寬時是 300（左右各留 45） */
+  display: flex; align-items: center; gap: 8px; width: calc(100cqw - 90px); box-sizing: border-box;
+  color: var(--ui-color-danger); font-size: 13px; font-weight: 700; line-height: 1.5;
+}
+.unknown svg { flex-shrink: 0; }
+.check {
+  position: absolute; top: 50%; left: 50%; display: flex; align-items: center; justify-content: center;
+  width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%);
+  border-radius: 50%; background: var(--ui-color-primary); color: var(--ui-color-on-dark);
+}
+.opening { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.opening svg { color: var(--ui-color-on-dark-soft); }
+.openingTitle { margin: 18px 0 0; font-size: 17px; font-weight: 700; line-height: 1.5; }
+.openingBody { margin: 8px 0 0; color: var(--ui-color-on-dark-soft); font-size: 13px; line-height: 1.6; }
+
+.bottom { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 40px max(40px, 7vh); }
+.hint { margin: 0; color: var(--ui-color-on-dark-soft); font-size: 13px; line-height: 1.5; text-align: center; }
+/* Figma S3「輸入代碼欄」（縮圖 144 寬 → 375，約 ×2.6）：高 48、圓角 9、左距 16、圖示 18、字 15 */
+.useCode {
+  display: flex; align-items: stretch; justify-content: flex-start; gap: 8px; width: 100%; min-height: 48px; padding: 0 0 0 16px; overflow: hidden;
+  border: 1px solid var(--ui-color-on-dark-field-line); border-radius: 9px; background: var(--ui-color-on-dark-field);
+  color: var(--ui-color-on-dark-muted); font-size: 15px; font-weight: 400; text-align: left;
+}
+.useCode:hover { border-color: var(--ui-color-on-dark-line); color: var(--ui-color-on-dark); }
+.useCode:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: 2px; }
+.useCode:disabled { opacity: 1; cursor: default; }
+.useCodeEdit { flex-shrink: 0; align-self: center; }
+.useCodeText { flex: 1 1 auto; align-self: center; }
+.useCodeGo {
+  display: flex; flex-shrink: 0; align-items: center; justify-content: center; padding: 0 12px;
+  border-left: 1px solid var(--ui-color-on-dark-divider); color: var(--ui-color-on-dark);
+}
+
+/* 改用輸入代碼：在原位展開成同一條深色欄，左邊輸入、右邊方塊換成「加入」（Fizzy 11/18：展開前後同一條欄） */
+.codeForm { margin: 0; }
+/* fieldset 當 flex 容器時，min-height 傳不到裡面那層，所以高度給在輸入欄和「加入」上（48 − 上下框線） */
+.codeRow {
+  display: flex; align-items: stretch; min-width: 0; margin: 0; padding: 0; overflow: hidden;
+  border: 1px solid var(--ui-color-on-dark-field-line); border-radius: 9px; background: var(--ui-color-on-dark-field);
+}
+.codeRow:focus-within { border-color: var(--ui-color-on-dark); }
+.codeRow:has(.codeInput[aria-invalid="true"]) { border-color: var(--ui-color-danger-on-dark); }
+.codeInput {
+  flex: 1 1 auto; min-width: 0; height: 46px; box-sizing: border-box; padding: 0 16px;
+  border: 0; background: transparent; color: var(--ui-color-on-dark);
+  font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.codeInput::placeholder { color: var(--ui-color-on-dark-muted); letter-spacing: normal; text-transform: none; font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif; }
+.codeInput:focus { outline: none; }
+.codeInput:disabled { opacity: 1; }
+.codeSubmit {
+  flex-shrink: 0; height: 46px; min-height: 0; padding: 0 16px; border: 0; border-left: 1px solid var(--ui-color-on-dark-divider); border-radius: 0;
+  background: transparent; color: var(--ui-color-on-dark); font-size: 15px; font-weight: 700;
+}
+.codeSubmit:hover:not(:disabled) { background: var(--ui-color-on-dark-divider); }
+.codeSubmit:focus-visible { outline: 2px solid var(--ui-color-on-dark); outline-offset: -4px; }
+
+/* 代碼查不到：放在輸入欄上方，跟首頁一樣的文字；淡紅底在深色畫面上也讀得清楚 */
+.codeError { display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.6; text-align: left; }
+.codeError strong { font-size: 14px; }

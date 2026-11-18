@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { api } from '../../contract/classroomClient';
+import { getGroupAnalysis, type GroupAnalysis } from '../../contract/classroomClient';
 import { forceLayout } from './graphLayout.mjs';
 const palette = ['#c7acff', '#80d8d2', '#f3cc95', '#ecaaca', '#93b8ef', '#bad797'];
-type GraphNode = { id: string; nickname: string; stage: string; text: string };
+type Group = GroupAnalysis['groups'][number];
+type GraphNode = Group['nodes'][number];
+type Select = (group: string, person?: string) => void;
 function polar(cx, cy, r, a) { return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
 function arc(r1, r2, a, b) { const s = polar(200, 200, r2, a), e = polar(200, 200, r2, b), i = polar(200, 200, r1, b), j = polar(200, 200, r1, a); return `M${s} A${r2},${r2} 0 ${b - a > Math.PI ? 1 : 0} 1 ${e} L${i} A${r1},${r1} 0 ${b - a > Math.PI ? 1 : 0} 0 ${j} Z`; }
-function Sunburst({ groups, select }) {
+function Sunburst({ groups, select }: { groups: Group[]; select: Select }) {
     const total = Math.max(1, groups.reduce((a, g) => a + Math.max(1, g.persons.length), 0));
     let cursor = -Math.PI / 2;
     return <svg viewBox="0 0 400 400" role="img" aria-label="全班、組別、個人、確認立場日輪圖"><text x="200" y="198" textAnchor="middle" fill="currentColor">全班觀點</text><text x="200" y="219" textAnchor="middle" fill="currentColor" fontSize="12">原話 · 確認</text>{groups.map((g, gi) => { const start = cursor, width = Math.PI * 2 * Math.max(1, g.persons.length) / total; cursor += width; return <g key={g.id}><path d={arc(68, 109, start, start + width - .01)} fill={palette[gi % palette.length]} opacity=".8" onClick={() => select(g.id)} tabIndex={0} onKeyDown={e => e.key === 'Enter' && select(g.id)}><title>{g.label}</title></path>{g.persons.map((p, pi) => { const a = start + width * pi / g.persons.length, b = start + width * (pi + 1) / g.persons.length - .01; return <g key={p.id}><path d={arc(114, 153, a, b)} fill={palette[gi % palette.length]} opacity=".55" onClick={() => select(g.id, p.id)}><title>{p.nickname}</title></path><path d={arc(158, 184, a, b)} fill={p.confirmed ? palette[gi % palette.length] : '#4a4556'} onClick={() => select(g.id, p.id)}><title>{p.nickname}：{p.confirmed ? '已確認' : '思考中'}。{p.timeline.filter(n => n.kind === 'confirmed_viewpoint').at(-1)?.text || '以後續學生確認補入。'}</title></path></g>; })}</g>; })}</svg>;
 }
-function Sankey({ groups }) {
+function Sankey({ groups }: { groups: Group[] }) {
     const stages = Array.from(new Set<string>(groups.flatMap(g => g.nodes.map(n => n.stage))));
     const links = new Map();
     for (const g of groups)
@@ -30,12 +32,12 @@ function Sankey({ groups }) {
     const x = (s) => 35 + stages.indexOf(s) * Math.max(65, 590 / Math.max(1, stages.length - 1));
     return <svg viewBox={`0 0 ${Math.max(660, stages.length * 90)} 260`} role="img" aria-label="原話所屬舞台階段的流向"><text x="20" y="22" fill="currentColor" fontSize="12">線寬＝觀測到的個人階段轉移次數</text>{[...links.values()].map((l, i) => <path key={i} d={`M${x(l.from)},100 C${x(l.from) + 60},${180 + i % 3 * 12} ${x(l.to) - 60},${180 + i % 3 * 12} ${x(l.to)},100`} stroke={palette[i % palette.length]} strokeWidth={Math.min(22, 3 + l.value * 2)} fill="none" opacity=".65"><title>{l.from} → {l.to}：{l.value}\n{l.quotes.join('\n')}</title></path>)}{stages.map((s, i) => <g key={s}><rect x={x(s) - 6} y="70" width="12" height="65" rx="5" fill={palette[i % palette.length]}/><text x={x(s)} y="162" textAnchor="middle" fontSize="10" fill="currentColor" transform={`rotate(25 ${x(s)} 162)`}>{s}</text></g>)}{!stages.length && <text x="25" y="110" fill="currentColor">學生送出原話後，這裡呈現實際流向。</text>}</svg>;
 }
-function Graph({ group, pick }) {
+function Graph({ group, pick }: { group: Group; pick: (node: GraphNode) => void }) {
     const nodes = group.nodes.slice(-150);
     const positions = useMemo(() => forceLayout(nodes, group.edges), [group.nodes, group.edges]);
     return <svg viewBox="0 0 600 380" role="img" aria-label="本組學生明示的論點關係圖">{group.edges.map((e, i) => { const a = positions.get(e.source), b = positions.get(e.target); return a && b ? <line key={i} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={e.type === 'challenges' ? '#ecaaca' : '#aeb7d1'} opacity=".45"><title>{e.type} · {e.source} → {e.target}</title></line> : null; })}{nodes.map((n, i) => { const p = positions.get(n.id); return <g key={n.id} tabIndex={0} role="button" aria-label={n.nickname + '：' + n.text} onClick={() => pick(n)} onKeyDown={e => e.key === 'Enter' && pick(n)}><circle cx={p[0]} cy={p[1]} r={n.kind === 'confirmed_viewpoint' ? 10 : 6} fill={palette[i % palette.length]}/><title>{n.nickname} · {n.kind}\n{n.text}</title></g>; })}</svg>;
 }
-function ArgumentTree({ group, pick }) {
+function ArgumentTree({ group, pick }: { group: Group; pick: (node: GraphNode) => void }) {
     const nodes = new Map<string, GraphNode>(group.nodes.map(n => [n.id, n]));
     const rows = group.tree_projection || [];
     const render = (parent, depth = 0) => depth > 80 ? <p>後續節點可沿關係圖逐點回讀。</p> : rows.filter(r => r.parent === parent).map(row => {
@@ -49,9 +51,9 @@ function ArgumentTree({ group, pick }) {
     });
     return <div className="group-tree" aria-label="論點 DAG 的樹狀投影"><h4>{group.label} · 原話與論點脈絡</h4>{rows.length ? render(null) : <p>學生送出原話後，論點樹沿實際證據展開。</p>}</div>;
 }
-export function GroupAnalytics({ id }) {
-    const [data, setData] = useState(null), [error, setError] = useState(''), [groupId, setGroupId] = useState(''), [personId, setPersonId] = useState(''), [quote, setQuote] = useState(null), [graphMode, setGraphMode] = useState('tree');
-    useEffect(() => { let alive = true; const load = () => api(`/groups/classrooms/${id}/analysis`).then(x => { if (alive)
+export function GroupAnalytics({ id }: { id: string }) {
+    const [data, setData] = useState<GroupAnalysis | null>(null), [error, setError] = useState(''), [groupId, setGroupId] = useState(''), [personId, setPersonId] = useState(''), [quote, setQuote] = useState<GraphNode | null>(null), [graphMode, setGraphMode] = useState('tree');
+    useEffect(() => { let alive = true; const load = () => getGroupAnalysis(id).then(x => { if (alive)
         setData(x); }).catch(e => { if (alive)
         setError(String(e)); }); void load(); const timer = setInterval(() => void load(), 5000); return () => { alive = false; clearInterval(timer); }; }, [id]);
     if (!data)

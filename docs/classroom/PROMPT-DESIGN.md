@@ -99,7 +99,7 @@ flags 只評**學生最新的那一則**，每個值都是 0 或 1。prompt 裡�
 
 ## 6. 雷達
 - **主路線**：每位學生的 `normalized_text` → 後端本地多語模型（預設 multilingual-e5-small）取 embedding → PCA（學生數 ≥ 15）→ 每個軸取兩端各 5 位學生的統整 → radar_axis_naming 產生軸名與兩端描述（老師可以改名）→ 投影值換成活動內的百分位 → 0–4 分。
-- **備援路線**（學生數 < 15）：radar_dimensions 從敘述、立場空間與全班的匿名統整（`summaries`：每人一則「最終主張＋判斷依據」，同 radar_axis_naming 的兩端材料）定出 4–6 個維度，每個維度在這班都要兩端有人、彼此是不同面向 → radar_scoring 依 final_summary 為每人每維打 0–4 分，並附引用。只看敘述時，定出的維度會是同一組對立（例如義務對後果）的變體，分數幾乎全在同一端。
+- **備援路線**（學生數 < 15、主路線分不出 3 個軸，或沒有 embedding 模型時）：radar_dimensions 從敘述、立場空間與全班的匿名統整（`summaries`：每人一則「最終主張＋判斷依據」，同 radar_axis_naming 的兩端材料）定出 4–6 個維度，每個維度在這班都要兩端有人、彼此是不同面向 → radar_scoring 依 final_summary 為每人每維打 0–4 分，並附引用。只看敘述時，定出的維度會是同一組對立（例如義務對後果）的變體，分數幾乎全在同一端。
 - 兩條路輸出同一個契約：dimensions［name、low_pole、high_pole、source＝embedding｜llm］＋每位學生每維的分數＋引用。
 
 ## 7. 鐵則 L2

@@ -11,7 +11,7 @@ import { useLogout } from './accountSummary'
 import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useIsPhone } from '../shared/useIsPhone'
 
-type NavKey = 'home' | 'dialogues' | 'bank' | 'store' | 'settings'
+type NavKey = 'home' | 'dialogues' | 'bank' | 'store' | 'settings' | 'admin'
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
@@ -32,6 +32,8 @@ const NAV_BY_ROLE: Record<'student' | 'teacher', NavKey[]> = {
   teacher: ['home', 'bank', 'store', 'settings'],
 }
 
+const ADMIN_ICON = icon(<><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></>)
+
 const COLLAPSED_KEY = 'socrates.shell.collapsed'
 
 function readCollapsed(): boolean {
@@ -43,6 +45,7 @@ function writeCollapsed(value: boolean): void {
 }
 
 export function activeItem(pathname: string, search: string): NavKey | null {
+  if (/^\/admin(\/|$)/.test(pathname)) return 'admin'
   if (/^\/my-dialogues\/?$/.test(pathname)) return 'dialogues'
   if (pathname === '/' || pathname.startsWith('/learn/') || pathname.startsWith('/teach/')) return 'home'
   if (/^\/teacher\/home\/?$/.test(pathname)) {
@@ -68,6 +71,8 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const navItems: NavEntry[] = ITEMS
     .filter(item => NAV_BY_ROLE[role].includes(item.key))
     .map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
+  // 平台管理員（老師或學生都可能）在一般項目下方多一個「後台」（Figma AD1、AD2；手機不加，後台只做電腦版）
+  if (account?.is_admin) navItems.push({ key: 'admin', label: t('nav.admin'), href: '/admin', icon: ADMIN_ICON, separated: true })
 
   function toggleCollapsed() {
     setCollapsed(value => { writeCollapsed(!value); return !value })
@@ -112,7 +117,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
             title: collapsed ? item.label : undefined,
           }
           const body = <>{item.icon}{!collapsed && item.label}</>
-          return <li key={item.key}>
+          return <li key={item.key} className={item.separated ? 'app-shell__separated' : undefined}>
             {item.fullLoad ? <a href={item.href} {...props}>{body}</a> : <Link to={item.href} {...props}>{body}</Link>}
           </li>
         })}

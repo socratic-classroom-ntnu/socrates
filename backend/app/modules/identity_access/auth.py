@@ -73,6 +73,7 @@ def account_view(db, account, csrf=""):
         "locale": account.locale,
         "kind": account.kind,
         "account_role": account.account_role,
+        "is_admin": account.platform_role == "admin",
         "guest_expires_at": account.guest_expires_at,
     }
     for extension in ACCOUNT_VIEW_EXTENSIONS:

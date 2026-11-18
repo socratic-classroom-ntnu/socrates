@@ -70,6 +70,13 @@ module = [
     "app.modules.solo_activity.roster",
     "app.modules.solo_activity.routes",
     "app.modules.solo_activity.service",
+    "app.modules.feedback.repositories",
+    "app.modules.feedback.service",
+    "app.modules.feedback.routes",
+    "app.modules.admin.service",
+    "app.modules.admin.routes",
+    "app.modules.identity_access.admins",
+    "app.modules.platform.toggles",
     "app.classroom_server",
 ]
 follow_imports = "skip"

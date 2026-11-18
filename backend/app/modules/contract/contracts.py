@@ -15,6 +15,13 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),
     "ACTIVITY_ENDED": ("course_management",),
     "ACTIVITY_LOCKED": ("course_management",),
+    "ADMIN_ACCOUNT_NOT_FOUND": ("identity_access",),
+    "ADMIN_ALREADY": ("identity_access",),
+    "ADMIN_CANNOT_REMOVE_SELF": ("identity_access",),
+    "ADMIN_GUEST_NOT_ALLOWED": ("identity_access",),
+    "ADMIN_NOT_FOUND": ("admin", "identity_access"),
+    "ADMIN_TOGGLE_NOT_FOUND": ("admin",),
+    "ADMIN_UNVERIFIED": ("identity_access",),
     "ACTIVITY_NOT_FOUND": (
         "course_management",
         "solo_activity",
@@ -65,6 +72,10 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ENROLLMENT_NOT_FOUND": ("course_management",),
     "ENROLL_CODE_NOT_FOUND": ("course_management",),
     "EXISTING_GROUP_ARGUMENT_REQUIRED": ("group_dialogue",),
+    "FEEDBACK_MESSAGE_REQUIRED": ("feedback",),
+    "FEEDBACK_NOT_FOUND": ("feedback",),
+    "FEEDBACK_SCREENSHOT_INVALID": ("feedback",),
+    "FEEDBACK_TOO_LONG": ("feedback",),
     "FOCUS_ID_REQUIRED": ("classroom_core",),
     "FOCUS_REQUIRED": ("classroom_core",),
     "FOCUS_TURN_REQUIRED": ("classroom_core",),
@@ -140,6 +151,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
 
 DYNAMIC_REASON_CODES: tuple[str, ...] = (
     "API_ROUTE_JSON_REQUIRED",
+    "GROUP_MODE_DISABLED",
     "EMAIL_TAKEN",
     "PROVIDER_ADAPTER_REQUIRED",
     "PROVIDER_AVAILABILITY",

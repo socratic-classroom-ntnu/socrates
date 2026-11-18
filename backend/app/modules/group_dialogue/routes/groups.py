@@ -1,7 +1,8 @@
 """GroupRun HTTP adapters on the native classroom authentication and persistence layer."""
 
-from fastapi import APIRouter, Request
+from fastapi import Depends, APIRouter, Request
 
+from app.modules.platform.toggles import group_mode_required
 from app.modules.platform.storage import transaction
 from app.modules.platform.errors import DomainError
 from app.modules.group_dialogue.service import actor
@@ -26,7 +27,7 @@ from app.modules.group_dialogue.service import (
 )
 from app.modules.group_dialogue.service import group_classroom_view
 
-router = APIRouter(prefix="/groups")
+router = APIRouter(prefix="/groups", dependencies=[Depends(group_mode_required)])
 
 
 @router.post("/classrooms/{rid}/configure", response_model=GroupActionReceipt)

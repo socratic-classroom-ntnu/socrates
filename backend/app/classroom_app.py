@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
 from app.modules.course_management import service as course_service
 from app.modules.ai_providers import service as ai_service
+from app.modules.admin import service as admin_service
 from app.modules.app_shell import practice_startup
 from app.modules.app_shell import models as _models  # noqa: F401  註冊所有模組的 ORM
 from app.modules.app_shell import wiring as _wiring  # noqa: F401  接上跨模組的 hook
@@ -15,7 +16,13 @@ from app.modules.app_shell.routes import include_classroom_routers
 from app.modules.platform.errors import DomainError
 from app.modules.classroom_core.realtime import BUS
 from app.modules.platform.storage import engine, transaction
-from app.modules.app_shell.llm_workers import clock_loop, guest_expiry_loop, llm_loop, mail_loop
+from app.modules.app_shell.llm_workers import (
+    clock_loop,
+    feedback_purge_loop,
+    guest_expiry_loop,
+    llm_loop,
+    mail_loop,
+)
 from app.modules.platform.env import env_int
 
 
@@ -24,8 +31,11 @@ async def lifespan(app):
     engine()
     with transaction() as db:
         practice_startup.prepare_practice(db, app.state.practice_config)
+        admin_service.bootstrap_from_env(db)  # 第一批平台管理員（後台 spec P3）
+        # 放在環境變數之後：先建內建管理員的話，資料庫就不再是「沒有管理員」，環境變數永遠不會套用
+        admin_service.ensure_builtin_admin(db)
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
-    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop]
+    loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop, feedback_purge_loop]
     loops += [llm_loop] * worker_count
     tasks = [asyncio.create_task(fn()) for fn in loops]
     try:

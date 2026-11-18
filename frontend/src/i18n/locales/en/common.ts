@@ -11,6 +11,10 @@ const common: Shape<typeof zhHant> = {
     show: 'Show password',
     hide: 'Hide password',
   },
+  groupModeOff: {
+    title: "Group mode isn't available right now",
+    body: "Group classes are paused for now. We'll let you know when they're back.",
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may be mistyped, or this page has been removed.',
@@ -40,7 +44,6 @@ const common: Shape<typeof zhHant> = {
     title: 'Coming soon',
     body: 'This feature is still being built and will open later.',
     back: 'Back to home',
-    scan: 'Scanning a QR code with this device\'s camera is still being built. For now, scan with your phone camera or enter the course code.',
     account: 'Personal settings will live here. You can switch the language from the account menu.',
     activity: 'The activity page is still being built. Your conversation with Socrates will start here.',
     live: 'Live progress will live here: where each student is on each question.',

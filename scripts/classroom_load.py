@@ -24,6 +24,7 @@ from app.modules.classroom_core.contracts import Command, JoinRoom
 from app.modules.content_authoring.contracts import ScriptDocument
 from app.modules.classroom_core import runtime as service
 from app.modules.platform import storage as storage
+from app.modules.platform import toggles
 from app.modules.app_shell import models as _models  # noqa: F401
 from app.modules.identity_access.repositories import Account, LoginSession
 from app.modules.content_authoring.repositories import Script
@@ -36,6 +37,9 @@ def fixtures():
     if not url.rsplit('/',1)[-1].split('?')[0].endswith('_load'):
         raise RuntimeError('Use a dedicated database whose name ends with _load')
     storage.configure(url,create=True)
+    # 多人模式預設關閉（後台 spec P7）；壓測就是在測多人教室，先在這個專用資料庫打開
+    with storage.transaction() as db:
+        toggles.set_toggle(db,'group_mode',True,'classroom-load',time.time())
     identities=[];room_ids=[]
     pw=HASHER.hash('Fixture-password-2026')
     with storage.transaction() as db:

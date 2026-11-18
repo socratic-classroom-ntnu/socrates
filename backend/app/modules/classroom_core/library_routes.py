@@ -1,8 +1,9 @@
 """Long-lived teacher Classroom assets, immutable Lessons, and linked Group Sessions."""
 
-from fastapi import APIRouter, Request
+from fastapi import Depends, APIRouter, Request
 from sqlalchemy import select
 
+from app.modules.platform.toggles import group_mode_required
 from app.modules.classroom_core.contracts import (
     AttachedScriptView,
     ClassroomAISettingsView,
@@ -33,7 +34,7 @@ from app.modules.classroom_core.service import (
 )
 
 
-router = APIRouter(prefix="/library")
+router = APIRouter(prefix="/library", dependencies=[Depends(group_mode_required)])
 
 
 @router.get("/classrooms", response_model=list[LibraryClassroomView])

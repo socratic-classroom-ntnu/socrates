@@ -8,7 +8,7 @@ import { useT } from '../i18n/useT'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
 import { GUEST_REGISTER, RoleTag, useAccountSummary, useLogout } from './accountSummary'
 
-export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean }
+export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean; separated?: boolean }
 
 /**
  * S2：帳號選單（電腦側欄底部、老師手機的頂部列）。名字旁標角色（P23）。

@@ -25,7 +25,8 @@
     "@dnd-kit/sortable": "10.0.0",
     "@dnd-kit/modifiers": "9.0.0",
     "@dnd-kit/utilities": "3.2.2",
-    "idb": "8.0.3"
+    "idb": "8.0.3",
+    "jsqr": "1.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

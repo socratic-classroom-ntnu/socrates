@@ -13,6 +13,8 @@ from fastapi import Request
 from sqlalchemy import (
     select,
 )
+import logging
+
 from app.modules.platform.errors import DomainError
 from app.modules.ai_providers.repositories import (
     AccountAISettings,
@@ -29,6 +31,8 @@ from app.modules.ai_providers.contracts import (
     UpdateProfile,
 )
 
+
+logger = logging.getLogger(__name__)
 
 ROLE_KEYS = (
     "socratic_tutor",
@@ -715,6 +719,7 @@ def platform_profile_config(env: Mapping[str, str] | None = None) -> PlatformCon
     if not key:
         return None
     base_url = (source.get("SOCRATES_PRACTICE_LLM_BASE_URL") or "").strip() or None
+    invalid: list[str] = []
     try:
         body = CreateProfile(
             name=PLATFORM_PROFILE_NAME,
@@ -724,7 +729,14 @@ def platform_profile_config(env: Mapping[str, str] | None = None) -> PlatformCon
             base_url=base_url,
         )
     except ValidationError as exc:
-        raise ValueError(f"SOCRATES_PRACTICE_LLM_* 設定不合法：{exc}") from exc
+        # Field names and reasons only: the error's own text quotes the input, the key included,
+        # and it would ride along as the traceback's cause (後台 spec P37).
+        invalid = [
+            f"{'.'.join(str(part) for part in error['loc'])}: {error['msg']}"
+            for error in exc.errors(include_input=False, include_url=False)
+        ]
+    if invalid:
+        raise ValueError("SOCRATES_PRACTICE_LLM_* 設定不合法：" + "；".join(invalid))
     if body.adapter == "openai-compatible":
         if not body.base_url:
             raise ValueError("SOCRATES_PRACTICE_LLM_BASE_URL：openai-compatible 一定要設")
@@ -798,8 +810,127 @@ def upsert_platform_profile(db, owner_id: str, config: PlatformConfig) -> None:
         settings.updated_at = time.time()
 
 
-def disable_platform_profile(db, owner_id: str) -> None:
+DEPLOY_AUTHOR = "deploy"
+
+
+def platform_profile(db, owner_id: str) -> ProviderProfile | None:
+    """The 系統 AI connection row, usable or not."""
+    return _find_platform_profile(db, owner_id)
+
+
+def _usable_platform(db, owner_id: str) -> tuple[ProviderProfile, str] | None:
+    """The 系統 AI row and its key when it can be used: present, enabled, and the key decrypts
+    (後台 spec P30)."""
     row = _find_platform_profile(db, owner_id)
-    if row is not None and row.enabled:
-        row.enabled = False
-        row.updated_at = time.time()
+    if row is None or not row.enabled:
+        return None
+    try:
+        secret = profile_secret(db, row, session_token_hash=None)
+    except (DomainError, ValueError, KeyError, TypeError, AttributeError):
+        # A key that no longer decrypts (master key rotated, ciphertext damaged) counts as no
+        # connection: the 後台 can set a new one and startup can import the env again.
+        logger.warning("系統 AI 的金鑰解不開，視為還沒設定（provider_profile %s）", row.id)
+        return None
+    return (row, secret) if secret else None
+
+
+def usable_platform_profile(db, owner_id: str) -> ProviderProfile | None:
+    found = _usable_platform(db, owner_id)
+    return found[0] if found is not None else None
+
+
+def usable_platform_config(db, owner_id: str) -> PlatformConfig | None:
+    """The saved 系統 AI connection with its key, for a test or save that keeps the key."""
+    found = _usable_platform(db, owner_id)
+    if found is None:
+        return None
+    row, secret = found
+    return PlatformConfig(row.adapter, row.default_model, secret, row.base_url)
+
+
+def platform_binding(db, owner_id: str, role: str) -> dict | None:
+    """The 系統 AI as a binding for a teacher's course (spec P36): its own model, never a
+    model_matrix (neither the teacher's nor the system account's)."""
+    found = _usable_platform(db, owner_id)
+    if found is None:
+        return None
+    row, secret = found
+    binding = binding_from_profile(
+        row, secret=secret, model=row.default_model, role=role, owner_id=owner_id
+    )
+    # Who saved it is the back office's business, not every call's audit.
+    binding["metadata"].pop("updated_by_account_id", None)
+    return binding
+
+
+def platform_author(row: ProviderProfile) -> str:
+    """Who saved the 系統 AI last: an admin's account id, or "deploy". A connection from before
+    P30 has no author recorded; only the env could create it then, so it counts as deploy."""
+    return str((row.metadata_json or {}).get("updated_by_account_id") or DEPLOY_AUTHOR)
+
+
+def save_platform_profile(db, owner_id: str, config: PlatformConfig, updated_by: str) -> None:
+    """Write the 系統 AI connection (enabled, the system account's default) and its author."""
+    upsert_platform_profile(db, owner_id, config)
+    row = _find_platform_profile(db, owner_id)
+    assert row is not None
+    # A new dict: the JSON column does not notice changes made in place.
+    row.metadata_json = {**(row.metadata_json or {}), "updated_by_account_id": updated_by}
+
+
+# ---- 後台「系統 AI」的測試連線（後台 spec P32、P33、P37）：admin 只從這裡取用 ----
+
+
+def probe_binding(config: PlatformConfig, owner_id: str) -> dict:
+    """A one-off binding for a connection test: nothing is stored, so there is no profile id."""
+    return {
+        "profile_id": None,
+        "owner_id": owner_id,
+        "adapter": config.adapter,
+        "base_url": config.base_url,
+        "organization": None,
+        "project": None,
+        "model": config.model,
+        "secret": config.api_key,
+        "role": "connection_probe",
+        "metadata": {},
+    }
+
+
+async def openrouter_key_info(binding: dict) -> Any:
+    """OpenRouter's /key for this binding's key (raises the gateway's usual errors)."""
+    from app.modules.ai_providers import classroom_gateway
+
+    response = await classroom_gateway._bounded_request(binding, method="GET", path="/key")
+    try:
+        return response.json()
+    except ValueError:
+        return None
+
+
+def openrouter_key_quota(body: Any) -> bool:
+    from app.modules.ai_providers import probe_errors
+
+    return probe_errors.openrouter_key_quota(body)
+
+
+def classify_probe_failure(adapter: str, failure: BaseException) -> str:
+    from app.modules.ai_providers import probe_errors
+
+    return probe_errors.classify(adapter, failure)
+
+
+def check_base_url(adapter: str, value: str | None) -> str:
+    """The URL a request would go to, refused unless HTTPS on a public address (raises DomainError)."""
+    from app.modules.ai_providers.classroom_gateway import validate_base_url
+
+    return validate_base_url(adapter, value)
+
+
+async def list_models(binding: dict) -> list[dict]:
+    """The provider's model list for this binding: id, name and whether it takes structured output
+    (True, False, or None when the provider does not say)."""
+    from app.modules.ai_providers import classroom_gateway
+
+    result = await classroom_gateway.discover_models(binding)
+    return list(result["models"])

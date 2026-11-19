@@ -307,10 +307,6 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
               aria-label={closed ? t('sections.expand', { name: t('sections.basics') }) : t('sections.collapse', { name: t('sections.basics') })}>⌄</button>
           </header>
           {!closed && <div className="editor-card__body">
-            <EditorField id="title" label={t('fields.title')} hint={t('fields.titleHint')} required error={fieldError('title')} t={t}>
-              <textarea id="title" rows={4} value={form.title} maxLength={LIMITS.title} readOnly={readonlyAll}
-                aria-invalid={fieldError('title') ? true : undefined} aria-describedby={describedBy(fieldError('title') && 'title-error', 'title-hint')} onChange={event => change({ ...form, title: event.target.value })} />
-            </EditorField>
             <div className="editor-window">
               <fieldset className="editor-window__start">
                 <legend>{t('fields.start')}</legend>
@@ -335,6 +331,14 @@ function Editor({ course, view, reload, navState }: { course: Course; view: View
               </fieldset>
             </div>
             {!readonlyAll && <FieldHint id="editor-window-hint">{mode === 'locked' ? t('fields.lockedWindowHint') : t('fields.windowHint')}</FieldHint>}
+            <EditorField id="title" label={t('fields.title')} required error={fieldError('title')} t={t}>
+              <input id="title" value={form.title} maxLength={LIMITS.title} readOnly={readonlyAll}
+                aria-invalid={fieldError('title') ? true : undefined} aria-describedby={describedBy(fieldError('title') && 'title-error')} onChange={event => change({ ...form, title: event.target.value })} />
+            </EditorField>
+            <EditorField id="scenario" label={t('fields.scenario')} hint={t('fields.scenarioHint')} required error={fieldError('scenario')} t={t}>
+              <textarea id="scenario" rows={4} value={form.scenario} maxLength={LIMITS.scenario} readOnly={readonlyAll || mode === 'locked'}
+                aria-invalid={fieldError('scenario') ? true : undefined} aria-describedby={describedBy(fieldError('scenario') && 'scenario-error', 'scenario-hint')} onChange={event => change({ ...form, scenario: event.target.value })} />
+            </EditorField>
           </div>}
         </section>
       </div>

@@ -7,9 +7,16 @@ const common: Shape<typeof zhHant> = {
   close: '关闭',
   copied: '已复制',
   copyFailed: '无法复制',
+  select: {
+    searching: '搜索中…',
+  },
   password: {
     show: '显示密码',
     hide: '隐藏密码',
+  },
+  groupModeOff: {
+    title: '多人模式目前没有开放',
+    body: '分组课这段时间暂停使用，之后开放会再通知。',
   },
   notFound: {
     title: '找不到这个页面',
@@ -40,7 +47,6 @@ const common: Shape<typeof zhHant> = {
     title: '功能开发中',
     body: '这个功能还在建设中，之后会开放。',
     back: '返回首页',
-    scan: '用这台设备的摄像头扫描二维码还在建设中。现在可以直接用手机相机扫描，或输入课程代码。',
     account: '个人设置之后会放在这里。语言可以从账号菜单切换。',
     activity: '活动页还在建设中，之后会从这里开始和苏格拉底对话。',
     live: '实时状况之后会放在这里：每位学生每一题的进度。',

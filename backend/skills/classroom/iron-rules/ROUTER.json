@@ -20,6 +20,7 @@
     "solo_tutor": {"L2": "L2/focused_tutor.md", "checks": ["screen_input", "no_leak", "pull_back", "language", "citations"], "fallback": "tutor"},
     "llm_student_turn": {"L2": "L2/llm_student_turn.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
     "other_suggestion": {"L2": "L2/other_suggestion.md", "checks": ["screen_input", "no_leak"], "fallback": "student"},
+    "connection_probe": {"L2": "L2/connection_probe.md", "checks": ["no_leak"], "fallback": null},
     "dynamic_question": {"L2": "L2/dynamic_question.md", "checks": ["no_leak"], "fallback": null},
     "question_summary": {"L2": "L2/question_summary.md", "checks": ["no_leak"], "fallback": null},
     "class_summary": {"L2": "L2/class_summary.md", "checks": ["no_leak"], "fallback": null},

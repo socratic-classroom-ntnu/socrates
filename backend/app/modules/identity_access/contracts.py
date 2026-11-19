@@ -182,6 +182,7 @@ class AccountView(Strict):
     locale: Locale | None = None
     kind: Literal["guest", "expired_guest", "registered"] = "registered"
     account_role: AccountRole
+    is_admin: bool = False
     # Guests only: 168 hours after joining; the daily job then clears the name and marks the
     # account expired_guest.
     guest_expires_at: float | None = None

@@ -1,22 +1,23 @@
 import type { components } from '../../../../contract/classroomTypes'
 
 // T3 表單的狀態與規則：純函式，頁面和草稿復原都用這裡。
-// 出題只有一個輸入：老師寫的文字就是活動名稱，也是第一個情境的材料。
+// 出題有兩欄：活動名稱（課程頁、學生看到的名稱）與情境描述（第一個情境的材料）。
 export type StartForm = { mode: 'now' } | { mode: 'at'; date: string; time: string }
 export type ActivityForm = {
   title: string
+  scenario: string
   start: StartForm
   end: { date: string; time: string }
 }
 type DraftIn = components['schemas']['ActivityDraft']
 type DraftOut = components['schemas']['ActivityDraft']
 
-export const LIMITS = { title: 300 } as const
+export const LIMITS = { title: 40, scenario: 300 } as const
 
 export type Problem = { field: string; kind: 'required' | 'endBeforeStart' | 'endPast' | 'startPast' }
 
 export function emptyForm(): ActivityForm {
-  return { title: '', start: { mode: 'now' }, end: { date: '', time: '' } }
+  return { title: '', scenario: '', start: { mode: 'now' }, end: { date: '', time: '' } }
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -37,6 +38,7 @@ export function fromEpochSeconds(seconds: number): { date: string; time: string 
 export function fromDraft(d: DraftOut | DraftIn): ActivityForm {
   return {
     title: d.title,
+    scenario: d.scenario,
     start: d.starts_at === null || d.starts_at === undefined ? { mode: 'now' } : { mode: 'at', ...fromEpochSeconds(d.starts_at) },
     end: fromEpochSeconds(d.ends_at),
   }
@@ -46,6 +48,7 @@ export function fromDraft(d: DraftOut | DraftIn): ActivityForm {
 export function toDraft(f: ActivityForm): DraftIn {
   return {
     title: f.title.trim(),
+    scenario: f.scenario.trim(),
     starts_at: f.start.mode === 'now' ? null : toEpochSeconds(f.start.date, f.start.time),
     ends_at: toEpochSeconds(f.end.date, f.end.time) as number,
   }
@@ -57,7 +60,6 @@ const blank = (value: string) => value.trim() === ''
 /** `startFixed`: the activity already opened, so its start is history, not a choice. */
 export function validate(f: ActivityForm, nowSeconds: number, options: { startFixed?: boolean } = {}): Problem[] {
   const problems: Problem[] = []
-  if (blank(f.title)) problems.push({ field: 'title', kind: 'required' })
   const start = f.start.mode === 'at' ? toEpochSeconds(f.start.date, f.start.time) : null
   if (f.start.mode === 'at' && !options.startFixed) {
     // 選擇器選不到過去的時間，但複製舊活動會帶著舊的開始時間進來
@@ -68,10 +70,12 @@ export function validate(f: ActivityForm, nowSeconds: number, options: { startFi
   if (end === null) problems.push({ field: 'end', kind: 'required' })
   else if (start !== null && end <= start) problems.push({ field: 'end', kind: 'endBeforeStart' })
   else if (end <= nowSeconds) problems.push({ field: 'end', kind: 'endPast' })
+  if (blank(f.title)) problems.push({ field: 'title', kind: 'required' })
+  if (blank(f.scenario)) problems.push({ field: 'scenario', kind: 'required' })
   return problems
 }
 
-const TOP_FIELDS: Record<string, string> = { title: 'title', starts_at: 'start', ends_at: 'end' }
+const TOP_FIELDS: Record<string, string> = { title: 'title', scenario: 'scenario', starts_at: 'start', ends_at: 'end' }
 
 /** FastAPI 422 `loc` paths → the same field ids `validate` uses; unknown paths are dropped. */
 export function problemsFrom422(detail: unknown): Problem[] {

@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.modules.identity_access.service import account
 from app.modules.platform.storage import transaction
-from app.modules.solo_activity import analysis, practice, progress, radar, roster
+from app.modules.solo_activity import analysis, practice, progress, radar, roster, teacher_attempt
 from app.modules.solo_activity import service as service
 from app.modules.solo_activity.contracts import (
     ACTION_BODIES,
@@ -30,6 +30,7 @@ from app.modules.solo_activity.contracts import (
     PracticeStarted,
     PracticeTopic,
     SoloCourseRosterView,
+    TeacherTranscriptView,
 )
 
 router = APIRouter(prefix="/solo", tags=["solo"])
@@ -145,3 +146,22 @@ def get_course_roster(course_id: str, request: Request):
     with transaction() as db:
         current, _ = account(db, request)
         return roster.roster_view(db, current, course_id, progress.now())
+
+
+@router.get(
+    "/activities/{activity_id}/students/{enrollment_id}/attempt",
+    response_model=TeacherTranscriptView,
+)
+def get_student_attempt(
+    activity_id: str, enrollment_id: str, request: Request, after: str | None = None
+):
+    """One student's whole conversation, for the course owner; read only.
+
+    ``after`` is a message id: only the messages after it come back (the page's refresh). A GET
+    under /activities, so POST /solo/attempts/{id}/{action} never takes it.
+    """
+    with transaction() as db:
+        current, _ = account(db, request)
+        return teacher_attempt.transcript_view(
+            db, current, activity_id, enrollment_id, teacher_attempt.now(), after
+        )

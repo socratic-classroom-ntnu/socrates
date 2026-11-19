@@ -1,0 +1,1599 @@
+{
+  "label": "growing",
+  "run": 1,
+  "count": 14,
+  "reset": false,
+  "at": 1795072048.8809743,
+  "seconds": 30.1,
+  "sources": [
+    "llm"
+  ],
+  "loaded": [
+    "陳柏宇",
+    "林雨潔",
+    "張家豪",
+    "王曉明",
+    "黃詩涵",
+    "吳承翰",
+    "劉品妍",
+    "周子軒",
+    "鄭宇彤",
+    "許書豪",
+    "蔡依婷",
+    "蕭宇翔",
+    "楊佳穎",
+    "謝承恩"
+  ],
+  "left_out": [],
+  "calls": [
+    {
+      "endpoint": "solo.radar_dimensions",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 3742,
+      "token_usage": {
+        "prompt_tokens": 1171,
+        "completion_tokens": 443,
+        "total_tokens": 1614,
+        "cost": 0.0003386,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0003386,
+          "upstream_inference_prompt_cost": 0.0001171,
+          "upstream_inference_completions_cost": 0.0002215
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 5642,
+      "token_usage": {
+        "prompt_tokens": 2558,
+        "completion_tokens": 1105,
+        "total_tokens": 3663,
+        "cost": 0.0008083,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008083,
+          "upstream_inference_prompt_cost": 0.0002558,
+          "upstream_inference_completions_cost": 0.0005525
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 786,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6590,
+      "token_usage": {
+        "prompt_tokens": 2468,
+        "completion_tokens": 1263,
+        "total_tokens": 3731,
+        "cost": 0.0008783,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008783,
+          "upstream_inference_prompt_cost": 0.0002468,
+          "upstream_inference_completions_cost": 0.0006315
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 936,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6916,
+      "token_usage": {
+        "prompt_tokens": 2407,
+        "completion_tokens": 1078,
+        "total_tokens": 3485,
+        "cost": 0.0007797,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0007797,
+          "upstream_inference_prompt_cost": 0.0002407,
+          "upstream_inference_completions_cost": 0.000539
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 778,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 7648,
+      "token_usage": {
+        "prompt_tokens": 2451,
+        "completion_tokens": 1466,
+        "total_tokens": 3917,
+        "cost": 0.0009781,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0009781,
+          "upstream_inference_prompt_cost": 0.0002451,
+          "upstream_inference_completions_cost": 0.000733
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1133,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 5570,
+      "token_usage": {
+        "prompt_tokens": 2413,
+        "completion_tokens": 1066,
+        "total_tokens": 3479,
+        "cost": 0.0007743,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0007743,
+          "upstream_inference_prompt_cost": 0.0002413,
+          "upstream_inference_completions_cost": 0.000533
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 768,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 5715,
+      "token_usage": {
+        "prompt_tokens": 2446,
+        "completion_tokens": 978,
+        "total_tokens": 3424,
+        "cost": 0.0007336,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0007336,
+          "upstream_inference_prompt_cost": 0.0002446,
+          "upstream_inference_completions_cost": 0.000489
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 672,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 7859,
+      "token_usage": {
+        "prompt_tokens": 2515,
+        "completion_tokens": 1504,
+        "total_tokens": 4019,
+        "cost": 0.0010035,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0010035,
+          "upstream_inference_prompt_cost": 0.0002515,
+          "upstream_inference_completions_cost": 0.000752
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1112,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6534,
+      "token_usage": {
+        "prompt_tokens": 2418,
+        "completion_tokens": 1405,
+        "total_tokens": 3823,
+        "cost": 0.0009443,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0009443,
+          "upstream_inference_prompt_cost": 0.0002418,
+          "upstream_inference_completions_cost": 0.0007025
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1046,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 5531,
+      "token_usage": {
+        "prompt_tokens": 2415,
+        "completion_tokens": 988,
+        "total_tokens": 3403,
+        "cost": 0.0007355,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0007355,
+          "upstream_inference_prompt_cost": 0.0002415,
+          "upstream_inference_completions_cost": 0.000494
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 706,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6714,
+      "token_usage": {
+        "prompt_tokens": 2318,
+        "completion_tokens": 1158,
+        "total_tokens": 3476,
+        "cost": 0.0008108,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008108,
+          "upstream_inference_prompt_cost": 0.0002318,
+          "upstream_inference_completions_cost": 0.000579
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 862,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6049,
+      "token_usage": {
+        "prompt_tokens": 2477,
+        "completion_tokens": 1287,
+        "total_tokens": 3764,
+        "cost": 0.0008912,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008912,
+          "upstream_inference_prompt_cost": 0.0002477,
+          "upstream_inference_completions_cost": 0.0006435
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 935,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 7612,
+      "token_usage": {
+        "prompt_tokens": 2349,
+        "completion_tokens": 1115,
+        "total_tokens": 3464,
+        "cost": 0.0007924,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0007924,
+          "upstream_inference_prompt_cost": 0.0002349,
+          "upstream_inference_completions_cost": 0.0005575
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 877,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 6102,
+      "token_usage": {
+        "prompt_tokens": 2393,
+        "completion_tokens": 1203,
+        "total_tokens": 3596,
+        "cost": 0.0008408,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008408,
+          "upstream_inference_prompt_cost": 0.0002393,
+          "upstream_inference_completions_cost": 0.0006015
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 915,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    },
+    {
+      "endpoint": "solo.radar_scoring",
+      "state": "READY",
+      "reason_code": null,
+      "requested_model": "anthropic/claude-haiku-5.5",
+      "actual_model": "anthropic/claude-haiku-5.5",
+      "latency_ms": 8451,
+      "token_usage": {
+        "prompt_tokens": 2389,
+        "completion_tokens": 1494,
+        "total_tokens": 3883,
+        "cost": 0.0009859,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0009859,
+          "upstream_inference_prompt_cost": 0.0002389,
+          "upstream_inference_completions_cost": 0.000747
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1188,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "estimated_cost": null
+    }
+  ],
+  "view": {
+    "dimensions": [
+      {
+        "index": 0,
+        "name": "判斷依據",
+        "low_pole": "主要看行為本身是否違反不可侵犯的原則，例如不主動傷害無辜者。",
+        "high_pole": "主要看結果的總體影響，例如傷亡人數多寡與整體福祉。",
+        "source": "llm"
+      },
+      {
+        "index": 1,
+        "name": "行動與不作為",
+        "low_pole": "認為主動造成傷害比袖手旁觀更需要道德辯護。",
+        "high_pole": "認為不作為同樣要負責，救人機會出現時就應該介入。",
+        "source": "llm"
+      },
+      {
+        "index": 2,
+        "name": "個人與群體",
+        "low_pole": "重視每個人的獨特價值，不應把個人當作達成整體目標的工具。",
+        "high_pole": "重視群體的共同利益，認為在困難時刻個人需要為整體做出讓步。",
+        "source": "llm"
+      },
+      {
+        "index": 3,
+        "name": "情境與普遍規則",
+        "low_pole": "認為道德判斷應依具體情境的細節而定，不同情況需要不同回應。",
+        "high_pole": "偏好統一可適用的規則，認為一致性能避免主觀判斷造成的不公。",
+        "source": "llm"
+      },
+      {
+        "index": 4,
+        "name": "直覺與推理",
+        "low_pole": "較信任直覺的道德反應，認為情感上的不安本身提供重要線索。",
+        "high_pole": "較信任經過推演的論證，認為應該檢驗並修正第一時間的感覺。",
+        "source": "llm"
+      }
+    ],
+    "students": [
+      {
+        "student_id": "bed5f4c5-7230-4a55-bc3b-e039588f7ac1",
+        "display_name": "陳柏宇",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 4.0,
+            "sources": [
+              {
+                "message_id": "eaf6d46c-e032-4dec-af74-93e488fd4c66",
+                "quote": "結果才是最重要的",
+                "start": 8,
+                "end": 16
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "ac13fb5c-9c5d-4554-a2ec-f72227b802ad",
+                "quote": "不拉的話死的人更多",
+                "start": 9,
+                "end": 18
+              },
+              {
+                "message_id": "16ec62e8-fbd5-48db-b868-02245bbb6fc0",
+                "quote": "結果一樣是一個換五個",
+                "start": 2,
+                "end": 12
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "26a40b14-587b-4c05-af91-a89af5d2803b",
+                "quote": "五個人比一個人多，救越多人越好",
+                "start": 4,
+                "end": 19
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "16ec62e8-fbd5-48db-b868-02245bbb6fc0",
+                "quote": "結果一樣是一個換五個",
+                "start": 2,
+                "end": 12
+              },
+              {
+                "message_id": "9c9d98b1-ec86-4ffa-a6ea-5a9d0f436052",
+                "quote": "數字就是重點",
+                "start": 18,
+                "end": 24
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "eaf6d46c-e032-4dec-af74-93e488fd4c66",
+                "quote": "感覺比較殘忍，但結果才是最重要的",
+                "start": 0,
+                "end": 16
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "f399de5c-ee78-47df-a3c2-aef7fc2cb491",
+        "display_name": "林雨潔",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "83f5e286-43fe-4b10-8f86-3ad7766979f4",
+                "quote": "殺一個無辜的人就是錯的，這條線不能跨",
+                "start": 7,
+                "end": 25
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "3d0203dd-118d-47a7-8cb1-08330a05b35a",
+                "quote": "拉了就是我殺了那個人",
+                "start": 5,
+                "end": 15
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "9f0e69a4-2003-4670-8bda-dc8314369844",
+                "quote": "人不能被拿來當成救別人的工具",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "83f5e286-43fe-4b10-8f86-3ad7766979f4",
+                "quote": "不管救幾個人，殺一個無辜的人就是錯的，這條線不能跨",
+                "start": 0,
+                "end": 25
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "31f4f01f-c8a8-4548-8071-f8da5df72c0d",
+                "quote": "五個人會死是電車造成的，不是我。",
+                "start": 0,
+                "end": 16
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "adc20cfc-054b-45c5-8ab6-158eeb7f04bb",
+        "display_name": "張家豪",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "203aeec9-eb64-4c92-95a9-0d584fc44ab1",
+                "quote": "他的死就是手段",
+                "start": 18,
+                "end": 25
+              },
+              {
+                "message_id": "9d664098-410f-45ca-8acc-7832c5e15bad",
+                "quote": "那個人死是副作用，不是我想要他死",
+                "start": 9,
+                "end": 25
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "9d664098-410f-45ca-8acc-7832c5e15bad",
+                "quote": "會拉",
+                "start": 0,
+                "end": 2
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "15f213ef-7f2c-4802-875d-529e96f01b6e",
+                "quote": "我需要他被撞到",
+                "start": 32,
+                "end": 39
+              },
+              {
+                "message_id": "203aeec9-eb64-4c92-95a9-0d584fc44ab1",
+                "quote": "他的死就是手段",
+                "start": 18,
+                "end": 25
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "15f213ef-7f2c-4802-875d-529e96f01b6e",
+                "quote": "跟拉桿不一樣",
+                "start": 0,
+                "end": 6
+              },
+              {
+                "message_id": "203aeec9-eb64-4c92-95a9-0d584fc44ab1",
+                "quote": "這次那個人是被我拿來擋車的",
+                "start": 4,
+                "end": 17
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "15f213ef-7f2c-4802-875d-529e96f01b6e",
+                "quote": "我也很高興",
+                "start": 22,
+                "end": 27
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "61b7d198-b4b9-4259-b99a-4624a55614f1",
+        "display_name": "王曉明",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "cfc59c1a-ddf0-4bdb-b706-64ab9e18fe6c",
+                "quote": "我不想負那個責任",
+                "start": 31,
+                "end": 39
+              },
+              {
+                "message_id": "1d179290-57a1-4379-bf40-da88ae6dc549",
+                "quote": "我不想毀掉自己的人生",
+                "start": 11,
+                "end": 21
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "2675ed7b-d135-405f-b182-292d2627ea0e",
+                "quote": "我沒有義務",
+                "start": 8,
+                "end": 13
+              },
+              {
+                "message_id": "6b9c1599-5397-4455-91e0-3db2ba2d964c",
+                "quote": "我只是路過",
+                "start": 16,
+                "end": 21
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "1d179290-57a1-4379-bf40-da88ae6dc549",
+                "quote": "我不想毀掉自己的人生",
+                "start": 11,
+                "end": 21
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "2675ed7b-d135-405f-b182-292d2627ea0e",
+                "quote": "不推，理由一樣，我沒有義務。",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "cfc59c1a-ddf0-4bdb-b706-64ab9e18fe6c",
+                "quote": "我知道軌道上那些人會死",
+                "start": 5,
+                "end": 16
+              },
+              {
+                "message_id": "413ae894-7d6e-4589-a176-b5c169ab861e",
+                "quote": "大家會怪我",
+                "start": 8,
+                "end": 13
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "06c68b21-c699-423f-a659-4ca18a0758e0",
+        "display_name": "黃詩涵",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "ab585201-1b6d-4b35-934b-e289cd68b4b9",
+                "quote": "碰到人的感覺太可怕了",
+                "start": 20,
+                "end": 30
+              },
+              {
+                "message_id": "862bfb19-1f98-44c8-ab87-3adfd8e77e51",
+                "quote": "我光想像就受不了",
+                "start": 5,
+                "end": 13
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "862bfb19-1f98-44c8-ab87-3adfd8e77e51",
+                "quote": "推不下去",
+                "start": 0,
+                "end": 4
+              },
+              {
+                "message_id": "ab585201-1b6d-4b35-934b-e289cd68b4b9",
+                "quote": "我真的做不到",
+                "start": 13,
+                "end": 19
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "3ed709f3-a743-4342-bbb4-3554fcf08637",
+                "quote": "我應該會拉吧",
+                "start": 0,
+                "end": 6
+              },
+              {
+                "message_id": "8e742b85-c6bc-486c-b915-18096043ad3e",
+                "quote": "只是當下覺得要救比較多人",
+                "start": 10,
+                "end": 22
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "ab585201-1b6d-4b35-934b-e289cd68b4b9",
+                "quote": "我知道理論上應該一樣",
+                "start": 0,
+                "end": 10
+              },
+              {
+                "message_id": "b4b76d83-5989-42dd-ae61-7839a14affd7",
+                "quote": "想到那個人在軌道上看著電車轉過來就很難過",
+                "start": 0,
+                "end": 20
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "8e742b85-c6bc-486c-b915-18096043ad3e",
+                "quote": "我其實不知道對不對",
+                "start": 0,
+                "end": 9
+              },
+              {
+                "message_id": "862bfb19-1f98-44c8-ab87-3adfd8e77e51",
+                "quote": "我光想像就受不了",
+                "start": 5,
+                "end": 13
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "45b4cf8b-ffe3-433c-97d8-734f74a9a6e9",
+        "display_name": "吳承翰",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "5dab0e59-2a66-486d-8022-7dadd2f83f13",
+                "quote": "推人一定是殺人罪，不會推。",
+                "start": 0,
+                "end": 13
+              },
+              {
+                "message_id": "c8c6b3f0-812a-4824-b8c2-aad404a209f2",
+                "quote": "就算救了五個人，法官也會判我有罪。",
+                "start": 0,
+                "end": 17
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "5dab0e59-2a66-486d-8022-7dadd2f83f13",
+                "quote": "推人一定是殺人罪，不會推。",
+                "start": 0,
+                "end": 13
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 2.0,
+            "sources": []
+          },
+          {
+            "dimension_index": 3,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "93d866ee-31e4-4ef3-9f07-55988984d988",
+                "quote": "要看法律。如果法律說拉了不用負責，我就拉。",
+                "start": 0,
+                "end": 21
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "3773d947-21eb-4c6a-81b0-612c8b065183",
+                "quote": "台灣好像有緊急避難，拉桿應該算吧。",
+                "start": 0,
+                "end": 17
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "5e409756-1362-4353-92d7-7bc624544c75",
+        "display_name": "劉品妍",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "07a3ad6c-1b44-4fb8-8377-3b4b332b5a22",
+                "quote": "陌生人的話……還是不太會推。",
+                "start": 0,
+                "end": 14
+              },
+              {
+                "message_id": "44c3009a-c9c4-4fc8-b255-97239ee445a3",
+                "quote": "要看那一個人是誰。",
+                "start": 0,
+                "end": 9
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "07a3ad6c-1b44-4fb8-8377-3b4b332b5a22",
+                "quote": "陌生人的話……還是不太會推。",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "2d0d064d-2af0-4263-9e77-1732bb01dc1c",
+                "quote": "人本來就會偏心自己人。",
+                "start": 11,
+                "end": 22
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "44c3009a-c9c4-4fc8-b255-97239ee445a3",
+                "quote": "要看那一個人是誰。",
+                "start": 0,
+                "end": 9
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "2d0d064d-2af0-4263-9e77-1732bb01dc1c",
+                "quote": "我知道這樣不公平，可是人本來就會偏心自己人。",
+                "start": 0,
+                "end": 22
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "01b4fa27-2165-42a4-9f26-d1a0049861af",
+        "display_name": "周子軒",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "60da3f2b-cefc-445a-83b2-c57d083145c7",
+                "quote": "那一個人沒有同意要為別人犧牲",
+                "start": 3,
+                "end": 17
+              },
+              {
+                "message_id": "111a5802-6ca5-48bf-828e-85bb6e916c4e",
+                "quote": "每個人的命是自己的，別人沒權利替他決定",
+                "start": 0,
+                "end": 19
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "60da3f2b-cefc-445a-83b2-c57d083145c7",
+                "quote": "不拉。那一個人沒有同意要為別人犧牲",
+                "start": 0,
+                "end": 17
+              },
+              {
+                "message_id": "dbf619fd-2577-4073-b8b7-978663bb4531",
+                "quote": "不推，原因一樣，而且更明顯",
+                "start": 0,
+                "end": 13
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "111a5802-6ca5-48bf-828e-85bb6e916c4e",
+                "quote": "每個人的命是自己的，別人沒權利替他決定",
+                "start": 0,
+                "end": 19
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "f00219ed-fe07-4a1c-88a3-42a54aa3c906",
+                "quote": "那是他的自由",
+                "start": 11,
+                "end": 17
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "60da3f2b-cefc-445a-83b2-c57d083145c7",
+                "quote": "不拉。那一個人沒有同意要為別人犧牲",
+                "start": 0,
+                "end": 17
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "60d8c9b9-d267-4be2-9bfb-bc6eae95f341",
+        "display_name": "鄭宇彤",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "77ecab79-66a6-40a7-af9e-f43f2ed6c1b7",
+                "quote": "我拉了反而害死那一個",
+                "start": 12,
+                "end": 22
+              },
+              {
+                "message_id": "1ddf45e1-5985-4c43-9ecb-87c687191f81",
+                "quote": "如果百分之百確定的話我可能會推",
+                "start": 0,
+                "end": 15
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "14a18e1c-2f49-4671-a9e5-f3c7bf3c0406",
+                "quote": "資訊不夠的時候，我傾向不要亂動",
+                "start": 0,
+                "end": 15
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 2.0,
+            "sources": []
+          },
+          {
+            "dimension_index": 3,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "7e9d6813-5137-4b13-ac37-e565ae42444f",
+                "quote": "現實中你怎麼知道一定有用？",
+                "start": 12,
+                "end": 25
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "3117f7ce-8707-4754-addb-933f6aa231c7",
+                "quote": "推更不確定，他擋得住電車嗎？",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "887d1c7a-6fa7-4860-8f53-30f6bf1d045e",
+        "display_name": "許書豪",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "e17f7ece-5e7b-4b3e-85b0-acdc9fe9fee2",
+                "quote": "每個人有自己的命，不該由我去改變。",
+                "start": 3,
+                "end": 20
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "a0901381-dc2f-4b24-a01c-118718448966",
+                "quote": "插手別人生死不是人該做的事。",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "e17f7ece-5e7b-4b3e-85b0-acdc9fe9fee2",
+                "quote": "每個人有自己的命，不該由我去改變。",
+                "start": 3,
+                "end": 20
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "a0901381-dc2f-4b24-a01c-118718448966",
+                "quote": "插手別人生死不是人該做的事。",
+                "start": 0,
+                "end": 14
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "eef0b46b-1544-4775-834b-7512e157b66c",
+                "quote": "電車本來要往哪裡走就是命運，人去插手就是扮演上帝。",
+                "start": 0,
+                "end": 25
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "a606522d-0cea-4bc1-8a53-9d001b1c0d6f",
+        "display_name": "蔡依婷",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "e54c823d-e1e3-4531-b0c2-4a2e08e62ac6",
+                "quote": "因為都是我在決定誰死",
+                "start": 17,
+                "end": 27
+              },
+              {
+                "message_id": "017e2875-fc99-4247-a216-6e4b7b3cce77",
+                "quote": "那我前面說的五大於一就不成立了",
+                "start": 9,
+                "end": 24
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "e54c823d-e1e3-4531-b0c2-4a2e08e62ac6",
+                "quote": "兩題應該都不要動手",
+                "start": 7,
+                "end": 16
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "26dfde17-77ec-477c-a90f-328c505a4c60",
+                "quote": "因為五大於一",
+                "start": 0,
+                "end": 6
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "40b16247-a53b-47b3-ae81-59a3c4394407",
+                "quote": "推人好像不太一樣",
+                "start": 13,
+                "end": 21
+              },
+              {
+                "message_id": "017e2875-fc99-4247-a216-6e4b7b3cce77",
+                "quote": "如果我會拉卻不推",
+                "start": 0,
+                "end": 8
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "017e2875-fc99-4247-a216-6e4b7b3cce77",
+                "quote": "如果我會拉卻不推，那我前面說的五大於一就不成立了",
+                "start": 0,
+                "end": 24
+              },
+              {
+                "message_id": "40b16247-a53b-47b3-ae81-59a3c4394407",
+                "quote": "推人好像不太一樣",
+                "start": 13,
+                "end": 21
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "8e2de857-b5a1-4834-aed9-6d4b3c283dd3",
+        "display_name": "蕭宇翔",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "c717fdad-ed0f-4273-9fd9-f4757a83b8c0",
+                "quote": "就救多一點。",
+                "start": 0,
+                "end": 6
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "58a037bc-84ee-4cb0-8596-288e3315a959",
+                "quote": "推人很怪。",
+                "start": 0,
+                "end": 5
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "c717fdad-ed0f-4273-9fd9-f4757a83b8c0",
+                "quote": "就救多一點。",
+                "start": 0,
+                "end": 6
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "014ab836-1445-4356-88bd-de5a2f214788",
+                "quote": "不知道，應該不會。",
+                "start": 0,
+                "end": 9
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "58a037bc-84ee-4cb0-8596-288e3315a959",
+                "quote": "推人很怪。",
+                "start": 0,
+                "end": 5
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "78b74549-0520-4328-b53f-4b4baad96eed",
+        "display_name": "楊佳穎",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "3495bac1-3c3e-4e8f-99dd-d4ee8295986c",
+                "quote": "要守住不能犧牲人的規則",
+                "start": 6,
+                "end": 17
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "3495bac1-3c3e-4e8f-99dd-d4ee8295986c",
+                "quote": "所以我不拉",
+                "start": 0,
+                "end": 5
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "35893c6b-bd74-4c6b-8135-550a2625ac3d",
+                "quote": "那社會會很可怕",
+                "start": 19,
+                "end": 26
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "48233a9d-a7a2-4151-926f-185b17627424",
+                "quote": "明天醫院就可以拿一個健康的人的器官救五個病人",
+                "start": 6,
+                "end": 28
+              },
+              {
+                "message_id": "3640ac18-83e2-4756-bcd3-39817655d034",
+                "quote": "這會開很壞的先例",
+                "start": 8,
+                "end": 16
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 3.0,
+            "sources": [
+              {
+                "message_id": "48233a9d-a7a2-4151-926f-185b17627424",
+                "quote": "明天醫院就可以拿一個健康的人的器官救五個病人",
+                "start": 6,
+                "end": 28
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "student_id": "8b24fdd5-f6a7-44e0-80f6-188ea16a6926",
+        "display_name": "謝承恩",
+        "scores": [
+          {
+            "dimension_index": 0,
+            "score": 0.0,
+            "sources": [
+              {
+                "message_id": "e4e8c5b0-9246-4cfd-b50b-06a778ab3147",
+                "quote": "犧牲別人不對",
+                "start": 0,
+                "end": 6
+              },
+              {
+                "message_id": "27630158-b982-426f-91bc-1e0488325336",
+                "quote": "至少我不用決定別人的命",
+                "start": 11,
+                "end": 22
+              }
+            ]
+          },
+          {
+            "dimension_index": 1,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "f2d5fb89-c95f-40c9-bfee-75f0169781de",
+                "quote": "不要拉也不要害別人",
+                "start": 15,
+                "end": 24
+              }
+            ]
+          },
+          {
+            "dimension_index": 2,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "e4e8c5b0-9246-4cfd-b50b-06a778ab3147",
+                "quote": "犧牲自己是我自己的選擇",
+                "start": 7,
+                "end": 18
+              }
+            ]
+          },
+          {
+            "dimension_index": 3,
+            "score": 2.0,
+            "sources": [
+              {
+                "message_id": "27630158-b982-426f-91bc-1e0488325336",
+                "quote": "至少我不用決定別人的命",
+                "start": 11,
+                "end": 22
+              }
+            ]
+          },
+          {
+            "dimension_index": 4,
+            "score": 1.0,
+            "sources": [
+              {
+                "message_id": "9cf2e80a-aac6-4ee1-9885-585e1e87715c",
+                "quote": "我會自己跳下去，不推他",
+                "start": 0,
+                "end": 11
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

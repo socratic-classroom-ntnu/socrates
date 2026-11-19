@@ -1,0 +1,9 @@
+# Layered on the root compose: docker compose -f docker-compose.yml -f prototypes/radar-evaluation/compose.yaml
+# Paths resolve from the repo root (the first file's directory).
+services:
+  backend:
+    environment:
+      EMBEDDING_MODEL_DIR: /opt/models/multilingual-e5-small
+    volumes:
+      - ./prototypes/radar-evaluation:/prototypes/radar-evaluation
+      - ./prototypes/radar-evaluation/models/multilingual-e5-small:/opt/models/multilingual-e5-small:ro

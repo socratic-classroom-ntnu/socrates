@@ -69,8 +69,10 @@ class TutorTurn(Strict):
 class PersonalSummary(Strict):
     """The tutor's candidate reading of one student's stance; the student confirms or revises it."""
 
-    current_position: str = Field(min_length=1, max_length=2000)
-    reason_summary: str = Field(min_length=1, max_length=4000)
+    # Empty until the student states one (some models write "" then); has_position and has_reason
+    # in observations, not these strings, decide whether the summary can be confirmed.
+    current_position: str = Field(max_length=2000)
+    reason_summary: str = Field(max_length=4000)
     relevant_conditions: list[str] = Field(default_factory=list, max_length=12)
     unresolved_issue: str = Field(default="", max_length=2000)
     # Why the reasons sit near observations.principle_label; empty when the label is 未明.

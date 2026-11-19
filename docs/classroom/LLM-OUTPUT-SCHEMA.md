@@ -198,8 +198,8 @@
 
 | 欄位 | 型別 | 必填 | 預設 | 限制 | 說明 |
 |---|---|---|---|---|---|
-| `current_position` | `string` | 是 | — | `min_length=1`、`max_length=2000` | 學生對原題的目前主張，可含條件或不確定；確認後成為 `baseline.position`。 |
-| `reason_summary` | `string` | 是 | — | `min_length=1`、`max_length=4000` | 主要理由；確認後成為 `baseline.reason_summary`，也是之後代表討論時採用的論點。 |
+| `current_position` | `string` | 是 | — | `max_length=2000` | 學生對原題的目前主張，可含條件或不確定；學生還沒表態時可以是空字串。確認後成為 `baseline.position`。 |
+| `reason_summary` | `string` | 是 | — | `max_length=4000` | 主要理由；學生還沒說理由時可以是空字串。確認後成為 `baseline.reason_summary`，也是之後代表討論時採用的論點。 |
 | `relevant_conditions` | `array<string>` | 否 | `[]` | `max_length=12` | 學生提到會影響判斷的條件；確認後成為 `baseline.conditions`。 |
 | `unresolved_issue` | `string` | 否 | `""` | `max_length=2000` | 尚未釐清之處；只顯示給學生與教師，不進基準。 |
 | `principle_note` | `string` | 否 | `""` | `max_length=300` | 理由為什麼接近 `observations.principle_label`；標籤是「未明」時留空。單人活動的 `solo_tutor` 使用；`personal_tutor` 的 prompt 不要求。 |

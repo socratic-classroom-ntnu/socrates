@@ -50,7 +50,6 @@ export default {
     analysis: '統計分析之後會放在這裡：立場分佈、完成人數和改變立場的人數。',
     aiAnalysis: 'AI 分析還在開發中，之後會從已確認的想法整理班級層級的脈絡。',
     toCourse: '回到課程',
-    projector: '全螢幕投影還在施工。現在可以先用邀請視窗裡的 QR code。',
   },
   dateTime: {
     chooseDate: '選擇日期',

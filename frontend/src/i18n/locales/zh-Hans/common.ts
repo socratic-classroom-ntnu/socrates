@@ -53,7 +53,6 @@ const common: Shape<typeof zhHant> = {
     analysis: '统计分析之后会放在这里：立场分布、完成人数和改变立场的人数。',
     aiAnalysis: 'AI 分析还在开发中，之后会从已确认的想法整理班级层级的脉络。',
     toCourse: '回到课程',
-    projector: '全屏投影还在建设中。现在可以先用邀请窗口里的二维码。',
   },
   dateTime: {
     chooseDate: '选择日期',

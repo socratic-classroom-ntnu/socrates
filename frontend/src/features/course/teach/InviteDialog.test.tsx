@@ -3,14 +3,17 @@ import { useState } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { Where } from '../../../testing/pageHarness'
 import { InviteDialog } from './InviteDialog'
+import { PROJECTOR_WINDOW_NAME } from './projectorNavigation'
 
 jest.mock('qrcode', () => ({ toDataURL: jest.fn(async (value: string) => 'data:' + value) }))
 
 const writeText = jest.fn(async () => {})
 beforeEach(() => {
   writeText.mockClear()
+  jest.spyOn(window, 'open').mockImplementation(() => null)
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
 })
+afterEach(() => jest.restoreAllMocks())
 
 function Opener({ kind }: { kind: 'course' | 'activity' }) {
   const props = kind === 'course'
@@ -51,10 +54,17 @@ test('activity invite has no code row and encodes activity url', async () => {
   expect(writeText).toHaveBeenCalledWith('http://localhost/activities/a-1/join')
 })
 
-test('projector button goes to placeholder route', async () => {
-  open('course')
-  fireEvent.click(screen.getByRole('link', { name: '投影到大螢幕' }))
-  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/teach/courses/c-1/projector'))
+test.each([
+  ['course', '/teach/courses/c-1/projector'],
+  ['activity', '/teach/activities/a-1/projector'],
+] as const)('%s projector link opens or reuses the dedicated projector tab', (kind, path) => {
+  open(kind)
+  const link = screen.getByRole('link', { name: '投影到大螢幕' })
+  expect(link).toHaveAttribute('target', PROJECTOR_WINDOW_NAME)
+  fireEvent.click(link)
+  expect(window.open).toHaveBeenCalledWith(path, PROJECTOR_WINDOW_NAME)
+  expect(screen.getByTestId('where')).toHaveTextContent('/teach/courses/c-1')
+  expect(screen.getByRole('dialog')).toBeInTheDocument()
 })
 
 test('focus returns to the opener on close', async () => {

@@ -144,6 +144,7 @@ const teach: Shape<typeof zhHant> = {
     noMatch: 'No hay actividades que coincidan',
   },
   analysis: {
+    blank: '(Aún sin explicar)',
     demoBanner: 'Datos de muestra: el análisis todavía está en desarrollo. Estas cifras no son respuestas reales de esta actividad.',
     overview: 'Resumen de finalización',
     started: 'Han empezado {{started}} / {{enrolled}}',

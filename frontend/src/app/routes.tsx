@@ -30,6 +30,7 @@ import { SoloDialoguePage } from '../features/solo-activity/SoloDialoguePage'
 import { TeacherCoursePage } from '../features/course/teach/TeacherCoursePage'
 import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPage'
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
+import { TeacherTranscriptPage } from '../features/course/teach/transcript/TeacherTranscriptPage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { ActivityProjectorPage, CourseProjectorPage } from '../features/course/teach/ProjectorPages'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
@@ -150,6 +151,7 @@ export function AppRoutes() {
           <Route path="/teach/courses/:courseId/activities/new" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId/edit" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId" element={<TeacherLivePage />} />
+          <Route path="/teach/activities/:activityId/students/:enrollmentId" element={<TeacherTranscriptPage />} />
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>

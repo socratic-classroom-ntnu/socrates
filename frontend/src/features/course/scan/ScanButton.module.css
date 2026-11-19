@@ -1,0 +1,9 @@
+/* S6、S7 對話框裡的灰底區塊：每一列是圖示＋粗體標題＋說明 */
+.ways {
+  display: flex; flex-direction: column; gap: 14px; margin: 14px 0 0; padding: 16px; list-style: none;
+  border-radius: 10px; background: var(--ui-color-neutral-soft);
+}
+.way { display: flex; align-items: flex-start; gap: 12px; }
+.wayIcon { display: flex; flex-shrink: 0; margin-top: 2px; color: var(--ui-color-primary); }
+.wayText { display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--ui-color-ink-soft); font-size: 13px; line-height: 1.6; }
+.wayText strong { color: var(--ui-color-ink); font-size: 15px; }

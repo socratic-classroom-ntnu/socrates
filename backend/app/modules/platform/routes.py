@@ -8,8 +8,15 @@ from fastapi import APIRouter
 from app.modules.platform.contracts import PublicConfigView
 from app.modules.platform.demo import demo_login
 from app.modules.platform.service import debug_mode
+from app.modules.platform.storage import transaction
+from app.modules.platform.toggles import features
 
 router = APIRouter()
+
+
+def _features() -> dict[str, bool]:
+    with transaction() as db:
+        return features(db)
 
 
 @router.get("/public-config", response_model=PublicConfigView)
@@ -23,4 +30,5 @@ def public_config():
         "search_state": "CONFIGURED" if valid else "AWAITING_SEARCH_ENGINE_BINDING",
         "debug_mode": debug_mode(),
         "demo_login": demo_login(),
+        "features": _features(),
     }

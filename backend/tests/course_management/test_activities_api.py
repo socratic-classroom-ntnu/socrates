@@ -20,6 +20,7 @@ TEST_DIALECT = make_url(env_str("CLASSROOM_TEST_DATABASE_URL", "sqlite://")).get
 def draft(**overrides):
     body = {
         "title": "第三週倫理討論",
+        "scenario": "一輛失控的電車正駛向五名工人，你站在拉桿旁。",
         "ends_at": time.time() + 3600,
     }
     body.update(overrides)
@@ -78,7 +79,10 @@ def test_draft_hidden_from_students(client):
     "broken",
     [
         {"title": ""},
-        {"title": "x" * 301},
+        {"title": "x" * 41},
+        {"scenario": ""},
+        {"scenario": None},
+        {"scenario": "x" * 301},
         {"ends_at": None},
         {"questions": [{"id": "q1", "title": "多題", "scenario": "x", "options": []}]},
         {"topic_direction": "已移除的欄位"},
@@ -463,9 +467,11 @@ def test_published_revision_has_no_option_or_question_fields(client):
         ).one()
         assert set(revision.content) == {
             "title",
+            "scenario",
             "starts_at",
             "ends_at",
             "course_intro",
             "course_goals",
         }
         assert revision.content["title"] == draft()["title"]
+        assert revision.content["scenario"] == draft()["scenario"]

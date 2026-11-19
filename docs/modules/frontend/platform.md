@@ -26,6 +26,9 @@
 - `frontend/src/setupTests.ts`
 - `frontend/src/types/window-globals.d.ts`
 - `frontend/src/vite-env.d.ts`
+- `frontend/src/shared/publicConfig.tsx`
+- `frontend/src/shared/GroupModeGate.tsx`
+- `frontend/src/shared/GroupModeGate.test.tsx`
 
 契約：
 - 公開設定（/public-config）（✅）

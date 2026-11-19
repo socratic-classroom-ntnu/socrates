@@ -75,3 +75,18 @@ def db():
         session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture(autouse=True)
+def _group_mode_on_for_existing_tests(monkeypatch):
+    """多人模式在正式環境預設關閉（後台 spec P7）；既有的多人模式測試照舊跑在「開啟」上。
+
+    擋下的行為與預設值本身由 tests/admin 驗證（那裡的 fixture 會設回關閉）。
+    """
+    from dataclasses import replace
+
+    from app.modules.platform import toggles
+
+    monkeypatch.setitem(
+        toggles.DB_TOGGLES, "group_mode", replace(toggles.DB_TOGGLES["group_mode"], default=True)
+    )

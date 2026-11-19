@@ -16,6 +16,7 @@ export default {
   },
   dialogue: { back: 'Back to activity', backToPractice: 'Back to My dialogues', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}' },
   scenarioTitle: 'Scenario {{number}}', teacherSource: 'Your teacher set this scenario. Socrates will not rewrite it.',
+  board: { expand: 'Show the scenario', collapse: 'Hide the scenario' },
   myAnswer: 'My answer', answerPending: 'Your first answer will appear here after you submit it.',
   aboutTitle: 'What this dialogue does',
   aboutBody: 'Socrates does not judge right or wrong. It asks why so you can make your reasons and exceptions clearer. When you are ready, it will summarize your view for you to confirm.',
@@ -54,11 +55,11 @@ export default {
     label: 'Say what is off', hint: 'After you explain, Socrates may ask a question or two, then summarize again for you to confirm.',
   },
   viewpoint: {
-    title: 'I tried to summarize your view. Does this sound right?', subtitle: 'Socrates organized it; you decide whether it is accurate',
+    title: 'I tried to summarize your view. Does this sound right?',
     reason: 'Reason', conditions: 'Conditions',
     principle: 'Related idea: {{principle}}', principleNote: 'This is a reference, not a label for you.',
     confirm: 'Yes, that is what I think', revise: 'Not quite, I want to explain more',
-    cappedTitle: 'You reached the message limit. Here is where things stand', cappedSubtitle: 'Socrates organized it; this scenario will not be marked as confirmed', cappedConfirm: 'OK, got it',
+    cappedTitle: 'You reached the message limit. Here is where things stand. This scenario will not be marked as confirmed.', cappedConfirm: 'OK, got it',
     principles: { consequentialism: 'Consequentialism', deontology: 'Deontology', mixed: 'Mixed approach' },
   },
   review: {

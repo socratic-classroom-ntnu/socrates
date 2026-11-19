@@ -40,7 +40,7 @@ const analysis: Analysis = {
 function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
-    revision: 1, draft: { title: analysis.title, ends_at: analysis.ends_at! },
+    revision: 1, draft: { title: analysis.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: analysis.ends_at! },
     starts_at: 1_799_999_000, ends_at: analysis.ends_at, available_actions: actions,
   }
 }

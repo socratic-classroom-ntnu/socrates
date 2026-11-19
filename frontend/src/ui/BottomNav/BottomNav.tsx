@@ -19,7 +19,8 @@ export type BottomNavItem = {
 
 /** 手機底部導覽（學生端，畫布 S2sm／S5m）：固定在最下方，最多四格，留出 iPhone 的安全區。 */
 export function BottomNav({ label, items, className }: { label: string; items: BottomNavItem[]; className?: string }) {
-  return <nav aria-label={label} className={classNames(styles.nav, className)}>
+  // data-feedback-avoid：意見回饋按鈕浮在它上方
+  return <nav aria-label={label} className={classNames(styles.nav, className)} data-feedback-avoid="">
     {items.map(item => {
       const body = <>
         {(item.current || item.expanded) && <span className={styles.marker} aria-hidden="true" />}

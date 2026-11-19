@@ -1,15 +1,16 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { ApiError, api } from '../contract/classroomClient'
+import { ApiError, api, getPublicConfig } from '../contract/classroomClient'
 import { TeacherShell } from '../features/authoring/TeacherDashboard'
 import { AppShell } from './AppShell'
 import { AuthProvider, useAuth } from '../features/auth/AuthContext'
+import { PublicConfigProvider } from '../shared/publicConfig'
 import { useShellActive, useShellBack } from '../shared/shellContext'
 import { LanguageSwitcher } from '../features/auth/LanguageSwitcher'
 
 jest.mock('../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../contract/classroomClient')>('../contract/classroomClient')
-  return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn() }
+  return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn(), getPublicConfig: jest.fn() }
 })
 
 let serverLocale = 'zh-Hant'
@@ -23,8 +24,9 @@ function Where() {
   return <output data-testid="where">{pathname + search}</output>
 }
 
-function open(url: string, page = <p>page-body</p>) {
-  return render(<MemoryRouter initialEntries={[url]}>
+// 多人模式預設關（正式預設）；'fetch' 表示真的去讀設定（測讀取中）
+function open(url: string, page = <p>page-body</p>, features: { group_mode: boolean } | 'fetch' = { group_mode: false }) {
+  const tree = <MemoryRouter initialEntries={[url]}>
     <AuthProvider>
       <Routes>
         <Route element={<AppShell />}><Route path="*" element={page} /></Route>
@@ -32,8 +34,12 @@ function open(url: string, page = <p>page-body</p>) {
       </Routes>
       <Where />
     </AuthProvider>
-  </MemoryRouter>)
+  </MemoryRouter>
+  return render(features === 'fetch'
+    ? <PublicConfigProvider>{tree}</PublicConfigProvider>
+    : <PublicConfigProvider initial={features}>{tree}</PublicConfigProvider>)
 }
+const GROUP_MODE_ON = { group_mode: true }
 
 function account() {
   return { id: 'u-1', username: 'Fizzy', email: 'fizzy@example.org', verified: true, csrf_token: 'c', locale: serverLocale, kind: 'registered', account_role: 'teacher', ...serverAccount }
@@ -278,7 +284,41 @@ test('collapse survives broken storage', async () => {
   expect(screen.getByRole('button', { name: '展開側邊欄' })).toBeInTheDocument()
 })
 
-test.each(['/groups', '/teacher/home'])('%s highlights nothing (no groups item any more)', async (url) => {
+// 多人模式開著時，老師側欄在首頁下面多「分組課」（Fizzy 11/18）；關著、讀取中、學生都沒有
+test('with group mode on a teacher sidebar has group classes under home', async () => {
+  open('/', undefined, GROUP_MODE_ON)
+  const nav = await screen.findByRole('navigation', { name: '主選單' })
+  expect(within(within(nav).getByRole('list')).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
+    ['首頁', '/'],
+    ['分組課', '/groups'],
+    ['個人題庫', '/teacher/home?view=bank'],
+    ['題庫商店', '/teacher/home?view=store'],
+    ['AI 連線設定', '/teacher/home?view=settings'],
+  ])
+})
+
+test('while the switch is still loading there is no group classes item', async () => {
+  jest.mocked(getPublicConfig).mockReturnValue(new Promise(() => undefined))
+  open('/', undefined, 'fetch')
+  const nav = await screen.findByRole('navigation', { name: '主選單' })
+  expect(within(nav).getByRole('link', { name: '首頁' })).toBeInTheDocument()
+  expect(within(nav).queryByRole('link', { name: '分組課' })).toBeNull()
+})
+
+test('a student never gets group classes, even with group mode on', async () => {
+  asStudent()
+  open('/', undefined, GROUP_MODE_ON)
+  const nav = await screen.findByRole('navigation', { name: '主選單' })
+  expect(within(nav).getByRole('link', { name: '我的對話' })).toBeInTheDocument()
+  expect(within(nav).queryByRole('link', { name: '分組課' })).toBeNull()
+})
+
+test.each(['/groups', '/teacher/courses/c-1', '/teacher/home'])('%s marks group classes', async (url) => {
+  open(url, undefined, GROUP_MODE_ON)
+  expect(await screen.findByRole('link', { name: '分組課' })).toHaveAttribute('aria-current', 'page')
+})
+
+test.each(['/groups', '/teacher/home'])('%s highlights nothing while group mode is off', async (url) => {
   open(url)
   const nav = await screen.findByRole('navigation', { name: '主選單' })
   expect(within(nav).queryAllByRole('link').filter(link => link.getAttribute('aria-current'))).toHaveLength(0)

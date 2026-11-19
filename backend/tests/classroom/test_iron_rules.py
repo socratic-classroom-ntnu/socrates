@@ -46,6 +46,7 @@ def test_every_provider_call_goes_through_the_iron_rules():
         if "guarded_generate(" in path.read_text(encoding="utf-8") and path.name != "iron_rules.py"
     }
     assert wired == {
+        "modules/admin/system_ai.py",
         "modules/app_shell/llm_workers.py",
         "modules/content_authoring/service.py",
         "modules/group_dialogue/service.py",
@@ -114,6 +115,7 @@ def test_programs_without_the_router_first_are_rejected(tmp_path, monkeypatch):
         (lambda r: r["roles"]["focused_tutor"].update(checks=["mind_reading"]), "unknown checks"),
         (lambda r: r["roles"]["focused_tutor"].update(fallback="nope"), "unknown fallback"),
         (lambda r: r.update(L1="missing.md"), "L1"),
+        (lambda r: r["roles"].pop("connection_probe"), "no route for 'connection_probe'"),
     ],
     ids=[
         "no-route",
@@ -122,6 +124,7 @@ def test_programs_without_the_router_first_are_rejected(tmp_path, monkeypatch):
         "unknown-check",
         "unknown-fallback",
         "missing-L1",
+        "no-connection-probe-route",
     ],
 )
 def test_broken_router_is_rejected(tmp_path, monkeypatch, mutate, message):

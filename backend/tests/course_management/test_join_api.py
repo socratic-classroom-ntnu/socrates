@@ -220,7 +220,11 @@ def test_owner_cannot_enroll_in_their_own_course(client):
 def test_join_preview_open_activity_title(client):
     user(client, "owner", account_role="teacher")
     course = create_course(client)
-    draft_payload = {"title": "第三週倫理討論", "ends_at": time.time() + 3600}
+    draft_payload = {
+        "title": "第三週倫理討論",
+        "scenario": "電車難題",
+        "ends_at": time.time() + 3600,
+    }
     user(client, "student")
     preview = client.get("/api/v2/course-join/preview", params={"code": course["code"]})
     assert preview.json()["open_activity_title"] is None

@@ -24,9 +24,16 @@ class DemoLoginView(BaseModel):
     accounts: list[DemoAccountView]
 
 
+class FeaturesView(BaseModel):
+    """後台的功能開關目前的狀態（spec P9）。"""
+
+    group_mode: bool
+
+
 class PublicConfigView(BaseModel):
     google_cse_id: str
     search_scope: str
     search_state: str
     debug_mode: bool
     demo_login: DemoLoginView | None = None
+    features: FeaturesView

@@ -67,6 +67,10 @@ jest.mock('../features/course/teach/TeacherAnalysisPage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { TeacherAnalysisPage: () => { const { activityId } = useParams(); return <p>{`teacher-analysis-page:${activityId}`}</p> } }
 })
+jest.mock('../features/course/teach/ProjectorPages', () => ({
+  CourseProjectorPage: () => <p>course-projector-page</p>,
+  ActivityProjectorPage: () => <p>activity-projector-page</p>,
+}))
 // 3D 舞台、分組課堂與 AI 設定和路由無關，jsdom 也載不了它們用到的 ESM（three、.mjs），換成空元件
 jest.mock('../features/classroom-stage/Arena', () => ({ Arena: () => null }))
 jest.mock('../features/group-dialogue/GroupClassroom', () => ({ GroupClassroomGate: () => null }))
@@ -139,8 +143,8 @@ test.each([
   ['/teach/activities/a1', 'teacher-live-page:a1'],
   ['/teach/activities/a1/analysis', 'teacher-analysis-page:a1'],
   ['/teach/activities/a1/analysis/ai', '功能開發中'],
-  ['/teach/courses/c1/projector', '功能開發中'],
-  ['/teach/activities/a1/projector', '功能開發中'],
+  ['/teach/courses/c1/projector', 'course-projector-page'],
+  ['/teach/activities/a1/projector', 'activity-projector-page'],
   ['/account', '功能開發中'],
   ['/my-dialogues', 'my-dialogues-page'],
   // 訪客帳號面板的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24）
@@ -343,17 +347,11 @@ describe('teacher placeholders go back to their course', () => {
     })
   }
 
-  test.each(['/teach/activities/a1/analysis/ai', '/teach/activities/a1/projector'])('%s', async (url) => {
+  test('/teach/activities/a1/analysis/ai', async () => {
     withActivity()
-    open(url)
+    open('/teach/activities/a1/analysis/ai')
     expect(await screen.findByText('功能開發中')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('link', { name: /回到課程/ })).toHaveAttribute('href', '/teach/courses/c9'))
-  })
-
-  test('course projector goes back to its course', async () => {
-    mockSession(teacher)
-    open('/teach/courses/c1/projector')
-    expect(await screen.findByRole('link', { name: /回到課程/ })).toHaveAttribute('href', '/teach/courses/c1')
   })
 
   test('an unknown activity falls back to my teaching', async () => {

@@ -4,6 +4,7 @@ import { api } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
 import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
 import { TeacherLivePage } from './TeacherLivePage'
+import { PROJECTOR_WINDOW_NAME } from './projectorNavigation'
 
 jest.mock('../../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
@@ -56,11 +57,13 @@ async function activityLoaded() {
 
 beforeEach(() => {
   jest.mocked(api).mockReset()
+  jest.spyOn(window, 'open').mockImplementation(() => null)
   activityAnswered = false
 })
 
 afterEach(() => {
   jest.useRealTimers()
+  jest.restoreAllMocks()
   applyLocale('zh-Hant')
 })
 
@@ -73,7 +76,15 @@ test('renders the live header, summary cards, progress table, timestamps and pri
   expect(within(page).getByRole('heading', { name: '科技與選擇' })).toBeInTheDocument()
   expect(within(page).getByText('進行中', { selector: '.pill' })).toBeInTheDocument()
   expect(within(page).getByText(/開放到.*即時更新/)).toBeInTheDocument()
-  expect(within(page).getByRole('link', { name: '投影活動 QR' })).toHaveAttribute('href', '/teach/activities/a-1/projector')
+  const projectorButton = within(page).getByRole('button', { name: '投影活動 QR' })
+  fireEvent.click(projectorButton)
+  const inviteDialog = screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })
+  expect(within(inviteDialog).getByRole('link', { name: '投影到大螢幕' })).toHaveAttribute('target', PROJECTOR_WINDOW_NAME)
+  expect(window.open).not.toHaveBeenCalled()
+  fireEvent.click(within(inviteDialog).getByRole('link', { name: '投影到大螢幕' }))
+  expect(window.open).toHaveBeenCalledWith('/teach/activities/a-1/projector', PROJECTOR_WINDOW_NAME)
+  expect(screen.getByTestId('where')).toHaveTextContent('/teach/activities/a-1')
+  expect(screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })).toBeInTheDocument()
   expect(within(page).getByRole('link', { name: '統計分析' })).toHaveAttribute('href', '/teach/activities/a-1/analysis')
 
   expect(within(page).getByText('已開始 3 ／ 4')).toBeInTheDocument()

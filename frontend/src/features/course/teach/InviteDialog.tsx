@@ -5,6 +5,7 @@ import type { components } from '../../../contract/classroomTypes'
 import { errorMessage } from '../../../i18n/errors'
 import { useT } from '../../../i18n/useT'
 import { ButtonLink, CopyButton, FormError, QrCode } from '../../../ui'
+import { openProjectorLink, PROJECTOR_WINDOW_NAME } from './projectorNavigation'
 
 type Course = components['schemas']['CourseTeacherView']
 
@@ -39,7 +40,7 @@ export function InviteDialog({ kind, name, url, code, projectorTo, onClose, disa
         <CopyButton text={code} label={t('invite.copyCode')} iconOnly />
       </div>}
       <div className="invite__actions">
-        <ButtonLink variant="dark" to={projectorTo}>
+        <ButtonLink variant="dark" to={projectorTo} target={PROJECTOR_WINDOW_NAME} onClick={event => openProjectorLink(event, projectorTo)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></svg>
           {t('invite.projector')}
         </ButtonLink>

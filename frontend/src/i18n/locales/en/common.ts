@@ -53,7 +53,6 @@ const common: Shape<typeof zhHant> = {
     analysis: 'Class analysis will live here: stance distribution, completions, and how many changed their stance.',
     aiAnalysis: 'AI analysis is still being built. It will later organize class-level patterns from confirmed viewpoints.',
     toCourse: 'Back to the course',
-    projector: 'Full-screen projection is still being built. For now, use the QR code in the invite window.',
   },
   dateTime: {
     chooseDate: 'Choose a date',

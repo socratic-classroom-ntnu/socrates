@@ -81,7 +81,7 @@ test('renders the live header, summary cards, progress table, timestamps and pri
   expect(within(page).getByText('需要留意 1 人（超過 5 分鐘沒有動作）')).toBeInTheDocument()
 
   const table = within(page).getByRole('table')
-  for (const heading of ['學生', '情境 1', '情境 2', '回顧與反思', '最後動作']) {
+  for (const heading of ['學生', '情境 1', '情境 2', '回顧與反思', '最後動作', '檢視']) {
     expect(within(table).getByRole('columnheader', { name: heading })).toBeInTheDocument()
   }
   expect(within(table).getAllByText('已確認').length).toBeGreaterThan(0)
@@ -93,7 +93,7 @@ test('renders the live header, summary cards, progress table, timestamps and pri
   // 到了回顧只代表回顧開始了，回顧與反思欄跟著 review_status，不因 overall=done 就寫已完成
   expect(within(within(table).getByRole('row', { name: /小博/ })).getByText('進行中')).toBeInTheDocument()
   expect(within(table).getByText('⏸ 2 分鐘沒有動作')).toBeInTheDocument()
-  expect(within(page).getByText('看不到對話內容；學生確認過的想法在『統計分析』')).toBeInTheDocument()
+  expect(within(page).getByText('點「檢視」的眼睛圖示，可以看這位學生的完整對話（唯讀）')).toBeInTheDocument()
 })
 
 test.each([
@@ -220,4 +220,66 @@ test('guest rows carry a guest tag and expired guests show an anonymous number',
   expect(within(guest).getByText('訪客')).toBeInTheDocument()
   const expired = within(page).getByText('過期訪客 2').closest('th')!
   expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})
+
+describe('the 檢視 column', () => {
+  test('every student who has started has an eye that opens their conversation', async () => {
+    open()
+    const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+    for (const [id, name] of [['e-1', '小安'], ['e-2', '小博'], ['e-4', '小德']]) {
+      const link = within(within(table).getByRole('row', { name: new RegExp(name) })).getByRole('link', { name: `查看 ${name} 的對話` })
+      expect(link).toHaveAttribute('href', `/teach/activities/a-1/students/${id}`)
+      expect(link).toHaveAttribute('data-tip', '查看對話')
+      expect(link.querySelector('svg')).not.toBeNull()
+    }
+  })
+
+  test('only the eye is the link, not the row', async () => {
+    open()
+    const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+    const row = within(table).getByRole('row', { name: /小安/ })
+    expect(within(row).getAllByRole('link')).toHaveLength(1)
+    expect(row.closest('a')).toBeNull()
+  })
+
+  test('a student who has not started has a struck-through eye that cannot be followed', async () => {
+    open()
+    const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+    const row = within(table).getByRole('row', { name: /小慈/ })
+    expect(within(row).queryByRole('link')).toBeNull()
+    const off = within(row).getByLabelText('無法查看對話')
+    expect(off).toHaveAttribute('data-tip', '無法查看對話')
+    expect(off).toHaveClass('live-view--off')
+    expect(off.querySelector('svg')).not.toBeNull()
+  })
+
+  test('the link names a guest as the page does, and an expired guest by number', async () => {
+    const [first, second] = progress.students
+    open({ view: { ...progress, students: [
+      { ...first, display_name: '阿明', kind: 'guest', guest_number: null },
+      { ...second, display_name: '', kind: 'expired_guest', guest_number: 2 },
+    ] } })
+    const page = await screen.findByTestId('teacher-live-page')
+    expect(within(page).getByRole('link', { name: '查看 阿明 的對話' })).toBeInTheDocument()
+    expect(within(page).getByRole('link', { name: '查看 過期訪客 2 的對話' })).toBeInTheDocument()
+  })
+
+  test('the empty table spans the new column too', async () => {
+    open({ view: { ...progress, students: [] } })
+    const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+    const empty = within(table).getByText('目前沒有學生')
+    expect(empty).toHaveAttribute('colspan', String(within(table).getAllByRole('columnheader').length))
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(5)
+  })
+
+  test.each([
+    ['en' as const, 'View', 'View Ana’s conversation', 'Click the eye icon under "View" to read this student’s full conversation (read only)'],
+    ['es' as const, 'Ver', 'Ver la conversación de Ana', 'Pulsa el icono del ojo en «Ver» para leer la conversación completa de este estudiante (solo lectura)'],
+  ])('%s: the column, the link and the footer are in that language', async (locale, heading, label, footer) => {
+    open({ locale, view: { ...progress, students: [{ ...progress.students[0], display_name: 'Ana' }] } })
+    const page = await screen.findByTestId('teacher-live-page')
+    expect(within(page).getByRole('columnheader', { name: heading })).toBeInTheDocument()
+    expect(within(page).getByRole('link', { name: label })).toBeInTheDocument()
+    expect(within(page).getByText(footer)).toBeInTheDocument()
+  })
 })

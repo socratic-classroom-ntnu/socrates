@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import type { components } from '../../../contract/classroomTypes'
 import { useResource } from '../../../contract/useResource'
 import { errorMessage } from '../../../i18n/errors'
@@ -57,6 +57,11 @@ export function TeacherLivePage() {
     </span>
   }
 
+  // The same name the row shows: an expired guest has none stored, so the page's own placeholder.
+  function nameOf(student: Student) {
+    return student.kind === 'expired_guest' ? t('guest.expired', { number: student.guest_number ?? '' }) : student.display_name
+  }
+
   function cellLabel(cell: Cell) {
     if (cell.status === 'confirmed') return t('live.cells.confirmed')
     if (cell.status === 'in_dialogue') return t('live.cells.inDialogue', { count: cell.turns ?? 0 })
@@ -98,6 +103,7 @@ export function TeacherLivePage() {
             {scenarios.map(index => <th scope="col" key={index}>{t('live.table.scenario', { number: index + 1 })}</th>)}
             <th scope="col">{t('live.table.review')}</th>
             <th scope="col">{t('live.table.lastActivity')}</th>
+            <th scope="col" className="live-table__view">{t('live.table.view')}</th>
           </tr></thead>
           <tbody>
             {shown.map(student => <tr key={student.enrollment_id} className={student.attention ? 'live-table__attention' : undefined}>
@@ -110,8 +116,12 @@ export function TeacherLivePage() {
               })}
               <td><span className="live-cell live-cell--review">{t(`live.review.${reviewKey(student)}`)}</span></td>
               <td>{lastActivity(student)}</td>
+              <td className="live-table__view">{student.overall === 'not_started'
+                // Nothing to read before the student starts: a struck-through eye, not a link.
+                ? <span className="live-view live-view--off" role="img" aria-label={t('live.view.unavailable')} data-tip={t('live.view.unavailable')}><EyeIcon off /></span>
+                : <Link className="live-view" to={`/teach/activities/${view.activity_id}/students/${student.enrollment_id}`} aria-label={t('live.view.openFor', { name: nameOf(student) })} data-tip={t('live.view.open')}><EyeIcon /></Link>}</td>
             </tr>)}
-            {shown.length === 0 && <tr><td colSpan={scenarios.length + 3} className="live-table__empty">{t('live.empty')}</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={scenarios.length + 4} className="live-table__empty">{t('live.empty')}</td></tr>}
           </tbody>
         </table>
       </div>
@@ -129,4 +139,13 @@ export function TeacherLivePage() {
 function reviewKey(student: { review_status: string; final_status: string | null }): string {
   if (student.review_status === 'completed') return student.final_status === 'unconfirmed' ? 'unconfirmed' : 'completed'
   return student.review_status === 'in_progress' ? 'inProgress' : 'notStarted'
+}
+
+/** The eye of the 檢視 column (Figma 884-15695); struck through when there is nothing to view. */
+function EyeIcon({ off = false }: { off?: boolean }) {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+    <circle cx="12" cy="12" r="3" />
+    {off && <path d="M4 4l16 16" />}
+  </svg>
 }

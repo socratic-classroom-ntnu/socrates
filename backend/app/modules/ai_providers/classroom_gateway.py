@@ -13,7 +13,7 @@ import httpx
 from pydantic import ValidationError
 
 from app.modules.platform.errors import DomainError
-from app.modules.ai_providers.classroom_provider import ProviderWait
+from app.modules.ai_providers.classroom_provider import ProviderHTTPError, ProviderWait
 from app.modules.platform.env import env_int
 from app.modules.ai_providers.provider_schema import gemini_response_schema, openai_response_schema
 
@@ -87,7 +87,8 @@ def _headers(binding: dict) -> dict[str, str]:
             "content-type": "application/json",
         }
     if adapter == "gemini":
-        return {"content-type": "application/json"}
+        # A header, not ?key=: an error from httpx quotes the whole URL (spec P37).
+        return {"x-goog-api-key": secret, "content-type": "application/json"}
     headers = {
         "authorization": "Bearer " + secret,
         "content-type": "application/json",
@@ -114,8 +115,6 @@ async def _bounded_request(
     base = validate_base_url(binding["adapter"], binding.get("base_url"))
     url = urljoin(base + "/", path.lstrip("/"))
     headers = _headers(binding)
-    if binding["adapter"] == "gemini":
-        query = {**(query or {}), "key": binding["secret"]}
     for _ in range(3):
         parsed = urlparse(url)
         if binding["adapter"] == "openai-compatible":
@@ -143,18 +142,45 @@ async def _bounded_request(
                 seconds = float(retry)
             except ValueError:
                 seconds = 60
-            raise ProviderWait(
+            raise ProviderHTTPError(
                 "PROVIDER_AVAILABILITY",
                 max(1, min(seconds, 3600)),
+                status=response.status_code,
+                error=_safe_error_body(response),
             )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise ProviderWait("PROVIDER_HTTP_" + str(response.status_code), 60) from exc
+        if not response.is_success:
+            # Raised here rather than from an `except httpx.HTTPStatusError`: that exception holds
+            # the request and its headers, and would ride along as __context__ (spec P37).
+            raise ProviderHTTPError(
+                "PROVIDER_HTTP_" + str(response.status_code),
+                60,
+                status=response.status_code,
+                error=_safe_error_body(response),
+            )
         if int(response.headers.get("content-length", "0") or 0) > 2_000_000:
             raise ProviderWait("PROVIDER_RESPONSE_SIZE", 60)
         return response
     raise ProviderWait("PROVIDER_REDIRECT_BOUND", 60)
+
+
+ERROR_MESSAGE_LIMIT = 500
+
+
+def _safe_error_body(response: httpx.Response) -> dict | None:
+    """The provider's `error` object for sorting a failure, its message cut short; None when the
+    body is not JSON or has no such object."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    error = body.get("error") if isinstance(body, dict) else None
+    if isinstance(body, list) and body and isinstance(body[0], dict):
+        error = body[0].get("error")  # Gemini sometimes wraps the error in a list
+    if not isinstance(error, dict):
+        return None
+    if isinstance(error.get("message"), str):
+        error = {**error, "message": error["message"][:ERROR_MESSAGE_LIMIT]}
+    return error
 
 
 def _schema_instruction(schema) -> str:

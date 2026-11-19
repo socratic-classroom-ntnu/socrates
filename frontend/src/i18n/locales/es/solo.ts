@@ -16,6 +16,7 @@ export default {
   },
   dialogue: { back: 'Volver a la actividad', backToPractice: 'Volver a Mis diálogos', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}' },
   scenarioTitle: 'Escenario {{number}}', teacherSource: 'Tu docente estableció este escenario. Sócrates no lo reescribirá.',
+  board: { expand: 'Mostrar el escenario', collapse: 'Ocultar el escenario' },
   myAnswer: 'Mi respuesta', answerPending: 'Tu primera respuesta aparecerá aquí cuando la envíes.',
   aboutTitle: 'Qué hace este diálogo',
   aboutBody: 'Sócrates no juzga si algo está bien o mal. Pregunta por qué para ayudarte a aclarar tus razones y excepciones. Cuando estés listo, resumirá tu postura para que la confirmes.',
@@ -54,11 +55,11 @@ export default {
     label: 'Di qué no encaja', hint: 'Después, Sócrates puede hacerte una o dos preguntas y luego volverá a resumirlo para que lo confirmes.',
   },
   viewpoint: {
-    title: 'Intenté resumir tu postura. ¿Está bien expresada?', subtitle: 'Sócrates la organizó; tú decides si es correcta',
+    title: 'Intenté resumir tu postura. ¿Está bien expresada?',
     reason: 'Razón', conditions: 'Condiciones',
     principle: 'Idea relacionada: {{principle}}', principleNote: 'Es solo una referencia, no una etiqueta para ti.',
     confirm: 'Sí, eso es lo que pienso', revise: 'No del todo, quiero explicarlo mejor',
-    cappedTitle: 'Llegaste al límite de mensajes. Así queda hasta ahora', cappedSubtitle: 'Sócrates lo organizó; este escenario no se marcará como confirmado', cappedConfirm: 'De acuerdo, entendido',
+    cappedTitle: 'Llegaste al límite de mensajes. Así queda hasta ahora. Este escenario no se marcará como confirmado.', cappedConfirm: 'De acuerdo, entendido',
     principles: { consequentialism: 'Consecuencialismo', deontology: 'Deontología', mixed: 'Enfoque mixto' },
   },
   review: {

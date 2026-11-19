@@ -25,7 +25,7 @@ const course = {
   role: 'teacher', id: 'c-1', name: '科技倫理', teacher_name: 'Fizzy', intro: '', goals: '', code: 'AB12CD34',
   code_enabled: true, student_count: 0, activity_count: 1, available_actions: [],
 }
-const draft = { title: '第三週倫理討論', starts_at: null, ends_at: now + 86400 }
+const draft = { title: '第三週倫理討論', scenario: '一輛失控的電車正駛向五名工人。', starts_at: null, ends_at: now + 86400 }
 function view(extra: Record<string, unknown> = {}) {
   return {
     id: 'a-1', course_id: 'c-1', status: 'draft', locked: false, has_unpublished_changes: false, revision: null,
@@ -66,7 +66,8 @@ function pickEnd() {
 }
 
 async function fillNew() {
-  fireEvent.change(await screen.findByLabelText(/^題目/), { target: { value: '第三週倫理討論' } })
+  fireEvent.change(await screen.findByLabelText(/^活動名稱/), { target: { value: '第三週倫理討論' } })
+  fireEvent.change(screen.getByLabelText(/^情境描述/), { target: { value: '一輛失控的電車正駛向五名工人。' } })
   pickEnd()
 }
 
@@ -82,7 +83,7 @@ test('save to activity list posts the complete draft and stays in the editor', a
   await fillNew()
   await click('儲存至活動列表')
   const body = calls.find(call => call.key === 'POST /courses/c-1/activities')?.body as Record<string, unknown>
-  expect(body).toEqual({ title: '第三週倫理討論', starts_at: null, ends_at: toEpochSeconds(endPicked.date, endPicked.time) })
+  expect(body).toEqual({ title: '第三週倫理討論', scenario: '一輛失控的電車正駛向五名工人。', starts_at: null, ends_at: toEpochSeconds(endPicked.date, endPicked.time) })
   await waitFor(() => expect(where()).toBe('/teach/activities/a-9/edit'))
   expect(await screen.findByText('已儲存至活動列表，學生仍看不到')).toBeInTheDocument()
 })
@@ -97,53 +98,75 @@ test('create activity posts then publishes then returns to course', async () => 
 
 test('invalid form shows the summary and calls no api', async () => {
   const calls = openNew()
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await click('建立活動')
   // 頂端只說一句，不逐條列出；畫面跳到第一個錯的欄位
   const summary = screen.getByRole('alert')
   expect(summary).toHaveTextContent(/^部分欄位尚未填寫$/)
   expect(within(summary).queryAllByRole('button')).toHaveLength(0)
-  expect(screen.getByLabelText(/^題目/)).toHaveAttribute('aria-invalid', 'true')
-  await waitFor(() => expect(screen.getByLabelText(/^題目/)).toHaveFocus())
+  expect(screen.getByLabelText(/^活動名稱/)).toHaveAttribute('aria-invalid', 'true')
+  expect(screen.getByLabelText(/^情境描述/)).toHaveAttribute('aria-invalid', 'true')
+  // 時間在最上面，第一個錯的欄位是結束時間
+  await waitFor(() => expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveFocus())
   expect(calls.some(call => call.key.startsWith('POST'))).toBe(false)
 })
 
 test('field errors and hints are read as each control’s description', async () => {
-  const titleHint = '寫一段話，蘇格拉底會以它為起點，替每位學生寫出第一個情境。這段話也是活動名稱。'
+  const scenarioHint = '蘇格拉底會以這段描述為起點，替每位學生寫出第一個情境。'
   const windowHint = '時間到會自動結束；你也可以在活動頁提早開始或結束。結束後，學生只能回看自己的紀錄。'
   openNew()
-  const title = await screen.findByLabelText(/^題目/)
-  expect(title).toHaveAccessibleDescription(titleHint)
+  const title = await screen.findByLabelText(/^活動名稱/)
+  const scenario = screen.getByLabelText(/^情境描述/)
+  expect(title).toHaveAccessibleDescription('')
+  expect(scenario).toHaveAccessibleDescription(scenarioHint)
   expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(windowHint)
   fireEvent.click(screen.getByRole('radio', { name: '指定時間' }))
   await click('建立活動')
 
-  expect(title).toHaveAccessibleDescription(`請填題目 ${titleHint}`)
+  expect(title).toHaveAccessibleDescription('請填活動名稱')
+  expect(scenario).toHaveAccessibleDescription(`請填情境描述 ${scenarioHint}`)
   expect(screen.getByRole('button', { name: /^開始時間/ })).toHaveAccessibleDescription(`請填開始時間 ${windowHint}`)
   expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAccessibleDescription(`請填結束時間 ${windowHint}`)
 
   // 補好就只剩說明
   fireEvent.change(title, { target: { value: '第三週倫理討論' } })
-  expect(title).toHaveAccessibleDescription(titleHint)
+  fireEvent.change(scenario, { target: { value: '一輛失控的電車' } })
+  expect(title).toHaveAccessibleDescription('')
+  expect(scenario).toHaveAccessibleDescription(scenarioHint)
 })
 
-test('the editor has one topic input and no question, option or panel controls', async () => {
+test('the editor has a name and a scenario input and no question, option or panel controls', async () => {
   openNew()
-  await screen.findByLabelText(/^題目/)
-  expect(screen.getAllByRole('textbox')).toHaveLength(1)
-  expect(screen.queryByLabelText(/^情境敘述/)).toBeNull()
+  const name = await screen.findByLabelText(/^活動名稱/)
+  const scenario = screen.getByLabelText(/^情境描述/)
+  expect(screen.getAllByRole('textbox')).toEqual([name, scenario])
+  expect(name.tagName).toBe('INPUT')
+  expect(name).toHaveAttribute('maxlength', '40')
+  expect(scenario.tagName).toBe('TEXTAREA')
+  expect(scenario).toHaveAttribute('maxlength', '300')
   expect(screen.queryByLabelText(/^主題方向/)).toBeNull()
   expect(screen.queryByRole('button', { name: /新增空白題目|增加選項/ })).toBeNull()
   expect(screen.queryByRole('tab')).toBeNull()
 })
 
-test('invalid submit reopens a collapsed section and focuses the topic field', async () => {
+test('the start and end times come before the name and the scenario', async () => {
   openNew()
-  await screen.findByLabelText(/^題目/)
+  const name = await screen.findByLabelText(/^活動名稱/)
+  const end = screen.getByRole('button', { name: /^結束時間/ })
+  const start = screen.getByRole('radiogroup', { name: '開始時間' })
+  const scenario = screen.getByLabelText(/^情境描述/)
+  const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+  expect(follows(start, name) && follows(end, name) && follows(name, scenario)).toBe(true)
+})
+
+test('invalid submit reopens a collapsed section and focuses the first missing field', async () => {
+  openNew()
+  await screen.findByLabelText(/^活動名稱/)
+  pickEnd()
   fireEvent.click(screen.getByRole('button', { expanded: true }))
-  expect(screen.queryByLabelText(/^題目/)).toBeNull()
+  expect(screen.queryByLabelText(/^活動名稱/)).toBeNull()
   await click('建立活動')
-  await waitFor(() => expect(screen.getByLabelText(/^題目/)).toHaveFocus())
+  await waitFor(() => expect(screen.getByLabelText(/^活動名稱/)).toHaveFocus())
 })
 
 test('publish failure after create keeps the draft and flags end time', async () => {
@@ -162,7 +185,7 @@ test('publish failure after create keeps the draft and flags end time', async ()
 test('editing a published activity puts then publishes', async () => {
   const published = view({ status: 'open', revision: 1, starts_at: now - 600, available_actions: ['update', 'update_details', 'publish', 'end_now', 'copy', 'delete'] })
   const calls = openEdit(published, { 'PUT /activities/a-1': published, 'POST /activities/a-1/publish': published })
-  fireEvent.change(await screen.findByLabelText(/^題目/), { target: { value: '改過的名稱' } })
+  fireEvent.change(await screen.findByLabelText(/^活動名稱/), { target: { value: '改過的名稱' } })
   expect(screen.queryByRole('button', { name: '建立活動' })).toBeNull()
   await click('儲存變更')
   const put = calls.find(call => call.key === 'PUT /activities/a-1')?.body as Record<string, unknown>
@@ -178,7 +201,7 @@ test('publish failure keeps pending changes visible', async () => {
     'PUT /activities/a-1': { ...published, has_unpublished_changes: true },
     'POST /activities/a-1/publish': () => { throw new ApiError(422, 'ACTIVITY_TIME_INVALID') },
   })
-  fireEvent.change(await screen.findByLabelText(/^題目/), { target: { value: '改過的名稱' } })
+  fireEvent.change(await screen.findByLabelText(/^活動名稱/), { target: { value: '改過的名稱' } })
   await click('儲存變更')
   expect(await screen.findByText('變更已保留，但尚未發布；學生仍看到上一個版本')).toBeInTheDocument()
   expect(where()).toBe('/teach/activities/a-1/edit')
@@ -194,7 +217,9 @@ const lockedView = view({ status: 'open', revision: 1, locked: true, starts_at: 
 test('locked activity edits only title and end through patch', async () => {
   const calls = openEdit(lockedView, { 'PATCH /activities/a-1': lockedView })
   expect(await screen.findByText('題目已鎖定')).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText(/^題目/), { target: { value: '新名稱' } })
+  expect(screen.getByLabelText(/^活動名稱/)).not.toHaveAttribute('readonly')
+  expect(screen.getByLabelText(/^情境描述/)).toHaveAttribute('readonly')
+  fireEvent.change(screen.getByLabelText(/^活動名稱/), { target: { value: '新名稱' } })
   await click('儲存變更')
   expect(calls.find(call => call.key === 'PATCH /activities/a-1')?.body).toEqual({ title: '新名稱' })
   await waitFor(() => expect(where()).toBe('/teach/courses/c-1'))
@@ -219,7 +244,7 @@ test('copy from locked banner opens the new draft with a copied note', async () 
 
 test('delete from the editor confirms then returns to the course', async () => {
   const calls = openEdit(view(), { 'DELETE /activities/a-1': null })
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await click('刪除活動')
   await click('確認刪除')
   expect(calls.some(call => call.key === 'DELETE /activities/a-1')).toBe(true)
@@ -228,7 +253,8 @@ test('delete from the editor confirms then returns to the course', async () => {
 
 test('ended activity is read-only', async () => {
   openEdit(view({ status: 'ended', revision: 1, starts_at: now - 7200, ends_at: now - 60, available_actions: ['copy', 'delete'] }))
-  expect(await screen.findByLabelText(/^題目/)).toHaveAttribute('readonly')
+  expect(await screen.findByLabelText(/^活動名稱/)).toHaveAttribute('readonly')
+  expect(screen.getByLabelText(/^情境描述/)).toHaveAttribute('readonly')
   expect(screen.queryByRole('button', { name: '儲存變更' })).toBeNull()
   expect(screen.queryByRole('button', { name: '建立活動' })).toBeNull()
   expect(screen.getByRole('button', { name: '複製成新活動' })).toBeInTheDocument()
@@ -239,9 +265,9 @@ test('offers to restore an unfinished form without overwriting the server copy',
   await saveActivityDraft('u-1:activity:a-1', { ...emptyForm(), title: '本機寫到一半' }, new Date().toISOString())
   openEdit(view())
   expect(await screen.findByRole('dialog', { name: /找到/ })).toBeInTheDocument()
-  expect(screen.getByLabelText(/^題目/)).toHaveValue('第三週倫理討論')
+  expect(screen.getByLabelText(/^活動名稱/)).toHaveValue('第三週倫理討論')
   await click('恢復')
-  expect(screen.getByLabelText(/^題目/)).toHaveValue('本機寫到一半')
+  expect(screen.getByLabelText(/^活動名稱/)).toHaveValue('本機寫到一半')
 })
 
 test('autosave status is shown', async () => {
@@ -270,14 +296,14 @@ test("copy opens the copy's own content", async () => {
   expect(await screen.findByDisplayValue('複本的名稱')).toBeInTheDocument()
   await click('儲存變更')
   const put = calls.find(call => call.key === 'PUT /activities/a-2')?.body as Record<string, unknown>
-  expect(Object.keys(put).sort()).toEqual(['ends_at', 'starts_at', 'title'])
+  expect(Object.keys(put).sort()).toEqual(['ends_at', 'scenario', 'starts_at', 'title'])
   expect(put.title).toBe('複本的名稱')
 })
 
 test('an old unfinished form with questions is not offered for restore', async () => {
   await saveActivityDraft('u-1:activity:a-1', { ...emptyForm(), title: '舊版', questions: [] } as never, new Date().toISOString())
   openEdit(view())
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   expect(screen.queryByRole('dialog')).toBeNull()
 })
 
@@ -288,7 +314,7 @@ test('closing the restore dialog keeps the snapshot', async () => {
   const dialog = await screen.findByRole('dialog', { name: /找到/ })
   fireEvent.keyDown(dialog, { key: 'Escape' })
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByLabelText(/^題目/)).toHaveValue('第三週倫理討論')
+  expect(screen.getByLabelText(/^活動名稱/)).toHaveValue('第三週倫理討論')
   expect((await loadActivityDraft('u-1:activity:a-1'))?.form.title).toBe('本機寫到一半')
 })
 
@@ -302,7 +328,7 @@ test('restore is focused first', async () => {
 test('identical snapshot is cleared silently', async () => {
   await saveActivityDraft('u-1:activity:a-1', fromDraft(draft), new Date().toISOString())
   openEdit(view())
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await waitFor(async () => expect(await loadActivityDraft('u-1:activity:a-1')).toBeNull())
   expect(screen.queryByRole('dialog')).toBeNull()
 })
@@ -314,16 +340,16 @@ test('put rejected as locked reloads into the locked mode', async () => {
     'GET /activities/a-1': () => (++gets === 1 ? published : lockedView),
     'PUT /activities/a-1': () => { throw new ApiError(409, 'ACTIVITY_LOCKED') },
   })
-  fireEvent.change(await screen.findByLabelText(/^題目/), { target: { value: '我改的名稱' } })
+  fireEvent.change(await screen.findByLabelText(/^活動名稱/), { target: { value: '我改的名稱' } })
   await click('儲存變更')
   expect(await screen.findByText('題目已鎖定')).toBeInTheDocument()
   expect(screen.getByText('活動狀態已經改變，已重新整理')).toBeInTheDocument()
-  expect(screen.getByLabelText(/^題目/)).toHaveValue('我改的名稱')
+  expect(screen.getByLabelText(/^活動名稱/)).toHaveValue('我改的名稱')
 })
 
 test('deleted elsewhere shows not found', async () => {
   openEdit(view(), { 'PUT /activities/a-1': () => { throw new ApiError(404, 'ACTIVITY_NOT_FOUND') } })
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await click('儲存變更')
   expect(await screen.findByText('找不到這個活動')).toBeInTheDocument()
   expect(screen.getByRole('link', { name: '回到課程頁' })).toHaveAttribute('href', '/teach/courses/c-1')
@@ -343,25 +369,25 @@ test('publish failure after create with another error explains it', async () => 
 
 test('server 422 opens the collapsed section', async () => {
   openEdit(view(), { 'PUT /activities/a-1': () => { throw new ApiError(422, [{ loc: ['body', 'ends_at'], type: 'missing' }]) } })
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await click('收合「基礎資訊」')
   expect(screen.queryByRole('button', { name: /^結束時間/ })).toBeNull()
   await click('儲存變更')
   expect(await screen.findByRole('button', { name: /^結束時間/ })).toHaveAttribute('aria-invalid', 'true')
-  fireEvent.change(screen.getByLabelText(/^題目/), { target: { value: '改一下' } })
+  fireEvent.change(screen.getByLabelText(/^活動名稱/), { target: { value: '改一下' } })
   expect(screen.getByRole('button', { name: /^結束時間/ })).toHaveAttribute('aria-invalid', 'true')
 })
 
 test('read-only activity does not offer to extend the end', async () => {
   openEdit(view({ status: 'ended', revision: 1, starts_at: now - 7200, ends_at: now - 60, available_actions: ['copy', 'delete'] }))
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   expect(screen.queryByText(/可以延後結束時間/)).toBeNull()
 })
 
 test('cancel and delete are disabled while saving', async () => {
   let finish: (value: unknown) => void = () => {}
   openEdit(view(), { 'PUT /activities/a-1': () => new Promise(resolve => { finish = resolve }) })
-  await screen.findByLabelText(/^題目/)
+  await screen.findByLabelText(/^活動名稱/)
   await click('儲存變更')
   expect(screen.getByRole('button', { name: '取消' })).toBeDisabled()
   expect(screen.getByRole('button', { name: '刪除活動' })).toBeDisabled()
@@ -380,7 +406,7 @@ test('locked save without changes returns to the course', async () => {
 // ---- 審核修正 ----
 test('leaving through the breadcrumb right after typing still keeps the change', async () => {
   openEdit(view())
-  fireEvent.change(await screen.findByLabelText(/^題目/), { target: { value: '剛打的字' } })
+  fireEvent.change(await screen.findByLabelText(/^活動名稱/), { target: { value: '剛打的字' } })
   // 300ms 內就離開：SPA 導航不會觸發 beforeunload／visibilitychange
   fireEvent.click(screen.getByRole('link', { name: '科技倫理' }))
   await waitFor(() => expect(where()).toBe('/teach/courses/c-1'))

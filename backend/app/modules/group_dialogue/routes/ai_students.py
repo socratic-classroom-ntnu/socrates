@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 
-from fastapi import APIRouter, Request
+from fastapi import Depends, APIRouter, Request
 
+from app.modules.platform.toggles import group_mode_required
 from app.modules.platform.storage import transaction
 
 from app.modules.platform.feature_flags import require_feature
@@ -20,7 +21,7 @@ from app.modules.group_dialogue.service import add_ai_students_to_room, clear_ai
 from app.modules.group_dialogue.service import suggest_other_option
 
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(group_mode_required)])
 
 
 @router.post("/groups/classrooms/{rid}/ai-students", response_model=AddAIStudentsReceipt)

@@ -10,7 +10,10 @@ import { GroupClassroomGate } from '../group-dialogue/GroupClassroom';
 import { FocusNotice } from '../../components/FocusNotice';
 import { TeacherRecords } from '../teacher-records/TeacherRecords';
 import { JOIN_ALIAS_MAX_LENGTH } from '../../contract/limits';
+import { useFeatures } from '../../shared/publicConfig';
+import { closedByGroupMode } from './socketClose';
 function useRoom(id, mode) {
+    const { refresh: refreshFeatures } = useFeatures();
     const [room, setRoom] = useState(null), [note, setNote] = useState(''), [buffer, setBuffer] = useState('');
     const [barrage, setBarrage] = useState([]);
     useDevView('教室畫面 /classrooms/:id', room);
@@ -88,7 +91,10 @@ function useRoom(id, mode) {
                 if (refreshTimer === undefined)
                     refreshTimer = window.setTimeout(() => { refreshTimer = undefined; void refresh(); }, 16);
             };
-            ws.onclose = () => { if (!stopped) {
+            ws.onclose = event => {
+                // 4403：多人模式被關掉（或沒權限）——不再重連，重讀設定；GroupModeGate 會換成停用頁（後台 spec P27）
+                if (closedByGroupMode(event?.code)) { stopped = true; void refreshFeatures(); return; }
+                if (!stopped) {
                 window.setTimeout(reconnect, backoff);
                 backoff = Math.min(5000, backoff * 2);
             } };
@@ -217,7 +223,7 @@ function LegacyClassroom({ id }) {
     {room.phase === 'distribution' && <section className="sc-distribution"><small>OUR PERSPECTIVES</small><h1>同一個問題，不同的看法。</h1>{room.distribution.map((raw, i) => { const d = raw; return <article className="sc-card" key={i}><h2>{d.text}</h2><b>{d.percent.toFixed(1)}% · {d.count} 人</b><div className="sc-bar"><i style={{ width: d.percent + '%' }}/></div><div className="sc-row">{d.members?.map((m, j) => <span className="sc-mini-person" key={j}><i>{m.alias.slice(0, 1)}</i>{m.alias}</span>)}</div></article>; })}</section>}
     {['arena', 'focus', 'focus_summary'].includes(room.phase) && <><Arena room={room}/><div className="sc-barrage-layer">{barrage.map((b, i) => <span key={b.id} style={{ top: (12 + (i % 6) * 10) + '%' }}>{b.text}</span>)}</div>
       {selected && <aside className="sc-focus-chat"><small>你的深入討論</small>{f?.messages.map((m, i) => <article className={'sc-message ' + m.role} key={i}><small>{m.role === 'tutor' ? '導師' : '你'}</small><p>{m.text}</p></article>)}</aside>}
-      <section className="sc-live-dialog"><small>{room.source_mode === 'openrouter' ? 'LIVE TUTOR' : 'SCRIPTED PROBE'} · {selected ? '導師正與你對話' : '一起聽聽這個觀點'}</small><FocusNotice status={f?.status} message={room.last_error}/><p>{buffer || f?.messages.filter(m => m.role === 'tutor').at(-1)?.text || (f?.status === 'TUTOR_UNAVAILABLE' ? '' : '導師正在整理問題…')}</p>{room.phase === 'focus_summary' && <p>{f?.micro_summary}</p>}
+      <section className="sc-live-dialog" data-feedback-avoid=""><small>{room.source_mode === 'openrouter' ? 'LIVE TUTOR' : 'SCRIPTED PROBE'} · {selected ? '導師正與你對話' : '一起聽聽這個觀點'}</small><FocusNotice status={f?.status} message={room.last_error}/><p>{buffer || f?.messages.filter(m => m.role === 'tutor').at(-1)?.text || (f?.status === 'TUTOR_UNAVAILABLE' ? '' : '導師正在整理問題…')}</p>{room.phase === 'focus_summary' && <p>{f?.micro_summary}</p>}
         {room.role === 'student' && <><DraftComposer value={text} onChange={setText} maxLength={selected ? 12000 : 500} label={selected ? '回覆導師' : '匿名彈幕'} enabled={!selected || room.available_actions.includes('focus_message')} placeholder={selected ? '說說你現在的想法…' : '分享一則匿名彈幕…'} onSend={async () => { if (text.trim()) {
             const ok = await run(selected ? 'focus_message' : 'barrage', { text });
             if (ok)

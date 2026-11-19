@@ -1,5 +1,10 @@
 # Hsy 的工作清單（A 包：課堂）
 
+## 11/18 新增（11/22 交）
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 8 | prototypes（不進 app） | 統整與雷達 | 雷達圖實測評估，規格以 Discord「【需求】雷達圖實測評估」討論串的附件為準（Fizzy 11/18 提出）。用附件的 16 位模擬學生，最終統整用 app 的 `final_summary` 產生並存成 JSON，之後每次重跑都用同一份。A：現在的雷達（全班共用一組軸），14 人走「模型定軸、模型評分」、16 人走「向量＋主成分分析」，各重跑 3 次並畫出每位學生的雷達圖；16 人那條要先抽 embedding，看向量能不能找出軸（至少 3 條才畫得成雷達圖）。B：每位學生自己的軸，雛型讓模型為每位學生挑 3–5 個傾向並附原話，做成雷達、長條、卡片三種給組長和 Fizzy 比較。程式只放 `prototypes/radar-evaluation/`，不改 `backend/app/`、`frontend/`；模型用 Haiku 5.5（經 OpenRouter），金鑰向 Fizzy 拿，上限 US$5，不要寫重試迴圈。Courecta 10（#176）合進 `backend/main` 後，用同一份 JSON 補跑一次前後對照。從 `backend/main` 開 `backend/<你的名字>/radar-evaluation`，PR 回 `backend/main`。實作或想法有問題問 Arthur | — | 報告貼回討論串並附圖，逐題回答附件的完成標準：軸有沒有重複、幾位學生的形狀是平的、重跑穩不穩、原話撐不撐得起分數、分不分得出學生，最後給「雷達圖值不值得繼續做」的結論；照 README 換一台電腦能重跑出同樣格式的結果；雛型的測試與 ruff 全綠 |
+
 ## 你的第一個 PR
 classroom-core 的 HTTP 層測試：用 TestClient 打真的路由，讀回 200 與欄位。涵蓋：
 - `POST /api/v2/classrooms/{room_id}/reactions`

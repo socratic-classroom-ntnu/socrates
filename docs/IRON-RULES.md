@@ -21,6 +21,7 @@
 | `other_suggestion` | 其他觀點建議（`app/modules/group_dialogue/routes/ai_students.py`） |
 | `solo_tutor` | 單人活動的導師（`app/modules/solo_activity/service.py`） |
 | `scenario_extension` | 單人活動的延伸情境（由 solo-activity 呼叫；失敗時由它的後備做法接手） |
+| `connection_probe` | 後台「系統 AI」的測試連線（`app/modules/admin/system_ai.py`）：送一句固定內容，確認服務、金鑰、模型可用 |
 
 ## 每次呼叫做什麼
 

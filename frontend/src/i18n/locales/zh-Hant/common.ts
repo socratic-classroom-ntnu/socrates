@@ -4,9 +4,16 @@ export default {
   close: '關閉',
   copied: '已複製',
   copyFailed: '無法複製',
+  select: {
+    searching: '搜尋中…',
+  },
   password: {
     show: '顯示密碼',
     hide: '隱藏密碼',
+  },
+  groupModeOff: {
+    title: '多人模式目前沒有開放',
+    body: '分組課這段時間暫停使用，之後開放會再通知。',
   },
   notFound: {
     title: '找不到這個頁面',
@@ -37,7 +44,6 @@ export default {
     title: '功能開發中',
     body: '這個功能還在施工，之後會開放。',
     back: '回到首頁',
-    scan: '用這台裝置的鏡頭掃描 QR code 還在施工。現在可以直接用手機相機掃描，或輸入課程代碼。',
     account: '個人設定之後會放在這裡。語言可以從帳號選單切換。',
     activity: '活動頁還在施工，之後會從這裡開始和蘇格拉底對話。',
     live: '即時狀況之後會放在這裡：每位學生每一題的進度。',

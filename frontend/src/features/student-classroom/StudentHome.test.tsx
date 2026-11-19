@@ -82,3 +82,12 @@ test('an empty classroom code is blocked before any request', async () => {
   expect(screen.getByRole('alert')).toHaveTextContent('請輸入教室代碼。')
   expect(api).not.toHaveBeenCalledWith('/classrooms/join', 'POST', expect.anything())
 })
+
+// 多人模式關閉時，放行的 AI 連線設定頁不讀教室清單（後台 spec P28）
+test('the providers view does not load classrooms while group mode is off', async () => {
+  const { PublicConfigProvider } = jest.requireActual<typeof import('../../shared/publicConfig')>('../../shared/publicConfig')
+  window.history.replaceState({}, '', '/groups?view=providers')
+  render(<PublicConfigProvider initial={{ group_mode: false }}><Home user={account} /></PublicConfigProvider>)
+  await act(async () => undefined)
+  expect(api).not.toHaveBeenCalled()
+})

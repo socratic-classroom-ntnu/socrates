@@ -26,8 +26,7 @@ TAIPEI_NEXT_DAY = datetime(2026, 11, 15, 16, 30, tzinfo=timezone.utc).timestamp(
 
 def prepare(config=KEY):
     cfg = ai_service.platform_profile_config(config) if config else None
-    with storage.transaction() as db:
-        practice_startup.prepare_practice(db, cfg)
+    practice_startup.prepare_practice(lambda: cfg)
 
 
 @pytest.fixture
@@ -90,7 +89,8 @@ def test_starting_builds_a_private_course_an_open_activity_and_an_attempt(client
         enrollment = db.scalar(select(Enrollment).where(Enrollment.course_id == course.id))
         assert (enrollment.account_id, enrollment.display_name) == (student["id"], "ming")
         assert activity.bank_item_id == "trolley"
-        assert activity.title.startswith("一輛失控的電車")
+        assert activity.title == "電車難題"
+        assert activity.draft["scenario"].startswith("一輛失控的電車")
         assert (activity.starts_at, activity.ends_at, activity.created_at) == (
             TAIPEI_LATE,
             4102444800,
@@ -259,7 +259,7 @@ def test_only_a_completed_attempt_counts_as_completed(client, student, at):
     assert listing(client)["dialogues"][0]["status"] == "completed"
 
 
-def test_a_removed_topic_still_lists_with_a_fallback_title(client, student, at, monkeypatch):
+def test_a_removed_topic_still_lists_with_the_stored_name(client, student, at, monkeypatch):
     start(client, "trolley")
     monkeypatch.setattr(
         course_practice, "_bank", tuple(i for i in course_practice.bank() if i.id != "trolley")
@@ -267,7 +267,7 @@ def test_a_removed_topic_still_lists_with_a_fallback_title(client, student, at, 
     (row,) = listing(client)["dialogues"]
     assert row["category"] is None
     assert row["body"].startswith("一輛失控的電車")
-    assert row["title"] == row["body"][:20] + "…"
+    assert row["title"] == "電車難題"
 
 
 def test_editing_a_topic_does_not_rewrite_what_was_discussed(client, student, at, monkeypatch):
@@ -318,3 +318,18 @@ def test_the_activity_and_attempt_views_show_the_short_title(client, student, at
     assert (view["title"], view["practice"]) == ("電車難題", True)
     attempt = client.get(f"/api/v2/solo/attempts/{started['attempt_id']}").json()
     assert attempt["activity_title"] == "電車難題"
+    assert attempt["scenarios"][0]["text"].startswith("一輛失控的電車")
+
+
+def test_a_platform_key_that_no_longer_decrypts_is_unavailable(client, at):
+    """Same answer as no connection (後台 spec P30, P34), not a decryption error."""
+    from app.modules.ai_providers.repositories import ProviderProfile
+
+    prepare()
+    with storage.transaction() as db:
+        db.scalar(
+            select(ProviderProfile)
+        ).encrypted_secret = '{"nonce": "AAAA", "ciphertext": "AAAA"}'
+    user(client, "ming")
+    r = start(client)
+    assert (r.status_code, r.json()) == (503, {"detail": "PRACTICE_UNAVAILABLE"})

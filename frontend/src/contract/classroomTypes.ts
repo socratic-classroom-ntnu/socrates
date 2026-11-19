@@ -2,9 +2,9 @@
 export interface components { schemas: {
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name": string };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
-  "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
+  "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
   "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string; "allow_guest": boolean };
   "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };
@@ -15,6 +15,9 @@ export interface components { schemas: {
   "ActivityTeacherView": { "id": string; "course_id": string; "status": "draft" | "scheduled" | "open" | "ended"; "locked": boolean; "has_unpublished_changes": boolean; "revision": (number | null); "draft": components["schemas"]["ActivityDraft"]; "starts_at": (number | null); "ends_at": (number | null); "available_actions": Array<"update" | "update_details" | "publish" | "start_now" | "end_now" | "copy" | "delete"> };
   "AddAIStudents": { "action_id": string; "count": number; "model": string; "provider_profile_id"?: (string | null) };
   "AddAIStudentsReceipt": { "status": string; "action_id": string; "seq": number; "room_id": string; "created": Array<components["schemas"]["AIStudentCreatedView"]>; "roster_digest": string };
+  "AdminAuthor": { "kind": "admin"; "name": string };
+  "AdminCreate": { "username": string };
+  "AdminView": { "account_id": string; "username": string; "display_name": string; "account_role": string; "is_you": boolean };
   "AnalysisEdgeView": { "source": string; "target": string; "type": "supports" | "challenges" | "qualifies" | "revises"; "provenance": "student_selected_relation" | "confirmation_snapshot" };
   "AnalysisGroupView": { "id": string; "label": string; "phase": string; "snapshot_id": string; "settlement": components["schemas"]["SettlementView"]; "persons": Array<components["schemas"]["AnalysisPersonView"]>; "nodes": Array<components["schemas"]["AnalysisNodeView"]>; "edges": Array<components["schemas"]["AnalysisEdgeView"]>; "tree_projection": Array<components["schemas"]["AnalysisTreeNodeView"]>; "roots": Array<string>; "stances": Array<components["schemas"]["GroupStanceView"]> };
   "AnalysisNodeView": { "id": string; "person_id": string; "nickname": string; "text": string; "at": number; "sequence": number; "stage": string; "question_index": number; "kind": "statement" | "post_ack_observation" | "confirmed_viewpoint"; "provenance": "student_original_quote" | "student_explicit_confirmation"; "visibility"?: ("personal" | "stage" | "group_shared" | null); "summary_digest"?: (string | null) };
@@ -56,7 +59,14 @@ export interface components { schemas: {
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
   "DemoAccountView": { "username": string; "role": "teacher" | "student" };
   "DemoLoginView": { "password": string; "accounts": Array<components["schemas"]["DemoAccountView"]> };
+  "DeployAuthor": { "kind": "deploy" };
   "DiscoveredModel": { "id": string; "name": (string | null); "pricing"?: unknown; "supported_parameters": Array<string>; "structured_outputs": (boolean | null); "reasoning": (Record<string, unknown> | null) };
+  "FeaturesView": { "group_mode": boolean };
+  "FeedbackCreate": { "kind"?: ("problem" | "suggestion" | "other" | null); "message": string; "contact"?: (string | null); "page": string; "viewport": components["schemas"]["Viewport"]; "locale": string; "screenshot"?: (components["schemas"]["ScreenshotUpload"] | null) };
+  "FeedbackCreated": { "id": string };
+  "FeedbackItem": { "id": string; "created_at": number; "kind": ("problem" | "suggestion" | "other" | null); "message": string; "contact": (string | null); "page": string; "viewport_w": number; "viewport_h": number; "locale": string; "user_agent": string; "release_id": string; "identity": "teacher" | "student" | "guest" | "anonymous"; "account_kind": ("registered" | "guest" | "expired_guest" | null); "account_name": (string | null); "has_screenshot": boolean };
+  "FeedbackPage": { "items": Array<components["schemas"]["FeedbackItem"]>; "page": number; "has_more": boolean };
+  "FeedbackScreenshot": { "mime": "image/png" | "image/jpeg" | "image/webp"; "data_base64": string };
   "FinalSummaryPointView": { "text": string; "sources": Array<components["schemas"]["CitationSourceView"]> };
   "FinalSummaryView": { "points": Array<components["schemas"]["FinalSummaryPointView"]>; "trajectory": Array<components["schemas"]["FinalTrajectoryStepView"]>; "final_position": string; "reasoning_style": string; "open_question": string };
   "FinalTrajectoryStepView": { "position": string; "shift_reason": string; "sources": Array<components["schemas"]["CitationSourceView"]> };
@@ -83,11 +93,12 @@ export interface components { schemas: {
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
-  "LoginView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name": string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
+  "LoginView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
   "MailRequest": { "email": string };
   "MailRequestView": { "status": "REQUEST_RECORDED"; "message": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
   "ModelDiscoveryView": { "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "models": Array<components["schemas"]["DiscoveredModel"]>; "manual_model_id_allowed": boolean; "observed_at": number };
+  "ModelOption": { "id": string; "name": string; "provider": (string | null); "free": boolean };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
@@ -102,7 +113,7 @@ export interface components { schemas: {
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicActivityPreview": { "course_name": string; "allow_guest": boolean; "status": "scheduled" | "open" | "ended" };
-  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null) };
+  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null); "features": components["schemas"]["FeaturesView"] };
   "PublicJoinPreview": { "course_name": string; "allow_guest": boolean };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
@@ -124,6 +135,7 @@ export interface components { schemas: {
   "SampleQuestionDraft": { "id": string; "title": string; "scenario": string; "options"?: Array<components["schemas"]["Option"]>; "duration_seconds": number; "argument_required": boolean; "tutor_goal": string; "probe_hints"?: Array<string>; "max_focus_turns": number; "focus_response_seconds": number; "sender_point_cap": number; "receiver_point_cap": number; "max_personal_turns": number; "personal_seconds": number };
   "SampleQuestionSet": { "title": string; "questions": Array<components["schemas"]["SampleQuestionDraft"]> };
   "ScenarioAI": { "provider_profile_id": string; "model": string };
+  "ScreenshotUpload": { "mime": string; "data_base64": string };
   "ScriptAssistRequest": { "request": string; "document"?: Record<string, unknown>; "question_index"?: (number | null); "script_id"?: (string | null) };
   "ScriptAssistView": { "question": components["schemas"]["PublicQuestion"]; "question_index": (number | null); "rationale": string; "model": (string | null); "provider": (string | null) };
   "ScriptDocument": { "title": string; "mode": "static" | "dynamic"; "questions": Array<components["schemas"]["Question"]>; "max_questions": number; "preview_seconds": number; "live_llm_call_budget": number };
@@ -153,6 +165,13 @@ export interface components { schemas: {
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest"; "guest_number": (number | null); "overall": "not_started" | "in_progress" | "done"; "cells": Array<components["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress" | "completed"; "final_status": ("confirmed" | "unconfirmed" | null); "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
+  "SystemAIInput": { "adapter": string; "model": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "SystemAIModelsInput": { "adapter": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "SystemAIModelsView": { "models": Array<components["schemas"]["ModelOption"]> };
+  "SystemAITestView": { "ok": true };
+  "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((components["schemas"]["AdminAuthor"] | components["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "ToggleUpdate": { "enabled": boolean };
+  "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
@@ -161,14 +180,15 @@ export interface components { schemas: {
   "VerificationStatusDelivery": { "state": string; "provider"?: (string | null); "provider_message_id"?: (string | null); "provider_status"?: (string | null); "attempts"?: (number | null); "created_at"?: (number | null); "updated_at"?: (number | null); "sent_at"?: (number | null); "delivered_at"?: (number | null); "last_error"?: (string | null); "preview_url"?: (string | null) };
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
   "VerifiedView": { "status": "VERIFIED" };
+  "Viewport": { "w": number; "h": number };
 } }
 
 export interface requestComponents { schemas: {
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name"?: string };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
-  "ActivityDraft": { "title": string; "starts_at"?: (number | null); "ends_at": number };
+  "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
   "ActivityJoinPreview": { "activity_id": string; "title": string; "course_id": string; "course_name": string; "teacher_name": string; "starts_at": number; "ends_at": number; "status": "scheduled" | "open" | "ended"; "already_enrolled": boolean; "default_display_name": string; "allow_guest": boolean };
   "ActivityJoinResult": { "course_id": string; "activity_id": string; "enrolled_now": boolean };
@@ -179,6 +199,9 @@ export interface requestComponents { schemas: {
   "ActivityTeacherView": { "id": string; "course_id": string; "status": "draft" | "scheduled" | "open" | "ended"; "locked": boolean; "has_unpublished_changes": boolean; "revision": (number | null); "draft": requestComponents["schemas"]["ActivityDraft"]; "starts_at": (number | null); "ends_at": (number | null); "available_actions": Array<"update" | "update_details" | "publish" | "start_now" | "end_now" | "copy" | "delete"> };
   "AddAIStudents": { "action_id": string; "count": number; "model"?: string; "provider_profile_id"?: (string | null) };
   "AddAIStudentsReceipt": { "status": string; "action_id": string; "seq": number; "room_id": string; "created": Array<requestComponents["schemas"]["AIStudentCreatedView"]>; "roster_digest": string };
+  "AdminAuthor": { "kind"?: "admin"; "name": string };
+  "AdminCreate": { "username": string };
+  "AdminView": { "account_id": string; "username": string; "display_name": string; "account_role": string; "is_you": boolean };
   "AnalysisEdgeView": { "source": string; "target": string; "type": "supports" | "challenges" | "qualifies" | "revises"; "provenance": "student_selected_relation" | "confirmation_snapshot" };
   "AnalysisGroupView": { "id": string; "label": string; "phase": string; "snapshot_id": string; "settlement": requestComponents["schemas"]["SettlementView"]; "persons": Array<requestComponents["schemas"]["AnalysisPersonView"]>; "nodes": Array<requestComponents["schemas"]["AnalysisNodeView"]>; "edges": Array<requestComponents["schemas"]["AnalysisEdgeView"]>; "tree_projection": Array<requestComponents["schemas"]["AnalysisTreeNodeView"]>; "roots": Array<string>; "stances": Array<requestComponents["schemas"]["GroupStanceView"]> };
   "AnalysisNodeView": { "id": string; "person_id": string; "nickname": string; "text": string; "at": number; "sequence": number; "stage": string; "question_index": number; "kind": "statement" | "post_ack_observation" | "confirmed_viewpoint"; "provenance": "student_original_quote" | "student_explicit_confirmation"; "visibility"?: ("personal" | "stage" | "group_shared" | null); "summary_digest"?: (string | null) };
@@ -220,7 +243,14 @@ export interface requestComponents { schemas: {
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
   "DemoAccountView": { "username": string; "role": "teacher" | "student" };
   "DemoLoginView": { "password": string; "accounts": Array<requestComponents["schemas"]["DemoAccountView"]> };
+  "DeployAuthor": { "kind"?: "deploy" };
   "DiscoveredModel": { "id": string; "name": (string | null); "pricing"?: unknown; "supported_parameters": Array<string>; "structured_outputs": (boolean | null); "reasoning": (Record<string, unknown> | null) };
+  "FeaturesView": { "group_mode": boolean };
+  "FeedbackCreate": { "kind"?: ("problem" | "suggestion" | "other" | null); "message": string; "contact"?: (string | null); "page": string; "viewport": requestComponents["schemas"]["Viewport"]; "locale": string; "screenshot"?: (requestComponents["schemas"]["ScreenshotUpload"] | null) };
+  "FeedbackCreated": { "id": string };
+  "FeedbackItem": { "id": string; "created_at": number; "kind": ("problem" | "suggestion" | "other" | null); "message": string; "contact": (string | null); "page": string; "viewport_w": number; "viewport_h": number; "locale": string; "user_agent": string; "release_id": string; "identity": "teacher" | "student" | "guest" | "anonymous"; "account_kind": ("registered" | "guest" | "expired_guest" | null); "account_name": (string | null); "has_screenshot": boolean };
+  "FeedbackPage": { "items": Array<requestComponents["schemas"]["FeedbackItem"]>; "page": number; "has_more": boolean };
+  "FeedbackScreenshot": { "mime": "image/png" | "image/jpeg" | "image/webp"; "data_base64": string };
   "FinalSummaryPointView": { "text": string; "sources": Array<requestComponents["schemas"]["CitationSourceView"]> };
   "FinalSummaryView": { "points": Array<requestComponents["schemas"]["FinalSummaryPointView"]>; "trajectory": Array<requestComponents["schemas"]["FinalTrajectoryStepView"]>; "final_position": string; "reasoning_style": string; "open_question": string };
   "FinalTrajectoryStepView": { "position": string; "shift_reason": string; "sources": Array<requestComponents["schemas"]["CitationSourceView"]> };
@@ -247,11 +277,12 @@ export interface requestComponents { schemas: {
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
-  "LoginView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "guest_expires_at"?: (number | null); "display_name"?: string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
+  "LoginView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
   "MailRequest": { "email": string };
   "MailRequestView": { "status": "REQUEST_RECORDED"; "message": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type"?: "human" | "llm_student"; "persona_id"?: (string | null) };
   "ModelDiscoveryView": { "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "models": Array<requestComponents["schemas"]["DiscoveredModel"]>; "manual_model_id_allowed": boolean; "observed_at": number };
+  "ModelOption": { "id": string; "name": string; "provider": (string | null); "free": boolean };
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
@@ -266,7 +297,7 @@ export interface requestComponents { schemas: {
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicActivityPreview": { "course_name": string; "allow_guest": boolean; "status": "scheduled" | "open" | "ended" };
-  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (requestComponents["schemas"]["DemoLoginView"] | null) };
+  "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (requestComponents["schemas"]["DemoLoginView"] | null); "features": requestComponents["schemas"]["FeaturesView"] };
   "PublicJoinPreview": { "course_name": string; "allow_guest": boolean };
   "PublicQuestion": { "id": string; "title": string; "scenario": string; "options": Array<requestComponents["schemas"]["Option"]>; "duration_seconds"?: number; "argument_required"?: boolean; "tutor_goal"?: string; "probe_hints"?: Array<string>; "max_focus_turns"?: number; "focus_response_seconds"?: number; "sender_point_cap"?: number; "receiver_point_cap"?: number; "max_personal_turns"?: number; "personal_seconds"?: number };
   "Publish": { "action_id": string; "script_id": string; "question_id": string; "title"?: (string | null); "tags"?: Array<string> };
@@ -288,6 +319,7 @@ export interface requestComponents { schemas: {
   "SampleQuestionDraft": { "id": string; "title": string; "scenario": string; "options"?: Array<requestComponents["schemas"]["Option"]>; "duration_seconds"?: number; "argument_required"?: boolean; "tutor_goal"?: string; "probe_hints"?: Array<string>; "max_focus_turns"?: number; "focus_response_seconds"?: number; "sender_point_cap"?: number; "receiver_point_cap"?: number; "max_personal_turns"?: number; "personal_seconds"?: number };
   "SampleQuestionSet": { "title": string; "questions": Array<requestComponents["schemas"]["SampleQuestionDraft"]> };
   "ScenarioAI": { "provider_profile_id": string; "model": string };
+  "ScreenshotUpload": { "mime": string; "data_base64": string };
   "ScriptAssistRequest": { "request": string; "document"?: Record<string, unknown>; "question_index"?: (number | null); "script_id"?: (string | null) };
   "ScriptAssistView": { "question": requestComponents["schemas"]["PublicQuestion"]; "question_index": (number | null); "rationale": string; "model": (string | null); "provider": (string | null) };
   "ScriptDocument": { "title": string; "mode"?: "static" | "dynamic"; "questions": Array<requestComponents["schemas"]["Question"]>; "max_questions"?: number; "preview_seconds"?: number; "live_llm_call_budget"?: number };
@@ -317,6 +349,13 @@ export interface requestComponents { schemas: {
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest"; "guest_number": (number | null); "overall": "not_started" | "in_progress" | "done"; "cells": Array<requestComponents["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress" | "completed"; "final_status": ("confirmed" | "unconfirmed" | null); "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases"?: boolean };
+  "SystemAIInput": { "adapter": string; "model": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "SystemAIModelsInput": { "adapter": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "SystemAIModelsView": { "models": Array<requestComponents["schemas"]["ModelOption"]> };
+  "SystemAITestView": { "ok"?: true };
+  "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((requestComponents["schemas"]["AdminAuthor"] | requestComponents["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "ToggleUpdate": { "enabled": boolean };
+  "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
   "UpdateProfile": { "name"?: (string | null); "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model"?: (string | null); "enabled"?: (boolean | null) };
   "ValidationError": { "loc": Array<(string | number)>; "msg": string; "type": string };
@@ -325,6 +364,7 @@ export interface requestComponents { schemas: {
   "VerificationStatusDelivery": { "state": string; "provider"?: (string | null); "provider_message_id"?: (string | null); "provider_status"?: (string | null); "attempts"?: (number | null); "created_at"?: (number | null); "updated_at"?: (number | null); "sent_at"?: (number | null); "delivered_at"?: (number | null); "last_error"?: (string | null); "preview_url"?: (string | null) };
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": requestComponents["schemas"]["VerificationStatusDelivery"] };
   "VerifiedView": { "status": "VERIFIED" };
+  "Viewport": { "w": number; "h": number };
 } }
 
 export interface paths {
@@ -354,6 +394,29 @@ export interface paths {
   };
   "/activities/{activity_id}/{action}": {
     "post": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["ActivityTeacherView"]; responseMedia: "application/json"; path: { "activity_id": string; "action": "publish" | "start_now" | "end_now" }; query: never };
+  };
+  "/admin/admins": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: Array<components["schemas"]["AdminView"]>; responseMedia: "application/json"; path: never; query: never };
+    "post": { body: requestComponents["schemas"]["AdminCreate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AdminView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/admin/admins/{account_id}": {
+    "delete": { body: never; bodyRequired: false; requestMedia: "none"; response: null; responseMedia: "none"; path: { "account_id": string }; query: never };
+  };
+  "/admin/system-ai": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["SystemAIView"]; responseMedia: "application/json"; path: never; query: never };
+    "put": { body: requestComponents["schemas"]["SystemAIInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["SystemAIView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/admin/system-ai/models": {
+    "post": { body: requestComponents["schemas"]["SystemAIModelsInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["SystemAIModelsView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/admin/system-ai/test": {
+    "post": { body: requestComponents["schemas"]["SystemAIInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["SystemAITestView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/admin/toggles": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: Array<components["schemas"]["ToggleView"]>; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/admin/toggles/{key}": {
+    "put": { body: requestComponents["schemas"]["ToggleUpdate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["ToggleView"]; responseMedia: "application/json"; path: { "key": string }; query: never };
   };
   "/ai-settings/account": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["AISettingsView"]; responseMedia: "application/json"; path: never; query: never };
@@ -456,6 +519,13 @@ export interface paths {
   };
   "/courses/{course_id}/{action}": {
     "post": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["CourseTeacherView"]; responseMedia: "application/json"; path: { "course_id": string; "action": "rotate_code" | "disable_code" | "enable_code" }; query: never };
+  };
+  "/feedback": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["FeedbackPage"]; responseMedia: "application/json"; path: never; query: { "page"?: number } };
+    "post": { body: requestComponents["schemas"]["FeedbackCreate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["FeedbackCreated"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/feedback/{feedback_id}/screenshot": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["FeedbackScreenshot"]; responseMedia: "application/json"; path: { "feedback_id": string }; query: never };
   };
   "/groups/classrooms/{rid}": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: (components["schemas"]["GroupCollectionView"] | components["schemas"]["GroupRunView"] | components["schemas"]["LegacyGroupView"]); responseMedia: "application/json"; path: { "rid": string }; query: never };
@@ -589,4 +659,4 @@ export interface paths {
 }
 
 // Generated from backend/app/modules/contract/contracts.py.
-export type ClassroomReasonCode = "ACCOUNT_DATA_TAKEN" | "ACCOUNT_PENDING_VERIFICATION" | "ACCOUNT_ROLE_FORBIDDEN" | "ACTION_ID_PAYLOAD_CONFLICT" | "ACTION_SCOPE_REQUIRED" | "ACTIVITY_ACTION_UNAVAILABLE" | "ACTIVITY_ENDED" | "ACTIVITY_LOCKED" | "ACTIVITY_NOT_FOUND" | "ACTIVITY_NOT_OPEN" | "ACTIVITY_TIME_INVALID" | "AI_BUDGET_REQUIRED" | "AI_MODEL_ID_REQUIRED" | "AI_ROLE_REQUIRED" | "ALREADY_SIGNED_IN" | "ANSWER_ALREADY_SUBMITTED" | "ANSWER_WINDOW_CLOSED" | "API_ROUTE_JSON_REQUIRED" | "ARENA_REQUIRED" | "ARGUMENT_RELATION_REQUIRED" | "ARGUMENT_REQUIRED" | "ARGUMENT_SIZE" | "AUTH_INVALID_CREDENTIALS" | "AUTH_TOKEN_INVALID" | "BANK_IMPORT_INVALID" | "BANK_OWNER_REQUIRED" | "BANK_QUESTION_INVALID" | "BANK_QUESTION_REQUIRED" | "BANK_SCRIPT_QUESTION_LIMIT" | "BANK_SOURCE_QUESTION_REQUIRED" | "BARRAGE_SIZE" | "BUDGET_RANGE" | "CLASSROOM_ASSET_OWNER_REQUIRED" | "CLASSROOM_MEMBERSHIP_REQUIRED" | "CLASSROOM_OWNER_REQUIRED" | "CLASSROOM_PARENT_REQUIRED" | "CLASSROOM_REQUIRED" | "CLASSROOM_SCRIPT_REQUIRED" | "COMPLETE_FINAL_STAGE_REQUIRED" | "CONFIRMABLE_PHASE_REQUIRED" | "COURSE_ACTION_UNAVAILABLE" | "COURSE_CODE_EXHAUSTED" | "COURSE_CODE_NOT_FOUND" | "COURSE_CODE_REQUIRED" | "COURSE_NOT_FOUND" | "CURRENT_GROUP_CONFIGURATION_REQUIRED" | "CURRENT_PHASE_ACTIONS" | "CURRENT_POPULATED_ROSTER_REQUIRED" | "CURRENT_ROSTER_DIGEST_REQUIRED" | "CURRENT_ROSTER_REQUIRED" | "CURRENT_SUMMARY_DIGEST_REQUIRED" | "DIALOGUE_PHASE_REQUIRED" | "EMAIL_TAKEN" | "EMAIL_VERIFICATION_REQUIRED" | "ENROLLMENT_NOT_FOUND" | "ENROLL_CODE_NOT_FOUND" | "EXISTING_GROUP_ARGUMENT_REQUIRED" | "FOCUS_ID_REQUIRED" | "FOCUS_REQUIRED" | "FOCUS_TURN_REQUIRED" | "FRESH_ARGUMENT_ID_REQUIRED" | "GROUP_ALREADY_SETTLED" | "GROUP_CAPACITY_REQUIRED" | "GROUP_COMMAND_REQUIRED" | "GROUP_INDEX_REQUIRED" | "GROUP_MEMBERSHIP_REQUIRED" | "GROUP_MEMBER_REQUIRED" | "GROUP_RUN_REQUIRED" | "GUEST_EXPIRED" | "GUEST_JOIN_DISABLED" | "GUEST_NOT_ALLOWED" | "GUEST_ONLY" | "KNOWN_ACTION_REQUIRED" | "LOBBY_REQUIRED" | "LOGIN_REQUIRED" | "ORIGIN_BINDING_REQUIRED" | "PERSONAL_CONFIRM_REQUIRED" | "PERSONAL_DIALOGUE_REQUIRED" | "PERSONAL_RETRY_REQUIRED" | "PERSONAL_TURN_REQUIRED" | "PERSONAL_WINDOW_CLOSED" | "PRACTICE_DAILY_LIMIT" | "PRACTICE_TOPIC_NOT_FOUND" | "PRACTICE_UNAVAILABLE" | "PREVIEW_REQUIRED" | "PROVIDER_ADAPTER_REQUIRED" | "PROVIDER_AVAILABILITY" | "PROVIDER_BASE_URL_REQUIRED" | "PROVIDER_CREDENTIAL_DECRYPTION" | "PROVIDER_CREDENTIAL_MALFORMED" | "PROVIDER_CREDENTIAL_REENTRY_REQUIRED" | "PROVIDER_CREDENTIAL_REQUIRED" | "PROVIDER_EMPTY_CONTENT" | "PROVIDER_HOST_RESOLUTION" | "PROVIDER_HTTPS_REQUIRED" | "PROVIDER_KEY_SOURCE_REQUIRED" | "PROVIDER_OUTPUT_TRUNCATED" | "PROVIDER_PROFILE_IN_ACCOUNT_SETTINGS" | "PROVIDER_PROFILE_IN_AI_STUDENT" | "PROVIDER_PROFILE_IN_CLASSROOM_SETTINGS" | "PROVIDER_PROFILE_IN_SCRIPT" | "PROVIDER_PROFILE_NAME_TAKEN" | "PROVIDER_PROFILE_OWNER_REQUIRED" | "PROVIDER_PUBLIC_ADDRESS_REQUIRED" | "PROVIDER_REDIRECT_BOUND" | "PROVIDER_REDIRECT_LOCATION" | "PROVIDER_RESPONSE_SIZE" | "PROVIDER_SCHEMA_MISMATCH" | "PROVIDER_TIMEOUT" | "QUESTION_ID_REQUIRED" | "QUESTION_OPTION_REQUIRED" | "QUESTION_REQUIRED" | "QUOTED_VIEWPOINT_REQUIRED" | "RADAR_DIMENSION_NOT_FOUND" | "RADAR_NOT_READY" | "RATE_LIMITED" | "SCENARIO_AI_PROFILE_REQUIRED" | "SCRIPT_ASSIST_DRAFT_SIZE" | "SCRIPT_ASSIST_INVALID_OUTPUT" | "SCRIPT_ASSIST_MODEL_REQUIRED" | "SCRIPT_ASSIST_PROVIDER_REQUIRED" | "SCRIPT_OWNER_REQUIRED" | "SCRIPT_SAMPLES_UNAVAILABLE" | "SESSION_CSRF_REQUIRED" | "SOLO_ACTION_UNAVAILABLE" | "SOLO_ATTEMPT_NOT_FOUND" | "SOLO_MESSAGE_LIMIT" | "SOLO_REVISE_HINT_INVALID" | "SOLO_STEP_NOT_READY" | "SOLO_SUMMARY_STALE" | "STARTED_CLASSROOM_REQUIRED" | "STATEMENT_LENGTH_1_TO_12000" | "STUDENT_MEMBERSHIP_REQUIRED" | "SUMMARY_PHASE_REQUIRED" | "TEACHER_MEMBERSHIP_REQUIRED" | "TEACHER_TEMPORARY_ALIAS_CONFIRMATION_REQUIRED" | "TYPED_STATEMENT_AND_PARENT_IDS_REQUIRED" | "USERNAME_TAKEN";
+export type ClassroomReasonCode = "ACCOUNT_DATA_TAKEN" | "ACCOUNT_PENDING_VERIFICATION" | "ACCOUNT_ROLE_FORBIDDEN" | "ACTION_ID_PAYLOAD_CONFLICT" | "ACTION_SCOPE_REQUIRED" | "ACTIVITY_ACTION_UNAVAILABLE" | "ACTIVITY_ENDED" | "ACTIVITY_LOCKED" | "ACTIVITY_NOT_FOUND" | "ACTIVITY_NOT_OPEN" | "ACTIVITY_TIME_INVALID" | "ADMIN_ACCOUNT_NOT_FOUND" | "ADMIN_ALREADY" | "ADMIN_CANNOT_REMOVE_SELF" | "ADMIN_GUEST_NOT_ALLOWED" | "ADMIN_NOT_FOUND" | "ADMIN_TOGGLE_NOT_FOUND" | "ADMIN_UNVERIFIED" | "AI_BUDGET_REQUIRED" | "AI_MODEL_ID_REQUIRED" | "AI_ROLE_REQUIRED" | "ALREADY_SIGNED_IN" | "ANSWER_ALREADY_SUBMITTED" | "ANSWER_WINDOW_CLOSED" | "API_ROUTE_JSON_REQUIRED" | "ARENA_REQUIRED" | "ARGUMENT_RELATION_REQUIRED" | "ARGUMENT_REQUIRED" | "ARGUMENT_SIZE" | "AUTH_INVALID_CREDENTIALS" | "AUTH_TOKEN_INVALID" | "BANK_IMPORT_INVALID" | "BANK_OWNER_REQUIRED" | "BANK_QUESTION_INVALID" | "BANK_QUESTION_REQUIRED" | "BANK_SCRIPT_QUESTION_LIMIT" | "BANK_SOURCE_QUESTION_REQUIRED" | "BARRAGE_SIZE" | "BUDGET_RANGE" | "CLASSROOM_ASSET_OWNER_REQUIRED" | "CLASSROOM_MEMBERSHIP_REQUIRED" | "CLASSROOM_OWNER_REQUIRED" | "CLASSROOM_PARENT_REQUIRED" | "CLASSROOM_REQUIRED" | "CLASSROOM_SCRIPT_REQUIRED" | "COMPLETE_FINAL_STAGE_REQUIRED" | "CONFIRMABLE_PHASE_REQUIRED" | "COURSE_ACTION_UNAVAILABLE" | "COURSE_CODE_EXHAUSTED" | "COURSE_CODE_NOT_FOUND" | "COURSE_CODE_REQUIRED" | "COURSE_NOT_FOUND" | "CURRENT_GROUP_CONFIGURATION_REQUIRED" | "CURRENT_PHASE_ACTIONS" | "CURRENT_POPULATED_ROSTER_REQUIRED" | "CURRENT_ROSTER_DIGEST_REQUIRED" | "CURRENT_ROSTER_REQUIRED" | "CURRENT_SUMMARY_DIGEST_REQUIRED" | "DIALOGUE_PHASE_REQUIRED" | "EMAIL_TAKEN" | "EMAIL_VERIFICATION_REQUIRED" | "ENROLLMENT_NOT_FOUND" | "ENROLL_CODE_NOT_FOUND" | "EXISTING_GROUP_ARGUMENT_REQUIRED" | "FEEDBACK_MESSAGE_REQUIRED" | "FEEDBACK_NOT_FOUND" | "FEEDBACK_SCREENSHOT_INVALID" | "FEEDBACK_TOO_LONG" | "FOCUS_ID_REQUIRED" | "FOCUS_REQUIRED" | "FOCUS_TURN_REQUIRED" | "FRESH_ARGUMENT_ID_REQUIRED" | "GROUP_ALREADY_SETTLED" | "GROUP_CAPACITY_REQUIRED" | "GROUP_COMMAND_REQUIRED" | "GROUP_INDEX_REQUIRED" | "GROUP_MEMBERSHIP_REQUIRED" | "GROUP_MEMBER_REQUIRED" | "GROUP_MODE_DISABLED" | "GROUP_RUN_REQUIRED" | "GUEST_EXPIRED" | "GUEST_JOIN_DISABLED" | "GUEST_NOT_ALLOWED" | "GUEST_ONLY" | "KNOWN_ACTION_REQUIRED" | "LOBBY_REQUIRED" | "LOGIN_REQUIRED" | "ORIGIN_BINDING_REQUIRED" | "PERSONAL_CONFIRM_REQUIRED" | "PERSONAL_DIALOGUE_REQUIRED" | "PERSONAL_RETRY_REQUIRED" | "PERSONAL_TURN_REQUIRED" | "PERSONAL_WINDOW_CLOSED" | "PRACTICE_DAILY_LIMIT" | "PRACTICE_TOPIC_NOT_FOUND" | "PRACTICE_UNAVAILABLE" | "PREVIEW_REQUIRED" | "PROVIDER_ADAPTER_REQUIRED" | "PROVIDER_AVAILABILITY" | "PROVIDER_BASE_URL_REQUIRED" | "PROVIDER_CREDENTIAL_DECRYPTION" | "PROVIDER_CREDENTIAL_MALFORMED" | "PROVIDER_CREDENTIAL_REENTRY_REQUIRED" | "PROVIDER_CREDENTIAL_REQUIRED" | "PROVIDER_EMPTY_CONTENT" | "PROVIDER_HOST_RESOLUTION" | "PROVIDER_HTTPS_REQUIRED" | "PROVIDER_KEY_SOURCE_REQUIRED" | "PROVIDER_OUTPUT_TRUNCATED" | "PROVIDER_PROFILE_IN_ACCOUNT_SETTINGS" | "PROVIDER_PROFILE_IN_AI_STUDENT" | "PROVIDER_PROFILE_IN_CLASSROOM_SETTINGS" | "PROVIDER_PROFILE_IN_SCRIPT" | "PROVIDER_PROFILE_NAME_TAKEN" | "PROVIDER_PROFILE_OWNER_REQUIRED" | "PROVIDER_PUBLIC_ADDRESS_REQUIRED" | "PROVIDER_REDIRECT_BOUND" | "PROVIDER_REDIRECT_LOCATION" | "PROVIDER_RESPONSE_SIZE" | "PROVIDER_SCHEMA_MISMATCH" | "PROVIDER_TIMEOUT" | "QUESTION_ID_REQUIRED" | "QUESTION_OPTION_REQUIRED" | "QUESTION_REQUIRED" | "QUOTED_VIEWPOINT_REQUIRED" | "RADAR_DIMENSION_NOT_FOUND" | "RADAR_NOT_READY" | "RATE_LIMITED" | "SCENARIO_AI_PROFILE_REQUIRED" | "SCRIPT_ASSIST_DRAFT_SIZE" | "SCRIPT_ASSIST_INVALID_OUTPUT" | "SCRIPT_ASSIST_MODEL_REQUIRED" | "SCRIPT_ASSIST_PROVIDER_REQUIRED" | "SCRIPT_OWNER_REQUIRED" | "SCRIPT_SAMPLES_UNAVAILABLE" | "SESSION_CSRF_REQUIRED" | "SOLO_ACTION_UNAVAILABLE" | "SOLO_ATTEMPT_NOT_FOUND" | "SOLO_MESSAGE_LIMIT" | "SOLO_REVISE_HINT_INVALID" | "SOLO_STEP_NOT_READY" | "SOLO_SUMMARY_STALE" | "STARTED_CLASSROOM_REQUIRED" | "STATEMENT_LENGTH_1_TO_12000" | "STUDENT_MEMBERSHIP_REQUIRED" | "SUMMARY_PHASE_REQUIRED" | "SYSTEM_AI_ADAPTER_INVALID" | "SYSTEM_AI_BASE_URL_INVALID" | "SYSTEM_AI_BASE_URL_NOT_ALLOWED" | "SYSTEM_AI_BASE_URL_REQUIRED" | "SYSTEM_AI_CHANGED" | "SYSTEM_AI_KEY_INVALID" | "SYSTEM_AI_KEY_MALFORMED" | "SYSTEM_AI_KEY_REQUIRED" | "SYSTEM_AI_MODEL_INVALID" | "SYSTEM_AI_MODEL_NOT_FOUND" | "SYSTEM_AI_MODEL_REQUIRED" | "SYSTEM_AI_QUOTA" | "SYSTEM_AI_TIMEOUT" | "SYSTEM_AI_UNREACHABLE" | "TEACHER_MEMBERSHIP_REQUIRED" | "TEACHER_TEMPORARY_ALIAS_CONFIRMATION_REQUIRED" | "TYPED_STATEMENT_AND_PARENT_IDS_REQUIRED" | "USERNAME_TAKEN";

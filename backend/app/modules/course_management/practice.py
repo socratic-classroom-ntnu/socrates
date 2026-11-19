@@ -101,6 +101,23 @@ def practice_owner(db: Session) -> Account:
         return winner
 
 
+def lock_practice_owner(db: Session) -> Account:
+    """The system account, row-locked until the transaction ends: whoever writes the 系統 AI
+    connection (startup env import, 後台 save) holds it, so the check and the write are one
+    step (後台 spec P30). FOR NO KEY UPDATE, so rows that only point at this account
+    (a student's new 我的對話 course) are not held up."""
+    owner = practice_owner(db)
+    db.flush()
+    locked = db.scalar(
+        select(Account)
+        .where(Account.id == owner.id)
+        .with_for_update(key_share=True)  # PostgreSQL: FOR NO KEY UPDATE
+        .execution_options(populate_existing=True)
+    )
+    assert locked is not None
+    return locked
+
+
 # ---- 私人課程 ----------------------------------------------------------------------------------
 
 PRACTICE_COURSE_NAME = "我的對話"
@@ -201,7 +218,9 @@ def create_practice_activity(db: Session, course: Course, item: BankItem, at: fl
     db.scalar(select(Course).where(Course.id == course.id).with_for_update())
     if created_today(db, course, at) >= daily_limit():
         raise DomainError("PRACTICE_DAILY_LIMIT", 429)
-    draft = ActivityDraft(title=item.body, starts_at=at, ends_at=PRACTICE_ENDS_AT)
+    draft = ActivityDraft(
+        title=item.title, scenario=item.body, starts_at=at, ends_at=PRACTICE_ENDS_AT
+    )
     activity = activities.create_draft(db, course, draft)
     activity.bank_item_id = item.id
     activity.created_at = at

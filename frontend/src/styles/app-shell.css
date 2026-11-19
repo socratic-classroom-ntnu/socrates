@@ -36,6 +36,8 @@
   border-radius: 8px; color: var(--shell-ink-soft); font-size: 15px; line-height: 1.35; text-decoration: none;
 }
 .app-shell__items a svg { flex-shrink: 0; }
+/* 平台管理員的「後台」：一般項目下方，分隔線之後（Figma AD1、AD2） */
+.app-shell__separated { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ui-color-line); }
 .app-shell__items a:hover { background: var(--shell-bg); }
 .app-shell__items a[aria-current="page"] { background: var(--shell-green-soft); color: var(--shell-green); font-weight: 700; }
 .app-shell__footer { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid var(--shell-line); }

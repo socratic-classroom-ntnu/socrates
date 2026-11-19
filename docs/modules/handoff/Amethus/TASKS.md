@@ -5,6 +5,11 @@
 
 `GUEST_JOIN_DISABLED`、`GUEST_EXPIRED`、`EXPANSION_LOCKED`、`RADAR_NOT_READY` 這四個 code 不在你的第一個 PR 預先加：contract gate 要求目錄和程式裡實際 raise 的 code 完全一致，預先加會讓測試失敗。它們由 Ken、Courecta 第一次 raise 的 PR 帶進來，你負責審。
 
+## 11/19 新增：教師看學生完整對話（11/22 交）
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 7 | contract | 教師看完整對話 | 審 Ken 第 9 項的新端點：response_model、用到的 reason code（非擁有者沿用 404 的既有 code；要新 code 就照規則在同一個 PR 加進 `REASON_CODES` 與前端文字）、重產型別後沒有 diff；狀態用詞與即時狀況共用同一組型別 | Ken 第 9 項的 PR | contract gate 測試通過 |
+
 ## 全部工作（照順序做；「—」是不綁新功能的現有待辦，有空檔就做）
 | 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
 |---|---|---|---|---|---|

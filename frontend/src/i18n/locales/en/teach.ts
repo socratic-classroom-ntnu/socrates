@@ -202,7 +202,7 @@ const teach: Shape<typeof zhHant> = {
     attentionSummary_other: '{{count}} need attention (no activity for over 5 minutes)',
     filterLabel: 'Filter students',
     filters: { all: 'All', inProgress: 'In dialogue', attention: 'Needs attention', done: 'Done', notStarted: 'Not started' },
-    table: { student: 'Student', scenario: 'Scenario {{number}}', review: 'Review and reflection', lastActivity: 'Last action' },
+    table: { student: 'Student', scenario: 'Scenario {{number}}', review: 'Review and reflection', lastActivity: 'Last action', view: 'View' },
     cells: {
       confirmed: 'Confirmed',
       inDialogue: 'In dialogue · {{count}} turns',
@@ -226,7 +226,8 @@ const teach: Shape<typeof zhHant> = {
     },
     empty: 'No students yet',
     updating: 'Updates automatically every 10 seconds',
-    privacy: 'Dialogue content is not shown; viewpoints students confirmed are in "Class analysis"',
+    view: { open: 'View conversation', openFor: 'View {{name}}’s conversation', unavailable: 'Conversation not available' },
+    privacy: 'Click the eye icon under "View" to read this student’s full conversation (read only)',
     endDialog: {
       title: 'End activity early',
       body: 'End "{{title}}" now? Students will not be able to start it afterwards.',

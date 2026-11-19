@@ -2,6 +2,11 @@
 
 使用者的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。
 
+## 回覆不合格式
+
+- 回覆是 JSON 但不合 schema 時丟 `service.ProviderSchemaMismatch`：`reason` 仍是 `PROVIDER_SCHEMA_MISMATCH`、等 30 秒，現有的呼叫端不用改；`fields` 列出每個沒過的欄位 `(路徑, 規則)`，例如 `("summary.reason_summary", "string_too_short")`、`("reply_text", "missing")`，讓 llm-runtime 能附上原因重問。只帶欄位與規則，不帶模型寫的內容（可能引用學生的話）。
+- 不是 JSON 的回覆照舊丟一般的 `ProviderWait("PROVIDER_SCHEMA_MISMATCH")`，沒有欄位可指。
+
 ## 本地 embedding（雷達的向量路線）
 
 - `service.embed(texts) -> list[list[float]]`：每段文字一個 `contracts.EMBEDDING_DIMENSIONS`（384）維、長度為 1 的向量，順序與輸入相同；空清單回空清單。餘弦相似度就是內積。

@@ -5,6 +5,8 @@ student with quotes from their own words. 15 or more with the model: PCA axes na
 scores by percentile within the activity. The result is kept until a summary changes.
 """
 
+import json
+
 import pytest
 from sqlalchemy import func, select
 
@@ -142,6 +144,19 @@ def test_a_small_class_is_scored_by_the_model_with_quotes(client, tutor):
         assert source == {"message_id": message_ids[-1], "quote": WORDS, "start": 0, "end": 6}
     assert entry["display_name"] == "s01同學"
     assert len(calls) == 3
+
+
+def test_the_model_sets_dimensions_from_the_class_summaries_without_names(client, tutor):
+    calls, replies = tutor
+    s, _ = class_of(
+        client, 2, [kept_summary("拉桿", "看救下的人數"), kept_summary("不拉桿", "看行為本身")]
+    )
+    replies.extend([DIMENSIONS, scores(), scores()])
+    ok(get_radar(client, s))
+    sent = json.loads(calls[0]["messages"][1]["content"])
+    # One anonymous position-and-reasoning entry per student, in no student order.
+    assert sent["summaries"] == ["不拉桿\n看行為本身", "拉桿\n看救下的人數"]
+    assert "同學" not in calls[0]["messages"][1]["content"]
 
 
 def test_an_invented_quote_is_written_again_before_the_score_is_kept(client, tutor):

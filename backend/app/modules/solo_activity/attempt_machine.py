@@ -141,6 +141,11 @@ def new_attempt(attempt_id: str, scenarios: list[Scenario]) -> AttemptState:
     )
 
 
+def _is_complete(summary: dict[str, Any]) -> bool:
+    """Both the position and the reason have words in them; blank space is not a word."""
+    return all(str(summary.get(key, "")).strip() for key in ("current_position", "reason_summary"))
+
+
 def _can_still_talk(current: ScenarioProgress) -> bool:
     """Whether the student may send another message in this scenario (the answer counts as one)."""
     return current.turn_index + 1 < MESSAGE_LIMIT
@@ -257,12 +262,16 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: PersonalTutorTurn) -> Atte
         turns_since_shift=None if last_shift is None else turn_index - last_shift,
         turns_since_revise=None if last_revise is None else turn_index - last_revise,
     )
-    # Out of messages without a settled view: the current summary goes to confirmation as capped.
-    capped = not advance and not _can_still_talk(a.current)
-    if not advance and not capped:
+    summary = turn.summary.model_dump()
+    # A summary with a blank in it is never offered while there is still a message to talk with,
+    # whatever the tutor reports (some models write "" until the student has said something).
+    settled_view = advance and _is_complete(summary)
+    # Out of messages without a settled view: the current summary goes to confirmation as capped,
+    # blanks and all.
+    capped = not settled_view and not _can_still_talk(a.current)
+    if not settled_view and not capped:
         progress = _with_current(settled, candidate_summary=None, summary_digest=None)
         return replace(settled, state="in_dialogue", progress=progress)
-    summary = turn.summary.model_dump()
     progress = _with_current(
         settled,
         **({"status": "capped"} if capped else {}),

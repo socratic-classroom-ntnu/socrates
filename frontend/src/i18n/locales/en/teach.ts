@@ -129,6 +129,7 @@ const teach: Shape<typeof zhHant> = {
     noMatch: 'No matching activities',
   },
   analysis: {
+    blank: '(Not explained yet)',
     demoBanner: 'Sample data: class analysis is still being completed. These numbers are not real responses from this activity.',
     overview: 'Completion overview',
     started: 'Started {{started}} / {{enrolled}}',

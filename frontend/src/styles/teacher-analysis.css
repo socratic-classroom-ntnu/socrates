@@ -15,6 +15,7 @@
 .analysis-students > header { padding: 12px 0; display: flex; justify-content: space-between; gap: 10px; color: var(--ui-color-muted); font-size: 13px; }
 .analysis-students > header strong { color: var(--ui-color-ink); font-size: 14px; }
 .analysis-student { padding: 13px 0; border-top: 1px solid #ECECE8; }
+.analysis-student__blank { color: var(--ui-color-muted); }
 .analysis-student__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .analysis-student__tag { padding: 2px 8px; border-radius: 999px; background: #E4EFF6; color: #31526B; font-size: 12px; font-weight: 700; }
 .analysis-student .analysis-student__position { color: var(--ui-color-ink); font-size: 15px; font-weight: 700; }

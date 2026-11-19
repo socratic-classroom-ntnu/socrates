@@ -95,8 +95,13 @@ function StudentViewpoint({ student }: { student: Student }) {
       <strong><StudentName student={student} /></strong>
       <span className="analysis-student__tag">{t('analysis.confirmedScenarios', { count: student.confirmed_scenarios })}</span>
     </div>
-    <p className="analysis-student__position">{student.current_position}</p>
-    <p>{student.reason_summary}</p>
+    <p className="analysis-student__position">{written(student.current_position, t('analysis.blank'))}</p>
+    <p>{written(student.reason_summary, t('analysis.blank'))}</p>
     {student.relevant_conditions.length > 0 && <p className="analysis-student__conditions">{t('analysis.conditions', { conditions: student.relevant_conditions.join('；') })}</p>}
   </div>
+}
+
+/** A field the student has not written yet (some models leave it empty): grey words in its place. */
+function written(text: string, blank: string) {
+  return text.trim() ? text : <span className="analysis-student__blank">{blank}</span>
 }

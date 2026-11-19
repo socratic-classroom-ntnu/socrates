@@ -9,7 +9,7 @@ Two routes give the same RadarView:
   either end, and a student's place on an axis is their standardised projection: 2 at the class
   mean, one point per standard deviation, held within 0 to 4. These scores carry no citations.
 - Fewer students, the model missing, or vectors with no spread: ``radar_dimensions`` sets four to
-  six dimensions from the activity, then ``radar_scoring`` scores each student 0 to 4 on each from
+  six dimensions from the activity and the class's anonymous summaries, then ``radar_scoring`` scores each student 0 to 4 on each from
   their final summary and their own words, quoting them; quotes not found verbatim are dropped.
 
 Only completed attempts on the activity's current revision that kept a final summary count. The
@@ -285,12 +285,14 @@ async def _vector_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
 
 async def _scoring_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
     """(dimensions, students) from the model; students it could not score are left out."""
+    # The class's own reasoning, so the dimensions split these students instead of restating one
+    # contrast from the activity text. Anonymous and sorted: no names, no order to read into.
+    context = {
+        **prepared["activity_context"],
+        "summaries": sorted(_pole_text(s["summary"]) for s in prepared["students"]),
+    }
     defined = await _call(
-        prepared,
-        DIMENSIONS_PROGRAM,
-        RadarDimensions,
-        prepared["activity_context"],
-        "solo.radar_dimensions",
+        prepared, DIMENSIONS_PROGRAM, RadarDimensions, context, "solo.radar_dimensions"
     )
     if defined is None:
         return None

@@ -32,7 +32,7 @@
 
 ## 回覆不合格式
 
-- 回覆是 JSON 但不合 schema 時丟 `service.ProviderSchemaMismatch`：`reason` 仍是 `PROVIDER_SCHEMA_MISMATCH`、等 30 秒，現有的呼叫端不用改；`fields` 列出每個沒過的欄位 `(路徑, 規則)`，例如 `("summary.reason_summary", "string_too_short")`、`("reply_text", "missing")`，讓 llm-runtime 能附上原因重問。只帶欄位與規則，不帶模型寫的內容（可能引用學生的話）。
+- 回覆是 JSON 但不合 schema 時丟 `service.ProviderSchemaMismatch`：`reason` 仍是 `PROVIDER_SCHEMA_MISMATCH`、等 30 秒，現有的呼叫端不用改；`fields` 列出每個沒過的欄位 `(路徑, 規則)`，例如 `("suggestion_text", "string_too_short")`、`("reply_text", "missing")`，讓 llm-runtime 能附上原因重問。只帶欄位與規則，不帶模型寫的內容（可能引用學生的話）。
 - 不是 JSON 的回覆照舊丟一般的 `ProviderWait("PROVIDER_SCHEMA_MISMATCH")`，沒有欄位可指。
 
 <!-- module-map:begin -->

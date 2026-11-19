@@ -7,6 +7,7 @@ const shell: Shape<typeof zhHant> = {
     label: '主菜单',
     home: '首页',
     dialogues: '我的对话',
+    groups: '分组课',
     me: '我',
     bank: '个人题库',
     store: '题库商店',

@@ -16,6 +16,7 @@ from app.modules.platform import storage as storage
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity import attempt_machine as sm
 from app.modules.solo_activity import service as service
+from app.modules.solo_activity import tutor_chain
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from tests.solo_activity.test_solo_attempts_api import do, ok, settled
 from tests.solo_activity.test_solo_conclude import confirm_current
@@ -281,7 +282,7 @@ def test_without_a_provider_the_student_can_still_finish(client, tutor, monkeypa
     _, replies = tutor
     _, attempt_id, _ = to_confirmed_view(client, replies, [NO_SCENARIO, RuntimeError("down")])
     # The teacher's provider disappears before the student tries again.
-    monkeypatch.setattr(service, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
+    monkeypatch.setattr(tutor_chain, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
     view = ok(do(client, attempt_id, "retry_reflection_prompt"))
     assert (view["state"], view["notice"]) == ("reviewing", "owner_provider_missing")
     done = ok(do(client, attempt_id, "submit_review"))

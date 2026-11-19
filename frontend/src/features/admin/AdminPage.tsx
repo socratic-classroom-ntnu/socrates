@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useId, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ComingSoonPage } from '../../components/ComingSoonPage'
 import { Dialog } from '../../components/Dialog'
@@ -9,8 +9,10 @@ import { Button, FormError } from '../../ui'
 import { useAuth } from '../auth/AuthContext'
 import { FeedbackTable } from '../feedback/FeedbackTable'
 import styles from './Admin.module.css'
+import { adminTime } from './adminTime'
+import { SystemAITab } from './SystemAITab'
 
-type Tab = 'toggles' | 'feedback' | 'admins'
+type Tab = 'toggles' | 'systemAI' | 'feedback' | 'admins'
 type OnError = (failure: unknown) => void
 
 const LOST_ACCESS = new Set(['ADMIN_NOT_FOUND', 'FEEDBACK_NOT_FOUND'])
@@ -24,11 +26,12 @@ function useLostAccess(): OnError {
 }
 const TABS: { key: Tab; to: string }[] = [
   { key: 'toggles', to: '/admin' },
+  { key: 'systemAI', to: '/admin/system-ai' },
   { key: 'feedback', to: '/admin/feedback' },
   { key: 'admins', to: '/admin/admins' },
 ]
 
-/** 後台（Figma AD3–AD8、後台 spec P11–P15）：三個分頁對應三個網址；只做電腦版。 */
+/** 後台（Figma AD3–AD9、後台 spec P11–P15、P31）：四個分頁對應四個網址；只做電腦版。 */
 export function AdminPage({ tab }: { tab: Tab }) {
   const { t } = useT('admin')
   const phone = useIsPhone()
@@ -40,6 +43,7 @@ export function AdminPage({ tab }: { tab: Tab }) {
       {TABS.map(item => <Link key={item.key} role="tab" aria-selected={tab === item.key} className={styles.tab} to={item.to}>{t(`tabs.${item.key}`)}</Link>)}
     </nav>
     {tab === 'toggles' && <TogglesTab onError={onError} />}
+    {tab === 'systemAI' && <SystemAITab onError={onError} />}
     {tab === 'feedback' && <FeedbackTable onError={onError} />}
     {tab === 'admins' && <AdminsTab onError={onError} />}
   </main>
@@ -55,7 +59,6 @@ function TogglesTab({ onError }: { onError: OnError }) {
   useEffect(() => {
     void listToggles().then(setRows).catch((failure: unknown) => { setLoadFailed(true); onError(failure) })
   }, [onError])
-  const time = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' })
 
   async function change(row: ToggleView, enabled: boolean) {
     setConfirm(null)
@@ -75,14 +78,19 @@ function TogglesTab({ onError }: { onError: OnError }) {
   return <>
     {loadFailed && <FormError role="alert">{t('toggles.loadFailed')}</FormError>}
     {failed && <FormError role="alert">{t('toggles.failed')}</FormError>}
-    {rows && <section className={styles.card} aria-label={t('tabs.toggles')}>
+    {rows && <section className={`${styles.card} ${styles.toggleCard}`} aria-label={t('tabs.toggles')}>
       {rows.map(row => <div key={row.key} className={styles.toggleRow}>
         <div className={styles.toggleText}>
-          <span className={styles.toggleName}>{row.name}<span className={styles.state} data-on={row.enabled}>{t(row.enabled ? 'toggles.on' : 'toggles.off')}</span></span>
+          <span className={styles.toggleName}>
+            {row.name}
+            <span className={styles.state} data-on={row.enabled}>{t(row.enabled ? 'toggles.on' : 'toggles.off')}</span>
+            {row.updated_at !== null && <LastChange text={t('toggles.changed', {
+              name: row.updated_by_name ?? '—',
+              time: adminTime(locale, row.updated_at),
+              action: t(row.enabled ? 'toggles.actionOn' : 'toggles.actionOff'),
+            })} />}
+          </span>
           <span className={styles.description}>{row.description}</span>
-          <span className={styles.meta}>{row.updated_at === null
-            ? t('toggles.never')
-            : t('toggles.changed', { name: row.updated_by_name ?? '—', time: time.format(new Date(row.updated_at * 1000)), action: t(row.enabled ? 'toggles.actionOn' : 'toggles.actionOff') })}</span>
         </div>
         <button
           type="button"
@@ -91,7 +99,11 @@ function TogglesTab({ onError }: { onError: OnError }) {
           aria-label={row.name}
           className={styles.switch}
           disabled={busy === row.key}
-          onClick={() => { if (row.enabled) setConfirm(row); else void change(row, true) }}
+          onClick={() => {
+            if (!row.enabled) void change(row, true)
+            else if (row.disable_warning) setConfirm(row)
+            else void change(row, false)
+          }}
         />
       </div>)}
     </section>}
@@ -105,9 +117,31 @@ function TogglesTab({ onError }: { onError: OnError }) {
         <Button variant="danger" onClick={() => { void change(confirm, false) }}>{t('toggles.confirm', { name: confirm.name })}</Button>
       </>}
     >
-      <p>{t('toggles.confirmBody', { name: confirm.name })}</p>
+      <p>{confirm.disable_warning}</p>
     </Dialog>}
   </>
+}
+
+/** 改過的開關旁的 ⓘ：滑鼠移上或鍵盤 focus 時在上方顯示最後一次改動（後台 spec P38）。 */
+function LastChange({ text }: { text: string }) {
+  const { t } = useT('admin')
+  const id = useId()
+  const [shown, setShown] = useState(false)
+  return <span className={styles.info}>
+    <button
+      type="button"
+      className={styles.infoButton}
+      aria-label={t('toggles.lastChange')}
+      aria-describedby={id}
+      onMouseEnter={() => setShown(true)}
+      onMouseLeave={() => setShown(false)}
+      onFocus={() => setShown(true)}
+      onBlur={() => setShown(false)}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>
+    </button>
+    <span role={shown ? 'tooltip' : undefined} id={id} className={styles.tooltip} hidden={!shown}>{text}</span>
+  </span>
 }
 
 const ADD_ERRORS = new Set(['ADMIN_ACCOUNT_NOT_FOUND', 'ADMIN_GUEST_NOT_ALLOWED', 'ADMIN_UNVERIFIED', 'ADMIN_ALREADY'])

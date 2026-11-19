@@ -753,6 +753,25 @@
         "title": "AddAIStudentsReceipt",
         "type": "object"
       },
+      "AdminAuthor": {
+        "properties": {
+          "kind": {
+            "const": "admin",
+            "default": "admin",
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AdminAuthor",
+        "type": "object"
+      },
       "AdminCreate": {
         "additionalProperties": false,
         "properties": {
@@ -2468,6 +2487,19 @@
           "accounts"
         ],
         "title": "DemoLoginView",
+        "type": "object"
+      },
+      "DeployAuthor": {
+        "description": "Imported from SOCRATES_PRACTICE_LLM_* at startup; no admin has changed it since (P31).",
+        "properties": {
+          "kind": {
+            "const": "deploy",
+            "default": "deploy",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "title": "DeployAuthor",
         "type": "object"
       },
       "DiscoveredModel": {
@@ -4268,6 +4300,41 @@
           "observed_at"
         ],
         "title": "ModelDiscoveryView",
+        "type": "object"
+      },
+      "ModelOption": {
+        "properties": {
+          "free": {
+            "title": "Free",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provider",
+          "free"
+        ],
+        "title": "ModelOption",
         "type": "object"
       },
       "Option": {
@@ -7558,6 +7625,215 @@
         "title": "Start",
         "type": "object"
       },
+      "SystemAIInput": {
+        "description": "The 系統 AI form (spec 〈介面〉). No length or format limits here: a rejected value would be\nechoed back in FastAPI's 422, and the key must never be (spec P37). `admin.system_ai`\nchecks every field and answers with an error code only.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "adapter",
+          "model"
+        ],
+        "title": "SystemAIInput",
+        "type": "object"
+      },
+      "SystemAIModelsInput": {
+        "description": "Where to list models from (spec P40); like SystemAIInput, unchecked here.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          }
+        },
+        "required": [
+          "adapter"
+        ],
+        "title": "SystemAIModelsInput",
+        "type": "object"
+      },
+      "SystemAIModelsView": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelOption"
+            },
+            "title": "Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "title": "SystemAIModelsView",
+        "type": "object"
+      },
+      "SystemAITestView": {
+        "properties": {
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "title": "SystemAITestView",
+        "type": "object"
+      },
+      "SystemAIView": {
+        "properties": {
+          "adapter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "fallback_enabled": {
+            "title": "Fallback Enabled",
+            "type": "boolean"
+          },
+          "key_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Last4"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "admin": "#/components/schemas/AdminAuthor",
+                    "deploy": "#/components/schemas/DeployAuthor"
+                  },
+                  "propertyName": "kind"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AdminAuthor"
+                  },
+                  {
+                    "$ref": "#/components/schemas/DeployAuthor"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "required": [
+          "configured",
+          "adapter",
+          "model",
+          "base_url",
+          "key_last4",
+          "updated_at",
+          "updated_by",
+          "fallback_enabled"
+        ],
+        "title": "SystemAIView",
+        "type": "object"
+      },
       "ToggleUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -7577,6 +7853,17 @@
           "description": {
             "title": "Description",
             "type": "string"
+          },
+          "disable_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disable Warning"
           },
           "enabled": {
             "title": "Enabled",
@@ -7619,7 +7906,8 @@
           "description",
           "enabled",
           "updated_at",
-          "updated_by_name"
+          "updated_by_name",
+          "disable_warning"
         ],
         "title": "ToggleView",
         "type": "object"
@@ -8606,6 +8894,149 @@
           }
         },
         "summary": "Remove Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/system-ai": {
+      "get": {
+        "operationId": "get_system_ai_api_v2_admin_system_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAIView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get System Ai",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "put_system_ai_api_v2_admin_system_ai_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemAIInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAIView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put System Ai",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/system-ai/models": {
+      "post": {
+        "description": "The models the form's service offers (spec P40); a blank key lists with the saved one.",
+        "operationId": "list_system_ai_models_api_v2_admin_system_ai_models_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemAIModelsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAIModelsView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List System Ai Models",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/system-ai/test": {
+      "post": {
+        "operationId": "test_system_ai_api_v2_admin_system_ai_test_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemAIInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAITestView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test System Ai",
         "tags": [
           "admin"
         ]

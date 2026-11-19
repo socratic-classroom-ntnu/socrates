@@ -4,6 +4,9 @@ export default {
   close: '關閉',
   copied: '已複製',
   copyFailed: '無法複製',
+  select: {
+    searching: '搜尋中…',
+  },
   password: {
     show: '顯示密碼',
     hide: '隱藏密碼',

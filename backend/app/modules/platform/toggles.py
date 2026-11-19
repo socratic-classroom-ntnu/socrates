@@ -20,7 +20,10 @@ class ToggleDef:
     name: str
     description: str
     default: bool
-    disabled_reason: str
+    # The error an API answers while the switch is off; None for a switch no API is gated on.
+    disabled_reason: str | None = None
+    # What the 後台 asks before turning the switch off; None turns it off without asking (P35).
+    disable_warning: str | None = None
 
 
 DB_TOGGLES: dict[str, ToggleDef] = {
@@ -29,6 +32,14 @@ DB_TOGGLES: dict[str, ToggleDef] = {
         description="分組課（多人教室）。關掉後，分組課的網址和功能都不能使用。",
         default=False,
         disabled_reason="GROUP_MODE_DISABLED",
+        disable_warning="關掉後，多人模式的網址和功能都不能使用，正在進行中的也會無法繼續。之後可以再打開。",
+    ),
+    # 後台 spec P35–P36: courses of a teacher without an AI connection use the 系統 AI.
+    "system_ai_fallback": ToggleDef(
+        name="老師沒設金鑰時用系統 AI",
+        description="沒設 AI 連線的老師，課程裡的學生對話改用系統 AI。",
+        default=False,
+        disable_warning="關掉後，沒設金鑰的老師，課程裡的學生對話會無法繼續，直到老師自己設好 AI 連線。之後可以再打開。",
     ),
 }
 
@@ -40,7 +51,9 @@ def toggle_enabled(db: Session, key: str) -> bool:
 
 def require_toggle(db: Session, key: str) -> None:
     if not toggle_enabled(db, key):
-        raise DomainError(DB_TOGGLES[key].disabled_reason, 403)
+        reason = DB_TOGGLES[key].disabled_reason
+        assert reason is not None, f"{key} gates no API"
+        raise DomainError(reason, 403)
 
 
 def set_toggle(db: Session, key: str, enabled: bool, by: str, now: float) -> FeatureToggle:

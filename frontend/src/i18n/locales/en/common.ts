@@ -7,6 +7,9 @@ const common: Shape<typeof zhHant> = {
   close: 'Close',
   copied: 'Copied',
   copyFailed: 'Couldn\'t copy',
+  select: {
+    searching: 'Searching…',
+  },
   password: {
     show: 'Show password',
     hide: 'Hide password',

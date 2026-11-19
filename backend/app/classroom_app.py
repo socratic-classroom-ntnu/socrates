@@ -3,6 +3,9 @@
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
 from app.modules.course_management import service as course_service
@@ -25,12 +28,16 @@ from app.modules.app_shell.llm_workers import (
 )
 from app.modules.platform.env import env_int
 
+# 後台「系統 AI」: its 422s never quote the request body (spec P37).
+SYSTEM_AI_PATH = "/api/v2/admin/system-ai"
+
 
 @asynccontextmanager
 async def lifespan(app):
     engine()
+    # 系統 AI：資料庫沒有可用的連線才讀 env（後台 spec P30）；env 不合法時服務起不來
+    practice_startup.prepare_practice(ai_service.platform_profile_config)
     with transaction() as db:
-        practice_startup.prepare_practice(db, app.state.practice_config)
         admin_service.bootstrap_from_env(db)  # 第一批平台管理員（後台 spec P3）
         # 放在環境變數之後：先建內建管理員的話，資料庫就不再是「沒有管理員」，環境變數永遠不會套用
         admin_service.ensure_builtin_admin(db)
@@ -55,15 +62,12 @@ def create_app(legacy=False, background=True):
     # 題庫壞掉就讓服務起不來，跟 programs 一樣在部署當下發現
     course_service.install_practice_bank(course_service.PRACTICE_BANK_PATH)
     course_service.check_practice_settings()
-    # 平台金鑰設定錯誤同樣讓服務起不來；寫進資料庫的部分在 lifespan（practice_startup）
-    practice_config = ai_service.platform_profile_config()
     app = FastAPI(
         title="Socrates API",
         version="0.3.0",
         lifespan=lifespan if background else None,
         separate_input_output_schemas=False,
     )
-    app.state.practice_config = practice_config
     if legacy:
         from app.main import app as first_run
 
@@ -82,6 +86,18 @@ def create_app(legacy=False, background=True):
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):
         return JSONResponse({"detail": exc.code}, status_code=exc.status)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request: Request, exc: RequestValidationError):
+        """FastAPI's 422 quotes what was sent; on the 系統 AI form that may be an API key, so
+        those errors leave out `input` and `ctx` (後台 spec P37). Nothing here logs `exc`."""
+        if not request.url.path.startswith(SYSTEM_AI_PATH):
+            return await request_validation_exception_handler(request, exc)
+        errors = [
+            {key: value for key, value in error.items() if key not in ("input", "ctx")}
+            for error in exc.errors()
+        ]
+        return JSONResponse({"detail": jsonable_encoder(errors)}, status_code=422)
 
     @app.middleware("http")
     async def security_headers(request, call_next):

@@ -18,8 +18,7 @@ KEY = {
 
 def private_course(client):
     """ming 開一段對話；回傳私人課程與活動，代碼已強制打開。"""
-    with storage.transaction() as db:
-        practice_startup.prepare_practice(db, ai_service.platform_profile_config(KEY))
+    practice_startup.prepare_practice(lambda: ai_service.platform_profile_config(KEY))
     ming = user(client, "ming")
     started = client.post("/api/v2/solo/practice", json={"bank_item_id": "trolley"})
     assert started.status_code == 201, started.text

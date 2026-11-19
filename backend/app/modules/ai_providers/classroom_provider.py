@@ -17,6 +17,16 @@ class ProviderWait(RuntimeError):
         super().__init__(reason)
 
 
+class ProviderHTTPError(ProviderWait):
+    """A provider answered with an error status. `reason` stays what every caller already
+    handles; `status` and the provider's `error` object (never the request, which carries the
+    key) let the 後台 test sort the failure (spec P33)."""
+
+    def __init__(self, reason, seconds=60, *, status: int, error: dict | None):
+        super().__init__(reason, seconds)
+        self.status, self.error = status, error
+
+
 def partial_reply(raw):
     match = re.search(r'"reply_text"\s*:\s*"', raw)
     if not match:

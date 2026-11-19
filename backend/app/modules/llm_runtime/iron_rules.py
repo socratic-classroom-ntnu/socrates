@@ -30,7 +30,7 @@ RULES_DIR = Path("skills/classroom/iron-rules")
 ROUTER = RULES_DIR / "ROUTER.json"
 PROGRAMS_PATH = Path("prompts/classroom/programs.json")
 # 不經過 programs.json 的呼叫點（其他觀點建議）也要有路由。
-DIRECT_ROLES = ("other_suggestion",)
+DIRECT_ROLES = ("other_suggestion", "connection_probe")
 KNOWN_CHECKS = frozenset({"screen_input", "no_leak", "pull_back", "language", "citations"})
 # Failing these twice is an error even for roles with a pull-back sentence: that sentence is
 # fixed Chinese text with no citations, so it cannot fix either.

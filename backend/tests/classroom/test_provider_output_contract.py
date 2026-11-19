@@ -6,12 +6,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.modules.llm_runtime.contracts import OtherSuggestionResult
+from app.modules.llm_runtime.contracts import CitedSummary, OtherSuggestionResult
 from app.modules.ai_providers.service import provider_error_status
 from app.classroom_app import create_app
 from app.modules.platform import storage as storage
 from app.modules.ai_providers import classroom_gateway as gateway
-from app.modules.ai_providers.classroom_provider import ProviderWait
+from app.modules.ai_providers.classroom_provider import ProviderSchemaMismatch, ProviderWait
 from app.modules.identity_access.repositories import Mail
 from app.modules.ai_providers.repositories import CallAudit
 
@@ -69,6 +69,35 @@ def test_provider_empty_content_becomes_provider_wait(monkeypatch, adapter, body
 def test_invalid_or_mismatched_json_becomes_provider_wait(raw):
     with pytest.raises(ProviderWait, match="PROVIDER_SCHEMA_MISMATCH"):
         gateway._validated_structured_result(raw, OtherSuggestionResult)
+
+
+@pytest.mark.parametrize(
+    ("raw", "schema", "fields"),
+    [
+        (
+            '{"suggestion_text": ""}',
+            OtherSuggestionResult,
+            [("suggestion_text", "string_too_short")],
+        ),
+        (
+            '{"points": [{"text": "", "sources": []}]}',
+            CitedSummary,
+            [("points.0.text", "string_too_short")],
+        ),
+        ("{}", OtherSuggestionResult, [("suggestion_text", "missing")]),
+    ],
+)
+def test_a_schema_mismatch_names_the_fields_that_failed_and_keeps_its_code(raw, schema, fields):
+    with pytest.raises(ProviderSchemaMismatch) as caught:
+        gateway._validated_structured_result(raw, schema)
+    assert (caught.value.reason, caught.value.seconds) == ("PROVIDER_SCHEMA_MISMATCH", 30)
+    assert caught.value.fields == fields
+
+
+def test_a_reply_that_is_not_json_has_no_fields_to_name():
+    with pytest.raises(ProviderWait, match="PROVIDER_SCHEMA_MISMATCH") as caught:
+        gateway._validated_structured_result("not json", OtherSuggestionResult)
+    assert not isinstance(caught.value, ProviderSchemaMismatch)
 
 
 def test_openrouter_requires_structured_output_capability(monkeypatch):

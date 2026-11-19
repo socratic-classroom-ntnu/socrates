@@ -100,6 +100,29 @@ def test_a_reply_that_is_not_json_has_no_fields_to_name():
     assert not isinstance(caught.value, ProviderSchemaMismatch)
 
 
+def test_a_schema_mismatch_carries_the_failed_calls_audit(monkeypatch):
+    """The re-ask after an empty field counts both calls, so the first one's usage must survive."""
+    usage = {"prompt_tokens": 40, "completion_tokens": 5, "total_tokens": 45}
+
+    async def request(*_, **__):
+        return FakeResponse(
+            {"choices": [{"message": {"content": '{"suggestion_text": ""}'}}], "usage": usage}
+        )
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    with pytest.raises(ProviderSchemaMismatch) as caught:
+        asyncio.run(
+            gateway.generate(
+                binding("openrouter"),
+                [{"role": "user", "content": "test"}],
+                OtherSuggestionResult,
+                None,
+            )
+        )
+    assert caught.value.audit["token_usage"] == usage
+    assert caught.value.audit["provider_profile_id"] == "profile-1"
+
+
 def test_openrouter_requires_structured_output_capability(monkeypatch):
     monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
     monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")

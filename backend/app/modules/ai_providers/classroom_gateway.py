@@ -13,7 +13,11 @@ import httpx
 from pydantic import ValidationError
 
 from app.modules.platform.errors import DomainError
-from app.modules.ai_providers.classroom_provider import ProviderHTTPError, ProviderWait
+from app.modules.ai_providers.classroom_provider import (
+    ProviderHTTPError,
+    ProviderSchemaMismatch,
+    ProviderWait,
+)
 from app.modules.platform.env import env_int
 from app.modules.ai_providers.provider_schema import gemini_response_schema, openai_response_schema
 
@@ -221,7 +225,14 @@ def _validated_structured_result(value, schema) -> dict:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
     try:
         return schema.model_validate_json(_extract_json_text(value)).model_dump()
-    except (ValidationError, TypeError, ValueError) as exc:
+    except ValidationError as exc:
+        errors = exc.errors()
+        if any(e["type"] == "json_invalid" for e in errors):
+            raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+        raise ProviderSchemaMismatch(
+            [(".".join(map(str, e["loc"])), e["type"]) for e in errors]
+        ) from exc
+    except (TypeError, ValueError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
 
 

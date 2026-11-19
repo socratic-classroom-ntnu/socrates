@@ -590,6 +590,7 @@ def profile_in_use(db, owner_id: str, profile_id: str) -> str | None:
 
 # Public surface for other modules (they import from service, not from these files).
 from app.modules.ai_providers.classroom_provider import (  # noqa: E402
+    ProviderSchemaMismatch as ProviderSchemaMismatch,
     ProviderWait as ProviderWait,
 )
 from app.modules.ai_providers.embeddings import embed as embed  # noqa: E402

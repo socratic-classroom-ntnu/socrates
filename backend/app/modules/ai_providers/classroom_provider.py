@@ -27,6 +27,16 @@ class ProviderHTTPError(ProviderWait):
         self.status, self.error = status, error
 
 
+class ProviderSchemaMismatch(ProviderWait):
+    """The reply was JSON but broke the schema. `fields` names each failure as (path, rule), e.g.
+    ("summary.reason_summary", "string_too_short"), so llm-runtime can re-ask with the reason.
+    Never the values: they may quote the student."""
+
+    def __init__(self, fields: list[tuple[str, str]]):
+        super().__init__("PROVIDER_SCHEMA_MISMATCH", 30)
+        self.fields = fields
+
+
 def partial_reply(raw):
     match = re.search(r'"reply_text"\s*:\s*"', raw)
     if not match:

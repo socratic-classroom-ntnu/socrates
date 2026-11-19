@@ -346,6 +346,32 @@ def tendencies_page(label: str = "1") -> tuple[str, dict[str, tuple[str, str, st
     return page("傾向三種呈現", body), parts
 
 
+def quote_table() -> str:
+    """Each judged cell beside its score and the quotes it was judged on."""
+    judged = _read(REPORT / "quote_judgments.json")
+    view = _read(RUNS / f"{judged['run']}.json")["view"]
+    names = [d["name"] for d in view["dimensions"]]
+    rows = []
+    for student in view["students"]:
+        name = student["display_name"]
+        for cell in student["scores"]:
+            index = cell["dimension_index"]
+            quotes = "<br>".join(f"「{esc(q['quote'])}」" for q in cell["sources"]) or "—"
+            note = judged["notes"].get(f"{name}|{index}", "")
+            rows.append(
+                f"<tr><td>{esc(name)}</td><td>{esc(names[index])}</td>"
+                f'<td class="num">{cell["score"]:g}</td><td>{quotes}</td>'
+                f"<td><b>{esc(judged['labels'][name][index])}</b></td><td>{esc(note)}</td></tr>"
+            )
+    return (
+        f"<details><summary>逐格標註（{len(rows)} 格）：分數、引用的原話與判斷</summary>"
+        '<div class="table-wrap"><table><tr><th>學生</th><th>軸</th><th class="num">分數</th>'
+        "<th>引用的原話</th><th>判斷</th><th>撐不起的理由</th></tr>"
+        + "".join(rows)
+        + "</table></div></details>"
+    )
+
+
 def tendency_table(numbers: dict) -> str:
     judged = _read(REPORT / "tendency_judgments.json")["labels"]
     runs = numbers["tendencies"]["runs"]
@@ -380,6 +406,8 @@ def fill(template: str, sections: dict[str, str], tendency: dict, numbers: dict)
                 f'<a href="#{esc(k)}">{esc(run_title(k, numbers["runs"][k]))}</a>' for k in sections
             )
             return f'<nav class="toc">{toc}</nav>' + "".join(sections.values())
+        if kind == "quote-table":
+            return quote_table()
         if kind == "tendency-table":
             return tendency_table(numbers)
         if kind == "tendency":

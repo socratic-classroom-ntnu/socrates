@@ -361,6 +361,20 @@ RETRY_FIX = {
 }
 
 
+def empty_note(paths: list[str]) -> str:
+    return (
+        f"格式提醒：上一個回應的 {'、'.join(paths)} 是空的；這些欄位必須有內容，其餘照原本的要求。"
+    )
+
+
+def left_empty(failure: Any) -> list[str]:
+    """Paths of the required strings the model left "" (every string minimum is 1 character);
+    [] when anything else broke the schema, which a reminder would not fix."""
+    if not failure.fields or any(rule != "string_too_short" for _, rule in failure.fields):
+        return []
+    return [path for path, _ in failure.fields]
+
+
 def retry_note(reason: str) -> str:
     fix = RETRY_FIX.get(
         reason,
@@ -405,6 +419,8 @@ async def guarded_generate(
     generate: Generate | None = None,
 ) -> tuple[JSON, JSON]:
     """以鐵則包住一次 provider 呼叫：前處理 → 產生（最多兩次）→ 檢查 → 才串流可見文字。"""
+    from app.modules.ai_providers.service import ProviderSchemaMismatch
+
     if generate is None:
         from app.modules.ai_providers.service import provider_generate as gateway_generate
 
@@ -419,12 +435,20 @@ async def guarded_generate(
     if hint:
         prompt = _note(prompt, OVERRIDE_NOTE)
     reasons: list[str] = []
-    result, audit = await generate(binding, prompt, schema, hold)
-    reason = check(kind, result, hint, context)
+    empty: list[str] = []
+    try:
+        result, audit = await generate(binding, prompt, schema, hold)
+        reason = check(kind, result, hint, context)
+    except ProviderSchemaMismatch as failure:
+        empty = left_empty(failure)
+        if not empty:
+            raise
+        audit, reason = failure.audit, "EMPTY_FIELD"
     if reason:
         reasons.append(reason)
         first = audit
-        result, audit = await generate(binding, _note(prompt, retry_note(reason)), schema, hold)
+        note = empty_note(empty) if empty else retry_note(reason)
+        result, audit = await generate(binding, _note(prompt, note), schema, hold)
         audit = merge_usage(first, audit)
         reason = check(kind, result, hint, context)
         if reason in TYPED_REASONS:

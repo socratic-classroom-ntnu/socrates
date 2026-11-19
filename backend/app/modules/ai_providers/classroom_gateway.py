@@ -218,7 +218,7 @@ def _provider_json(response) -> dict:
     return body
 
 
-def _validated_structured_result(value, schema) -> dict:
+def _validated_structured_result(value, schema, usage: dict | None = None) -> dict:
     if value is None or (isinstance(value, str) and not value.strip()):
         raise ProviderWait("PROVIDER_EMPTY_CONTENT", 30)
     if not isinstance(value, str):
@@ -229,9 +229,8 @@ def _validated_structured_result(value, schema) -> dict:
         errors = exc.errors()
         if any(e["type"] == "json_invalid" for e in errors):
             raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
-        raise ProviderSchemaMismatch(
-            [(".".join(map(str, e["loc"])), e["type"]) for e in errors]
-        ) from exc
+        fields = [(".".join(map(str, e["loc"])), e["type"]) for e in errors]
+        raise ProviderSchemaMismatch(fields, usage) from exc
     except (TypeError, ValueError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
 
@@ -272,11 +271,8 @@ async def _openai_generate(binding, messages, schema):
         raw = message.get("content")
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
-    return (
-        _validated_structured_result(raw, schema),
-        body.get("usage", {}),
-        body.get("model"),
-    )
+    usage = body.get("usage", {})
+    return _validated_structured_result(raw, schema, usage), usage, body.get("model")
 
 
 async def _anthropic_generate(binding, messages, schema):
@@ -314,11 +310,7 @@ async def _anthropic_generate(binding, messages, schema):
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
     raw = "".join(value for value in text_parts if isinstance(value, str))
     usage = body.get("usage", {})
-    return (
-        _validated_structured_result(raw, schema),
-        usage,
-        body.get("model"),
-    )
+    return _validated_structured_result(raw, schema, usage), usage, body.get("model")
 
 
 async def _gemini_generate(binding, messages, schema):
@@ -346,7 +338,7 @@ async def _gemini_generate(binding, messages, schema):
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     usage = body.get("usageMetadata", {})
-    return _validated_structured_result(raw, schema), usage, binding["model"]
+    return _validated_structured_result(raw, schema, usage), usage, binding["model"]
 
 
 def _token_breakdown(usage: dict) -> tuple[int, int]:
@@ -399,24 +391,33 @@ def _estimated_cost(binding: dict, usage: dict) -> float | None:
 async def generate(binding, messages, schema, on_delta):
     started = time.monotonic()
     adapter = binding["adapter"]
-    if adapter in {
-        "openrouter",
-        "openai",
-        "openai-compatible",
-    }:
-        result, usage, actual_model = await _openai_generate(binding, messages, schema)
-    elif adapter == "anthropic":
-        result, usage, actual_model = await _anthropic_generate(binding, messages, schema)
-    elif adapter == "gemini":
-        result, usage, actual_model = await _gemini_generate(binding, messages, schema)
-    else:
-        raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
+    try:
+        if adapter in {
+            "openrouter",
+            "openai",
+            "openai-compatible",
+        }:
+            result, usage, actual_model = await _openai_generate(binding, messages, schema)
+        elif adapter == "anthropic":
+            result, usage, actual_model = await _anthropic_generate(binding, messages, schema)
+        elif adapter == "gemini":
+            result, usage, actual_model = await _gemini_generate(binding, messages, schema)
+        else:
+            raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
+    except ProviderSchemaMismatch as exc:
+        exc.audit = _audit(binding, exc.usage, None, started)
+        raise
 
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
+    return result, _audit(binding, usage, actual_model, started)
+
+
+def _audit(binding, usage: dict, actual_model, started: float) -> dict:
+    adapter = binding["adapter"]
     reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
-    audit = {
+    return {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
         "classroom_owner_id": binding["owner_id"],
@@ -434,7 +435,6 @@ async def generate(binding, messages, schema, on_delta):
         "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,
     }
-    return result, audit
 
 
 def _model_capabilities(item: dict, adapter: str) -> dict:

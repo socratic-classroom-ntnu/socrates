@@ -22,7 +22,7 @@ INPUTS = {
         "student_says",
     ),
     "radar_axis_naming": ("narrative", "axes", "low_end", "high_end", "output_locale"),
-    "radar_dimensions": ("narrative", "stances", "output_locale"),
+    "radar_dimensions": ("narrative", "stances", "output_locale", "summaries"),
     "radar_scoring": ("dimensions", "final_summary", "student_messages"),
 }
 CITING = ("final_summary", "radar_scoring")
@@ -53,6 +53,12 @@ def test_template_names_every_input(kind):
 def test_citing_programs_quote_verbatim_from_the_given_refs(kind):
     assert "逐字複製" in template(kind)
     assert "student_messages 裡的 ref" in template(kind)
+
+
+def test_radar_dimensions_must_split_this_class_and_not_repeat_one_contrast():
+    text = template("radar_dimensions")
+    assert "兩端都有人" in text and "不同的面向" in text
+    assert "不引用個別學生的原話" in text
 
 
 def test_every_role_writes_in_the_output_locale():

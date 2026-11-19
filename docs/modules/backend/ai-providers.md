@@ -2,6 +2,12 @@
 
 使用者的模型供應商：金鑰加密保存、模型矩陣、路由鏈、呼叫稽核。
 
+## 輸出額度
+
+- `CLASSROOM_MAX_OUTPUT_TOKENS`（預設 2048）是回應本身的額度，`CLASSROOM_REASONING_MAX_TOKENS`（預設 1024）是思考的額度。
+- OpenAI 類（含 OpenRouter）與 Gemini 的上限都是兩者相加；OpenRouter 另外帶 `reasoning.max_tokens`，Gemini 帶 `thinkingConfig.thinkingBudget`。Gemini 的思考也算在 `maxOutputTokens` 裡，只給輸出額度時回應會被截斷。
+- Gemini 回 `finishReason: MAX_TOKENS` 時丟 `PROVIDER_OUTPUT_TRUNCATED`（422），和 `PROVIDER_SCHEMA_MISMATCH`（格式不合）分開。
+
 ## 本地 embedding（雷達的向量路線）
 
 - `service.embed(texts) -> list[list[float]]`：每段文字一個 `contracts.EMBEDDING_DIMENSIONS`（384）維、長度為 1 的向量，順序與輸入相同；空清單回空清單。餘弦相似度就是內積。

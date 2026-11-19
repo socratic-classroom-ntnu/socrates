@@ -37,6 +37,14 @@ course-management 的敘述型活動：活動內容改成「敘述＋立場空�
 - 前端（出題表單、學生對話頁、教師兩頁）也由你做（Fizzy 11-05 的要求），就是上表 F1–F4；一樣是一項一個 PR 到 `backend/main`。畫面照現有元件與樣式延伸，新的視覺有疑問再問視覺設計團隊。
 - 分組課這一輪不動、仍有選項：共用的 Observations、should_advance 的意思不變，分組課的測試要列入回歸。
 
+## 11/19 新增：Claude Haiku 回覆格式（11/22 交，排在下一段「教師看學生完整對話」前面）
+規格以 Discord「【問題回報】Claude Haiku 模型回覆格式」討論串為準。後台把 AI 設成 Claude Haiku 5.5（經 OpenRouter）時，學生還沒說理由，模型會把導師摘要的「理由摘要」寫成空字串；現在規定至少 1 個字，整個回覆被丟掉，學生的「我的對話」一直暫時無法回應。Anthropic 不保證遵守格式裡的字數、項數下限，老師用自己的 Anthropic 金鑰也會遇到，11/24 試用前要修好。格式放寬由 Courecta 做（他的第 11～13 項），這裡是單人活動與畫面的部分。開工前先等 `backend/main` 同步 `develop`（含 Fizzy 11/19 推的平台管理員與平台共用 AI 設定），再從同步後的 `backend/main` 開分支。分支照後端組流程，每項一個 PR 回 `backend/main`；兩人的項目都合進 `backend/main` 後，由 Arthur 打包成 `fix/haiku-response-format` PR 到 `develop`。
+
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 12 | solo-activity | Haiku 回覆格式 | 學生被請去確認觀點前，導師摘要的「目前立場」「理由摘要」都要有字：任一欄是空字串就不進確認、繼續對話（`should_advance` 為真也一樣）；訊息額度用完（capped）照舊送確認，空的欄位原樣存空字串 | Courecta 11 | 新測試先紅再綠：一欄空 → 不進確認；capped 且兩欄都空 → 仍進確認 |
+| 13 | 前端 solo-activity | Haiku 回覆格式 | 確認觀點畫面（含 capped）遇到空的「目前立場」「理由摘要」，顯示灰字「（還沒說明）」；教師即時狀況、統計分析顯示這兩欄的地方一樣處理 | 12 | 頁面測試先紅再綠；最後在 dev 站用平台共用 AI 設定把模型設成 Claude Haiku 5.5（經 OpenRouter），實際走完一次「我的對話」到確認觀點，截圖與稽核紀錄貼回討論串 |
+
 ## 11/19 新增：教師看學生完整對話（11/22 交）
 規格以 Discord「【需求】教師看學生完整對話」討論串的附件與 Figma「教師看完整對話」為準（Fizzy 11/19 提出）。分支照後端組流程：從 `backend/main` 開 `backend/<你的名字>/...`，每項一個 PR 回 `backend/main`；四項都合進 `backend/main` 後，由 Arthur 打包成 `feature/teacher-transcript` PR 到 `develop`。學生端畫面與學生自己的 API 一律不改。
 

@@ -127,6 +127,7 @@ const teach: Shape<typeof zhHant> = {
     noMatch: '没有符合的活动',
   },
   analysis: {
+    blank: '（还没说明）',
     demoBanner: '示意数据：统计功能还在完成中，以下数字不是这个活动的真实作答',
     overview: '完成概况',
     started: '已开始 {{started}} ／ {{enrolled}}',

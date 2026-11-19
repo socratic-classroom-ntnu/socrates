@@ -124,6 +124,7 @@ export default {
     noMatch: '沒有符合的活動',
   },
   analysis: {
+    blank: '（還沒說明）',
     demoBanner: '示意資料：統計功能還在完成中，以下數字不是這個活動的真實作答',
     overview: '完成概況',
     started: '已開始 {{started}} ／ {{enrolled}}',

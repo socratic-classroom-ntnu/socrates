@@ -59,6 +59,7 @@ def toggle_views(db: Session) -> list[ToggleView]:
             enabled=row.enabled if row is not None else spec.default,
             updated_at=row.updated_at if row is not None else None,
             updated_by_name=_name(db, row.updated_by) if row is not None else None,
+            disable_warning=spec.disable_warning,
         )
         for key, spec, row in toggles.toggle_rows(db)
     ]

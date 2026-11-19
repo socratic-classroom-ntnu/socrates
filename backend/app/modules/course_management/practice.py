@@ -101,6 +101,23 @@ def practice_owner(db: Session) -> Account:
         return winner
 
 
+def lock_practice_owner(db: Session) -> Account:
+    """The system account, row-locked until the transaction ends: whoever writes the 系統 AI
+    connection (startup env import, 後台 save) holds it, so the check and the write are one
+    step (後台 spec P30). FOR NO KEY UPDATE, so rows that only point at this account
+    (a student's new 我的對話 course) are not held up."""
+    owner = practice_owner(db)
+    db.flush()
+    locked = db.scalar(
+        select(Account)
+        .where(Account.id == owner.id)
+        .with_for_update(key_share=True)  # PostgreSQL: FOR NO KEY UPDATE
+        .execution_options(populate_existing=True)
+    )
+    assert locked is not None
+    return locked
+
+
 # ---- 私人課程 ----------------------------------------------------------------------------------
 
 PRACTICE_COURSE_NAME = "我的對話"

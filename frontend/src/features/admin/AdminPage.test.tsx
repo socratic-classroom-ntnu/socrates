@@ -40,7 +40,10 @@ function renderAt(path: string) {
   </MemoryRouter>)
 }
 
-const groupMode = { key: 'group_mode', name: '多人模式', description: '分組課（多人教室）。', enabled: false, updated_at: null, updated_by_name: null }
+const groupMode = {
+  key: 'group_mode', name: '多人模式', description: '分組課（多人教室）。', enabled: false, updated_at: null, updated_by_name: null,
+  disable_warning: '關掉後，多人模式的網址和功能都不能使用，正在進行中的也會無法繼續。之後可以再打開。',
+}
 
 beforeEach(async () => {
   await applyLocale('zh-Hant')
@@ -65,15 +68,26 @@ test.each([
   expect(toggles).not.toHaveBeenCalled()
 })
 
-test('the switches tab lists each switch with who changed it last', async () => {
+test('the switches tab lists each switch; only a changed one has an ⓘ with who changed it', async () => {
   toggles.mockResolvedValue([groupMode, { ...groupMode, key: 'other', name: '另一個', enabled: true, updated_at: 1_763_500_000, updated_by_name: 'fizzy' }])
   renderAt('/admin')
   expect(await screen.findByRole('heading', { level: 1, name: '後台' })).toBeInTheDocument()
   expect(screen.getByRole('tab', { name: '功能開關' })).toHaveAttribute('aria-selected', 'true')
   const first = screen.getByRole('switch', { name: '多人模式' })
   expect(first).toHaveAttribute('aria-checked', 'false')
-  expect(screen.getByText('還沒有人改過')).toBeInTheDocument()
-  expect(screen.getByText(/最後由 fizzy 在/)).toBeInTheDocument()
+  expect(screen.queryByText('還沒有人改過')).not.toBeInTheDocument()
+  const infos = screen.getAllByRole('button', { name: '最後改動' })
+  expect(infos).toHaveLength(1)
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  fireEvent.mouseEnter(infos[0])
+  expect(screen.getByRole('tooltip')).toHaveTextContent(/^最後由 fizzy 在 .+ 開啟$/)
+  fireEvent.mouseLeave(infos[0])
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  fireEvent.focus(infos[0])
+  expect(infos[0]).toHaveAccessibleDescription(/最後由 fizzy 在/)
+  fireEvent.blur(infos[0])
+  expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
+  expect(screen.getByText('開關改了立刻生效，重新整理頁面就會看到。')).toBeInTheDocument()
 })
 
 test('turning a switch on sends it at once', async () => {
@@ -84,15 +98,25 @@ test('turning a switch on sends it at once', async () => {
   expect(await screen.findByRole('switch', { name: '多人模式' })).toHaveAttribute('aria-checked', 'true')
 })
 
-test('turning group mode off asks first', async () => {
+test('turning group mode off asks first with the warning the switch carries', async () => {
   toggles.mockResolvedValue([{ ...groupMode, enabled: true }])
   update.mockResolvedValue({ ...groupMode, enabled: false, updated_at: 2, updated_by_name: 'wang' })
   renderAt('/admin')
   fireEvent.click(await screen.findByRole('switch', { name: '多人模式' }))
   const dialog = await screen.findByRole('dialog', { name: '關閉多人模式？' })
+  expect(within(dialog).getByText(groupMode.disable_warning)).toBeInTheDocument()
   expect(update).not.toHaveBeenCalled()
   fireEvent.click(within(dialog).getByRole('button', { name: '關閉多人模式' }))
   await waitFor(() => expect(update).toHaveBeenCalledWith('group_mode', false))
+})
+
+test('a switch without a warning turns off at once', async () => {
+  toggles.mockResolvedValue([{ ...groupMode, enabled: true, disable_warning: null }])
+  update.mockResolvedValue({ ...groupMode, enabled: false, disable_warning: null })
+  renderAt('/admin')
+  fireEvent.click(await screen.findByRole('switch', { name: '多人模式' }))
+  await waitFor(() => expect(update).toHaveBeenCalledWith('group_mode', false))
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 })
 
 test('a failed switch says so and keeps the old state', async () => {

@@ -1,7 +1,7 @@
 ---
-description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、密碼欄、狀態標籤、篩選 chip、複製鈕、QR、底部導覽
+description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、密碼欄、下拉選單、狀態標籤、篩選 chip、複製鈕、QR、底部導覽
 globs: frontend/src/**/*.tsx
-keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, StatusPill, Chip, ChipGroup, CopyButton, QrCode, BottomNav, className, CSS Modules]
+keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Select, StatusPill, Chip, ChipGroup, CopyButton, QrCode, BottomNav, className, CSS Modules]
 ---
 
 # 前端共用元件（`frontend/src/ui`）
@@ -21,6 +21,7 @@ keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Stat
 | `RequiredMark` | 單獨的必填星號 | 放在 `Field` 以外的標題，例如 `<legend>` |
 | `FormError` | 整張表單或整頁的錯誤 | 一般的 `<p>` props，通常加 `role="alert"` |
 | `PasswordInput` | 密碼欄，右側有顯示／隱藏密碼的眼睛按鈕 | 其餘 props 與 `ref` 都給 `<input>`（不收 `type`）；預設遮住；欄位 `disabled` 時眼睛也停用。所有帳號密碼欄都用它（API key 這類金鑰欄不用） |
+| `Select` | 下拉選單（取代原生 `<select>`；選中的打勾、可用鍵盤） | `value`、`options`（每項 `value`、`label`，可加第二行 `description` 與右側 `badge`）、`onChange`、`listLabel`（清單名稱，通常同欄位標題）；`search` 加搜尋框、`typedLabel` 允許直接用搜尋框打的字、`note` 是清單上方一行說明（也可以是函式，拿到搜尋字與符合數）、`align: 'end'` 讓較寬的清單往左展開；`id` 等於 `Field` 的 `id`，`invalid`／`describedBy` 照 `Field` 的規則接 |
 | `StatusPill` | 狀態標籤 | `tone`：`open`、`scheduled`、`draft`、`ended`、`quiet` |
 | `Chip` | 可切換的篩選 chip | `pressed`（會變成 `aria-pressed`） |
 | `ChipGroup` | 一排 chip | `label` 是這組的名稱（`role="group"`） |

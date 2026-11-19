@@ -77,6 +77,9 @@ module = [
     "app.modules.admin.routes",
     "app.modules.identity_access.admins",
     "app.modules.platform.toggles",
+    "app.modules.admin.system_ai",
+    "app.modules.solo_activity.tutor_chain",
+    "app.modules.ai_providers.probe_errors",
     "app.classroom_server",
 ]
 follow_imports = "skip"

@@ -194,7 +194,7 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
     assert client.get("/api/v2/public-config").json()["features"] == {"group_mode": False}
     user(client, "fizzy", account_role="teacher")
     make_admin("fizzy")
-    [row] = client.get("/api/v2/admin/toggles").json()
+    row, fallback = client.get("/api/v2/admin/toggles").json()
     assert row == {
         "key": "group_mode",
         "name": "多人模式",
@@ -202,6 +202,17 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
         "enabled": False,
         "updated_at": None,
         "updated_by_name": None,
+        "disable_warning": "關掉後，多人模式的網址和功能都不能使用，正在進行中的也會無法繼續。之後可以再打開。",
+    }
+    # 後台 spec P35: off by default, and turning it off asks first with its own warning.
+    assert fallback == {
+        "key": "system_ai_fallback",
+        "name": "老師沒設金鑰時用系統 AI",
+        "description": "沒設 AI 連線的老師，課程裡的學生對話改用系統 AI。",
+        "enabled": False,
+        "updated_at": None,
+        "updated_by_name": None,
+        "disable_warning": "關掉後，沒設金鑰的老師，課程裡的學生對話會無法繼續，直到老師自己設好 AI 連線。之後可以再打開。",
     }
     before = time.time()
     response = client.put("/api/v2/admin/toggles/group_mode", json={"enabled": True})

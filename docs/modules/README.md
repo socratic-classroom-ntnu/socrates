@@ -38,7 +38,7 @@
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
 | [Feedback（意見回饋）](./backend/feedback.md) | ✅ | `backend/app/modules/feedback/` | platform、identity-access | 0 |
-| [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access | 0 |
+| [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access、ai-providers、course-management、llm-runtime | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 
@@ -67,7 +67,7 @@
 | 教室房間（/classrooms/*） | classroom-core | student-classroom | classroom_schemas.py、room_schemas.py → api/types.ts | 產生型別 ✅ |
 | 分組課（/groups/*） | group-dialogue | group-dialogue、teacher-analytics | routes/groups.py | 產生型別 ✅ |
 | AI 學生（/ai-students/*） | group-dialogue | group-dialogue | routes/ai_students.py | 產生型別 ✅ |
-| 雷達圖 | solo-activity | teacher-analytics | backend/app/modules/solo_activity/contracts.py | 後端 ViewModel 已定義；端點待實作 |
+| 雷達圖 | solo-activity | teacher-analytics | backend/app/modules/solo_activity/contracts.py | 產生型別 ✅（GET／PATCH /solo/activities/{id}/radar） |
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |

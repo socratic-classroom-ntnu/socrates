@@ -7,6 +7,9 @@ const common: Shape<typeof zhHant> = {
   close: '关闭',
   copied: '已复制',
   copyFailed: '无法复制',
+  select: {
+    searching: '搜索中…',
+  },
   password: {
     show: '显示密码',
     hide: '隐藏密码',

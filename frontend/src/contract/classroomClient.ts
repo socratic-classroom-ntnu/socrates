@@ -336,6 +336,30 @@ export function removeAdmin(accountId: string) {
   return typedApi('/admin/admins/{account_id}', 'DELETE', { path: { account_id: accountId } })
 }
 
+export type SystemAIView = components['schemas']['SystemAIView']
+export type SystemAIInput = components['schemas']['SystemAIInput']
+
+/** 系統 AI（後台 spec P31–P37）：讀取只給末四碼；測試與儲存都會真的送一句，儲存時後端再測一次。 */
+export function getSystemAI() {
+  return typedApi('/admin/system-ai', 'GET')
+}
+
+export function testSystemAI(body: SystemAIInput) {
+  return typedApi('/admin/system-ai/test', 'POST', { body })
+}
+
+export function saveSystemAI(body: SystemAIInput) {
+  return typedApi('/admin/system-ai', 'PUT', { body })
+}
+
+export type ModelOption = components['schemas']['ModelOption']
+export type SystemAIModelsInput = components['schemas']['SystemAIModelsInput']
+
+/** 這個服務有哪些可用的模型（後台 spec P40）；金鑰留空＝同服務同網址時用已存的。 */
+export function listSystemAIModels(body: SystemAIModelsInput) {
+  return typedApi('/admin/system-ai/models', 'POST', { body })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

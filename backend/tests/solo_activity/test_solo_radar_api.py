@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 
 from app.modules.ai_providers.contracts import EmbeddingUnavailable
 from app.modules.platform import storage as storage
-from app.modules.solo_activity import radar
+from app.modules.solo_activity import radar, tutor_chain
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from tests.course_management.conftest import switch, user
 from tests.solo_activity.test_solo_analysis_api import student
@@ -121,7 +121,7 @@ def test_no_kept_final_summary_is_not_ready(client, tutor):
 
 def test_without_a_provider_the_radar_is_not_ready(client, tutor, monkeypatch):
     s, _ = class_of(client, 2)
-    monkeypatch.setattr(radar, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
+    monkeypatch.setattr(tutor_chain, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
     assert get_radar(client, s).json()["detail"] == "RADAR_NOT_READY"
 
 

@@ -34,7 +34,8 @@ from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from app.modules.ai_providers.contracts import EmbeddingUnavailable
-from app.modules.ai_providers.service import embed, resolve_owner_chain
+from app.modules.ai_providers.service import embed
+from app.modules.solo_activity.tutor_chain import course_bindings
 from app.modules.course_management import service as activities
 from app.modules.course_management.repositories import ActivityRevision, Course, Enrollment
 from app.modules.identity_access.repositories import Account
@@ -384,7 +385,7 @@ def begin_radar(db: Session, account: Account, activity_id: str, at: float) -> D
     kept = db.get(SoloRadar, activity.id)
     if kept is not None and kept.basis == basis:
         return {"view": _view(kept)}
-    bindings, _ = resolve_owner_chain(db, course.owner_id, service.ROLE)
+    bindings = course_bindings(db, course, service.ROLE)
     if not bindings:
         raise DomainError("RADAR_NOT_READY", 409)
     for student in students:

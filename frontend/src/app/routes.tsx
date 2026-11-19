@@ -91,6 +91,7 @@ export function AppRoutes() {
     <Route element={<AdminGate />}>
       <Route element={<AppShell />}>
         <Route path="/admin" element={<AdminPage tab="toggles" />} />
+        <Route path="/admin/system-ai" element={<AdminPage tab="systemAI" />} />
         <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
         <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
       </Route>

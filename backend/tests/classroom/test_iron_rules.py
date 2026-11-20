@@ -48,6 +48,7 @@ def test_every_provider_call_goes_through_the_iron_rules():
     }
     assert wired == {
         "modules/admin/system_ai.py",
+        "modules/analytics/radar.py",
         "modules/app_shell/llm_workers.py",
         "modules/content_authoring/service.py",
         "modules/group_dialogue/service.py",

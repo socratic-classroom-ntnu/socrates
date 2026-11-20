@@ -10,6 +10,7 @@ from tests.classroom.test_group_guest_block import QUERY, REQUESTS, group_routes
 from tests.course_management.conftest import user
 
 ANALYSIS = ("GET", "/api/v2/groups/classrooms/{rid}/analysis")
+RADAR = ("GET", "/api/v2/groups/classrooms/{rid}/questions/{index}/radar")
 ORIGIN = {"Origin": "http://testserver"}
 
 
@@ -27,10 +28,10 @@ def test_every_group_endpoint_is_covered(client):
         and route.endpoint.__module__.startswith("app.modules.analytics.")
         for method in route.methods
     }
-    assert analytics == {ANALYSIS}
+    assert analytics == {ANALYSIS, RADAR}
 
 
-@pytest.mark.parametrize(("method", "path"), sorted(REQUESTS) + [ANALYSIS])
+@pytest.mark.parametrize(("method", "path"), sorted(REQUESTS) + [ANALYSIS, RADAR])
 def test_every_group_endpoint_is_closed_while_group_mode_is_off(client, method, path):
     user(client, "lin", account_role="teacher")
     url = path.format(script_id="x", room_id="x", index=0, rid="x", mid="x", cid="x")

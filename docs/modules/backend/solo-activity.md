@@ -12,7 +12,7 @@
 - `backend/app/modules/solo_activity/`
 
 契約：
-- 雷達圖（產生型別 ✅（GET／PATCH /solo/activities/{id}/radar））
+- 雷達圖（產生型別 ✅（GET／PATCH /solo/activities/{id}/radar；分組課 GET /groups/classrooms/{id}/questions/{index}/radar））
 - 單人活動（/solo/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）

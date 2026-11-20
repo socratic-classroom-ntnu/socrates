@@ -28,7 +28,8 @@ export function StudentCoursePage() {
   const [params, setParams] = useSearchParams()
   const raw = params.get('filter')
   const filter: Filter = isFilter(raw) ? raw : 'all'
-  useShellBack('/?tab=learn', t('breadcrumb'))
+  // 手機頂部列「‹ 首頁」（S5m，P33）：首頁已經沒有「我學的課」分頁
+  useShellBack('/', t('shell:nav.home'))
 
   if ((course.loading && !course.data) || (list.loading && !list.data)) return <main className="learn-page" aria-busy="true" />
   if (!course.data || !list.data) {

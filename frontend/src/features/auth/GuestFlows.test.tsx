@@ -5,7 +5,7 @@ import { reportSessionLost } from '../../contract/sessionEvents'
 import { AppRoutes } from '../../app/routes'
 import { applyLocale } from '../../i18n'
 import { AuthProvider } from './AuthContext'
-import { UPGRADED_KEY } from './GuestPanels'
+import { HOME_NOTICE_KEY } from './GuestPanels'
 import { guestKeepUntil } from './guestExpiry'
 
 jest.mock('../../contract/classroomClient', () => {
@@ -18,16 +18,18 @@ jest.mock('../ai-settings/ProviderSettings', () => ({ ProviderSettings: () => nu
 jest.mock('../course/learn/StudentCoursePage', () => ({ StudentCoursePage: () => <p>course-page</p> }))
 
 const WEEK = 7 * 86400
+// 首頁問候語跟著當下時間換（早安／午安／晚安），等首頁出現時三種都要接受，測試才不會隨 CI 的時間變紅。
+const HOME_GREETING = /(早安|午安|晚安)，ming/
 const now = () => Math.floor(Date.now() / 1000)
 const guest = (extra: Record<string, unknown> = {}) => ({
   id: 'g-1', username: '小-明-1a2b3c4d', display_name: '小-明', email: '', email_masked: '',
   verified: false, authority_state: 'EMAIL_VERIFICATION', csrf_token: 'csrf', points: 0, achievements: [],
-  locale: 'zh-Hant', kind: 'guest', guest_expires_at: now() + WEEK, ...extra,
+  locale: 'zh-Hant', kind: 'guest', account_role: 'student', guest_expires_at: now() + WEEK, ...extra,
 })
 const registered = {
   id: 'u-1', username: 'ming', display_name: 'ming', email: 'ming@example.org', email_masked: 'm***@example.org',
   verified: true, authority_state: 'FULL_PRODUCT', csrf_token: 'csrf', points: 0, achievements: [],
-  locale: 'zh-Hant', kind: 'registered', guest_expires_at: null,
+  locale: 'zh-Hant', kind: 'registered', account_role: 'student', guest_expires_at: null,
 }
 const lists = { teaching: [], learning: [] }
 
@@ -96,7 +98,9 @@ test('the account menu shows the nickname and the keep-until date, with register
   openApp('/')
   fireEvent.click(await screen.findByRole('button', { name: '帳號選單' }))
   const menu = await screen.findByRole('menu', { name: '帳號選單' })
-  expect(within(menu).getByText(/訪客 · 紀錄保留到/)).toBeInTheDocument()
+  // 名字旁是「訪客」角色標籤，第二行只寫保留日期
+  expect(within(menu).getByText('訪客')).toBeInTheDocument()
+  expect(within(menu).getByText(/^保留到 /)).toBeInTheDocument()
   expect(within(menu).getAllByText('小-明').length).toBeGreaterThan(0)
   expect(within(menu).queryByText('小-明-1a2b3c4d')).toBeNull()
   expect(within(menu).getByRole('menuitem', { name: '註冊以保留紀錄' })).toBeInTheDocument()
@@ -161,14 +165,26 @@ async function fillRegister(email = 'ming@example.org') {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: /^註冊/ })) })
 }
 
-test('a guest sees only 首頁 in the side navigation: the other items are teacher pages that refuse guests', async () => {
+// 訪客的 account_role 一律是 student，側欄沿用學生的兩項；老師頁面會拒絕訪客，不能出現
+test('a guest sees 首頁 and 我的對話 in the side navigation, and none of the teacher pages', async () => {
   serve(guest())
   openApp('/')
   await screen.findByText('你目前是訪客')
   const nav = screen.getAllByRole('navigation').find(item => within(item).queryByText('首頁')) as HTMLElement
+  expect(within(nav).getByRole('link', { name: '首頁' })).toHaveAttribute('href', '/')
+  expect(within(nav).getByRole('link', { name: '我的對話' })).toHaveAttribute('href', '/my-dialogues')
   expect(within(nav).queryByText('個人題庫')).toBeNull()
   expect(within(nav).queryByText('分組課')).toBeNull()
   expect(within(nav).queryByText('題庫商店')).toBeNull()
+})
+
+test('a guest opening 我的對話 gets the guest version, not the email verification page', async () => {
+  const calls = serve(guest(), { 'GET /solo/practice/bank': [] })
+  openApp('/my-dialogues')
+  expect(await screen.findByText('註冊帳號，就能隨時跟蘇格拉底練習')).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '註冊帳號' })).toHaveAttribute('href', '/guest/register')
+  expect(where()).toBe('/my-dialogues')
+  expect(calls.some(call => call.key === 'GET /solo/practice')).toBe(false)
 })
 
 test('the guest sign-up and sign-in pages use the join header with the 訪客 tag, not the old chalkboard', async () => {
@@ -189,7 +205,7 @@ test('registering keeps the guest records and goes to email verification first',
   await fillRegister()
   await waitFor(() => expect(window.location.pathname).toBe('/verify'))
   expect(calls).toContainEqual({ key: 'POST /auth/guest/upgrade', body: { username: 'ming', email: 'ming@example.org', password: 'Socratic-123' } })
-  expect(localStorage.getItem(UPGRADED_KEY)).toBe('1')
+  expect(JSON.parse(localStorage.getItem(HOME_NOTICE_KEY) ?? 'null')).toEqual({ kind: 'upgraded', accountId: 'u-1' })
 })
 
 test('an email that is already registered shows only the G19 alert and the two ways out', async () => {
@@ -232,12 +248,28 @@ test('an email already registered offers logging in with it to keep the records 
 })
 
 test('after verifying, home says the guest records were kept (G26), once', async () => {
-  localStorage.setItem(UPGRADED_KEY, '1')
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'u-1' }))
   serve(registered)
   openApp('/')
   expect(await screen.findByText('Email 驗證完成，訪客時的紀錄都保留下來了。')).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: '知道了' }))
-  expect(localStorage.getItem(UPGRADED_KEY)).toBeNull()
+  expect(localStorage.getItem(HOME_NOTICE_KEY)).toBeNull()
+})
+
+test('a notice left for another account is not shown and is dropped', async () => {
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'someone-else' }))
+  serve(registered)
+  openApp('/')
+  expect(await screen.findByText(HOME_GREETING)).toBeInTheDocument()
+  expect(screen.queryByText('Email 驗證完成，訪客時的紀錄都保留下來了。')).toBeNull()
+  await waitFor(() => expect(localStorage.getItem(HOME_NOTICE_KEY)).toBeNull())
+})
+
+test('?merged=1 in the address (for example carried through a login next) shows nothing', async () => {
+  serve(registered)
+  openApp('/?merged=1')
+  await screen.findByText(HOME_GREETING)
+  expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
 })
 
 // ---- logging in to merge (G20–G25) --------------------------------------------------------
@@ -249,12 +281,15 @@ async function logIn(password = 'Socratic-123') {
 }
 
 test('logging in moves the guest records and home says so only when the backend moved them (G25)', async () => {
+  localStorage.setItem(HOME_NOTICE_KEY, JSON.stringify({ kind: 'upgraded', accountId: 'u-1' }))
   let me: unknown = guest()
   serve(() => me, { 'POST /auth/login': () => { me = registered; return { ...registered, guest_merge: 'MERGED' } } })
   openApp('/guest/login')
   await logIn()
   expect(await screen.findByText('訪客的課程和對話已經併入你的帳號。')).toBeInTheDocument()
-  expect(where()).toBe('/?merged=1')
+  expect(where()).toBe('/')
+  // One notice at a time: the merge replaces any notice still waiting.
+  expect(document.querySelectorAll('.home-notice')).toHaveLength(1)
 })
 
 test('nothing was merged (expired guest, rolled back hook): login is plain, no G25', async () => {
@@ -264,6 +299,17 @@ test('nothing was merged (expired guest, rolled back hook): login is plain, no G
   await logIn()
   await waitFor(() => expect(where()).toBe('/'))
   expect(screen.queryByText('訪客的課程和對話已經併入你的帳號。')).toBeNull()
+})
+
+test.each(['/guest/register', '/guest/login'])('%s: the eye button shows and hides the password', async url => {
+  serve(guest())
+  openApp(url)
+  const field = await screen.findByLabelText('密碼')
+  expect(field).toHaveAttribute('type', 'password')
+  fireEvent.click(screen.getByRole('button', { name: '顯示密碼' }))
+  expect(field).toHaveAttribute('type', 'text')
+  fireEvent.click(screen.getByRole('button', { name: '隱藏密碼' }))
+  expect(field).toHaveAttribute('type', 'password')
 })
 
 test('a wrong password says so and stays (G22)', async () => {

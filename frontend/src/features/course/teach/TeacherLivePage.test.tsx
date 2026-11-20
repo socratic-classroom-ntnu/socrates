@@ -29,7 +29,7 @@ const progress: Progress = {
 function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
-    revision: 1, draft: { title: progress.title, ends_at: progress.ends_at! },
+    revision: 1, draft: { title: progress.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: progress.ends_at! },
     starts_at: generatedAt - 3600, ends_at: progress.ends_at, available_actions: actions,
   }
 }
@@ -218,6 +218,6 @@ test('guest rows carry a guest tag and expired guests show an anonymous number',
   expect(within(registered).queryByText('訪客')).toBeNull()
   const guest = within(page).getByText('阿明').closest('th')!
   expect(within(guest).getByText('訪客')).toBeInTheDocument()
-  const expired = within(page).getByText('匿名訪客 2').closest('th')!
+  const expired = within(page).getByText('過期訪客 2').closest('th')!
   expect(within(expired).getByText('訪客')).toBeInTheDocument()
 })

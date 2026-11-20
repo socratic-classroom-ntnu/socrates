@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, NamedTuple
 
 from app.modules.llm_runtime.contracts import PersonalTutorTurn
@@ -80,6 +80,9 @@ class ScenarioProgress:
     rejected_summary: dict[str, Any] | None = None
     # The turn of the first student message after the latest 不太對; policy.py holds confirmation.
     last_revise_turn: int | None = None
+    # When each 不太對 on this scenario's summary was pressed, oldest first. Only the teacher's
+    # transcript reads it; the student's own view never carries it.
+    rejected_at: list[float] = field(default_factory=list)
     # Only a written (not the teacher's) scenario: the one condition it changed, the student's
     # words it tests (message id and where the quote sits), and which provider and model wrote it.
     change: dict[str, str] | None = None
@@ -139,6 +142,11 @@ def new_attempt(attempt_id: str, scenarios: list[Scenario]) -> AttemptState:
         scenario_index=0,
         progress=tuple(ScenarioProgress(item.scenario_id, item.text) for item in scenarios),
     )
+
+
+def _is_complete(summary: dict[str, Any]) -> bool:
+    """Both the position and the reason have words in them; blank space is not a word."""
+    return all(str(summary.get(key, "")).strip() for key in ("current_position", "reason_summary"))
 
 
 def _can_still_talk(current: ScenarioProgress) -> bool:
@@ -257,12 +265,16 @@ def apply_tutor_turn(a: AttemptState, key: str, turn: PersonalTutorTurn) -> Atte
         turns_since_shift=None if last_shift is None else turn_index - last_shift,
         turns_since_revise=None if last_revise is None else turn_index - last_revise,
     )
-    # Out of messages without a settled view: the current summary goes to confirmation as capped.
-    capped = not advance and not _can_still_talk(a.current)
-    if not advance and not capped:
+    summary = turn.summary.model_dump()
+    # A summary with a blank in it is never offered while there is still a message to talk with,
+    # whatever the tutor reports (some models write "" until the student has said something).
+    settled_view = advance and _is_complete(summary)
+    # Out of messages without a settled view: the current summary goes to confirmation as capped,
+    # blanks and all.
+    capped = not settled_view and not _can_still_talk(a.current)
+    if not settled_view and not capped:
         progress = _with_current(settled, candidate_summary=None, summary_digest=None)
         return replace(settled, state="in_dialogue", progress=progress)
-    summary = turn.summary.model_dump()
     progress = _with_current(
         settled,
         **({"status": "capped"} if capped else {}),
@@ -367,8 +379,10 @@ def extend(
     return replace(a, state="between_scenarios", progress=(*a.progress, added))
 
 
-def revise_viewpoint(a: AttemptState) -> AttemptState:
-    """不太對: back to the dialogue; the turn count stays, so the floor is not reset."""
+def revise_viewpoint(a: AttemptState, now: float | None = None) -> AttemptState:
+    """不太對: back to the dialogue; the turn count stays, so the floor is not reset.
+
+    Each press adds its time to the scenario's ``rejected_at``; without a time nothing is added."""
     _require(a, "revise_viewpoint")
     progress = _with_current(
         a,
@@ -376,6 +390,7 @@ def revise_viewpoint(a: AttemptState) -> AttemptState:
         summary_digest=None,
         revising=True,
         rejected_summary=a.current.candidate_summary,
+        rejected_at=a.current.rejected_at if now is None else [*a.current.rejected_at, now],
     )
     return replace(a, state="in_dialogue", progress=progress)
 

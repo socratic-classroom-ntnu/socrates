@@ -19,11 +19,9 @@ from uuid import uuid4
 
 from sqlalchemy import func, select
 
-from app.modules.ai_providers.service import (
-    record_direct_call_audit,
-    resolve_owner_chain,
-)
+from app.modules.ai_providers.service import record_direct_call_audit
 from app.modules.course_management import service as activities
+from app.modules.solo_activity.tutor_chain import course_bindings
 from app.modules.course_management.contracts import ActivityTimes, status
 from app.modules.course_management.repositories import (
     Activity,
@@ -114,9 +112,13 @@ def _published_activity(db, activity_id: str) -> tuple[Activity, ActivityRevisio
     return activity, revision
 
 
-def _enrollment(db, account: Account, course: Course, missing: str) -> Enrollment:
-    """Only enrolled students; a course's teacher is not a student of it."""
-    found = activities.existing_enrollment(db, account, course)
+def _enrollment(
+    db, account: Account, course: Course, missing: str, lock: bool = False
+) -> Enrollment:
+    """Only enrolled students; a course's teacher is not a student of it. lock holds the
+    enrollment (shared) until the transaction ends, so a removal cannot slip in between."""
+    lookup = activities.locked_enrollment if lock else activities.existing_enrollment
+    found = lookup(db, account, course)
     if found is None or course.owner_id == account.id:
         raise DomainError(missing, 404)
     return found
@@ -202,6 +204,14 @@ def _messages(db, attempt_id: str) -> list[SoloMessage]:
 # ---- views ---------------------------------------------------------------------------------
 
 
+def _display_title(activity: Activity, course: Course) -> str:
+    """我的對話的私人活動存的是整段情境；畫面上顯示題庫的短標題（spec §10 M16）。"""
+    if course.practice_account_id is None:
+        return activity.title
+    item = activities.practice_bank_item(activity.bank_item_id or "")
+    return activities.practice_display_title(item, activity.title)
+
+
 def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     a = _state(row)
     activity = db.get(Activity, row.activity_id)
@@ -231,7 +241,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
     return {
         "id": row.id,
         "activity_id": activity.id,
-        "activity_title": activity.title,
+        "activity_title": _display_title(activity, course),
         "course_id": course.id,
         "course_name": course.name,
         "display_name": enrolled.display_name if enrolled else "",
@@ -307,12 +317,13 @@ def activity_view(db, account: Account, activity_id: str, at: float) -> dict:
     row = _own_attempt(db, activity.id, account.id)
     return {
         "activity_id": activity.id,
-        "title": activity.title,
+        "title": _display_title(activity, course),
         "course_id": course.id,
         "course_name": course.name,
         "status": _status(activity, at),
         "ends_at": activity.ends_at,
         "attempt": _attempt_brief(row) if row is not None else None,
+        "practice": course.practice_account_id is not None,
     }
 
 
@@ -344,7 +355,8 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
     """
     activity, _ = _published_activity(db, activity_id)
     course = db.get(Course, activity.course_id)
-    _enrollment(db, account, course, "ACTIVITY_NOT_FOUND")
+    # Locked: a removal at the same moment must not leave an attempt without an enrollment.
+    _enrollment(db, account, course, "ACTIVITY_NOT_FOUND", lock=True)
     row = _own_attempt(db, activity.id, account.id)
     if row is not None:
         return _attempt_view(db, row, at)
@@ -357,7 +369,7 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
     row = SoloAttempt(
         id=str(uuid4()), activity_id=activity.id, revision_id=revision.id, account_id=account.id
     )
-    first = Scenario(FIRST_SCENARIO_ID, revision.content["title"])
+    first = Scenario(FIRST_SCENARIO_ID, revision.content["scenario"])
     _store(row, machine.new_attempt(row.id, [first]))
     db.add(row)
     db.flush()
@@ -404,7 +416,7 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         digest = cast("ConfirmViewpointBody", body).summary_digest
         return machine.confirm_viewpoint(a, digest), None
     if action == "revise_viewpoint":
-        return machine.revise_viewpoint(a), None
+        return machine.revise_viewpoint(a, at), None
     if action == "next_scenario":
         return machine.next_scenario(a), None
     if action == "submit_review":
@@ -453,7 +465,7 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
         return {"view": _attempt_view(db, row, at)}
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         failed = machine.tutor_failed(new, pending.key, "owner_provider_missing")
         _store(row, cast(AttemptState, failed))
@@ -479,7 +491,7 @@ def _prepare_extension(db, row: SoloAttempt, a: AttemptState, account: Account) 
     """
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         return None
     current = a.current
@@ -736,7 +748,7 @@ def _prepare_final(
     """
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         _store(
             row,

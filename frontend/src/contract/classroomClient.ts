@@ -285,6 +285,81 @@ export function getPublicConfig() {
   return api('/public-config')
 }
 
+export type FeedbackCreate = components['schemas']['FeedbackCreate']
+export type FeedbackPage = components['schemas']['FeedbackPage']
+export type FeedbackItem = components['schemas']['FeedbackItem']
+
+/** 意見回饋：誰都能送；30 秒沒回應就放棄（spec P17），呼叫端保留使用者寫的內容。 */
+export async function sendFeedback(body: FeedbackCreate, timeoutMs = 30_000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await typedApi('/feedback', 'POST', { body, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/** 回饋列表（只有名單上的帳號看得到，其他人一律 404）。 */
+export function listFeedback(page: number) {
+  return typedApi('/feedback', 'GET', { query: { page } })
+}
+
+/** 一則回饋的截圖，轉成 blob 給新分頁看（端點回 JSON，spec P16）。 */
+export async function feedbackScreenshot(id: string): Promise<Blob> {
+  const shot = await typedApi('/feedback/{feedback_id}/screenshot', 'GET', { path: { feedback_id: id } })
+  const bytes = Uint8Array.from(atob(shot.data_base64), char => char.charCodeAt(0))
+  return new Blob([bytes], { type: shot.mime })
+}
+
+export type ToggleView = components['schemas']['ToggleView']
+export type AdminView = components['schemas']['AdminView']
+
+/** 後台（後台 spec 〈介面〉）：非管理員一律 404 ADMIN_NOT_FOUND。 */
+export function listToggles() {
+  return typedApi('/admin/toggles', 'GET')
+}
+
+export function updateToggle(key: string, enabled: boolean) {
+  return typedApi('/admin/toggles/{key}', 'PUT', { path: { key }, body: { enabled } })
+}
+
+export function listAdmins() {
+  return typedApi('/admin/admins', 'GET')
+}
+
+export function addAdmin(username: string) {
+  return typedApi('/admin/admins', 'POST', { body: { username } })
+}
+
+export function removeAdmin(accountId: string) {
+  return typedApi('/admin/admins/{account_id}', 'DELETE', { path: { account_id: accountId } })
+}
+
+export type SystemAIView = components['schemas']['SystemAIView']
+export type SystemAIInput = components['schemas']['SystemAIInput']
+
+/** 系統 AI（後台 spec P31–P37）：讀取只給末四碼；測試與儲存都會真的送一句，儲存時後端再測一次。 */
+export function getSystemAI() {
+  return typedApi('/admin/system-ai', 'GET')
+}
+
+export function testSystemAI(body: SystemAIInput) {
+  return typedApi('/admin/system-ai/test', 'POST', { body })
+}
+
+export function saveSystemAI(body: SystemAIInput) {
+  return typedApi('/admin/system-ai', 'PUT', { body })
+}
+
+export type ModelOption = components['schemas']['ModelOption']
+export type SystemAIModelsInput = components['schemas']['SystemAIModelsInput']
+
+/** 這個服務有哪些可用的模型（後台 spec P40）；金鑰留空＝同服務同網址時用已存的。 */
+export function listSystemAIModels(body: SystemAIModelsInput) {
+  return typedApi('/admin/system-ai/models', 'POST', { body })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

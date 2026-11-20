@@ -4,6 +4,7 @@ status allows, and the request/response models."""
 from typing import Annotated, Literal, Protocol
 
 from pydantic import Field, StringConstraints, field_validator, model_validator
+from sqlalchemy.orm import Session
 
 from app.modules.identity_access.contracts import AccountView, Locale
 from app.modules.platform.contracts import Strict
@@ -22,6 +23,19 @@ _ORDER: tuple[TeacherAction, ...] = (
     "copy",
     "delete",
 )
+
+
+class EnrollmentRecordHook(Protocol):
+    """What every module that keeps a student's records in a course's activities provides for
+    removing that student from the course (the app shell registers it with
+    enrollment.register_enrollment_hook).
+
+    remove: delete everything the module keeps for this account in this course's activities,
+    soft-deleted activities included; there is no undo. Runs in the caller's transaction, after
+    the caller has locked the enrollment, and never commits.
+    """
+
+    def remove(self, db: Session, course_id: str, account_id: str) -> None: ...
 
 
 class ActivityTimes(Protocol):
@@ -172,10 +186,11 @@ class GuestJoinResult(Strict):
 
 
 class ActivityDraft(Strict):
-    """The teacher's single input: one text that is both the activity name and the material the
-    first scenario is written from. Incomplete drafts are rejected, never stored."""
+    """The activity's name (what cards and students see) and the scenario text the first
+    scenario is written from. Incomplete drafts are rejected, never stored."""
 
-    title: str = Field(min_length=1, max_length=300)
+    title: str = Field(min_length=1, max_length=40)
+    scenario: str = Field(min_length=1, max_length=300)
     starts_at: float | None = None
     ends_at: float
 
@@ -183,7 +198,7 @@ class ActivityDraft(Strict):
 class ActivityDetailsUpdate(Strict):
     """Operational fields a teacher may still change after the content locks."""
 
-    title: str | None = Field(default=None, min_length=1, max_length=300)
+    title: str | None = Field(default=None, min_length=1, max_length=40)
     ends_at: float | None = None
 
     @field_validator("title", "ends_at")

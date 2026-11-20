@@ -40,7 +40,7 @@ const analysis: Analysis = {
 function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
-    revision: 1, draft: { title: analysis.title, ends_at: analysis.ends_at! },
+    revision: 1, draft: { title: analysis.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: analysis.ends_at! },
     starts_at: 1_799_999_000, ends_at: analysis.ends_at, available_actions: actions,
   }
 }
@@ -168,6 +168,39 @@ test('guest viewpoints carry a guest tag and expired guests show an anonymous nu
   expect(within(registered).queryByText('訪客')).toBeNull()
   const guest = within(page).getByText('阿明').closest('.analysis-student') as HTMLElement
   expect(within(guest).getByText('訪客')).toBeInTheDocument()
-  const expired = within(page).getByText('匿名訪客 2').closest('.analysis-student') as HTMLElement
+  const expired = within(page).getByText('過期訪客 2').closest('.analysis-student') as HTMLElement
   expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})
+
+describe('a field the student has not written yet', () => {
+  test('shows grey 「（還沒說明）」 in place of an empty position or reason', async () => {
+    open({ view: { ...analysis, students: [
+      student(1, { current_position: '', reason_summary: '理由1' }),
+      student(2, { current_position: '立場2', reason_summary: '' }),
+      student(3, { current_position: '', reason_summary: '' }),
+    ] } })
+    const list = await screen.findByRole('region', { name: '學生確認過的想法' })
+    const rows = (name: string) => within(list).getByText(name).closest('.analysis-student') as HTMLElement
+    expect(within(rows('學生1')).getAllByText('（還沒說明）')).toHaveLength(1)
+    expect(within(rows('學生1')).getByText('（還沒說明）')).toHaveClass('analysis-student__blank')
+    expect(within(rows('學生1')).getByText('理由1')).toBeInTheDocument()
+    expect(within(rows('學生2')).getAllByText('（還沒說明）')).toHaveLength(1)
+    expect(within(rows('學生2')).getByText('立場2')).toBeInTheDocument()
+    expect(within(rows('學生3')).getAllByText('（還沒說明）')).toHaveLength(2)
+  })
+
+  test('a viewpoint with both fields written has no grey words', async () => {
+    open()
+    const list = await screen.findByRole('region', { name: '學生確認過的想法' })
+    expect(within(list).queryByText('（還沒說明）')).toBeNull()
+  })
+
+  test.each([
+    ['en' as const, '(Not explained yet)'],
+    ['es' as const, '(Aún sin explicar)'],
+  ])('%s: the grey words are in that language', async (locale, words) => {
+    open({ locale, view: { ...analysis, students: [student(1, { current_position: '', reason_summary: '' })] } })
+    expect((await screen.findAllByText(words)).length).toBe(2)
+    expect(screen.queryByText('（還沒說明）')).toBeNull()
+  })
 })

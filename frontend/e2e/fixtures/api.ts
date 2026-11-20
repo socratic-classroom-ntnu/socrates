@@ -12,7 +12,12 @@ const DAY = 24 * HOUR
 export const account = {
   id: 'u-1', username: '林小華', email: 'student@example.org', email_masked: 's***@example.org', verified: true,
   authority_state: 'FULL_PRODUCT', csrf_token: 'csrf-baseline', points: 0, achievements: [], locale: 'zh-Hant',
-  kind: 'registered', display_name: '林小華',
+  kind: 'registered', account_role: 'student', is_admin: false, display_name: '林小華',
+} satisfies S['AccountView']
+
+// 帳號只有一個角色：老師頁要用老師帳號才看得到，學生帳號會看到跨角色說明頁
+export const teacherAccount = {
+  ...account, id: 'u-2', username: '王思齊', email: 'teacher@example.org', email_masked: 't***@example.org', account_role: 'teacher', display_name: '王思齊',
 } satisfies S['AccountView']
 
 export const unverifiedAccount = {
@@ -76,7 +81,7 @@ const studentCourse = {
 const activityView = (card: S['ActivityTeacherCard']) => ({
   id: card.id, course_id: 'c-1', status: card.status, locked: card.locked, revision: card.status === 'draft' ? null : 1,
   has_unpublished_changes: false, starts_at: card.starts_at, ends_at: card.ends_at, available_actions: card.available_actions,
-  draft: { title: card.title, starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
+  draft: { title: card.title, scenario: '一輛失控的電車正駛向五名工人。', starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
 }) satisfies S['ActivityTeacherView']
 
 const joinPreview = {
@@ -99,6 +104,7 @@ const soloActivity = {
     id: attemptId, state: 'in_dialogue', scenario_index: 0, current_turn: 2, review_status: 'not_started',
     progress: [{ index: 0, status: 'in_dialogue' }],
   },
+  practice: false,
 } satisfies S['SoloActivityView']
 
 const attempt = {
@@ -150,8 +156,8 @@ const analysis = {
 } satisfies S['SoloActivityAnalysisView']
 
 /** `GET <path?query>` → body。沒列到的請求一律回 404，並記在基準輸出的 unmocked 裡。 */
-export function classroomRoutes(options: { signedIn: boolean; verified?: boolean }): Record<string, unknown> {
-  const me = options.verified === false ? unverifiedAccount : account
+export function classroomRoutes(options: { signedIn: boolean; verified?: boolean; role?: 'student' | 'teacher' }): Record<string, unknown> {
+  const me = options.verified === false ? unverifiedAccount : options.role === 'teacher' ? teacherAccount : account
   const routes: Record<string, unknown> = {
     'GET /courses': courseLists,
     'GET /courses/c-1?role=teacher': teacherCourse,
@@ -168,7 +174,8 @@ export function classroomRoutes(options: { signedIn: boolean; verified?: boolean
     'GET /solo/activities/a-ended/progress': { ...progress, activity_id: 'a-ended', title: '第二週：說謊可以嗎', status: 'ended', ends_at: now - HOUR },
     'GET /classrooms': [] satisfies S['RoomSummary'][],
     // 開發控制台只在 debug_mode 為 true 時出現；基準照正式環境的樣子關掉
-    'GET /public-config': { debug_mode: false, google_cse_id: '', search_scope: '', search_state: 'disabled' } satisfies S['PublicConfigView'],
+    // 多人模式：e2e 照舊在開著的情況下跑分組課頁（正式環境預設關閉，由單元測試涵蓋）
+    'GET /public-config': { debug_mode: false, google_cse_id: '', search_scope: '', search_state: 'disabled', features: { group_mode: true } } satisfies S['PublicConfigView'],
   }
   for (const card of teacherCards) routes[`GET /activities/${card.id}`] = activityView(card)
   if (options.signedIn) routes['GET /auth/me'] = me

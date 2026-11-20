@@ -36,6 +36,9 @@ docker compose -p socrates-local -f deploy/local/compose.yml up -d --build
   `SOCRATES_MAIL_TRANSPORT: fixture`，會蓋過 `deploy/local/.env`，所以 SMTP／Resend 設定在這裡沒有作用。
   驗證信與重設密碼信以預覽連結顯示在驗證頁；auth 語意與 production 相同。
 - **LLM 由教室擁有者在 app 的「LLM 設定」建立 provider profile**，不是從 `.env` 讀 key。
+  例外是學生「我的對話」（自己練習）：它用平台金鑰 `SOCRATES_PRACTICE_LLM_ADAPTER`／`_MODEL`／`_API_KEY`
+  （openai-compatible 另加 `_BASE_URL`）。它只在資料庫還沒有可用的系統 AI 時，啟動才讀進資料庫（那時填錯服務起不來）；
+  之後一律在後台「系統 AI」分頁改，這組變數不再覆蓋、清空也不會停用。兩邊都沒有就不能開新對話。
   本機允許的自架端點（例如本機模型服務）由 `SOCRATES_PROVIDER_LOCAL_ALLOWLIST` 控制，
   預設 `127.0.0.1,localhost,host.docker.internal`。
 

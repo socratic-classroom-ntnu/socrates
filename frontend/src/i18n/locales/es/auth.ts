@@ -31,7 +31,19 @@ const auth: Shape<typeof zhHant> = {
     submit: 'Guardar contraseña',
     done: 'Tu contraseña se actualizó. Inicia sesión con la nueva.',
   },
+  role: {
+    legend: 'Soy',
+    student: 'Estudiante',
+    teacher: 'Docente',
+    desktopOnly: 'Solo en computadora',
+    note: 'No se puede cambiar después de registrarte.',
+    teacherPhoneNote: 'Las funciones de docente se usan en una computadora; inicia sesión allí. No se puede cambiar después de registrarte.',
+    studentOnly: 'Si te registras desde el código QR o el enlace de invitación de un curso, la cuenta es de estudiante.',
+  },
   fieldErrors: {
+    account_role: {
+      missing: 'Elige estudiante o docente.',
+    },
     username: {
       missing: 'Escribe un nombre de usuario.',
       tooShort: 'El nombre de usuario necesita al menos {{min}} caracteres.',
@@ -56,7 +68,7 @@ const auth: Shape<typeof zhHant> = {
     },
   },
   busy: 'Procesando…',
-  passwordRule: 'Usa de 8 a 32 caracteres con una mayúscula, una minúscula, un número y un carácter especial (! @ # $ % ^ & * _ - + = . ? ~). Sin espacios ni otros símbolos.',
+  passwordRule: 'De 8 a 32 caracteres, con mayúsculas, minúsculas, un número y un símbolo.',
   blocked: 'Se bloquearon caracteres no permitidos: {{chars}}',
   space: 'espacio',
   links: { login: 'Volver a iniciar sesión', register: 'Registrarse', forgot: 'Olvidé mi contraseña' },

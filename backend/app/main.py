@@ -1,12 +1,12 @@
 import datetime as dt
 import os
-import subprocess
 
 from fastapi import FastAPI
 
 from app.modules.app_shell.contracts import ReleaseView
 from app.modules.content_authoring.service import LadderRepository
 from app.modules.platform.config import settings
+from app.modules.platform.release import release_snapshot
 
 # A broken ladder file must stop the service from starting (AGENTS.md); script_assist reads its
 # stages as sample questions.
@@ -20,21 +20,11 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-def _source_sha() -> str:
-    configured = os.environ.get("SOCRATES_SOURCE_SHA")
-    if configured:
-        return configured
-    try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=2).strip()
-    except Exception:
-        return "local-worktree"
-
-
 @app.get("/api/release", response_model=ReleaseView)
 def release() -> ReleaseView:
-    source_sha = _source_sha()
+    release_id, source_sha = release_snapshot()
     return ReleaseView(
-        release_id=os.environ.get("SOCRATES_RELEASE_ID", f"socrates-{source_sha[:12]}"),
+        release_id=release_id,
         source_sha=source_sha,
         environment=os.environ.get("SOCRATES_ENVIRONMENT", "local-dev"),
         alembic_revision=os.environ.get("SOCRATES_ALEMBIC_REVISION", "head"),

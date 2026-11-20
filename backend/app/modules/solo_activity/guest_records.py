@@ -1,7 +1,7 @@
 """Guests in solo activities: how the teacher's views name them, and solo-activity's guest record
 hook (identity_access.contracts.GuestRecordHook).
 
-An expired guest is shown as 匿名訪客 N. N counts only the expired guests of the course, in the
+An expired guest is shown as 過期訪客 N. N counts only the expired guests of the course, in the
 order they joined it (enrollment time, then enrollment id); it is worked out on every read and
 never stored, so sorting a view differently never renumbers anyone. A guest past
 guest_expires_at is expired already, before the daily job marks it.

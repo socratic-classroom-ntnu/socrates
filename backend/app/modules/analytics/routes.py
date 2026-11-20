@@ -1,6 +1,7 @@
 """Teacher analytics over a grouped classroom (evidence projections, no identities)."""
 
-from fastapi import APIRouter, Request
+from fastapi import Depends, APIRouter, Request
+from app.modules.platform.toggles import group_mode_required
 from app.modules.classroom_core.repositories import (
     Room,
 )
@@ -11,7 +12,7 @@ from app.modules.analytics.contracts import GroupAnalysisView
 from app.modules.analytics import radar
 from app.modules.solo_activity.contracts import RadarView
 
-router = APIRouter(prefix="/groups")
+router = APIRouter(prefix="/groups", dependencies=[Depends(group_mode_required)])
 
 
 # exclude_unset keeps fields that only some nodes or settlement states carry absent, as before.

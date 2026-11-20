@@ -14,7 +14,7 @@ def create_course(client, **overrides):
 
 
 def test_create_defaults_and_code(client):
-    user(client)
+    user(client, account_role="teacher")
 
     course = create_course(client)
 
@@ -44,7 +44,7 @@ def test_unverified_cannot_create(client):
 
 
 def test_csrf_required(client):
-    user(client)
+    user(client, account_role="teacher")
     client.headers["X-CSRF-Token"] = "wrong"
 
     response = client.post("/api/v2/courses", json={"name": "科技倫理", "teacher_name": "Fizzy"})
@@ -54,7 +54,7 @@ def test_csrf_required(client):
 
 
 def test_other_teacher_cannot_read_or_patch(client):
-    user(client, "owner")
+    user(client, "owner", account_role="teacher")
     course = create_course(client)
     user(client, "other")
 
@@ -68,7 +68,7 @@ def test_other_teacher_cannot_read_or_patch(client):
 
 
 def test_rotate_code_replaces_persisted_code(client, monkeypatch):
-    user(client)
+    user(client, account_role="teacher")
     course = create_course(client)
     replacement = "BCDEFGHJ"
     monkeypatch.setattr(course_service, "new_code", lambda: replacement)
@@ -83,7 +83,7 @@ def test_rotate_code_replaces_persisted_code(client, monkeypatch):
 
 
 def test_code_collision_retries_then_succeeds(client, monkeypatch):
-    user(client)
+    user(client, account_role="teacher")
     existing = create_course(client)
     replacement = "BCDEFGHJ"
     values = iter([existing["code"], replacement])
@@ -95,7 +95,7 @@ def test_code_collision_retries_then_succeeds(client, monkeypatch):
 
 
 def test_code_collision_exhaustion(client, monkeypatch):
-    user(client)
+    user(client, account_role="teacher")
     existing = create_course(client)
     monkeypatch.setattr(course_service, "new_code", lambda: existing["code"])
     with storage.transaction() as db:
@@ -110,7 +110,7 @@ def test_code_collision_exhaustion(client, monkeypatch):
 
 
 def test_owner_is_not_auto_enrolled(client):
-    owner = user(client, "owner")
+    owner = user(client, "owner", account_role="teacher")
     course = create_course(client)
 
     owner_lists = client.get("/api/v2/courses").json()
@@ -128,7 +128,7 @@ def test_owner_is_not_auto_enrolled(client):
 
 
 def test_student_view_has_code_unless_disabled(client):
-    owner = user(client, "owner")
+    owner = user(client, "owner", account_role="teacher")
     course = create_course(client)
     student = user(client, "student")
     joined = client.post(

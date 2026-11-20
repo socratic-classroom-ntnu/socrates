@@ -9,7 +9,7 @@ Two routes give the same RadarView:
   either end, and a student's place on an axis is their standardised projection: 2 at the class
   mean, one point per standard deviation, held within 0 to 4. These scores carry no citations.
 - Fewer students, the model missing, or vectors with no spread: ``radar_dimensions`` sets four to
-  six dimensions from the activity, then ``radar_scoring`` scores each student 0 to 4 on each from
+  six dimensions from the activity and the class's anonymous summaries, then ``radar_scoring`` scores each student 0 to 4 on each from
   their final summary and their own words, quoting them; quotes not found verbatim are dropped.
 
 Only completed attempts on the activity's current revision that kept a final summary count. The
@@ -34,7 +34,8 @@ from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
 from app.modules.ai_providers.contracts import EmbeddingUnavailable
-from app.modules.ai_providers.service import embed, resolve_owner_chain
+from app.modules.ai_providers.service import embed
+from app.modules.solo_activity.tutor_chain import course_bindings
 from app.modules.course_management import service as activities
 from app.modules.course_management.repositories import ActivityRevision, Course, Enrollment
 from app.modules.identity_access.repositories import Account
@@ -48,6 +49,8 @@ from app.modules.solo_activity.repositories import SoloAttempt, SoloRadar
 
 EMBEDDING_MIN_STUDENTS = 15
 MAX_AXES = 5
+# A radar needs three axes to draw a shape; with fewer the class is scored by the model instead.
+MIN_AXES = 3
 # An axis must explain this share of the variance between the students' summaries.
 MIN_AXIS_SHARE = 0.10
 POLE_STUDENTS = 5
@@ -228,7 +231,7 @@ async def _vector_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
     except EmbeddingUnavailable:
         return None
     axes = principal_axes(vectors, MAX_AXES, MIN_AXIS_SHARE)
-    if not axes:
+    if len(axes) < MIN_AXES:
         return None
     context = {
         **prepared["activity_context"],
@@ -282,12 +285,14 @@ async def _vector_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
 
 async def _scoring_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
     """(dimensions, students) from the model; students it could not score are left out."""
+    # The class's own reasoning, so the dimensions split these students instead of restating one
+    # contrast from the activity text. Anonymous and sorted: no names, no order to read into.
+    context = {
+        **prepared["activity_context"],
+        "summaries": sorted(_pole_text(s["summary"]) for s in prepared["students"]),
+    }
     defined = await _call(
-        prepared,
-        DIMENSIONS_PROGRAM,
-        RadarDimensions,
-        prepared["activity_context"],
-        "solo.radar_dimensions",
+        prepared, DIMENSIONS_PROGRAM, RadarDimensions, context, "solo.radar_dimensions"
     )
     if defined is None:
         return None
@@ -382,7 +387,7 @@ def begin_radar(db: Session, account: Account, activity_id: str, at: float) -> D
     kept = db.get(SoloRadar, activity.id)
     if kept is not None and kept.basis == basis:
         return {"view": _view(kept)}
-    bindings, _ = resolve_owner_chain(db, course.owner_id, service.ROLE)
+    bindings = course_bindings(db, course, service.ROLE)
     if not bindings:
         raise DomainError("RADAR_NOT_READY", 409)
     for student in students:

@@ -103,3 +103,25 @@ def test_another_site_cannot_log_a_guest_device_in(client):
     r = client.post("/api/v2/auth/login", json=LOGIN, headers={"Origin": "https://evil.example"})
     assert (r.status_code, r.json()["detail"]) == (403, "ORIGIN_BINDING_REQUIRED")
     assert records.moves == []
+
+
+def test_a_teacher_account_logs_in_but_keeps_the_guest_separate(client):
+    """A teacher account cannot take a student's records: the login goes ahead, nothing moves,
+    and the guest keeps its own session."""
+    records = Records()
+    register_guest_hook("solo-activity", records)
+    body = {
+        "username": "laoshi",
+        "email": "laoshi@example.org",
+        "password": PASSWORD,
+        "account_role": "teacher",
+    }
+    teacher_id = client.post("/api/v2/auth/register", json=body).json()["id"]
+    client.cookies.clear()
+    guest_id, guest_cookie = join(client)
+    r = client.post("/api/v2/auth/login", json={"login": "laoshi", "password": PASSWORD})
+    assert r.status_code == 200 and r.json()["id"] == teacher_id
+    assert r.json()["guest_merge"] == "REFUSED_TEACHER"
+    assert records.moves == []
+    client.cookies.set("socrates_session", guest_cookie)
+    assert client.get("/api/v2/auth/me").json()["id"] == guest_id

@@ -89,6 +89,7 @@ def course_lists(request: Request):
 def create_course(body: CourseCreate, request: Request):
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
+        service.require_account_role(current, "teacher")
         course = service.create(db, current, body)
         return service.teacher_view(db, course)
 
@@ -98,6 +99,7 @@ def join_course(body: CourseJoin, request: Request):
     _join_limit(request, mutation=True)
     with transaction() as db:
         current, _ = account(db, request, mutation=True, allow_guest=True)
+        service.require_account_role(current, "student")
         course = enrollment.find_by_code(db, body.code)
         row, _ = enrollment.enroll(db, current, course, body.display_name)
         return service.student_view(course, row)
@@ -210,6 +212,16 @@ def list_activities(
         return {"role": "student", "items": activity_service.student_cards(db, access.course, at)}
 
 
+@router.delete("/{course_id}/students/{enrollment_id}", status_code=204, response_class=Response)
+def remove_student(course_id: str, enrollment_id: str, request: Request):
+    """Remove a student from the course with every answer of theirs in it; there is no undo."""
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        course = _teacher_course(db, current, course_id)
+        enrollment.remove_student(db, course, enrollment_id)
+    return Response(status_code=204)
+
+
 @router.post(
     "/{course_id}/{action}",
     response_model=CourseTeacherView,
@@ -277,6 +289,7 @@ def guest_join_activity(
 def join_activity(activity_id: str, body: ActivityJoin, request: Request):
     with transaction() as db:
         current, _ = account(db, request, mutation=True, allow_guest=True)
+        service.require_account_role(current, "student")
         activity = activity_service.get_activity(db, activity_id)
         return activity_service.join_by_activity(
             db, current, activity, body.display_name, activity_service.now()

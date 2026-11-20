@@ -345,13 +345,39 @@ test('activity that fails to load shows the error instead of loading forever', a
   expect(screen.getByRole('link', { name: '回到首頁' })).toHaveAttribute('href', '/')
 })
 
-test('missing attempt shows the localized solo error', async () => {
+// P9：老師把學生移出課程後，這段對話已被刪除；學生被帶回首頁
+test('an attempt that is gone sends the student home', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': () => { throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND') },
   })
 
-  expect(await screen.findByText('找不到這段對話。')).toBeInTheDocument()
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/))
+})
+
+test('an action on an attempt removed meanwhile sends the student home', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => { throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND') },
+  })
+  fireEvent.change(await screen.findByLabelText('回答蘇格拉底'), { target: { value: '還想再說一句' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/))
+})
+
+test('another not-found on an action stays on the page with an error', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => { throw new ApiError(404, 'ACTIVITY_NOT_FOUND') },
+  })
+  fireEvent.change(await screen.findByLabelText('回答蘇格拉底'), { target: { value: '還想再說一句' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  expect(await screen.findByRole('alert')).toBeInTheDocument()
+  expect(screen.getByTestId('where')).toHaveTextContent('/learn/activities/a-1/dialogue')
 })
 
 test.each([
@@ -576,6 +602,96 @@ test('timeline does not force scroll while the student reads older messages', as
   expect(scrollTo).not.toHaveBeenCalled()
 })
 
+/** A phone-width screen: the dialogue CSS switches to one column under 768px. */
+function onPhone() {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({ matches: query === '(max-width: 767px)', media: query, addEventListener() {}, removeEventListener() {} }),
+  })
+}
+
+describe('on a phone', () => {
+  afterEach(() => { Reflect.deleteProperty(window, 'matchMedia') })
+
+  test('the whole conversation scrolls to the latest message, not only the timeline', async () => {
+    onPhone()
+    const scrolled: Element[] = []
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value(this: Element) { scrolled.push(this) },
+    })
+    renderPage({
+      'GET /solo/activities/a-1': activity,
+      'GET /solo/attempts/attempt-1': dialogueAttempt,
+      'POST /solo/attempts/attempt-1/send_message': () => new Promise(() => undefined),
+    })
+
+    const input = await screen.findByLabelText('回答蘇格拉底')
+    scrolled.length = 0
+    fireEvent.change(input, { target: { value: '請看這則新訊息。' } })
+    fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+    // A1m: the board, the messages and the composer share one scrolling page under the header.
+    const conversation = document.querySelector('.solo-conversation')
+    expect(scrolled.length).toBeGreaterThan(0)
+    expect(scrolled.every(element => element === conversation)).toBe(true)
+  })
+
+  test('reading older messages stops the conversation from jumping to the latest', async () => {
+    onPhone()
+    const scrollTo = jest.fn()
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', { configurable: true, value: scrollTo })
+    renderPage({
+      'GET /solo/activities/a-1': activity,
+      'GET /solo/attempts/attempt-1': dialogueAttempt,
+      'POST /solo/attempts/attempt-1/send_message': () => new Promise(() => undefined),
+    })
+
+    await screen.findByLabelText('回答蘇格拉底')
+    const conversation = document.querySelector('.solo-conversation')!
+    Object.defineProperties(conversation, {
+      scrollHeight: { configurable: true, value: 1000 },
+      clientHeight: { configurable: true, value: 300 },
+      scrollTop: { configurable: true, value: 100, writable: true },
+    })
+    fireEvent.scroll(conversation)
+    scrollTo.mockClear()
+    fireEvent.change(screen.getByLabelText('回答蘇格拉底'), { target: { value: '我還在看前面的內容。' } })
+    fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+})
+
+test('the scenario board is open until the first answer, then folds and opens on request', async () => {
+  // A0m／A1m: on a phone the board starts open for the first answer, then folds to its title so
+  // the conversation has the room; the student can open it again. Desktop ignores the fold.
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': attempt,
+  })
+  const open = await screen.findByRole('button', { name: '收起情境' })
+  expect(open).toHaveAttribute('aria-expanded', 'true')
+  expect(screen.getByText((_, node) => node?.textContent === scenario && node.tagName === 'P'))
+    .not.toHaveClass('solo-question__scenario--folded')
+})
+
+test('after the first answer the scenario board is folded, and a tap opens it', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+  const toggle = await screen.findByRole('button', { name: '展開情境' })
+  expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  const text = screen.getByText((_, node) => node?.textContent === scenario && node.tagName === 'P')
+  expect(text).toHaveClass('solo-question__scenario--folded')
+  expect(toggle).toHaveAttribute('aria-controls', text.id)
+
+  fireEvent.click(toggle)
+  expect(screen.getByRole('button', { name: '收起情境' })).toHaveAttribute('aria-expanded', 'true')
+  expect(text).not.toHaveClass('solo-question__scenario--folded')
+})
+
 test.each([
   ['429', new ApiError(429, 'RATE_LIMITED'), '操作太頻繁，請稍候再試。'],
   ['409', new ApiError(409, 'SOLO_MESSAGE_LIMIT'), '這個情境的訊息已達上限。'],
@@ -670,6 +786,25 @@ test('awaiting state polls until it changes', async () => {
   await act(async () => { jest.advanceTimersByTime(3000); await Promise.resolve(); await Promise.resolve() })
   expect(reads).toBe(2)
   expect(screen.getByLabelText('回答蘇格拉底')).toBeEnabled()
+})
+
+test('a removal noticed while polling for the reply sends the student home', async () => {
+  jest.useFakeTimers()
+  let reads = 0
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': () => {
+      reads += 1
+      if (reads === 1) return { ...dialogueAttempt, state: 'awaiting_tutor', available_actions: [] }
+      throw new ApiError(404, 'SOLO_ATTEMPT_NOT_FOUND')
+    },
+  })
+
+  await act(async () => { await Promise.resolve(); await Promise.resolve() })
+  expect(screen.getByTestId('where')).toHaveTextContent('/learn/activities/a-1/dialogue')
+  await act(async () => { jest.advanceTimersByTime(3000); await Promise.resolve(); await Promise.resolve() })
+  expect(reads).toBe(2)
+  expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/)
 })
 
 test('tutor unavailable shows the notice and retry inside the conversation (X2)', async () => {
@@ -790,16 +925,72 @@ test('confirming shows summary and both choices', async () => {
     'GET /solo/attempts/attempt-1': confirmingAttempt,
   })
 
-  const heading = await screen.findByRole('heading', { name: '我試著整理你的想法，這樣說對嗎？' })
-  expect(heading).toBeInTheDocument()
-  expect(heading.closest('section')!.querySelector('.solo-stance-chip')).toBeNull()
-  expect(heading.closest('section')).not.toHaveTextContent('立場')
+  // Design A2: Socrates asks in the conversation; the card under it holds only the summary.
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  const ask = screen.getByText('我試著整理你的想法，這樣說對嗎？').closest('article')!
+  expect(ask).toHaveClass('solo-message--tutor')
+  expect(ask).toHaveTextContent('蘇格拉底')
+  expect(card).not.toContainElement(ask)
+  expect(card).not.toHaveTextContent('我試著整理你的想法')
+  expect(card.querySelector('.solo-stance-chip')).toBeNull()
+  expect(card).not.toHaveTextContent('立場')
+  expect(card).toHaveTextContent('主動介入會讓我直接承擔另一個人的死亡。')
   expect(screen.getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
   expect(screen.getByText('如果軌道上的人是我認識的人，我可能會改變選擇。')).toBeInTheDocument()
   expect(screen.queryByText('不行動是否也算一種選擇？')).toBeNull()
   expect(screen.getByText('接近的想法：義務論')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeInTheDocument()
+})
+
+const blankSummary = { ...confirmingAttempt.candidate_summary, current_position: '', reason_summary: '' }
+
+test('a summary whose reason is still blank says so in grey and can still be answered', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...confirmingAttempt, candidate_summary: blankSummary },
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  const row = within(card).getByText('理由').closest('div')!
+  const blank = within(row).getByText('（還沒說明）')
+  expect(blank).toHaveClass('solo-viewpoint__blank')
+  expect(within(card).getAllByText('（還沒說明）')).toHaveLength(1)
+  expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeEnabled()
+})
+
+test('a capped scenario with nothing written yet shows the same grey words and keeps its one action', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...confirmingAttempt,
+      candidate_summary: blankSummary,
+      scenarios: [{ ...firstScenario, status: 'capped' }],
+      available_actions: ['confirm_viewpoint'],
+    },
+  })
+  const card = await screen.findByRole('region', { name: /訊息已達上限/ })
+  expect(within(card).getByText('（還沒說明）')).toHaveClass('solo-viewpoint__blank')
+  expect(screen.getByRole('button', { name: '好，我知道了' })).toBeEnabled()
+})
+
+test('a written reason is shown as it is, without the grey words', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': confirmingAttempt,
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  expect(within(card).queryByText('（還沒說明）')).toBeNull()
+  expect(card.querySelector('.solo-viewpoint__blank')).toBeNull()
+})
+
+test('a reason of only blank space counts as not written', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...confirmingAttempt, candidate_summary: { ...blankSummary, reason_summary: '  \n ' } },
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  expect(within(card).getByText('（還沒說明）')).toBeInTheDocument()
 })
 
 test('a capped scenario says the limit was reached and is not agreed to as "my view"', async () => {
@@ -814,8 +1005,11 @@ test('a capped scenario says the limit was reached and is not agreed to as "my v
     },
   })
 
-  expect(await screen.findByRole('heading', { name: '訊息已達上限，這是到目前為止的整理' })).toBeInTheDocument()
-  expect(screen.getByText('蘇格拉底整理；這個情境不會標成「已確認」')).toBeInTheDocument()
+  // The note that this scenario stays unconfirmed is part of what Socrates says, outside the card.
+  const notice = '訊息已達上限，這是到目前為止的整理。這個情境不會標成「已確認」。'
+  const card = await screen.findByRole('region', { name: notice })
+  expect(screen.getByText(notice).closest('article')).toHaveClass('solo-message--tutor')
+  expect(card).not.toHaveTextContent('已達上限')
   expect(screen.getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '好，我知道了' })).toBeEnabled()
   expect(screen.queryByRole('button', { name: '對，這就是我的想法' })).toBeNull()
@@ -889,7 +1083,7 @@ test('confirming hides the follow-up of the turn that led to it', async () => {
     },
   })
 
-  await screen.findByRole('heading', { name: '我試著整理你的想法，這樣說對嗎？' })
+  await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
   expect(screen.getByText('站在旁邊不行動，也是一種選擇嗎？')).toBeInTheDocument()
   expect(screen.getByText('不行動不算選擇。')).toBeInTheDocument()
   expect(screen.queryByText('那麼「選擇」對你來說是什麼？')).toBeNull()
@@ -1266,6 +1460,17 @@ test('the review offers writing the summary or finishing, as the backend allows'
   expect(calls.some(call => call.key === 'POST /solo/attempts/attempt-1/submit_review')).toBe(false)
 })
 
+
+// 我的對話的私人活動（spec §10 M16）：左上返回直接回「我的對話」，頂欄是題目短標題
+test('a private practice dialogue goes back to my dialogues', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': { ...activity, title: '電車難題', practice: true },
+    'GET /solo/attempts/attempt-1': { ...attempt, activity_title: '電車難題' },
+  })
+  const back = await screen.findByRole('link', { name: '回到我的對話' })
+  expect(back).toHaveAttribute('href', '/my-dialogues')
+})
+
 test('a failed summary says so and offers trying again', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
@@ -1371,4 +1576,3 @@ test('the sentence on the final summary sits in the review, not in the scenario 
   expect(within(timeline).queryByText('我其實有猶豫')).toBeNull()
   expect(screen.getByRole('list', { name: '你說哪裡不太對' })).toHaveTextContent('你說：「我其實有猶豫」')
 })
-

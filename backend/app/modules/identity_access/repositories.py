@@ -54,6 +54,14 @@ class Account(Base):
     kind: Mapped[str] = mapped_column(String(16), default="registered", server_default="registered")
     # Guests only: 168 hours after joining, never extended.
     guest_expires_at: Mapped[float | None] = mapped_column(Float, nullable=True, index=True)
+    # "student" or "teacher", chosen at registration and fixed. Not the membership role a course
+    # or classroom gives someone; only the course entry points (create, join) read it.
+    account_role: Mapped[str] = mapped_column(
+        String(16), default="student", server_default="student"
+    )
+    # "admin" for platform admins (the 後台), otherwise null. Independent of account_role: a
+    # teacher or a student may be an admin; guests never are.
+    platform_role: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
 
 class LoginSession(Base):

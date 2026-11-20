@@ -5,6 +5,21 @@
 - **接著做 5a**（登入時併入訪客紀錄，11/24 要上）：只依賴 #125 的 hook 契約，不用等 Ken 的 7a，先用假的 hook 寫測試（像 #125 那樣），Ken 的 7a 合進來後再接起來跑一次。兩件事先跟 Ken 對好：登入回應加一個「有沒有併入」的欄位（前端靠它顯示併入完成）；「學生／老師角色」的 `account_role` 合進去後，老師帳號拒絕併入，回一個錯誤碼（前端顯示「老師帳號無法併入」）。Ken 做免註冊時發現帳號模組的問題，也由你修。他這份的 PR（含帳號模組的部分）由 Fizzy 審。
 - 雷達這一輪要做：6（embedding）照原本的規格繼續（#142 已開）。8（TTS）這一輪先不排，語音模式下一輪。
 
+## 11/17 新增（雷達用真的模型實測後發現，11/24 前要進）
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 9 | ai-providers | 所有 LLM 功能（緊急） | Gemini 3 的思考會吃掉 `maxOutputTokens`：`_gemini_generate` 給 2048，但 gemini-3-flash-preview 光思考就用掉 1700–2600 token，回應被截斷（`finishReason` 是 `MAX_TOKENS`），變成 `PROVIDER_SCHEMA_MISMATCH`。實測 radar_scoring 16 次失敗 8 次；老師用 Gemini 3 時，單人導師、統整這些結構化輸出也會隨機失敗。照 OpenAI 那條路改：`maxOutputTokens` 用輸出額度加推理額度（`CLASSROOM_MAX_OUTPUT_TOKENS`＋`CLASSROOM_REASONING_MAX_TOKENS`），並帶 `thinkingConfig.thinkingBudget`＝推理額度（實測 3072／1024 連跑 4 次都合格） | — | 測試確認 Gemini 的請求帶 `thinkingConfig`、`maxOutputTokens` 是兩個額度相加；`finishReason` 是 `MAX_TOKENS` 時回一個能分辨的錯誤碼（例如 `PROVIDER_OUTPUT_TRUNCATED`），不要和 schema 不合混在一起 |
+| 10 | llm-runtime | 雷達 | `radar_dimensions` 現在只看活動敘述，定出的維度彼此高度相關（實測 5 個都是「義務還是後果」的變體），分數幾乎全 0 或全 4，雷達圖不是滿的就是空的。改成也看匿名的學生統整（`final_position`、`reasoning_style`，做法同 `radar_axis_naming`），並要求維度能把學生分開、彼此不重複。`solo_activity/radar.py` 的 `_scoring_route` 要把統整傳進 context，那一側由後端組長這邊配合改 | 9 | 用 15 人以下、理由分散的測試統整跑一次：維度兩兩不同，每個維度的分數不是全班都在同一端 |
+
+## 11/19 新增：Claude Haiku 回覆格式（11/22 交，先做）
+規格以 Discord「【問題回報】Claude Haiku 模型回覆格式」討論串為準。後台把 AI 設成 Claude Haiku 5.5（經 OpenRouter）時，學生還沒說理由，模型會把導師摘要的「理由摘要」寫成空字串；現在 `PersonalSummary.reason_summary` 規定至少 1 個字，`_validated_structured_result` 驗證失敗丟 `PROVIDER_SCHEMA_MISMATCH`，整個回覆被丟掉，學生一直看到暫時無法回應。Anthropic 不保證遵守格式裡的字數、項數下限，老師用自己的 Anthropic 金鑰也會遇到，11/24 試用前要修好。單人活動進確認的條件與畫面由 Ken 做（他的第 12、13 項）。分組課這次只放寬格式，不改流程。開工前先等 `backend/main` 同步 `develop`（含 Fizzy 11/19 推的平台管理員與平台共用 AI 設定），再從同步後的 `backend/main` 開分支。分支照後端組流程，每項一個 PR 回 `backend/main`；兩人的項目都合進 `backend/main` 後，由 Arthur 打包成 `fix/haiku-response-format` PR 到 `develop`。
+
+| 順序 | 模組 | 功能 | 做什麼 | 等誰 | 完成的樣子 |
+|---|---|---|---|---|---|
+| 11 | llm-runtime | Haiku 回覆格式 | 掃一遍 `llm_runtime/contracts.py` 所有 AI 回覆格式裡有下限的欄位（`min_length` 的字數與項數），逐欄分成「可空」「必填」，清單寫在 PR 說明；可空的改成允許空字串，目前是導師摘要（`PersonalSummary`）的 `current_position`、`reason_summary`，分組課的 `GroupTutorTurn` 繼承它，一起放寬 | — | 摘要兩欄回空字串的回覆通過格式驗證；schema 測試先紅再綠；分組課現有測試全過 |
+| 12 | ai-providers | Haiku 回覆格式 | 回覆不合格式時，`_validated_structured_result` 現在一律丟 `PROVIDER_SCHEMA_MISMATCH` 並等 30 秒。改成把沒過的欄位路徑與規則（例如 `reply_text` 是空的）帶在例外裡，讓 llm-runtime 能附上原因重問 | — | 單元測試：必填欄位回空 → 例外裡有欄位路徑；其他格式錯誤維持原本的 reason code |
+| 13 | llm-runtime | Haiku 回覆格式 | 必填欄位回空時，`guarded_generate` 附上原因（哪個欄位必須有內容）重問一次；仍失敗才走現有失敗流程；兩次呼叫的用量都算進去（沿用 `merge_usage`） | 12 | 用假的 provider 測：第一次空、第二次有內容 → 成功且稽核記 regenerated；兩次都空 → 走現有失敗流程 |
+
 ## 你的第一個 PR
 在 `llm_runtime/contracts.py` 定義 7 個新 schema 的型別：SoloTutorTurn（含 10 個 flags）、ActivityExpansion、StanceClassification、FinalSummary、RadarAxisNames、RadarDimensions、RadarScores。每個 schema 附一個合格、一個不合格的測試樣本。這個 PR 只放型別，不放 prompt；Ken 會等這份型別才開始接，請最先做。
 

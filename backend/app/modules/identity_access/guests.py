@@ -43,6 +43,10 @@ def merge_guest_records(db: Session, guest_token: str | None, account_id: str) -
     guest = db.get(Account, session.account_id, with_for_update=True)
     if guest is None or guest.kind != "guest" or (guest.guest_expires_at or 0) <= time.time():
         return "NONE"
+    # A teacher account cannot hold a student's records; the guest keeps them and its session.
+    target = db.get(Account, account_id)
+    if target is not None and target.account_role == "teacher":
+        return "REFUSED_TEACHER"
     try:
         with db.begin_nested():
             for hook in GUEST_HOOKS.values():

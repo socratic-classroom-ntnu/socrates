@@ -22,7 +22,7 @@ def accounts() -> int:
 
 
 def teacher_course(client, **overrides):
-    teacher = user(client)
+    teacher = user(client, account_role="teacher")
     return teacher, create_course(client, **overrides)
 
 

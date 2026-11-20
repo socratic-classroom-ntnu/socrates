@@ -46,7 +46,8 @@ Flux 每個環境有獨立的 ImagePolicy，只追自己前綴的 tag（flux-k8s
 | Docker Engine＋Compose v2 | 伺服器管理員 | 建置與啟動兩個容器 |
 | PostgreSQL 專用資料庫 | `DATABASE_URL` | 持久化所有帳號、作答、課堂事件、積分，以及加密後的 provider 憑證 |
 | Resend API | `RESEND_API_KEY`／`RESEND_FROM`／`RESEND_WEBHOOK_SECRET` | Email 驗證、忘記密碼；註冊後由郵件連結啟用 |
-| LLM | 不需伺服器設定 | 由教室擁有者在 app 內設定 provider profile（openrouter／openai／anthropic／gemini／openai-compatible） |
+| LLM（課堂） | 不需伺服器設定 | 由教室擁有者在 app 內設定 provider profile（openrouter／openai／anthropic／gemini／openai-compatible） |
+| LLM（學生「我的對話」） | `SOCRATES_PRACTICE_LLM_ADAPTER`／`_MODEL`／`_API_KEY`／`_BASE_URL` | 「系統 AI」（學生自己練習、以及開關打開時老師沒設金鑰的課程用的平台金鑰）的**第一次匯入**：只有資料庫還沒有可用的系統 AI 時，啟動才讀它並寫進資料庫；那時設定不合法服務起不來。之後換金鑰、換模型一律在後台「系統 AI」分頁，這組變數不再覆蓋，清空也不會停用。資料庫沒有系統 AI、這裡也沒填，就不能開新對話。`SOCRATES_PRACTICE_DAILY_LIMIT` 是每位學生每天的新對話上限（預設 5，至少 1），`SOCRATES_PRACTICE_TIMEZONE` 是一天從哪個時區的午夜算起（預設 Asia/Taipei）；兩者填錯服務都起不來 |
 | 研究搜尋（選用） | `SOCRATES_GOOGLE_CSE_ID`／`SOCRATES_GOOGLE_CSE_SCOPE` | 學生作答時的研究側欄（Google Programmable Search）；留空則關閉 |
 | 現有 Tunnel 路由權限 | 管理員的 Cloudflare 帳號 | 將公開網域接到本機8080 |
 | 建置主機對外 HTTPS | 能連到 `raw.githubusercontent.com`（備援 `api.github.com`） | 前端 image 在 build 期下載釘選版 avatar（CC-BY-NC-4.0，非商業教學用） |

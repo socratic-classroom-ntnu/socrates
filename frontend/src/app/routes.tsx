@@ -20,8 +20,10 @@ import '../ui'
 import { ComingSoonPage, NotFoundPage } from '../components/ComingSoonPage'
 import { GroupsPage } from '../features/student-classroom/GroupsPage'
 import { HomePage } from '../features/course/home/HomePage'
+import { MyDialoguesPage } from '../features/course/practice/MyDialoguesPage'
 import { JoinActivityPage } from '../features/course/join/JoinActivityPage'
 import { JoinCoursePage } from '../features/course/join/JoinCoursePage'
+import { ScanPage } from '../features/course/scan/ScanPage'
 import { StudentCoursePage } from '../features/course/learn/StudentCoursePage'
 import { SoloActivityPage } from '../features/solo-activity/SoloActivityPage'
 import { SoloDialoguePage } from '../features/solo-activity/SoloDialoguePage'
@@ -35,8 +37,13 @@ import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountP
 import { LoginPage } from '../features/auth/LoginPage'
 import { VerifyPage } from '../features/auth/VerifyPage'
 import { AppShell } from './AppShell'
-import { RequireAuth } from '../features/auth/RequireAuth'
+import { LoadingScreen, RequireAuth } from '../features/auth/RequireAuth'
 import { DemoSurface } from './DemoSurface'
+import { RoleGate } from './RoleGate'
+// 後台用 src/ui 元件：要在 import '../ui' 與課程頁之後（styleOrder.test.ts）
+import { AdminGate } from '../features/admin/AdminGate'
+import { AdminPage } from '../features/admin/AdminPage'
+import { GroupModeGate } from '../shared/GroupModeGate'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -50,7 +57,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'scan' | 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
+type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
 
 // 這一批不做的入口：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -79,8 +86,22 @@ export function AppRoutes() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/join/guest" element={<GuestJoinPage />} />
+    {/* 回饋列表搬進後台（後台 spec P11）；後台不經登入守門，非管理員（含未登入）一律看到找不到頁面（P15） */}
+    <Route path="/feedback" element={<Navigate to="/admin/feedback" replace />} />
+    <Route element={<AdminGate />}>
+      <Route element={<AppShell />}>
+        <Route path="/admin" element={<AdminPage tab="toggles" />} />
+        <Route path="/admin/system-ai" element={<AdminPage tab="systemAI" />} />
+        <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
+        <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
+      </Route>
+    </Route>
     <Route element={<RequireAuth />}>
+      {/* 先登入、再驗證、再看帳號角色：角色不符的頁面換成說明頁（RoleGate），手機檢查在它裡面 */}
+      <Route element={<RoleGate />}>
       {/* 分組教室維持全螢幕；分組課頁沿用舊首頁，舊首頁不要求驗證（加入時由後端擋） */}
+      {/* 多人模式關閉時，分組課與它的示範頁都換成「多人模式目前沒有開放」（後台 spec P8、P19） */}
+      <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
       <Route path="/classrooms/:roomId" element={<LegacyClassroomRoute />} />
       {/* 寫死資料的示範頁：要登入才看得到，外框標明「示範資料」 */}
       <Route path="/question-bank" element={<DemoSurface title="教師題庫畫面"><QuestionBank /></DemoSurface>} />
@@ -89,18 +110,24 @@ export function AppRoutes() {
       <Route path="/group-result" element={<DemoSurface title="分組結果"><GroupResult /></DemoSurface>} />
       <Route path="/poll-result" element={<DemoSurface title="選項占比"><PollResult /></DemoSurface>} />
       <Route path="/activity-form" element={<DemoSurface title="教師出題表單"><ActivityFormModal onClose={() => location.assign('/')} onSubmit={() => location.assign('/')} /></DemoSurface>} />
+      </Route>
       <Route element={<AppShell />}>
-        <Route path="/groups" element={<GroupsPage />} />
-        <Route path="/scan" element={<Placeholder kind="scan" />} />
+        {/* /groups?view=providers 是舊的 AI 連線設定入口，GroupModeGate 放行（P20） */}
+        <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
+          <Route path="/groups" element={<GroupsPage />} />
+        </Route>
         <Route path="/account" element={<Placeholder kind="account" />} />
+      </Route>
       </Route>
       {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}
       <Route path="/guest/register" element={<GuestUpgradePage />} />
       <Route path="/guest/login" element={<GuestLoginPage />} />
     </Route>
     <Route element={<RequireAuth verified />}>
+      <Route element={<RoleGate />}>
       {/* 加入流程與投影是全螢幕，不包外框 */}
       <Route path="/join" element={<JoinCoursePage />} />
+      <Route path="/scan" element={<ScanPage />} />
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
       <Route path="/learn/activities/:activityId/dialogue" element={<SoloDialoguePage />} />
       <Route element={<TeacherDesktopOnly />}>
@@ -109,6 +136,8 @@ export function AppRoutes() {
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />
+        {/* 學生「我的對話」：要求驗證；訪客由 RequireAuth 放行，頁面畫訪客版（註冊邀請＋鎖住的題目） */}
+        <Route path="/my-dialogues" element={<MyDialoguesPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}
@@ -123,8 +152,14 @@ export function AppRoutes() {
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
         </Route>
-        <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
-        <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+        <Route element={<TeacherDesktopOnly />}>
+          {/* 舊教師頁：個人題庫、題庫商店、AI 連線設定（?view=）放行，多人課程首頁與課程頁要多人模式（P8） */}
+          <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
+            <Route path="/teacher/home" element={<LegacyTeacherRoute />} />
+            <Route path="/teacher/courses/:courseId" element={<LegacyTeacherCourseRoute />} />
+          </Route>
+        </Route>
+      </Route>
       </Route>
     </Route>
     <Route path="*" element={<NotFoundPage />} />

@@ -37,6 +37,8 @@
 | [Analytics](./backend/analytics.md) | ⚠️ | `backend/app/modules/analytics/` | platform、classroom-core、group-dialogue、solo-activity、llm-runtime、ai-providers | 0 |
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
+| [Feedback（意見回饋）](./backend/feedback.md) | ✅ | `backend/app/modules/feedback/` | platform、identity-access | 0 |
+| [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access、ai-providers、course-management、llm-runtime | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 
@@ -44,7 +46,7 @@
 |---|---|---|---|---|
 | [Shell](./frontend/shell.md) | ✅ | `frontend/src/App.tsx`<br>`frontend/src/main.tsx`<br>`frontend/src/app/`<br>`frontend/src/testing/` | 全部（組裝層） | 0 |
 | [Contract（對接）](./frontend/contract.md) | ✅ | `frontend/src/contract/` | — | 0 |
-| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/ui/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/shared/accountName.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts` | contract | 0 |
+| [Platform](./frontend/platform.md) | ✅ | `frontend/src/components/`<br>`frontend/src/ui/`<br>`frontend/src/shared/phaseLabels.ts`<br>`frontend/src/shared/personalStatus.ts`<br>`frontend/src/shared/clipboard.test.ts`<br>`frontend/src/shared/clipboard.ts`<br>`frontend/src/shared/shellContext.ts`<br>`frontend/src/shared/useIsPhone.ts`<br>`frontend/src/shared/next.ts`<br>`frontend/src/shared/accountName.ts`<br>`frontend/src/i18n/`<br>`frontend/src/features/dev-console/`<br>`frontend/src/testkit.ts`<br>`frontend/src/setupTests.ts`<br>`frontend/src/types/window-globals.d.ts`<br>`frontend/src/vite-env.d.ts`<br>`frontend/src/shared/publicConfig.tsx`<br>`frontend/src/shared/GroupModeGate.tsx`<br>`frontend/src/shared/GroupModeGate.test.tsx` | contract | 0 |
 | [Media](./frontend/media.md) | ✅ | `frontend/src/features/avatar/`<br>`frontend/src/features/conversation-room/voice/`<br>`frontend/src/shared/input/`<br>`frontend/src/types/speech-recognition.d.ts`<br>`frontend/src/types/talkinghead.d.ts` | platform、contract | 0 |
 | [Auth](./frontend/auth.md) | ✅ | `frontend/src/features/auth/`<br>`frontend/src/features/entrance/` | platform、contract | 0 |
 | [AI Settings](./frontend/ai-settings.md) | ✅ | `frontend/src/features/ai-settings/` | platform、contract | 0 |
@@ -54,6 +56,8 @@
 | [Student Classroom](./frontend/student-classroom.md) | ✅ | `frontend/src/features/student-classroom/`<br>`frontend/src/features/research/`<br>`frontend/src/features/classroom-answer/`<br>`frontend/src/features/danmaku/` | platform、media、auth、ai-settings、group-dialogue、teacher-analytics、contract | 0 |
 | [課程](./frontend/course.md) | ✅ | `frontend/src/features/course/` | platform、contract、auth、solo-activity | 0 |
 | [單人活動](./frontend/solo-activity.md) | ✅ | `frontend/src/features/solo-activity/` | platform、contract | 0 |
+| [意見回饋](./frontend/feedback.md) | ✅ | `frontend/src/features/feedback/` | platform、contract、auth | 0 |
+| [後台](./frontend/admin.md) | ✅ | `frontend/src/features/admin/` | platform、contract、auth、feedback | 0 |
 
 **契約（兩端唯一的接縫）**
 
@@ -71,6 +75,8 @@
 | 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
 | 課程與活動（/courses/*、/course-join/*、/activities/*） | course-management | course | backend/app/modules/course_management/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 | 單人活動（/solo/*） | solo-activity | solo-activity、course | backend/app/modules/solo_activity/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
+| 意見回饋（/feedback） | feedback | feedback | backend/app/modules/feedback/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
+| 後台（/admin） | admin | admin | backend/app/modules/admin/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 
 <!-- module-map:end -->
 

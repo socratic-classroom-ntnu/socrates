@@ -5,12 +5,14 @@ student with quotes from their own words. 15 or more with the model: PCA axes na
 scores by percentile within the activity. The result is kept until a summary changes.
 """
 
+import json
+
 import pytest
 from sqlalchemy import func, select
 
 from app.modules.ai_providers.contracts import EmbeddingUnavailable
 from app.modules.platform import storage as storage
-from app.modules.solo_activity import radar
+from app.modules.solo_activity import radar, tutor_chain
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from tests.course_management.conftest import switch, user
 from tests.solo_activity.test_solo_analysis_api import student
@@ -121,7 +123,7 @@ def test_no_kept_final_summary_is_not_ready(client, tutor):
 
 def test_without_a_provider_the_radar_is_not_ready(client, tutor, monkeypatch):
     s, _ = class_of(client, 2)
-    monkeypatch.setattr(radar, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
+    monkeypatch.setattr(tutor_chain, "resolve_owner_chain", lambda *args, **kwargs: ([], None))
     assert get_radar(client, s).json()["detail"] == "RADAR_NOT_READY"
 
 
@@ -142,6 +144,19 @@ def test_a_small_class_is_scored_by_the_model_with_quotes(client, tutor):
         assert source == {"message_id": message_ids[-1], "quote": WORDS, "start": 0, "end": 6}
     assert entry["display_name"] == "s01同學"
     assert len(calls) == 3
+
+
+def test_the_model_sets_dimensions_from_the_class_summaries_without_names(client, tutor):
+    calls, replies = tutor
+    s, _ = class_of(
+        client, 2, [kept_summary("拉桿", "看救下的人數"), kept_summary("不拉桿", "看行為本身")]
+    )
+    replies.extend([DIMENSIONS, scores(), scores()])
+    ok(get_radar(client, s))
+    sent = json.loads(calls[0]["messages"][1]["content"])
+    # One anonymous position-and-reasoning entry per student, in no student order.
+    assert sent["summaries"] == ["不拉桿\n看行為本身", "拉桿\n看救下的人數"]
+    assert "同學" not in calls[0]["messages"][1]["content"]
 
 
 def test_an_invented_quote_is_written_again_before_the_score_is_kept(client, tutor):
@@ -212,6 +227,14 @@ def spread(count):
     return vectors
 
 
+def spread_three(count):
+    """Three independent splits of the class, each carrying about a third of the variance."""
+    return [
+        [1.0 if i % 2 else -1.0, 1.0 if (i // 2) % 2 else -1.0, 1.0 if (i // 4) % 2 else -1.0, 0.0]
+        for i in range(count)
+    ]
+
+
 def axis_names(count):
     return {
         "axes": [
@@ -229,21 +252,37 @@ def test_a_class_of_fifteen_gets_named_principal_axes(client, tutor, monkeypatch
 
     def embed(batch):
         seen.append(batch)
-        return spread(len(batch))
+        return spread_three(len(batch))
 
     monkeypatch.setattr(radar, "embed", embed)
-    # The noise direction explains under a tenth of the variance, so only one axis is named.
-    replies.append(axis_names(1))
+    replies.append(axis_names(3))
     view = ok(get_radar(client, s))
     assert seen == [texts]
-    assert [(d["source"], d["name"]) for d in view["dimensions"]] == [("embedding", "軸0")]
-    first_axis = sorted(entry["scores"][0]["score"] for entry in view["students"])
-    # Two groups far apart: one cluster below the mean, one above, none at it.
-    assert first_axis[0] < 2 < first_axis[-1]
-    assert not any(1.5 < score < 2.5 for score in first_axis)
+    assert [(d["source"], d["name"]) for d in view["dimensions"]] == [
+        ("embedding", "軸0"),
+        ("embedding", "軸1"),
+        ("embedding", "軸2"),
+    ]
+    for axis in range(3):
+        on_axis = sorted(entry["scores"][axis]["score"] for entry in view["students"])
+        # Each axis spreads the class to both sides of the mean, inside the 0–4 scale.
+        assert 0 <= on_axis[0] < 2 < on_axis[-1] <= 4
     assert all(score["sources"] == [] for e in view["students"] for score in e["scores"])
     (call,) = calls
     assert "axes" in call["messages"][1]["content"]
+
+
+def test_fewer_than_three_axes_falls_back_to_scoring(client, tutor, monkeypatch):
+    calls, replies = tutor
+    s, _ = class_of(client, 15)
+    # One split and a little noise: a single axis carries the class, too few for a radar.
+    monkeypatch.setattr(radar, "embed", lambda batch: spread(len(batch)))
+    replies.extend([DIMENSIONS] + [scores()] * 15)
+    view = ok(get_radar(client, s))
+    assert {d["source"] for d in view["dimensions"]} == {"llm"}
+    assert len(view["dimensions"]) == 4
+    assert len(view["students"]) == 15
+    assert not any("axes" in call["messages"][1]["content"] for call in calls)
 
 
 def test_without_the_embedding_model_a_large_class_falls_back_to_scoring(

@@ -6,12 +6,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.modules.llm_runtime.contracts import OtherSuggestionResult
+from app.modules.llm_runtime.contracts import CitedSummary, OtherSuggestionResult
 from app.modules.ai_providers.service import provider_error_status
 from app.classroom_app import create_app
 from app.modules.platform import storage as storage
 from app.modules.ai_providers import classroom_gateway as gateway
-from app.modules.ai_providers.classroom_provider import ProviderWait
+from app.modules.ai_providers.classroom_provider import ProviderSchemaMismatch, ProviderWait
 from app.modules.identity_access.repositories import Mail
 from app.modules.ai_providers.repositories import CallAudit
 
@@ -71,6 +71,58 @@ def test_invalid_or_mismatched_json_becomes_provider_wait(raw):
         gateway._validated_structured_result(raw, OtherSuggestionResult)
 
 
+@pytest.mark.parametrize(
+    ("raw", "schema", "fields"),
+    [
+        (
+            '{"suggestion_text": ""}',
+            OtherSuggestionResult,
+            [("suggestion_text", "string_too_short")],
+        ),
+        (
+            '{"points": [{"text": "", "sources": []}]}',
+            CitedSummary,
+            [("points.0.text", "string_too_short")],
+        ),
+        ("{}", OtherSuggestionResult, [("suggestion_text", "missing")]),
+    ],
+)
+def test_a_schema_mismatch_names_the_fields_that_failed_and_keeps_its_code(raw, schema, fields):
+    with pytest.raises(ProviderSchemaMismatch) as caught:
+        gateway._validated_structured_result(raw, schema)
+    assert (caught.value.reason, caught.value.seconds) == ("PROVIDER_SCHEMA_MISMATCH", 30)
+    assert caught.value.fields == fields
+
+
+def test_a_reply_that_is_not_json_has_no_fields_to_name():
+    with pytest.raises(ProviderWait, match="PROVIDER_SCHEMA_MISMATCH") as caught:
+        gateway._validated_structured_result("not json", OtherSuggestionResult)
+    assert not isinstance(caught.value, ProviderSchemaMismatch)
+
+
+def test_a_schema_mismatch_carries_the_failed_calls_audit(monkeypatch):
+    """The re-ask after an empty field counts both calls, so the first one's usage must survive."""
+    usage = {"prompt_tokens": 40, "completion_tokens": 5, "total_tokens": 45}
+
+    async def request(*_, **__):
+        return FakeResponse(
+            {"choices": [{"message": {"content": '{"suggestion_text": ""}'}}], "usage": usage}
+        )
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    with pytest.raises(ProviderSchemaMismatch) as caught:
+        asyncio.run(
+            gateway.generate(
+                binding("openrouter"),
+                [{"role": "user", "content": "test"}],
+                OtherSuggestionResult,
+                None,
+            )
+        )
+    assert caught.value.audit["token_usage"] == usage
+    assert caught.value.audit["provider_profile_id"] == "profile-1"
+
+
 def test_openrouter_requires_structured_output_capability(monkeypatch):
     monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
     monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
@@ -97,6 +149,46 @@ def test_openrouter_requires_structured_output_capability(monkeypatch):
     assert captured["provider"] == {"require_parameters": True}
     assert captured["reasoning"] == {"exclude": True, "max_tokens": 50}
     assert captured["max_tokens"] == 250
+
+
+def gemini_body(text, finish="STOP"):
+    return {
+        "candidates": [{"content": {"parts": [{"text": text}]}, "finishReason": finish}],
+        "usageMetadata": {},
+    }
+
+
+def test_gemini_thinking_has_its_own_budget_on_top_of_the_output(monkeypatch):
+    monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+    captured = {}
+
+    async def request(*_, **kwargs):
+        captured.update(kwargs["payload"]["generationConfig"])
+        return FakeResponse(gemini_body(json.dumps({"suggestion_text": "新的角度"})))
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    result, _, _ = asyncio.run(
+        gateway._gemini_generate(
+            binding("gemini"), [{"role": "user", "content": "test"}], OtherSuggestionResult
+        )
+    )
+    assert result == {"suggestion_text": "新的角度"}
+    assert captured["maxOutputTokens"] == 250
+    assert captured["thinkingConfig"] == {"thinkingBudget": 50}
+
+
+def test_gemini_cut_off_at_the_token_cap_is_truncated_not_a_schema_mismatch(monkeypatch):
+    async def request(*_, **__):
+        return FakeResponse(gemini_body('{"suggestion_text": "新的', finish="MAX_TOKENS"))
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    with pytest.raises(ProviderWait, match="PROVIDER_OUTPUT_TRUNCATED"):
+        asyncio.run(
+            gateway._gemini_generate(
+                binding("gemini"), [{"role": "user", "content": "test"}], OtherSuggestionResult
+            )
+        )
 
 
 def test_openrouter_model_capabilities_are_exposed(monkeypatch):
@@ -167,8 +259,29 @@ def test_generate_audit_separates_reasoning_and_visible_output(monkeypatch):
     assert audit["reasoning_budget_tokens"] == 50
 
 
+def test_gemini_audit_records_the_reasoning_budget(monkeypatch):
+    async def generate(_binding, _messages, _schema):
+        return {"suggestion_text": "新的角度"}, {}, "fixture-model"
+
+    async def no_delta(_):
+        return None
+
+    monkeypatch.setattr(gateway, "_gemini_generate", generate)
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+    _, audit = asyncio.run(
+        gateway.generate(
+            binding("gemini"),
+            [{"role": "user", "content": "test"}],
+            OtherSuggestionResult,
+            no_delta,
+        )
+    )
+    assert audit["reasoning_budget_tokens"] == 50
+
+
 def test_provider_error_status_preserves_typed_application_bodies():
     assert provider_error_status("PROVIDER_EMPTY_CONTENT") == 422
+    assert provider_error_status("PROVIDER_OUTPUT_TRUNCATED") == 422
     assert provider_error_status("PROVIDER_SCHEMA_MISMATCH") == 422
     assert provider_error_status("SCRIPT_ASSIST_INVALID_OUTPUT") == 422
     assert provider_error_status("PROVIDER_HTTP_401") == 424

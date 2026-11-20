@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.modules.identity_access.service import account
 from app.modules.platform.storage import transaction
-from app.modules.solo_activity import analysis, progress, radar
+from app.modules.solo_activity import analysis, practice, progress, radar, roster, teacher_attempt
 from app.modules.solo_activity import service as service
 from app.modules.solo_activity.contracts import (
     ACTION_BODIES,
@@ -25,9 +25,37 @@ from app.modules.solo_activity.contracts import (
     SoloActivityView,
     SoloAttemptView,
     SoloAction,
+    PracticeList,
+    PracticeStart,
+    PracticeStarted,
+    PracticeTopic,
+    SoloCourseRosterView,
+    TeacherTranscriptView,
 )
 
 router = APIRouter(prefix="/solo", tags=["solo"])
+
+
+@router.get("/practice/bank", response_model=list[PracticeTopic])
+def get_practice_bank(request: Request):
+    """The main-flow bank; guests may read it (their 我的對話 page shows the topics locked)."""
+    with transaction() as db:
+        account(db, request, allow_guest=True)
+        return practice.bank_view()
+
+
+@router.get("/practice", response_model=PracticeList)
+def get_practice(request: Request):
+    with transaction() as db:
+        current, _ = account(db, request)
+        return practice.practice_list(db, current, service.now())
+
+
+@router.post("/practice", response_model=PracticeStarted, status_code=201)
+def start_practice(body: PracticeStart, request: Request):
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        return practice.start_practice(db, current, body.bank_item_id, service.now())
 
 
 @router.get("/activities/{activity_id}", response_model=SoloActivityView)
@@ -111,3 +139,29 @@ def rename_radar_dimension(
     with transaction() as db:
         current, _ = account(db, request, mutation=True)
         return radar.rename_dimension(db, current, activity_id, index, body.name)
+
+
+@router.get("/courses/{course_id}/students", response_model=SoloCourseRosterView)
+def get_course_roster(course_id: str, request: Request):
+    with transaction() as db:
+        current, _ = account(db, request)
+        return roster.roster_view(db, current, course_id, progress.now())
+
+
+@router.get(
+    "/activities/{activity_id}/students/{enrollment_id}/attempt",
+    response_model=TeacherTranscriptView,
+)
+def get_student_attempt(
+    activity_id: str, enrollment_id: str, request: Request, after: str | None = None
+):
+    """One student's whole conversation, for the course owner; read only.
+
+    ``after`` is a message id: only the messages after it come back (the page's refresh). A GET
+    under /activities, so POST /solo/attempts/{id}/{action} never takes it.
+    """
+    with transaction() as db:
+        current, _ = account(db, request)
+        return teacher_attempt.transcript_view(
+            db, current, activity_id, enrollment_id, teacher_attempt.now(), after
+        )

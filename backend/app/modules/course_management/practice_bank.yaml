@@ -1,0 +1,46 @@
+# 主流程題庫：學生「我的對話」從這裡挑題（之後老師「從題庫挑選」也讀這份）。
+# 服務啟動時載入並驗證，檔案壞掉服務就起不來（app/modules/course_management/practice.py）。
+#
+# 每題：
+#   id           英數小寫與連字號，永不重用、不改意思（舊對話用它查短標題與分類）
+#   title        短標題（1–40 字），卡片與對話頁頂欄顯示
+#   body         情境描述（1–300 字），就是活動的唯一輸入，蘇格拉底從它開始
+#   category     life（生命與責任）／honesty（誠實）／self（自我與身分）／tech（科技）
+#   recommended  true 才會出現在推薦題目裡
+# 順序就是畫面上的順序。
+
+- id: llm-school
+  title: 語言模型與學校學習
+  body: 請問在 2026 年的現在，我們在學校的學習（作業與考試）是不是也要開放使用語言模型作為我們的輔助工具？
+  category: tech
+  recommended: true
+
+- id: trolley
+  title: 電車難題
+  body: 一輛失控的電車正駛向五名工人。你站在轉轍器旁，拉下拉桿，電車會轉向另一條軌道，那裡只有一名工人。你會拉下拉桿嗎？
+  category: life
+  recommended: true
+
+- id: lie-to-save-friend
+  title: 說謊救朋友
+  body: 你的朋友為了躲一個想傷害他的人，躲進了你家。那個人敲門，問你朋友在不在裡面。你會說謊嗎？
+  category: honesty
+  recommended: true
+
+- id: ship-of-theseus
+  title: 忒修斯之船
+  body: 一艘船的木板一塊塊換掉，全部換完之後，它還是同一艘船嗎？
+  category: self
+  recommended: true
+
+- id: experience-machine
+  title: 經驗機器
+  body: 有一台機器能讓你一輩子都感到幸福，但一切都不是真的。你會接上嗎？
+  category: tech
+  recommended: true
+
+- id: footbridge
+  title: 天橋上的陌生人
+  body: 失控的電車駛向五個人。你站在天橋上，旁邊有一個陌生人，把他推下去就能擋住電車。你會推嗎？
+  category: life
+  recommended: true

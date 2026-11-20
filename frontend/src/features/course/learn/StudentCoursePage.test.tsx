@@ -1,4 +1,6 @@
 import { act, fireEvent, screen, within } from '@testing-library/react'
+import { Route } from 'react-router-dom'
+import { AppShell } from '../../../app/AppShell'
 import { ApiError } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
 import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
@@ -154,4 +156,13 @@ test('es locale renders without Chinese', async () => {
 test('empty filter explains itself', async () => {
   open({}, [card('o1', 'open', '第三週倫理討論')], '/learn/courses/c-1?filter=ended')
   expect(await screen.findByText('沒有符合的活動')).toBeInTheDocument()
+})
+
+// P33：手機頂部列是「‹ 首頁」（畫布 S5m）：首頁已經沒有「我學的課」分頁
+test('the phone top bar goes back to home', async () => {
+  phone()
+  mockApi({ 'GET /courses/c-1?role=student': course, 'GET /courses/c-1/activities?role=student': { role: 'student', items } })
+  renderAt('/learn/courses/c-1', '/unused', null, <Route element={<AppShell />}><Route path="/learn/courses/:courseId" element={<StudentCoursePage />} /></Route>)
+  const back = (await screen.findAllByRole('link', { name: '首頁' })).find(link => link.closest('header'))
+  expect(back).toHaveAttribute('href', '/')
 })

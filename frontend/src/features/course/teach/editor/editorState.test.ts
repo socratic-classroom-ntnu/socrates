@@ -6,14 +6,15 @@ const NOW = 1_800_000_000
 
 function complete(extra: Partial<ActivityForm> = {}): ActivityForm {
   const end = fromEpochSeconds(NOW + 86400)
-  return { title: '第三週倫理討論', start: { mode: 'now' }, end, ...extra }
+  return { title: '第三週倫理討論', scenario: '一輛失控的電車正駛向五名工人。', start: { mode: 'now' }, end, ...extra }
 }
 
-test('validate lists the missing topic and end in screen order', () => {
-  const problems = validate(complete({ title: ' ', end: { date: '', time: '' } }), NOW)
+test('validate lists the missing end, name and scenario in screen order', () => {
+  const problems = validate(complete({ title: ' ', scenario: ' ', end: { date: '', time: '' } }), NOW)
   expect(problems.map(p => [p.field, p.kind])).toEqual([
-    ['title', 'required'],
     ['end', 'required'],
+    ['title', 'required'],
+    ['scenario', 'required'],
   ])
 })
 
@@ -56,36 +57,39 @@ test('toDraft and fromDraft round trip', () => {
   const draft = toDraft(form)
   expect(draft).toEqual({
     title: '第三週倫理討論',
+    scenario: '一輛失控的電車正駛向五名工人。',
     starts_at: toEpochSeconds(form.start.mode === 'at' ? form.start.date : '', form.start.mode === 'at' ? form.start.time : ''),
     ends_at: toEpochSeconds(form.end.date, form.end.time),
   })
   expect(fromDraft(draft)).toEqual(form)
 })
 
-test('the draft body has only the single input and the window', () => {
+test('the draft body has the name, the scenario and the window', () => {
   const draft = toDraft(complete())
-  expect(Object.keys(draft).sort()).toEqual(['ends_at', 'starts_at', 'title'])
+  expect(Object.keys(draft).sort()).toEqual(['ends_at', 'scenario', 'starts_at', 'title'])
 })
 
-test('now mode sends null starts_at and trims the topic', () => {
-  const draft = toDraft(complete({ title: '  名稱  ' }))
+test('now mode sends null starts_at and trims the name and scenario', () => {
+  const draft = toDraft(complete({ title: '  名稱  ', scenario: '  情境  ' }))
   expect(draft.starts_at).toBeNull()
   expect(draft.title).toBe('名稱')
+  expect(draft.scenario).toBe('情境')
 })
 
-test('empty form is one blank topic with an open-now start', () => {
+test('empty form is a blank name and scenario with an open-now start', () => {
   const form = emptyForm()
-  expect(form).toEqual({ title: '', start: { mode: 'now' }, end: { date: '', time: '' } })
+  expect(form).toEqual({ title: '', scenario: '', start: { mode: 'now' }, end: { date: '', time: '' } })
 })
 
 test('problemsFrom422 maps pydantic locations', () => {
   const detail = [
     { loc: ['body', 'title'], type: 'string_too_long' },
     { loc: ['body', 'ends_at'], type: 'missing' },
+    { loc: ['body', 'scenario'], type: 'string_too_long' },
     { loc: ['body', 'starts_at'], type: 'float_parsing' },
     { loc: ['body', 'nonsense'], type: 'missing' },
     { loc: ['body', 'title', 'extra'], type: 'missing' },
   ]
-  expect(problemsFrom422(detail).map(p => p.field)).toEqual(['title', 'end', 'start'])
+  expect(problemsFrom422(detail).map(p => p.field)).toEqual(['title', 'end', 'scenario', 'start'])
   expect(problemsFrom422('ACTIVITY_TIME_INVALID')).toEqual([])
 })

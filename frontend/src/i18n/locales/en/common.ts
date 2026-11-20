@@ -7,6 +7,17 @@ const common: Shape<typeof zhHant> = {
   close: 'Close',
   copied: 'Copied',
   copyFailed: 'Couldn\'t copy',
+  select: {
+    searching: 'Searching…',
+  },
+  password: {
+    show: 'Show password',
+    hide: 'Hide password',
+  },
+  groupModeOff: {
+    title: "Group mode isn't available right now",
+    body: "Group classes are paused for now. We'll let you know when they're back.",
+  },
   notFound: {
     title: 'Page not found',
     body: 'The address may be mistyped, or this page has been removed.',
@@ -19,6 +30,10 @@ const common: Shape<typeof zhHant> = {
     USERNAME_TAKEN: 'That username is taken. Please choose another.',
     EMAIL_TAKEN: 'That email is already registered. Log in instead, or reset your password if you forgot it.',
     ACCOUNT_PENDING_VERIFICATION: 'That username or email is registered and waiting for email verification. If it is yours, log in and resend the verification email. If not, it is released once the link expires (24 hours after the last email), and you can sign up then.',
+    ACCOUNT_ROLE_FORBIDDEN: 'This needs the other kind of account: creating a course takes a teacher account, and joining a course or activity takes a student account.',
+    PRACTICE_DAILY_LIMIT: 'You have used today\'s new conversations. Come back tomorrow; your earlier conversations can continue.',
+    PRACTICE_TOPIC_NOT_FOUND: 'That topic was not found. Reload the page and pick again.',
+    PRACTICE_UNAVAILABLE: 'Practice is unavailable right now. Please try again later.',
     LOGIN_REQUIRED: 'Please log in first.',
     SESSION_CSRF_REQUIRED: 'Your session has expired. Please reload the page.',
     RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
@@ -32,7 +47,6 @@ const common: Shape<typeof zhHant> = {
     title: 'Coming soon',
     body: 'This feature is still being built and will open later.',
     back: 'Back to home',
-    scan: 'Scanning a QR code with this device\'s camera is still being built. For now, scan with your phone camera or enter the course code.',
     account: 'Personal settings will live here. You can switch the language from the account menu.',
     activity: 'The activity page is still being built. Your conversation with Socrates will start here.',
     live: 'Live progress will live here: where each student is on each question.',

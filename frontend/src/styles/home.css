@@ -4,26 +4,18 @@
   color: var(--ui-color-ink); font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
 }
 .home__greeting { margin: 0; font-size: 30px; font-weight: 700; }
+.home__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .home__panel {
   flex-grow: 1; display: flex; flex-direction: column; gap: 20px; padding: 20px 24px 24px;
   border-radius: 16px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line);
 }
 .home__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #ECECE8; }
-.home__tabs { display: flex; gap: 28px; }
-.home__tabs button {
-  position: relative; min-height: 44px; padding: 0 2px; border: 0; background: transparent; font: inherit; font-size: 17px;
-  color: var(--ui-color-muted); font-weight: 500; cursor: pointer;
-}
-.home__tabs button[aria-selected="true"] { color: var(--ui-color-ink); font-weight: 700; }
-.home__tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 25%; right: 25%; bottom: 2px; height: 3px; border-radius: 3px; background: var(--ui-color-primary); }
-.home__tabs button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
 .home__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .home__loading { min-height: 200px; }
 .home__empty { flex-grow: 1; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
 .home__empty h2 { margin: 12px 0 0; font-size: 18px; }
 .home__empty p { margin: 0; color: var(--ui-color-muted); font-size: 14px; }
 .empty-classroom-illustration { max-width: 100%; height: auto; }
-.home__hint { margin: 0; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--ui-color-bg); color: var(--ui-color-ink-soft); font-size: 14px; }
 
 /* 代碼表單 */
 .join-code { display: flex; flex-direction: column; gap: 10px; }
@@ -62,6 +54,9 @@
 .course-card__code { position: relative; z-index: 1; align-self: flex-end; display: flex; align-items: center; gap: 4px; font-family: 'Noto Sans Mono', ui-monospace, monospace; font-size: 13px; color: var(--ui-color-muted); }
 .course-card__actions { position: relative; z-index: 1; align-self: flex-end; }
 .course-card__actions .course-card__button { min-height: 44px; font-size: 15px; }
+.course-card__enter { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--ui-color-primary); font-size: 15px; font-weight: 700; text-decoration: none; }
+.course-card__enter:hover { text-decoration: underline; }
+.course-card__enter:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; border-radius: 4px; }
 
 /* 手機：整張卡片是一個連結 */
 .course-card--phone { padding: 0; gap: 0; }
@@ -79,11 +74,10 @@
 @media (max-width: 767px) {
   .home { padding: 20px 16px 32px; gap: 16px; }
   .home__greeting { font-size: 24px; }
+  .home__head { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
   .home__panel { padding: 0; border: 0; background: transparent; gap: 16px; }
   .home__bar { padding-bottom: 0; }
-  .home__tabs { gap: 24px; }
-  .home__tabs button { font-size: 16px; }
-  .join-code--phone .join-code__row { flex-wrap: nowrap; }
+      .join-code--phone .join-code__row { flex-wrap: nowrap; }
   .join-code--phone .join-code__input { width: auto; flex: 1 1 auto; min-width: 0; }
   .join-code__scan { flex-shrink: 0; }
   .home__create-phone { width: 100%; }
@@ -95,7 +89,40 @@
 .join-code__input { text-transform: uppercase; }
 .join-code__input::placeholder { text-transform: none; }
 .join-code .join-code__button { flex-shrink: 0; white-space: nowrap; }
-@media (max-width: 767px) { .home__hint { background: #E9E9E4; } }
+
+
+/* 老師首頁（H1t／H2t）：「我的課程 N 門」＋建立課程；沒課時是建立第一門課＋三個步驟 */
+.home__title { margin: 0; font-size: 18px; font-weight: 700; }
+.home__count { color: var(--ui-color-muted); font-size: 14px; font-weight: 400; }
+.home__empty h3 { margin: 12px 0 0; font-size: 18px; }
+.home__empty--teach p { max-width: 440px; line-height: 1.7; }
+/* 大按鈕（畫布 H2t：高 52、字 17）；加父層提高優先序，蓋過共用 Button 的尺寸 */
+.home__empty--teach > .home__create-first { margin-top: 6px; min-height: 52px; padding: 0 24px; border-radius: 10px; font-size: 17px; }
+.home__steps {
+  margin: 18px 0 0; padding: 0; list-style: none; width: 100%;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: left;
+}
+.home__steps li { display: flex; gap: 12px; padding: 16px; border-radius: 12px; background: var(--ui-color-panel-hover); border: 1px solid var(--ui-color-line); font-size: 13px; line-height: 1.6; color: var(--ui-color-muted); }
+.home__steps b { display: block; margin-bottom: 4px; color: var(--ui-color-ink); font-size: 15px; }
+.home__step-number {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; background: var(--ui-color-primary); color: var(--ui-color-panel);
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+}
+@media (max-width: 900px) { .home__steps { grid-template-columns: minmax(0, 1fr); } }
+
+/* 手機老師（S4m-t）：只有請用電腦，置中 */
+.home--teacher-phone { align-items: center; justify-content: center; min-height: calc(100dvh - 60px); text-align: center; }
+.home--teacher-phone h1 { margin: 8px 0 0; font-size: 20px; font-weight: 700; }
+.home--teacher-phone > p { margin: 0; max-width: 320px; color: var(--ui-color-muted); font-size: 15px; line-height: 1.7; }
+/* 「目前登入」小卡（畫布 S4m-t）：淡灰底、沒有框 */
+.home__signed-in {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 12px; border-radius: 10px;
+  background: var(--ui-color-panel-hover); font-size: 13px; color: var(--ui-color-ink-soft);
+}
+.home__signed-in .app-shell__avatar { width: 24px; height: 24px; font-size: 12px; }
+/* 小卡也是 .home--teacher-phone 底下的 p：蓋過那裡的 15px／淡色說明字 */
+.home--teacher-phone > .home__signed-in { max-width: none; font-size: 13px; color: var(--ui-color-ink-soft); }
+.home__role-tag { height: 20px; padding: 0 7px; border-radius: 999px; display: inline-flex; align-items: center; background: var(--ui-color-info-soft); color: var(--ui-color-info); font-size: 11px; font-weight: 700; }
 
 /* 訪客（04、G13）與併入、驗證完成的提示（G25、G26）：顏色照「提示訊息」規則卡 */
 .guest-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding: 16px 20px; border-radius: 12px; background: var(--ui-color-info-soft); color: var(--ui-color-ink); }

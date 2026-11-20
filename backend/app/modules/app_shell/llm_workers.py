@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from sqlalchemy import or_, select
 
+from app.modules.feedback.service import purge_screenshots
 from app.modules.identity_access.service import expire_guests
 from app.modules.llm_runtime.contracts import DynamicResult, SummaryResult
 from app.modules.identity_access.email_delivery import (
@@ -479,6 +480,24 @@ async def guest_expiry_loop():
         except Exception as exc:
             print("CLASSROOM_GUEST_EXPIRY " + type(exc).__name__, flush=True)
         await asyncio.sleep(GUEST_EXPIRY_SECONDS)
+
+
+# 截圖 90 天後清掉（意見回饋 P10）；重跑無害，每個 pod 都跑。
+FEEDBACK_PURGE_SECONDS = 3600
+
+
+def purge_feedback_screenshots() -> int:
+    with transaction() as db:
+        return purge_screenshots(db, time.time())
+
+
+async def feedback_purge_loop():
+    while True:
+        try:
+            await asyncio.to_thread(purge_feedback_screenshots)
+        except Exception as exc:
+            print("CLASSROOM_FEEDBACK_PURGE " + type(exc).__name__, flush=True)
+        await asyncio.sleep(FEEDBACK_PURGE_SECONDS)
 
 
 def send_mail_once():

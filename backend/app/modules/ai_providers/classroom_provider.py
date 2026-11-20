@@ -17,6 +17,28 @@ class ProviderWait(RuntimeError):
         super().__init__(reason)
 
 
+class ProviderHTTPError(ProviderWait):
+    """A provider answered with an error status. `reason` stays what every caller already
+    handles; `status` and the provider's `error` object (never the request, which carries the
+    key) let the 後台 test sort the failure (spec P33)."""
+
+    def __init__(self, reason, seconds=60, *, status: int, error: dict | None):
+        super().__init__(reason, seconds)
+        self.status, self.error = status, error
+
+
+class ProviderSchemaMismatch(ProviderWait):
+    """The reply was JSON but broke the schema. `fields` names each failure as (path, rule), e.g.
+    ("summary.reason_summary", "string_too_short"), so llm-runtime can re-ask with the reason.
+    Never the values: they may quote the student. `audit` is the failed call's, set by
+    classroom_gateway.generate, so a re-ask can count both calls."""
+
+    def __init__(self, fields: list[tuple[str, str]], usage: dict | None = None):
+        super().__init__("PROVIDER_SCHEMA_MISMATCH", 30)
+        self.fields, self.usage = fields, usage or {}
+        self.audit: dict = {}
+
+
 def partial_reply(raw):
     match = re.search(r'"reply_text"\s*:\s*"', raw)
     if not match:

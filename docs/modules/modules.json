@@ -208,13 +208,16 @@
       "id": "admin",
       "name": "Admin（後台）",
       "status": "ok",
-      "about": "後台：平台管理員的增減與功能開關（資料庫存值）；啟動時套用第一批管理員。",
+      "about": "後台：平台管理員的增減、功能開關（資料庫存值）、系統 AI（平台金鑰的檢視、測試、更換）；啟動時套用第一批管理員。",
       "paths": [
         "backend/app/modules/admin/"
       ],
       "uses": [
         "platform",
-        "identity-access"
+        "identity-access",
+        "ai-providers",
+        "course-management",
+        "llm-runtime"
       ],
       "todo": []
     }

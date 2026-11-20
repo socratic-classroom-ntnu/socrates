@@ -19,6 +19,7 @@ from app.modules.course_management.practice import (  # noqa: F401
     install_bank as install_practice_bank,
     check_settings as check_practice_settings,
     practice_owner as practice_owner,
+    lock_practice_owner as lock_practice_owner,
     practice_course as practice_course,
     ensure_practice_course as ensure_practice_course,
     create_practice_activity as create_practice_activity,

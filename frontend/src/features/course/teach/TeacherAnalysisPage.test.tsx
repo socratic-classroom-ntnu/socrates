@@ -4,6 +4,7 @@ import { api } from '../../../contract/classroomClient'
 import { applyLocale } from '../../../i18n'
 import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
 import { TeacherAnalysisPage } from './TeacherAnalysisPage'
+import { PROJECTOR_WINDOW_NAME } from './projectorNavigation'
 
 jest.mock('../../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
@@ -65,8 +66,11 @@ function open(options: { actions?: Activity['available_actions']; locale?: 'zh-H
   return calls
 }
 
-beforeEach(() => jest.mocked(api).mockReset())
-afterEach(() => { jest.useRealTimers(); void applyLocale('zh-Hant') })
+beforeEach(() => {
+  jest.mocked(api).mockReset()
+  jest.spyOn(window, 'open').mockImplementation(() => null)
+})
+afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks(); void applyLocale('zh-Hant') })
 
 test('renders overview cards from summary', async () => {
   open()
@@ -87,6 +91,16 @@ test('shares header and tabs with live page', async () => {
   expect(within(page).getByRole('link', { name: '統計分析' })).toHaveAttribute('aria-current', 'page')
   expect(within(page).getByRole('link', { name: '即時狀況' })).toHaveAttribute('href', '/teach/activities/a-1')
   expect(within(page).getByRole('link', { name: 'AI 分析（開發中）' })).toHaveAttribute('href', '/teach/activities/a-1/analysis/ai')
+  const projectorButton = within(page).getByRole('button', { name: '投影活動 QR' })
+  fireEvent.click(projectorButton)
+  const inviteDialog = screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })
+  const projectorLink = within(inviteDialog).getByRole('link', { name: '投影到大螢幕' })
+  expect(projectorLink).toHaveAttribute('target', PROJECTOR_WINDOW_NAME)
+  expect(window.open).not.toHaveBeenCalled()
+  fireEvent.click(projectorLink)
+  expect(window.open).toHaveBeenCalledWith('/teach/activities/a-1/projector', PROJECTOR_WINDOW_NAME)
+  expect(screen.getByTestId('where')).toHaveTextContent('/teach/activities/a-1/analysis')
+  expect(screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })).toBeInTheDocument()
 })
 
 test('end early only with end_now action', async () => {
@@ -170,4 +184,37 @@ test('guest viewpoints carry a guest tag and expired guests show an anonymous nu
   expect(within(guest).getByText('訪客')).toBeInTheDocument()
   const expired = within(page).getByText('過期訪客 2').closest('.analysis-student') as HTMLElement
   expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})
+
+describe('a field the student has not written yet', () => {
+  test('shows grey 「（還沒說明）」 in place of an empty position or reason', async () => {
+    open({ view: { ...analysis, students: [
+      student(1, { current_position: '', reason_summary: '理由1' }),
+      student(2, { current_position: '立場2', reason_summary: '' }),
+      student(3, { current_position: '', reason_summary: '' }),
+    ] } })
+    const list = await screen.findByRole('region', { name: '學生確認過的想法' })
+    const rows = (name: string) => within(list).getByText(name).closest('.analysis-student') as HTMLElement
+    expect(within(rows('學生1')).getAllByText('（還沒說明）')).toHaveLength(1)
+    expect(within(rows('學生1')).getByText('（還沒說明）')).toHaveClass('analysis-student__blank')
+    expect(within(rows('學生1')).getByText('理由1')).toBeInTheDocument()
+    expect(within(rows('學生2')).getAllByText('（還沒說明）')).toHaveLength(1)
+    expect(within(rows('學生2')).getByText('立場2')).toBeInTheDocument()
+    expect(within(rows('學生3')).getAllByText('（還沒說明）')).toHaveLength(2)
+  })
+
+  test('a viewpoint with both fields written has no grey words', async () => {
+    open()
+    const list = await screen.findByRole('region', { name: '學生確認過的想法' })
+    expect(within(list).queryByText('（還沒說明）')).toBeNull()
+  })
+
+  test.each([
+    ['en' as const, '(Not explained yet)'],
+    ['es' as const, '(Aún sin explicar)'],
+  ])('%s: the grey words are in that language', async (locale, words) => {
+    open({ locale, view: { ...analysis, students: [student(1, { current_position: '', reason_summary: '' })] } })
+    expect((await screen.findAllByText(words)).length).toBe(2)
+    expect(screen.queryByText('（還沒說明）')).toBeNull()
+  })
 })

@@ -65,6 +65,20 @@ const teach: Shape<typeof zhHant> = {
     guestOn: '学生扫码后可以取个名字直接加入，记录保留 7 天。',
     guestOff: '学生要登录或注册才能加入；已经加入的访客不受影响。',
   },
+  projectorPage: {
+    escapeHintBefore: '按', escapeHintAfter: '离开投影', loading: '正在加载投影画面',
+    loadError: '加载失败', loadErrorTitle: '无法显示加入信息',
+    loadErrorDescription: '请检查网络连接，或重新加载投影画面。', retry: '重新加载', retrying: '正在重新加载…',
+    notFoundTitle: '找不到{{resource}}', notFoundDescription: '请确认{{resource}}网址是否正确。',
+    resources: { course: '课程', activity: '活动', parentCourse: '所属课程' },
+    qrAlt: '加入「{{name}}」的 QR Code', activity: '课堂活动', joinCourse: '加入课程',
+    activityUpcoming: '活动即将开始，你可以先扫描 QR Code，准备加入。',
+    activityJoin: '使用手机扫描 QR Code，加入这个课堂活动。',
+    courseJoin: '使用手机扫描 QR Code，或输入课程代码加入。', courseCode: '课程代码', scanToJoin: '扫描后即可参与活动',
+    courseDisabled: '此课程代码已停用', courseDisabledDescription: '目前无法使用课程代码加入「{{name}}」。',
+    activityStatus: '活动状态', activityEnded: '活动已结束', activityEndedDescription: '「{{name}}」已经结束，现在无法加入。',
+    activityDraft: '活动尚未开放', activityDraftDescription: '「{{name}}」目前仍是草稿，发布后学生才能加入。',
+  },
   status: {
     draft: '草稿',
     scheduled: '已排程',
@@ -127,6 +141,7 @@ const teach: Shape<typeof zhHant> = {
     noMatch: '没有符合的活动',
   },
   analysis: {
+    blank: '（还没说明）',
     demoBanner: '示意数据：统计功能还在完成中，以下数字不是这个活动的真实作答',
     overview: '完成概况',
     started: '已开始 {{started}} ／ {{enrolled}}',

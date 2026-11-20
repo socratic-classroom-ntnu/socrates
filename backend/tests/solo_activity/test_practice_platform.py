@@ -1,6 +1,7 @@
 """我的對話的平台金鑰與系統帳號（spec §10 M3、M8）。
 
-金鑰由部署環境變數帶入，啟動時替系統帳號建立／更新／停用一組連線設定；設定不合法就讓服務起不來。
+系統 AI 以資料庫為準（後台 spec P30）：只有資料庫還沒有可用的平台連線時，啟動才讀環境變數並寫入；
+之後換金鑰、換模型都在後台，環境變數不再覆蓋，清空也不會停用。
 """
 
 import socket
@@ -29,8 +30,7 @@ def config(**env):
 
 
 def prepare(cfg):
-    with storage.transaction() as db:
-        practice_startup.prepare_practice(db, cfg)
+    practice_startup.prepare_practice(lambda: cfg)
 
 
 def owner_id():
@@ -93,11 +93,13 @@ def test_openai_compatible_takes_a_checked_base_url(monkeypatch):
     assert (cfg.adapter, cfg.base_url) == ("openai-compatible", "https://llm.example.com/v1")
 
 
-def test_a_broken_setting_stops_the_service_from_starting(monkeypatch):
+def test_a_broken_setting_no_longer_stops_create_app(monkeypatch):
+    """The env is read at startup only when the database has no usable connection (P30), so
+    create_app itself does not parse it; tests/solo_activity/test_practice_lifespan.py covers when a
+    broken setting still stops the service."""
     monkeypatch.setenv("SOCRATES_PRACTICE_LLM_API_KEY", KEY)
     monkeypatch.setenv("SOCRATES_PRACTICE_LLM_ADAPTER", "openroutr")
-    with pytest.raises(ValueError):
-        create_app(background=False)
+    create_app(background=False)
 
 
 # ---- 啟動時寫進資料庫 ----
@@ -157,27 +159,74 @@ def test_a_key_gives_the_system_account_a_default_persistent_connection(client):
         assert db.get(AccountAISettings, profile.owner_id).default_profile_id == profile.id
 
 
-def test_a_new_key_or_model_updates_the_same_connection(client):
+def test_a_new_env_does_not_override_the_saved_connection(client):
     prepare(config())
     prepare(
         config(SOCRATES_PRACTICE_LLM_API_KEY="sk-new-key-9999", SOCRATES_PRACTICE_LLM_MODEL="m2")
     )
     (binding,) = chain()
-    assert (binding["secret"], binding["model"]) == ("sk-new-key-9999", "m2")
+    assert (binding["secret"], binding["model"]) == (KEY, "openrouter/free")
     with storage.transaction() as db:
         assert db.scalar(select(func.count()).select_from(ProviderProfile)) == 1
 
 
-def test_removing_the_key_disables_it_and_adding_it_back_enables_it(client):
+def test_removing_the_key_from_the_env_keeps_the_connection(client):
     prepare(config())
     prepare(None)
-    assert chain() == []
-    prepare(config())
     assert len(chain()) == 1
 
 
-def test_two_workers_racing_still_get_one_connection(client, monkeypatch):
+def test_the_env_is_not_read_while_a_usable_connection_exists(client):
     prepare(config())
+
+    def broken():
+        raise AssertionError("the env must not be read")
+
+    practice_startup.prepare_practice(broken)
+    assert len(chain()) == 1
+
+
+def test_an_env_import_is_recorded_as_the_deploy_setting(client):
+    prepare(config())
+    with storage.transaction() as db:
+        profile = db.scalar(select(ProviderProfile))
+        assert profile.metadata_json["updated_by_account_id"] == "deploy"
+
+
+def test_a_connection_disabled_by_the_old_startup_counts_as_missing(client):
+    """Before P30 an empty env disabled the row; the next env import enables it again."""
+    prepare(config())
+    with storage.transaction() as db:
+        db.scalar(select(ProviderProfile)).enabled = False
+    with storage.transaction() as db:
+        assert practice_startup.needs_env_import(db) is True
+    prepare(config(SOCRATES_PRACTICE_LLM_MODEL="m3"))
+    (binding,) = chain()
+    assert binding["model"] == "m3"
+
+
+def test_nothing_is_written_without_a_connection_or_an_env(client):
+    prepare(None)
+    assert chain() == []
+    with storage.transaction() as db:
+        assert db.scalar(select(func.count()).select_from(ProviderProfile)) == 0
+
+
+def test_import_env_checks_again_under_the_lock(client):
+    """A connection saved after needs_env_import said yes is not overwritten."""
+    with storage.transaction() as db:
+        assert practice_startup.needs_env_import(db) is True
+    with storage.transaction() as db:
+        ai_service.save_platform_profile(
+            db, owner_id(), config(SOCRATES_PRACTICE_LLM_MODEL="admin-model"), "admin-1"
+        )
+    with storage.transaction() as db:
+        practice_startup.import_env(db, config())
+    (binding,) = chain()
+    assert binding["model"] == "admin-model"
+
+
+def test_two_workers_racing_still_get_one_connection(client, monkeypatch):
     lookup = ai_service._find_platform_profile
     calls = {"n": 0}
 
@@ -185,8 +234,34 @@ def test_two_workers_racing_still_get_one_connection(client, monkeypatch):
         calls["n"] += 1
         return None if calls["n"] == 1 else lookup(db, owner)
 
+    with storage.transaction() as db:
+        ai_service.save_platform_profile(db, owner_id(), config(), "deploy")
     monkeypatch.setattr(ai_service, "_find_platform_profile", miss_once)
-    prepare(config())
+    with storage.transaction() as db:
+        ai_service.save_platform_profile(db, owner_id(), config(), "deploy")
     with storage.transaction() as db:
         assert db.scalar(select(func.count()).select_from(ProviderProfile)) == 1
     assert len(chain()) == 1
+
+
+def test_saving_again_records_the_new_author(client):
+    with storage.transaction() as db:
+        ai_service.save_platform_profile(db, owner_id(), config(), "deploy")
+    with storage.transaction() as db:
+        ai_service.save_platform_profile(
+            db, owner_id(), config(SOCRATES_PRACTICE_LLM_MODEL="m2"), "admin-1"
+        )
+    with storage.transaction() as db:
+        assert (
+            db.scalar(select(ProviderProfile)).metadata_json["updated_by_account_id"] == "admin-1"
+        )
+
+
+def test_a_broken_env_key_never_appears_in_the_startup_error():
+    """後台 spec P37: the service may refuse to start, but its error and traceback hold no key."""
+    secret = "sk-or-v1 secret with spaces 9999"
+    with pytest.raises(ValueError) as caught:
+        ai_service.platform_profile_config({**ENV, "SOCRATES_PRACTICE_LLM_API_KEY": secret})
+    assert "secret with spaces" not in str(caught.value)
+    assert caught.value.__cause__ is None and caught.value.__context__ is None
+    assert "credential" in str(caught.value)  # still says which setting is wrong

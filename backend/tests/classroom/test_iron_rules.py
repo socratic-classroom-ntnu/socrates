@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from app.modules.ai_providers.service import ProviderSchemaMismatch
 from app.modules.llm_runtime import iron_rules, prompts
 
 APP = Path(__file__).resolve().parents[2] / "app"
@@ -46,6 +47,7 @@ def test_every_provider_call_goes_through_the_iron_rules():
         if "guarded_generate(" in path.read_text(encoding="utf-8") and path.name != "iron_rules.py"
     }
     assert wired == {
+        "modules/admin/system_ai.py",
         "modules/app_shell/llm_workers.py",
         "modules/content_authoring/service.py",
         "modules/group_dialogue/service.py",
@@ -114,6 +116,7 @@ def test_programs_without_the_router_first_are_rejected(tmp_path, monkeypatch):
         (lambda r: r["roles"]["focused_tutor"].update(checks=["mind_reading"]), "unknown checks"),
         (lambda r: r["roles"]["focused_tutor"].update(fallback="nope"), "unknown fallback"),
         (lambda r: r.update(L1="missing.md"), "L1"),
+        (lambda r: r["roles"].pop("connection_probe"), "no route for 'connection_probe'"),
     ],
     ids=[
         "no-route",
@@ -122,6 +125,7 @@ def test_programs_without_the_router_first_are_rejected(tmp_path, monkeypatch):
         "unknown-check",
         "unknown-fallback",
         "missing-L1",
+        "no-connection-probe-route",
     ],
 )
 def test_broken_router_is_rejected(tmp_path, monkeypatch, mutate, message):
@@ -176,6 +180,8 @@ class Fake:
     async def __call__(self, binding, messages, schema, on_delta):
         self.prompts.append(messages)
         result = self.results.pop(0) if len(self.results) > 1 else self.results[0]
+        if isinstance(result, Exception):
+            raise result
         return result, {
             "token_usage": {"total_tokens": 10},
             "estimated_cost": 0.01,
@@ -211,6 +217,39 @@ def test_off_topic_question_is_not_answered_and_gets_pulled_back():
     assert audit["iron_rules"]["outcome"] == "fallback"
     assert len(fake.prompts) == 2
     assert "鐵則提醒" in fake.prompts[1][0]["content"]
+
+
+def left_empty(*fields):
+    """What the gateway raises when the model wrote "" for required fields (Claude Haiku does)."""
+    failure = ProviderSchemaMismatch([(path, "string_too_short") for path in fields])
+    failure.audit = {"token_usage": {"total_tokens": 7}, "estimated_cost": 0.02, "latency_ms": 3}
+    return failure
+
+
+def test_a_required_field_left_empty_is_asked_again_with_the_field_named():
+    reply = "如果那一個人是你認識的人，你的選擇會不同嗎？"
+    fake = Fake(left_empty("reply_text"), tutor(reply))
+    result, audit, shown = run(fake, "我會拉桿")
+    assert result["reply_text"] == reply and shown == [reply]
+    assert len(fake.prompts) == 2 and "reply_text" in fake.prompts[1][0]["content"]
+    assert audit["iron_rules"]["outcome"] == "regenerated"
+    assert audit["iron_rules"]["reasons"] == ["EMPTY_FIELD"]
+    assert audit["token_usage"]["total_tokens"] == 17
+    assert audit["estimated_cost"] == pytest.approx(0.03)
+
+
+def test_a_field_left_empty_twice_fails_as_before():
+    fake = Fake(left_empty("reply_text"), left_empty("reply_text"))
+    with pytest.raises(ProviderSchemaMismatch):
+        run(fake, "我會拉桿")
+    assert len(fake.prompts) == 2
+
+
+def test_other_schema_failures_are_not_asked_again():
+    fake = Fake(ProviderSchemaMismatch([("guard", "literal_error")]))
+    with pytest.raises(ProviderSchemaMismatch):
+        run(fake, "我會拉桿")
+    assert len(fake.prompts) == 1
 
 
 def test_off_topic_pull_back_from_the_model_passes_on_the_first_try():

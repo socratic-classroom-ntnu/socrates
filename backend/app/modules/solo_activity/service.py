@@ -19,11 +19,9 @@ from uuid import uuid4
 
 from sqlalchemy import func, select
 
-from app.modules.ai_providers.service import (
-    record_direct_call_audit,
-    resolve_owner_chain,
-)
+from app.modules.ai_providers.service import record_direct_call_audit
 from app.modules.course_management import service as activities
+from app.modules.solo_activity.tutor_chain import course_bindings
 from app.modules.course_management.contracts import ActivityTimes, status
 from app.modules.course_management.repositories import (
     Activity,
@@ -467,7 +465,7 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
         return {"view": _attempt_view(db, row, at)}
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         failed = machine.tutor_failed(new, pending.key, "owner_provider_missing")
         _store(row, cast(AttemptState, failed))
@@ -493,7 +491,7 @@ def _prepare_extension(db, row: SoloAttempt, a: AttemptState, account: Account) 
     """
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         return None
     current = a.current
@@ -750,7 +748,7 @@ def _prepare_final(
     """
     activity = db.get(Activity, row.activity_id)
     course = db.get(Course, activity.course_id)
-    bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
+    bindings = course_bindings(db, course, ROLE)
     if not bindings:
         _store(
             row,

@@ -7,6 +7,9 @@ const common: Shape<typeof zhHant> = {
   close: 'Cerrar',
   copied: 'Copiado',
   copyFailed: 'No se pudo copiar',
+  select: {
+    searching: 'Buscando…',
+  },
   password: {
     show: 'Mostrar contraseña',
     hide: 'Ocultar contraseña',
@@ -50,7 +53,6 @@ const common: Shape<typeof zhHant> = {
     analysis: 'Aquí estará el análisis de la clase: distribución de posturas, quiénes terminaron y cuántos cambiaron de postura.',
     aiAnalysis: 'El análisis con IA todavía está en desarrollo. Más adelante organizará patrones de la clase a partir de posturas confirmadas.',
     toCourse: 'Volver al curso',
-    projector: 'La proyección a pantalla completa todavía está en construcción. Por ahora, usa el código QR de la ventana de invitación.',
   },
   dateTime: {
     chooseDate: 'Elige una fecha',

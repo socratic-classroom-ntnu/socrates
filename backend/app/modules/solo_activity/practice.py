@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.modules.ai_providers.service import resolve_owner_chain
+from app.modules.ai_providers.service import resolve_owner_chain, usable_platform_profile
 from app.modules.course_management import service as courses
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
@@ -81,6 +81,9 @@ def start_practice(db: Session, account: Account, bank_item_id: str, at: float) 
     if item is None:
         raise DomainError("PRACTICE_TOPIC_NOT_FOUND", 404)
     owner = courses.practice_owner(db)
+    # A key that no longer decrypts counts as no connection here too (後台 spec P30, P34).
+    if usable_platform_profile(db, owner.id) is None:
+        raise DomainError("PRACTICE_UNAVAILABLE", 503)
     bindings, _ = resolve_owner_chain(db, owner.id, TUTOR_ROLE)
     if not bindings:
         raise DomainError("PRACTICE_UNAVAILABLE", 503)

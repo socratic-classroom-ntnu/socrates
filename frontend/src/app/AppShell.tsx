@@ -9,9 +9,10 @@ import { AccountMenu, type NavEntry } from './AccountMenu'
 import { AccountSheet } from './AccountSheet'
 import { useLogout } from './accountSummary'
 import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
+import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
 
-type NavKey = 'home' | 'dialogues' | 'bank' | 'store' | 'settings' | 'admin'
+type NavKey = 'home' | 'dialogues' | 'groups' | 'bank' | 'store' | 'settings' | 'admin'
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
@@ -20,16 +21,18 @@ const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24
 const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] = [
   { key: 'home', href: '/', icon: icon(<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />) },
   { key: 'dialogues', href: '/my-dialogues', icon: icon(<><path d="M4 5h16v11H9l-5 4z" /><path d="M8 9h8M8 12h5" /></>) },
+  { key: 'groups', href: '/groups', icon: icon(<><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20a6 6 0 0 1 12 0M14 20a4.5 4.5 0 0 1 7-3.7" /></>) },
   { key: 'bank', href: '/teacher/home?view=bank', fullLoad: true, icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
   { key: 'store', href: '/teacher/home?view=store', fullLoad: true, icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
   { key: 'settings', href: '/teacher/home?view=settings', fullLoad: true, icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
 ]
 
-// 帳號只有一個角色（P22）：側欄依角色，兩邊都沒有「分組課」（路由不擋，只是沒有入口）。
+// 帳號只有一個角色（P22）：側欄依角色。「分組課」只給老師，而且要多人模式開著（後台開關，Fizzy 11/18）；
+// 開關還沒讀到或讀取失敗都不顯示，跟 GroupModeGate 一致。學生進分組教室靠加入碼或連結，沒有入口。
 // 訪客的角色一律是學生，側欄跟學生一樣：「我的對話」點進去是註冊後才能使用的說明頁。
 const NAV_BY_ROLE: Record<'student' | 'teacher', NavKey[]> = {
   student: ['home', 'dialogues'],
-  teacher: ['home', 'bank', 'store', 'settings'],
+  teacher: ['home', 'groups', 'bank', 'store', 'settings'],
 }
 
 const ADMIN_ICON = icon(<><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></>)
@@ -48,9 +51,11 @@ export function activeItem(pathname: string, search: string): NavKey | null {
   if (/^\/admin(\/|$)/.test(pathname)) return 'admin'
   if (/^\/my-dialogues\/?$/.test(pathname)) return 'dialogues'
   if (pathname === '/' || pathname.startsWith('/learn/') || pathname.startsWith('/teach/')) return 'home'
+  if (/^\/groups\/?$/.test(pathname) || pathname.startsWith('/teacher/courses/')) return 'groups'
   if (/^\/teacher\/home\/?$/.test(pathname)) {
+    // 沒有 ?view= 的舊教師首頁就是多人課程首頁
     const view = new URLSearchParams(search).get('view')
-    return view === 'bank' || view === 'store' || view === 'settings' ? view : null
+    return view === 'bank' || view === 'store' || view === 'settings' ? view : 'groups'
   }
   return null
 }
@@ -67,9 +72,11 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   // 頁面宣告的優先（例如我的對話的私人活動頁），否則依網址
   const [declared, setDeclared] = useState<ShellActive>(null)
   const active = children ? null : declared ?? activeItem(pathname, search)
+  const { status: featuresStatus, features } = useFeatures()
   const role = account?.account_role === 'teacher' ? 'teacher' : 'student'
+  const groupsOpen = featuresStatus === 'ready' && features.group_mode
   const navItems: NavEntry[] = ITEMS
-    .filter(item => NAV_BY_ROLE[role].includes(item.key))
+    .filter(item => NAV_BY_ROLE[role].includes(item.key) && (item.key !== 'groups' || groupsOpen))
     .map(item => ({ key: item.key, label: t(`nav.${item.key}`), href: item.href, icon: item.icon, fullLoad: item.fullLoad }))
   // 平台管理員（老師或學生都可能）在一般項目下方多一個「後台」（Figma AD1、AD2；手機不加，後台只做電腦版）
   if (account?.is_admin) navItems.push({ key: 'admin', label: t('nav.admin'), href: '/admin', icon: ADMIN_ICON, separated: true })

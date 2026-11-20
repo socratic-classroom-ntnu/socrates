@@ -31,6 +31,7 @@ import { TeacherCoursePage } from '../features/course/teach/TeacherCoursePage'
 import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPage'
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
+import { ActivityProjectorPage, CourseProjectorPage } from '../features/course/teach/ProjectorPages'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
 import { GuestJoinPage } from '../features/auth/GuestJoinPage'
 import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
@@ -57,7 +58,7 @@ function legacyRedirect(pathname: string, search: string): string | null {
   return null
 }
 
-type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis' | 'projector'
+type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis'
 
 // 這一批不做的入口：共用佔位頁，說明文字依入口換。
 function Placeholder({ kind }: { kind?: PlaceholderKind }) {
@@ -91,6 +92,7 @@ export function AppRoutes() {
     <Route element={<AdminGate />}>
       <Route element={<AppShell />}>
         <Route path="/admin" element={<AdminPage tab="toggles" />} />
+        <Route path="/admin/system-ai" element={<AdminPage tab="systemAI" />} />
         <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
         <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
       </Route>
@@ -130,8 +132,8 @@ export function AppRoutes() {
       <Route path="/activities/:activityId/join" element={<JoinActivityPage />} />
       <Route path="/learn/activities/:activityId/dialogue" element={<SoloDialoguePage />} />
       <Route element={<TeacherDesktopOnly />}>
-        <Route path="/teach/courses/:courseId/projector" element={<TeachPlaceholder kind="projector" />} />
-        <Route path="/teach/activities/:activityId/projector" element={<TeachPlaceholder kind="projector" />} />
+        <Route path="/teach/courses/:courseId/projector" element={<CourseProjectorPage />} />
+        <Route path="/teach/activities/:activityId/projector" element={<ActivityProjectorPage />} />
       </Route>
       <Route element={<AppShell />}>
         <Route path="/" element={<HomePage />} />

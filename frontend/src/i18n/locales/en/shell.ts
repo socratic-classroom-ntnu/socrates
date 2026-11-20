@@ -7,6 +7,7 @@ const shell: Shape<typeof zhHant> = {
     label: 'Main menu',
     home: 'Home',
     dialogues: 'My dialogues',
+    groups: 'Group classes',
     me: 'Me',
     bank: 'My question bank',
     store: 'Question store',

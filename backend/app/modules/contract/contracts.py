@@ -144,6 +144,15 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "STATEMENT_LENGTH_1_TO_12000": ("group_dialogue",),
     "STUDENT_MEMBERSHIP_REQUIRED": ("classroom_core",),
     "SUMMARY_PHASE_REQUIRED": ("classroom_core",),
+    "SYSTEM_AI_ADAPTER_INVALID": ("admin",),
+    "SYSTEM_AI_BASE_URL_INVALID": ("admin",),
+    "SYSTEM_AI_BASE_URL_NOT_ALLOWED": ("admin",),
+    "SYSTEM_AI_BASE_URL_REQUIRED": ("admin",),
+    "SYSTEM_AI_CHANGED": ("admin",),
+    "SYSTEM_AI_KEY_MALFORMED": ("admin",),
+    "SYSTEM_AI_KEY_REQUIRED": ("admin",),
+    "SYSTEM_AI_MODEL_INVALID": ("admin",),
+    "SYSTEM_AI_MODEL_REQUIRED": ("admin",),
     "TEACHER_MEMBERSHIP_REQUIRED": ("classroom_core", "group_dialogue"),
     "TEACHER_TEMPORARY_ALIAS_CONFIRMATION_REQUIRED": ("group_dialogue",),
     "TYPED_STATEMENT_AND_PARENT_IDS_REQUIRED": ("group_dialogue",),
@@ -167,6 +176,12 @@ DYNAMIC_REASON_CODES: tuple[str, ...] = (
     "PROVIDER_SCHEMA_MISMATCH",
     "PROVIDER_TIMEOUT",
     "RATE_LIMITED",
+    # The 後台 connection test's kinds (ai_providers/probe_errors.py, spec P33).
+    "SYSTEM_AI_KEY_INVALID",
+    "SYSTEM_AI_MODEL_NOT_FOUND",
+    "SYSTEM_AI_QUOTA",
+    "SYSTEM_AI_TIMEOUT",
+    "SYSTEM_AI_UNREACHABLE",
     "USERNAME_TAKEN",
 )
 

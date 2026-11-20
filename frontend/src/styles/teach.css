@@ -11,7 +11,11 @@
 .teach-head__crumb { font-size: 14px; color: var(--ui-color-muted); }
 .teach-head__crumb a { color: var(--ui-color-primary); text-decoration: none; }
 .teach-head__crumb a:hover { text-decoration: underline; }
-.teach-head h1 { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.teach-head h1 {
+  margin: 0; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box;
+  -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  font-size: 30px; font-weight: 700; line-height: 1.3;
+}
 .teach-head__meta { font-size: 14px; color: var(--ui-color-muted); }
 .teach-tabs { display: flex; flex-wrap: wrap; gap: 4px 28px; border-bottom: 1px solid var(--ui-color-line); }
 .teach-tabs a {

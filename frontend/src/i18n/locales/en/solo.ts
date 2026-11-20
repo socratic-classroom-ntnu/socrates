@@ -56,6 +56,7 @@ export default {
   },
   viewpoint: {
     title: 'I tried to summarize your view. Does this sound right?',
+    blank: '(Not explained yet)',
     reason: 'Reason', conditions: 'Conditions',
     principle: 'Related idea: {{principle}}', principleNote: 'This is a reference, not a label for you.',
     confirm: 'Yes, that is what I think', revise: 'Not quite, I want to explain more',

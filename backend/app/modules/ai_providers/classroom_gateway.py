@@ -13,7 +13,11 @@ import httpx
 from pydantic import ValidationError
 
 from app.modules.platform.errors import DomainError
-from app.modules.ai_providers.classroom_provider import ProviderWait
+from app.modules.ai_providers.classroom_provider import (
+    ProviderHTTPError,
+    ProviderSchemaMismatch,
+    ProviderWait,
+)
 from app.modules.platform.env import env_int
 from app.modules.ai_providers.provider_schema import gemini_response_schema, openai_response_schema
 
@@ -87,7 +91,8 @@ def _headers(binding: dict) -> dict[str, str]:
             "content-type": "application/json",
         }
     if adapter == "gemini":
-        return {"content-type": "application/json"}
+        # A header, not ?key=: an error from httpx quotes the whole URL (spec P37).
+        return {"x-goog-api-key": secret, "content-type": "application/json"}
     headers = {
         "authorization": "Bearer " + secret,
         "content-type": "application/json",
@@ -114,8 +119,6 @@ async def _bounded_request(
     base = validate_base_url(binding["adapter"], binding.get("base_url"))
     url = urljoin(base + "/", path.lstrip("/"))
     headers = _headers(binding)
-    if binding["adapter"] == "gemini":
-        query = {**(query or {}), "key": binding["secret"]}
     for _ in range(3):
         parsed = urlparse(url)
         if binding["adapter"] == "openai-compatible":
@@ -143,18 +146,45 @@ async def _bounded_request(
                 seconds = float(retry)
             except ValueError:
                 seconds = 60
-            raise ProviderWait(
+            raise ProviderHTTPError(
                 "PROVIDER_AVAILABILITY",
                 max(1, min(seconds, 3600)),
+                status=response.status_code,
+                error=_safe_error_body(response),
             )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise ProviderWait("PROVIDER_HTTP_" + str(response.status_code), 60) from exc
+        if not response.is_success:
+            # Raised here rather than from an `except httpx.HTTPStatusError`: that exception holds
+            # the request and its headers, and would ride along as __context__ (spec P37).
+            raise ProviderHTTPError(
+                "PROVIDER_HTTP_" + str(response.status_code),
+                60,
+                status=response.status_code,
+                error=_safe_error_body(response),
+            )
         if int(response.headers.get("content-length", "0") or 0) > 2_000_000:
             raise ProviderWait("PROVIDER_RESPONSE_SIZE", 60)
         return response
     raise ProviderWait("PROVIDER_REDIRECT_BOUND", 60)
+
+
+ERROR_MESSAGE_LIMIT = 500
+
+
+def _safe_error_body(response: httpx.Response) -> dict | None:
+    """The provider's `error` object for sorting a failure, its message cut short; None when the
+    body is not JSON or has no such object."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    error = body.get("error") if isinstance(body, dict) else None
+    if isinstance(body, list) and body and isinstance(body[0], dict):
+        error = body[0].get("error")  # Gemini sometimes wraps the error in a list
+    if not isinstance(error, dict):
+        return None
+    if isinstance(error.get("message"), str):
+        error = {**error, "message": error["message"][:ERROR_MESSAGE_LIMIT]}
+    return error
 
 
 def _schema_instruction(schema) -> str:
@@ -188,14 +218,20 @@ def _provider_json(response) -> dict:
     return body
 
 
-def _validated_structured_result(value, schema) -> dict:
+def _validated_structured_result(value, schema, usage: dict | None = None) -> dict:
     if value is None or (isinstance(value, str) and not value.strip()):
         raise ProviderWait("PROVIDER_EMPTY_CONTENT", 30)
     if not isinstance(value, str):
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
     try:
         return schema.model_validate_json(_extract_json_text(value)).model_dump()
-    except (ValidationError, TypeError, ValueError) as exc:
+    except ValidationError as exc:
+        errors = exc.errors()
+        if any(e["type"] == "json_invalid" for e in errors):
+            raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
+        fields = [(".".join(map(str, e["loc"])), e["type"]) for e in errors]
+        raise ProviderSchemaMismatch(fields, usage) from exc
+    except (TypeError, ValueError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
 
 
@@ -235,11 +271,8 @@ async def _openai_generate(binding, messages, schema):
         raw = message.get("content")
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
-    return (
-        _validated_structured_result(raw, schema),
-        body.get("usage", {}),
-        body.get("model"),
-    )
+    usage = body.get("usage", {})
+    return _validated_structured_result(raw, schema, usage), usage, body.get("model")
 
 
 async def _anthropic_generate(binding, messages, schema):
@@ -277,11 +310,7 @@ async def _anthropic_generate(binding, messages, schema):
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30)
     raw = "".join(value for value in text_parts if isinstance(value, str))
     usage = body.get("usage", {})
-    return (
-        _validated_structured_result(raw, schema),
-        usage,
-        body.get("model"),
-    )
+    return _validated_structured_result(raw, schema, usage), usage, body.get("model")
 
 
 async def _gemini_generate(binding, messages, schema):
@@ -309,7 +338,7 @@ async def _gemini_generate(binding, messages, schema):
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     usage = body.get("usageMetadata", {})
-    return _validated_structured_result(raw, schema), usage, binding["model"]
+    return _validated_structured_result(raw, schema, usage), usage, binding["model"]
 
 
 def _token_breakdown(usage: dict) -> tuple[int, int]:
@@ -362,24 +391,33 @@ def _estimated_cost(binding: dict, usage: dict) -> float | None:
 async def generate(binding, messages, schema, on_delta):
     started = time.monotonic()
     adapter = binding["adapter"]
-    if adapter in {
-        "openrouter",
-        "openai",
-        "openai-compatible",
-    }:
-        result, usage, actual_model = await _openai_generate(binding, messages, schema)
-    elif adapter == "anthropic":
-        result, usage, actual_model = await _anthropic_generate(binding, messages, schema)
-    elif adapter == "gemini":
-        result, usage, actual_model = await _gemini_generate(binding, messages, schema)
-    else:
-        raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
+    try:
+        if adapter in {
+            "openrouter",
+            "openai",
+            "openai-compatible",
+        }:
+            result, usage, actual_model = await _openai_generate(binding, messages, schema)
+        elif adapter == "anthropic":
+            result, usage, actual_model = await _anthropic_generate(binding, messages, schema)
+        elif adapter == "gemini":
+            result, usage, actual_model = await _gemini_generate(binding, messages, schema)
+        else:
+            raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
+    except ProviderSchemaMismatch as exc:
+        exc.audit = _audit(binding, exc.usage, None, started)
+        raise
 
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
+    return result, _audit(binding, usage, actual_model, started)
+
+
+def _audit(binding, usage: dict, actual_model, started: float) -> dict:
+    adapter = binding["adapter"]
     reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
-    audit = {
+    return {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
         "classroom_owner_id": binding["owner_id"],
@@ -397,7 +435,6 @@ async def generate(binding, messages, schema, on_delta):
         "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,
     }
-    return result, audit
 
 
 def _model_capabilities(item: dict, adapter: str) -> dict:

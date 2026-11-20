@@ -768,6 +768,27 @@ test('a send is marked saved once the server has it, before the reply', async ()
   expect(screen.getByRole('status')).toHaveTextContent('正在想你說的話…')
 })
 
+test('leaving the page while a send is open stops the saved check', async () => {
+  jest.useFakeTimers()
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => new Promise(() => undefined),
+  })
+  const { unmount } = render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+  await act(async () => { await Promise.resolve(); await Promise.resolve() })
+
+  fireEvent.change(screen.getByLabelText('回答蘇格拉底'), { target: { value: '我先離開一下。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+  unmount()
+
+  await act(async () => { jest.advanceTimersByTime(1000); await Promise.resolve() })
+  expect(calls.filter(call => call.key === 'GET /solo/attempts/attempt-1')).toHaveLength(1)
+})
+
 test('awaiting state polls until it changes', async () => {
   jest.useFakeTimers()
   let reads = 0

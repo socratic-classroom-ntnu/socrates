@@ -35,6 +35,9 @@ export function SoloDialoguePage() {
   // Set once a read shows the sent message already stored, while the reply is still pending.
   const [savedEarly, setSavedEarly] = useState(false)
   const sendInFlight = useRef(false)
+  // A send can outlive the page; its saved check must not read the attempt after the student left.
+  const saveCheck = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(saveCheck.current), [])
   useEffect(() => { if (attempt.data) setView(attempt.data) }, [attempt.data])
   useEffect(() => {
     if (!view || !(view.state === 'awaiting_tutor' || view.state === 'awaiting_reflection_prompt') || pendingAction) return
@@ -103,11 +106,11 @@ export function SoloDialoguePage() {
   async function sendWithSaveCheck(action: SoloAction, body: Record<string, unknown>, pending: { text: string; first: boolean }) {
     setPendingStudent(pending)
     sendInFlight.current = true
-    const timer = window.setTimeout(() => { void confirmSaved(view!.messages.length) }, SAVE_CHECK_MS)
+    saveCheck.current = window.setTimeout(() => { void confirmSaved(view!.messages.length) }, SAVE_CHECK_MS)
     try {
       return await perform(action, body)
     } finally {
-      window.clearTimeout(timer)
+      window.clearTimeout(saveCheck.current)
       sendInFlight.current = false
       setSavedEarly(false)
       setPendingStudent(null)

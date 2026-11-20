@@ -13,6 +13,7 @@ import { SoloProgress } from './SoloProgress'
 import { SoloTimeline } from './SoloTimeline'
 import { can, currentScenario, REVIEW_STATES, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { ViewpointCard } from './ViewpointCard'
+import { VoiceMode } from './voice/VoiceMode'
 
 const SAVE_CHECK_MS = 1000
 
@@ -166,6 +167,7 @@ export function SoloDialoguePage() {
               retrying={pendingAction === 'retry'}
               onRetry={() => { void perform('retry') }}
             />
+            <VoiceMode view={view} onView={setView} />
             <SoloComposer
               key={`composer-${view.id}-${scenario.index}`}
               view={view}

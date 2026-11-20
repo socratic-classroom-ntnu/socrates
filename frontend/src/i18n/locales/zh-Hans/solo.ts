@@ -37,6 +37,12 @@ export default {
     title: '苏格拉底暂时无法回复', ownerMissing: '老师尚未设置 AI 连接',
     saved: '你的消息已经保存，不会丢失。可以稍等一下再点重试，或先离开，回来时对话会停在这里。', retry: '重试',
   },
+  voice: {
+    enter: '语音模式', enterHint: '用说的跟苏格拉底对话', panel: '语音模式', fullscreen: '全屏', exitFullscreen: '缩小', toTyping: '切回打字',
+    connecting: '连接中…', listening: '正在听你说…', thinking: '正在想你说的话…', speaking: '苏格拉底说话中', youSaid: '你说：{{text}}',
+    micDenied: '麦克风权限被拒绝，请在浏览器设置里允许使用麦克风，或继续打字。', unsupported: '这个浏览器不支持语音模式，可以继续打字。',
+    unavailable: '语音模式目前无法使用，可以继续打字。', service: '语音服务出错了，可以继续打字。',
+  },
   statusUpdated: '状态已更新',
   next: {
     button: '下一个情境', scenarioLabel: '新的情境',

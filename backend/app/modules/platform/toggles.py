@@ -3,13 +3,14 @@
 A switch is registered here with its name, description and default; the database keeps only the
 value an admin set, and who set it when. Every read goes to the database, so a change takes effect
 on the next request. The env-only flags in feature_flags.py (ai_students) are separate and stay.
-Adding a switch later (voice mode) means one more entry in DB_TOGGLES.
+Voice mode is offered only when its switch is on and its key is set (platform config).
 """
 
 from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
+from app.modules.platform.config import settings
 from app.modules.platform.errors import DomainError
 from app.modules.platform.repositories import FeatureToggle
 from app.modules.platform.storage import transaction
@@ -40,6 +41,13 @@ DB_TOGGLES: dict[str, ToggleDef] = {
         description="沒設 AI 連線的老師，課程裡的學生對話改用系統 AI。",
         default=False,
         disable_warning="關掉後，沒設金鑰的老師，課程裡的學生對話會無法繼續，直到老師自己設好 AI 連線。之後可以再打開。",
+    ),
+    "voice_mode": ToggleDef(
+        name="語音模式",
+        description="單人對話可以用說的跟蘇格拉底對話。關掉或沒設語音金鑰時，學生看不到語音入口。",
+        default=False,
+        disabled_reason="VOICE_MODE_DISABLED",
+        disable_warning="關掉後，正在用語音的學生說完當下這句就會切回打字。之後可以再打開。",
     ),
 }
 
@@ -73,8 +81,15 @@ def toggle_rows(db: Session) -> list[tuple[str, ToggleDef, FeatureToggle | None]
     return [(key, spec, db.get(FeatureToggle, key)) for key, spec in DB_TOGGLES.items()]
 
 
+def voice_mode_ready(db: Session) -> bool:
+    """On, and every key voice mode needs is set."""
+    return toggle_enabled(db, "voice_mode") and bool(settings.voice_gemini_api_key.strip())
+
+
 def features(db: Session) -> dict[str, bool]:
-    return {key: toggle_enabled(db, key) for key in DB_TOGGLES}
+    shown = {key: toggle_enabled(db, key) for key in DB_TOGGLES}
+    shown["voice_mode"] = voice_mode_ready(db)
+    return shown
 
 
 def group_mode_required() -> None:

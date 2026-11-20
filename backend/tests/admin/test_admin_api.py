@@ -191,10 +191,14 @@ def test_bootstrap_does_nothing_without_the_variable(client, monkeypatch):
 def test_group_mode_is_off_until_an_admin_turns_it_on(client):
     with storage.transaction() as db:
         assert toggles.toggle_enabled(db, "group_mode") is False
-    assert client.get("/api/v2/public-config").json()["features"] == {"group_mode": False}
+    assert client.get("/api/v2/public-config").json()["features"] == {
+        "group_mode": False,
+        "voice_mode": False,
+    }
     user(client, "fizzy", account_role="teacher")
     make_admin("fizzy")
-    row, fallback = client.get("/api/v2/admin/toggles").json()
+    row, fallback, voice = client.get("/api/v2/admin/toggles").json()
+    assert (voice["key"], voice["name"], voice["enabled"]) == ("voice_mode", "語音模式", False)
     assert row == {
         "key": "group_mode",
         "name": "多人模式",
@@ -220,7 +224,10 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
     body = response.json()
     assert body["enabled"] is True and body["updated_by_name"] == "fizzy"
     assert body["updated_at"] >= before
-    assert client.get("/api/v2/public-config").json()["features"] == {"group_mode": True}
+    assert client.get("/api/v2/public-config").json()["features"] == {
+        "group_mode": True,
+        "voice_mode": False,
+    }
     with storage.transaction() as db:
         assert toggles.toggle_enabled(db, "group_mode") is True
 
@@ -228,7 +235,7 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
 def test_an_unknown_toggle_is_refused(client):
     user(client, "fizzy", account_role="teacher")
     make_admin("fizzy")
-    response = client.put("/api/v2/admin/toggles/voice_mode", json={"enabled": True})
+    response = client.put("/api/v2/admin/toggles/no_such_switch", json={"enabled": True})
     assert (response.status_code, response.json()["detail"]) == (404, "ADMIN_TOGGLE_NOT_FOUND")
 
 

@@ -366,8 +366,17 @@ export async function getRelease() {
   return response.data
 }
 
-/** The live classroom event stream; the only place the app opens a WebSocket. */
+/** The live classroom event stream; one of the two places the app opens a WebSocket. */
 export function openClassroomSocket(roomId: string, mode: string, lastSeq: number): WebSocket {
   const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
   return new WebSocket(`${scheme}://${location.host}/api/v2/classrooms/${roomId}/ws?mode=${mode}&last_seq=${lastSeq}`);
+}
+
+/** Solo voice mode: microphone audio out, Socrates' audio, captions and the attempt view in.
+ * The browser never talks to the voice model itself; the backend relays and checks everything. */
+export function openSoloVoiceSocket(attemptId: string): WebSocket {
+  const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+  const socket = new WebSocket(`${scheme}://${location.host}/api/v2/solo/attempts/${encodeURIComponent(attemptId)}/voice`);
+  socket.binaryType = 'arraybuffer';
+  return socket;
 }

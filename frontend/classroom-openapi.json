@@ -2570,6 +2570,11 @@
           "group_mode": {
             "title": "Group Mode",
             "type": "boolean"
+          },
+          "voice_mode": {
+            "default": false,
+            "title": "Voice Mode",
+            "type": "boolean"
           }
         },
         "required": [

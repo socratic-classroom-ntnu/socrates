@@ -28,6 +28,8 @@ class FeaturesView(BaseModel):
     """後台的功能開關目前的狀態（spec P9）。"""
 
     group_mode: bool
+    # Switched on in the 後台 and the voice key set: the solo dialogue shows the voice entry.
+    voice_mode: bool = False
 
 
 class PublicConfigView(BaseModel):

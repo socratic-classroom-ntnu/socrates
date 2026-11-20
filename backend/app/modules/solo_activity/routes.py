@@ -6,15 +6,21 @@ and are 1:1 with ``available_actions``. A provider call runs outside the transac
 the student's message (AGENTS.md: 學生訊息先落地才呼叫 provider).
 """
 
+import asyncio
+import time
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Body, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Request, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import RequestValidationError
 
-from app.modules.identity_access.service import account
+from app.modules.ai_providers.service import open_voice_session
+from app.modules.identity_access import service as auth
+from app.modules.identity_access.service import account, same_origin
+from app.modules.platform.errors import DomainError
 from app.modules.platform.storage import transaction
 from app.modules.solo_activity import analysis, practice, progress, radar, roster, teacher_attempt
 from app.modules.solo_activity import service as service
+from app.modules.solo_activity import voice_relay
 from app.modules.solo_activity.contracts import (
     ACTION_BODIES,
     RadarDimensionUpdate,
@@ -165,3 +171,75 @@ def get_student_attempt(
         return teacher_attempt.transcript_view(
             db, current, activity_id, enrollment_id, teacher_attempt.now(), after
         )
+
+
+# ---- voice mode ---------------------------------------------------------------------------
+
+
+@router.websocket("/attempts/{attempt_id}/voice")
+async def voice(ws: WebSocket, attempt_id: str):
+    """The browser's only voice connection: microphone audio in; Socrates' audio, captions and
+    the attempt view out. Text frames from the browser are ignored: it cannot send the voice
+    model's instructions or either side's transcript (voice_relay keeps both on the backend).
+    """
+    try:
+        same_origin(ws)
+
+        def identify() -> str:
+            with transaction() as db:
+                who, _ = auth.identity(db, ws.cookies.get(auth.COOKIE))
+                voice_relay.available(db, who, attempt_id, time.time())
+                return who.id
+
+        account_id = await asyncio.to_thread(identify)
+    except DomainError as exc:
+        await ws.close(code=4403 if exc.status in (401, 403) else 4409)
+        return
+    await ws.accept()
+
+    async def send_json(message: dict) -> None:
+        if message.get("type") == "view":
+            message = {
+                **message,
+                "view": SoloAttemptView.model_validate(message["view"]).model_dump(mode="json"),
+            }
+        await ws.send_json(message)
+
+    relay = voice_relay.VoiceRelay(
+        account_id=account_id,
+        attempt_id=attempt_id,
+        open_live=open_voice_session,
+        send_json=send_json,
+        send_audio=ws.send_bytes,
+    )
+    try:
+        await relay.start()
+    except Exception:  # noqa: BLE001 — no voice session: the student keeps typing
+        await ws.send_json(
+            {"type": "to_typing", "reason": "error", "text": voice_relay.TO_TYPING_TEXT["error"]}
+        )
+        await ws.close()
+        return
+    runner = asyncio.create_task(relay.run())
+    try:
+        while not runner.done():
+            incoming = asyncio.create_task(ws.receive())
+            done, _ = await asyncio.wait({incoming, runner}, return_when=asyncio.FIRST_COMPLETED)
+            if incoming not in done:
+                incoming.cancel()
+                break
+            frame = incoming.result()
+            if frame["type"] == "websocket.disconnect":
+                break
+            if frame.get("bytes"):
+                await relay.from_browser(frame["bytes"])
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await relay.close()
+        if not runner.done():
+            runner.cancel()
+        try:
+            await ws.close()
+        except RuntimeError:
+            pass

@@ -936,3 +936,11 @@ async def list_models(binding: dict) -> list[dict]:
 
     result = await classroom_gateway.discover_models(binding)
     return list(result["models"])
+
+
+# Voice mode: the Gemini Live session the solo dialogue's relay opens (key read from platform
+# config, never sent to the browser).
+from app.modules.ai_providers.gemini_live import LiveEvent  # noqa: E402
+from app.modules.ai_providers.gemini_live import open_session as open_voice_session  # noqa: E402
+
+__voice__ = (LiveEvent, open_voice_session)

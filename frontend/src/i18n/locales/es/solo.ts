@@ -56,6 +56,7 @@ export default {
   },
   viewpoint: {
     title: 'Intenté resumir tu postura. ¿Está bien expresada?',
+    blank: '(Aún sin explicar)',
     reason: 'Razón', conditions: 'Condiciones',
     principle: 'Idea relacionada: {{principle}}', principleNote: 'Es solo una referencia, no una etiqueta para ti.',
     confirm: 'Sí, eso es lo que pienso', revise: 'No del todo, quiero explicarlo mejor',

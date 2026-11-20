@@ -56,6 +56,7 @@ export default {
   },
   viewpoint: {
     title: '我试着整理你的想法，这样说对吗？',
+    blank: '（还没说明）',
     reason: '理由', conditions: '条件',
     principle: '接近的想法：{{principle}}', principleNote: '这只是参考，不是你的标签。',
     confirm: '对，这就是我的想法', revise: '不太对，我想再说清楚',

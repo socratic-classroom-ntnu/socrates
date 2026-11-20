@@ -768,6 +768,27 @@ test('a send is marked saved once the server has it, before the reply', async ()
   expect(screen.getByRole('status')).toHaveTextContent('正在想你說的話…')
 })
 
+test('leaving the page while a send is open stops the saved check', async () => {
+  jest.useFakeTimers()
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => new Promise(() => undefined),
+  })
+  const { unmount } = render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+  await act(async () => { await Promise.resolve(); await Promise.resolve() })
+
+  fireEvent.change(screen.getByLabelText('回答蘇格拉底'), { target: { value: '我先離開一下。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+  unmount()
+
+  await act(async () => { jest.advanceTimersByTime(1000); await Promise.resolve() })
+  expect(calls.filter(call => call.key === 'GET /solo/attempts/attempt-1')).toHaveLength(1)
+})
+
 test('awaiting state polls until it changes', async () => {
   jest.useFakeTimers()
   let reads = 0
@@ -941,6 +962,56 @@ test('confirming shows summary and both choices', async () => {
   expect(screen.getByText('接近的想法：義務論')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeInTheDocument()
+})
+
+const blankSummary = { ...confirmingAttempt.candidate_summary, current_position: '', reason_summary: '' }
+
+test('a summary whose reason is still blank says so in grey and can still be answered', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...confirmingAttempt, candidate_summary: blankSummary },
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  const row = within(card).getByText('理由').closest('div')!
+  const blank = within(row).getByText('（還沒說明）')
+  expect(blank).toHaveClass('solo-viewpoint__blank')
+  expect(within(card).getAllByText('（還沒說明）')).toHaveLength(1)
+  expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeEnabled()
+  expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeEnabled()
+})
+
+test('a capped scenario with nothing written yet shows the same grey words and keeps its one action', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': {
+      ...confirmingAttempt,
+      candidate_summary: blankSummary,
+      scenarios: [{ ...firstScenario, status: 'capped' }],
+      available_actions: ['confirm_viewpoint'],
+    },
+  })
+  const card = await screen.findByRole('region', { name: /訊息已達上限/ })
+  expect(within(card).getByText('（還沒說明）')).toHaveClass('solo-viewpoint__blank')
+  expect(screen.getByRole('button', { name: '好，我知道了' })).toBeEnabled()
+})
+
+test('a written reason is shown as it is, without the grey words', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': confirmingAttempt,
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  expect(within(card).queryByText('（還沒說明）')).toBeNull()
+  expect(card.querySelector('.solo-viewpoint__blank')).toBeNull()
+})
+
+test('a reason of only blank space counts as not written', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...confirmingAttempt, candidate_summary: { ...blankSummary, reason_summary: '  \n ' } },
+  })
+  const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
+  expect(within(card).getByText('（還沒說明）')).toBeInTheDocument()
 })
 
 test('a capped scenario says the limit was reached and is not agreed to as "my view"', async () => {

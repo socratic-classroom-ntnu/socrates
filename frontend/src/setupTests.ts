@@ -16,6 +16,17 @@ Object.defineProperty(window, 'matchMedia', { configurable: true, value: (query)
         addEventListener() { }, removeEventListener() { }, dispatchEvent() { return true; },
     }) });
 Element.prototype.scrollIntoView = jest.fn();
+// 測試裡的路由器預設跟 App.tsx 用同一組 future 設定，不必每個檔案各寫一次。
+jest.mock('react-router-dom', () => {
+    const { createElement } = jest.requireActual('react');
+    const actual = jest.requireActual('react-router-dom');
+    const { ROUTER_FUTURE } = jest.requireActual('./app/routerFuture');
+    return {
+        ...actual,
+        MemoryRouter: (props) => createElement(actual.MemoryRouter, { future: ROUTER_FUTURE, ...props }),
+        BrowserRouter: (props) => createElement(actual.BrowserRouter, { future: ROUTER_FUTURE, ...props }),
+    };
+});
 // Tests read zh-Hant text unless they switch language themselves; jsdom reports en-US.
 beforeEach(async () => { localStorage.clear(); await applyLocale('zh-Hant'); localStorage.clear(); });
 afterEach(() => { cleanup(); jest.restoreAllMocks(); });

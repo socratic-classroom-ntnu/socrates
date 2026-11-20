@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { openSoloVoiceSocket } from '../../../contract/classroomClient'
-import type { SoloAttemptView } from '../soloView'
+import { can, type SoloAction, type SoloAttemptView } from '../soloView'
 import { audioContextClass, level, Player, toPcm16 } from './voiceAudio'
 
 export type VoiceStatus = 'off' | 'connecting' | 'listening' | 'thinking' | 'speaking'
@@ -15,9 +15,12 @@ type ServerMessage =
   | { type: 'turn_complete' }
   | { type: 'to_typing'; reason: string; text: string }
 
+// Actions a spoken answer can press: a message, or 對／不太對 on a scenario's or the final summary.
+const SPOKEN_ACTIONS: SoloAction[] = ['send_message', 'confirm_viewpoint', 'submit_reflection']
+
 /** Whether the microphone may be open: only when the backend offers a spoken step. */
 export function micAllowed(view: SoloAttemptView): boolean {
-  return view.available_actions.includes('send_message') || view.available_actions.includes('confirm_viewpoint')
+  return SPOKEN_ACTIONS.some(action => can(view, action))
 }
 
 export function useSoloVoice(view: SoloAttemptView, onView: (view: SoloAttemptView) => void) {

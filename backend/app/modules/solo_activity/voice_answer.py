@@ -13,7 +13,7 @@ import unicodedata
 
 import opencc  # type: ignore[import-untyped]  # ships no type hints
 
-from app.modules.solo_activity.voice_confirmation import VoiceAnswer
+from app.modules.solo_activity.voice_confirmation import Verdict as VoiceAnswer
 
 _TO_TRADITIONAL = opencc.OpenCC("s2t")
 

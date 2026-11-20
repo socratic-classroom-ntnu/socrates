@@ -17,6 +17,7 @@ from app.modules.llm_runtime.contracts import (
     StanceClassification,
     SummaryResult,
     TutorTurn,
+    VoiceConfirmation,
 )
 from app.modules.llm_runtime.repositories import Program
 from app.modules.platform.storage import digest
@@ -38,6 +39,7 @@ SCHEMAS = {
     "RadarDimensions": RadarDimensions,
     "RadarScores": RadarScores,
     "StanceClassification": StanceClassification,
+    "VoiceConfirmation": VoiceConfirmation,
 }
 
 
@@ -54,7 +56,8 @@ JOB_KINDS = (
 # solo_tutor shares personal_tutor's output schema but never recaps in its reply: in a solo
 # activity the backend alone decides when the student confirms.
 # scenario_extension writes a solo student's next scenario; the first one is the teacher's text.
-# The rest are the solo activity's programs, called by course-management and solo-activity.
+# The rest are the solo activity's programs, called by course-management and solo-activity;
+# voice_confirmation judges a spoken answer to a summary read out in voice mode.
 REQUEST_PROGRAMS = (
     "ai_script_authoring",
     "solo_tutor",
@@ -65,6 +68,7 @@ REQUEST_PROGRAMS = (
     "radar_axis_naming",
     "radar_dimensions",
     "radar_scoring",
+    "voice_confirmation",
 )
 # L0 路由；compile_program 依角色載入 L1＋L2（app/modules/llm_runtime/iron_rules.py）。
 IRON_RULES_SKILL = "iron-rules/ROUTER.json"

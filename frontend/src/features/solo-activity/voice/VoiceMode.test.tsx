@@ -86,6 +86,7 @@ describe('語音模式的入口', () => {
     renderVoice({ ...base, available_actions: [] })
     expect(screen.queryByRole('button', { name: '語音模式' })).toBeNull()
     expect(micAllowed({ ...base, available_actions: ['confirm_viewpoint', 'revise_viewpoint'] })).toBe(true)
+    expect(micAllowed({ ...base, available_actions: ['submit_reflection', 'continue_reflection'] })).toBe(true)
     expect(micAllowed({ ...base, available_actions: ['next_scenario'] })).toBe(false)
   })
 })

@@ -1,50 +1,40 @@
-"""Voice mode: what the student's spoken answer to a read-out summary does.
+"""Voice mode: what the student's spoken answer to a summary read to them does.
 
-In voice mode the summary is read aloud and the student answers in speech; a classifier sorts the
-answer (``VoiceAnswer``) and ``decide`` turns it into one step for the state machine. Only an
-explicit agreement to a summary heard to the end confirms; everything else keeps the dialogue
-going. Pure: no I/O, no clock.
+Voice has no confirmation rules of its own: the answer only picks which of the two actions the
+backend offers at that point is pressed, 對 (``confirm_viewpoint`` / ``submit_reflection``) or
+不太對 (``revise_viewpoint`` / ``continue_reflection``), exactly as the student would on the card.
+Only an agreement to a summary whose meaning reached the student intact confirms; everything else
+keeps the discussion going, up to the limits the state machine already has. Pure: no I/O.
 """
 
 from __future__ import annotations
 
 from typing import Literal
 
-# What the classifier says the student meant.
-VoiceAnswer = Literal["agree", "disagree", "addition", "unclear"]
+# What the student meant (voice_judge: the model's verdict, the word list as fallback and check).
+Verdict = Literal["agree", "disagree", "addition", "unclear"]
 
-# confirm: as 對. revise: as 不太對, the answer goes on as the next message. withdraw: the summary
-# is taken back without counting as 不太對, the answer goes on as an ordinary message. ask_again:
-# the question (or, when it was not heard in full, the summary) is read once more. show_card:
-# voice cannot settle it, the student presses the card as when typing.
-Decision = Literal["confirm", "revise", "withdraw", "ask_again", "show_card"]
+# confirm: as 對. not_confirmed: as 不太對, the discussion goes on with the answer. ask_again: the
+# question is asked once more. read_again: the summary is read once more. withdraw: the summary
+# never reached the student intact; it is taken back without counting as 不太對.
+Decision = Literal["confirm", "not_confirmed", "ask_again", "read_again", "withdraw"]
 
-# Unclear answers asked again before the answer counts as not confirmed.
-UNCLEAR_ASKS = 1
+# Answers that could not be judged are asked once more; the second one is a failed confirmation.
+ASKS = 1
+# A reading that bent the summary is read once more; the second one is withdrawn.
+READS = 1
 
 
-def decide(
-    answer: VoiceAnswer,
-    *,
-    heard_in_full: bool,
-    unclear_asks: int,
-    can_still_talk: bool,
-) -> Decision:
-    """``heard_in_full``: the read-out was not interrupted and matched the summary word for word.
-    ``unclear_asks``: how many times the question has already been asked again for this summary.
-    ``can_still_talk``: the student has a message left in the scenario (only 對 is offered else).
+def decide(verdict: Verdict, *, faithful: bool, vetoed: bool, asks: int, reads: int) -> Decision:
+    """``faithful``: what the student heard kept the summary's meaning and was not cut off.
+    ``vetoed``: the word list heard a plain no where the model heard a yes.
+    ``asks``/``reads``: how many times the question/the summary has already been said again.
     """
-    if not can_still_talk:
-        # Only an agreement can move on; anything else is asked again, then handed to the card.
-        if heard_in_full and answer == "agree":
-            return "confirm"
-        return "ask_again" if unclear_asks < UNCLEAR_ASKS else "show_card"
-    if not heard_in_full:
-        return "withdraw"
-    if answer == "agree":
+    if not faithful:
+        return "read_again" if reads < READS else "withdraw"
+    if verdict == "agree" and not vetoed:
         return "confirm"
-    if answer == "disagree":
-        return "revise"
-    if answer == "unclear" and unclear_asks < UNCLEAR_ASKS:
-        return "ask_again"
-    return "withdraw"
+    if verdict in ("disagree", "addition"):
+        return "not_confirmed"
+    # Unclear, or a yes the student's own words contradict: judged twice, it is not a confirmation.
+    return "ask_again" if asks < ASKS else "not_confirmed"

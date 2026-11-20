@@ -134,3 +134,43 @@ def test_confirming_what_was_read_stores_the_summary_the_readout_was_built_from(
     stored = b.progress[0].confirmed_summary
     assert stored == a.current.candidate_summary
     assert vr.readout(stored, "zh-Hant") == read
+
+
+# ---- the final summary, and the student's script ---------------------------------------------
+
+FINAL = {
+    "trajectory": [
+        {"position": "不拉桿", "shift_reason": ""},
+        {"position": "要看他是不是自願的", "shift_reason": "想到他可能是自願的"},
+    ],
+    "final_position": "你最後選擇看當事人的意願。",
+    "reasoning_style": "你常從當事人的角度判斷",
+}
+
+
+def test_the_final_readout_says_how_the_position_moved_and_where_it_ended():
+    from app.modules.solo_activity.voice_readout import final_parts, final_readout
+
+    text = final_readout(FINAL, "zh-Hant")
+    assert text.startswith("我把整段討論整理一下。一開始你認為：不拉桿。")
+    assert "後來想到他可能是自願的，你認為：要看他是不是自願的。" in text
+    assert "你最後的立場是：你最後選擇看當事人的意願。" in text
+    assert "你常從當事人的角度判斷。" in text and text.endswith("這樣整理對嗎？")
+    assert final_parts(FINAL) == ["不拉桿", "要看他是不是自願的", "你最後選擇看當事人的意願。"]
+    assert vr.heard_as_read(text, text, final_parts(FINAL))
+
+
+def test_transcripts_are_put_in_taiwan_traditional_characters_for_zh_hant_only():
+    from app.modules.solo_activity.voice_readout import to_script
+
+    assert to_script("我觉得这样整理对吗", "zh-Hant") == "我覺得這樣整理對嗎"
+    assert to_script("我觉得", "zh-Hans") == "我觉得"
+    assert to_script("I think so", "en") == "I think so"
+
+
+def test_a_quote_is_found_whatever_the_script_spaces_or_punctuation():
+    from app.modules.solo_activity.voice_readout import says
+
+    assert says("對啊，就是 這樣！", "就是这样")
+    assert not says("嗯哼", "完全同意")
+    assert not says("對", "")

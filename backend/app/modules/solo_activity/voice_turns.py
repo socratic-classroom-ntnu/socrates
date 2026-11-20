@@ -8,9 +8,11 @@ through the typing path:
   policy.py's decision to ask for confirmation, are exactly those typing would get. What is
   stored on Socrates' side is what the student heard (the voice model's transcript), not the
   tutor's own reply text.
-- When the attempt reaches confirming, the next thing Socrates says is the readout built from the
-  candidate summary (voice_readout). The student's spoken answer is sorted (voice_answer) and
-  turned into one step (voice_confirmation.decide): 對, 不太對, withdrawn, asked again, or the card.
+- At a confirmation point the backend offers (a scenario's summary, or the final summary), the
+  next thing Socrates says is the readout built from that summary (voice_readout). The student's
+  spoken answer is judged (voice_judge) and presses one of the two actions offered there, 對 or
+  不太對 (voice_confirmation.decide); a summary reached at the message limit is only acknowledged,
+  as on the card, with nothing to answer.
 
 ``VoiceStep.say`` is what the voice model must say next, word for word; the relay hands it back
 as ``spoken`` with the transcript of what was actually heard.
@@ -21,7 +23,9 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
+
+from sqlalchemy import select
 
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
@@ -29,9 +33,15 @@ from app.modules.platform.storage import transaction
 from app.modules.solo_activity import attempt_machine as machine
 from app.modules.solo_activity import service
 from app.modules.solo_activity.contracts import ConfirmViewpointBody, SendMessageBody
-from app.modules.solo_activity.voice_answer import classify
+from app.modules.solo_activity.repositories import SoloMessage
 from app.modules.solo_activity.voice_confirmation import decide
-from app.modules.solo_activity.voice_readout import heard_as_read, readout, summary_parts
+from app.modules.solo_activity.voice_judge import Judgment
+from app.modules.solo_activity.voice_readout import (
+    final_parts,
+    final_readout,
+    readout,
+    summary_parts,
+)
 
 ASK_AGAIN = {
     "zh-Hant": "想確認一下，這樣整理對嗎？",
@@ -51,8 +61,19 @@ class VoiceStep:
     tutor: dict[str, Any] | None = None
     # What service.finish_action needs after a confirmation: a next scenario or the final.
     follow: dict[str, Any] | None = None
-    # Voice cannot settle the summary: the student presses the card, as when typing.
-    to_card: bool = False
+
+
+@dataclass(frozen=True)
+class Point:
+    """A summary the student is asked to confirm, as voice reads it."""
+
+    kind: Literal["scenario", "final"]
+    expected: str  # the readout
+    parts: list[str]  # the summary's own texts the readout must carry
+    summary: dict[str, Any]  # what the judging model reads
+    digest: str
+    # Reached at the message limit: only 對 is offered, so the summary is acknowledged, not asked.
+    capped: bool = False
 
 
 def locale_of(account: Account) -> str:
@@ -102,75 +123,138 @@ async def finish_turn(prepared: dict[str, Any], heard: Awaitable[str]) -> VoiceS
         if new is not None:
             service._store(row, new)
         view = service._attempt_view(db, row, service.now())
-        say = None
-        if new is not None and new.state == "confirming" and new.current.candidate_summary:
-            say = readout(new.current.candidate_summary, locale_of(account))
-        return VoiceStep(view=view, say=say)
+        found = point_of(db, account, prepared["attempt_id"], service.now())
+        return VoiceStep(view=view, say=found.expected if found is not None else None)
 
 
-def answer_readout(
+_SHOWN = ("current_position", "reason_summary", "relevant_conditions", "principle_note")
+
+
+def point_of(db: Any, account: Account, attempt_id: str, at: float) -> Point | None:
+    """The confirmation point the attempt is at now, or None when it is at none."""
+    row = service._locked_attempt(db, account, attempt_id)
+    a = service._state(row)
+    locale = locale_of(account)
+    if a.state == "confirming" and a.current.candidate_summary:
+        summary = a.current.candidate_summary
+        return Point(
+            kind="scenario",
+            expected=readout(summary, locale),
+            parts=summary_parts(summary),
+            summary={key: summary.get(key) for key in _SHOWN},
+            digest=a.current.summary_digest or "",
+            capped="revise_viewpoint" not in machine.actions_for(a, at),
+        )
+    if a.state == "reflecting" and a.final.summary:
+        final = service._student_final(a.final.summary)
+        final.pop("points", None)
+        for step in final["trajectory"]:
+            step.pop("sources", None)
+        return Point(
+            kind="final",
+            expected=final_readout(a.final.summary, locale),
+            parts=final_parts(a.final.summary),
+            summary=final,
+            digest=a.final.digest or "",
+        )
+    return None
+
+
+def _note(db: Any, row: Any, audit: dict[str, Any]) -> None:
+    """The judgment is kept on the student's answer: why it counted (or not) stays readable."""
+    last = db.scalar(
+        select(SoloMessage)
+        .where(SoloMessage.attempt_id == row.id, SoloMessage.role == "student")
+        .order_by(SoloMessage.seq.desc())
+        .limit(1)
+    )
+    if last is not None:
+        last.meta = {**(last.meta or {}), "voice_confirmation": audit}
+        db.flush()
+
+
+def acknowledge(
+    db: Any, account: Account, attempt_id: str, point: Point, heard: str, at: float
+) -> VoiceStep:
+    """A summary at the message limit: read, then acknowledged as the card does (stored capped)."""
+    row = service._locked_attempt(db, account, attempt_id)
+    service._add_message(db, row, "tutor", heard)
+    out = service.begin_action(
+        db,
+        account,
+        attempt_id,
+        "confirm_viewpoint",
+        ConfirmViewpointBody(summary_digest=point.digest),
+        at,
+    )
+    return VoiceStep(view=out.get("view"), follow=None if "view" in out else out)
+
+
+def answer(
     db: Any,
     account: Account,
     attempt_id: str,
     *,
+    point: Point,
     spoken: str,
     heard: str,
-    interrupted: bool,
     said: str,
-    asked: int,
+    judgment: Judgment,
+    asks: int,
+    reads: int,
     at: float,
 ) -> VoiceStep:
-    """The student's spoken answer to the summary Socrates just read (or asked about again).
+    """The student's spoken answer to what Socrates just said at ``point``.
 
-    ``spoken`` is the step's ``say``; ``heard`` the transcript of what the student heard of it;
-    ``asked`` how many times the question has been asked again for this summary.
+    ``spoken`` is what Socrates was asked to say (the readout, or the question asked again);
+    ``heard`` the transcript of what the student heard of it.
     """
-    row = service._locked_attempt(db, account, attempt_id)
-    a = service._state(row)
-    if a.state != "confirming" or not a.current.candidate_summary:
+    now = point_of(db, account, attempt_id, at)
+    if now is None or now.kind != point.kind or now.digest != point.digest:
         raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
     locale = locale_of(account)
-    summary = a.current.candidate_summary
-    digest = a.current.summary_digest or ""
-    expected = readout(summary, locale)
-    if spoken == expected:
-        heard_in_full = not interrupted and heard_as_read(expected, heard, summary_parts(summary))
-    elif spoken == ASK_AGAIN.get(locale, ASK_AGAIN["zh-Hant"]):
-        # Only asked again after the summary itself was heard in full.
-        heard_in_full = True
+    if spoken == ASK_AGAIN.get(locale, ASK_AGAIN["zh-Hant"]):
+        faithful = True  # only asked again after the summary itself reached the student
+    elif spoken == point.expected:
+        faithful = judgment.faithful
     else:
-        # Words that are not this summary's readout (an older summary, or anything else).
-        heard_in_full = False
-    can_talk = "revise_viewpoint" in machine.actions_for(a, at)
+        faithful = False  # words that are not this summary's readout
     step = decide(
-        classify(said, locale),
-        heard_in_full=heard_in_full,
-        unclear_asks=asked,
-        can_still_talk=can_talk,
+        judgment.verdict, faithful=faithful, vetoed=judgment.vetoed, asks=asks, reads=reads
     )
+    if point.kind == "final" and step == "withdraw":
+        step = "not_confirmed"  # the final summary cannot be taken back, only written again
+    audit = {**judgment.audit(), "faithful": faithful, "decision": step, "point": point.kind}
+    row = service._locked_attempt(db, account, attempt_id)
     # What the student heard is stored as said, as typing stores the tutor's reply.
     service._add_message(db, row, "tutor", heard)
+    if step in ("ask_again", "read_again"):
+        service._add_message(db, row, "student", said, meta={"voice_confirmation": audit})
+        again = (
+            point.expected if step == "read_again" else ASK_AGAIN.get(locale, ASK_AGAIN["zh-Hant"])
+        )
+        return VoiceStep(view=service._attempt_view(db, row, at), say=again)
     if step == "confirm":
-        service._add_message(db, row, "student", said)
+        service._add_message(db, row, "student", said, meta={"voice_confirmation": audit})
+        action = "confirm_viewpoint" if point.kind == "scenario" else "submit_reflection"
         out = service.begin_action(
-            db,
-            account,
-            attempt_id,
-            "confirm_viewpoint",
-            ConfirmViewpointBody(summary_digest=digest),
-            at,
+            db, account, attempt_id, action, ConfirmViewpointBody(summary_digest=point.digest), at
         )
         return VoiceStep(view=out.get("view"), follow=None if "view" in out else out)
-    if step == "ask_again":
-        service._add_message(db, row, "student", said)
-        again = ASK_AGAIN.get(locale, ASK_AGAIN["zh-Hant"]) if heard_in_full else expected
-        return VoiceStep(view=service._attempt_view(db, row, at), say=again)
-    if step == "show_card":
-        service._add_message(db, row, "student", said)
-        return VoiceStep(view=service._attempt_view(db, row, at), to_card=True)
-    if step == "revise":
+    if point.kind == "final":
+        # 不太對 on the final summary: the answer is the student's feedback; it is written again,
+        # or the attempt ends 未確認 the second time, as on the card.
+        out = service.begin_action(
+            db, account, attempt_id, "continue_reflection", SendMessageBody(text=said), at
+        )
+        _note(db, row, audit)
+        return VoiceStep(view=out.get("view"), follow=None if "view" in out else out)
+    if step == "not_confirmed":
         service.begin_action(db, account, attempt_id, "revise_viewpoint", None, at)
     else:
-        service._store(row, machine.withdraw_viewpoint(a, digest))
+        a = service._state(row)
+        service._store(row, machine.withdraw_viewpoint(a, point.digest))
     # The answer goes on as the student's next message (stored by send_message).
-    return VoiceStep(view=None, tutor=begin_turn(db, account, attempt_id, said, at))
+    prepared = begin_turn(db, account, attempt_id, said, at)
+    _note(db, row, audit)
+    return VoiceStep(view=None, tutor=prepared)

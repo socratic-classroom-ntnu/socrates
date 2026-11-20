@@ -1,0 +1,447 @@
+"""Public contracts of /api/v2/solo: the state machine's names, the activity entry, the attempt
+view, action bodies, and the teacher's progress and statistics views.
+
+A student answers each scenario in their own words and walks a sequence of scenarios whose length
+is not fixed when the attempt starts, so no view carries a scenario count ahead of time.
+
+The Literals list every state and action in the design spec's §4.5 table; states and actions
+not implemented yet are part of the type but never produced.
+"""
+
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.modules.platform.model_base import TrimmedModel
+
+SoloState = Literal[
+    "answering",
+    "awaiting_tutor",
+    "tutor_unavailable",
+    "in_dialogue",
+    "confirming",
+    "between_scenarios",
+    "reviewing",
+    "awaiting_reflection_prompt",
+    "reflecting",
+    "budget_exhausted",
+    "completed",
+]
+SoloAction = Literal[
+    "send_message",
+    "retry",
+    "confirm_viewpoint",
+    "revise_viewpoint",
+    "next_scenario",
+    "submit_review",
+    "retry_reflection_prompt",
+    "continue_reflection",
+    "submit_reflection",
+    "continue_without_tutor",
+]
+SoloNotice = Literal["tutor_unavailable", "owner_provider_missing"]
+# capped: the scenario ran out of messages before the view settled; its summary was only shown.
+ScenarioStatus = Literal["in_progress", "goal_met", "capped"]
+# The final summary the attempt ended with: confirmed by the student, or turned down twice (未確認).
+FinalStatus = Literal["confirmed", "unconfirmed"]
+PrincipleHint = Literal["後果主義", "義務論", "混合"]
+TutorMove = Literal["probe", "clarify", "challenge", "reflect", "summarize", "hypothetical"]
+# Which part of a turned-down summary the student says is wrong.
+ReviseHint = Literal["stance", "reason", "condition", "changed_mind"]
+
+
+class View(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class SoloScenarioProgressView(View):
+    index: int
+    status: Literal["in_dialogue", "confirmed", "capped"]
+
+
+# The review after the last scenario: completed once the attempt is (final summary or not).
+ReviewStatus = Literal["not_started", "in_progress", "completed"]
+
+
+class SoloAttemptBrief(View):
+    id: str
+    state: SoloState
+    scenario_index: int
+    progress: list[SoloScenarioProgressView]  # one per scenario of the sequence so far
+    review_status: ReviewStatus
+    current_turn: int  # the current scenario's turn_index
+
+
+class SoloActivityView(View):
+    activity_id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["scheduled", "open", "ended"]
+    ends_at: float
+    attempt: SoloAttemptBrief | None  # None until the student starts
+    # 學生「我的對話」的私人活動：沒有期限、返回「我的對話」、title 是題庫短標題
+    practice: bool
+
+
+class CitationSourceView(View):
+    """One exact quote from a student message, located at its first exact occurrence.
+
+    Offsets index the exact ``SoloMessageView.text`` returned by the API. They are not Unicode
+    code-point or grapheme-cluster offsets.
+    """
+
+    message_id: str = Field(
+        min_length=1,
+        description="ID of the student message whose exact text contains quote.",
+    )
+    quote: str = Field(
+        min_length=1,
+        max_length=500,
+        description="Exact, unnormalised substring of the referenced SoloMessageView.text.",
+    )
+    start: int = Field(
+        ge=0,
+        description=(
+            "Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence "
+            "in SoloMessageView.text."
+        ),
+    )
+    end: int = Field(
+        ge=1,
+        description=(
+            "Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; "
+            "text.slice(start, end) equals quote."
+        ),
+    )
+
+
+RadarDimensionSource = Literal["embedding", "llm"]
+
+
+class RadarDimensionView(View):
+    index: int = Field(ge=0, le=5)
+    name: str = Field(min_length=1, max_length=60)
+    low_pole: str = Field(min_length=1, max_length=300)
+    high_pole: str = Field(min_length=1, max_length=300)
+    source: RadarDimensionSource
+
+
+class RadarScoreView(View):
+    dimension_index: int = Field(ge=0, le=5)
+    score: float = Field(ge=0, le=4)
+    sources: list[CitationSourceView] = Field(max_length=3)
+
+
+class RadarStudentView(View):
+    # Opaque within this payload: enrollment id for solo, scoped pseudonym for group analytics.
+    student_id: str = Field(min_length=1)
+    display_name: str = Field(min_length=1, max_length=64)
+    scores: list[RadarScoreView] = Field(min_length=1, max_length=6)
+
+
+class RadarView(View):
+    dimensions: list[RadarDimensionView] = Field(min_length=1, max_length=6)
+    students: list[RadarStudentView] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def aligned(self) -> "RadarView":
+        indices = [dimension.index for dimension in self.dimensions]
+        if indices != list(range(len(self.dimensions))):
+            raise ValueError("雷達維度必須從 0 開始連續排列")
+        student_ids = [student.student_id for student in self.students]
+        if len(set(student_ids)) != len(student_ids):
+            raise ValueError("雷達學生 id 不可重複")
+        if any(
+            [score.dimension_index for score in student.scores] != indices
+            for student in self.students
+        ):
+            raise ValueError("每位學生必須依序包含每個雷達維度的分數")
+        return self
+
+
+class RadarDimensionUpdate(TrimmedModel):
+    name: str = Field(min_length=1, max_length=60)
+
+
+class PersonalSummaryView(View):
+    current_position: str
+    reason_summary: str
+    relevant_conditions: list[str]
+    unresolved_issue: str
+    # Why the reasons sit near principle_hint; empty when there is none (or stored before it).
+    principle_note: str = ""
+    # Empty until llm-runtime hands solo-activity validated, located citations.
+    sources: list[CitationSourceView] = Field(default_factory=list)
+
+
+class SoloScenarioChangeView(View):
+    """The one condition a written scenario changed, shown as before → after."""
+
+    condition: str
+    before: str
+    after: str
+
+
+class SoloScenarioView(View):
+    index: int
+    id: str
+    text: str  # the scenario as the teacher or the scenario writer wrote it, verbatim
+    # None for the teacher's own first scenario; what the written ones changed.
+    change: SoloScenarioChangeView | None
+    answer: str | None  # the student's first answer; None until given
+    status: ScenarioStatus
+    confirmed_summary: PersonalSummaryView | None
+
+
+class FinalSummaryPointView(View):
+    text: str
+    sources: list[CitationSourceView]
+
+
+class FinalTrajectoryStepView(View):
+    """The student's position in one scenario of the sequence, oldest first."""
+
+    position: str
+    # Why the student moved here from the previous step; empty for the first and when unchanged.
+    shift_reason: str
+    sources: list[CitationSourceView]
+
+
+class FinalSummaryView(View):
+    """The whole attempt's line of thought, written from the confirmed stages (O6)."""
+
+    points: list[FinalSummaryPointView]
+    trajectory: list[FinalTrajectoryStepView]
+    final_position: str
+    reasoning_style: str
+    open_question: str  # empty when there is none
+
+
+class SoloMessageView(View):
+    id: str
+    scenario_index: int  # the scenario this message belongs to
+    role: Literal["student", "tutor"]
+    text: str
+    created_at: float
+    move: TutorMove | None  # tutor messages only
+    revise_hint: ReviseHint | None  # student messages only
+    # A student's sentence on what is off in the final summary (不太對): it belongs to the review,
+    # not to the scenario whose index it carries.
+    final_feedback: bool
+
+
+class SoloAttemptView(View):
+    id: str
+    activity_id: str
+    activity_title: str
+    course_id: str
+    course_name: str
+    display_name: str
+    state: SoloState
+    scenario_index: int
+    # Only scenarios the student has reached (index <= scenario_index).
+    scenarios: list[SoloScenarioView]
+    messages: list[SoloMessageView]
+    candidate_summary: PersonalSummaryView | None
+    summary_digest: str | None
+    principle_hint: PrincipleHint | None
+    # After 不太對 until the next student message; rejected_summary is the summary turned down.
+    revising: bool
+    rejected_summary: PersonalSummaryView | None
+    notice: SoloNotice | None
+    # Shown while reflecting, kept once completed; None before it is written or when skipped.
+    final_summary: FinalSummaryView | None
+    final_digest: str | None  # reflecting only; submit_reflection sends it back
+    final_status: FinalStatus | None  # completed only; None when finished without a summary
+    # One 不太對 was already given: the next one ends the attempt as 未確認.
+    final_revised: bool
+    available_actions: list[SoloAction]
+
+
+class SendMessageBody(TrimmedModel):
+    # The first message of a scenario is the student's answer; later ones continue the dialogue.
+    text: str = Field(min_length=1, max_length=4000)
+    # Only while revising: which part of the turned-down summary was wrong.
+    revise_hint: ReviseHint | None = None
+
+
+class ConfirmViewpointBody(TrimmedModel):
+    summary_digest: str = Field(min_length=1, max_length=64)
+
+
+SoloActionBody = SendMessageBody | ConfirmViewpointBody
+
+# Which body each action takes; actions not listed take none.
+ACTION_BODIES: dict[str, type[TrimmedModel]] = {
+    "send_message": SendMessageBody,
+    "confirm_viewpoint": ConfirmViewpointBody,
+    # 不太對 on the final summary carries the student's sentence on what is off.
+    "continue_reflection": SendMessageBody,
+    "submit_reflection": ConfirmViewpointBody,
+}
+
+
+# ---- T5: the teacher's live progress (statuses, turn counts and times; never what was written)
+
+
+class SoloProgressSummaryView(View):
+    enrolled: int
+    started: int
+    done: int  # completed the attempt
+    attention: int
+
+
+class SoloProgressCellView(View):
+    status: Literal["answering", "in_dialogue", "confirming", "confirmed", "capped"]
+    turns: int | None  # in_dialogue only
+
+
+# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
+StudentKind = Literal["registered", "guest", "expired_guest"]
+
+
+class SoloStudentProgressView(View):
+    enrollment_id: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    # expired_guest only: its place among the course's expired guests, by joining order.
+    guest_number: int | None
+    overall: Literal["not_started", "in_progress", "done"]
+    cells: list[SoloProgressCellView]  # one per scenario of this student's sequence so far
+    review_status: ReviewStatus
+    # completed only: confirmed, turned down twice (unconfirmed), or None when finished without.
+    final_status: FinalStatus | None
+    # The later of the last message and the attempt's last update; None before starting.
+    last_activity_at: float | None
+    attention: bool  # in progress and idle for over ATTENTION_SECONDS
+
+
+class SoloActivityProgressView(View):
+    activity_id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["draft", "scheduled", "open", "ended"]
+    ends_at: float | None
+    generated_at: float
+    summary: SoloProgressSummaryView
+    students: list[SoloStudentProgressView]
+
+
+# ---- the course roster (the 學生 tab): who is in the course, and how far each has come -------
+
+
+class SoloRosterStudentView(View):
+    enrollment_id: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    # expired_guest only: its place among the course's expired guests, by joining order.
+    guest_number: int | None
+    email: str | None  # registered students only
+    joined_at: float
+    # The latest update or message of any of the student's attempts in the course; None before any.
+    last_activity_at: float | None
+    # Completed attempts among the activities counted in counted_activities.
+    completed_activities: int
+
+
+class SoloRosterSummaryView(View):
+    total: int
+    registered: int
+    guests: int
+    expired_guests: int
+
+
+class SoloCourseRosterView(View):
+    course_id: str
+    course_name: str
+    generated_at: float
+    # The course's activities that are open or ended now (drafts, scheduled and deleted ones not).
+    counted_activities: int
+    summary: SoloRosterSummaryView
+    # Newest last_activity_at first; students without any last, by joining order.
+    students: list[SoloRosterStudentView]
+
+
+# ---- T6: the teacher's statistics (the confirmed viewpoint's three fields; nothing else written)
+
+
+class SoloAnalysisSummaryView(View):
+    enrolled: int
+    started: int
+    done: int  # completed the attempt, the same definition as T5
+    in_progress: int  # started - done
+
+
+class SoloAnalysisStudentView(View):
+    enrollment_id: str
+    display_name: str
+    kind: StudentKind
+    guest_number: int | None  # as in SoloStudentProgressView
+    confirmed_scenarios: int  # scenarios whose summary the student confirmed
+    # From the latest confirmed summary; empty before the first confirmation.
+    current_position: str
+    reason_summary: str
+    relevant_conditions: list[str]
+    final_status: FinalStatus | None  # as in SoloStudentProgressView
+
+
+class SoloActivityAnalysisView(View):
+    activity_id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["draft", "scheduled", "open", "ended"]
+    ends_at: float | None
+    generated_at: float
+    revision_id: str | None  # the ActivityRevision these numbers belong to; None for a draft
+    summary: SoloAnalysisSummaryView
+    students: list[SoloAnalysisStudentView]  # every student who started, in enrollment order
+
+
+# ---- 學生「我的對話」：從主流程題庫自己練習（spec §10 M12、M15） ----
+
+PracticeCategory = Literal["life", "honesty", "self", "tech"]
+
+
+class PracticeTopic(View):
+    id: str
+    title: str
+    body: str
+    category: PracticeCategory
+    recommended: bool
+
+
+class PracticeDialogue(View):
+    activity_id: str
+    attempt_id: str
+    topic_id: str
+    title: str  # the topic's short title; for a topic since removed, a cut of `body`
+    body: str  # what the activity stored: the scenario the student actually discussed
+    category: PracticeCategory | None  # None once the topic is removed from the bank
+    status: Literal["in_progress", "completed"]  # completed only when the attempt is completed
+    created_at: float
+    updated_at: float  # the attempt's last update; the list is newest first
+
+
+class PracticeQuota(View):
+    limit: int
+    used_today: int
+    remaining: int
+
+
+class PracticeList(View):
+    dialogues: list[PracticeDialogue]
+    quota: PracticeQuota
+
+
+class PracticeStart(TrimmedModel):
+    model_config = ConfigDict(extra="forbid")
+
+    bank_item_id: str = Field(min_length=1, max_length=40)
+
+
+class PracticeStarted(View):
+    activity_id: str
+    attempt_id: str

@@ -5,9 +5,12 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.db import Base
-from app import models  # noqa: F401  確保所有 model 被註冊
-from app.config import settings
+from app.modules.platform.db import Base
+from app.modules.app_shell.models import register_models
+from app.modules.platform.config import settings
+from app.modules.platform import storage as storage
+
+register_models()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +23,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-target_metadata = Base.metadata
+target_metadata = [Base.metadata, storage.Base.metadata]
 
 # Set the database URL from settings
 config.set_main_option("sqlalchemy.url", settings.database_url)

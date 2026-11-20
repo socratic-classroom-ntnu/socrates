@@ -1,3 +1,9 @@
+<!-- SOCRATES_STAGE_OPERATOR -->
+## 伺服器組員：從這裡架設 Stage
+
+部署分支為 `stage`。完整步驟請讀 [Stage 部署指南](deploy/stage/README.md)。
+教室（多人課堂）架構見 [CLASSROOM-ARCHITECTURE](docs/CLASSROOM-ARCHITECTURE.md)。
+
 # 蘇格拉底式對話機器人
 
 一個會反問你的哲學課堂。
@@ -44,13 +50,27 @@
 
 ## 目前的狀態
 
-**第一輪的垂直切片，能從首頁走到總結。** 但要知道現在還不是完整的產品：
+網站有兩種課：教室（多人課堂），以及課程活動裡的單人活動。
 
-- **三階情境內容與固定回覆腳本已備妥**，路口進階與達上限的後端流程及前端按鈕也已接上；
-  完整的第一輪驗收仍須補齊歷史紀錄等流程
-- **教授的回覆是固定腳本**。你打什麼內容，回應都一樣——這是為了讓驗收可重現，
-  接真實模型是後續的工作
-- 免註冊，身分存在瀏覽器裡。換裝置或清掉網站資料，紀錄就找不回來
+**教室：多人課堂（網站根目錄 `/`）**
+
+- 帳號註冊、Email 驗證、忘記密碼；教師建立劇本與教室，學生以課程碼加入
+- 課堂流程：倒數、作答、選項分布、代表學生與導師的聚焦討論、題目／班級／個人總結；
+  可選 `dynamic` 模式由模型產生後續題目，也可加入 AI 學生
+- 導師由教室擁有者在「LLM 設定」建立的 provider profile 驅動；沒有可用的 LLM 或額度用完時，
+  改用固定內容完成
+- 教室角色是選用設定；模型清單暫時無法讀取時，提示只留在角色設定內，不擋後端已授權的開課，
+  也可原樣重新保存既有角色。容量、名單變更與後端操作權限仍須通過。
+- `stickman` 固定使用內建 SVG 教室角色，不讀取模型清單或瀏覽器記住的其他角色；
+  其他角色無法載入時也顯示內建角色，對話可繼續。
+
+**課程與單人活動**
+
+- 老師開課、建立活動與題目；學生輸入課程代碼選課，在活動裡逐題跟 AI 導師一對一對話：
+  選立場、回答追問、確認導師整理的想法，也可以說「不太對」或改變立場
+- 導師由開課老師的 provider profile 驅動；老師可以看即時進度與統計
+- 舊的單人對話（免註冊的電車難題三階情境）已經移除；它用過的資料表還留在資料庫裡，
+  要刪除時先跟資料庫擁有者協調
 
 ## 跑起來
 
@@ -58,14 +78,20 @@
 docker compose up -d
 ```
 
-開 <http://localhost:5173>。三個服務：前端 5173、後端 8000、PostgreSQL 5432。
+開 <http://localhost:5173> 是登入頁；本機不會真的寄信，註冊後驗證頁會直接顯示驗證連結。
+三個服務：前端 5173、後端 8000、PostgreSQL 5432。
 
 ```bash
 docker compose exec backend python -m pytest tests -q   # 後端測試
-cd frontend && npm test -- --run                        # 前端測試
+cd frontend && npm test -- --runInBand                  # 前端測試
 ```
 
 後端測試會自己用獨立的 `socrates_test` 資料庫，不會動到你的開發資料。
+
+**第一次 clone 下來，在 repo 根目錄跑一次 `npm install`**，啟用 git hook（husky）：
+commit 前自動跑有變更部分的 lint/typecheck，push 前自動跑滿整組（比照 CI）。
+push 前 backend 容器要是開著的（`docker compose up -d`），`pre-push` 會用
+`docker compose exec` 跑後端檢查，容器沒開會直接擋下並提示。
 
 ## 接下來讀什麼
 
@@ -74,13 +100,13 @@ cd frontend && npm test -- --run                        # 前端測試
 | 要動手改程式 | [`AGENTS.md`](AGENTS.md)——不可妥協條款與範本索引，動手前必讀 |
 | 新加入團隊 | [`docs/onboarding.md`](docs/onboarding.md)——六站閱讀路徑，順序是刻意排的 |
 | 想理解產品 | [`docs/product/product-overview.md`](docs/product/product-overview.md) |
-| 要驗收三階腳本 | [`docs/testing/trolley-round1-acceptance.md`](docs/testing/trolley-round1-acceptance.md) |
+| 想理解教室（多人課堂） | [`docs/CLASSROOM-ARCHITECTURE.md`](docs/CLASSROOM-ARCHITECTURE.md) |
 | 想理解實作 | [`docs/superpowers/specs/2026-09-19-socratic-tutor-design.md`](docs/superpowers/specs/2026-09-19-socratic-tutor-design.md) |
 
 
 ## 技術
 
-React + Vite · FastAPI · PostgreSQL · Docker Compose
+React + TypeScript + Vite · FastAPI · PostgreSQL · Docker Compose
 
 對話的推進由後端的狀態機決定，不交給語言模型——「現在第幾階」是事實不是判斷，
 而且換一家模型不該改變闖關的節奏。模型只負責產生教授的話，以及回報對學生的觀察。

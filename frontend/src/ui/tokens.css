@@ -1,0 +1,49 @@
+/*
+ * 課程頁的設計 token，只有亮色一套（D8）。依用途命名，不依色相（D7）；Figma 定出 variables 之後再對名稱。
+ * 數值取自 ui.css 共用調色盤與 app-shell.css 的 --shell-*，一個色碼只對一個 token，換成 token 不改外觀。
+ * 只放顏色：尺寸、間距、圓角等 Figma 定出尺寸 token 再加（D16）。斷點 767px 不能寫成變數，寫在各檔的 media query。
+ * main.tsx 第一個載入（styleOrder.test.ts 的 tokens load first）。
+ */
+:root {
+  --ui-color-bg: #F3F3F1;
+  --ui-color-panel: #FFFFFF;
+  --ui-color-panel-hover: #F7F7F5;
+  --ui-color-line: #E3E3DF;
+  --ui-color-border: #CFCFC9;
+
+  --ui-color-primary: #2E5045;
+  --ui-color-primary-hover: #24413A;
+  --ui-color-primary-soft: #E7EEEA;
+  --ui-color-dark: #23332C;
+  /* 深色底（掃描頁的相機畫面）上的字與線 */
+  --ui-color-on-dark: #FFFFFF;
+  --ui-color-on-dark-soft: rgba(255, 255, 255, 0.86);
+  --ui-color-on-dark-line: rgba(255, 255, 255, 0.6);
+  --ui-color-scrim: rgba(0, 0, 0, 0.38);
+  /* 深色底上的半透明欄（掃描頁的「改用輸入代碼」）：底、框線、分隔線、字 */
+  --ui-color-on-dark-field: rgba(23, 37, 31, 0.87);
+  --ui-color-on-dark-field-line: rgba(255, 255, 255, 0.44);
+  --ui-color-on-dark-divider: rgba(255, 255, 255, 0.25);
+  --ui-color-on-dark-muted: rgba(255, 255, 255, 0.7);
+  /* 深色底上的紅色線條（S5 的對準框）：--ui-color-danger 壓在深色上不到 3:1，看不清楚 */
+  --ui-color-danger-on-dark: #E5534B;
+
+  --ui-color-ink: #1F2421;
+  --ui-color-ink-soft: #3F4642;
+  --ui-color-muted: #5F6661;
+
+  --ui-color-danger: #B03A2E;
+  --ui-color-danger-soft: #FBE7E3;
+  --ui-color-error-ink: #8A2A1F;
+
+  --ui-color-success: #2F8F5B;
+  --ui-color-info: #2D4B8E;
+  --ui-color-info-soft: #E8EDF7;
+  /* 需要注意（Figma 變數 warning-soft／warning-ink）：訪客標籤（畫布 S2gm） */
+  --ui-color-warning-soft: #FFF7E0;
+  --ui-color-warning-ink: #76540E;
+  --ui-color-neutral-soft: #EFEFEA;
+  --ui-color-ended-ink: #A3311A;
+  --ui-color-warn-soft: #FFF3D4;
+  --ui-color-warn-ink: #6E4B0B;
+}

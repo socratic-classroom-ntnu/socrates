@@ -1,0 +1,139 @@
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useT } from '../../../i18n/useT'
+import { Button, FormError, IconButton } from '../../../ui'
+import { JoinCodeErrorText, useJoinCode } from '../home/useJoinCode'
+import { joinPathFor, parseScannedQr } from './parseScannedQr'
+import type { ScanNotice, ScanNoticeState } from './scanNotice'
+import { FOUND_DELAY_MS } from './scanTiming'
+import { useCamera } from './useCamera'
+import { useQrScanner } from './useQrScanner'
+import styles from './ScanPage.module.css'
+
+type Phase = 'opening' | 'scanning' | 'found'
+
+/**
+ * 全螢幕掃描頁（S2–S5）。一打開就是 S2 並要相機；有畫面之後進入掃描。
+ * 離開一律用 replace：學生之後按上一頁不會回到這裡、不會再要一次相機。
+ */
+export function ScanPage() {
+  const { t } = useT('home')
+  const { t: tc } = useT('common')
+  const navigate = useNavigate()
+  const video = useRef<HTMLVideoElement>(null)
+  const frame = useRef<HTMLDivElement>(null)
+  const [phase, setPhase] = useState<Phase>('opening')
+  const found = useRef(false)
+  const [unknown, setUnknown] = useState(false)
+  // 改用輸入代碼：在原位展開輸入欄；輸入欄有焦點、或代碼正在查的時候暫停辨識，避免被掃到的 QR 帶走
+  const [typing, setTyping] = useState(false)
+  const [typingFocused, setTypingFocused] = useState(false)
+  const [code, setCode] = useState('')
+  const codeField = useRef<HTMLInputElement>(null)
+  const lookup = useJoinCode({ replace: true })
+  useEffect(() => { if (typing) codeField.current?.focus() }, [typing])
+  const foundTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  useEffect(() => () => clearTimeout(foundTimer.current), [])
+
+  // 回首頁：S6／S7 由首頁的掃描按鈕顯示
+  function leave(notice?: ScanNotice) {
+    clearTimeout(foundTimer.current)
+    const state: ScanNoticeState | undefined = notice ? { scanNotice: notice } : undefined
+    navigate('/', { replace: true, state })
+  }
+
+  useCamera(video, () => setPhase('scanning'), leave)
+  // 掃到本站的 QR：停止辨識、顯示 S4，半秒後進加入畫面。同一個 QR 一直對著鏡頭也只導頁一次；S4 期間按關閉就不導頁。
+  // 不認得的 QR：S5，相機繼續開著、繼續掃，提示留到掃到本站的 QR 為止
+  function onText(text: string) {
+    // 手打的代碼正在查：讓查詢的結果決定去哪，不然兩邊會各導一次頁
+    if (found.current || lookup.busy) return
+    const qr = parseScannedQr(text, window.location.href)
+    if (qr.kind === 'unknown') {
+      setUnknown(true)
+      return
+    }
+    found.current = true
+    setUnknown(false)
+    setPhase('found')
+    foundTimer.current = setTimeout(() => navigate(joinPathFor(qr), { replace: true }), FOUND_DELAY_MS)
+  }
+
+  function submitCode(event: FormEvent) {
+    event.preventDefault()
+    void lookup.lookUp(code)
+  }
+
+  // 點「加入」送出時輸入欄會失去焦點，所以查詢進行中也要暫停辨識
+  useQrScanner(video, frame, phase === 'scanning' && !typingFocused && !lookup.busy, onText, () => leave('unavailable'))
+  const aiming = phase === 'scanning' || phase === 'found'
+  const frameState = phase === 'found' ? 'found' : unknown ? 'unknown' : 'aiming'
+
+  return <main className={styles.page} data-phase={phase}>
+    <video ref={video} className={styles.video} data-phase={phase === 'opening' ? 'opening' : 'live'} autoPlay playsInline muted aria-hidden="true" />
+    <div className={styles.top}>
+      <IconButton label={tc('close')} className={styles.close} onClick={() => leave()}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </IconButton>
+    </div>
+    <div className={styles.heading} aria-live="polite">
+      {aiming && <h1 className={styles.title}>{t(phase === 'found' ? 'scan.page.foundTitle' : 'scan.page.aimTitle')}</h1>}
+    </div>
+    <div className={styles.middle}>
+      {aiming && <div className={styles.frameArea}>
+        <div ref={frame} className={styles.frame} data-testid="scan-frame" data-state={frameState} aria-hidden="true">
+          <span className={styles.corner} /><span className={styles.corner} /><span className={styles.corner} /><span className={styles.corner} />
+          {phase === 'found' && <span className={styles.check}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+          </span>}
+        </div>
+        {frameState === 'unknown' && <FormError role="alert" className={styles.unknown}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5v.01" /></svg>
+          {t('scan.page.unknown')}
+        </FormError>}
+      </div>}
+      {phase === 'opening' && <div className={styles.opening} role="status">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10" /></svg>
+        <p className={styles.openingTitle}>{t('scan.page.openingTitle')}</p>
+        <p className={styles.openingBody}>{t('scan.page.openingBody')}</p>
+      </div>}
+    </div>
+    <div className={styles.bottom}>
+      <p className={styles.hint}>{t('scan.page.hint')}</p>
+      {lookup.failure && <FormError id="scan-code-error" role="alert" className={styles.codeError}>
+        <JoinCodeErrorText failure={lookup.failure} />
+      </FormError>}
+      {typing
+        ? <form className={styles.codeForm} onSubmit={submitCode} noValidate>
+          {/* S4 那半秒內輸入欄照樣顯示，但不能操作 */}
+          <fieldset className={styles.codeRow} disabled={phase === 'found'}>
+            <input
+              ref={codeField}
+              className={styles.codeInput}
+              value={code}
+              aria-label={t('join.label')}
+              placeholder={t('join.phonePlaceholder')}
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={32}
+              aria-invalid={lookup.notFound ? true : undefined}
+              aria-describedby={lookup.failure ? 'scan-code-error' : undefined}
+              onFocus={() => setTypingFocused(true)}
+              onBlur={() => setTypingFocused(false)}
+              onChange={event => { setCode(event.target.value); lookup.clearFailure() }}
+            />
+            <Button type="submit" className={styles.codeSubmit} disabled={lookup.busy}>{t('join.phoneSubmit')}</Button>
+          </fieldset>
+        </form>
+        : <Button className={styles.useCode} disabled={phase === 'found'} onClick={() => setTyping(true)}>
+          {/* Figma S3「輸入代碼欄」：半透明深色欄，左邊鉛筆、右邊隔一條線的箭頭方塊 */}
+          <svg className={styles.useCodeEdit} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" /></svg>
+          <span className={styles.useCodeText}>{t('scan.page.useCode')}</span>
+          <span className={styles.useCodeGo} aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </span>
+        </Button>}
+    </div>
+  </main>
+}

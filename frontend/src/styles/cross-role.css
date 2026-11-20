@@ -1,0 +1,43 @@
+/* 跨角色說明頁（畫布 X5s／X5t／X5sm／X5tm／X5q）：電腦在外框裡白卡撐滿、左插圖右文字；手機不要白卡，靠左、垂直置中 */
+.cross-role { box-sizing: border-box; min-height: 100dvh; padding: 32px 40px 48px; display: flex; flex-direction: column; }
+.cross-role__card {
+  flex-grow: 1; display: flex; align-items: center; justify-content: center; gap: 56px; flex-wrap: wrap;
+  padding: 48px; border-radius: 16px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line);
+}
+.cross-role__illustration { flex-shrink: 0; max-width: 100%; height: auto; }
+.cross-role__halo { fill: var(--ui-color-primary-soft); }
+.cross-role__door { fill: var(--ui-color-panel); }
+.cross-role__door--open { stroke: var(--ui-color-primary); }
+.cross-role__door--locked { stroke: var(--ui-color-border); }
+.cross-role__plate--open { fill: var(--ui-color-primary-soft); }
+.cross-role__plate--locked { fill: var(--ui-color-info-soft); }
+.cross-role__knob { fill: var(--ui-color-primary); }
+.cross-role__shackle { stroke: var(--ui-color-info); }
+.cross-role__lock { fill: var(--ui-color-info); }
+.cross-role__floor { fill: var(--ui-color-primary-soft); }
+.cross-role__text { flex: 0 1 440px; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.cross-role__text h1 { margin: 0; font-size: 28px; font-weight: 700; color: var(--ui-color-ink); }
+.cross-role__scanned { margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--ui-color-muted); }
+.cross-role__scanned b { font-size: 18px; color: var(--ui-color-ink); }
+.cross-role__body { margin: 0; font-size: 16px; line-height: 1.8; color: var(--ui-color-ink-soft); }
+.cross-role__body span { display: block; }
+.cross-role__actions { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 767px) {
+  /* 頂部列 60；學生另有底部導覽 64 */
+  .cross-role { min-height: calc(100dvh - 60px); padding: 24px 20px; justify-content: center; }
+  .app-shell--bottom-nav .cross-role { min-height: calc(100dvh - 124px - env(safe-area-inset-bottom)); }
+  .cross-role__card { flex-grow: 0; flex-direction: column; align-items: stretch; gap: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+  .cross-role__illustration { width: 180px; }
+  .cross-role__text { flex-basis: auto; align-items: stretch; gap: 14px; }
+  .cross-role__text h1 { font-size: 24px; }
+  .cross-role__scanned {
+    align-self: flex-start; padding: 10px 14px; border-radius: 10px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line);
+    font-size: 12px;
+  }
+  .cross-role__scanned b { font-size: 16px; }
+  .cross-role__body { line-height: 1.75; }
+  .cross-role__actions { margin-top: 10px; flex-direction: column; gap: 10px; }
+  .cross-role__actions > * { width: 100%; }
+  .cross-role__actions > .cross-role__home { min-height: 52px; border-radius: 10px; font-size: 17px; }
+}

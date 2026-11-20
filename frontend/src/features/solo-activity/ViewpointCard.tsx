@@ -31,7 +31,10 @@ export function ViewpointCard({ view, pending, onConfirm, onRevise }: Props) {
     </article>
     <section className="solo-viewpoint" aria-labelledby="solo-viewpoint-title">
       <dl>
-        <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary}</dd></div>
+        <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary.trim()
+          ? summary.reason_summary
+          // Some models leave it empty until the student has said something to summarise.
+          : <span className="solo-viewpoint__blank">{t('viewpoint.blank')}</span>}</dd></div>
         {summary.relevant_conditions.length > 0 && <div>
           <dt>{t('viewpoint.conditions')}</dt>
           <dd><ul>{summary.relevant_conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></dd>

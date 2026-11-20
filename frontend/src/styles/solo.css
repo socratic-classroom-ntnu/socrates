@@ -180,6 +180,7 @@
 .solo-viewpoint__ask { margin: 0 14px 14px; }
 .solo-viewpoint:not(.solo-final) dl { margin: 0; }
 .solo-viewpoint:not(.solo-final) dl > div:first-child { padding-top: 0; border-top: 0; }
+.solo-viewpoint__blank { color: var(--ui-color-muted); }
 .solo-viewpoint dt { color: #6e5034; font-weight: 700; }
 .solo-viewpoint dd { margin: 0; line-height: 1.6; }
 .solo-viewpoint ul { margin: 0; padding-left: 20px; }

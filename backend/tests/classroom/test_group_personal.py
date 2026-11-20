@@ -27,7 +27,7 @@ from app.modules.app_shell.llm_workers import deterministic_result
 from tests.classroom.test_groups import classroom, start  # noqa: F401
 from app.modules.classroom_core.repositories import Membership, Room, persist_machine
 from app.modules.group_dialogue.contracts import GroupCommand
-from app.modules.llm_runtime.contracts import GroupTutorTurn, SoloFlags
+from app.modules.llm_runtime.contracts import GroupTutorTurn, PersonalTutorTurn, SoloFlags
 
 Q = {
     "id": "q1",
@@ -290,6 +290,20 @@ def test_revise_reprobes_and_old_summary_cannot_be_confirmed():
         g.command("personal_confirm", {"summary_digest": old_digest}, "m1", False)
     confirm(g, "m1")
     assert entry(g, "m1")["baseline"]["reason_summary"] == "公平"
+
+
+def test_a_summary_left_empty_before_the_student_gives_a_reason_is_a_valid_turn():
+    """Claude Haiku leaves the candidate summary empty until there is something to summarise."""
+    empty = {**SUMMARY, "current_position": "", "reason_summary": ""}
+    unsure = {**NOT_MET, "has_position": False, "has_reason": False}
+    turn = tutor(unsure, summary=empty)
+    PersonalTutorTurn.model_validate({k: v for k, v in turn.items() if k != "flags"})
+    GroupTutorTurn.model_validate(turn)
+    g = room()
+    answer(g, "m1")
+    finish(g, "m1", turn)
+    assert entry(g, "m1")["status"] == "probing"
+    assert "personal_confirm" not in student_actions(g.s, "m1")
 
 
 def test_empty_reply_is_refused():

@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["models", "data", "runs"]
+
+[tool.ruff.format]
+# The attachment's students, kept exactly as handed over.
+exclude = ["students.py"]

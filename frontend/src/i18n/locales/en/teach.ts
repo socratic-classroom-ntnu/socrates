@@ -256,7 +256,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: 'Current viewpoint summary', pending: 'Waiting for the student', caption: 'Only summarises the current view in scenario {{number}}; the student has not confirmed it.',
-      position: 'Stance', reason: 'Reason', conditions: 'Conditions', unresolved: 'Unresolved', principle: 'Principle',
+      position: 'Stance', reason: 'Reason', conditions: 'Conditions', unresolved: 'Unresolved', principle: 'Principle', conditionsJoin: '; ',
     },
     track: {
       noStance: 'No stance yet',
@@ -276,6 +276,7 @@ const teach: Shape<typeof zhHant> = {
       title: 'Review and reflection', finalTitle: 'Final summary', confirmed: 'Confirmed', pending: 'Waiting for the student',
       finalPosition: 'Final stance', trajectory: 'Stance by scenario', style: 'How they judge', points: 'Main points', open: 'Still thinking about',
       shift: ' ({{reason}})',
+      step: '{{label}}: {{position}}',
       unconfirmedTitle: 'Confirmed summaries by scenario', crossTitle: 'The final summary across scenarios',
       crossIntro: 'In the final step the student chose "Not quite" twice in a row.',
       attempt: 'Round {{number}} · the student chose "Not quite": "{{text}}"',

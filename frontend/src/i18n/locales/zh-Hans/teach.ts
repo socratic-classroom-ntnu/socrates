@@ -232,7 +232,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: '目前的观点摘要', pending: '待学生确认', caption: '仅整理情境 {{number}} 的目前观点，尚未经学生确认。',
-      position: '立场', reason: '理由', conditions: '条件', unresolved: '未厘清', principle: '原则',
+      position: '立场', reason: '理由', conditions: '条件', unresolved: '未厘清', principle: '原则', conditionsJoin: '；',
     },
     track: {
       noStance: '还没整理出立场',
@@ -252,6 +252,7 @@ const teach: Shape<typeof zhHant> = {
       title: '观点回顾与反思', finalTitle: '最终整理', confirmed: '已确认', pending: '待学生确认',
       finalPosition: '最终立场', trajectory: '各情境的立场', style: '判断依据', points: '整理的重点', open: '仍想继续思考',
       shift: '（{{reason}}）',
+      step: '{{label}}：{{position}}',
       unconfirmedTitle: '各情境已确认摘要', crossTitle: '最后的跨情境整理',
       crossIntro: '学生在最后的整理阶段，连续两次选择“不太对”。',
       attempt: '第 {{number}} 次确认 · 学生选择“不太对”：“{{text}}”',

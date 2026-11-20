@@ -243,7 +243,7 @@ export default {
     },
     summary: {
       title: '目前的觀點摘要', pending: '待學生確認', caption: '僅整理情境 {{number}} 的目前觀點，尚未經學生確認。',
-      position: '立場', reason: '理由', conditions: '條件', unresolved: '未釐清', principle: '原則',
+      position: '立場', reason: '理由', conditions: '條件', unresolved: '未釐清', principle: '原則', conditionsJoin: '；',
     },
     track: {
       noStance: '還沒整理出立場',
@@ -263,6 +263,7 @@ export default {
       title: '觀點回顧與反思', finalTitle: '最終整理', confirmed: '已確認', pending: '待學生確認',
       finalPosition: '最終立場', trajectory: '各情境的立場', style: '判斷依據', points: '整理的重點', open: '仍想繼續思考',
       shift: '（{{reason}}）',
+      step: '{{label}}：{{position}}',
       unconfirmedTitle: '各情境已確認摘要', crossTitle: '最後的跨情境整理',
       crossIntro: '學生在最後的整理階段，連續兩次選擇「不太對」。',
       attempt: '第 {{number}} 次確認 · 學生選擇「不太對」：「{{text}}」',

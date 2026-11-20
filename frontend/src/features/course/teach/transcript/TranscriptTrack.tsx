@@ -18,7 +18,7 @@ export function TranscriptTrack({ attempt, name, onJump }: { attempt: Attempt; n
       {rows.map(row => {
         const label = stageLabel(t as T, { kind: 'cell', status: row.status, turns: row.turns })
         return <li key={row.index} className={`tt-row${row.current ? ' tt-row--current' : ''}`} aria-current={row.current ? 'step' : undefined}>
-          <button type="button" className="tt-row__button" onClick={() => onJump(row.index)} aria-label={t('transcript.track.jump', { number: row.index + 1 })}>
+          <button type="button" className="tt-row__button" onClick={() => onJump(row.index)}>
             <span className="tt-row__head">
               <strong>{t('transcript.scenarioLabel', { number: row.index + 1 })}</strong>
               <span className={label.className}>{label.label}</span>
@@ -34,6 +34,7 @@ export function TranscriptTrack({ attempt, name, onJump }: { attempt: Attempt; n
             </>}
             {(row.status === 'in_dialogue' || row.status === 'answering') && <span className="tt-row__note">{t('transcript.track.noStance')}</span>}
             {row.rejections > 0 && <span className="tt-row__warn">{t('transcript.track.rejected', { count: row.rejections })}</span>}
+            <span className="sr-only">{t('transcript.track.jump', { number: row.index + 1 })}</span>
           </button>
         </li>
       })}

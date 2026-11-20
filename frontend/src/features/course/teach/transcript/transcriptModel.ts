@@ -32,7 +32,7 @@ export type ChatItem =
 
 /** A scenario has no name of its own in the data: its first sentence stands in, cut short. */
 export function scenarioName(text: string): string {
-  const first = text.split(/[。！？!?\n]/)[0]?.trim() ?? ''
+  const first = text.split(/[。！？!?\n]|\.(?:\s|$)/)[0]?.trim() ?? ''
   const chars = Array.from(first)
   return chars.length > 16 ? `${chars.slice(0, 16).join('')}…` : first
 }

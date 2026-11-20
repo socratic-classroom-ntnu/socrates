@@ -243,7 +243,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: 'Resumen actual del punto de vista', pending: 'Pendiente del estudiante', caption: 'Solo resume el punto de vista actual del escenario {{number}}; el estudiante aún no lo ha confirmado.',
-      position: 'Postura', reason: 'Motivo', conditions: 'Condiciones', unresolved: 'Sin resolver', principle: 'Principio',
+      position: 'Postura', reason: 'Motivo', conditions: 'Condiciones', unresolved: 'Sin resolver', principle: 'Principio', conditionsJoin: '; ',
     },
     track: {
       noStance: 'Aún sin postura',
@@ -263,6 +263,7 @@ const teach: Shape<typeof zhHant> = {
       title: 'Repaso y reflexión', finalTitle: 'Resumen final', confirmed: 'Confirmado', pending: 'Pendiente del estudiante',
       finalPosition: 'Postura final', trajectory: 'Postura por escenario', style: 'Cómo juzga', points: 'Puntos principales', open: 'Sigue pensando en',
       shift: ' ({{reason}})',
+      step: '{{label}}: {{position}}',
       unconfirmedTitle: 'Resúmenes confirmados por escenario', crossTitle: 'El resumen final entre escenarios',
       crossIntro: 'En el último paso el estudiante eligió «No del todo» dos veces seguidas.',
       attempt: 'Ronda {{number}} · el estudiante eligió «No del todo»: «{{text}}»',

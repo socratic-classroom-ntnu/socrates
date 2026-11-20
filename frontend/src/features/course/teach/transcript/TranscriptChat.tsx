@@ -25,7 +25,8 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
   const [unseen, setUnseen] = useState(0)
   const items = buildChat(attempt)
   const ids = messageIds(items)
-  const idKey = ids.join(':')
+  // A card or a system line can arrive without a message, and the reader at the bottom should follow that too.
+  const growthKey = items.map(item => item.key).join(':')
 
   useImperativeHandle(ref, () => ({
     jumpToScenario(index) {
@@ -49,7 +50,7 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
     } else {
       setUnseen(ids.filter(id => !seen.current.has(id)).length)
     }
-  }, [idKey])
+  }, [growthKey])
 
   function onScroll() {
     const container = scroller.current

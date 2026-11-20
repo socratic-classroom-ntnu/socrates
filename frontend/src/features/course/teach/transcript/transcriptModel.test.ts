@@ -101,6 +101,9 @@ describe('scenarioName', () => {
     expect(scenarioName('一輛失控的電車即將撞上五名工人。你會拉嗎？')).toBe('一輛失控的電車即將撞上五名工人')
     expect(scenarioName('這是一個非常非常長而且沒有標點符號的情境描述會被截斷')).toBe('這是一個非常非常長而且沒有標點符…')
     expect(scenarioName('')).toBe('')
+    expect(scenarioName('A trolley is heading toward five workers. Will you pull the lever?')).toBe('A trolley is hea…')
+    expect(scenarioName('Pull it. Or not.')).toBe('Pull it')
+    expect(scenarioName('It costs 3.5 dollars to ride.')).toBe('It costs 3.5 dol…')
   })
 })
 

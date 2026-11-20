@@ -3,7 +3,7 @@ import { ApiError, api } from '../../../../contract/classroomClient'
 import { applyLocale } from '../../../../i18n'
 import { mockApi, renderAt, signedInTeacher } from '../../../../testing/pageHarness'
 import { TeacherTranscriptPage } from './TeacherTranscriptPage'
-import { attempt, completed, confirming, longContent, message, scenario, T0, talking, transcript, unconfirmed } from './transcriptFixtures'
+import { attempt, completed, confirming, longContent, message, scenario, summary, T0, talking, transcript, unconfirmed } from './transcriptFixtures'
 import type { Transcript } from './transcriptModel'
 
 jest.mock('../../../../contract/classroomClient', () => {
@@ -284,7 +284,7 @@ describe('the stance track', () => {
     const scroll = within(c).getByTestId('transcript-scroll')
     const second = c.querySelector('[data-scenario="1"]') as HTMLElement
     Object.defineProperty(second, 'offsetTop', { configurable: true, value: 640 })
-    fireEvent.click(within(await track()).getByRole('button', { name: '捲到情境 2 的開頭' }))
+    fireEvent.click(within(await track()).getByRole('button', { name: /捲到情境 2 的開頭/ }))
     expect(scroll.scrollTop).toBe(640 - 12)
   })
 })
@@ -449,6 +449,17 @@ describe('scrolling while it refreshes', () => {
     expect(screen.getByRole('button', { name: '↓ 有 2 則新內容' })).toBeInTheDocument()
   })
 
+  test('at the bottom, a card or system line that arrives with no new message still carries the view down', async () => {
+    const first = transcript({ attempt: talking() })
+    const second: Transcript = { ...first, attempt: { ...first.attempt!, state: 'confirming', candidate_summary: summary(), cells: [{ status: 'confirming', turns: null }] } }
+    const { state, next } = await openAndTick(first, second)
+    state.top = 600
+    fireEvent.scroll(screen.getByTestId('transcript-scroll'))
+    state.height = 1200
+    await next()
+    expect(state.top).toBe(1200)
+  })
+
   test('the pill counts only the student and Socrates messages, not system lines', async () => {
     const first = transcript({ attempt: talking() })
     const second = more(first)
@@ -515,5 +526,26 @@ describe('guests and languages', () => {
     expect(await within(view).findByText(line)).toBeInTheDocument()
     expect(within(view).getByRole('heading', { name: heading })).toBeInTheDocument()
     expect(within(view).getByRole('link', { name: back })).toBeInTheDocument()
+  })
+})
+
+describe('reading the page without the Chinese punctuation', () => {
+  test('the track button is named by what it shows, with the jump hint added', async () => {
+    open(transcript({ attempt: confirming() }))
+    const button = within(await track()).getByRole('button', { name: /捲到情境 1 的開頭/ })
+    expect(button).toHaveAccessibleName(/情境 1.*不拉拉桿.*捲到情境 1 的開頭/)
+  })
+
+  test('English and Spanish use their own colon and separator', async () => {
+    const a = confirming()
+    a.candidate_summary = summary({ relevant_conditions: ['one', 'two'] })
+    open(transcript({ attempt: a }), 'en')
+    expect(await screen.findByText('one; two')).toBeInTheDocument()
+  })
+
+  test('the final summary words each trajectory step with the locale\'s colon', async () => {
+    open(transcript({ attempt: completed() }), 'en')
+    expect(await screen.findByText(/Scenario 1: 不拉拉桿/)).toBeInTheDocument()
+    expect(screen.queryByText(/Scenario 1：/)).toBeNull()
   })
 })

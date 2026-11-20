@@ -21,7 +21,7 @@ export function PendingSummary({ summary, scenarioNumber }: { summary: Summary; 
     <dl className="tc-rows">
       <div><dt>{t('transcript.summary.position')}</dt><dd><span className="tc-chip"><Written text={summary.current_position} /></span></dd></div>
       <div><dt>{t('transcript.summary.reason')}</dt><dd><Written text={summary.reason_summary} /></dd></div>
-      {summary.relevant_conditions.length > 0 && <div><dt>{t('transcript.summary.conditions')}</dt><dd>{summary.relevant_conditions.join('；')}</dd></div>}
+      {summary.relevant_conditions.length > 0 && <div><dt>{t('transcript.summary.conditions')}</dt><dd>{summary.relevant_conditions.join(t('transcript.summary.conditionsJoin'))}</dd></div>}
       {summary.unresolved_issue.trim() !== '' && <div><dt>{t('transcript.summary.unresolved')}</dt><dd>{summary.unresolved_issue}</dd></div>}
       {summary.principle_note.trim() !== '' && <div><dt>{t('transcript.summary.principle')}</dt><dd>{summary.principle_note}</dd></div>}
     </dl>
@@ -39,7 +39,7 @@ function FinalCard({ summary, confirmed }: { summary: FinalSummary; confirmed: b
       <div><dt>{t('transcript.review.finalPosition')}</dt><dd><Written text={summary.final_position} /></dd></div>
       {summary.trajectory.length > 0 && <div><dt>{t('transcript.review.trajectory')}</dt><dd>
         {summary.trajectory.map((step, index) => <p key={index}>
-          {t('transcript.scenarioLabel', { number: index + 1 })}：{step.position}
+          {t('transcript.review.step', { label: t('transcript.scenarioLabel', { number: index + 1 }), position: step.position })}
           {step.shift_reason.trim() !== '' && t('transcript.review.shift', { reason: step.shift_reason })}
         </p>)}
       </dd></div>}

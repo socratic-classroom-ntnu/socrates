@@ -1,9 +1,11 @@
-"""Voice mode: what Socrates reads out as the summary, and whether the student heard it.
+"""Voice mode: what Socrates reads out as a summary, and whether the student heard it.
 
-The voice model does not compose the summary it reads: ``readout`` builds the words with a fixed
-template from the candidate summary (the fields the typing card shows), the voice model is told to
-read them word for word, and ``heard_as_read`` compares its transcript of what it actually said
-with that text. A match is what lets a spoken "對" confirm the stored summary. Pure: no I/O.
+The voice model does not compose the summary it reads: ``readout`` (a scenario's candidate summary)
+and ``final_readout`` (the final summary) build the words with a fixed template from the fields the
+typing card shows, and the voice model is told to read them. ``heard_as_read`` compares its
+transcript of what it actually said with that text: a match settles that the student heard the
+summary. A reworded reading is not refused here; whether it kept the meaning is judged with the
+student's answer (voice_judge). ``to_script`` puts a transcript in the student's script. Pure.
 """
 
 from __future__ import annotations
@@ -27,6 +29,11 @@ _TEMPLATES: dict[str, dict[str, str]] = {
         "conditions": "你考慮的條件有：{}。",
         "joiner": "、",
         "question": "這樣整理對嗎？",
+        "final_intro": "我把整段討論整理一下。",
+        "step": "一開始你認為：{}。",
+        "shift": "後來{}，你認為：{}。",
+        "final_position": "你最後的立場是：{}。",
+        "style": "{}",
     },
     "zh-Hans": {
         "intro": "我整理一下你目前的想法。",
@@ -35,6 +42,11 @@ _TEMPLATES: dict[str, dict[str, str]] = {
         "conditions": "你考虑的条件有：{}。",
         "joiner": "、",
         "question": "这样整理对吗？",
+        "final_intro": "我把整段讨论整理一下。",
+        "step": "一开始你认为：{}。",
+        "shift": "后来{}，你认为：{}。",
+        "final_position": "你最后的立场是：{}。",
+        "style": "{}",
     },
     "en": {
         "intro": "Let me sum up where you are now. ",
@@ -43,6 +55,11 @@ _TEMPLATES: dict[str, dict[str, str]] = {
         "conditions": "The conditions you weighed: {}. ",
         "joiner": "; ",
         "question": "Is that right?",
+        "final_intro": "Let me sum up the whole discussion. ",
+        "step": "At first you thought: {}. ",
+        "shift": "Then, {}, you thought: {}. ",
+        "final_position": "Where you ended up: {}. ",
+        "style": "{} ",
     },
     "es": {
         "intro": "Déjame resumir lo que piensas ahora. ",
@@ -51,10 +68,18 @@ _TEMPLATES: dict[str, dict[str, str]] = {
         "conditions": "Las condiciones que tuviste en cuenta: {}. ",
         "joiner": "; ",
         "question": "¿Es correcto?",
+        "final_intro": "Déjame resumir toda la conversación. ",
+        "step": "Al principio pensabas: {}. ",
+        "shift": "Después, {}, pensaste: {}. ",
+        "final_position": "Tu postura final: {}. ",
+        "style": "{} ",
     },
 }
 _DEFAULT_LOCALE = "zh-Hant"
 _TO_SIMPLIFIED = opencc.OpenCC("t2s")
+_TO_TAIWAN = opencc.OpenCC("s2tw")
+# Speech recognition has no Taiwan Mandarin: transcripts come back in simplified characters.
+_SCRIPT = {"zh-Hant": _TO_TAIWAN}
 
 
 def _clause(text: str) -> str:
@@ -82,6 +107,45 @@ def readout(summary: Mapping[str, Any], locale: str) -> str:
     return "".join(parts)
 
 
+def _sentence(text: str, t: Mapping[str, str]) -> str:
+    text = text.strip()
+    if not text or text[-1] in "。.！!？?":
+        return text
+    return text + ("。" if t["joiner"] == "、" else ". ")
+
+
+def final_readout(final: Mapping[str, Any], locale: str) -> str:
+    """The final summary as said: how the student's position moved, where it ended, then the
+    question. Points and open questions stay on the card; the trajectory is the line of thought."""
+    t = _TEMPLATES.get(locale, _TEMPLATES[_DEFAULT_LOCALE])
+    parts = [t["final_intro"]]
+    for index, step in enumerate(final.get("trajectory") or []):
+        position = _clause(step["position"])
+        shift = _clause(step.get("shift_reason") or "")
+        if index and shift:
+            parts.append(t["shift"].format(shift, position))
+        else:
+            parts.append(t["step"].format(position))
+    parts.append(t["final_position"].format(_clause(final["final_position"])))
+    style = _sentence(final.get("reasoning_style") or "", t)
+    if style:
+        parts.append(t["style"].format(style))
+    parts.append(t["question"])
+    return "".join(parts)
+
+
+def final_parts(final: Mapping[str, Any]) -> list[str]:
+    """The texts of a final summary that its readout must carry whole."""
+    steps = [step["position"] for step in final.get("trajectory") or []]
+    return [*steps, final["final_position"]]
+
+
+def to_script(text: str, locale: str) -> str:
+    """A transcript in the student's script: Taiwan traditional characters for zh-Hant."""
+    convert = _SCRIPT.get(locale)
+    return convert.convert(text) if convert is not None else text
+
+
 def _fold(text: str) -> str:
     """Compare letters only: one script, no spaces or punctuation, one case."""
     simplified = _TO_SIMPLIFIED.convert(unicodedata.normalize("NFKC", text))
@@ -107,6 +171,12 @@ def heard_as_read(expected: str, transcript: str, parts: Sequence[str] = ()) -> 
         return False
     folded = [p for p in (_fold(part) for part in parts) if p]
     return all(_covered(p, got) >= MATCH_RATIO for p in folded)
+
+
+def says(text: str, words: str) -> bool:
+    """Whether ``words`` appear in ``text``, ignoring script, spaces and punctuation."""
+    folded = _fold(words)
+    return bool(folded) and folded in _fold(text)
 
 
 def summary_parts(summary: Mapping[str, Any]) -> list[str]:

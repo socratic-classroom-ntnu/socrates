@@ -398,7 +398,7 @@ def revise_viewpoint(a: AttemptState, now: float | None = None) -> AttemptState:
 def withdraw_viewpoint(a: AttemptState, digest: str) -> AttemptState:
     """Voice mode only: the summary being read goes back unconfirmed, without counting as 不太對.
 
-    The student did not hear it to the end, or answered with an addition or unclearly. Nothing is
+    The student did not hear it with its meaning intact (cut off, or read twice and bent). Nothing is
     recorded as turned down and the revise hold does not start; the dialogue goes on and policy.py
     decides as usual when to offer a summary again. Not an action the student is offered: the
     voice relay calls it after its own checks. Only the summary currently shown may be withdrawn.

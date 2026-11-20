@@ -22,6 +22,9 @@ URL = (
     "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
 )
 INPUT_MIME = "audio/pcm;rate=16000"
+# What speech recognition listens for, per student locale. Mandarin is only offered in simplified
+# characters (cmn-Hans-CN); the solo dialogue converts transcripts to the student's script itself.
+LANGUAGE_CODES = {"zh-Hant": "cmn-Hans-CN", "zh-Hans": "cmn-Hans-CN", "en": "en-US", "es": "es-ES"}
 
 EventKind = Literal["audio", "input_text", "output_text", "turn_complete", "interrupted"]
 
@@ -75,7 +78,7 @@ class GeminiLiveSession:
         await self.ws.close()
 
 
-async def open_session(instruction: str) -> GeminiLiveSession:
+async def open_session(instruction: str, locale: str) -> GeminiLiveSession:
     key = settings.voice_gemini_api_key.strip()
     if not key:
         raise RuntimeError("VOICE_KEY_MISSING")
@@ -89,7 +92,7 @@ async def open_session(instruction: str) -> GeminiLiveSession:
             },
         },
         "systemInstruction": {"parts": [{"text": instruction}]},
-        "inputAudioTranscription": {},
+        "inputAudioTranscription": {"languageCodes": [LANGUAGE_CODES.get(locale, "cmn-Hans-CN")]},
         "outputAudioTranscription": {},
     }
     await ws.send(json.dumps({"setup": setup}))

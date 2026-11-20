@@ -32,6 +32,7 @@
     "final_summary": {"L2": "L2/final_summary.md", "checks": ["no_leak", "language", "citations"], "fallback": null},
     "radar_axis_naming": {"L2": "L2/radar_axis_naming.md", "checks": ["no_leak", "language"], "fallback": null},
     "radar_dimensions": {"L2": "L2/radar_dimensions.md", "checks": ["no_leak", "language"], "fallback": null},
-    "radar_scoring": {"L2": "L2/radar_scoring.md", "checks": ["no_leak", "citations"], "fallback": null}
+    "radar_scoring": {"L2": "L2/radar_scoring.md", "checks": ["no_leak", "citations"], "fallback": null},
+    "voice_confirmation": {"L2": "L2/voice_confirmation.md", "checks": ["no_leak"], "fallback": null}
   }
 }

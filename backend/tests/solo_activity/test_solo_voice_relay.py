@@ -3,7 +3,9 @@
 A scripted voice model stands in for Gemini Live. The browser can only send microphone audio; the
 system instruction (rules and scenario) comes from the backend, the stored dialogue comes from the
 voice model's transcripts, and audio reaches the student only after its sentence passed the
-no-leak check. Spoken confirmation, the daily limit and the switch end voice mode as specified.
+no-leak check. Every confirmation point is settled by voice up to the end of the attempt; the
+daily limit and the switch end voice mode as specified. What is shown and stored is in the
+student's script (Taiwan traditional characters for zh-Hant).
 """
 
 import asyncio
@@ -20,7 +22,6 @@ from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity.voice_readout import readout
 from tests.solo_activity.test_solo_attempts_api import (
     MET,
-    NOT_MET,
     OPENING,
     SCENARIO,
     ok,
@@ -34,8 +35,9 @@ REPLY = "你說不能主動害人，「主動」指的是什麼？"
 class FakeLive:
     """Events the test pushes; what the relay sent to the voice model is kept."""
 
-    def __init__(self, instruction):
+    def __init__(self, instruction, locale):
         self.instruction = instruction
+        self.locale = locale
         self.queue = asyncio.Queue()
         self.texts = []
         self.audio_in = []
@@ -65,8 +67,8 @@ class Harness:
         self.json = []
         self.audio_out = []
 
-        async def open_live(instruction):
-            live = FakeLive(instruction)
+        async def open_live(instruction, locale):
+            live = FakeLive(instruction, locale)
             self.lives.append(live)
             return live
 
@@ -238,7 +240,7 @@ def to_confirming(h, replies):
     ]
 
 
-def test_a_spoken_yes_to_the_read_summary_confirms_it_and_ends_voice_after_the_last_scenario(
+def test_a_spoken_yes_confirms_the_summary_and_voice_goes_on_to_the_end_of_the_attempt(
     client, tutor, voice_on
 ):
     _, replies = tutor
@@ -266,17 +268,20 @@ def test_a_spoken_yes_to_the_read_summary_confirms_it_and_ends_voice_after_the_l
             == MET["summary"]["current_position"]
         )
     assert messages(attempt_id)[-2:] == [("tutor", text), ("student", "對")]
+    # No model was there to write the final summary: tried once more, then finished without it,
+    # all by voice; nothing was left for the student to press.
+    with storage.transaction() as db:
+        assert db.get(SoloAttempt, attempt_id).state == "completed"
     assert h.json[-1]["type"] == "to_typing" and h.json[-1]["reason"] == "done"
 
 
-def test_an_interrupted_summary_is_not_confirmed(client, tutor, voice_on):
+def test_an_interrupted_summary_is_not_confirmed_but_read_again(client, tutor, voice_on):
     _, replies = tutor
     attempt_id, h, _ = begin(client, tutor)
     text = readout(MET["summary"], "zh-Hant")
 
     async def script():
         await play(h, *to_confirming(h, replies))
-        replies.append(NOT_MET)
         await play(
             h,
             vr.LiveEvent("audio", b"\x05"),
@@ -284,14 +289,60 @@ def test_an_interrupted_summary_is_not_confirmed(client, tutor, voice_on):
             vr.LiveEvent("interrupted"),
             vr.LiveEvent("turn_complete"),
             *student_says("對"),
-            *socrates_says(REPLY),
+            *socrates_says("好的。"),
         )
+        assert h.live.texts[-1] == vr.READ_VERBATIM.format(text)
 
     asyncio.run(with_relay(h, script))
     with storage.transaction() as db:
         row = db.get(SoloAttempt, attempt_id)
-        assert row.state == "in_dialogue"
+        assert row.state == "confirming"
         assert row.progress[0]["confirmed_summary"] is None
+
+
+def test_what_is_shown_and_stored_is_in_taiwan_traditional_characters(client, tutor, voice_on):
+    _, replies = tutor
+    attempt_id, h, _ = begin(client, tutor)
+    replies.append(OPENING)
+
+    async def script():
+        assert h.live.locale == "zh-Hant" and "台灣" in h.live.instruction
+        await play(h, *student_says("我觉得不能主动害人"), *socrates_says("你说的主动是什么意思？"))
+
+    asyncio.run(with_relay(h, script))
+    assert messages(attempt_id) == [
+        ("student", "我覺得不能主動害人"),
+        ("tutor", "你說的主動是什麼意思？"),
+    ]
+    assert {"type": "caption", "text": "你說的主動是什麼意思？"} in h.json
+    assert {"type": "student", "text": "我覺得不能主動害人"} in h.json
+
+
+def test_the_final_summary_is_read_and_confirmed_by_voice(client, tutor, voice_on):
+    from app.modules.solo_activity.voice_readout import final_readout
+    from tests.solo_activity.test_solo_final_confirmation import FINAL, NO_SCENARIO
+
+    _, replies = tutor
+    attempt_id, h, _ = begin(client, tutor)
+    text = readout(MET["summary"], "zh-Hant")
+    yes = {"faithful": True, "verdict": "agree", "quote": "對"}
+    final = final_readout(FINAL, "zh-Hant")
+
+    async def script():
+        await play(h, *to_confirming(h, replies))
+        await play(h, *socrates_says(text))
+        replies.extend([yes, NO_SCENARIO, FINAL])
+        await play(h, *student_says("對"), vr.LiveEvent("audio", b"\x06"))
+        assert h.live.texts[-1] == vr.READ_VERBATIM.format(final)
+        await play(h, *socrates_says(final))
+        replies.append(yes)
+        await play(h, *student_says("對"), vr.LiveEvent("audio", b"\x07"))
+
+    asyncio.run(with_relay(h, script))
+    with storage.transaction() as db:
+        row = db.get(SoloAttempt, attempt_id)
+        assert row.state == "completed" and row.final["status"] == "confirmed"
+    assert h.json[-1]["reason"] == "done"
 
 
 def test_at_the_daily_limit_voice_ends_after_the_current_reply(

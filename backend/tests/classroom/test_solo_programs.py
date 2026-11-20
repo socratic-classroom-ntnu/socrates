@@ -24,6 +24,7 @@ INPUTS = {
     "radar_axis_naming": ("narrative", "axes", "low_end", "high_end", "output_locale"),
     "radar_dimensions": ("narrative", "stances", "output_locale", "summaries"),
     "radar_scoring": ("dimensions", "final_summary", "student_messages"),
+    "voice_confirmation": ("summary", "spoken", "student_text", "output_locale"),
 }
 CITING = ("final_summary", "radar_scoring")
 

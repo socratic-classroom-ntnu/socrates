@@ -1,11 +1,12 @@
-"""Voice mode, step 3: a spoken dialogue goes through the same machine and tutor as typing.
+"""Voice mode: a spoken dialogue goes through the same machine and tutor as typing.
 
 The same scripted tutor replies drive one attempt by typing and one by voice: the voice attempt
 asks for confirmation, extends and concludes at the same turns, because what the student said is
 an ordinary message and the same tutor program judges it (policy.py decides, not the voice
 model). On Socrates' side the voice attempt stores what the student heard; the summary readout and
-the student's spoken answer are stored as ordinary messages; only a plain yes to a summary heard
-in full confirms it, and the stored summary is the one that was read.
+the student's spoken answer are stored as ordinary messages. At each confirmation point (a
+scenario's summary, the final summary) a model judges the spoken answer, the word list helps, and
+the answer presses 對 or 不太對 as the card would; a summary at the message limit is acknowledged.
 """
 
 import asyncio
@@ -15,6 +16,7 @@ from sqlalchemy import select
 from app.modules.identity_access.repositories import Account
 from app.modules.platform import storage
 from app.modules.solo_activity import service
+from app.modules.solo_activity import voice_judge as vj
 from app.modules.solo_activity import voice_turns as vt
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity.voice_readout import readout
@@ -43,18 +45,59 @@ def said(attempt_id, text, heard=HEARD):
     return asyncio.run(vt.finish_turn(prepared, _now(heard)))
 
 
-def answered(attempt_id, step, text, *, heard=None, interrupted=False, asked=0):
-    """The student's spoken answer to what Socrates just said (``step.say``)."""
+NO_MODEL = RuntimeError("no judging model")
+
+
+def judged(verdict="agree", quote="對", faithful=True):
+    return {"faithful": faithful, "verdict": verdict, "quote": quote}
+
+
+def answered(
+    attempt_id,
+    step,
+    text,
+    replies,
+    *,
+    model=NO_MODEL,
+    heard=None,
+    interrupted=False,
+    asks=0,
+    reads=0,
+):
+    """The student's spoken answer to what Socrates just said (``step.say``).
+
+    ``model`` is what the judging model replies; by default it fails and the word list judges.
+    """
+    heard = step.say if heard is None else heard
+    replies.insert(0, model)
     with storage.transaction() as db:
-        out = vt.answer_readout(
+        point = vt.point_of(db, _account(db), attempt_id, 1_000_000.0)
+        prepared = vj.prepare(
+            db, _account(db), attempt_id, summary=point.summary, heard=heard, said=text
+        )
+    judgment = asyncio.run(
+        vj.judge(
+            prepared,
+            expected=point.expected,
+            parts=point.parts,
+            heard=heard,
+            interrupted=interrupted,
+            said=text,
+            locale="zh-Hant",
+        )
+    )
+    with storage.transaction() as db:
+        out = vt.answer(
             db,
             _account(db),
             attempt_id,
+            point=point,
             spoken=step.say,
-            heard=step.say if heard is None else heard,
-            interrupted=interrupted,
+            heard=heard,
             said=text,
-            asked=asked,
+            judgment=judgment,
+            asks=asks,
+            reads=reads,
             at=1_000_000.0,
         )
     if out.tutor is not None:
@@ -76,6 +119,21 @@ def messages(attempt_id):
             .order_by(SoloMessage.seq)
         ).all()
         return [(m.role, m.text) for m in rows]
+
+
+def last_student_meta(attempt_id):
+    with storage.transaction() as db:
+        rows = db.scalars(
+            select(SoloMessage)
+            .where(SoloMessage.attempt_id == attempt_id, SoloMessage.role == "student")
+            .order_by(SoloMessage.seq)
+        ).all()
+        return rows[-1].meta or {}
+
+
+def current(attempt_id):
+    with storage.transaction() as db:
+        return db.get(SoloAttempt, attempt_id).progress[0]
 
 
 def stored_summary(attempt_id):
@@ -142,12 +200,15 @@ def test_the_tutor_sees_the_dialogue_the_student_had(client, tutor):
     assert HEARD in calls[1]["messages"][1]["content"]
 
 
-# ---- confirming by voice ----------------------------------------------------------------------
+# ---- confirming a scenario's summary by voice -----------------------------------------------
 
 
-def test_a_plain_yes_to_a_summary_heard_in_full_confirms_the_summary_that_was_read(client, tutor):
+def test_the_models_yes_to_a_summary_read_as_written_confirms_the_summary_that_was_read(
+    client, tutor
+):
+    _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
-    out = answered(attempt_id, step, "對")
+    out = answered(attempt_id, step, "對", replies, model=judged())
     assert out.view["state"] in ("reviewing", "awaiting_reflection_prompt")
     assert {k: v for k, v in stored_summary(attempt_id).items() if k != "sources"} == MET["summary"]
     assert readout(stored_summary(attempt_id), "zh-Hant") == step.say
@@ -155,103 +216,232 @@ def test_a_plain_yes_to_a_summary_heard_in_full_confirms_the_summary_that_was_re
     assert messages(attempt_id)[-2:] == [("tutor", step.say), ("student", "對")]
 
 
-def test_an_interrupted_readout_is_not_confirmed_even_by_a_yes(client, tutor):
+def test_why_it_counted_is_kept_on_the_students_answer(client, tutor):
     _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
-    replies.append(NOT_MET)
-    out = answered(attempt_id, step, "對", heard=step.say[:12], interrupted=True)
-    assert out.view["state"] == "in_dialogue"
-    assert stored_summary(attempt_id) is None
-    with storage.transaction() as db:
-        current = db.get(SoloAttempt, attempt_id).progress[0]
-    # Withdrawn, not turned down: no 不太對 is recorded.
-    assert current["rejected_summary"] is None and current["rejected_at"] == []
+    answered(attempt_id, step, "對啊，就是這樣", replies, model=judged(quote="就是這樣"))
+    note = last_student_meta(attempt_id)["voice_confirmation"]
+    assert note["verdict"] == "agree" and note["quote"] == "就是這樣"
+    assert note["source"] == "model" and note["decision"] == "confirm"
 
 
-def test_a_readout_the_voice_model_reworded_is_not_confirmed(client, tutor):
+def test_without_a_model_the_word_list_judges(client, tutor):
     _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
+    out = answered(attempt_id, step, "對", replies)
+    assert out.view["state"] in ("reviewing", "awaiting_reflection_prompt")
+    assert last_student_meta(attempt_id)["voice_confirmation"]["source"] == "word_list"
+
+
+def test_a_reworded_reading_that_kept_the_meaning_is_enough(client, tutor):
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    reworded = "我幫你整理：你不會拉，因為那是你親手造成的。這樣對嗎？"
+    out = answered(attempt_id, step, "對", replies, model=judged(), heard=reworded)
+    assert out.view["state"] in ("reviewing", "awaiting_reflection_prompt")
+    assert stored_summary(attempt_id) is not None
+
+
+def test_a_reading_that_bent_the_meaning_is_read_again_then_taken_back(client, tutor):
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    bent = "所以你就是不想負責，對吧？"
+    again = answered(attempt_id, step, "對", replies, model=judged(faithful=False), heard=bent)
+    assert again.view["state"] == "confirming" and again.say == step.say
     replies.append(NOT_MET)
-    out = answered(attempt_id, step, "對", heard="所以你就是不想拉，對吧？")
+    out = answered(
+        attempt_id, again, "對", replies, model=judged(faithful=False), heard=bent, reads=1
+    )
     assert out.view["state"] == "in_dialogue"
+    assert stored_summary(attempt_id) is None
+    # Taken back, not turned down: no 不太對 is recorded.
+    assert (
+        current(attempt_id)["rejected_summary"] is None and current(attempt_id)["rejected_at"] == []
+    )
+
+
+def test_an_interrupted_reading_is_never_confirmed_even_by_the_models_yes(client, tutor):
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    again = answered(
+        attempt_id, step, "對", replies, model=judged(), heard=step.say[:12], interrupted=True
+    )
+    assert again.view["state"] == "confirming" and again.say == step.say
     assert stored_summary(attempt_id) is None
 
 
-def test_no_is_turning_the_summary_down_and_the_answer_is_the_next_message(client, tutor):
+def test_no_is_a_failed_confirmation_and_the_answer_is_the_next_message(client, tutor):
     calls, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
     replies.append(NOT_MET)
-    out = answered(attempt_id, step, "不對，我是說後果不重要")
+    out = answered(
+        attempt_id, step, "不對，我是說後果不重要", replies, model=judged("disagree", "不對")
+    )
     assert out.view["state"] == "in_dialogue"
-    with storage.transaction() as db:
-        current = db.get(SoloAttempt, attempt_id).progress[0]
-    assert len(current["rejected_at"]) == 1
+    assert len(current(attempt_id)["rejected_at"]) == 1
     assert ("student", "不對，我是說後果不重要") in messages(attempt_id)
     assert "不對，我是說後果不重要" in calls[-1]["messages"][1]["content"]
+    assert last_student_meta(attempt_id)["voice_confirmation"]["decision"] == "not_confirmed"
 
 
-def test_an_addition_goes_on_as_a_message_without_turning_the_summary_down(client, tutor):
+def test_a_correction_is_a_failed_confirmation_too(client, tutor):
     _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
     replies.append(NOT_MET)
-    out = answered(attempt_id, step, "對，但我想補充，如果他是自願的就不一樣")
+    text = "對，但我想補充，如果他是自願的就不一樣"
+    out = answered(attempt_id, step, text, replies, model=judged("addition", "但我想補充"))
     assert out.view["state"] == "in_dialogue"
-    with storage.transaction() as db:
-        current = db.get(SoloAttempt, attempt_id).progress[0]
-    assert current["rejected_summary"] is None and current["rejected_at"] == []
+    assert len(current(attempt_id)["rejected_at"]) == 1
 
 
-def test_an_unclear_answer_is_asked_once_more_then_withdrawn(client, tutor):
+def test_judged_unclear_twice_is_a_failed_confirmation(client, tutor):
     _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
-    again = answered(attempt_id, step, "嗯……應該吧")
+    again = answered(attempt_id, step, "嗯……", replies, model=judged("unclear", ""))
     assert again.view["state"] == "confirming"
     assert again.say == vt.ASK_AGAIN["zh-Hant"]
     replies.append(NOT_MET)
-    out = answered(attempt_id, again, "大概吧", asked=1)
+    out = answered(attempt_id, again, "大概吧", replies, model=judged("unclear", ""), asks=1)
     assert out.view["state"] == "in_dialogue"
     assert stored_summary(attempt_id) is None
+    assert len(current(attempt_id)["rejected_at"]) == 1
 
 
 def test_a_yes_after_being_asked_again_confirms(client, tutor):
+    _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
-    again = answered(attempt_id, step, "嗯")
-    out = answered(attempt_id, again, "對", asked=1)
+    again = answered(attempt_id, step, "嗯", replies, model=judged("unclear", ""))
+    out = answered(attempt_id, again, "對", replies, model=judged(), asks=1)
     assert out.view["state"] in ("reviewing", "awaiting_reflection_prompt")
-    assert {k: v for k, v in stored_summary(attempt_id).items() if k != "sources"} == MET["summary"]
+
+
+def test_the_models_yes_is_overruled_when_the_student_said_no(client, tutor):
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    again = answered(attempt_id, step, "不對", replies, model=judged("agree", "不對"))
+    assert again.say == vt.ASK_AGAIN["zh-Hant"]
+    assert last_student_meta(attempt_id)["voice_confirmation"]["vetoed"] is True
+
+
+def test_a_yes_must_quote_what_the_student_actually_said(client, tutor):
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    again = answered(attempt_id, step, "嗯哼", replies, model=judged("agree", "完全同意"))
+    assert again.say == vt.ASK_AGAIN["zh-Hant"]
+    assert stored_summary(attempt_id) is None
 
 
 def test_words_that_are_not_this_summary_never_confirm(client, tutor):
     _, replies = tutor
     attempt_id, _, step = voice_to_confirming(client, tutor)
     stale = vt.VoiceStep(view=step.view, say="我整理一下：你的立場是要拉桿。這樣整理對嗎？")
-    replies.append(NOT_MET)
-    out = answered(attempt_id, stale, "對")
-    assert out.view["state"] == "in_dialogue"
+    again = answered(attempt_id, stale, "對", replies, model=judged())
+    assert again.view["state"] == "confirming" and again.say == step.say
     assert stored_summary(attempt_id) is None
 
 
-def test_answering_a_readout_outside_confirming_is_unavailable(client, tutor):
+def test_there_is_no_point_to_answer_outside_one(client, tutor):
     _, replies = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
     replies.append(OPENING)
     said(attempt["id"], "不能主動害人")
-    step = vt.VoiceStep(view=None, say="這樣整理對嗎？")
     with storage.transaction() as db:
-        try:
-            vt.answer_readout(
-                db,
-                _account(db),
-                attempt["id"],
-                spoken=step.say,
-                heard=step.say,
-                interrupted=False,
-                said="對",
-                asked=0,
-                at=1_000_000.0,
-            )
-        except Exception as exc:  # noqa: BLE001
-            assert getattr(exc, "code", None) == "SOLO_ACTION_UNAVAILABLE"
-        else:
-            raise AssertionError("answering outside confirming must fail")
+        assert vt.point_of(db, _account(db), attempt["id"], 1_000_000.0) is None
+
+
+def test_a_summary_at_the_message_limit_is_acknowledged_as_the_card_does(
+    client, tutor, monkeypatch
+):
+    from app.modules.solo_activity import attempt_machine as sm
+
+    _, replies = tutor
+    monkeypatch.setattr(sm, "MESSAGE_LIMIT", 2)
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    replies.append(OPENING)
+    said(attempt["id"], "不能主動害人")
+    replies.append(NOT_MET)
+    step = said(attempt["id"], "因為是我親手造成的")
+    with storage.transaction() as db:
+        point = vt.point_of(db, _account(db), attempt["id"], 1_000_000.0)
+    assert point.capped and step.say == point.expected
+    with storage.transaction() as db:
+        out = vt.acknowledge(db, _account(db), attempt["id"], point, step.say, 1_000_000.0)
+    view = out.view if out.follow is None else asyncio.run(service.finish_action(out.follow))
+    assert view["state"] != "confirming"
+    assert current(attempt["id"])["status"] == "capped"
+
+
+# ---- the final summary by voice --------------------------------------------------------------
+
+
+def to_final(client, tutor, final):
+    """The only scenario confirmed by voice, no next scenario, and the final summary written."""
+    from tests.solo_activity.test_solo_final_confirmation import NO_SCENARIO
+
+    _, replies = tutor
+    attempt_id, _, step = voice_to_confirming(client, tutor)
+    replies.extend([judged(), NO_SCENARIO, final])
+    with storage.transaction() as db:
+        point = vt.point_of(db, _account(db), attempt_id, 1_000_000.0)
+        prepared = vj.prepare(
+            db, _account(db), attempt_id, summary=point.summary, heard=step.say, said="對"
+        )
+    judgment = asyncio.run(
+        vj.judge(
+            prepared,
+            expected=point.expected,
+            parts=point.parts,
+            heard=step.say,
+            interrupted=False,
+            said="對",
+            locale="zh-Hant",
+        )
+    )
+    with storage.transaction() as db:
+        out = vt.answer(
+            db,
+            _account(db),
+            attempt_id,
+            point=point,
+            spoken=step.say,
+            heard=step.say,
+            said="對",
+            judgment=judgment,
+            asks=0,
+            reads=0,
+            at=1_000_000.0,
+        )
+    view = asyncio.run(service.finish_action(out.follow))
+    assert view["state"] == "reflecting"
+    with storage.transaction() as db:
+        final_point = vt.point_of(db, _account(db), attempt_id, 1_000_000.0)
+    return attempt_id, vt.VoiceStep(view=view, say=final_point.expected)
+
+
+def test_the_final_summary_is_read_and_a_spoken_yes_completes_the_attempt(client, tutor):
+    from tests.solo_activity.test_solo_final_confirmation import FINAL
+
+    _, replies = tutor
+    attempt_id, step = to_final(client, tutor, FINAL)
+    assert FINAL["final_position"].rstrip("。") in step.say
+    out = answered(attempt_id, step, "對", replies, model=judged())
+    assert out.view["state"] == "completed"
+    with storage.transaction() as db:
+        assert db.get(SoloAttempt, attempt_id).final["status"] == "confirmed"
+
+
+def test_a_spoken_no_to_the_final_summary_writes_it_again_with_the_students_words(client, tutor):
+    from tests.solo_activity.test_solo_final_confirmation import FINAL, SECOND
+
+    _, replies = tutor
+    attempt_id, step = to_final(client, tutor, FINAL)
+    replies.append(SECOND)
+    out = answered(
+        attempt_id, step, "不對，我其實有猶豫", replies, model=judged("disagree", "不對")
+    )
+    assert out.view["state"] == "reflecting"
+    assert ("student", "不對，我其實有猶豫") in messages(attempt_id)
+    meta = last_student_meta(attempt_id)
+    assert meta["final_feedback"] is True and meta["voice_confirmation"]["point"] == "final"

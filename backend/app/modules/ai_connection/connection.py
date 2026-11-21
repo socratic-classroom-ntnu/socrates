@@ -148,6 +148,21 @@ def free_name(db: Session, owner_id: str, base: str, keep_id: str | None) -> str
         number += 1
 
 
+def switch(db: Session, owner_id: str, mode: str) -> None:
+    """系統提供 only while it can be used; the teacher's own only with a key it can still use.
+    Neither tests the connection (需求：切回不用重填、不重新測試)."""
+    ai_service.lock_owner(db, owner_id)
+    if mode == "system":
+        if not system_option(db).available:
+            raise DomainError("AI_CONNECTION_SYSTEM_UNAVAILABLE", 409)
+        ai_service.switch_owner_connection(db, owner_id, enabled=False)
+        return
+    own = ai_service.owner_connection(db, owner_id)
+    if own is None or not own.key_usable:
+        raise DomainError("AI_CONNECTION_NO_KEPT_KEY", 409)
+    ai_service.switch_owner_connection(db, owner_id, enabled=True)
+
+
 def save(
     db: Session,
     owner_id: str,

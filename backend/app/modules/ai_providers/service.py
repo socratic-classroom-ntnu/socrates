@@ -1078,3 +1078,28 @@ def write_owner_connection(
     settings.model_matrix = dict.fromkeys(ROLE_KEYS, config.model)
     settings.revision = int(settings.revision or 0) + 1
     settings.updated_at = time.time()
+
+
+def switch_owner_connection(db, owner_id: str, *, enabled: bool) -> None:
+    """系統提供 (False) or the teacher's kept connection back on (True); the key stays as it is.
+
+    The connection becomes the default and the fallback is cleared either way, so a student's
+    dialogue uses exactly what the page shows: the 系統 AI, or this connection. A change bumps
+    `updated_at`, so a save tested against the old state is refused."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return
+    settings, profile = found
+    if (
+        profile.enabled == enabled
+        and settings.default_profile_id == profile.id
+        and settings.fallback_profile_id is None
+    ):
+        return
+    row = owned_profile(db, owner_id, profile.id, lock=True)
+    row.enabled = enabled
+    row.updated_at = time.time()
+    settings.default_profile_id = row.id
+    settings.fallback_profile_id = None
+    settings.revision = int(settings.revision or 0) + 1
+    settings.updated_at = time.time()

@@ -31,6 +31,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "AI_CONNECTION_CHANGED": ("ai_connection",),
     "AI_CONNECTION_NAME_INVALID": ("ai_connection",),
     "AI_CONNECTION_NAME_TAKEN": ("ai_connection",),
+    "AI_CONNECTION_NO_KEPT_KEY": ("ai_connection",),
+    "AI_CONNECTION_SYSTEM_UNAVAILABLE": ("ai_connection",),
     "AI_BUDGET_REQUIRED": ("ai_providers",),
     "ALREADY_SIGNED_IN": ("course_management",),
     "AI_MODEL_ID_REQUIRED": ("ai_providers",),

@@ -10,12 +10,10 @@ import httpx
 import pytest
 from sqlalchemy import select
 
-from app.modules.ai_connection import service as checks
 from app.modules.ai_providers import classroom_gateway as gateway
 from app.modules.ai_providers import service as ai_service
 from app.modules.ai_providers.repositories import AccountAISettings, ProviderProfile
 from app.modules.platform import storage
-from app.modules.platform.errors import DomainError
 from tests.course_management.conftest import user
 from tests.solo_activity.test_solo_attempts_api import configure_ai
 
@@ -30,26 +28,6 @@ FAILURES = (
     "AI_CONNECTION_UNREACHABLE",
     "AI_CONNECTION_MODEL_NOT_FOUND",
 )
-
-
-@pytest.fixture
-def probes(monkeypatch):
-    """Every connection tested, in order; set `fail` to a code to make the next test fail, or
-    `during` to a function that runs while the provider is being asked."""
-    tried: list[ai_service.PlatformConfig] = []
-    state: dict = {"fail": None, "during": None}
-
-    async def fake(config, owner_id, *, prefix):
-        assert prefix == "AI_CONNECTION"
-        tried.append(config)
-        if state["during"]:
-            state.pop("during")()
-        if state["fail"]:
-            raise DomainError(state["fail"], 424)
-        return config
-
-    monkeypatch.setattr(checks, "probe", fake)
-    return tried, state
 
 
 @pytest.fixture

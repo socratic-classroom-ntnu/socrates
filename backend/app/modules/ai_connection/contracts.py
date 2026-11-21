@@ -54,5 +54,10 @@ class AIConnectionInput(BaseModel):
     name: str | None = None
 
 
+class AIConnectionModeInput(BaseModel):
+    # "system" = 系統提供 (the connection disabled, its key kept); "own" = that connection back on.
+    mode: Literal["system", "own"]
+
+
 class AIConnectionTestView(BaseModel):
     ok: Literal[True] = True

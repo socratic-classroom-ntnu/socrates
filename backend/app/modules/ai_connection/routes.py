@@ -9,6 +9,7 @@ from app.modules.ai_connection import connection
 from app.modules.ai_connection import service as checks
 from app.modules.ai_connection.contracts import (
     AIConnectionInput,
+    AIConnectionModeInput,
     AIConnectionTestView,
     AIConnectionView,
 )
@@ -62,5 +63,15 @@ async def put_connection(body: AIConnectionInput, request: Request) -> AIConnect
         # Checked again: the account is read anew after the test.
         _teacher(db, request, mutation=True)
         connection.save(db, owner_id, form, config, before.seen)
+    with transaction() as db:
+        return connection.view(db, owner_id)
+
+
+@router.put("/mode", response_model=AIConnectionView)
+def put_mode(body: AIConnectionModeInput, request: Request) -> AIConnectionView:
+    """Switch between 系統提供 and the teacher's kept connection; nothing is sent to a provider."""
+    with transaction() as db:
+        owner_id = _teacher(db, request, mutation=True)
+        connection.switch(db, owner_id, body.mode)
     with transaction() as db:
         return connection.view(db, owner_id)

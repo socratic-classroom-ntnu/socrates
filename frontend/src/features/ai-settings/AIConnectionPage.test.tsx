@@ -52,15 +52,16 @@ async function openPage(view: AIConnectionView) {
 
 const radio = (name: string) => screen.getByRole('radio', { name: new RegExp(`^${name}`) })
 const form = () => screen.getByRole('form')
+const keyField = () => screen.getByLabelText(/API 金鑰/)
 
 function chooseService(label: string) {
-  fireEvent.click(screen.getByLabelText('服務'))
+  fireEvent.click(screen.getByLabelText('選擇服務'))
   fireEvent.click(screen.getByRole('option', { name: label }))
 }
 
 function chooseModel(id: string) {
-  fireEvent.click(screen.getByLabelText('模型'))
-  fireEvent.change(screen.getByRole('combobox', { name: '搜尋模型' }), { target: { value: id } })
+  fireEvent.click(screen.getByLabelText('選擇模型'))
+  fireEvent.change(screen.getByRole('combobox', { name: '搜尋模型名稱或供應商' }), { target: { value: id } })
   const typed = screen.queryByRole('option', { name: `使用「${id}」` })
   fireEvent.click(typed ?? document.querySelector(`[data-value="${CSS.escape(id)}"]`)!)
 }
@@ -68,7 +69,7 @@ function chooseModel(id: string) {
 /** 選服務 → 貼金鑰 → 選模型 (the model list loads after the key). */
 async function fillForm(key = 'sk-or-new-key') {
   chooseService('OpenRouter')
-  fireEvent.change(screen.getByLabelText('貼上新的 API 金鑰'), { target: { value: key } })
+  fireEvent.change(keyField(), { target: { value: key } })
   await waitFor(() => expect(models).toHaveBeenCalled(), { timeout: 2000 })
   chooseModel('google/gemini-2.5-flash')
 }
@@ -79,7 +80,8 @@ test('a teacher who never set a key uses the system AI, with no usage block (A01
   await openPage(systemFresh)
   expect(radio('系統提供')).toBeChecked()
   expect(screen.getByText('system-model')).toBeInTheDocument()
-  expect(screen.getByText('可直接使用')).toBeInTheDocument()
+  expect(screen.getByText(/可直接使用/)).toBeInTheDocument()
+  expect(screen.getByText('學生的對話已可使用 AI。你不需要設定，也不需要準備金鑰。')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '一個設定，全部 AI 都能用' })).toBeInTheDocument()
   expect(screen.queryByText('我的用量')).not.toBeInTheDocument()
   expect(usage).not.toHaveBeenCalled()
@@ -98,7 +100,7 @@ test('with the switch off and no key, the system AI is greyed out and the form s
 test('the switch turned off after choosing the system AI warns and keeps the key to switch back to', async () => {
   await openPage({ ...systemKept, system: SYSTEM_OFF })
   expect(screen.getByRole('status')).toHaveTextContent('系統提供目前沒有開放，學生的對話暫時不能使用 AI。請改用自己的金鑰。')
-  expect(screen.getByText('已保留的金鑰：OpenRouter・google/gemini-2.5-flash・末四碼 7K2M')).toBeInTheDocument()
+  expect(screen.getByText(/已保留的金鑰：OpenRouter\s+·\s+google\/gemini-2\.5-flash\s+·\s+末四碼 7K2M/)).toBeInTheDocument()
   expect(radio('系統提供')).toBeChecked()
   expect(radio('系統提供')).toBeDisabled()
   setMode.mockResolvedValue(ownInUse)
@@ -118,7 +120,7 @@ test('choosing the system AI asks first with the rewritten copy (改回系統提
   setMode.mockResolvedValue(systemKept)
   await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: '確認' })) })
   expect(setMode).toHaveBeenCalledWith('system')
-  expect(screen.getByText('已保留的金鑰：OpenRouter・google/gemini-2.5-flash・末四碼 7K2M')).toBeInTheDocument()
+  expect(screen.getByText(/已保留的金鑰：OpenRouter\s+·\s+google\/gemini-2\.5-flash\s+·\s+末四碼 7K2M/)).toBeInTheDocument()
   expect(screen.queryByText('我的用量')).not.toBeInTheDocument()
 })
 
@@ -135,7 +137,7 @@ test('switching back to a kept key needs no form', async () => {
   setMode.mockResolvedValue(ownInUse)
   await act(async () => { fireEvent.click(radio('自己的金鑰')) })
   expect(setMode).toHaveBeenCalledWith('own')
-  expect(screen.getByText('已連線，套用到全部 AI')).toBeInTheDocument()
+  expect(screen.getByText(/已連線，套用到全部 AI/)).toBeInTheDocument()
   expect(screen.queryByRole('form')).not.toBeInTheDocument()
 })
 
@@ -163,27 +165,27 @@ test('the own key in use shows the connected card (A08)', async () => {
   expect(screen.getByText('OpenRouter')).toBeInTheDocument()
   expect(screen.getByText('•••• •••• 7K2M')).toBeInTheDocument()
   expect(screen.getByText('已加密保存')).toBeInTheDocument()
-  expect(screen.getByText('已連線，套用到全部 AI')).toBeInTheDocument()
+  expect(screen.getByText(/已連線，套用到全部 AI/)).toBeInTheDocument()
   expect(usage).toHaveBeenCalledTimes(1)
 })
 
 test('a key that no longer works says so', async () => {
   await openPage({ ...ownInUse, own: { ...OWN, key_usable: false } })
-  expect(screen.getByText('金鑰已失效，請更換金鑰')).toBeInTheDocument()
+  expect(screen.getByText(/金鑰已失效，請更換金鑰/)).toBeInTheDocument()
 })
 
 // ---- 設定表單 ----------------------------------------------------------------------------------
 
 test('the form goes service → key → model, with no model picked for the teacher', async () => {
   await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
-  expect(screen.getByLabelText('模型')).toBeDisabled()
-  expect(screen.getByLabelText('貼上新的 API 金鑰')).toBeDisabled()
+  expect(screen.getByLabelText('選擇模型')).toBeDisabled()
+  expect(keyField()).toBeDisabled()
   chooseService('OpenRouter')
   expect(screen.getByRole('link', { name: '取得 OpenRouter 金鑰 ↗' })).toHaveAttribute('href', 'https://openrouter.ai/settings/keys')
-  expect(screen.getByLabelText('模型')).toBeDisabled()
-  fireEvent.change(screen.getByLabelText('貼上新的 API 金鑰'), { target: { value: 'sk-or-new-key' } })
-  await waitFor(() => expect(screen.getByLabelText('模型')).toBeEnabled(), { timeout: 2000 })
-  expect(screen.getByLabelText('模型')).toHaveTextContent('請選擇模型')
+  expect(screen.getByLabelText('選擇模型')).toBeDisabled()
+  fireEvent.change(keyField(), { target: { value: 'sk-or-new-key' } })
+  await waitFor(() => expect(screen.getByLabelText('選擇模型')).toBeEnabled(), { timeout: 2000 })
+  expect(screen.getByLabelText('選擇模型')).toHaveTextContent('請選擇模型')
   expect(screen.getByRole('button', { name: '套用' })).toBeDisabled()
   chooseModel('google/gemini-2.5-flash')
   expect(screen.getByRole('button', { name: '套用' })).toBeEnabled()
@@ -192,7 +194,7 @@ test('the form goes service → key → model, with no model picked for the teac
 test('a free model is marked as likely rate-limited', async () => {
   await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
   await fillForm()
-  fireEvent.click(screen.getByLabelText('模型'))
+  fireEvent.click(screen.getByLabelText('選擇模型'))
   expect(screen.getByText('免費・可能限流')).toBeInTheDocument()
 })
 
@@ -202,7 +204,10 @@ test('testing shows 正在連線 then 連線成功', async () => {
   let finish!: () => void
   probe.mockReturnValue(new Promise(resolve => { finish = () => resolve({ ok: true }) }))
   fireEvent.click(screen.getByRole('button', { name: '測試' }))
-  expect(screen.getByRole('button', { name: '正在連線…' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '正在連線⋯' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: '測試' })).toBeDisabled()
+  expect(screen.getByText('請稍候，這通常只需幾秒。')).toBeInTheDocument()
+  expect(screen.getByText('測試中，尚未變更目前連線')).toBeInTheDocument()
   await act(async () => { finish() })
   expect(screen.getByRole('status')).toHaveTextContent('連線成功')
   expect(probe).toHaveBeenCalledWith({ adapter: 'openrouter', model: 'google/gemini-2.5-flash', api_key: 'sk-or-new-key' })
@@ -213,27 +218,29 @@ test('an invalid key marks only the key field, no banner (A11)', async () => {
   await fillForm()
   probe.mockRejectedValue(new ApiError(424, 'AI_CONNECTION_KEY_INVALID'))
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '測試' })) })
-  expect(screen.getByLabelText('貼上新的 API 金鑰')).toHaveAttribute('aria-invalid', 'true')
+  expect(keyField()).toHaveAttribute('aria-invalid', 'true')
   expect(screen.getByText('金鑰無效，請重新貼上後再試一次。')).toBeInTheDocument()
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   expect(screen.getByRole('heading', { name: '確認金鑰來源' })).toBeInTheDocument()
 })
 
 test.each([
-  ['AI_CONNECTION_QUOTA', '這個服務帳號目前無可用額度。', '補充額度後再試'],
-  ['AI_CONNECTION_UNREACHABLE', '暫時連不上服務，原本的連線沒有變更，請稍後再試。', '可以先繼續教學'],
-  ['AI_CONNECTION_TIMEOUT', '服務太久沒有回應，原本的連線沒有變更，請稍後再試。', '可以先繼續教學'],
+  ['AI_CONNECTION_QUOTA', 'OpenRouter 額度已用完。請先到服務後台補充額度，再重新測試。現階段未儲存，也未切換連線。', '補充額度後再試'],
+  ['AI_CONNECTION_UNREACHABLE', '暫時連不上 OpenRouter。請稍後重試，或檢查網路連線。現階段未儲存，也未切換連線。', '可以先繼續教學'],
+  ['AI_CONNECTION_TIMEOUT', 'OpenRouter 太久沒有回應。請稍後重試，或檢查網路連線。現階段未儲存，也未切換連線。', '可以先繼續教學'],
 ])('a failed apply (%s) leaves the system AI in use and says so (A10, A12)', async (code, message, card) => {
   await openPage(systemFresh)
   fireEvent.click(radio('自己的金鑰'))
   await fillForm()
   apply.mockRejectedValue(new ApiError(424, code))
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '套用' })) })
-  const alert = screen.getByRole('alert')
-  expect(alert).toHaveTextContent(message)
-  expect(alert).toHaveTextContent('尚未切換服務，目前仍使用系統提供。')
+  expect(screen.getByRole('alert')).toHaveTextContent(message)
+  expect(screen.getByText('尚未切換服務，目前仍使用系統提供。')).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: card })).toBeInTheDocument()
-  expect(form()).toBeInTheDocument()
+  expect(screen.getByRole('form', { name: '檢查連線設定' })).toBeInTheDocument()
+  expect(screen.getByText('目前尚未儲存這把金鑰。')).toBeInTheDocument()
+  // 改了欄位才能再套用（A10–A12 的套用是灰的）
+  expect(screen.getByRole('button', { name: '套用' })).toBeDisabled()
 })
 
 test('the first setup applies without asking', async () => {
@@ -244,16 +251,18 @@ test('the first setup applies without asking', async () => {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '套用' })) })
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(apply).toHaveBeenCalledWith({ adapter: 'openrouter', model: 'google/gemini-2.5-flash', api_key: 'sk-or-new-key' })
-  expect(screen.getByText('已連線，套用到全部 AI')).toBeInTheDocument()
+  expect(screen.getByText(/已連線，套用到全部 AI/)).toBeInTheDocument()
 })
 
 test('replacing the key in use asks first (B01)', async () => {
   await openPage(ownInUse)
   fireEvent.click(screen.getByRole('button', { name: '更換金鑰或模型' }))
-  expect(screen.getByText('目前模型設定：OpenRouter・google/gemini-2.5-flash・金鑰末四碼 7K2M')).toBeInTheDocument()
+  expect(screen.getByText(/目前模型設定：OpenRouter\s+·\s+google\/gemini-2\.5-flash\s+·\s+金鑰末四碼 7K2M/)).toBeInTheDocument()
   await fillForm()
   fireEvent.click(screen.getByRole('button', { name: '套用' }))
   const dialog = screen.getByRole('dialog', { name: '確認更換金鑰或模型？' })
+  expect(dialog).toHaveTextContent('新設定驗證成功後才會套用。')
+  expect(dialog).toHaveTextContent('若更換失敗，系統會維持原有的模型設定，您仍可繼續使用目前的連線。')
   expect(apply).not.toHaveBeenCalled()
   apply.mockResolvedValue(ownInUse)
   await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: '確認' })) })
@@ -264,7 +273,7 @@ test('a blank key keeps the saved one for the same service', async () => {
   await openPage(ownInUse)
   fireEvent.click(screen.getByRole('button', { name: '更換金鑰或模型' }))
   chooseService('OpenRouter')
-  expect(screen.getByText('若只換模型，可保留原服務與已儲存的金鑰（末四碼 7K2M）。')).toBeInTheDocument()
+  expect(screen.getByText('若只換模型，可保留原服務與已儲存的金鑰。')).toBeInTheDocument()
   await waitFor(() => expect(models).toHaveBeenCalledWith({ adapter: 'openrouter' }))
 })
 
@@ -307,12 +316,12 @@ async function openUsage(found: AIConnectionUsageView, own = OWN) {
 
 test('a key with a limit shows used, limit and remaining (A08)', async () => {
   const panel = await openUsage(limited(37.6, { used: 12.4, limit_reset: 'monthly' }))
-  expect(panel).toHaveTextContent('OpenRouter 帳號・美元 USD・不分課程或學生')
+  expect(panel).toHaveTextContent('OpenRouter 帳號 · 美元 USD · 不分課程或學生')
   expect(panel).toHaveTextContent('$12.40')
   expect(panel).toHaveTextContent('$50.00')
   expect(panel).toHaveTextContent('$37.60')
   expect(panel).toHaveTextContent('每月重置')
-  expect(panel).toHaveTextContent('已使用 24.8%・依 OpenRouter 金鑰上限計算')
+  expect(panel).toHaveTextContent('已使用 24.8% · 依 OpenRouter 金鑰上限計算')
   expect(screen.queryByText('需要注意')).not.toBeInTheDocument()
 })
 
@@ -325,7 +334,7 @@ test('a key without a limit shows only what it used (C01)', async () => {
 
 test('less than 10% left warns at the top (C02)', async () => {
   await openUsage(limited(4))
-  expect(screen.getByRole('status')).toHaveTextContent('OpenRouter 額度剩不到 10%')
+  expect(screen.getByRole('status')).toHaveTextContent('剩餘額度不到 10%：剩下 $4.00（8.0%）。請前往 OpenRouter 補充額度，避免學生對話中斷。')
 })
 
 test('nothing left shows $0.00, a full bar and the top-up link', async () => {
@@ -340,6 +349,7 @@ test('nothing left shows $0.00, a full bar and the top-up link', async () => {
 test('another service cannot report a balance (C03)', async () => {
   const panel = await openUsage({ ...NO_USAGE, status: 'unsupported', adapter: 'openai' }, { ...OWN, adapter: 'openai', name: 'OpenAI' })
   expect(panel).toHaveTextContent('這個服務查不到餘額')
+  expect(panel).toHaveTextContent('無法在此取得總花費與剩餘額度，請到服務後台查看。')
   expect(within(panel).getByRole('link', { name: '前往 OpenAI 後台查看 ↗' })).toHaveAttribute('href', 'https://platform.openai.com/usage')
 })
 

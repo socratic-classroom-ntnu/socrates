@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import math
 import os
 import socket
 import time
@@ -388,6 +389,15 @@ def _estimated_cost(binding: dict, usage: dict) -> float | None:
     )
 
 
+def _reported_cost(adapter: str, usage: dict) -> float | None:
+    """What OpenRouter charged for this call (`usage.cost`, US dollars, sent on every response);
+    None when it did not say or for another service, whose `cost` would mean something else."""
+    cost = usage.get("cost") if adapter == "openrouter" and isinstance(usage, dict) else None
+    if isinstance(cost, bool) or not isinstance(cost, (int, float)):
+        return None
+    return float(cost) if math.isfinite(cost) and cost >= 0 else None
+
+
 async def generate(binding, messages, schema, on_delta):
     started = time.monotonic()
     adapter = binding["adapter"]
@@ -417,6 +427,7 @@ async def generate(binding, messages, schema, on_delta):
 def _audit(binding, usage: dict, actual_model, started: float) -> dict:
     adapter = binding["adapter"]
     reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
+    cost = _reported_cost(adapter, usage)
     return {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
@@ -432,7 +443,7 @@ def _audit(binding, usage: dict, actual_model, started: float) -> dict:
         "reasoning_budget_tokens": (
             env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024) if adapter == "openrouter" else None
         ),
-        "estimated_cost": _estimated_cost(binding, usage),
+        "estimated_cost": cost if cost is not None else _estimated_cost(binding, usage),
         "fallback_used": False,
     }
 

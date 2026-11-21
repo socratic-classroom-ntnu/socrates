@@ -10,7 +10,9 @@ const FOLLOW_LATEST_THRESHOLD = 96
 
 /** Where a jump lands. Written as one function so a later one can aim at a sentence instead of a scenario's start. */
 export function scrollToTarget(container: HTMLElement, target: HTMLElement) {
-  container.scrollTop = Math.max(0, target.offsetTop - 12)
+  // Smooth, so the reader sees how far the scenario was and which way; not for whoever asked their system for less motion.
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  container.scrollTo({ top: Math.max(0, target.offsetTop - 12), behavior: reduced ? 'auto' : 'smooth' })
 }
 
 export type ChatHandle = { jumpToScenario(index: number): void }

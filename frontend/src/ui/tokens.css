@@ -46,4 +46,14 @@
   --ui-color-ended-ink: #A3311A;
   --ui-color-warn-soft: #FFF3D4;
   --ui-color-warn-ink: #6E4B0B;
+  /* 教師「完整對話」頁用的：學生對話頁（solo.css）已經在用的米白、深綠、木框黑板與黃泡泡，值照 Figma classroom/* */
+  --ui-classroom-paper: #FFFDF8;
+  --ui-classroom-line: #DDD5C6;
+  --ui-classroom-board-green: #2F4A3F;
+  --ui-classroom-gold: #E8C46A;
+  --ui-classroom-ink: #1E1C18;
+  --ui-classroom-chalk: #EFEBE0;
+  --ui-classroom-panel: #ECE6DA;
+  --ui-classroom-wood: #6E5034;
+  --ui-classroom-hint: #F3DFA8;
 }

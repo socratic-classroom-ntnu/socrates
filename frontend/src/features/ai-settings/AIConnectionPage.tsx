@@ -29,6 +29,8 @@ export function AIConnectionPage() {
   const [confirmSystem, setConfirmSystem] = useState(false)
   const [switching, setSwitching] = useState(false)
   const [switchFailed, setSwitchFailed] = useState<string | null>(null)
+  // B06：剛從自己的金鑰改回系統提供，頁首說明換一句。
+  const [backToSystem, setBackToSystem] = useState(false)
   const [form, setForm] = useState<FormState>(IDLE)
   const [usage, setUsage] = useState<Usage | null>(null)
 
@@ -72,6 +74,7 @@ export function AIConnectionPage() {
     setSwitchFailed(null)
     try {
       show(await setAIConnectionMode(mode))
+      setBackToSystem(mode === 'system')
     } catch (problem) {
       setSwitchFailed(failureText(problem).message)
     } finally {
@@ -85,6 +88,7 @@ export function AIConnectionPage() {
       else { setChoosingOwn(false); setEditing(null); setForm(IDLE) }
       return
     }
+    setBackToSystem(false)
     if (view?.mode === 'system' && keptUsable) void switchTo('own')
     else setChoosingOwn(true)
   }
@@ -97,7 +101,8 @@ export function AIConnectionPage() {
           : failure.message)
     : null
   const lead = failure && view.mode === 'system' ? 'aiSettings.leadNotSwitched'
-    : formShown ? 'aiSettings.leadForm' : view.mode === 'own' ? 'aiSettings.leadOwn' : 'aiSettings.leadSystem'
+    : formShown ? 'aiSettings.leadForm' : view.mode === 'own' ? 'aiSettings.leadOwn'
+      : backToSystem ? 'aiSettings.leadBackToSystem' : 'aiSettings.leadSystem'
   const remaining = ownUsage?.remaining ?? 0
 
   return <main className={styles.page}>
@@ -208,8 +213,9 @@ function OwnCard({ view, onReplace, onAdvanced }: { view: AIConnectionView; onRe
   </section>
 }
 
-function SideCard({ title, tone, children }: { title: string; tone?: 'soft'; children: ReactNode }) {
-  return <aside className={`${styles.card} ${styles.side}`} data-tone={tone}>
+/** 說明卡：預設和左邊表單一樣高（A02–A07）；失敗時的卡片（A10–A12）只有自己的高度。 */
+function SideCard({ title, tone, fit, children }: { title: string; tone?: 'soft'; fit?: boolean; children: ReactNode }) {
+  return <aside className={`${styles.card} ${styles.side}`} data-tone={tone} data-fit={fit}>
     <h2 className={styles.sideTitle}>{title}</h2>
     {children}
   </aside>
@@ -223,13 +229,13 @@ function FormSide({ view, form }: { view: AIConnectionView; form: FormState }) {
   const fromSystem = view.mode === 'system'
   const code = form.failure?.code
   if (code === 'AI_CONNECTION_QUOTA') {
-    return <SideCard title={t('aiSettings.quotaTitle')}>
+    return <SideCard title={t('aiSettings.quotaTitle')} fit>
       <p className={styles.sideText}>{t(fromSystem ? 'aiSettings.quotaBody' : 'aiSettings.quotaBodyOwn')}</p>
       <span className={styles.sideFoot}><TopUp adapter={form.adapter} short /></span>
     </SideCard>
   }
   if (code === 'AI_CONNECTION_KEY_INVALID') {
-    return <SideCard title={t('aiSettings.keySourceTitle')}>
+    return <SideCard title={t('aiSettings.keySourceTitle')} fit>
       <p className={styles.sideText}>{t('aiSettings.keySourceBody', { service })}</p>
       {KEY_PAGES[form.adapter] && <span className={styles.sideFoot}>
         <a className={styles.link} href={KEY_PAGES[form.adapter]} target="_blank" rel="noreferrer">{t('aiSettings.keyPage')}</a>
@@ -237,7 +243,7 @@ function FormSide({ view, form }: { view: AIConnectionView; form: FormState }) {
     </SideCard>
   }
   if (code === 'AI_CONNECTION_UNREACHABLE' || code === 'AI_CONNECTION_TIMEOUT') {
-    return <SideCard title={t('aiSettings.offlineTitle')}>
+    return <SideCard title={t('aiSettings.offlineTitle')} fit>
       <p className={styles.sideText}>{t(fromSystem ? 'aiSettings.offlineBody' : 'aiSettings.offlineBodyOwn')}</p>
     </SideCard>
   }
@@ -258,6 +264,10 @@ function FormSide({ view, form }: { view: AIConnectionView; form: FormState }) {
     </>}
     {form.busy
       ? <div className={styles.sideFoot}><p className={styles.testingNote}>{t('aiSettings.testingNote')}</p></div>
-      : !form.adapter && <p className={`${styles.sideFoot} ${styles.sideHint}`}>{t('aiSettings.keyAfterService')}</p>}
+      : !form.adapter
+        ? <p className={`${styles.sideFoot} ${styles.sideHint}`}>{t('aiSettings.keyAfterService')}</p>
+        : KEY_PAGES[form.adapter] && <p className={`${styles.sideFoot} ${styles.sideHint}`}>
+          <a className={styles.link} href={KEY_PAGES[form.adapter]} target="_blank" rel="noreferrer">{t('aiSettings.getKeyShort')}</a>
+        </p>}
   </SideCard>
 }

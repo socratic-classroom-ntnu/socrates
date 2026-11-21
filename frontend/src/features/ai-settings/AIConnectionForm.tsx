@@ -7,7 +7,7 @@ import {
 import { useT } from '../../i18n/useT'
 import { Button, describedBy, Field, FieldError, FieldHint, PasswordInput, Select } from '../../ui'
 import styles from './AIConnection.module.css'
-import { ADAPTERS, COMPATIBLE, FIELD_OF, KEY_PAGES, useFailureText, useServiceName, type FieldName } from './aiConnectionServices'
+import { ADAPTERS, COMPATIBLE, FIELD_OF, useFailureText, useServiceName, type FieldName } from './aiConnectionServices'
 import { ConnectionAlert } from './ConnectionAlert'
 import { ConnectionModelPicker, type ModelList } from './ConnectionModelPicker'
 
@@ -151,32 +151,32 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
 
   const fieldWithError = failure ? FIELD_OF[failure.code] : undefined
   const errorOn = (name: FieldName) => (fieldWithError === name ? failure?.message ?? '' : null)
+  // A02：沒選服務時提醒步驟；有自己的金鑰時提醒可以只換模型（A04–A07）；失敗時說這把金鑰還沒存（A10、A12）。
   const keyHint = errorOn('apiKey') ? null
-    : keepsKey && !form.apiKey.trim() ? t('aiSettings.keepKeyHint')
-      : failure && form.apiKey.trim() ? t('aiSettings.keyNotSaved') : null
+    : failure ? (form.apiKey.trim() ? t('aiSettings.keyNotSaved') : null)
+      : !form.adapter ? t('aiSettings.formHint')
+        : own ? t('aiSettings.keepKeyHint') : null
   const title = t(failure ? 'aiSettings.checkTitle' : own ? 'aiSettings.formTitle' : 'aiSettings.setupTitle')
 
   return <>
     <form aria-label={title} autoComplete="off" className={`${styles.card} ${styles.form}`} onSubmit={submit}>
       <h2 className={styles.cardTitle}>{title}</h2>
-      <div className={styles.fieldRow}>
+      <div className={styles.fields} data-advanced={showAdvanced}>
         <Field id="ai-adapter" label={t('aiSettings.serviceLabel')} invalid={Boolean(errorOn('adapter'))}>
           <Select
             id="ai-adapter"
+            className={styles.select}
             value={form.adapter}
             listLabel={t('aiSettings.serviceLabel')}
             placeholder={t('aiSettings.pickService')}
             options={ADAPTERS.map(adapter => ({ value: adapter, label: serviceName(adapter) }))}
             invalid={Boolean(errorOn('adapter'))}
-            describedBy={describedBy(errorOn('adapter') && 'ai-adapter-error', KEY_PAGES[form.adapter] && 'ai-adapter-hint')}
+            describedBy={errorOn('adapter') ? 'ai-adapter-error' : undefined}
             onChange={adapter => edit('adapter', adapter)}
           />
           {errorOn('adapter') && <FieldError id="ai-adapter-error">{errorOn('adapter')}</FieldError>}
-          {KEY_PAGES[form.adapter] && <FieldHint id="ai-adapter-hint">
-            <a className={styles.link} href={KEY_PAGES[form.adapter]} target="_blank" rel="noreferrer">{t('aiSettings.getKey', { service })}</a>
-          </FieldHint>}
         </Field>
-        <Field id="ai-model" label={t('aiSettings.modelLabel')} invalid={Boolean(errorOn('model'))}>
+        <Field id="ai-model" className={styles.modelField} label={t('aiSettings.modelLabel')} invalid={Boolean(errorOn('model'))}>
           <ConnectionModelPicker
             id="ai-model"
             value={form.model}
@@ -190,8 +190,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
           {errorOn('model') && <FieldError id="ai-model-error">{errorOn('model')}</FieldError>}
           {hasSource && !canList && <FieldHint id="ai-model-hint">{t('aiSettings.needKeyForModels')}</FieldHint>}
         </Field>
-      </div>
-      <Field id="ai-apiKey" label={t(own && !failure ? 'aiSettings.pasteKey' : 'aiSettings.keyLabel')} invalid={Boolean(errorOn('apiKey'))}>
+      <Field id="ai-apiKey" className={styles.keyField} label={t(own && !failure ? 'aiSettings.pasteKey' : 'aiSettings.keyLabel')} invalid={Boolean(errorOn('apiKey'))}>
         <div className={styles.keyRow}>
           <PasswordInput
             id="ai-apiKey"
@@ -213,8 +212,10 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
         {keyHint && <FieldHint id="ai-apiKey-hint">{keyHint}</FieldHint>}
         {tested && <div className={styles.tested}><ConnectionAlert tone="done" role="status">{t('aiSettings.tested')}</ConnectionAlert></div>}
       </Field>
-      {!ready && !failure && <p className={styles.meta}>{t('aiSettings.formHint')}</p>}
+      </div>
+      {/* B03：展開後「進階設定 ⌃」移到分隔線上面當標題，按鈕列不再放它 */}
       {showAdvanced && <div className={styles.advanced}>
+        <button type="button" className={styles.advancedHead} aria-expanded onClick={() => setShowAdvanced(false)}>{t('aiSettings.advanced')}{'  ⌃'}</button>
         <Field id="ai-name" label={t('aiSettings.name')} invalid={Boolean(errorOn('name'))}>
           <input
             id="ai-name"
@@ -224,9 +225,9 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
             maxLength={100}
             onChange={event => edit('name', event.target.value)}
             aria-invalid={errorOn('name') ? true : undefined}
-            aria-describedby={errorOn('name') ? 'ai-name-error' : 'ai-name-hint'}
+            aria-describedby={errorOn('name') ? 'ai-name-error' : undefined}
           />
-          {errorOn('name') ? <FieldError id="ai-name-error">{errorOn('name')}</FieldError> : <FieldHint id="ai-name-hint">{t('aiSettings.nameHint')}</FieldHint>}
+          {errorOn('name') && <FieldError id="ai-name-error">{errorOn('name')}</FieldError>}
         </Field>
         {form.adapter === COMPATIBLE && <Field id="ai-baseUrl" label={t('aiSettings.baseUrl')} invalid={Boolean(errorOn('baseUrl'))}>
           <input
@@ -251,9 +252,9 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
           </Button>
         </div>
         : <div className={styles.actions}>
-          <button type="button" className={styles.textButton} aria-expanded={showAdvanced} onClick={() => setShowAdvanced(open => !open)}>
-            {t('aiSettings.advanced')}{showAdvanced ? ' ˄' : '↗'}
-          </button>
+          {!showAdvanced && <button type="button" className={styles.textButton} aria-expanded={false} onClick={() => setShowAdvanced(true)}>
+            {t('aiSettings.advanced')}↗
+          </button>}
           <span className={styles.spacer} />
           {onCancel && <Button variant="outline" className={styles.smallButton} onClick={onCancel}>{t('aiSettings.cancel')}</Button>}
           <Button type="submit" variant="primary" className={styles.smallButton} disabled={!ready || Boolean(failure)}>{t('aiSettings.apply')}</Button>

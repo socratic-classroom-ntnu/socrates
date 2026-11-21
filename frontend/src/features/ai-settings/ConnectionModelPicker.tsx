@@ -24,13 +24,13 @@ export function ConnectionModelPicker({ id, value, list, service, disabled, inva
   const models = list.state === 'ready' ? list.models : []
   return <Select
     id={id}
+    className={styles.select}
     value={value}
     listLabel={t('aiSettings.model')}
     placeholder={t(service ? 'aiSettings.pickModel' : 'aiSettings.pickServiceFirst')}
     disabled={disabled}
     invalid={invalid}
     describedBy={describedBy}
-    align="end"
     search={{ label: t('aiSettings.searchModels'), placeholder: `${t('aiSettings.searchModels')}…` }}
     typedLabel={text => t('aiSettings.useTyped', { id: text })}
     options={models.map(model => ({

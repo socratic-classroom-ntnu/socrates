@@ -6,11 +6,11 @@
 .header { display: flex; flex-direction: column; }
 .breadcrumb { display: flex; gap: 8px; font-size: 12px; line-height: 1.5; color: var(--ui-color-muted); }
 .title { margin: 6px 0 0; font-size: 30px; line-height: 1.5; color: var(--ui-color-dark); }
-.lead { margin: 4px 0 0; font-size: 15px; line-height: 1.5; color: var(--ui-color-muted); }
+.lead { margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: var(--ui-color-muted); }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* 頁首下方：提示訊息與兩張單選卡 */
-.top { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.top { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
 
 /* Figma 元件「提示訊息」：一行、圖示＋粗體 13px */
 .alert { box-sizing: border-box; min-height: 42px; padding: 12px 14px; border-radius: 10px; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 700; line-height: 1.4; }
@@ -21,23 +21,27 @@
 .alert a { margin-left: 6px; color: inherit; }
 .alert > span { white-space: pre-wrap; }
 
-/* 單選卡（Figma 1364:28963）。暫代版：ui/RadioCards 進 develop 後換成它，這段一起拿掉 */
-.modes { margin: 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.modeCard { box-sizing: border-box; height: 54px; padding: 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--ui-color-line); border-radius: 8px; background: var(--ui-color-panel); cursor: pointer; }
-.modeCard > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 14px; color: var(--ui-color-ink); }
-.modeCard > span > span { font-size: 13px; color: var(--ui-color-muted); }
-.modeCard input { appearance: none; flex-shrink: 0; width: 16px; height: 16px; margin: 0; border: 1.5px solid var(--ui-color-border); border-radius: 50%; background: var(--ui-color-panel); cursor: inherit; }
-.modeCard[data-checked='true'] { border-color: var(--ui-color-primary); background: var(--ui-color-primary-soft); }
-.modeCard[data-checked='true'] b { font-weight: 700; }
-.modeCard:not([data-checked='true']) b { font-weight: 400; }
-.modeCard[data-checked='true'] input { border: 0; background: radial-gradient(circle, var(--ui-color-panel) 0 3px, var(--ui-color-primary) 3.5px); }
-.modeCard[data-disabled='true'] { cursor: not-allowed; opacity: 0.55; }
+/* 單選卡（Figma 1364:28963）。class 名稱對應 ui/RadioCards 的 .fieldset／.options／.card／.content／.label／.description，
+   它進 develop 後這段改成傳給它的 className */
+.modes { min-width: 0; margin: 0; padding: 0; border: 0; }
+.modeOptions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.modeCard { box-sizing: border-box; min-width: 0; min-height: 54px; padding: 8px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--ui-color-line); border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-ink); cursor: pointer; }
+.modeContent { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.modeLabel { font-size: 14px; font-weight: 400; line-height: 1.25; }
+.modeDescription { font-size: 13px; line-height: 1.25; color: var(--ui-color-muted); }
+.modeCard input { appearance: none; box-sizing: border-box; flex-shrink: 0; width: 16px; height: 16px; margin: 0; border: 1.5px solid var(--ui-color-border); border-radius: 50%; background: var(--ui-color-panel); cursor: inherit; }
+.modeCard:has(input:checked) { border-color: var(--ui-color-primary); background: var(--ui-color-primary-soft); }
+.modeCard:has(input:checked) .modeLabel { font-weight: 700; }
+.modeCard input:checked { border: 0; background: radial-gradient(circle, var(--ui-color-panel) 0 3px, var(--ui-color-primary) 3.5px); }
+.modeCard:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
+.modes:disabled .modeCard { cursor: progress; }
 .modeCard:has(input:focus-visible) { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
 
-/* 內容：單選卡下方 40 */
-.stack { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+/* 內容：單選卡下方 46（Figma 單選卡外框 60 高＋40） */
+.stack { margin-top: 46px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .stack .stack, .columns .stack { margin-top: 0; }
-.columns { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 612fr) minmax(0, 332fr); gap: 24px; align-items: start; }
+.columns { margin-top: 46px; display: grid; grid-template-columns: minmax(0, 612fr) minmax(0, 332fr); gap: 24px; align-items: stretch; }
+.columns > .stack { align-self: start; }
 /* Figma 只畫 1280 寬：視窗窄時右側說明卡排到下面，不出現左右捲動 */
 @media (max-width: 1100px) { .columns { grid-template-columns: minmax(0, 1fr); } .columns > span:empty { display: none; } }
 .stack > .columns { margin-top: 0; }
@@ -53,47 +57,81 @@
 .textButton:hover { text-decoration: underline; }
 
 /* A01 系統提供 */
-.systemCard { position: relative; padding: 19px 23px 17px; }
+.systemCard { position: relative; min-height: 172px; padding: 19px 23px 20px; }
 .inUse { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.5; color: var(--ui-color-primary); }
-.systemTitle { margin: 6px 0 0; font-size: 22px; line-height: 1.5; color: var(--ui-color-dark); }
-.systemModel { margin: 14px 0 8px; display: flex; align-items: baseline; gap: 28px; }
+.systemTitle { margin: 8px 0 0; font-size: 22px; line-height: 1.5; color: var(--ui-color-dark); }
+.systemModel { margin: 13px 0 11px; display: flex; align-items: baseline; gap: 40px; }
 .systemModel span { font-size: 13px; color: var(--ui-color-muted); }
 .systemModel b { font-size: 16px; font-weight: 500; color: var(--ui-color-dark); }
-.readyPill { position: absolute; top: 23px; right: 23px; padding: 5px 12px; border-radius: 8px; background: var(--ui-color-primary-soft); font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--ui-color-primary); white-space: pre; }
+.readyPill { position: absolute; top: 23px; right: 23px; box-sizing: border-box; min-width: 126px; height: 32px; padding: 5px 12px; border-radius: 8px; background: var(--ui-color-primary-soft); font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--ui-color-primary); white-space: pre; }
 
 /* A08 自己的金鑰 */
-.ownCard { padding: 16px 23px 20px; }
+.ownCard { min-height: 206px; padding: 16px 23px 21px; }
 .replaceButton { min-width: 164px; justify-content: flex-start; }
-.facts { margin: 22px 0 0; display: grid; grid-template-columns: 296fr 344fr 280fr; gap: 0 16px; }
+/* 欄的起點照 Figma（23、319、663），中間留 16 讓窄視窗時長的模型代碼不會貼到下一欄 */
+.facts { margin: 25px 0 0; display: grid; grid-template-columns: 280fr 328fr 280fr; gap: 0 16px; }
 .facts dt { font-size: 13px; line-height: 1.5; color: var(--ui-color-muted); }
-.facts dd { margin: 6px 0 0; font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--ui-color-dark); overflow-wrap: anywhere; }
-.facts .small { display: block; margin-top: 2px; }
-.cardFoot { margin-top: 2px; }
+.facts dd { margin: 7px 0 0; font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--ui-color-dark); overflow-wrap: anywhere; }
+.facts .small { display: block; margin-top: 4px; }
+.cardFoot { margin-top: 6px; }
 .status { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--ui-color-primary); white-space: pre; }
 .status[data-ok='false'] { color: var(--ui-color-error-ink); }
 
 /* 右側說明卡 332 寬 */
-.side { min-height: 218px; padding: 21px 23px 23px; display: flex; flex-direction: column; }
-.side[data-tone='soft'] { min-height: 0; border-color: var(--ui-color-primary-soft); background: var(--ui-color-primary-soft); }
+.side { min-height: 218px; padding: 21px 23px 28px; display: flex; flex-direction: column; }
+.side[data-fit='true'] { align-self: start; min-height: 264px; }
+.side[data-tone='soft'] { min-height: 132px; padding: 18px 24px; border-color: var(--ui-color-primary-soft); background: var(--ui-color-primary-soft); }
 .sideTitle { margin: 0 0 16px; font-size: 18px; line-height: 1.5; color: var(--ui-color-dark); }
 .sideSubtitle { margin: 16px 0 10px; font-size: 17px; line-height: 1.5; color: var(--ui-color-dark); }
 .sideText { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ui-color-muted); white-space: pre-line; }
 .sideFoot { margin-top: auto; padding-top: 24px; }
 .sideStrong { margin-bottom: 0; font-size: 14px; font-weight: 700; color: var(--ui-color-dark); }
-.sideHint { margin-bottom: 0; font-size: 14px; font-weight: 500; color: var(--ui-color-muted); }
+.sideHint { margin-bottom: 0; padding-bottom: 18px; font-size: 14px; font-weight: 500; color: var(--ui-color-muted); }
 .testingNote { margin: 0 -9px; padding: 9px 14px; border-radius: 8px; background: var(--ui-color-primary-soft); font-size: 13px; color: var(--ui-color-primary); }
 
 /* 設定表單（A02） */
-.form { padding: 19px 23px 23px; display: flex; flex-direction: column; gap: 18px; }
-.fieldRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.form { padding: 19px 23px 29px; display: flex; flex-direction: column; gap: 19px; }
+/* 服務、模型並排，金鑰在下面一整行；進階設定展開時（B03）三欄改成上下排：服務、金鑰、模型 */
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'service model' 'key key'; gap: 20px 28px; }
+.fields > :first-child { grid-area: service; }
+.modelField { grid-area: model; }
+.keyField { grid-area: key; }
+.fields[data-advanced='true'] { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'service' 'key' 'model'; }
+.form label { font-size: 14px; line-height: 1.5; color: var(--ui-color-dark); }
+.form .fields > div, .advanced > div { gap: 7px; }
+.form .fields p { margin-top: 2px; font-size: 13px; }
 .keyRow { display: flex; gap: 12px; align-items: center; }
 .keyRow > :first-child { flex-grow: 1; }
-.smallButton { min-width: 80px; height: 42px; }
+.smallButton { min-width: 80px; height: 42px; font-size: 15px; }
+/* Figma 的停用按鈕是灰底灰字，不是淡掉的綠色 */
+.form .smallButton:disabled { opacity: 1; border-color: transparent; background: var(--ui-color-line); color: var(--ui-color-muted); }
+.form .connecting:disabled { opacity: 1; background: var(--ui-color-primary); color: var(--ui-color-panel); }
+/* 金鑰欄：停用時灰底、沒有眼睛；遮住的點拉開間距 */
+.keyRow input:disabled { background: var(--ui-color-panel-hover); border-color: var(--ui-color-line); }
+.keyRow input:disabled + button { display: none; }
+.keyRow input[type='password']:not(:placeholder-shown) { letter-spacing: 0.3em; }
+/* 共用 Select 在這頁的樣子（Figma「下拉選單」：44 高、15px；清單和按鈕同寬、選項不加粗） */
+.select > button { min-height: 44px; padding: 0 13px; font-size: 15px; }
+/* styles.css 有全站的 button:disabled { opacity: .46 }，會把停用的下拉選單淡掉；Figma 是灰底、字照常 */
+.select > button:disabled { opacity: 1; color: var(--ui-color-muted); }
+.select > button:disabled > svg { color: var(--ui-color-ink); }
+.select > div { width: 100%; padding: 3px; border-color: var(--ui-color-line); border-radius: 8px; box-shadow: 0 6px 20px rgba(26, 51, 38, 0.12); gap: 0; }
+.select > div:has(input) { padding: 11px 4px 7px 7px; }
+.select > div > input { width: calc(100% - 4px); height: 42px; margin: 0 0 12px; padding: 0 13px; border-color: var(--ui-color-line); background: var(--ui-color-panel-hover); font-size: 14px; }
+.select > div > input:focus { outline: none; border-color: var(--ui-color-border); }
+.select > div > p { padding: 0 8px 4px; }
+.select li { min-height: 35px; padding: 6px 14px; font-size: 15px; font-weight: 500; color: var(--ui-color-dark); }
+.select li b { font-weight: 500; }
+.select > div:has(input) li { min-height: 49px; padding: 3px 12px; font-size: 14px; }
+.select > div:has(input) li [class*='description'] { color: var(--ui-color-muted); }
+.select li[data-active='true']:not([aria-selected='true']), .select li:hover:not([aria-selected='true']) { background: var(--ui-color-panel-hover); }
 .input { box-sizing: border-box; width: 100%; height: 44px; padding: 0 13px; border: 1px solid var(--ui-color-border); border-radius: 8px; font: inherit; font-size: 15px; }
 .input[aria-invalid='true'] { border-color: var(--ui-color-danger); }
 .tested { margin-top: 8px; }
-.advanced { padding-top: 18px; border-top: 1px solid var(--ui-color-line); display: flex; flex-direction: column; gap: 18px; }
-.actions { display: flex; align-items: center; gap: 12px; }
+.advanced { display: flex; flex-direction: column; gap: 20px; }
+.advancedHead { align-self: flex-start; margin-top: 9px; padding: 0 0 13px; border: 0; border-bottom: 1px solid var(--ui-color-line); align-self: stretch; background: none; font: inherit; font-size: 15px; font-weight: 700; line-height: 1.5; color: var(--ui-color-primary); text-align: left; cursor: pointer; white-space: pre; }
+.advancedHead:hover { text-decoration: underline; }
+.actions { margin-top: 13px; display: flex; align-items: center; gap: 12px; }
 .spacer { flex-grow: 1; }
 .connecting { min-width: 196px; height: 42px; gap: 10px; }
 .spinner { width: 14px; height: 14px; border: 1.5px dashed currentColor; border-radius: 50%; animation: spin 1.2s linear infinite; }
@@ -107,11 +145,11 @@
 .dialogBody .dialogStrong { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ui-color-ink); }
 
 /* 我的用量（A08、C01–C04） */
-.usage { padding: 17px 23px 20px; display: flex; flex-direction: column; gap: 10px; }
+.usage { min-height: 230px; padding: 17px 23px 20px; display: flex; flex-direction: column; gap: 10px; }
 .usageHead { display: flex; align-items: baseline; gap: 54px; }
 .usageTitle { margin: 0; font-size: 18px; line-height: 1.5; color: var(--ui-color-dark); }
 .usageNoteTitle { margin: 16px 0 0; font-size: 22px; font-weight: 700; line-height: 1.5; color: var(--ui-color-dark); }
-.numbers { margin: 4px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; align-items: center; }
+.numbers { margin: 6px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; align-items: center; }
 .numbers dl { margin: 0; }
 .numbers dt { font-size: 13px; line-height: 1.5; color: var(--ui-color-muted); }
 .numbers dd { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.5; color: var(--ui-color-dark); }
@@ -124,8 +162,10 @@
 .bar > span { display: block; height: 100%; border-radius: 8px; background: var(--ui-color-primary); }
 .limited[data-low='true'] .bar { background: var(--ui-color-neutral-soft); }
 .limited[data-low='true'] .bar > span { background: var(--ui-color-warning-ink); }
-.usageFoot { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.limited .usageFoot { margin-top: 0; }
+.usageFoot { margin-top: auto; padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.limited .usageFoot { margin-top: 0; padding-top: 0; }
+.limited .bar { margin-top: -2px; }
+.limited > .small { margin-top: 10px; }
 .limited .usageFoot .link { margin-right: 53px; }
 .refresh { padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
 .refresh:hover { color: var(--ui-color-primary); text-decoration: underline; }

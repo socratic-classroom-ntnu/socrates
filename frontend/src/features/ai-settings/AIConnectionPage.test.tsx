@@ -181,7 +181,7 @@ test('the form goes service → key → model, with no model picked for the teac
   expect(screen.getByLabelText('選擇模型')).toBeDisabled()
   expect(keyField()).toBeDisabled()
   chooseService('OpenRouter')
-  expect(screen.getByRole('link', { name: '取得 OpenRouter 金鑰 ↗' })).toHaveAttribute('href', 'https://openrouter.ai/settings/keys')
+  expect(screen.getByRole('link', { name: '取得金鑰 ↗' })).toHaveAttribute('href', 'https://openrouter.ai/settings/keys')
   expect(screen.getByLabelText('選擇模型')).toBeDisabled()
   fireEvent.change(keyField(), { target: { value: 'sk-or-new-key' } })
   await waitFor(() => expect(screen.getByLabelText('選擇模型')).toBeEnabled(), { timeout: 2000 })

@@ -33,6 +33,7 @@ import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { ActivityProjectorPage, CourseProjectorPage } from '../features/course/teach/ProjectorPages'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
+import { AIConnectionPage } from '../features/ai-settings/AIConnectionPage'
 import { GuestJoinPage } from '../features/auth/GuestJoinPage'
 import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
 import { LoginPage } from '../features/auth/LoginPage'
@@ -47,14 +48,16 @@ import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
-// 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
+// 舊的 AI 連線設定入口（多連線頁）一律轉到新頁面：舊頁能改同一份設定，留著會讓新頁顯示的跟學生實際用的不一樣。
 function legacyRedirect(pathname: string, search: string): string | null {
   const params = new URLSearchParams(search)
   const verify = params.get('verify_token')
   if (verify) return '/verify?token=' + encodeURIComponent(verify)
   const reset = params.get('reset_token')
   if (reset) return '/login?mode=reset&token=' + encodeURIComponent(reset)
-  if (pathname === '/' && params.get('view') === 'providers') return '/groups?view=providers'
+  const view = params.get('view')
+  if (view === 'providers' && (pathname === '/' || pathname === '/groups')) return '/teach/ai-settings'
+  if (view === 'settings' && /^\/teacher\/home\/?$/.test(pathname)) return '/teach/ai-settings'
   return null
 }
 
@@ -113,7 +116,7 @@ export function AppRoutes() {
       <Route path="/activity-form" element={<DemoSurface title="教師出題表單"><ActivityFormModal onClose={() => location.assign('/')} onSubmit={() => location.assign('/')} /></DemoSurface>} />
       </Route>
       <Route element={<AppShell />}>
-        {/* /groups?view=providers 是舊的 AI 連線設定入口，GroupModeGate 放行（P20） */}
+        {/* 舊的 /groups?view=providers 已由 legacyRedirect 轉到 /teach/ai-settings */}
         <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
           <Route path="/groups" element={<GroupsPage />} />
         </Route>
@@ -152,6 +155,7 @@ export function AppRoutes() {
           <Route path="/teach/activities/:activityId" element={<TeacherLivePage />} />
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
+          <Route path="/teach/ai-settings" element={<AIConnectionPage />} />
         </Route>
         <Route element={<TeacherDesktopOnly />}>
           {/* 舊教師頁：個人題庫、題庫商店、AI 連線設定（?view=）放行，多人課程首頁與課程頁要多人模式（P8） */}

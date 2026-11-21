@@ -83,12 +83,12 @@ def test_only_openrouters_cost_is_trusted(monkeypatch, adapter):
     assert audit["estimated_cost"] is None
 
 
-def test_a_schema_mismatch_keeps_the_failed_calls_cost(monkeypatch):
-    """The failed call was still charged; its audit carries what it cost."""
+def test_a_failed_call_records_no_cost(monkeypatch):
+    """需求：失敗的呼叫（例如回錯格式）不記花費，維持現狀。"""
     with pytest.raises(ProviderSchemaMismatch) as caught:
         audit_for(
             monkeypatch,
             {"completion_tokens": 5, "cost": 0.0004},
             content=json.dumps({"suggestion_text": ""}),
         )
-    assert caught.value.audit["estimated_cost"] == 0.0004
+    assert caught.value.audit["estimated_cost"] is None

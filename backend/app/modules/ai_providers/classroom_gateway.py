@@ -415,7 +415,8 @@ async def generate(binding, messages, schema, on_delta):
         else:
             raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
     except ProviderSchemaMismatch as exc:
-        exc.audit = _audit(binding, exc.usage, None, started)
+        # A failed call keeps the old estimate only (需求：失敗的呼叫不記花費，維持現狀).
+        exc.audit = _audit(binding, exc.usage, None, started, failed=True)
         raise
 
     visible = result.get("reply_text") or result.get("text") or ""
@@ -424,10 +425,10 @@ async def generate(binding, messages, schema, on_delta):
     return result, _audit(binding, usage, actual_model, started)
 
 
-def _audit(binding, usage: dict, actual_model, started: float) -> dict:
+def _audit(binding, usage: dict, actual_model, started: float, *, failed: bool = False) -> dict:
     adapter = binding["adapter"]
     reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
-    cost = _reported_cost(adapter, usage)
+    cost = None if failed else _reported_cost(adapter, usage)
     return {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],

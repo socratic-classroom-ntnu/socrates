@@ -415,20 +415,23 @@ async def generate(binding, messages, schema, on_delta):
         else:
             raise ProviderWait("PROVIDER_ADAPTER_REQUIRED", 60)
     except ProviderSchemaMismatch as exc:
-        # A failed call keeps the old estimate only (需求：失敗的呼叫不記花費，維持現狀).
-        exc.audit = _audit(binding, exc.usage, None, started, failed=True)
+        exc.audit = _audit(binding, exc.usage, None, started)
         raise
 
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
-    return result, _audit(binding, usage, actual_model, started)
+    audit = _audit(binding, usage, actual_model, started)
+    # Successful calls only: a failed one records no cost (需求，維持現狀).
+    cost = _reported_cost(adapter, usage)
+    if cost is not None:
+        audit["estimated_cost"] = cost
+    return result, audit
 
 
-def _audit(binding, usage: dict, actual_model, started: float, *, failed: bool = False) -> dict:
+def _audit(binding, usage: dict, actual_model, started: float) -> dict:
     adapter = binding["adapter"]
     reasoning_tokens, visible_output_tokens = _token_breakdown(usage)
-    cost = None if failed else _reported_cost(adapter, usage)
     return {
         "provider": adapter,
         "provider_profile_id": binding["profile_id"],
@@ -444,7 +447,7 @@ def _audit(binding, usage: dict, actual_model, started: float, *, failed: bool =
         "reasoning_budget_tokens": (
             env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024) if adapter == "openrouter" else None
         ),
-        "estimated_cost": cost if cost is not None else _estimated_cost(binding, usage),
+        "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,
     }
 

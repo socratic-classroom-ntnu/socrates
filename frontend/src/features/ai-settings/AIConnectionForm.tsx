@@ -8,6 +8,7 @@ import { useT } from '../../i18n/useT'
 import { Button, describedBy, Field, FieldError, FieldHint, PasswordInput, Select } from '../../ui'
 import styles from './AIConnection.module.css'
 import { ADAPTERS, COMPATIBLE, FIELD_OF, KEY_PAGES, useFailureText, useServiceName, type FieldName } from './aiConnectionServices'
+import { ConnectionAlert } from './ConnectionAlert'
 import { ConnectionModelPicker, type ModelList } from './ConnectionModelPicker'
 
 type Form = { adapter: string; model: string; apiKey: string; baseUrl: string; name: string }
@@ -195,7 +196,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
           <PasswordInput
             id="ai-apiKey"
             value={form.apiKey}
-            placeholder={form.adapter ? t('aiSettings.keyPlaceholder', { service }) : t('aiSettings.keyPlaceholderNoService')}
+            placeholder={!form.adapter ? t('aiSettings.keyPlaceholderNoService') : form.adapter === COMPATIBLE ? t('aiSettings.keyPlaceholderAny') : t('aiSettings.keyPlaceholder', { service })}
             disabled={!form.adapter}
             autoComplete="new-password"
             spellCheck={false}
@@ -210,7 +211,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
         </div>
         {errorOn('apiKey') && <FieldError id="ai-apiKey-error">{errorOn('apiKey')}</FieldError>}
         {keyHint && <FieldHint id="ai-apiKey-hint">{keyHint}</FieldHint>}
-        {tested && <p className={styles.success} role="status">{t('aiSettings.tested')}</p>}
+        {tested && <div className={styles.tested}><ConnectionAlert tone="done" role="status">{t('aiSettings.tested')}</ConnectionAlert></div>}
       </Field>
       {!ready && !failure && <p className={styles.meta}>{t('aiSettings.formHint')}</p>}
       {showAdvanced && <div className={styles.advanced}>

@@ -338,6 +338,7 @@ const teach: Shape<typeof zhHant> = {
     keyLabel: 'API key',
     keyPlaceholderNoService: 'Choose a service, then paste the API key',
     keyPlaceholder: 'Paste your {{service}} API key',
+    keyPlaceholderAny: 'Paste the API key',
     keepKeyHint: 'To change only the model, keep the same service and the saved key.',
     keyNotSaved: 'This key hasn\'t been saved yet.',
     getKey: 'Get a {{service}} key ↗',

@@ -163,6 +163,14 @@ test('the AI connection page is a teacher page', async () => {
   expect(await screen.findByText('ai-settings-page')).toBeInTheDocument()
 })
 
+test('a student opening the AI connection page sees that it is a teacher page', async () => {
+  mockSession(verified)
+  open('/teach/ai-settings')
+  expect(await screen.findByRole('heading', { name: '這是老師的頁面' })).toBeInTheDocument()
+  expect(screen.queryByText('ai-settings-page')).not.toBeInTheDocument()
+  expect(where()).toBe('/teach/ai-settings')
+})
+
 // 舊的多連線頁能改同一份設定，留著會讓新頁面顯示的跟學生實際用的不一樣：一律轉到新網址。
 test.each(['/?view=providers', '/groups?view=providers', '/teacher/home?view=settings'])(
   'the old AI settings entry %s moves to the new page',

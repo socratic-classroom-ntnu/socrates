@@ -5,6 +5,7 @@ import { useT } from '../../i18n/useT'
 import { Button, FormError } from '../../ui'
 import styles from './AIConnection.module.css'
 import { AIConnectionForm, type FormState } from './AIConnectionForm'
+import { ConnectionAlert } from './ConnectionAlert'
 import { COMPATIBLE, CONSOLES, FIELD_OF, KEY_PAGES, useFailureText, useServiceName } from './aiConnectionServices'
 import { ModeChoice, type Mode } from './ModeChoice'
 import { dollars, UsagePanel, usedShare, type Usage } from './UsagePanel'
@@ -109,12 +110,12 @@ export function AIConnectionPage() {
     </header>
 
     <div className={styles.top}>
-      {view.mode === 'system' && systemOff && own && <Alert tone="warning">{t('aiSettings.systemClosed')}</Alert>}
-      {topFailure && <Alert tone="error">{topFailure}{t('aiSettings.notSaved')}</Alert>}
-      {switchFailed && <Alert tone="error">{switchFailed}</Alert>}
-      {own && (formShown || view.mode === 'system') && <Alert tone="done">
+      {view.mode === 'system' && systemOff && own && <ConnectionAlert tone="warning">{t('aiSettings.systemClosed')}</ConnectionAlert>}
+      {topFailure && <ConnectionAlert tone="error">{topFailure}{/[。！？]$/.test(topFailure) ? '' : ' '}{t('aiSettings.notSaved')}</ConnectionAlert>}
+      {switchFailed && <ConnectionAlert tone="error">{switchFailed}</ConnectionAlert>}
+      {own && (formShown || view.mode === 'system') && <ConnectionAlert tone="done">
         {t(view.mode === 'own' ? 'aiSettings.current' : 'aiSettings.kept', { service, model: own.model, last4: own.key_last4 ?? '' })}
-      </Alert>}
+      </ConnectionAlert>}
       <ModeChoice value={selected} systemDisabled={systemOff} busy={switching} onChoose={choose} />
     </div>
 
@@ -131,12 +132,12 @@ export function AIConnectionPage() {
       </div>
       : view.mode === 'own' && own
         ? <div className={styles.stack}>
-          {ownUsage && share !== null && remaining <= 0 && <Alert tone="error">
+          {ownUsage && share !== null && remaining <= 0 && <ConnectionAlert tone="error">
             {t('aiSettings.noQuota')} <TopUp adapter={own.adapter} />
-          </Alert>}
-          {ownUsage && share !== null && remaining > 0 && share > 0.9 && <Alert tone="warning">
+          </ConnectionAlert>}
+          {ownUsage && share !== null && remaining > 0 && share > 0.9 && <ConnectionAlert tone="warning">
             {t('aiSettings.lowQuota', { amount: dollars(remaining), percent: ((remaining / (ownUsage.limit ?? 1)) * 100).toFixed(1), service })}
-          </Alert>}
+          </ConnectionAlert>}
           <OwnCard view={view} onReplace={() => setEditing('replace')} onAdvanced={() => setEditing('advanced')} />
           {usage && <UsagePanel usage={usage} adapter={own.adapter} onRefresh={loadUsage} />}
         </div>
@@ -162,20 +163,6 @@ export function AIConnectionPage() {
       </div>
     </Dialog>}
   </main>
-}
-
-const ICONS = {
-  done: <path d="M9 12.5l2 2 4-4.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" />,
-  warning: <><path d="M12 3 2 20h20L12 3Z" /><path d="M12 10v4M12 17h.01" /></>,
-  error: <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></>,
-}
-
-/** 頁面頂端的提示訊息（Figma 元件「提示訊息」：完成、需要注意、錯誤）。src/ui 還沒有這個元件，這頁自己用的。 */
-function Alert({ tone, children }: { tone: 'done' | 'warning' | 'error'; children: ReactNode }) {
-  return <div className={styles.alert} data-tone={tone} role={tone === 'error' ? 'alert' : tone === 'warning' ? 'status' : undefined}>
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[tone]}</svg>
-    <span>{children}</span>
-  </div>
 }
 
 function TopUp({ adapter, short }: { adapter: string; short?: boolean }) {
@@ -270,7 +257,7 @@ function FormSide({ view, form }: { view: AIConnectionView; form: FormState }) {
       <p className={styles.sideText}>{t('aiSettings.setupGuideBody')}</p>
     </>}
     {form.busy
-      ? <p className={`${styles.sideFoot} ${styles.testingNote}`}>{t('aiSettings.testingNote')}</p>
+      ? <div className={styles.sideFoot}><p className={styles.testingNote}>{t('aiSettings.testingNote')}</p></div>
       : !form.adapter && <p className={`${styles.sideFoot} ${styles.sideHint}`}>{t('aiSettings.keyAfterService')}</p>}
   </SideCard>
 }

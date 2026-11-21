@@ -294,6 +294,7 @@ const teach: Shape<typeof zhHant> = {
     keyLabel: 'API 密钥',
     keyPlaceholderNoService: '请先选择服务，再贴上 API 密钥',
     keyPlaceholder: '贴上 {{service}} 的 API 密钥',
+    keyPlaceholderAny: '贴上 API 密钥',
     keepKeyHint: '若只换模型，可保留原服务与已储存的密钥。',
     keyNotSaved: '目前尚未储存这把密钥。',
     getKey: '取得 {{service}} 密钥 ↗',

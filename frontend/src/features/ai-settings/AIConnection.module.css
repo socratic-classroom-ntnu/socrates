@@ -79,7 +79,7 @@
 .sideFoot { margin-top: auto; padding-top: 24px; }
 .sideStrong { margin-bottom: 0; font-size: 14px; font-weight: 700; color: var(--ui-color-dark); }
 .sideHint { margin-bottom: 0; font-size: 14px; font-weight: 500; color: var(--ui-color-muted); }
-.testingNote { margin: auto -9px 0; padding: 9px 14px; border-radius: 8px; background: var(--ui-color-primary-soft); font-size: 13px; color: var(--ui-color-primary); }
+.testingNote { margin: 0 -9px; padding: 9px 14px; border-radius: 8px; background: var(--ui-color-primary-soft); font-size: 13px; color: var(--ui-color-primary); }
 
 /* 設定表單（A02） */
 .form { padding: 19px 23px 23px; display: flex; flex-direction: column; gap: 18px; }
@@ -89,7 +89,7 @@
 .smallButton { min-width: 80px; height: 42px; }
 .input { box-sizing: border-box; width: 100%; height: 44px; padding: 0 13px; border: 1px solid var(--ui-color-border); border-radius: 8px; font: inherit; font-size: 15px; }
 .input[aria-invalid='true'] { border-color: var(--ui-color-danger); }
-.success { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--ui-color-primary); }
+.tested { margin-top: 8px; }
 .advanced { padding-top: 18px; border-top: 1px solid var(--ui-color-line); display: flex; flex-direction: column; gap: 18px; }
 .actions { display: flex; align-items: center; gap: 12px; }
 .spacer { flex-grow: 1; }

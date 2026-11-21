@@ -305,6 +305,7 @@ export default {
     keyLabel: 'API 金鑰',
     keyPlaceholderNoService: '請先選擇服務，再貼上 API 金鑰',
     keyPlaceholder: '貼上 {{service}} 的 API 金鑰',
+    keyPlaceholderAny: '貼上 API 金鑰',
     keepKeyHint: '若只換模型，可保留原服務與已儲存的金鑰。',
     keyNotSaved: '目前尚未儲存這把金鑰。',
     getKey: '取得 {{service}} 金鑰 ↗',

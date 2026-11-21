@@ -22,7 +22,7 @@
 .alert > span { white-space: pre-wrap; }
 
 /* 單選卡（Figma 1364:28963）。暫代版：ui/RadioCards 進 develop 後換成它，這段一起拿掉 */
-.modes { margin: 0; padding: 0; border: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.modes { margin: 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .modeCard { box-sizing: border-box; height: 54px; padding: 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--ui-color-line); border-radius: 8px; background: var(--ui-color-panel); cursor: pointer; }
 .modeCard > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 14px; color: var(--ui-color-ink); }
 .modeCard > span > span { font-size: 13px; color: var(--ui-color-muted); }
@@ -37,7 +37,9 @@
 /* 內容：單選卡下方 40 */
 .stack { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .stack .stack, .columns .stack { margin-top: 0; }
-.columns { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 612px) 332px; gap: 24px; align-items: start; }
+.columns { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 612fr) minmax(0, 332fr); gap: 24px; align-items: start; }
+/* Figma 只畫 1280 寬：視窗窄時右側說明卡排到下面，不出現左右捲動 */
+@media (max-width: 1100px) { .columns { grid-template-columns: minmax(0, 1fr); } .columns > span:empty { display: none; } }
 .stack > .columns { margin-top: 0; }
 
 .card { box-sizing: border-box; border-radius: 8px; background: var(--ui-color-panel); border: 1px solid var(--ui-color-line); }
@@ -62,7 +64,7 @@
 /* A08 自己的金鑰 */
 .ownCard { padding: 16px 23px 20px; }
 .replaceButton { min-width: 164px; justify-content: flex-start; }
-.facts { margin: 22px 0 0; display: grid; grid-template-columns: 296px 344px 1fr; }
+.facts { margin: 22px 0 0; display: grid; grid-template-columns: 296fr 344fr 280fr; gap: 0 16px; }
 .facts dt { font-size: 13px; line-height: 1.5; color: var(--ui-color-muted); }
 .facts dd { margin: 6px 0 0; font-size: 17px; font-weight: 500; line-height: 1.5; color: var(--ui-color-dark); overflow-wrap: anywhere; }
 .facts .small { display: block; margin-top: 2px; }
@@ -83,7 +85,7 @@
 
 /* 設定表單（A02） */
 .form { padding: 19px 23px 23px; display: flex; flex-direction: column; gap: 18px; }
-.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.fieldRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
 .keyRow { display: flex; gap: 12px; align-items: center; }
 .keyRow > :first-child { flex-grow: 1; }
 .smallButton { min-width: 80px; height: 42px; }
@@ -109,7 +111,7 @@
 .usageHead { display: flex; align-items: baseline; gap: 54px; }
 .usageTitle { margin: 0; font-size: 18px; line-height: 1.5; color: var(--ui-color-dark); }
 .usageNoteTitle { margin: 16px 0 0; font-size: 22px; font-weight: 700; line-height: 1.5; color: var(--ui-color-dark); }
-.numbers { margin: 4px 0 0; display: grid; grid-template-columns: 320px 320px 1fr; align-items: center; }
+.numbers { margin: 4px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 16px; align-items: center; }
 .numbers dl { margin: 0; }
 .numbers dt { font-size: 13px; line-height: 1.5; color: var(--ui-color-muted); }
 .numbers dd { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.5; color: var(--ui-color-dark); }

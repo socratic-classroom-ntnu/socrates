@@ -203,7 +203,7 @@ const teach: Shape<typeof zhHant> = {
     attentionSummary_other: '{{count}} necesitan atención (más de 5 minutos sin actividad)',
     filterLabel: 'Filtrar estudiantes',
     filters: { all: 'Todos', inProgress: 'En diálogo', attention: 'Necesitan atención', done: 'Completado', notStarted: 'Sin empezar' },
-    table: { student: 'Estudiante', scenario: 'Escenario {{number}}', review: 'Repaso y reflexión', lastActivity: 'Última acción' },
+    table: { student: 'Estudiante', scenario: 'Escenario {{number}}', review: 'Repaso y reflexión', lastActivity: 'Última acción', view: 'Ver' },
     cells: {
       confirmed: 'Confirmado',
       inDialogue: 'En diálogo · {{count}} turnos',
@@ -227,7 +227,8 @@ const teach: Shape<typeof zhHant> = {
     },
     empty: 'Todavía no hay estudiantes',
     updating: 'Se actualiza automáticamente cada 10 segundos',
-    privacy: 'No se muestra el contenido de los diálogos; los puntos de vista confirmados están en «Análisis de la clase»',
+    view: { open: 'Ver conversación', openFor: 'Ver la conversación de {{name}}', unavailable: 'No se puede ver la conversación' },
+    privacy: 'Pulsa el icono del ojo en «Ver» para leer la conversación completa de este estudiante (solo lectura)',
     endDialog: {
       title: 'Terminar la actividad antes',
       body: '¿Terminar «{{title}}» ahora? Después los estudiantes no podrán empezarla.',

@@ -166,10 +166,18 @@ async def probe(
 
 
 async def models(
-    config: ai_service.PlatformConfig, owner_id: str, *, prefix: str
+    config: ai_service.PlatformConfig,
+    owner_id: str,
+    *,
+    prefix: str,
+    openrouter_reasoning: bool = False,
 ) -> list[ModelOption]:
     """The models this connection offers that we can use (spec P40): the URL check and the
-    provider call share the probe's time limit, and a failure is sorted like a test's."""
+    provider call share the probe's time limit, and a failure is sorted like a test's.
+
+    `openrouter_reasoning`: also drop OpenRouter models that do not take `reasoning`, which
+    every request of ours to OpenRouter carries with `require_parameters` (the teacher's list;
+    the 後台 list is left as it was)."""
     kind: str | None = None
     listed: list[dict] = []
     try:
@@ -189,8 +197,15 @@ async def models(
     return [
         _option(config.adapter, item)
         for item in listed
-        if item.get("id") and item.get("structured_outputs") is not False and _can_chat(item)
+        if item.get("id")
+        and item.get("structured_outputs") is not False
+        and _can_chat(item)
+        and (not openrouter_reasoning or _takes_reasoning(config.adapter, item))
     ]
+
+
+def _takes_reasoning(adapter: str, item: dict) -> bool:
+    return adapter != "openrouter" or "reasoning" in (item.get("supported_parameters") or [])
 
 
 # Lists that say nothing about structured output (OpenAI, most compatible services) still name

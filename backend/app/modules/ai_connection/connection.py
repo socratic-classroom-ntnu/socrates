@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.modules.ai_connection import service as checks
 from app.modules.ai_connection.contracts import (
     AIConnectionInput,
+    AIConnectionModelsInput,
     AIConnectionView,
     AIConnectionOwnView,
     AIConnectionSystemView,
@@ -80,19 +81,30 @@ class Form:
     name: str | None
 
 
+def _same_address(draft: checks.Draft) -> checks.Draft:
+    """The URL as the URL check saves it, so the same address typed with a trailing slash still
+    keeps the saved key and the same row."""
+    if draft.base_url is None:
+        return draft
+    return replace(draft, base_url=draft.base_url.rstrip("/"))
+
+
 def check_form(body: AIConnectionInput) -> Form:
     """Every check that needs no database and no network; error codes only, never the key."""
-    draft = checks.check_fields(
-        body.adapter, body.model, body.api_key, body.base_url, prefix=PREFIX
+    draft = _same_address(
+        checks.check_fields(body.adapter, body.model, body.api_key, body.base_url, prefix=PREFIX)
     )
-    if draft.base_url is not None:
-        # As the URL check saves it, so the same address typed with a trailing slash still
-        # keeps the saved key and the same row.
-        draft = replace(draft, base_url=draft.base_url.rstrip("/"))
     name = None if checks.blank(body.name) else (body.name or "").strip()
     if name is not None and len(name) > NAME_LIMIT:
         raise DomainError("AI_CONNECTION_NAME_INVALID", 422)
     return Form(draft=draft, name=name)
+
+
+def check_source(body: AIConnectionModelsInput) -> checks.Draft:
+    """The model list's service, key and URL, checked like the form's."""
+    return _same_address(
+        checks.check_source(body.adapter, body.api_key, body.base_url, prefix=PREFIX)
+    )
 
 
 @dataclass(frozen=True)
@@ -121,6 +133,14 @@ def current(db: Session, owner_id: str) -> Current:
         connection=ai_service.owner_connection(db, owner_id),
         stored=ai_service.owner_connection_config(db, owner_id),
     )
+
+
+def usage_config(db: Session, owner_id: str) -> ai_service.PlatformConfig | None:
+    """The connection whose usage the page shows: the teacher's own in use with a usable key."""
+    own = ai_service.owner_connection(db, owner_id)
+    if own is None or not own.enabled:
+        return None
+    return ai_service.owner_connection_config(db, owner_id)
 
 
 def check_name_free(db: Session, owner_id: str, form: Form, keep_id: str | None) -> None:

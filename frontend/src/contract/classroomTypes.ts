@@ -2,9 +2,12 @@
 export interface components { schemas: {
   "AIConnectionInput": { "adapter": string; "model": string; "api_key"?: (string | null); "base_url"?: (string | null); "name"?: (string | null) };
   "AIConnectionModeInput": { "mode": "system" | "own" };
+  "AIConnectionModelsInput": { "adapter": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "AIConnectionModelsView": { "models": Array<components["schemas"]["ModelOption"]> };
   "AIConnectionOwnView": { "adapter": string; "model": string; "base_url": (string | null); "name": string; "key_last4": (string | null); "enabled": boolean; "key_usable": boolean };
   "AIConnectionSystemView": { "available": boolean; "model": (string | null) };
   "AIConnectionTestView": { "ok": true };
+  "AIConnectionUsageView": { "status": "ok" | "unsupported" | "failed" | "none"; "adapter": (string | null); "used": (number | null); "limit": (number | null); "remaining": (number | null); "limit_reset": ("daily" | "weekly" | "monthly" | null) };
   "AIConnectionView": { "mode": "system" | "own"; "system": components["schemas"]["AIConnectionSystemView"]; "own": (components["schemas"]["AIConnectionOwnView"] | null) };
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
@@ -192,9 +195,12 @@ export interface components { schemas: {
 export interface requestComponents { schemas: {
   "AIConnectionInput": { "adapter": string; "model": string; "api_key"?: (string | null); "base_url"?: (string | null); "name"?: (string | null) };
   "AIConnectionModeInput": { "mode": "system" | "own" };
+  "AIConnectionModelsInput": { "adapter": string; "api_key"?: (string | null); "base_url"?: (string | null) };
+  "AIConnectionModelsView": { "models": Array<requestComponents["schemas"]["ModelOption"]> };
   "AIConnectionOwnView": { "adapter": string; "model": string; "base_url": (string | null); "name": string; "key_last4": (string | null); "enabled": boolean; "key_usable": boolean };
   "AIConnectionSystemView": { "available": boolean; "model": (string | null) };
   "AIConnectionTestView": { "ok"?: true };
+  "AIConnectionUsageView": { "status": "ok" | "unsupported" | "failed" | "none"; "adapter": (string | null); "used": (number | null); "limit": (number | null); "remaining": (number | null); "limit_reset": ("daily" | "weekly" | "monthly" | null) };
   "AIConnectionView": { "mode": "system" | "own"; "system": requestComponents["schemas"]["AIConnectionSystemView"]; "own": (requestComponents["schemas"]["AIConnectionOwnView"] | null) };
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
@@ -441,8 +447,14 @@ export interface paths {
   "/ai-settings/connection/mode": {
     "put": { body: requestComponents["schemas"]["AIConnectionModeInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AIConnectionView"]; responseMedia: "application/json"; path: never; query: never };
   };
+  "/ai-settings/connection/models": {
+    "post": { body: requestComponents["schemas"]["AIConnectionModelsInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AIConnectionModelsView"]; responseMedia: "application/json"; path: never; query: never };
+  };
   "/ai-settings/connection/test": {
     "post": { body: requestComponents["schemas"]["AIConnectionInput"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AIConnectionTestView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/ai-settings/connection/usage": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["AIConnectionUsageView"]; responseMedia: "application/json"; path: never; query: never };
   };
   "/auth/forgot-password": {
     "post": { body: requestComponents["schemas"]["MailRequest"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["MailRequestView"]; responseMedia: "application/json"; path: never; query: never };

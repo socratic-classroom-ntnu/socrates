@@ -5,12 +5,15 @@ The URL check (DNS) and every provider call run between two transactions, never 
 
 from fastapi import APIRouter, Request
 
-from app.modules.ai_connection import connection
+from app.modules.ai_connection import connection, usage
 from app.modules.ai_connection import service as checks
 from app.modules.ai_connection.contracts import (
     AIConnectionInput,
     AIConnectionModeInput,
+    AIConnectionModelsInput,
+    AIConnectionModelsView,
     AIConnectionTestView,
+    AIConnectionUsageView,
     AIConnectionView,
 )
 from app.modules.identity_access.service import account
@@ -75,3 +78,27 @@ def put_mode(body: AIConnectionModeInput, request: Request) -> AIConnectionView:
         connection.switch(db, owner_id, body.mode)
     with transaction() as db:
         return connection.view(db, owner_id)
+
+
+@router.post("/models", response_model=AIConnectionModelsView)
+async def list_models(body: AIConnectionModelsInput, request: Request) -> AIConnectionModelsView:
+    """The models the form's service offers; a blank key lists with the saved one."""
+    with transaction() as db:
+        owner_id = _teacher(db, request, mutation=True)
+        stored = connection.current(db, owner_id).stored
+    draft = connection.check_source(body)
+    config = checks.with_key(draft, stored, prefix=connection.PREFIX)
+    return AIConnectionModelsView(
+        models=await checks.models(
+            config, owner_id, prefix=connection.PREFIX, openrouter_reasoning=True
+        )
+    )
+
+
+@router.get("/usage", response_model=AIConnectionUsageView)
+async def get_usage(request: Request) -> AIConnectionUsageView:
+    """我的用量 of the teacher's connection in use; asked anew on every call (no polling)."""
+    with transaction() as db:
+        owner_id = _teacher(db, request, mutation=False)
+        config = connection.usage_config(db, owner_id)
+    return await usage.ask(config, owner_id)

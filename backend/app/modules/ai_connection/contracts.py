@@ -61,3 +61,33 @@ class AIConnectionModeInput(BaseModel):
 
 class AIConnectionTestView(BaseModel):
     ok: Literal[True] = True
+
+
+class AIConnectionModelsInput(BaseModel):
+    """Where to list models from; unchecked here for the same reason as AIConnectionInput."""
+
+    adapter: str
+    # Blank = the saved key, only for the same service at the same address.
+    api_key: str | None = None
+    base_url: str | None = None
+
+
+class AIConnectionModelsView(BaseModel):
+    models: list[ModelOption]
+
+
+class AIConnectionUsageView(BaseModel):
+    """我的用量, in US dollars, for the teacher's connection in use (需求〈我的用量〉).
+
+    status: "ok" (OpenRouter answered), "unsupported" (the service cannot be asked), "failed"
+    (the query failed or timed out; nothing about the connection changed), "none" (no own
+    connection in use with a usable key: the page shows no usage)."""
+
+    status: Literal["ok", "unsupported", "failed", "none"]
+    adapter: str | None
+    # With a limit: limit − remaining; without one: everything the key has used.
+    used: float | None
+    limit: float | None
+    # May be 0 or below: nothing left.
+    remaining: float | None
+    limit_reset: Literal["daily", "weekly", "monthly"] | None

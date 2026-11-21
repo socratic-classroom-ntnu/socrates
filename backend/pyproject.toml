@@ -82,6 +82,7 @@ module = [
     "app.modules.ai_connection.contracts",
     "app.modules.ai_connection.connection",
     "app.modules.ai_connection.routes",
+    "app.modules.ai_connection.usage",
     "app.modules.solo_activity.tutor_chain",
     "app.modules.ai_providers.probe_errors",
     "app.classroom_server",

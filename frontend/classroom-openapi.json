@@ -70,6 +70,58 @@
         "title": "AIConnectionModeInput",
         "type": "object"
       },
+      "AIConnectionModelsInput": {
+        "description": "Where to list models from; unchecked here for the same reason as AIConnectionInput.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          }
+        },
+        "required": [
+          "adapter"
+        ],
+        "title": "AIConnectionModelsInput",
+        "type": "object"
+      },
+      "AIConnectionModelsView": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelOption"
+            },
+            "title": "Models",
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "title": "AIConnectionModelsView",
+        "type": "object"
+      },
       "AIConnectionOwnView": {
         "description": "The teacher's one connection. Never the key: only its last four characters.",
         "properties": {
@@ -163,6 +215,91 @@
           }
         },
         "title": "AIConnectionTestView",
+        "type": "object"
+      },
+      "AIConnectionUsageView": {
+        "description": "我的用量, in US dollars, for the teacher's connection in use (需求〈我的用量〉).\n\nstatus: \"ok\" (OpenRouter answered), \"unsupported\" (the service cannot be asked), \"failed\"\n(the query failed or timed out; nothing about the connection changed), \"none\" (no own\nconnection in use with a usable key: the page shows no usage).",
+        "properties": {
+          "adapter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "limit_reset": {
+            "anyOf": [
+              {
+                "enum": [
+                  "daily",
+                  "weekly",
+                  "monthly"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Reset"
+          },
+          "remaining": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unsupported",
+              "failed",
+              "none"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "used": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Used"
+          }
+        },
+        "required": [
+          "status",
+          "adapter",
+          "used",
+          "limit",
+          "remaining",
+          "limit_reset"
+        ],
+        "title": "AIConnectionUsageView",
         "type": "object"
       },
       "AIConnectionView": {
@@ -9472,6 +9609,48 @@
         ]
       }
     },
+    "/api/v2/ai-settings/connection/models": {
+      "post": {
+        "description": "The models the form's service offers; a blank key lists with the saved one.",
+        "operationId": "list_models_api_v2_ai_settings_connection_models_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionModelsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIConnectionModelsView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Models",
+        "tags": [
+          "ai-connection"
+        ]
+      }
+    },
     "/api/v2/ai-settings/connection/test": {
       "post": {
         "description": "Test only; nothing is saved.",
@@ -9509,6 +9688,28 @@
           }
         },
         "summary": "Test Connection",
+        "tags": [
+          "ai-connection"
+        ]
+      }
+    },
+    "/api/v2/ai-settings/connection/usage": {
+      "get": {
+        "description": "我的用量 of the teacher's connection in use; asked anew on every call (no polling).",
+        "operationId": "get_usage_api_v2_ai_settings_connection_usage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIConnectionUsageView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Usage",
         "tags": [
           "ai-connection"
         ]

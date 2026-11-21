@@ -1,0 +1,16 @@
+{
+  "schema": "portal/avatar-azure-fixture/v1",
+  "state": "PASS",
+  "text": "Hello! Welcome to our coffee shop. What can I get started for you today? Are you in the mood for coffee, tea, or something else?",
+  "voice": "en-US-GuyNeural",
+  "language": "en-US",
+  "audio": {
+    "file": "audio.mp3",
+    "bytes": 62064,
+    "sha256": "6cc2b782be71a9a2767574ae65f3b50c2537928b8cf21f2d6eb7d4b182321ab3",
+    "format": "Audio24Khz48KBitRateMonoMp3"
+  },
+  "wordCount": 31,
+  "visemeCount": 90,
+  "generatedAt": "2026-10-09T21:31:08.156Z"
+}

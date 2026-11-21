@@ -1,5 +1,5 @@
-from app.config import settings
-from app.ladders.repository import LadderRepository
+from app.modules.platform.config import settings
+from app.modules.content_authoring.ladder_repository import LadderRepository
 
 
 def test_loads_all_stages_in_order():

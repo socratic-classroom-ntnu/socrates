@@ -10,26 +10,41 @@ services:
       test: ["CMD-SHELL", "pg_isready -U socrates"]
       interval: 3s
       retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   backend:
     build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg://socrates:socrates@db:5432/socrates
+      # 明確標成本機：測試帳號 seed 與登入頁的快速登入按鈕都只認明確設定的值（backend/app/modules/platform/demo.py）
+      SOCRATES_ENVIRONMENT: local-dev
+      SOCRATES_PUBLIC_ORIGIN: http://localhost:5173
+      SOCRATES_ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       LADDER_PATH: /app/ladders/trolley.yaml
-      SCRIPT_PATH: ${SCRIPT_PATH:-/app/scripts/trolley.script.yaml}
     volumes:
       - ./backend:/app
       - ./ladders:/app/ladders
       - ./scripts:/app/scripts
+      # 後端測試會讀 repo 根目錄的這三處（contract gate 讀 frontend 的錯誤文案、schema 文件、stage 設定）；
+      # 容器內 /app 的上一層是 /，所以掛在根目錄，pre-push 才跟 CI 的 host checkout 一樣不跳過、不誤紅。
+      - ./frontend:/frontend:ro
+      - ./docs:/docs:ro
+      - ./deploy:/deploy:ro
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
-    command: sh -c "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "alembic upgrade head && exec uvicorn app.classroom_server:app --host 0.0.0.0 --port 8000 --reload"
 
   frontend:
     build: ./frontend
+    environment:
+      SOCRATES_DEV_API_ORIGIN: http://backend:8000
     volumes:
       - ./frontend/src:/app/src
     ports: ["5173:5173"]
     depends_on: [backend]
     command: npm run dev
+
+volumes:
+  pgdata:

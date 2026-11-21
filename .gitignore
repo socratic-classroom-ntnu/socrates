@@ -1,4 +1,5 @@
 docs/superpowers/plans/
+docs/superpowers/specs/
 .env
 .env.*
 !.env.example
@@ -12,3 +13,12 @@ dist/
 *.pyc
 .DS_Store
 *.tsbuildinfo
+
+.socrates-previous-release
+
+deploy/stage/.env
+
+deploy/local/.env
+
+# 樣式基準工具的輸出（frontend/e2e/style-baseline.spec.ts），像素與字型因機器而異，不進版控
+frontend/e2e/.baseline/

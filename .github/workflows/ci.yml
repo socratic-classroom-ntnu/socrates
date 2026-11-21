@@ -1,79 +1,242 @@
 name: CI
-
 on:
+  # backend/arthur/** 由本機 CI 檢查：以它為 base 的疊層 PR 與它的 push 都不跑；
+  # PR 進 develop 時照常跑完整 CI（pull_request 的 branches 比對的是 base 分支）。
   pull_request:
+    branches-ignore: ['backend/arthur/**']
   push:
-    branches: [main, develop]
-
+    branches: [master, develop, stage, 'backend/**', '!backend/arthur/**']
+permissions:
+  contents: read
+concurrency:
+  group: socrates-ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_USER: socrates
-          POSTGRES_PASSWORD: socrates
+          POSTGRES_PASSWORD: socrates-ci
           POSTGRES_DB: socrates
-        ports: ["5432:5432"]
+        ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U socrates"
-          --health-interval 3s --health-timeout 3s --health-retries 10
+          --health-cmd "pg_isready -U socrates" --health-interval 3s
+          --health-timeout 3s --health-retries 20
     env:
-      DATABASE_URL: postgresql+psycopg://socrates:socrates@localhost:5432/socrates
+      DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
+      CLASSROOM_TEST_DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: backend/requirements-dev.txt
       - run: python -m pip install -r backend/requirements-dev.txt
-      - run: python -m ruff check backend
-      - run: python -m ruff format --check backend
-      - run: python -m mypy backend/app
-      - run: python -m pytest tests -v
-        working-directory: backend
-
+      - name: Ruff lint, complete backend
+        run: python -m ruff check backend
+      - name: Ruff format, complete backend
+        run: python -m ruff format --check backend
+      - name: Naming and backend module map
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          bash scripts/check_naming.sh
+          python -m pytest scripts/test_check_modules.py -q
+          if [ -n "$BASE_REF" ]; then
+            git fetch --depth=1 origin "$BASE_REF"
+            python scripts/check_modules.py --baseline-ref "origin/$BASE_REF"
+          else
+            python scripts/check_modules.py
+          fi
+      - name: Strict core types and classroom contracts
+        run: |
+          cd backend
+          python tools/mypy_check.py
+      - name: Database migration and domain/API regression
+        run: |
+          cd backend
+          python -m alembic upgrade head
+          python -m pytest tests -v --junitxml=backend-tests.xml
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-evidence
+          path: backend/backend-tests.xml
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
         working-directory: frontend
+      - name: Fetch source-pinned local avatar
+        run: python scripts/fetch_avatar.py
       - run: npm run lint
         working-directory: frontend
       - run: npm run typecheck
         working-directory: frontend
-      - run: npm test -- --run
+      - run: npm test -- --runInBand
         working-directory: frontend
-
+      - run: npm run build
+        working-directory: frontend
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-lock
+          path: |
+            frontend/package-lock.json
+            frontend/dist
   contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
-      SCRIPT_PATH: ${{ github.workspace }}/scripts/trolley.script.yaml
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
+        with: {python-version: '3.12'}
       - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+        with: {node-version: '22'}
       - run: python -m pip install -r backend/requirements.txt
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
         working-directory: frontend
       - run: ./scripts/gen_types.sh
-      - run: git diff --exit-code -- frontend/openapi.json frontend/src/api/types.ts
+      - run: python scripts/gen_classroom_types.py
+      - run: git diff --exit-code -- frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
+  # 契約檔落後時，只修同 repo 的個人開發分支；共用與部署分支維持人工審查。
+  contract-fix:
+    needs: [contract]
+    if: >-
+      failure() && github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (startsWith(github.head_ref, 'feature/') || startsWith(github.head_ref, 'fix/') || startsWith(github.head_ref, 'frontend/'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: write, pull-requests: write}
+    env:
+      LADDER_PATH: ${{ github.workspace }}/ladders/trolley.yaml
+      HEAD_REF: ${{ github.head_ref }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+      CONTRACTS: frontend/openapi.json frontend/src/contract/types.ts frontend/classroom-openapi.json frontend/src/contract/classroomTypes.ts
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.head_ref }}'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install -r backend/requirements.txt
+      - run: npm ci --no-audit --no-fund
+        working-directory: frontend
+      - run: ./scripts/gen_types.sh
+      - run: python scripts/gen_classroom_types.py
+      - id: diff
+        run: |
+          if git diff --quiet -- $CONTRACTS; then
+            echo "分支契約已是最新；請先 rebase 或 merge base 分支。"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.diff.outputs.changed == 'true'
+        run: npm run typecheck
+        working-directory: frontend
+      - if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- $CONTRACTS
+          git commit -m "chore(contracts): regenerate OpenAPI contracts"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          gh pr comment "$PR_NUMBER" --body "OpenAPI 契約已重新產生並推回個人開發分支。"
+  compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Wait for a positive health response
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/api/health; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/api/health
+          curl -fsS http://127.0.0.1:8000/api/v2/readiness
+      - if: always()
+        run: docker compose logs --no-color > compose-smoke.log
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: {name: compose-smoke-evidence, path: compose-smoke.log, retention-days: 7}
+      - if: always()
+        run: docker compose down
+  classroom-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env: {POSTGRES_USER: socrates, POSTGRES_PASSWORD: socrates-ci, POSTGRES_DB: socrates_load}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U socrates" --health-interval 3s
+          --health-timeout 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://socrates:socrates-ci@localhost:5432/socrates_load
+      CLASSROOM_COOKIE_SECURE: 'false'
+      SOCRATES_ALLOWED_ORIGINS: http://127.0.0.1:8099
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install -r backend/requirements-dev.txt
+      - name: Two-worker, real PostgreSQL 2×60 workload
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE/backend"
+          python scripts/classroom_load.py --output classroom-load.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: classroom-load-evidence
+          path: |
+            classroom-load.json
+            classroom-server.log
+  ci-required:
+    if: always()
+    runs-on: ubuntu-latest
+    needs: [backend, frontend, contract, compose-smoke, classroom-load]
+    steps:
+      - env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python - <<'PY'
+          import json,os
+          jobs=json.loads(os.environ['RESULTS'])
+          print(json.dumps({k:v['result'] for k,v in jobs.items()},indent=2))
+          assert all(v['result']=='success' for v in jobs.values())
+          PY
+  # Every push to stage/develop/master publishes <channel>-<UTC ts>-<sha> images.
+  # Flux deploys each channel to its own host (flux-k8s, apps/base/socrates):
+  # master -> socrates.driseam.com, stage -> -qa, develop -> -dev.
+  # backend/main publishes too, as channel backend-main (a tag cannot hold "/").
+  # No real environment follows that prefix; only the standing preview
+  # https://preview-backend-main.socrates.driseam.com uses its sha-<sha> tag
+  # (flux-k8s apps/base/socrates-preview/branches.yaml).
+  release:
+    if: github.event_name == 'push' && contains(fromJSON('["stage","develop","master","backend/main"]'), github.ref_name)
+    needs: [ci-required]
+    permissions: {contents: read, packages: write}
+    uses: ./.github/workflows/stage-release.yml
+    with:
+      source_sha: '${{ github.sha }}'
+      channel: "${{ github.ref_name == 'backend/main' && 'backend-main' || github.ref_name }}"

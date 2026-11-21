@@ -1,0 +1,2 @@
+/* 整張表單或整頁的錯誤訊息（數值等於 PR C 之後 ui.css 的 .form-error） */
+.formError { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--ui-color-danger-soft); color: var(--ui-color-error-ink); font-size: 14px; }

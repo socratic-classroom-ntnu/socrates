@@ -1,0 +1,76 @@
+import type zhHant from '../zh-Hant/editor';
+import type { Shape } from '../../shape';
+
+const editor: Shape<typeof zhHant> = {
+  titleNew: '新建活动',
+  titleEdit: '编辑活动',
+  crumb: '我教的课',
+  actions: {
+    cancel: '取消',
+    saveToList: '保存到活动列表',
+    create: '创建活动',
+    saveChanges: '保存更改',
+    delete: '删除活动',
+    back: '返回',
+    copy: '复制为新活动',
+    toCourse: '回到课程页',
+  },
+  autosave: {
+    idle: '内容会自动暂存在这台设备',
+    saved: '已暂存于这台设备',
+  },
+  restore: {
+    title: '找到 {{time}} 的未完成内容',
+    body: '这台设备上有一份还没保存的内容。要恢复它，还是舍弃并使用目前的内容？',
+    discard: '舍弃',
+    restore: '恢复',
+  },
+  notices: {
+    savedToList: '已保存到活动列表，学生仍看不到',
+    saved: '已保存更改',
+    copied: '这是「{{title}}」的副本，修改后再创建活动。',
+    publishFailed: '更改已保留，但尚未发布；学生仍看到上一个版本',
+    pending: '有未发布的更改：学生仍看到上一个版本。按「保存更改」重新发布。',
+    stale: '活动状态已经改变，已重新整理',
+    notFound: '找不到这个活动',
+  },
+  locked: {
+    title: '题目已锁定',
+    body: '你仍然可以修改活动名称和结束时间。要改题目，请复制为新活动。',
+    pendingBody: '活动在更改发布前已被锁定，学生仍看到上一个版本。复制为新活动可以保留这些更改。',
+    readonlyBody: '这个活动已经结束，内容不能再修改。可以复制为新活动再用一次。',
+  },
+  sections: {
+    basics: '基础信息',
+    collapse: '收起「{{name}}」',
+    expand: '展开「{{name}}」',
+  },
+  fields: {
+    required: '（必填）',
+    title: '活动名称',
+    scenario: '情境描述',
+    scenarioHint: '苏格拉底会以这段描述为起点，替每位学生写出第一个情境。',
+    start: '开始时间',
+    startNow: '创建后立刻开放',
+    startAt: '指定时间',
+    opened: '{{time}} 已开放',
+    end: '结束时间',
+    windowHint: '时间到会自动结束；你也可以在活动页提前开始或结束。结束后，学生只能回看自己的记录。',
+    lockedWindowHint: '可以延后结束时间，让还没做完的学生继续；提前结束请在活动页操作。',
+  },
+  errors: {
+    title: '请填活动名称',
+    scenario: '请填情境描述',
+    start: '请填开始时间',
+    end: '请填结束时间',
+    endBeforeStart: '结束时间要晚于开始时间',
+    endPast: '结束时间已经过了',
+    startPast: '开始时间已经过了；要立刻开放，请选「创建后立刻开放」',
+    summary: '部分栏位尚未填写',
+    missing: '还没填',
+    beforeStart: '要晚于开始时间',
+    past: '已经过了',
+  },
+  loadFailed: '活动没有加载成功。',
+};
+export default editor;

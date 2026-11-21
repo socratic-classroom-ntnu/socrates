@@ -1,0 +1,106 @@
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { ApiError } from '../../../contract/classroomClient'
+import type { components } from '../../../contract/classroomTypes'
+import { useResource } from '../../../contract/useResource'
+import { useShellBack } from '../../../shared/shellContext'
+import { useIsPhone } from '../../../shared/useIsPhone'
+import { errorMessage } from '../../../i18n/errors'
+import { formatDateTime } from '../../../i18n/format'
+import { useT } from '../../../i18n/useT'
+import { ButtonLink, Chip, ChipGroup, CopyButton } from '../../../ui'
+import '../../../styles/learn.css'
+
+type Course = components['schemas']['CourseStudentView']
+type List = components['schemas']['ActivityStudentList']
+type Card = components['schemas']['ActivityStudentCard']
+type Status = Card['status']
+type Filter = 'all' | Status
+const SECTIONS: Status[] = ['open', 'scheduled', 'ended']
+const isFilter = (value: string | null): value is Filter => value === 'all' || SECTIONS.includes(value as Status)
+
+/** The student's view of one course. Progress-based wording comes later. */
+export function StudentCoursePage() {
+  const { t, locale } = useT('learn')
+  const { courseId = '' } = useParams()
+  const phone = useIsPhone()
+  const course = useResource<Course>(`/courses/${courseId}?role=student`)
+  const list = useResource<List>(`/courses/${courseId}/activities?role=student`)
+  const [params, setParams] = useSearchParams()
+  const raw = params.get('filter')
+  const filter: Filter = isFilter(raw) ? raw : 'all'
+  // 手機頂部列「‹ 首頁」（S5m，P33）：首頁已經沒有「我學的課」分頁
+  useShellBack('/', t('shell:nav.home'))
+
+  if ((course.loading && !course.data) || (list.loading && !list.data)) return <main className="learn-page" aria-busy="true" />
+  if (!course.data || !list.data) {
+    const error = course.error ?? list.error
+    const notFound = error instanceof ApiError && error.status === 404
+    return <main className="learn-page learn-page--message">
+      <h1>{notFound ? t('notFound.title') : errorMessage(t, error)}</h1>
+      {notFound && <p>{t('notFound.body')}</p>}
+      <ButtonLink variant="outline" to="/">{t('notFound.back')}</ButtonLink>
+    </main>
+  }
+
+  const data = course.data
+  const items = list.data.items
+  const date = (seconds: number, style: Parameters<typeof formatDateTime>[2]) => formatDateTime(seconds, locale, style)
+  const count = (key: Filter) => key === 'all' ? items.length : items.filter(item => item.status === key).length
+  const shown = SECTIONS.filter(status => filter === 'all' || filter === status)
+    .map(status => [status, items.filter(item => item.status === status)] as const)
+    .filter(([, cards]) => cards.length > 0)
+
+  function openCard(card: Card) {
+    if (phone) return <article key={card.id} className="learn-card learn-card--open">
+      <Link className="learn-card__whole" to={`/learn/activities/${card.id}`}>
+        <span className="learn-card__body"><span className="learn-card__title">{card.title}</span>
+          <span className="learn-card__meta">{t('phoneOpen', { end: date(card.ends_at, 'date') })}</span></span>
+        <span className="learn-card__chevron" aria-hidden="true">›</span>
+      </Link>
+    </article>
+    // The title link stretches over the whole card; the start button sits above it.
+    return <article key={card.id} className="learn-card learn-card--open">
+      <h3 className="learn-card__title"><Link className="learn-card__stretch" to={`/learn/activities/${card.id}`}>{card.title}</Link></h3>
+      <div className="learn-card__content">
+        <span className="learn-card__meta">{t('openUntil', { end: date(card.ends_at, 'weekdayDateTime') })}</span>
+      </div>
+      <ButtonLink variant="outline" className="learn-card__start" to={`/learn/activities/${card.id}`}>{t('start')}<span aria-hidden="true">→</span></ButtonLink>
+    </article>
+  }
+
+  return <main className="learn-page">
+    <header className="learn-head">
+      <div className="learn-head__title">
+        {!phone && <nav className="learn-head__crumb" aria-label={t('breadcrumbLabel')}>
+          <Link to="/?tab=learn">{t('breadcrumb')}</Link> <span aria-hidden="true">/</span>
+        </nav>}
+        <h1>{data.name}</h1>
+        <span className="learn-head__meta">{t('teacher', { name: data.teacher_name })}</span>
+      </div>
+      {/* 手機稿沒有代碼框 */}
+      {data.code && !phone && <div className="learn-head__code">
+        <span>{t('code')}</span><strong>{data.code}</strong>
+        <CopyButton text={data.code} label={t('copyCode')} iconOnly tone="quiet" />
+      </div>}
+    </header>
+    {items.length === 0 ? <p className="learn-empty">{t('nothing')}</p> : <>
+      <ChipGroup label={t('filterLabel')} className="learn-chips">
+        {(['all', ...SECTIONS] as Filter[]).map(key => <Chip key={key} className="learn-chip" pressed={filter === key}
+          onClick={() => setParams(key === 'all' ? {} : { filter: key }, { replace: true })}>{t(`filters.${key}`)} {count(key)}</Chip>)}
+      </ChipGroup>
+      {shown.length === 0 && <p className="learn-empty">{t('noMatch')}</p>}
+      {shown.map(([status, cards]) => <section key={status} className={`learn-section learn-section--${status}`} aria-labelledby={`learn-${status}`}>
+        <h2 id={`learn-${status}`}>{t(`sections.${status}`)}</h2>
+        {status === 'open' && <div className="learn-grid">{cards.map(openCard)}</div>}
+        {status === 'scheduled' && <div className="learn-list">{cards.map(card => <article key={card.id} className="learn-card learn-card--scheduled">
+          <h3 className="learn-card__title">{card.title}</h3>
+          <span className="learn-card__meta">{t('opensAt', { start: date(card.starts_at, 'dateTime') })}</span>
+        </article>)}</div>}
+        {status === 'ended' && <ul className="learn-ended">{cards.map(card => <li key={card.id}>
+          <span className="learn-card__title">{card.title}</span>
+          <span className="learn-card__meta">{t('endedAt', { end: date(card.ends_at, 'date') })}</span>
+        </li>)}</ul>}
+      </section>)}
+    </>}
+  </main>
+}

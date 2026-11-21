@@ -1,0 +1,179 @@
+import { useEffect, useRef } from 'react'
+import { useT } from '../../i18n/useT'
+import { can, currentScenario, REVIEW_STATES, type SoloAttemptView, type SoloScenario } from './soloView'
+
+const FOLLOW_LATEST_THRESHOLD = 96
+// Matches the phone breakpoint in solo.css, where the whole conversation scrolls instead of the timeline.
+const PHONE_QUERY = '(max-width: 767px)'
+
+type Props = {
+  view: SoloAttemptView
+  pendingStudent?: { text: string; first: boolean } | null
+  waiting?: boolean
+  retrying?: boolean
+  onRetry?: () => void
+}
+
+export function SoloTimeline({ view, pendingStudent = null, waiting = false, retrying = false, onRetry }: Props) {
+  const { t } = useT('solo')
+  const timelineRef = useRef<HTMLElement>(null)
+  const followLatest = useRef(true)
+  const messages = withoutConfirmingFollowUp(view)
+  const scenario = currentScenario(view)
+  const contentKey = `${messages.map(message => message.id).join(':')}|${pendingStudent?.text ?? ''}|${waiting}`
+  /** Desktop scrolls the timeline; a phone (A1m) scrolls the whole conversation under the header. */
+  function scroller(): HTMLElement | null {
+    const timeline = timelineRef.current
+    const phone = typeof window.matchMedia === 'function' && window.matchMedia(PHONE_QUERY).matches
+    return phone ? timeline?.closest<HTMLElement>('.solo-conversation') ?? timeline : timeline
+  }
+
+  // Instant, not smooth: a smooth scroll is dropped when the layout changes mid-animation.
+  function showLatest() {
+    const target = scroller()
+    if (target && followLatest.current && typeof target.scrollTo === 'function') {
+      target.scrollTo({ top: target.scrollHeight, behavior: 'auto' })
+    }
+  }
+
+  useEffect(showLatest, [contentKey])
+
+  // The composer below changes height (waiting hint, X2 notice), and fonts load after the
+  // first render; either shortens the timeline, so stay on the latest message when it does.
+  useEffect(() => {
+    const timeline = timelineRef.current
+    if (!timeline || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(showLatest)
+    observer.observe(timeline)
+    return () => observer.disconnect()
+  }, [])
+
+  function trackScroll() {
+    const target = scroller()
+    if (!target) return
+    const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+    followLatest.current = distanceFromBottom <= FOLLOW_LATEST_THRESHOLD
+  }
+
+  // On a phone the scroll happens on the conversation, which onScroll below never sees.
+  useEffect(() => {
+    const conversation = timelineRef.current?.closest<HTMLElement>('.solo-conversation')
+    if (!conversation) return
+    const onScroll = () => { if (scroller() === conversation) trackScroll() }
+    conversation.addEventListener('scroll', onScroll)
+    return () => conversation.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // A1w／X2: only the message still waiting for a reply carries 已保存 (it reached the server).
+  const awaitingReply = view.state === 'awaiting_tutor' || view.state === 'tutor_unavailable'
+  const savedId = awaitingReply ? messages.filter(message => message.role === 'student').at(-1)?.id : undefined
+  // X2, or a reply that never came (stale wait): retry in the conversation instead of thinking.
+  const offerRetry = can(view, 'retry') && !retrying
+  let studentIndex = 0
+  // Earlier scenarios stay in the same conversation, collapsed to their confirmed viewpoint.
+  const earlier = view.scenarios.filter(item => item.index < view.scenario_index)
+  function confirmedCard(item: SoloScenario) {
+    if (!item.confirmed_summary) return null
+    return <article key={`confirmed-${item.id}`} className="solo-confirmed">
+      <strong><span aria-hidden="true">✓ </span>{t('review.confirmedCard', { number: item.index + 1 })}</strong>
+      <p>{item.confirmed_summary.reason_summary}</p>
+    </article>
+  }
+
+  return <section ref={timelineRef} className="solo-timeline" aria-label={t('timeline.label')} onScroll={trackScroll}>
+    {earlier.map(confirmedCard)}
+    {scenario && scenario.index > 0
+      ? <>
+        <article className="solo-scenario">
+          <strong>{t('scenarioTitle', { number: scenario.index + 1 })}</strong>
+          <span>{t('next.scenarioLabel')}</span>
+          <p>{scenario.text}</p>
+        </article>
+        <article className="solo-message solo-message--tutor">
+          <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+          <div><strong>{t('timeline.socrates')}</strong><p>{t('next.intuition')}</p></div>
+        </article>
+      </>
+      : <article className="solo-message solo-message--tutor">
+        <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+        <div><strong>{t('timeline.socrates')}</strong><p>{t('timeline.opening', { name: view.display_name })}</p></div>
+      </article>}
+    {messages.map(message => {
+      if (message.role === 'student') studentIndex += 1
+      if (message.role === 'tutor') return <article key={message.id} className="solo-message solo-message--tutor">
+        <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+        <div>
+          <strong>{t('timeline.socrates')}</strong>
+          {message.move === 'hypothetical' && <span className="solo-message__move">{t('timeline.hypothetical')}</span>}
+          <p>{message.text}</p>
+        </div>
+      </article>
+      // Design A1: the student's label sits above the bubble, outside it.
+      return <article key={message.id} className="solo-message solo-message--student">
+        <strong className="solo-message__label">{studentIndex === 1 ? t('timeline.meFirst') : t('timeline.me')}</strong>
+        <div>
+          <p>{message.text}</p>
+          {message.id === savedId && <small>{t('timeline.saved')}</small>}
+        </div>
+      </article>
+    })}
+    {pendingStudent && <article className="solo-message solo-message--student">
+      <strong className="solo-message__label">{pendingStudent.first ? t('timeline.meFirst') : t('timeline.me')}</strong>
+      <div><p>{pendingStudent.text}</p></div>
+    </article>}
+    {/* X1: the summary the student called off, then Socrates asks which part (fixed copy). */}
+    {view.revising && view.rejected_summary && <>
+      <article className="solo-message solo-message--student solo-rejected">
+        <div>
+          <strong>{t('revise.echoTitle')}</strong>
+          <p>{rejectedText(view.rejected_summary, t)}</p>
+        </div>
+      </article>
+      <article className="solo-message solo-message--tutor">
+        <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+        <div><strong>{t('timeline.socrates')}</strong><p>{t('revise.ask')}</p></div>
+      </article>
+    </>}
+    {/* The confirmed viewpoint closes this scenario's part of the conversation. */}
+    {scenario && confirmedCard(scenario)}
+    {REVIEW_STATES.includes(view.state) && <article className="solo-message solo-message--tutor">
+      <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+      <div><strong>{t('timeline.socrates')}</strong><p>{t('review.closing', { name: view.display_name })}</p></div>
+    </article>}
+    {/* X2: the failure sits in the conversation, right after the saved message it concerns. */}
+    {offerRetry && <div className="solo-unavailable" role="status">
+      <div>
+        <strong>{view.notice === 'owner_provider_missing' ? t('unavailable.ownerMissing') : t('unavailable.title')}</strong>
+        <p>{t('unavailable.saved')}</p>
+      </div>
+      <button className="solo-primary" type="button" onClick={() => onRetry?.()}>{t('unavailable.retry')}</button>
+    </div>}
+    {waiting && !offerRetry && <article className="solo-message solo-message--tutor" role="status">
+      <span className="solo-message__avatar" aria-hidden="true">{t('timeline.socratesMark')}</span>
+      <div><strong>{t('timeline.socrates')}</strong><p>{t('timeline.thinking')}</p></div>
+    </article>}
+  </section>
+}
+
+const SETTLED: ReadonlyArray<SoloAttemptView['state']> = ['confirming', 'between_scenarios', ...REVIEW_STATES]
+
+/** This scenario's messages. Once the backend decides to confirm (and after it, between scenarios and in review),
+ * the tutor's reply to that turn is left out: its new question would ask the student two
+ * things at once (the designs put the summary right after the student's last message). */
+function withoutConfirmingFollowUp(view: SoloAttemptView) {
+  // 對最終統整說「不太對」的那句屬於回顧，不是這個情境的對話
+  const messages = view.messages.filter(message => message.scenario_index === view.scenario_index && !message.final_feedback)
+  const last = messages[messages.length - 1]
+  if ((SETTLED.includes(view.state) || view.revising) && last?.role === 'tutor') return messages.slice(0, -1)
+  return messages
+}
+
+type Summary = NonNullable<SoloAttemptView['rejected_summary']>
+
+function rejectedText(summary: Summary, t: (key: string, options?: Record<string, unknown>) => string) {
+  const parts = [
+    t('revise.reason', { value: summary.reason_summary }),
+    summary.relevant_conditions.length > 0 && t('revise.conditions', { value: summary.relevant_conditions.join('；') }),
+  ]
+  return parts.filter(Boolean).join(t('revise.separator'))
+}

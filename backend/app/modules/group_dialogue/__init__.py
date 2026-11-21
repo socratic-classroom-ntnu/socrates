@@ -1,0 +1,1 @@
+"""Group Dialogue module boundary."""

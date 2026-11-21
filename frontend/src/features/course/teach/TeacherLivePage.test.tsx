@@ -1,0 +1,234 @@
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import type { components } from '../../../contract/classroomTypes'
+import { api } from '../../../contract/classroomClient'
+import { applyLocale } from '../../../i18n'
+import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
+import { TeacherLivePage } from './TeacherLivePage'
+import { PROJECTOR_WINDOW_NAME } from './projectorNavigation'
+
+jest.mock('../../../contract/classroomClient', () => {
+  const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
+  return { ApiError: actual.ApiError, api: jest.fn(), command: jest.fn(), setCSRF: jest.fn() }
+})
+
+type Progress = components['schemas']['SoloActivityProgressView']
+type Activity = components['schemas']['ActivityTeacherView']
+
+const generatedAt = 1_800_000_000
+const progress: Progress = {
+  activity_id: 'a-1', title: '科技與選擇', course_id: 'c-1', course_name: '科技倫理',
+  status: 'open', ends_at: generatedAt + 3600, generated_at: generatedAt,
+  summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
+  students: [
+    { enrollment_id: 'e-1', display_name: '小安', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirmed', turns: 4 }, { status: 'in_dialogue', turns: 3 }], review_status: 'not_started', last_activity_at: generatedAt - 120, attention: true },
+    { enrollment_id: 'e-2', display_name: '小博', kind: 'registered', guest_number: null, final_status: null, overall: 'done', cells: [{ status: 'confirmed', turns: 3 }, { status: 'confirmed', turns: 5 }], review_status: 'in_progress', last_activity_at: generatedAt - 20, attention: false },
+    { enrollment_id: 'e-3', display_name: '小慈', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', cells: [], review_status: 'not_started', last_activity_at: null, attention: false },
+    { enrollment_id: 'e-4', display_name: '小德', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirming', turns: 2 }], review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false },
+  ],
+}
+
+function activity(actions: Activity['available_actions'] = ['end_now']): Activity {
+  return {
+    id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
+    revision: 1, draft: { title: progress.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: progress.ends_at! },
+    starts_at: generatedAt - 3600, ends_at: progress.ends_at, available_actions: actions,
+  }
+}
+
+function open(options: { actions?: Activity['available_actions']; locale?: 'zh-Hant' | 'en' | 'es'; view?: Progress } = {}) {
+  const calls = mockApi({
+    'GET /auth/me': { ...signedIn, locale: options.locale ?? 'zh-Hant' },
+    'GET /solo/activities/a-1/progress': options.view ?? progress,
+    'GET /activities/a-1': () => { activityAnswered = true; return activity(options.actions) },
+    'POST /activities/a-1/end_now': {},
+  })
+  renderAt('/teach/activities/a-1', '/teach/activities/:activityId', <TeacherLivePage />)
+  return calls
+}
+
+let activityAnswered = false
+
+// 「提早結束」只看 header 自己另外拿的 GET /activities/a-1，那支請求在頁面出現之後才發出，
+// 所以要等它回來再斷言按鈕；CI 比較慢時，直接斷言會在回應前就看畫面。
+async function activityLoaded() {
+  await waitFor(() => expect(activityAnswered).toBe(true))
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)) })
+}
+
+beforeEach(() => {
+  jest.mocked(api).mockReset()
+  jest.spyOn(window, 'open').mockImplementation(() => null)
+  activityAnswered = false
+})
+
+afterEach(() => {
+  jest.useRealTimers()
+  jest.restoreAllMocks()
+  applyLocale('zh-Hant')
+})
+
+test('renders the live header, summary cards, progress table, timestamps and privacy footer', async () => {
+  open()
+  const page = await screen.findByTestId('teacher-live-page')
+
+  expect(within(page).getByRole('link', { name: '課程' })).toHaveAttribute('href', '/teach/courses/c-1')
+  expect(within(page).getByText('科技倫理')).toBeInTheDocument()
+  expect(within(page).getByRole('heading', { name: '科技與選擇' })).toBeInTheDocument()
+  expect(within(page).getByText('進行中', { selector: '.pill' })).toBeInTheDocument()
+  expect(within(page).getByText(/開放到.*即時更新/)).toBeInTheDocument()
+  const projectorButton = within(page).getByRole('button', { name: '投影活動 QR' })
+  fireEvent.click(projectorButton)
+  const inviteDialog = screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })
+  expect(within(inviteDialog).getByRole('link', { name: '投影到大螢幕' })).toHaveAttribute('target', PROJECTOR_WINDOW_NAME)
+  expect(window.open).not.toHaveBeenCalled()
+  fireEvent.click(within(inviteDialog).getByRole('link', { name: '投影到大螢幕' }))
+  expect(window.open).toHaveBeenCalledWith('/teach/activities/a-1/projector', PROJECTOR_WINDOW_NAME)
+  expect(screen.getByTestId('where')).toHaveTextContent('/teach/activities/a-1')
+  expect(screen.getByRole('dialog', { name: '邀請學生參加「科技與選擇」' })).toBeInTheDocument()
+  expect(within(page).getByRole('link', { name: '統計分析' })).toHaveAttribute('href', '/teach/activities/a-1/analysis')
+
+  expect(within(page).getByText('已開始 3 ／ 4')).toBeInTheDocument()
+  expect(within(page).getByText('完成 1 人')).toBeInTheDocument()
+  expect(within(page).getByText('需要留意 1 人（超過 5 分鐘沒有動作）')).toBeInTheDocument()
+
+  const table = within(page).getByRole('table')
+  for (const heading of ['學生', '情境 1', '情境 2', '回顧與反思', '最後動作']) {
+    expect(within(table).getByRole('columnheader', { name: heading })).toBeInTheDocument()
+  }
+  expect(within(table).getAllByText('已確認').length).toBeGreaterThan(0)
+  expect(within(table).getByText('對話中 · 3 輪')).toBeInTheDocument()
+  expect(within(table).getByText('確認觀點中')).toBeInTheDocument()
+  expect(within(table).getAllByText('未開始').length).toBeGreaterThan(0)
+  expect(within(table).getAllByText('剛剛')).toHaveLength(2)
+  expect(within(table).getByText('2 分鐘前')).toBeInTheDocument()
+  // 到了回顧只代表回顧開始了，回顧與反思欄跟著 review_status，不因 overall=done 就寫已完成
+  expect(within(within(table).getByRole('row', { name: /小博/ })).getByText('進行中')).toBeInTheDocument()
+  expect(within(table).getByText('⏸ 2 分鐘沒有動作')).toBeInTheDocument()
+  expect(within(page).getByText('看不到對話內容；學生確認過的想法在『統計分析』')).toBeInTheDocument()
+})
+
+test.each([
+  ['zh-Hant' as const, '寫第一個回答中'],
+  ['en' as const, 'Writing the first answer'],
+  ['es' as const, 'Escribiendo la primera respuesta'],
+])('%s: a student still on the first answer is not shown as in dialogue', async (locale, label) => {
+  const answering = { ...progress.students[0], cells: [{ status: 'confirmed', turns: null }, { status: 'answering', turns: null }] } as Progress['students'][number]
+  open({ locale, view: { ...progress, students: [answering] } })
+  const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+  expect(within(table).getByText(label)).toHaveClass('live-cell--answering')
+  expect(within(table).queryByText(/0 (輪|turns?|turnos?)/)).toBeNull()
+})
+
+test('a completed review says so, and whether its final summary was confirmed', async () => {
+  const finished = (name: string, final_status: 'confirmed' | 'unconfirmed') => ({
+    ...progress.students[1], enrollment_id: name, display_name: name, review_status: 'completed', final_status,
+  }) as Progress['students'][number]
+  open({ view: { ...progress, students: [finished('小真', 'confirmed'), finished('小疑', 'unconfirmed')] } })
+  const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+  expect(within(within(table).getByRole('row', { name: /小真/ })).getByText('已完成')).toBeInTheDocument()
+  expect(within(within(table).getByRole('row', { name: /小疑/ })).getByText('已完成・未確認')).toBeInTheDocument()
+})
+
+test('a capped scenario shows as not settled, not as answering or confirmed', async () => {
+  open({
+    view: {
+      ...progress,
+      students: [{
+        enrollment_id: 'e-5', display_name: '小恩', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress',
+        cells: [{ status: 'capped', turns: 10 }, { status: 'in_dialogue', turns: 1 }],
+        review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false,
+      }],
+    },
+  })
+  const table = await screen.findByRole('table')
+
+  const row = within(table).getByRole('row', { name: /小恩/ })
+  expect(within(row).getByText('尚未釐清')).toBeInTheDocument()
+  expect(within(row).queryByText('寫第一個回答中')).toBeNull()
+  expect(within(row).queryByText('已確認')).toBeNull()
+})
+
+test('the table has one column per scenario the furthest student reached, and at least one', async () => {
+  open({ view: { ...progress, students: [progress.students[2]] } })
+  const table = within(await screen.findByTestId('teacher-live-page')).getByRole('table')
+  expect(within(table).getByRole('columnheader', { name: '情境 1' })).toBeInTheDocument()
+  expect(within(table).queryByRole('columnheader', { name: '情境 2' })).toBeNull()
+  expect(within(table).getByText('未開始', { selector: '.live-cell--not_started' })).toBeInTheDocument()
+
+  const three = { ...progress.students[0], cells: [{ status: 'confirmed', turns: 1 }, { status: 'confirmed', turns: 2 }, { status: 'in_dialogue', turns: 1 }] } as Progress['students'][number]
+  open({ view: { ...progress, students: [three] } })
+  expect(await screen.findByRole('columnheader', { name: '情境 3' })).toBeInTheDocument()
+})
+
+test('filters students and shows a count on every filter', async () => {
+  open()
+  const page = await screen.findByTestId('teacher-live-page')
+  const group = within(page).getByRole('group', { name: '篩選學生' })
+  for (const label of ['全部 4', '對話中 2', '需要留意 1', '已完成 1', '還沒開始 1']) {
+    expect(within(group).getByRole('button', { name: label })).toBeInTheDocument()
+  }
+
+  fireEvent.click(within(group).getByRole('button', { name: '需要留意 1' }))
+  expect(within(page).getByRole('row', { name: /小安/ })).toBeInTheDocument()
+  expect(within(page).queryByRole('row', { name: /小博/ })).toBeNull()
+
+  fireEvent.click(within(group).getByRole('button', { name: '還沒開始 1' }))
+  expect(within(page).getByRole('row', { name: /小慈/ })).toBeInTheDocument()
+  expect(within(page).queryByRole('row', { name: /小安/ })).toBeNull()
+})
+
+test('reloads progress every ten seconds', async () => {
+  jest.useFakeTimers()
+  const calls = open()
+  await act(async () => { await Promise.resolve(); await Promise.resolve() })
+  expect(calls.filter(call => call.key === 'GET /solo/activities/a-1/progress')).toHaveLength(1)
+
+  await act(async () => { jest.advanceTimersByTime(10_000); await Promise.resolve() })
+  expect(calls.filter(call => call.key === 'GET /solo/activities/a-1/progress')).toHaveLength(2)
+})
+
+test.each([
+  [['end_now'] as Activity['available_actions'], true],
+  [[], false],
+])('shows end early only when available_actions allows it: %p', async (actions, visible) => {
+  open({ actions })
+  const page = await screen.findByTestId('teacher-live-page')
+  await activityLoaded()
+  expect(within(page).queryByRole('button', { name: '提早結束' }) !== null).toBe(visible)
+})
+
+test('confirms before ending and posts the state-machine action', async () => {
+  const calls = open()
+  const page = await screen.findByTestId('teacher-live-page')
+  await activityLoaded()
+  fireEvent.click(within(page).getByRole('button', { name: '提早結束' }))
+  const dialog = screen.getByRole('dialog', { name: '提早結束活動' })
+  expect(calls.some(call => call.key === 'POST /activities/a-1/end_now')).toBe(false)
+  fireEvent.click(within(dialog).getByRole('button', { name: '確認結束' }))
+  await waitFor(() => expect(calls.some(call => call.key === 'POST /activities/a-1/end_now')).toBe(true))
+})
+
+test.each([
+  ['en' as const, { ...progress, title: 'Technology and Choice', course_name: 'Technology Ethics', students: progress.students.map((student, index) => ({ ...student, display_name: ['Ana', 'Ben', 'Cora', 'Dan'][index] })) }],
+  ['es' as const, { ...progress, title: 'Tecnología y elección', course_name: 'Ética tecnológica', students: progress.students.map((student, index) => ({ ...student, display_name: ['Ana', 'Beto', 'Cora', 'Dani'][index] })) }],
+])('%s live page contains no Chinese interface text', async (locale, view) => {
+  open({ locale, view })
+  const page = await screen.findByTestId('teacher-live-page')
+  expect(page.textContent).not.toMatch(/[\u3400-\u9fff]/)
+})
+
+test('guest rows carry a guest tag and expired guests show an anonymous number', async () => {
+  const [first, second, third] = progress.students
+  open({ view: { ...progress, students: [
+    first,
+    { ...second, display_name: '阿明', kind: 'guest', guest_number: 1 },
+    { ...third, display_name: '', kind: 'expired_guest', guest_number: 2 },
+  ] } })
+  const page = await screen.findByTestId('teacher-live-page')
+  const registered = within(page).getByRole('rowheader', { name: '小安' })
+  expect(within(registered).queryByText('訪客')).toBeNull()
+  const guest = within(page).getByText('阿明').closest('th')!
+  expect(within(guest).getByText('訪客')).toBeInTheDocument()
+  const expired = within(page).getByText('過期訪客 2').closest('th')!
+  expect(within(expired).getByText('訪客')).toBeInTheDocument()
+})

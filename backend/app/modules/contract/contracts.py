@@ -28,6 +28,9 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     ),
     "ACTIVITY_NOT_OPEN": ("solo_activity",),
     "ACTIVITY_TIME_INVALID": ("course_management",),
+    "AI_CONNECTION_CHANGED": ("ai_connection",),
+    "AI_CONNECTION_NAME_INVALID": ("ai_connection",),
+    "AI_CONNECTION_NAME_TAKEN": ("ai_connection",),
     "AI_BUDGET_REQUIRED": ("ai_providers",),
     "ALREADY_SIGNED_IN": ("course_management",),
     "AI_MODEL_ID_REQUIRED": ("ai_providers",),
@@ -151,6 +154,21 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
 }
 
 DYNAMIC_REASON_CODES: tuple[str, ...] = (
+    # The teacher's AI 連線設定 form checks and test kinds, raised with this prefix by
+    # ai_connection/service.py.
+    "AI_CONNECTION_ADAPTER_INVALID",
+    "AI_CONNECTION_BASE_URL_INVALID",
+    "AI_CONNECTION_BASE_URL_NOT_ALLOWED",
+    "AI_CONNECTION_BASE_URL_REQUIRED",
+    "AI_CONNECTION_KEY_INVALID",
+    "AI_CONNECTION_KEY_MALFORMED",
+    "AI_CONNECTION_KEY_REQUIRED",
+    "AI_CONNECTION_MODEL_INVALID",
+    "AI_CONNECTION_MODEL_NOT_FOUND",
+    "AI_CONNECTION_MODEL_REQUIRED",
+    "AI_CONNECTION_QUOTA",
+    "AI_CONNECTION_TIMEOUT",
+    "AI_CONNECTION_UNREACHABLE",
     "API_ROUTE_JSON_REQUIRED",
     "GROUP_MODE_DISABLED",
     "EMAIL_TAKEN",

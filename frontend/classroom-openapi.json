@@ -1,6 +1,185 @@
 {
   "components": {
     "schemas": {
+      "AIConnectionInput": {
+        "description": "The form. No length or format limits here: a rejected value would be echoed back in\nFastAPI's 422, and the key must never be (classroom_app leaves `input` out on this path).\n`ai_connection.connection` checks every field and answers with an error code only.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "adapter",
+          "model"
+        ],
+        "title": "AIConnectionInput",
+        "type": "object"
+      },
+      "AIConnectionOwnView": {
+        "description": "The teacher's one connection. Never the key: only its last four characters.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Last4"
+          },
+          "key_usable": {
+            "title": "Key Usable",
+            "type": "boolean"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "adapter",
+          "model",
+          "base_url",
+          "name",
+          "key_last4",
+          "enabled",
+          "key_usable"
+        ],
+        "title": "AIConnectionOwnView",
+        "type": "object"
+      },
+      "AIConnectionSystemView": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "required": [
+          "available",
+          "model"
+        ],
+        "title": "AIConnectionSystemView",
+        "type": "object"
+      },
+      "AIConnectionTestView": {
+        "properties": {
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "title": "AIConnectionTestView",
+        "type": "object"
+      },
+      "AIConnectionView": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "system",
+              "own"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "own": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIConnectionOwnView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "system": {
+            "$ref": "#/components/schemas/AIConnectionSystemView"
+          }
+        },
+        "required": [
+          "mode",
+          "system",
+          "own"
+        ],
+        "title": "AIConnectionView",
+        "type": "object"
+      },
       "AISettingsView": {
         "additionalProperties": false,
         "properties": {
@@ -1900,38 +2079,6 @@
           "observed_at"
         ],
         "title": "ConnectionTestView",
-        "type": "object"
-      },
-      "ConnectionView": {
-        "properties": {
-          "mode": {
-            "enum": [
-              "system",
-              "own"
-            ],
-            "title": "Mode",
-            "type": "string"
-          },
-          "own": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OwnConnectionView"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "system": {
-            "$ref": "#/components/schemas/SystemOptionView"
-          }
-        },
-        "required": [
-          "mode",
-          "system",
-          "own"
-        ],
-        "title": "ConnectionView",
         "type": "object"
       },
       "CourseCreate": {
@@ -4498,64 +4645,6 @@
           "suggestion_provider"
         ],
         "title": "OtherSuggestionView",
-        "type": "object"
-      },
-      "OwnConnectionView": {
-        "description": "The teacher's one connection. Never the key: only its last four characters.",
-        "properties": {
-          "adapter": {
-            "title": "Adapter",
-            "type": "string"
-          },
-          "base_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Base Url"
-          },
-          "enabled": {
-            "title": "Enabled",
-            "type": "boolean"
-          },
-          "key_last4": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Key Last4"
-          },
-          "key_usable": {
-            "title": "Key Usable",
-            "type": "boolean"
-          },
-          "model": {
-            "title": "Model",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "adapter",
-          "model",
-          "base_url",
-          "name",
-          "key_last4",
-          "enabled",
-          "key_usable"
-        ],
-        "title": "OwnConnectionView",
         "type": "object"
       },
       "PasswordResetView": {
@@ -7924,31 +8013,6 @@
         "title": "SystemAIView",
         "type": "object"
       },
-      "SystemOptionView": {
-        "properties": {
-          "available": {
-            "title": "Available",
-            "type": "boolean"
-          },
-          "model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model"
-          }
-        },
-        "required": [
-          "available",
-          "model"
-        ],
-        "title": "SystemOptionView",
-        "type": "object"
-      },
       "ToggleUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -9296,7 +9360,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConnectionView"
+                  "$ref": "#/components/schemas/AIConnectionView"
                 }
               }
             },
@@ -9304,6 +9368,88 @@
           }
         },
         "summary": "Get Connection",
+        "tags": [
+          "ai-connection"
+        ]
+      },
+      "put": {
+        "description": "Test, and save only when the test passes; a failure leaves the connection as it was.",
+        "operationId": "put_connection_api_v2_ai_settings_connection_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIConnectionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Connection",
+        "tags": [
+          "ai-connection"
+        ]
+      }
+    },
+    "/api/v2/ai-settings/connection/test": {
+      "post": {
+        "description": "Test only; nothing is saved.",
+        "operationId": "test_connection_api_v2_ai_settings_connection_test_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AIConnectionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIConnectionTestView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Connection",
         "tags": [
           "ai-connection"
         ]

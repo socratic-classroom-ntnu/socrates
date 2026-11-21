@@ -954,15 +954,15 @@ class OwnerConnection:
     # False when a student's dialogue cannot use the key: a login-session key that is gone, no
     # key at all, or one that no longer decrypts.
     key_usable: bool
+    # Compared again under the lock before a save, with profile_id.
+    updated_at: float
 
 
-def owner_connection(db, owner_id: str) -> OwnerConnection | None:
-    """The default profile, or the fallback when there is no default (students use it then), with
-    the tutor's model from the matrix before the profile's own (what a student's dialogue uses)."""
+def _owner_profile(db, owner_id: str) -> tuple[AccountAISettings, ProviderProfile] | None:
+    """The default profile, or the fallback when there is no default (students use it then)."""
     settings = db.get(AccountAISettings, owner_id)
     if settings is None:
         return None
-    profile = None
     for profile_id in (settings.default_profile_id, settings.fallback_profile_id):
         if profile_id:
             profile = db.scalar(
@@ -971,14 +971,25 @@ def owner_connection(db, owner_id: str) -> OwnerConnection | None:
                 )
             )
             if profile is not None:
-                break
-    if profile is None:
-        return None
+                return settings, profile
+    return None
+
+
+def _owner_secret(db, settings: AccountAISettings, profile: ProviderProfile) -> str | None:
     try:
-        usable = bool(profile_secret(db, profile, session_token_hash=settings.session_token_hash))
+        return profile_secret(db, profile, session_token_hash=settings.session_token_hash)
     except (DomainError, ValueError, KeyError, TypeError, AttributeError):
         logger.warning("老師的金鑰解不開（provider_profile %s）", profile.id)
-        usable = False
+        return None
+
+
+def owner_connection(db, owner_id: str) -> OwnerConnection | None:
+    """The teacher's connection with the tutor's model from the matrix before the profile's own
+    (what a student's dialogue uses)."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return None
+    settings, profile = found
     return OwnerConnection(
         profile_id=profile.id,
         adapter=profile.adapter,
@@ -987,5 +998,83 @@ def owner_connection(db, owner_id: str) -> OwnerConnection | None:
         name=profile.name,
         key_last4=profile.secret_last4,
         enabled=profile.enabled,
-        key_usable=usable,
+        key_usable=bool(_owner_secret(db, settings, profile)),
+        updated_at=profile.updated_at,
     )
+
+
+def owner_connection_config(db, owner_id: str) -> PlatformConfig | None:
+    """The teacher's connection with its key, for a test or save that keeps the key; None when
+    there is none or its key cannot be used."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return None
+    settings, profile = found
+    secret = _owner_secret(db, settings, profile)
+    if not secret:
+        return None
+    model = (settings.model_matrix or {}).get("socratic_tutor") or profile.default_model
+    return PlatformConfig(profile.adapter, model, secret, profile.base_url)
+
+
+def lock_owner(db, owner_id: str) -> None:
+    """Serialize one teacher's connection writes (two tabs saving at once)."""
+    db.scalar(select(Account.id).where(Account.id == owner_id).with_for_update())
+
+
+def profile_name_taken(db, owner_id: str, name: str, keep_id: str | None) -> bool:
+    query = select(ProviderProfile.id).where(
+        ProviderProfile.owner_id == owner_id, ProviderProfile.name == name
+    )
+    if keep_id is not None:
+        query = query.where(ProviderProfile.id != keep_id)
+    return db.scalar(query) is not None
+
+
+def write_owner_connection(
+    db, owner_id: str, config: PlatformConfig, *, name: str, profile_id: str | None
+) -> None:
+    """Save a tested connection as the teacher's only one: into `profile_id` (same service and
+    address), or a new row when None, the old row left alone (other settings may point at it).
+    The key is always kept encrypted; every role gets the model and the fallback is cleared."""
+    from sqlalchemy.exc import IntegrityError
+
+    if profile_id is not None:
+        row = owned_profile(db, owner_id, profile_id, lock=True)
+    else:
+        row = ProviderProfile(
+            owner_id=owner_id,
+            name=name,
+            adapter=config.adapter,
+            default_model=config.model,
+            credential_mode="PERSISTENT",
+        )
+        db.add(row)
+        db.flush()
+    row.name = name
+    row.adapter = config.adapter
+    row.base_url = config.base_url
+    row.default_model = config.model
+    row.enabled = True
+    row.credential_mode = "PERSISTENT"
+    encrypted, version = _seal(config.api_key, profile_id=row.id, owner_id=owner_id)
+    row.encrypted_secret = encrypted
+    row.secret_last4 = config.api_key[-4:]
+    row.key_version = version
+    row.updated_at = time.time()
+    settings = db.get(AccountAISettings, owner_id)
+    if settings is None:
+        try:
+            with db.begin_nested():
+                settings = AccountAISettings(owner_id=owner_id)
+                db.add(settings)
+        except IntegrityError:
+            settings = db.get(AccountAISettings, owner_id)
+            if settings is None:
+                raise
+    settings.default_profile_id = row.id
+    settings.fallback_profile_id = None
+    # Every role, never {}: 個人題庫's AI 協助出題 refuses without ai_script_authoring's model.
+    settings.model_matrix = dict.fromkeys(ROLE_KEYS, config.model)
+    settings.revision = int(settings.revision or 0) + 1
+    settings.updated_at = time.time()

@@ -278,14 +278,33 @@ describe('the stance track', () => {
     expect(within(last).getByText('最終整理學生否決 2 次，結果未確認')).toBeInTheDocument()
   })
 
-  test('clicking a stop scrolls the chat to the start of that scenario', async () => {
+  // jsdom has no Element.scrollTo, so each test puts one on the scroller and reads what it was asked to do
+  async function clickSecondStop() {
     open(transcript({ attempt: confirming() }))
     const c = await chat()
     const scroll = within(c).getByTestId('transcript-scroll')
+    const scrollTo = jest.fn()
+    scroll.scrollTo = scrollTo
     const second = c.querySelector('[data-scenario="1"]') as HTMLElement
     Object.defineProperty(second, 'offsetTop', { configurable: true, value: 640 })
     fireEvent.click(within(await track()).getByRole('button', { name: /捲到情境 2 的開頭/ }))
-    expect(scroll.scrollTop).toBe(640 - 12)
+    return scrollTo
+  }
+
+  test('clicking a stop scrolls the chat smoothly to the start of that scenario', async () => {
+    expect(await clickSecondStop()).toHaveBeenCalledWith({ top: 640 - 12, behavior: 'smooth' })
+  })
+
+  test('a reader who asked for less motion gets the jump without the animation', async () => {
+    const original = window.matchMedia
+    // setupTests defines matchMedia with defineProperty, so it is replaced the same way
+    const set = (value: typeof window.matchMedia) => Object.defineProperty(window, 'matchMedia', { configurable: true, writable: true, value })
+    set(((query: string) => ({ ...original(query), matches: query.includes('prefers-reduced-motion') })) as typeof window.matchMedia)
+    try {
+      expect(await clickSecondStop()).toHaveBeenCalledWith({ top: 640 - 12, behavior: 'auto' })
+    } finally {
+      set(original)
+    }
   })
 })
 

@@ -44,6 +44,7 @@ export interface components { schemas: {
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id": string };
   "ConfirmViewpointBody": { "summary_digest": string };
   "ConnectionTestView": { "status": "READY"; "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "model_count": number; "sample": Array<components["schemas"]["DiscoveredModel"]>; "observed_at": number };
+  "ConnectionView": { "mode": "system" | "own"; "system": components["schemas"]["SystemOptionView"]; "own": (components["schemas"]["OwnConnectionView"] | null) };
   "CourseCreate": { "name": string; "teacher_name": string; "intro": string; "goals": string };
   "CourseJoin": { "code": string; "display_name": string };
   "CourseLearningCard": { "id": string; "name": string; "teacher_name": string; "open_activity_count": number; "highlight": (components["schemas"]["ActivityStudentCard"] | null) };
@@ -102,6 +103,7 @@ export interface components { schemas: {
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
+  "OwnConnectionView": { "adapter": string; "model": string; "base_url": (string | null); "name": string; "key_last4": (string | null); "enabled": boolean; "key_usable": boolean };
   "PasswordResetView": { "status": "PASSWORD_RESET" };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note": string; "sources"?: Array<components["schemas"]["CitationSourceView"]> };
   "PracticeDialogue": { "activity_id": string; "attempt_id": string; "topic_id": string; "title": string; "body": string; "category": ("life" | "honesty" | "self" | "tech" | null); "status": "in_progress" | "completed"; "created_at": number; "updated_at": number };
@@ -170,6 +172,7 @@ export interface components { schemas: {
   "SystemAIModelsView": { "models": Array<components["schemas"]["ModelOption"]> };
   "SystemAITestView": { "ok": true };
   "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((components["schemas"]["AdminAuthor"] | components["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "SystemOptionView": { "available": boolean; "model": (string | null) };
   "ToggleUpdate": { "enabled": boolean };
   "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
@@ -228,6 +231,7 @@ export interface requestComponents { schemas: {
   "Configure": { "action_id": string; "expected_roster_digest": string; "group_count": number; "members_per_group": number; "assignments"?: Record<string, number>; "avatar_pack_id"?: string };
   "ConfirmViewpointBody": { "summary_digest": string };
   "ConnectionTestView": { "status": "READY"; "provider_profile_id": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "model_count": number; "sample": Array<requestComponents["schemas"]["DiscoveredModel"]>; "observed_at": number };
+  "ConnectionView": { "mode": "system" | "own"; "system": requestComponents["schemas"]["SystemOptionView"]; "own": (requestComponents["schemas"]["OwnConnectionView"] | null) };
   "CourseCreate": { "name": string; "teacher_name": string; "intro"?: string; "goals"?: string };
   "CourseJoin": { "code": string; "display_name": string };
   "CourseLearningCard": { "id": string; "name": string; "teacher_name": string; "open_activity_count": number; "highlight": (requestComponents["schemas"]["ActivityStudentCard"] | null) };
@@ -286,6 +290,7 @@ export interface requestComponents { schemas: {
   "Option": { "id": string; "text": string };
   "OtherSuggestionRequest": { "question_id": string; "title": string; "scenario": string; "existing_options"?: Array<string>; "room_id"?: (string | null) };
   "OtherSuggestionView": { "suggestion_text": string; "suggestion_id": string; "suggestion_model"?: (string | null); "suggestion_provider": string; "provider_profile_id"?: (string | null); "classroom_owner_id"?: (string | null) };
+  "OwnConnectionView": { "adapter": string; "model": string; "base_url": (string | null); "name": string; "key_last4": (string | null); "enabled": boolean; "key_usable": boolean };
   "PasswordResetView": { "status": "PASSWORD_RESET" };
   "PersonalSummaryView": { "current_position": string; "reason_summary": string; "relevant_conditions": Array<string>; "unresolved_issue": string; "principle_note"?: string; "sources"?: Array<requestComponents["schemas"]["CitationSourceView"]> };
   "PracticeDialogue": { "activity_id": string; "attempt_id": string; "topic_id": string; "title": string; "body": string; "category": ("life" | "honesty" | "self" | "tech" | null); "status": "in_progress" | "completed"; "created_at": number; "updated_at": number };
@@ -354,6 +359,7 @@ export interface requestComponents { schemas: {
   "SystemAIModelsView": { "models": Array<requestComponents["schemas"]["ModelOption"]> };
   "SystemAITestView": { "ok"?: true };
   "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((requestComponents["schemas"]["AdminAuthor"] | requestComponents["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "SystemOptionView": { "available": boolean; "model": (string | null) };
   "ToggleUpdate": { "enabled": boolean };
   "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
@@ -421,6 +427,9 @@ export interface paths {
   "/ai-settings/account": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["AISettingsView"]; responseMedia: "application/json"; path: never; query: never };
     "put": { body: requestComponents["schemas"]["SettingsUpdate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AISettingsView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/ai-settings/connection": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["ConnectionView"]; responseMedia: "application/json"; path: never; query: never };
   };
   "/auth/forgot-password": {
     "post": { body: requestComponents["schemas"]["MailRequest"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["MailRequestView"]; responseMedia: "application/json"; path: never; query: never };

@@ -1902,6 +1902,38 @@
         "title": "ConnectionTestView",
         "type": "object"
       },
+      "ConnectionView": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "system",
+              "own"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "own": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OwnConnectionView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "system": {
+            "$ref": "#/components/schemas/SystemOptionView"
+          }
+        },
+        "required": [
+          "mode",
+          "system",
+          "own"
+        ],
+        "title": "ConnectionView",
+        "type": "object"
+      },
       "CourseCreate": {
         "additionalProperties": false,
         "properties": {
@@ -4466,6 +4498,64 @@
           "suggestion_provider"
         ],
         "title": "OtherSuggestionView",
+        "type": "object"
+      },
+      "OwnConnectionView": {
+        "description": "The teacher's one connection. Never the key: only its last four characters.",
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "key_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Last4"
+          },
+          "key_usable": {
+            "title": "Key Usable",
+            "type": "boolean"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "adapter",
+          "model",
+          "base_url",
+          "name",
+          "key_last4",
+          "enabled",
+          "key_usable"
+        ],
+        "title": "OwnConnectionView",
         "type": "object"
       },
       "PasswordResetView": {
@@ -7834,6 +7924,31 @@
         "title": "SystemAIView",
         "type": "object"
       },
+      "SystemOptionView": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "required": [
+          "available",
+          "model"
+        ],
+        "title": "SystemOptionView",
+        "type": "object"
+      },
       "ToggleUpdate": {
         "additionalProperties": false,
         "properties": {
@@ -9171,6 +9286,27 @@
           }
         },
         "summary": "Update Account Settings"
+      }
+    },
+    "/api/v2/ai-settings/connection": {
+      "get": {
+        "operationId": "get_connection_api_v2_ai_settings_connection_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Connection",
+        "tags": [
+          "ai-connection"
+        ]
       }
     },
     "/api/v2/auth/forgot-password": {

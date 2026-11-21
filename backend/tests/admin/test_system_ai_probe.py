@@ -8,6 +8,7 @@ import pytest
 
 from app.modules.admin import system_ai
 from app.modules.admin.contracts import SystemAIInput
+from app.modules.ai_connection import service as connection
 from app.modules.ai_providers import classroom_gateway as gateway
 from app.modules.ai_providers.service import PlatformConfig
 from app.modules.platform.errors import DomainError
@@ -214,7 +215,7 @@ def test_a_timeout_is_its_own_kind(monkeypatch):
 
 def test_a_probe_that_runs_too_long_is_a_timeout(monkeypatch):
     """Under the proxies' own limits, so the page shows 逾時 instead of a gateway error."""
-    import app.modules.admin.system_ai as module
+    import app.modules.ai_connection.service as module
 
     async def hangs(*args, **kwargs):
         await asyncio.sleep(5)
@@ -266,7 +267,7 @@ def test_the_url_is_checked_inside_the_time_limit_and_off_the_event_loop(monkeyp
     """A slow DNS answer for a custom URL counts against the 45 s like the request itself."""
     import time
 
-    monkeypatch.setattr(system_ai, "PROBE_SECONDS", 0.2)
+    monkeypatch.setattr(connection, "PROBE_SECONDS", 0.2)
     monkeypatch.setattr(gateway.socket, "getaddrinfo", lambda *a, **k: time.sleep(1.5) or [])
     config = PlatformConfig("openai-compatible", "m", KEY, "https://slow-dns.example/v1")
 
@@ -325,7 +326,7 @@ def test_listing_models_uses_the_real_gateway_and_keeps_its_time_limit(monkeypat
 
 
 def test_a_slow_listing_is_a_timeout(monkeypatch):
-    import app.modules.admin.system_ai as module
+    import app.modules.ai_connection.service as module
 
     async def hangs(binding):
         await asyncio.sleep(5)

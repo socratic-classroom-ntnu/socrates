@@ -935,3 +935,57 @@ async def list_models(binding: dict) -> list[dict]:
 
     result = await classroom_gateway.discover_models(binding)
     return list(result["models"])
+
+
+# ---- 老師的 AI 連線設定（一組連線、全部 AI 共用；ai_connection 模組讀寫用）----
+
+
+@dataclass(frozen=True)
+class OwnerConnection:
+    """A teacher's one connection as the AI 連線設定 page shows it. Never carries the key."""
+
+    profile_id: str
+    adapter: str
+    model: str
+    base_url: str | None
+    name: str
+    key_last4: str | None
+    enabled: bool
+    # False when a student's dialogue cannot use the key: a login-session key that is gone, no
+    # key at all, or one that no longer decrypts.
+    key_usable: bool
+
+
+def owner_connection(db, owner_id: str) -> OwnerConnection | None:
+    """The default profile, or the fallback when there is no default (students use it then), with
+    the tutor's model from the matrix before the profile's own (what a student's dialogue uses)."""
+    settings = db.get(AccountAISettings, owner_id)
+    if settings is None:
+        return None
+    profile = None
+    for profile_id in (settings.default_profile_id, settings.fallback_profile_id):
+        if profile_id:
+            profile = db.scalar(
+                select(ProviderProfile).where(
+                    ProviderProfile.id == profile_id, ProviderProfile.owner_id == owner_id
+                )
+            )
+            if profile is not None:
+                break
+    if profile is None:
+        return None
+    try:
+        usable = bool(profile_secret(db, profile, session_token_hash=settings.session_token_hash))
+    except (DomainError, ValueError, KeyError, TypeError, AttributeError):
+        logger.warning("老師的金鑰解不開（provider_profile %s）", profile.id)
+        usable = False
+    return OwnerConnection(
+        profile_id=profile.id,
+        adapter=profile.adapter,
+        model=(settings.model_matrix or {}).get("socratic_tutor") or profile.default_model,
+        base_url=profile.base_url,
+        name=profile.name,
+        key_last4=profile.secret_last4,
+        enabled=profile.enabled,
+        key_usable=usable,
+    )

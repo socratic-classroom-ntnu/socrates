@@ -247,3 +247,41 @@ def test_a_key_that_no_longer_decrypts_needs_a_new_one(client, teacher, probes):
     body = apply(client).json()
     assert body["own"]["key_usable"] is True
     assert profile_id in [row["id"] for row in profiles(teacher)]
+
+
+# ---- 主要連線學生用不到、備用連線用得到：顯示學生實際用的那筆 -------------------------------
+
+
+def test_a_disabled_default_shows_the_fallback_students_use(client, teacher):
+    default_id = old_profile(client, "主要")
+    fallback_id = old_profile(client, "備用", model="fallback-default")
+    old_settings(client, default_profile_id=default_id, fallback_profile_id=fallback_id)
+    with storage.transaction() as db:
+        db.get(ProviderProfile, default_id).enabled = False
+    body = view(client)
+    assert (body["mode"], body["own"]["name"]) == ("own", "備用")
+    (binding,) = bindings(teacher)
+    assert binding["profile_id"] == fallback_id
+
+
+def test_an_expired_default_key_shows_the_fallback_students_use(client, teacher):
+    default_id = old_profile(client, "主要", mode="SESSION")
+    fallback_id = old_profile(client, "備用")
+    old_settings(client, default_profile_id=default_id, fallback_profile_id=fallback_id)
+    expire_session_keys(default_id)
+    assert view(client)["own"]["name"] == "備用"
+    (binding,) = bindings(teacher)
+    assert binding["profile_id"] == fallback_id
+
+
+def test_choosing_the_system_ai_then_stops_the_fallback(client, teacher):
+    default_id = old_profile(client, "主要")
+    fallback_id = old_profile(client, "備用")
+    old_settings(client, default_profile_id=default_id, fallback_profile_id=fallback_id)
+    with storage.transaction() as db:
+        db.get(ProviderProfile, default_id).enabled = False
+    system_id = system_ai()
+    fallback()
+    assert client.put(PATH + "/mode", json={"mode": "system"}).status_code == 200
+    (binding,) = bindings(teacher)
+    assert binding["owner_id"] == system_id

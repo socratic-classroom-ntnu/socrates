@@ -959,10 +959,13 @@ class OwnerConnection:
 
 
 def _owner_profile(db, owner_id: str) -> tuple[AccountAISettings, ProviderProfile] | None:
-    """The default profile, or the fallback when there is no default (students use it then)."""
+    """The connection a student's dialogue uses, picked as `_owner_bindings` does: default then
+    fallback, past a disabled or keyless one (a key that no longer decrypts stops there: students
+    get its error). When students can use neither, the first one, kept for the page to show."""
     settings = db.get(AccountAISettings, owner_id)
     if settings is None:
         return None
+    found = []
     for profile_id in (settings.default_profile_id, settings.fallback_profile_id):
         if profile_id:
             profile = db.scalar(
@@ -971,8 +974,19 @@ def _owner_profile(db, owner_id: str) -> tuple[AccountAISettings, ProviderProfil
                 )
             )
             if profile is not None:
-                return settings, profile
-    return None
+                found.append(profile)
+    for profile in found:
+        if profile.enabled and _students_reach(db, settings, profile):
+            return settings, profile
+    return (settings, found[0]) if found else None
+
+
+def _students_reach(db, settings: AccountAISettings, profile: ProviderProfile) -> bool:
+    """Whether a student's dialogue stops at this profile: a key, or one that fails to decrypt."""
+    try:
+        return bool(profile_secret(db, profile, session_token_hash=settings.session_token_hash))
+    except (DomainError, ValueError, KeyError, TypeError, AttributeError):
+        return True
 
 
 def _owner_secret(db, settings: AccountAISettings, profile: ProviderProfile) -> str | None:

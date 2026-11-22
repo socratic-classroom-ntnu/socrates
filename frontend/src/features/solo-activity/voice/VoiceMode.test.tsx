@@ -189,3 +189,76 @@ describe('聲音格式', () => {
     expect(pcm[0]).toBe(16383)
   })
 })
+
+describe('語音模式的狀態轉換（useSoloVoice）', () => {
+  const status = () => screen.getByRole('region', { name: '語音模式' }).querySelector('.solo-voice__status')!.textContent
+  const audio = (socket: FakeSocket, samples = 2400) => {
+    act(() => { socket.onmessage?.({ data: new Int16Array(samples).fill(1000).buffer } as MessageEvent) })
+  }
+
+  async function opened() {
+    renderVoice(base)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    return FakeSocket.last!
+  }
+
+  it('連線中 → 聆聽 → 學生說完在想 → 蘇格拉底說話 → 播完回到聆聽', async () => {
+    jest.useFakeTimers()
+    try {
+      const socket = await opened()
+      expect(status()).toBe('連線中…')
+      act(() => { socket.onopen?.() })
+      expect(status()).toBe('正在聽你說…')
+      act(() => { socket.receive({ type: 'student', text: '我不拉' }) })
+      expect(status()).toBe('正在想你說的話…')
+      expect(screen.getByText('你說：我不拉')).toBeInTheDocument()
+      audio(socket)
+      expect(status()).toBe('蘇格拉底說話中')
+      act(() => { socket.receive({ type: 'turn_complete' }) })
+      // Still speaking until the queued audio (0.1 s) has played out.
+      act(() => { jest.advanceTimersByTime(50) })
+      expect(status()).toBe('蘇格拉底說話中')
+      act(() => { jest.advanceTimersByTime(100) })
+      expect(status()).toBe('正在聽你說…')
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('被打斷時立刻回到聆聽，不等播完', async () => {
+    const socket = await opened()
+    act(() => { socket.onopen?.() })
+    audio(socket, 240000)
+    expect(status()).toBe('蘇格拉底說話中')
+    act(() => { socket.receive({ type: 'interrupted' }) })
+    expect(status()).toBe('正在聽你說…')
+  })
+
+  it.each([
+    [4403, '語音模式目前無法使用'],
+    [4409, '語音模式目前無法使用'],
+    [1011, '語音服務出錯了'],
+  ])('連線以 %i 關閉時結束語音並說明原因', async (code, text) => {
+    const socket = await opened()
+    act(() => { socket.onopen?.() })
+    act(() => { socket.onclose?.({ code } as CloseEvent) })
+    expect(screen.queryByRole('region', { name: '語音模式' })).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent(text)
+  })
+
+  it('正常關閉（1000）不顯示錯誤', async () => {
+    const socket = await opened()
+    act(() => { socket.onopen?.() })
+    act(() => { socket.onclose?.({ code: 1000 } as CloseEvent) })
+    expect(screen.queryByRole('region', { name: '語音模式' })).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('切回打字會關掉連線與麥克風', async () => {
+    const socket = await opened()
+    act(() => { socket.onopen?.() })
+    fireEvent.click(screen.getByRole('button', { name: '切回打字' }))
+    expect(socket.readyState).toBe(3)
+    expect(screen.queryByRole('region', { name: '語音模式' })).toBeNull()
+  })
+})

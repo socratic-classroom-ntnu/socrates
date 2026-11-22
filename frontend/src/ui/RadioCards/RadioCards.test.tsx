@@ -51,3 +51,15 @@ test('disables the entire group while a form is submitting', async () => {
   await user.click(screen.getByText('學生'))
   expect(screen.getByRole('radio', { name: '全部' })).toBeChecked()
 })
+
+test('all radio options share the same name', () => {
+  render(<Example />)
+
+  const radios = screen.getAllByRole('radio')
+
+  expect(radios).toHaveLength(3)
+
+  radios.forEach(radio => {
+    expect(radio).toHaveAttribute('name', 'audience')
+  })
+})

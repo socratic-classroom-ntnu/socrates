@@ -82,6 +82,7 @@ const activityView = (card: S['ActivityTeacherCard']) => ({
   id: card.id, course_id: 'c-1', status: card.status, locked: card.locked, revision: card.status === 'draft' ? null : 1,
   has_unpublished_changes: false, starts_at: card.starts_at, ends_at: card.ends_at, available_actions: card.available_actions,
   draft: { title: card.title, scenario: '一輛失控的電車正駛向五名工人。', starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
+  expansion: null,
 }) satisfies S['ActivityTeacherView']
 
 const joinPreview = {

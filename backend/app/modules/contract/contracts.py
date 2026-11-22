@@ -72,6 +72,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ENROLLMENT_NOT_FOUND": ("course_management",),
     "ENROLL_CODE_NOT_FOUND": ("course_management",),
     "EXISTING_GROUP_ARGUMENT_REQUIRED": ("group_dialogue",),
+    "EXPANSION_LOCKED": ("course_management",),
+    "EXPANSION_UNAVAILABLE": ("course_management",),
     "FEEDBACK_MESSAGE_REQUIRED": ("feedback",),
     "FEEDBACK_NOT_FOUND": ("feedback",),
     "FEEDBACK_SCREENSHOT_INVALID": ("feedback",),

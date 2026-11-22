@@ -49,7 +49,7 @@ from app.modules.solo_activity.attempt_machine import (
     Scenario,
     ScenarioProgress,
 )
-from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
+from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage, SoloSummarySource
 
 # Runs work after the response (the route's BackgroundTasks): the final summary, and placing a
 # stated position in the stance space. None runs it inline.
@@ -974,7 +974,47 @@ async def _finish_final(prepared: dict) -> dict:
             )
         if new is not None:
             _store(row, new)
+            if called is not None and new.final.summary is not None and new.final.digest:
+                _keep_sources(db, row.id, new.final.digest, new.final.summary)
         return _attempt_view(db, row, now())
+
+
+def _keep_sources(db, attempt_id: str, digest: str, summary: dict) -> None:
+    """One row per located quote of the summary just kept (solo_summary_sources)."""
+    for part, items in (
+        ("point", summary.get("points") or []),
+        ("step", summary.get("trajectory") or []),
+    ):
+        for item_index, item in enumerate(items):
+            for seq, source in enumerate(item.get("sources") or []):
+                db.add(
+                    SoloSummarySource(
+                        attempt_id=attempt_id,
+                        summary_digest=digest,
+                        part=part,
+                        item_index=item_index,
+                        seq=seq,
+                        message_id=source["message_id"],
+                        quote=source["quote"],
+                        start=source["start"],
+                        end=source["end"],
+                    )
+                )
+    db.flush()
+
+
+def summary_sources(db, attempt_id: str, digest: str) -> list[SoloSummarySource]:
+    """The quotes of one kept summary, in the order the summary cites them."""
+    return list(
+        db.scalars(
+            select(SoloSummarySource)
+            .where(
+                SoloSummarySource.attempt_id == attempt_id,
+                SoloSummarySource.summary_digest == digest,
+            )
+            .order_by(SoloSummarySource.part, SoloSummarySource.item_index, SoloSummarySource.seq)
+        )
+    )
 
 
 def final_summaries(db, activity_id: str) -> list[dict]:

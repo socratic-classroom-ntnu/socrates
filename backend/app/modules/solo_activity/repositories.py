@@ -58,6 +58,30 @@ class SoloMessage(Base):
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 
+class SoloSummarySource(Base):
+    """Every quote a kept final summary cites, one row each (Ken 5 統整引用).
+
+    Written in the same transaction as the summary it belongs to and never changed: a summary
+    written again (after 不太對) gets a new digest and its own rows. ``start``/``end`` count
+    UTF-16 code units in the student message's text, as the view's CitationSourceView does.
+    """
+
+    __tablename__ = "solo_summary_sources"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    attempt_id: Mapped[str] = mapped_column(String(36), ForeignKey("solo_attempts.id"), index=True)
+    summary_digest: Mapped[str] = mapped_column(String(64), index=True)
+    # "point" (points[item_index]) or "step" (trajectory[item_index]); seq orders its quotes.
+    part: Mapped[str] = mapped_column(String(8))
+    item_index: Mapped[int] = mapped_column(Integer)
+    seq: Mapped[int] = mapped_column(Integer)
+    message_id: Mapped[str] = mapped_column(String(36), ForeignKey("solo_messages.id"))
+    quote: Mapped[str] = mapped_column(Text)
+    start: Mapped[int] = mapped_column(Integer)
+    end: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[float] = mapped_column(Float, default=time.time)
+
+
 class SoloRadar(Base):
     """The teacher's radar for one activity, as last computed (NEW-FEATURES 3.4).
 

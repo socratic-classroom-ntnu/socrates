@@ -146,6 +146,8 @@ export function VerifyPage() {
   if (token) return <AuthLayout actions={logout}><TokenCard token={token} next={next} /></AuthLayout>
   if (status === 'loading') return <LoadingScreen />
   if (!account) return <Navigate to={'/login?next=' + encodeURIComponent('/verify' + (next === '/' ? '' : '?next=' + encodeURIComponent(next)))} replace />
-  if (account.verified) return <Navigate to={next} replace />
+  // 訪客沒有 Email，沒有東西可驗證；舊網址（書籤、自動完成、沒關的分頁）不能讓他停在一張寄到空白信箱的卡上，
+  // 那裡唯一的出口是「登出」，而訪客登出就找不回自己的對話。
+  if (account.verified || account.kind === 'guest') return <Navigate to={next} replace />
   return <AuthLayout actions={logout}><WaitingCard next={next} /></AuthLayout>
 }

@@ -1105,6 +1105,34 @@
             "title": "Id",
             "type": "string"
           },
+          "mark_message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mark Message Ids",
+            "type": "array"
+          },
+          "marks": {
+            "items": {
+              "enum": [
+                "danger_tendency",
+                "malicious_off_topic"
+              ],
+              "type": "string"
+            },
+            "title": "Marks",
+            "type": "array"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloMetricsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "nickname": {
             "title": "Nickname",
             "type": "string"
@@ -1122,7 +1150,10 @@
           "nickname",
           "confirmed",
           "confirmation_digest",
-          "timeline"
+          "timeline",
+          "metrics",
+          "marks",
+          "mark_message_ids"
         ],
         "title": "AnalysisPersonView",
         "type": "object"

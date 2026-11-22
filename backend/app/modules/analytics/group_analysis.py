@@ -4,6 +4,7 @@ from hashlib import sha256
 from copy import deepcopy
 
 from app.modules.group_dialogue.service import stance_distribution
+from app.modules.solo_activity.metrics import student_metrics
 
 
 def pseudonym(classroom_id, member_id):
@@ -16,6 +17,36 @@ def pseudonymous_settlement(settlement, midmap):
         out["incomplete_members"] = [midmap[m] for m in out["incomplete_members"]]
     if "member_status" in out:
         out["member_status"] = {midmap[m]: v for m, v in out["member_status"].items()}
+    return out
+
+
+def person_metrics(state, member_id):
+    """The same metrics and marks as the solo activity (solo_activity/metrics.py), from the flags
+    the personal tutor gave this member's messages over every question of the class.
+
+    The personal dialogue stays private to the student, so no message ids leave here: the lists
+    that name the messages behind a metric or a mark are empty.
+    """
+    judged, shifts, tested = [], 0, False
+    for run_index, run in enumerate(state.get("runs") or []):
+        messages = ((run.get("personal") or {}).get(member_id) or {}).get("messages") or []
+        last_student = None
+        for index, message in enumerate(messages):
+            if message.get("role") == "student":
+                last_student = index
+                continue
+            observations = message.get("observations") or {}
+            shifts += bool(observations.get("position_shifted"))
+            tested = tested or bool(observations.get("reason_tested"))
+            if message.get("flags") and last_student is not None:
+                judged.append(
+                    {"message_id": f"q{run_index}.m{last_student}", "flags": message["flags"]}
+                )
+    out = student_metrics(judged, position_shifts=shifts, reason_tested=tested)
+    if out["metrics"] is not None:
+        for name in ("engagement", "distraction", "depth", "initiative"):
+            out["metrics"][name]["message_ids"] = []
+    out["mark_message_ids"] = []
     return out
 
 
@@ -44,6 +75,7 @@ def analysis(classroom_id, title, rooms):
                     "confirmed": bool(ack),
                     "confirmation_digest": ack["summary_digest"] if ack else None,
                     "timeline": quoted,
+                    **person_metrics(s, m),
                 }
             )
         edges = deepcopy(p["edges"])

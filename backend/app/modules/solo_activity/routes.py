@@ -101,7 +101,7 @@ async def act_on_attempt(
         current, _ = account(db, request, mutation=True, allow_guest=True)
         prepared = service.begin_action(db, current, attempt_id, action, body, service.now())
     return await service.finish_action(
-        prepared, lambda final: background.add_task(service.write_final, final)
+        prepared, lambda later: background.add_task(service.write_deferred, later)
     )
 
 

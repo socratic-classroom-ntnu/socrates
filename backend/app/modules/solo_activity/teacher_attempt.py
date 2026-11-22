@@ -18,7 +18,12 @@ from sqlalchemy.orm import Session
 
 from app.modules.course_management import service as activities
 from app.modules.course_management.contracts import ActivityTimes, status
-from app.modules.course_management.repositories import Activity, Course, Enrollment
+from app.modules.course_management.repositories import (
+    Activity,
+    ActivityRevision,
+    Course,
+    Enrollment,
+)
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.guest_records import student_kinds
@@ -79,6 +84,18 @@ def _after(messages: list[dict[str, Any]], after: str | None) -> list[dict[str, 
     return messages[ids.index(after) + 1 :]
 
 
+def _stances(db: Session, row: SoloAttempt, placed: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each placement with its stance's label in the attempt's own revision."""
+    revision = db.get(ActivityRevision, row.revision_id)
+    space = (revision.content or {}).get("stance_space") or [] if revision is not None else []
+    labels = {stance["id"]: stance["label"] for stance in space}
+    return [
+        {**item, "label": labels[item["stance_id"]]}
+        for item in placed
+        if item["stance_id"] in labels
+    ]
+
+
 def _attempt(db: Session, row: SoloAttempt, at: float, after: str | None) -> dict[str, Any]:
     student = _attempt_view(db, row, at)
     state = _state(row)
@@ -89,6 +106,7 @@ def _attempt(db: Session, row: SoloAttempt, at: float, after: str | None) -> dic
             **{key: scenario[key] for key in _SCENARIO_FIELDS},
             "rejected_at": list(state.progress[scenario["index"]].rejected_at),
             "first_message_id": first.get(scenario["index"]),
+            "stances": _stances(db, row, state.progress[scenario["index"]].stances),
         }
         for scenario in student["scenarios"]
     ]

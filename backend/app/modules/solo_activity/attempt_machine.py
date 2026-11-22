@@ -91,6 +91,10 @@ class ScenarioProgress:
     # A capped scenario's summary the student saw and acknowledged: never a confirmed viewpoint,
     # but the final summary may read it as such (O6).
     capped_summary: dict[str, Any] | None = None
+    # Where the student's stated position sits in the stance space, oldest first: a change of
+    # mind adds one and the earlier ones stay. {stance_id, confidence, message_id, at}; only the
+    # teacher's transcript reads it.
+    stances: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

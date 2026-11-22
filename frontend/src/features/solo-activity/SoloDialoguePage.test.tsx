@@ -1567,7 +1567,7 @@ test('the sentence on the final summary sits in the review, not in the scenario 
       final_revised: true,
       messages: [
         ...reflectingAttempt.messages,
-        { id: 'm-fb', scenario_index: 0, role: 'student', text: '我其實有猶豫', created_at: 9, move: null, revise_hint: null, final_feedback: true },
+        { id: 'm-fb', scenario_index: 0, role: 'student', text: '我其實有猶豫', created_at: 9, move: null, revise_hint: null, final_feedback: true, locale: 'zh-Hant' },
       ],
     },
   })

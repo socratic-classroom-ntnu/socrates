@@ -7166,6 +7166,17 @@
             "title": "Id",
             "type": "string"
           },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "move": {
             "anyOf": [
               {
@@ -7227,7 +7238,8 @@
           "created_at",
           "move",
           "revise_hint",
-          "final_feedback"
+          "final_feedback",
+          "locale"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -8131,6 +8143,13 @@
             "title": "Rejected At",
             "type": "array"
           },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/TeacherStanceView"
+            },
+            "title": "Stances",
+            "type": "array"
+          },
           "status": {
             "enum": [
               "in_progress",
@@ -8154,9 +8173,49 @@
           "status",
           "confirmed_summary",
           "rejected_at",
-          "first_message_id"
+          "first_message_id",
+          "stances"
         ],
         "title": "TeacherScenarioView",
+        "type": "object"
+      },
+      "TeacherStanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message_id": {
+            "title": "Message Id",
+            "type": "string"
+          },
+          "stance_id": {
+            "title": "Stance Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance_id",
+          "label",
+          "confidence",
+          "message_id",
+          "at"
+        ],
+        "title": "TeacherStanceView",
         "type": "object"
       },
       "TeacherStudentView": {

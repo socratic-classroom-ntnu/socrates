@@ -50,6 +50,8 @@ class SoloMessage(Base):
     observations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Student: {revise_hint} after 不太對, kept for statistics. Tutor: {move}.
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Student messages: the language the student chose when writing it; the text stays as written.
+    locale: Mapped[str | None] = mapped_column(String(16), nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 

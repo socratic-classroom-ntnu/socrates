@@ -33,6 +33,19 @@
 .live-time__attention { color: #8A572E; font-size: 12px; font-weight: 700; }
 .teacher-live__footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding-top: 2px; color: #6A706C; font-size: 12px; }
 
+/* 檢視欄：只有眼睛可以點；hover 或鍵盤聚焦時在下方顯示小提示（Figma 884-15846） */
+.live-table .live-table__view { width: 64px; text-align: center; }
+.live-view { position: relative; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: var(--ui-color-ink-soft); }
+a.live-view:hover, a.live-view:focus-visible { background: var(--ui-color-panel-hover); color: var(--ui-color-ink); }
+.live-view--off { color: var(--ui-color-border); cursor: not-allowed; }
+.live-view::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 6px); right: 0; z-index: 2; padding: 6px 12px; border: 1px solid var(--ui-color-line); border-radius: 8px;
+  background: var(--ui-color-panel); color: var(--ui-color-ink); font-size: 12px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s;
+}
+.live-view:hover::after, .live-view:focus-visible::after { opacity: 1; }
+/* 表格容器會裁掉超出的內容：最後一列的提示往上顯示，才不會被切掉 */
+.live-table tbody tr:last-child .live-view::after { top: auto; bottom: calc(100% + 6px); }
+
 @media (max-width: 900px) {
   .teacher-live__head { align-items: flex-start; }
   .teacher-live__actions { width: 100%; }

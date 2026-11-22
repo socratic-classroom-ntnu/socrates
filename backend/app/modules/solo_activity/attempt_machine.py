@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any, NamedTuple
 
 from app.modules.llm_runtime.contracts import PersonalTutorTurn
@@ -80,6 +80,9 @@ class ScenarioProgress:
     rejected_summary: dict[str, Any] | None = None
     # The turn of the first student message after the latest 不太對; policy.py holds confirmation.
     last_revise_turn: int | None = None
+    # When each 不太對 on this scenario's summary was pressed, oldest first. Only the teacher's
+    # transcript reads it; the student's own view never carries it.
+    rejected_at: list[float] = field(default_factory=list)
     # Only a written (not the teacher's) scenario: the one condition it changed, the student's
     # words it tests (message id and where the quote sits), and which provider and model wrote it.
     change: dict[str, str] | None = None
@@ -376,8 +379,10 @@ def extend(
     return replace(a, state="between_scenarios", progress=(*a.progress, added))
 
 
-def revise_viewpoint(a: AttemptState) -> AttemptState:
-    """不太對: back to the dialogue; the turn count stays, so the floor is not reset."""
+def revise_viewpoint(a: AttemptState, now: float | None = None) -> AttemptState:
+    """不太對: back to the dialogue; the turn count stays, so the floor is not reset.
+
+    Each press adds its time to the scenario's ``rejected_at``; without a time nothing is added."""
     _require(a, "revise_viewpoint")
     progress = _with_current(
         a,
@@ -385,6 +390,7 @@ def revise_viewpoint(a: AttemptState) -> AttemptState:
         summary_digest=None,
         revising=True,
         rejected_summary=a.current.candidate_summary,
+        rejected_at=a.current.rejected_at if now is None else [*a.current.rejected_at, now],
     )
     return replace(a, state="in_dialogue", progress=progress)
 

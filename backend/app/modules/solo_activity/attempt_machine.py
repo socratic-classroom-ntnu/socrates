@@ -151,7 +151,11 @@ def _can_still_talk(current: ScenarioProgress) -> bool:
     return current.turn_index + 1 < MESSAGE_LIMIT
 
 
-def actions_for(a: AttemptState, now: float) -> list[SoloAction]:
+def actions_for(a: AttemptState, now: float, activity_ended: bool = False) -> list[SoloAction]:
+    """What the student may do now. Once the activity has ended nothing is offered, whatever
+    state the attempt was left in: the student may only read what they wrote."""
+    if activity_ended:
+        return []
     if a.state in ("awaiting_tutor", "awaiting_reflection_prompt"):
         stale = a.pending_since is not None and now - a.pending_since > STALE_SECONDS
         retry_action: SoloAction = (

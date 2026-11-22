@@ -220,6 +220,17 @@ test('closed activity has no start button', async () => {
   expect(screen.getByText('這個活動目前不能開始。')).toBeInTheDocument()
 })
 
+test('an ended activity with an attempt offers the record, not continuing (C7)', async () => {
+  mockApi({ 'GET /solo/activities/a-1': { ...activity, status: 'ended', attempt } })
+  renderPage()
+
+  const view = await screen.findByRole('button', { name: '查看紀錄' })
+  expect(screen.queryByRole('button', { name: '繼續對話' })).toBeNull()
+  expect(screen.getByText('活動已結束，可以回頭看自己的紀錄，但不能再回答。')).toBeInTheDocument()
+  fireEvent.click(view)
+  await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent('/learn/activities/a-1/dialogue'))
+})
+
 test('unknown activity shows not found', async () => {
   mockApi({ 'GET /solo/activities/a-1': () => { throw new ApiError(404, 'ACTIVITY_NOT_FOUND') } })
   renderPage()

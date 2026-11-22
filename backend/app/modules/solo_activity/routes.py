@@ -176,6 +176,13 @@ def get_student_attempt(
 # ---- voice mode ---------------------------------------------------------------------------
 
 
+# Refusals the student can act on: they end voice mode with the reason, like ending mid-session.
+REFUSED: dict[str, voice_relay.ToTyping] = {
+    "VOICE_TIME_USED_UP": "quota",
+    "VOICE_MODE_DISABLED": "disabled",
+}
+
+
 @router.websocket("/attempts/{attempt_id}/voice")
 async def voice(ws: WebSocket, attempt_id: str):
     """The browser's only voice connection: microphone audio in; Socrates' audio, captions and
@@ -193,6 +200,14 @@ async def voice(ws: WebSocket, attempt_id: str):
 
         account_id = await asyncio.to_thread(identify)
     except DomainError as exc:
+        # Accept first: a socket closed before it is accepted reaches the browser as a bare
+        # failure, so it could only say 「語音服務出錯了」. Out of time or switched off says so.
+        await ws.accept()
+        why = REFUSED.get(exc.code)
+        if why is not None:
+            await ws.send_json(
+                {"type": "to_typing", "reason": why, "text": voice_relay.TO_TYPING_TEXT[why]}
+            )
         await ws.close(code=4403 if exc.status in (401, 403) else 4409)
         return
     await ws.accept()
@@ -233,6 +248,8 @@ async def voice(ws: WebSocket, attempt_id: str):
                 break
             if frame.get("bytes"):
                 await relay.from_browser(frame["bytes"])
+                if relay.ended is not None:
+                    break
     except WebSocketDisconnect:
         pass
     finally:

@@ -441,3 +441,60 @@ def test_each_voice_session_records_its_token_usage_for_the_cost_readback(client
     assert len(voice) == 1
     assert voice[0]["token_usage"] == {"promptTokenCount": 1200, "responseTokenCount": 800}
     assert voice[0]["provider"] == "gemini_live"
+
+
+# ---- time and silence without a turn (QA 11/22: a session that never finished a turn ran an hour)
+
+
+def test_without_a_finished_turn_the_time_is_still_settled_and_voice_ends_at_the_limit(
+    client, tutor, voice_on, monkeypatch
+):
+    monkeypatch.setattr(settings, "voice_daily_seconds", 60)
+    attempt_id, h, t = begin(client, tutor)
+
+    async def script():
+        for _ in range(4):
+            t[0] += vr.SETTLE_SECONDS
+            await h.relay.from_browser(b"\x00\x00")
+        await play(h)
+
+    asyncio.run(with_relay(h, script))
+    assert h.json[-1] == {
+        "type": "to_typing",
+        "reason": "quota",
+        "text": "今天的語音時間用完了，可以繼續打字",
+    }
+    with storage.transaction() as db:
+        assert vr.voice_usage.used(db, h.relay.account_id, t[0]) >= 60
+
+
+def test_a_long_silence_ends_voice_mode(client, tutor, voice_on):
+    attempt_id, h, t = begin(client, tutor)
+
+    async def script():
+        t[0] += vr.IDLE_SECONDS + 1
+        await h.relay.from_browser(b"\x00\x00")
+        await play(h)
+
+    asyncio.run(with_relay(h, script))
+    assert h.json[-1] == {
+        "type": "to_typing",
+        "reason": "idle",
+        "text": vr.TO_TYPING_TEXT["idle"],
+    }
+
+
+def test_speaking_keeps_voice_mode_open(client, tutor, voice_on):
+    _, replies = tutor
+    replies.append(OPENING)
+    attempt_id, h, t = begin(client, tutor)
+
+    async def script():
+        t[0] += vr.IDLE_SECONDS - 10
+        await play(h, *student_says("不能主動害人"))
+        t[0] += 20
+        await h.relay.from_browser(b"\x00\x00")
+        await play(h)
+
+    asyncio.run(with_relay(h, script))
+    assert "idle" not in [m.get("reason") for m in h.json if m["type"] == "to_typing"]

@@ -45,7 +45,12 @@ from app.modules.solo_activity import service, voice_judge, voice_turns, voice_u
 from app.modules.solo_activity.voice_readout import to_script
 from app.modules.solo_activity.voice_turns import Point, VoiceStep
 
-ToTyping = Literal["done", "quota", "disabled", "error"]
+ToTyping = Literal["done", "quota", "disabled", "idle", "error"]
+
+# The used time is settled at least this often while audio comes in, so the daily limit holds even
+# when no turn finishes; this long without anyone speaking ends voice mode.
+SETTLE_SECONDS = 30.0
+IDLE_SECONDS = 180.0
 
 _SENTENCE_END = re.compile(r"[。！？!?.；;…]")
 _TO_TRADITIONAL = opencc.OpenCC("s2t")
@@ -61,6 +66,7 @@ TO_TYPING_TEXT: dict[ToTyping, str] = {
     "done": "這次的討論完成了，最後的整理在畫面上。",
     "quota": voice_usage.USED_UP,
     "disabled": "語音模式已關閉，可以繼續打字。",
+    "idle": "一段時間沒有聽到你說話，先切回打字。",
     "error": "語音服務暫時無法使用，可以繼續打字。",
 }
 
@@ -142,6 +148,7 @@ class VoiceRelay:
         self.heard: asyncio.Future[str] | None = None
         self.ended: ToTyping | None = None
         self.counted_at = clock()
+        self.active_at = clock()  # last time the student or Socrates said something
         self.stopped = False
         # Token usage each voice model session reported, for the cost readback (one per scenario).
         self.usage: list[dict[str, Any]] = []
@@ -178,6 +185,13 @@ class VoiceRelay:
             await self._after_point({"state": state})
 
     async def from_browser(self, pcm: bytes) -> None:
+        if self.ended is None and not self.stopped:
+            now = self.clock()
+            if now - self.counted_at >= SETTLE_SECONDS:
+                await self._count_time()
+            if self.ended is None and now - self.active_at >= IDLE_SECONDS:
+                await self._count_time()
+                await self._end("idle")
         if self.live is not None and self.ended is None:
             await self.live.send_audio(pcm)
 
@@ -233,6 +247,8 @@ class VoiceRelay:
     # ---- events -------------------------------------------------------------------------------
 
     async def _on_event(self, event: LiveEvent) -> None:
+        if event.kind in ("input_text", "output_text", "audio"):
+            self.active_at = self.clock()
         if event.kind == "input_text":
             self.said += str(event.data)
         elif event.kind in ("audio", "output_text") and self.said.strip() and self.pending is None:

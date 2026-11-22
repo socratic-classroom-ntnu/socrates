@@ -1,0 +1,165 @@
+.page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100dvh;
+  padding: 32px 40px 48px;
+  color: var(--ui-color-ink);
+  font-family: 'Noto Sans TC', 'Noto Sans SC', 'Noto Sans', system-ui, sans-serif;
+}
+
+.pageHeading { display: flex; align-items: baseline; gap: 8px; min-height: 44px; }
+.pageHeading h1 { font-size: 28px; line-height: 1.45; margin: 0; }
+.mobileCount { display: none; }
+.panel {
+  flex: 1;
+  border: 1px solid var(--ui-color-line);
+  border-radius: 16px;
+  padding: 20px 24px 24px;
+  background: var(--ui-color-panel);
+}
+.panelHeading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--ui-color-line);
+}
+.panelHeading h2 { margin: 0; font-size: 16px; }
+.panelHeading span, .mobileCount { color: var(--ui-color-muted); font-size: 13px; }
+.list { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
+.card, .mobileCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 20px;
+  background: var(--ui-color-panel);
+  border: 1px solid var(--ui-color-border);
+  border-radius: 12px;
+}
+.card[data-read='true'], .mobileCard[data-read='true'] {
+  background: var(--ui-color-bg);
+  border-color: var(--ui-color-line);
+}
+.cardBody { flex: 1; min-width: 0; display: grid; gap: 8px; text-align: start; }
+.cardHeading { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.cardTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.card[data-read='true'] .cardTitle,
+.mobileCard[data-read='true'] .cardTitle { font-weight: 400; color: var(--ui-color-ink-soft); }
+.summary {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--ui-color-muted);
+}
+.dot {
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-color-primary);
+}
+.dot[data-read='true'] { visibility: hidden; }
+.label {
+  display: inline-block;
+  flex-shrink: 0;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+}
+.label[data-type='guest_expiry'] { color: var(--ui-color-warning-ink); background: var(--ui-color-warning-soft); }
+.label[data-type='activity'] { color: var(--ui-color-info); background: var(--ui-color-info-soft); }
+.view {
+  flex-shrink: 0;
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ui-color-primary);
+  font-weight: 700;
+}
+.view:hover { text-decoration: underline; }
+.empty {
+  margin: 0;
+  padding: 30px 14px;
+  text-align: center;
+  color: var(--ui-color-muted);
+}
+.loadError, .readError { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.readError {
+  position: fixed;
+  z-index: 40;
+  inset: 72px 16px auto auto;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border: 1px solid var(--ui-color-line);
+  border-radius: 12px;
+  background: var(--ui-color-panel);
+}
+.dialogText { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ui-color-ink-soft); font-size: 14px; line-height: 1.6; }
+.maintenance {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  background: var(--ui-color-primary-soft);
+  color: var(--ui-color-primary);
+  font-size: 16px;
+}
+.bell, .mobileBell {
+  display: inline-block;
+  flex-shrink: 0;
+  background: currentColor;
+  mask-repeat: no-repeat;
+}
+.bell { width: 18px; height: 18px; mask-image: url('./assets/notification-bell.svg'); }
+.mobileBell { width: 22px; height: 22px; mask-image: url('./assets/notification-bell-mobile.svg'); }
+
+@media (max-width: 767px) {
+  .page { gap: 12px; min-height: 0; padding: 18px 16px 20px; }
+  .pageHeading h1 { font-size: 24px; line-height: 1.2; }
+  .pageHeading { min-height: 0; padding-bottom: 4px; }
+  .mobileCount { display: inline; }
+  .panel { border: 0; background: transparent; padding: 0; }
+  .panelHeading { display: none; }
+  .mobileCard { gap: 10px; padding: 14px; color: var(--ui-color-ink); }
+  .cardBody { gap: 4px; }
+  .cardHeading { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 4px 8px; }
+  .cardTitle { grid-column: 1 / -1; }
+  .summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+  .chevron {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    background: url('./assets/notification-chevron.svg') no-repeat;
+  }
+  .empty {
+    background: var(--ui-color-panel);
+    border: 1px solid var(--ui-color-line);
+    border-radius: 12px;
+  }
+}

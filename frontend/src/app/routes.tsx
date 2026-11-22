@@ -45,6 +45,8 @@ import { RoleGate } from './RoleGate'
 import { AdminGate } from '../features/admin/AdminGate'
 import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
+import { NotificationsPage } from '../features/notifications/NotificationsPage'
+import { NotificationsProvider } from '../features/notifications/NotificationsProvider'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -83,7 +85,7 @@ export function AppRoutes() {
   const { pathname, search } = useLocation()
   const redirect = legacyRedirect(pathname, search)
   if (redirect) return <Navigate to={redirect} replace />
-  return <Routes>
+  return <NotificationsProvider><Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/join/guest" element={<GuestJoinPage />} />
@@ -95,6 +97,7 @@ export function AppRoutes() {
         <Route path="/admin/system-ai" element={<AdminPage tab="systemAI" />} />
         <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
         <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
+        <Route path="/admin/announcements" element={<AdminPage tab="announcements" />} />
       </Route>
     </Route>
     <Route element={<RequireAuth />}>
@@ -139,6 +142,7 @@ export function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         {/* 學生「我的對話」：要求驗證；訪客由 RequireAuth 放行，頁面畫訪客版（註冊邀請＋鎖住的題目） */}
         <Route path="/my-dialogues" element={<MyDialoguesPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}
@@ -164,5 +168,5 @@ export function AppRoutes() {
       </Route>
     </Route>
     <Route path="*" element={<NotFoundPage />} />
-  </Routes>
+  </Routes></NotificationsProvider>
 }

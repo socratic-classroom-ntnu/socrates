@@ -1,5 +1,8 @@
 export default {
   nav: {
+    notifications: "通知中心",
+    notificationsShort: "通知",
+    unread: "有未讀",
     admin: '後台',
     label: '主選單',
     home: '首頁',

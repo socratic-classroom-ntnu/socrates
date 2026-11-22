@@ -17,6 +17,7 @@ MODEL_MODULES = (
     "app.modules.classroom_core.repositories",
     "app.modules.group_dialogue.repositories",
     "app.modules.feedback.repositories",
+    "app.modules.notifications.repositories",
 )
 
 

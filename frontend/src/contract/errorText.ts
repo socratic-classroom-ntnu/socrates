@@ -24,6 +24,7 @@ const CODES: Record<string, string> = {
   ADMIN_NOT_FOUND: '找不到這個頁面。',
   ADMIN_TOGGLE_NOT_FOUND: '找不到這個功能開關。',
   ADMIN_UNVERIFIED: '這個帳號還沒驗證 Email。',
+  ANNOUNCEMENT_INVALID: '請檢查公告欄位。',
   AI_BUDGET_REQUIRED: 'AI 呼叫次數已用完，請到 AI 設定提高上限。',
   AI_MODEL_ID_REQUIRED: '請選擇或輸入 AI 模型。',
   AI_ROLE_REQUIRED: '請指定這個 AI 的角色。',

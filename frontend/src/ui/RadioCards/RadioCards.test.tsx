@@ -69,3 +69,18 @@ test('radios share the same name', () => {
     expect(option).toHaveAttribute('name', 'language')
   })
 })
+
+test.each([
+  [2, '2', '2'],
+  [3, '3', '3'],
+  [4, '4', '2'],
+])('%i options set the desktop and mobile column counts', (count, desktop, mobile) => {
+  const options = Array.from({ length: count }, (_, i) => ({ value: `v${i}`, label: `選項 ${i}` }))
+  render(
+    <RadioCards legend="欄數" name="columns" options={options} value="v0" onChange={() => {}} />,
+  )
+
+  const grid = screen.getAllByRole('radio')[0].closest('label')!.parentElement!
+  expect(grid.style.getPropertyValue('--radio-cards-count')).toBe(desktop)
+  expect(grid.style.getPropertyValue('--radio-cards-mobile-count')).toBe(mobile)
+})

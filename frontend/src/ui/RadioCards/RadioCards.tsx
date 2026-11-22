@@ -1,4 +1,5 @@
 
+import type { CSSProperties } from 'react'
 import styles from './RadioCards.module.css'
 
 export type RadioCardOption<T extends string> = {
@@ -27,7 +28,13 @@ export function RadioCards<T extends string>({
     <fieldset className={styles.fieldset} disabled={disabled}>
       <legend className={styles.legend}>{legend}</legend>
 
-      <div className={styles.options}>
+      <div
+        className={styles.options}
+        style={{
+          '--radio-cards-count': options.length,
+          '--radio-cards-mobile-count': options.length > 3 ? 2 : options.length,
+        } as CSSProperties}
+      >
         {options.map(option => (
           <label key={option.value} className={styles.card}>
             <input

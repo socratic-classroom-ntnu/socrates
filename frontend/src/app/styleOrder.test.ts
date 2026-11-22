@@ -5,6 +5,8 @@ import path from 'node:path'
 // （深度優先、依 import 的先後）從 main.tsx 走一遍 import，算出瀏覽器實際載入樣式表的順序。
 // export … from 也算（src/ui/index.ts 用它把元件連同樣式一起帶進來）
 const SRC = path.resolve(__dirname, '..')
+// 樣式分組與快照用 repo 相對路徑；實際讀檔仍交給 Node 的 path API。
+const relativeSourcePath = (file: string) => path.relative(SRC, file).split(path.sep).join('/')
 const IMPORT = /^\s*(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm
 
 function resolve(from: string, spec: string): string | null {
@@ -24,7 +26,7 @@ function stylesheetOrder(entry: string): string[] {
     for (const [, typeOnly, spec] of fs.readFileSync(file, 'utf8').matchAll(IMPORT)) {
       if (typeOnly || !spec.startsWith('.')) continue
       if (spec.endsWith('.css')) {
-        const sheet = path.relative(SRC, path.resolve(path.dirname(file), spec))
+        const sheet = relativeSourcePath(path.resolve(path.dirname(file), spec))
         if (!sheets.includes(sheet)) sheets.push(sheet)
         continue
       }
@@ -72,7 +74,7 @@ const among = (list: string[]) => order.filter(sheet => list.includes(sheet))
 test('every imported stylesheet exists', () => {
   const missing = sourceFiles(SRC, /\.(tsx?|mjs)$/).flatMap(file => [...fs.readFileSync(path.join(SRC, file), 'utf8')
     .matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.{1,2}\/[^'"]+\.css)['"]/g)]
-    .map(([, spec]) => path.relative(SRC, path.resolve(path.dirname(path.join(SRC, file)), spec)))
+    .map(([, spec]) => relativeSourcePath(path.resolve(path.dirname(path.join(SRC, file)), spec)))
     .filter(sheet => !fs.existsSync(path.join(SRC, sheet))).map(sheet => `${file} -> ${sheet}`))
   expect(missing).toEqual([])
 })
@@ -141,7 +143,7 @@ function allStylesheets(dir = SRC): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) return allStylesheets(full)
-    return entry.name.endsWith('.css') ? [path.relative(SRC, full)] : []
+    return entry.name.endsWith('.css') ? [relativeSourcePath(full)] : []
   })
 }
 
@@ -179,7 +181,7 @@ test('local @import only where allowed', () => {
   const imports = allStylesheets().flatMap(sheet => [...source(sheet).replace(/url\(\s*['"]?data:[^)]*\)/gi, 'url()').matchAll(IMPORT_AT_RULE)]
     .map(([, spec]) => spec)
     .filter(spec => !/^(https?:)?\/\//i.test(spec))
-    .map(spec => `${sheet} -> ${path.relative(SRC, path.resolve(path.dirname(path.join(SRC, sheet)), spec))}`))
+    .map(spec => `${sheet} -> ${relativeSourcePath(path.resolve(path.dirname(path.join(SRC, sheet)), spec))}`))
   withHint('本地 @import 有增減。@import 會在每個引用它的樣式表各展開一份，載入順序測試看不到，可能蓋掉頁面的覆寫；'
     + '請改在 JS 裡 import。確定要用，就加進這條的清單。',
   () => expect(imports.sort()).toEqual([
@@ -312,7 +314,7 @@ function sourceFiles(dir = SRC, pattern = /\.tsx$/): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) return sourceFiles(full, pattern)
-    return pattern.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path.relative(SRC, full)] : []
+    return pattern.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [relativeSourcePath(full)] : []
   })
 }
 

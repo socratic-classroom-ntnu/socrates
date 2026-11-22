@@ -13,7 +13,7 @@ const all = {
 beforeEach(() => {
   jest.resetAllMocks()
   jest.mocked(listAnnouncements).mockResolvedValue([all])
-  jest.mocked(createAnnouncement).mockResolvedValue(all)
+  jest.mocked(createAnnouncement).mockImplementation(async input => ({ ...all, ...input, id: '456' }))
   jest.mocked(deleteAnnouncement).mockResolvedValue(null)
 })
 
@@ -71,6 +71,9 @@ test.each([
   fireEvent.change(screen.getByLabelText('內容'), { target: { value: '  第一行\n第二行  ' } })
   fireEvent.click(screen.getByRole('button', { name: '發布' }))
   await screen.findByText('已發布 2 則')
+  expect(screen.getAllByRole('cell', { name: all.title })).toHaveLength(1)
+  const publishedRow = screen.getByRole('row', { name: new RegExp(` ${label} 公告 `) })
+  expect(within(publishedRow).getByRole('cell', { name: label })).toBeInTheDocument()
   expect(createAnnouncement).toHaveBeenCalledWith({
     audience: value, title: '公告', content: '  第一行\n第二行  ',
     maintenance_date: null, maintenance_start: null, maintenance_end: null,

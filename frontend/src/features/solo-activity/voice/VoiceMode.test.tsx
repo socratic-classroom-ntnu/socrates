@@ -26,6 +26,7 @@ jest.mock('../../../contract/classroomClient', () => ({
 }))
 
 let processor: { onaudioprocess: ((frame: unknown) => void) | null }
+let sources: Array<{ stop: jest.Mock }> = []
 
 class FakeAudioContext {
   sampleRate = 48000
@@ -39,7 +40,11 @@ class FakeAudioContext {
     return processor
   }
   createBuffer(_: number, length: number) { return { duration: length / 24000, getChannelData: () => new Float32Array(length) } }
-  createBufferSource() { return { connect: () => undefined, start: () => undefined, stop: () => undefined, onended: null } }
+  createBufferSource() {
+    const source = { connect: () => undefined, start: () => undefined, stop: jest.fn(), onended: null }
+    sources.push(source)
+    return source
+  }
 }
 
 const base = {
@@ -119,6 +124,19 @@ describe('語音模式的連線', () => {
     expect(screen.getByText('我整理一下你目前的想法。')).toBeInTheDocument()
     act(() => { socket.receive({ type: 'view', view: { ...base, state: 'confirming' } }) })
     expect(onView).toHaveBeenCalledWith(expect.objectContaining({ state: 'confirming' }))
+  })
+
+  it('學生一開口（後端回 interrupted），蘇格拉底正在播的聲音立刻停掉', async () => {
+    sources = []
+    renderVoice(base)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    const socket = FakeSocket.last!
+    act(() => { socket.onopen?.() })
+    act(() => { socket.onmessage?.({ data: new Int16Array(2400).fill(1000).buffer } as MessageEvent) })
+    expect(sources).toHaveLength(1)
+    expect(sources[0].stop).not.toHaveBeenCalled()
+    act(() => { socket.receive({ type: 'interrupted' }) })
+    expect(sources[0].stop).toHaveBeenCalled()
   })
 
   it('後端要切回打字時關掉語音並顯示原因', async () => {

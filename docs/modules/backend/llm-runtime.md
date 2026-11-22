@@ -48,7 +48,7 @@ Provider profiles、routing、budget、jobs、iron rules、structured output 與
 - `backend/app/modules/llm_runtime/`
 
 契約：
-- TTS（文字→音訊＋字時間點）（等契約）
+- —
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

@@ -71,7 +71,7 @@
 | AI 供應商（/provider-profiles/*、/ai-settings/*） | ai-providers | ai-settings、authoring | routes/provider_profiles.py → api/types.ts | 產生型別 ✅ |
 | 出題與題庫（/library/*、/question-bank/*、/script-assist/*） | content-authoring | authoring | 各 route 的 schema → api/types.ts | 產生型別 ✅ |
 | 公開設定（/public-config） | platform | platform | routes/public_config.py | ✅ |
-| TTS（文字→音訊＋字時間點） | llm-runtime | media | 待定 | 等契約 |
+| 語音模式（WebSocket /solo/attempts/{id}/voice） | solo-activity | solo-activity | backend/app/modules/solo_activity/voice_relay.py 送出的 JSON 訊息（caption、student、view、interrupted、turn_complete、to_typing）與 24 kHz PCM16 音訊；瀏覽器送 16 kHz PCM16 → frontend/src/features/solo-activity/voice/useSoloVoice.ts 的 ServerMessage | 手寫型別（WebSocket 不在 OpenAPI）；取代原本的 TTS 列：Gemini Live 直接出聲、學生開口就停（interrupted），不另做文字→音訊 |
 | 人像模型清單（/avatar-packs/catalog.json） | platform | media | Portal avatar-serve 產生的靜態檔 → api/avatarCatalog.ts | ✅ |
 | 課程與活動（/courses/*、/course-join/*、/activities/*） | course-management | course | backend/app/modules/course_management/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 | 單人活動（/solo/*） | solo-activity | solo-activity、course | backend/app/modules/solo_activity/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |

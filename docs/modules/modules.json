@@ -306,13 +306,13 @@
       ]
     },
     {
-      "name": "TTS（文字→音訊＋字時間點）",
-      "backend": "llm-runtime",
-      "source": "待定",
-      "state": "等契約",
-      "consumer": "導師人像",
+      "name": "語音模式（WebSocket /solo/attempts/{id}/voice）",
+      "backend": "solo-activity",
+      "source": "backend/app/modules/solo_activity/voice_relay.py 送出的 JSON 訊息（caption、student、view、interrupted、turn_complete、to_typing）與 24 kHz PCM16 音訊；瀏覽器送 16 kHz PCM16 → frontend/src/features/solo-activity/voice/useSoloVoice.ts 的 ServerMessage",
+      "state": "手寫型別（WebSocket 不在 OpenAPI）；取代原本的 TTS 列：Gemini Live 直接出聲、學生開口就停（interrupted），不另做文字→音訊",
+      "consumer": "學生單人活動的語音模式",
       "frontend": [
-        "media"
+        "solo-activity"
       ]
     },
     {

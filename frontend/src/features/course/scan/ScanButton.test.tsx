@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { mockApi, renderAt } from '../../../testing/pageHarness'
 import { JoinCodeForm } from '../home/JoinCodeForm'
 import { INTRO_SEEN_KEY } from './introSeen'
@@ -134,6 +134,10 @@ async function arriveWith(scanNotice: 'denied' | 'unavailable') {
   mockApi({})
   renderAt({ pathname: '/', state: { scanNotice } }, '/', <JoinCodeForm variant="phone" />)
   await screen.findByRole('button', { name: '掃描' })
+  // 對話框畫出來的下一刻，它的 effect 才把焦點移進去、掛上 Esc 的監聽。機器忙的時候，這中間
+  // 常常還沒跑完，這時按 Esc 會被忽略；等到焦點進了對話框才算開好。
+  const dialog = await screen.findByRole('dialog')
+  await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement))
 }
 
 test('a camera already refused stays home and shows S6 with the steps to allow it again', async () => {

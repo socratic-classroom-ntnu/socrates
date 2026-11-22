@@ -164,7 +164,8 @@ describe('guest (MyDialogGuest)', () => {
     renderAt('/my-dialogues', '/my-dialogues', <MyDialoguesPage />)
     expect(await screen.findByText('註冊帳號，就能隨時跟蘇格拉底練習')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '註冊帳號' })).toHaveAttribute('href', '/guest/register')
-    const locked = screen.getByRole('region', { name: '註冊後可以聊這些' })
+    // 邀請文字一開始就有；鎖住的題目要等題庫回來才畫出來，所以這裡要等。
+    const locked = await screen.findByRole('region', { name: '註冊後可以聊這些' })
     for (const card of within(locked).getAllByRole('button')) {
       expect(card).toBeDisabled()
       expect(card).toHaveTextContent('註冊後可以開始')

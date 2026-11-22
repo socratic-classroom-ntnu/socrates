@@ -35,6 +35,7 @@ from app.modules.llm_runtime.contracts import (
     FinalSummary,
     PersonalTutorTurn,
     ScenarioExtension,
+    SoloFlags,
     StanceClassification,
 )
 from app.modules.llm_runtime.service import compile_program, guarded_generate, locate_citation
@@ -54,6 +55,15 @@ from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 # stated position in the stance space. None runs it inline.
 Defer = Callable[[dict], None]
 STANCE_PROGRAM = "stance_classify"
+
+
+class SoloTurn(PersonalTutorTurn):
+    """The tutor's reply as the solo activity reads it: the ten flags on the student's latest
+    message come with it once the solo prompt asks for them (PROMPT-DESIGN §3); a reply without
+    them is still a reply."""
+
+    flags: SoloFlags | None = None
+
 
 if TYPE_CHECKING:
     from app.modules.solo_activity.contracts import (
@@ -644,7 +654,7 @@ async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     return await finish_action(follow, defer)
 
 
-async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
+async def _call_tutor(prepared: dict) -> tuple[SoloTurn, bool] | None:
     """Each binding in order; every attempt is audited. None when all of them fail.
 
     The call goes through the iron rules: a reply that breaks them is generated once more,
@@ -670,7 +680,7 @@ async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
                 ),
                 PROVIDER_TIMEOUT_SECONDS,
             )
-            turn = PersonalTutorTurn.model_validate(result)
+            turn = SoloTurn.model_validate(result)
         except Exception as exc:  # noqa: BLE001 — any provider failure leaves the turn retryable
             reason = (
                 getattr(exc, "reason", None)
@@ -739,6 +749,7 @@ async def finish_action(prepared: dict, defer: Defer | None = None) -> dict:
                     turn.observations.model_dump(),
                     meta={"move": turn.move},
                 )
+                _keep_flags(db, row, turn)
                 placing = _prepare_stance(db, row, new, turn, account, prepared["bindings"])
         if new is not None:
             _store(row, new)
@@ -749,6 +760,20 @@ async def finish_action(prepared: dict, defer: Defer | None = None) -> dict:
         else:
             await write_stance(placing)
     return view
+
+
+def _keep_flags(db, row: SoloAttempt, turn: SoloTurn) -> None:
+    """The flags judge the student's latest message, so they are kept on that message."""
+    if turn.flags is None:
+        return
+    latest = db.scalar(
+        select(SoloMessage)
+        .where(SoloMessage.attempt_id == row.id, SoloMessage.role == "student")
+        .order_by(SoloMessage.seq.desc())
+        .limit(1)
+    )
+    if latest is not None:
+        latest.flags = turn.flags.model_dump()
 
 
 # ---- placing a stated position in the stance space (Ken 2) -----------------------------------

@@ -7244,6 +7244,79 @@
         "title": "SoloMessageView",
         "type": "object"
       },
+      "SoloMetricView": {
+        "additionalProperties": false,
+        "properties": {
+          "message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Message Ids",
+            "type": "array"
+          },
+          "trend": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "trend",
+          "message_ids"
+        ],
+        "title": "SoloMetricView",
+        "type": "object"
+      },
+      "SoloMetricsView": {
+        "additionalProperties": false,
+        "properties": {
+          "depth": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "distraction": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "engagement": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "initiative": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "judged_messages": {
+            "title": "Judged Messages",
+            "type": "integer"
+          },
+          "position_shifts": {
+            "title": "Position Shifts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "engagement",
+          "distraction",
+          "depth",
+          "initiative",
+          "position_shifts",
+          "judged_messages"
+        ],
+        "title": "SoloMetricsView",
+        "type": "object"
+      },
       "SoloProgressCellView": {
         "additionalProperties": false,
         "properties": {
@@ -7595,6 +7668,34 @@
             ],
             "title": "Last Activity At"
           },
+          "mark_message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mark Message Ids",
+            "type": "array"
+          },
+          "marks": {
+            "items": {
+              "enum": [
+                "danger_tendency",
+                "malicious_off_topic"
+              ],
+              "type": "string"
+            },
+            "title": "Marks",
+            "type": "array"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloMetricsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "overall": {
             "enum": [
               "not_started",
@@ -7624,7 +7725,10 @@
           "review_status",
           "final_status",
           "last_activity_at",
-          "attention"
+          "attention",
+          "metrics",
+          "marks",
+          "mark_message_ids"
         ],
         "title": "SoloStudentProgressView",
         "type": "object"

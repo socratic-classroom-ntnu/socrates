@@ -304,6 +304,25 @@ class SoloProgressCellView(View):
 StudentKind = Literal["registered", "guest", "expired_guest"]
 
 
+class SoloMetricView(View):
+    value: float  # 0–100, a reference indicator for the teacher, not a score
+    # The recent window against the whole, shown only past ±10; None when level or not tracked.
+    trend: Literal["up", "down"] | None
+    message_ids: list[str]  # the student's messages behind it (the flags at 1)
+
+
+class SoloMetricsView(View):
+    engagement: SoloMetricView  # 認真度
+    distraction: SoloMetricView  # 分心度
+    depth: SoloMetricView  # 思考深度
+    initiative: SoloMetricView  # 主動性 (no trend)
+    position_shifts: int  # 立場變化: tutor turns that reported a change of position
+    judged_messages: int  # how many of the student's messages the tutor judged
+
+
+SoloMark = Literal["danger_tendency", "malicious_off_topic"]
+
+
 class SoloStudentProgressView(View):
     enrollment_id: str
     display_name: str  # empty once a guest's name is forgotten
@@ -318,6 +337,11 @@ class SoloStudentProgressView(View):
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
     attention: bool  # in progress and idle for over ATTENTION_SECONDS
+    # From the tutor's flags (solo_activity/metrics.py); None before any message was judged.
+    metrics: SoloMetricsView | None
+    # 危險傾向／惡意離題 on any message: the teacher's row is marked; the student never sees it.
+    marks: list[SoloMark]
+    mark_message_ids: list[str]
 
 
 class SoloActivityProgressView(View):

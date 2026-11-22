@@ -131,13 +131,13 @@ const progress = {
   ends_at: now + 3 * DAY, generated_at: now,
   summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
-    { enrollment_id: 'e-1', display_name: '小華', kind: 'registered', guest_number: null, final_status: null, overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-1', display_name: '小華', kind: 'registered', guest_number: null, final_status: null, overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
       cells: [{ status: 'confirmed', turns: 4 }, { status: 'confirmed', turns: 3 }] },
-    { enrollment_id: 'e-2', display_name: '阿明', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-2', display_name: '阿明', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
       cells: [{ status: 'confirming', turns: 6 }] },
-    { enrollment_id: 'e-3', display_name: '佳穎', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-3', display_name: '佳穎', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
       cells: [{ status: 'confirmed', turns: 2 }, { status: 'in_dialogue', turns: 1 }] },
-    { enrollment_id: 'e-4', display_name: '志豪', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-4', display_name: '志豪', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
       cells: [] },
   ],
 } satisfies S['SoloActivityProgressView']

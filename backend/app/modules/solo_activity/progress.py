@@ -1,7 +1,8 @@
 """T5 live progress: each enrolled student's status per scenario, for the course owner.
 
-Statuses, turn counts and times only. Message text, observations, answers and summaries never
-leave this module: the teacher sees confirmed viewpoints in statistics, not here.
+Statuses, turn counts, times, and the metrics and marks computed from the tutor's flags
+(metrics.py) with the ids of the messages behind them. Message text, observations, answers and
+summaries never leave this module: the teacher sees confirmed viewpoints in statistics, not here.
 """
 
 import time
@@ -15,6 +16,7 @@ from app.modules.course_management.repositories import Course, Enrollment
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.errors import DomainError
 from app.modules.solo_activity.guest_records import student_kinds
+from app.modules.solo_activity.metrics import Judged, student_metrics
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity.service import REVIEW_STATES, final_status, review_status
 
@@ -52,6 +54,47 @@ def _cells(row: SoloAttempt | None) -> list[dict]:
     return cells
 
 
+def _flag_metrics(db, activity_id: str) -> dict[str, dict]:
+    """Each attempt's metrics from its judged student messages and its tutor turns."""
+    judged: dict[str, list[Judged]] = {}
+    shifts: dict[str, int] = {}
+    tested: dict[str, bool] = {}
+    rows = db.execute(
+        select(
+            SoloMessage.attempt_id,
+            SoloMessage.id,
+            SoloMessage.role,
+            SoloMessage.flags,
+            SoloMessage.observations,
+        )
+        .join(SoloAttempt, SoloAttempt.id == SoloMessage.attempt_id)
+        .where(SoloAttempt.activity_id == activity_id)
+        .order_by(SoloMessage.attempt_id, SoloMessage.seq)
+    ).all()
+    for attempt_id, message_id, role, flags, observations in rows:
+        if role == "student" and flags:
+            judged.setdefault(attempt_id, []).append({"message_id": message_id, "flags": flags})
+        elif role == "tutor" and observations:
+            shifts[attempt_id] = shifts.get(attempt_id, 0) + bool(
+                observations.get("position_shifted")
+            )
+            tested[attempt_id] = tested.get(attempt_id, False) or bool(
+                observations.get("reason_tested")
+            )
+    attempts = set(judged) | set(shifts)
+    return {
+        attempt_id: student_metrics(
+            judged.get(attempt_id, []),
+            position_shifts=shifts.get(attempt_id, 0),
+            reason_tested=tested.get(attempt_id, False),
+        )
+        for attempt_id in attempts
+    }
+
+
+NO_METRICS = {"metrics": None, "marks": [], "mark_message_ids": []}
+
+
 def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
     activity = activities.get_activity(db, activity_id)
     course = db.get(Course, activity.course_id)
@@ -79,6 +122,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         ).all()
     )
 
+    flagged = _flag_metrics(db, activity.id)
     kinds = student_kinds(db, enrolled, at)
     students = []
     for enrollment in enrolled:
@@ -104,6 +148,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
                     and last_at is not None
                     and at - last_at > ATTENTION_SECONDS
                 ),
+                **(flagged.get(row.id, NO_METRICS) if row is not None else NO_METRICS),
             }
         )
 

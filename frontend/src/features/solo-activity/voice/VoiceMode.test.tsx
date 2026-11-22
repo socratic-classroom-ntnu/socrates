@@ -262,3 +262,74 @@ describe('語音模式的狀態轉換（useSoloVoice）', () => {
     expect(screen.queryByRole('region', { name: '語音模式' })).toBeNull()
   })
 })
+
+describe('語音模式的取消與重啟（useSoloVoice）', () => {
+  function pendingMic() {
+    const tracks: Array<{ stop: jest.Mock }> = []
+    const waiting: Array<(stream: unknown) => void> = []
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: jest.fn(() => new Promise(resolve => { waiting.push(resolve) })),
+      },
+    })
+    const grant = (index: number) => {
+      const track = { stop: jest.fn() }
+      tracks[index] = track
+      waiting[index]({ getTracks: () => [track] })
+    }
+    return { grant, tracks }
+  }
+
+  it('等麥克風授權時按切回打字：晚到的授權不開連線，麥克風立刻關掉', async () => {
+    const mic = pendingMic()
+    renderVoice(base)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    fireEvent.click(screen.getByRole('button', { name: '切回打字' }))
+    await act(async () => { mic.grant(0) })
+    expect(FakeSocket.last).toBeNull()
+    expect(mic.tracks[0].stop).toHaveBeenCalled()
+  })
+
+  it('等授權時離開頁面也一樣', async () => {
+    const mic = pendingMic()
+    const view = render(<PublicConfigProvider initial={{ group_mode: true, voice_mode: true }}>
+      <VoiceMode view={base} onView={jest.fn()} />
+    </PublicConfigProvider>)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    view.unmount()
+    await act(async () => { mic.grant(0) })
+    expect(FakeSocket.last).toBeNull()
+    expect(mic.tracks[0].stop).toHaveBeenCalled()
+  })
+
+  it('重新開啟後，舊的那次晚到不會開第二條連線，也干擾不到新的', async () => {
+    const mic = pendingMic()
+    renderVoice(base)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    fireEvent.click(screen.getByRole('button', { name: '切回打字' }))
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    await act(async () => { mic.grant(1) })
+    const current = FakeSocket.last!
+    act(() => { current.onopen?.() })
+    await act(async () => { mic.grant(0) })
+    expect(FakeSocket.last).toBe(current)
+    expect(mic.tracks[0].stop).toHaveBeenCalled()
+    expect(mic.tracks[1].stop).not.toHaveBeenCalled()
+    expect(screen.getByRole('region', { name: '語音模式' })).toHaveTextContent('正在聽你說…')
+  })
+
+  it('舊連線關掉後晚到的訊息不會改到新連線的畫面', async () => {
+    renderVoice(base)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    const old = FakeSocket.last!
+    act(() => { old.onopen?.() })
+    fireEvent.click(screen.getByRole('button', { name: '切回打字' }))
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    const current = FakeSocket.last!
+    act(() => { current.onopen?.() })
+    act(() => { old.receive({ type: 'student', text: '舊的那句' }) })
+    expect(screen.queryByText('你說：舊的那句')).toBeNull()
+    expect(screen.getByRole('region', { name: '語音模式' })).toHaveTextContent('正在聽你說…')
+  })
+})

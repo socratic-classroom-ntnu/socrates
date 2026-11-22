@@ -498,3 +498,88 @@ def test_speaking_keeps_voice_mode_open(client, tutor, voice_on):
 
     asyncio.run(with_relay(h, script))
     assert "idle" not in [m.get("reason") for m in h.json if m["type"] == "to_typing"]
+
+
+CHUNK = b"\x01" * 4800  # 0.1 s of 24 kHz PCM16
+
+
+def test_audio_goes_out_only_in_step_with_the_checked_transcript(client, tutor, voice_on):
+    """Review #204: a checked sentence lets through its share of the audio, not audio that may
+    belong to the unchecked rest; the whole reply's audio goes once all of it is checked."""
+    _, replies = tutor
+    replies.append(OPENING)
+    attempt_id, h, _ = begin(client, tutor)
+    first, rest = "你說的主動是什麼意思？", "這兩個情況有什麼不同"
+
+    async def script():
+        await play(h, *student_says("不能主動害人"))
+        await play(
+            h, *[vr.LiveEvent("audio", CHUNK)] * 10, vr.LiveEvent("output_text", first + rest)
+        )
+        share = 10 * len(CHUNK) * len(first) / len(first + rest) - vr.HOLD_BACK_BYTES
+        sent = sum(len(chunk) for chunk in h.audio_out)
+        assert 0 < sent <= share
+        assert sent < 10 * len(CHUNK)
+        # Audio arriving after the check waits too, then everything goes with the turn's end.
+        await play(h, vr.LiveEvent("audio", CHUNK), vr.LiveEvent("turn_complete"))
+        assert sum(len(chunk) for chunk in h.audio_out) == 11 * len(CHUNK)
+
+    asyncio.run(with_relay(h, script))
+
+
+def test_late_audio_after_a_fully_checked_sentence_still_plays(client, tutor, voice_on):
+    _, replies = tutor
+    replies.append(OPENING)
+    attempt_id, h, _ = begin(client, tutor)
+
+    async def script():
+        await play(h, *student_says("不能主動害人"))
+        await play(h, vr.LiveEvent("audio", CHUNK), vr.LiveEvent("output_text", REPLY))
+        await play(h, vr.LiveEvent("audio", CHUNK), vr.LiveEvent("turn_complete"))
+
+    asyncio.run(with_relay(h, script))
+    assert h.audio_out == [CHUNK, CHUNK]
+
+
+def test_audio_without_any_transcript_never_reaches_the_student(client, tutor, voice_on):
+    attempt_id, h, _ = begin(client, tutor)
+
+    async def script():
+        await play(h, vr.LiveEvent("audio", CHUNK), vr.LiveEvent("turn_complete"))
+
+    asyncio.run(with_relay(h, script))
+    assert h.audio_out == []
+
+
+def test_the_limits_hold_even_when_nothing_arrives(client, tutor, voice_on):
+    """Review #204: no audio from the browser and no event from the voice model — the idle
+    limit still ends voice mode, on the relay's own clock."""
+    attempt_id, h, t = begin(client, tutor)
+
+    async def tick(_):
+        t[0] += vr.IDLE_SECONDS / 2 + 1
+        await asyncio.sleep(0)
+
+    async def script():
+        await asyncio.wait_for(h.relay.watch(sleep=tick), 5)
+        await play(h)
+
+    asyncio.run(with_relay(h, script))
+    assert h.json[-1] == {"type": "to_typing", "reason": "idle", "text": vr.TO_TYPING_TEXT["idle"]}
+
+
+def test_the_daily_limit_holds_even_when_nothing_arrives(client, tutor, voice_on, monkeypatch):
+    monkeypatch.setattr(settings, "voice_daily_seconds", 60)
+    attempt_id, h, t = begin(client, tutor)
+
+    async def tick(_):
+        t[0] += vr.SETTLE_SECONDS
+        h.relay.active_at = t[0]  # someone is speaking, so only the daily limit can end it
+        await asyncio.sleep(0)
+
+    async def script():
+        await asyncio.wait_for(h.relay.watch(sleep=tick), 5)
+        await play(h)
+
+    asyncio.run(with_relay(h, script))
+    assert h.json[-1]["reason"] == "quota"

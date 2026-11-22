@@ -51,6 +51,10 @@ ToTyping = Literal["done", "quota", "disabled", "idle", "error"]
 # when no turn finishes; this long without anyone speaking ends voice mode.
 SETTLE_SECONDS = 30.0
 IDLE_SECONDS = 180.0
+# The transcript carries no timings, so audio is let through in proportion to how much of the
+# transcript is checked, holding back this much (0.3 s of 24 kHz PCM16) for audio that may run
+# ahead of its transcript; the rest goes when the whole reply is checked at the turn's end.
+HOLD_BACK_BYTES = 14_400
 
 _SENTENCE_END = re.compile(r"[。！？!?.；;…]")
 _TO_TRADITIONAL = opencc.OpenCC("s2t")
@@ -106,6 +110,8 @@ class _Turn:
     """What happens in one reply of the voice model."""
 
     held: list[bytes] = field(default_factory=list)
+    audio_bytes: int = 0  # all the audio of this reply so far
+    released_bytes: int = 0  # of which this much reached the student
     text: str = ""  # everything the transcript says so far
     released: str = ""  # what was let through to the student
     checked_to: int = 0
@@ -185,15 +191,30 @@ class VoiceRelay:
             await self._after_point({"state": state})
 
     async def from_browser(self, pcm: bytes) -> None:
-        if self.ended is None and not self.stopped:
-            now = self.clock()
-            if now - self.counted_at >= SETTLE_SECONDS:
-                await self._count_time()
-            if self.ended is None and now - self.active_at >= IDLE_SECONDS:
-                await self._count_time()
-                await self._end("idle")
+        await self._tick()
         if self.live is not None and self.ended is None:
             await self.live.send_audio(pcm)
+
+    async def watch(
+        self, sleep: Callable[[float], Awaitable[None]] = asyncio.sleep, every: float = 1.0
+    ) -> None:
+        """The time limits on their own clock: they hold even when neither the browser nor the
+        voice model sends anything. Returns once voice mode has ended."""
+        while self.ended is None and not self.stopped:
+            await sleep(every)
+            await self._tick()
+
+    async def _tick(self) -> None:
+        """Settle the used time at least every SETTLE_SECONDS; end after IDLE_SECONDS of nobody
+        speaking."""
+        if self.ended is not None or self.stopped:
+            return
+        now = self.clock()
+        if now - self.counted_at >= SETTLE_SECONDS:
+            await self._count_time()
+        if self.ended is None and now - self.active_at >= IDLE_SECONDS:
+            await self._count_time()
+            await self._end("idle")
 
     async def run(self) -> ToTyping:
         """Relays the voice model's events until voice mode ends; returns why."""
@@ -342,6 +363,22 @@ class VoiceRelay:
         if t.blocked or t.dropped or t.interrupted:
             return
         t.held.append(chunk)
+        t.audio_bytes += len(chunk)
+        if t.checked_to:
+            await self._release()
+
+    async def _release(self, whole: bool = False) -> None:
+        """Let held audio through up to the checked share of the transcript (all of it once the
+        whole reply is checked)."""
+        t = self.turn
+        if whole:
+            allowed = float("inf")
+        else:
+            allowed = t.audio_bytes * t.checked_to / max(len(t.text), 1) - HOLD_BACK_BYTES
+        while t.held and t.released_bytes + len(t.held[0]) <= allowed:
+            chunk = t.held.pop(0)
+            t.released_bytes += len(chunk)
+            await self.send_audio_out(chunk)
 
     async def _output_text(self, text: str) -> None:
         t = self.turn
@@ -364,14 +401,15 @@ class VoiceRelay:
         t.checked_to = upto
         t.released = t.text[:upto]
         await self.send_json({"type": "caption", "text": to_script(t.released, self.locale)})
-        for chunk in t.held:
-            await self.send_audio_out(chunk)
-        t.held.clear()
+        await self._release()
 
     async def _turn_complete(self) -> None:
         t = self.turn
         if not (t.dropped or t.blocked or t.interrupted) and t.checked_to < len(t.text):
             await self._check(len(t.text))
+        if t.text and t.checked_to == len(t.text) and not (t.dropped or t.blocked or t.interrupted):
+            # The whole reply is checked: the audio that came late or was held back goes too.
+            await self._release(whole=True)
         self.turn = _Turn()
         await self.send_json({"type": "turn_complete"})
         if t.blocked:

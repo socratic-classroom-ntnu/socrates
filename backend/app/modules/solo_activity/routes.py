@@ -236,10 +236,14 @@ async def voice(ws: WebSocket, attempt_id: str):
         await ws.close()
         return
     runner = asyncio.create_task(relay.run())
+    # The time limits hold even when nothing arrives from the browser or the voice model.
+    watcher = asyncio.create_task(relay.watch())
     try:
-        while not runner.done():
+        while not runner.done() and not watcher.done():
             incoming = asyncio.create_task(ws.receive())
-            done, _ = await asyncio.wait({incoming, runner}, return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait(
+                {incoming, runner, watcher}, return_when=asyncio.FIRST_COMPLETED
+            )
             if incoming not in done:
                 incoming.cancel()
                 break
@@ -256,6 +260,8 @@ async def voice(ws: WebSocket, attempt_id: str):
         await relay.close()
         if not runner.done():
             runner.cancel()
+        if not watcher.done():
+            watcher.cancel()
         try:
             await ws.close()
         except RuntimeError:

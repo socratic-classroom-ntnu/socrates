@@ -34,12 +34,19 @@ export function useSoloVoice(view: SoloAttemptView, onView: (view: SoloAttemptVi
   const context = useRef<AudioContext | null>(null)
   const stream = useRef<MediaStream | null>(null)
   const player = useRef<Player | null>(null)
+  const processor = useRef<ScriptProcessorNode | null>(null)
+  // Each start gets its own number; stop (and unmount) moves it on, so a start still waiting
+  // for the microphone, or an old connection's late events, can tell they are no longer current.
+  const run = useRef(0)
   const micOpen = useRef(micAllowed(view))
   const viewRef = useRef(onView)
   viewRef.current = onView
   micOpen.current = micAllowed(view)
 
   const stop = useCallback(() => {
+    run.current += 1
+    if (processor.current) processor.current.onaudioprocess = null
+    processor.current = null
     socket.current?.close()
     socket.current = null
     stream.current?.getTracks().forEach(track => track.stop())
@@ -77,6 +84,8 @@ export function useSoloVoice(view: SoloAttemptView, onView: (view: SoloAttemptVi
 
   /** Called from the button press: the press unlocks audio on phones. */
   const start = useCallback(async () => {
+    if (socket.current || stream.current || context.current) stop()
+    const mine = (run.current += 1)
     setError(null)
     setEnded(null)
     const Context = audioContextClass()
@@ -85,37 +94,47 @@ export function useSoloVoice(view: SoloAttemptView, onView: (view: SoloAttemptVi
     context.current = audio
     void audio.resume().catch(() => undefined)
     setStatus('connecting')
+    let media: MediaStream
     try {
-      stream.current = await navigator.mediaDevices.getUserMedia({
+      media = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       })
     } catch (reason) {
+      if (run.current !== mine) return
       const denied = reason instanceof DOMException && (reason.name === 'NotAllowedError' || reason.name === 'SecurityError')
       setError(denied ? 'micDenied' : 'unsupported')
       stop()
       return
     }
+    if (run.current !== mine) {
+      // Cancelled (or unmounted, or started again) while the browser asked for the microphone.
+      media.getTracks().forEach(track => track.stop())
+      void audio.close().catch(() => undefined)
+      return
+    }
+    stream.current = media
     player.current = new Player(audio, setLoudness)
     const ws = openSoloVoiceSocket(view.id)
     socket.current = ws
-    ws.onmessage = onMessage
-    ws.onopen = () => setStatus('listening')
+    ws.onmessage = event => { if (socket.current === ws) onMessage(event) }
+    ws.onopen = () => { if (socket.current === ws) setStatus('listening') }
     ws.onclose = closed => {
       if (socket.current !== ws) return
       if (closed.code === 4403 || closed.code === 4409) setError('unavailable')
       else if (closed.code !== 1000) setError('service')
       stop()
     }
-    const source = audio.createMediaStreamSource(stream.current)
-    const processor = audio.createScriptProcessor(4096, 1, 1)
-    processor.onaudioprocess = frame => {
+    const source = audio.createMediaStreamSource(media)
+    const node = audio.createScriptProcessor(4096, 1, 1)
+    processor.current = node
+    node.onaudioprocess = frame => {
       const samples = frame.inputBuffer.getChannelData(0)
       if (!micOpen.current || ws.readyState !== WebSocket.OPEN) return
       ws.send(toPcm16(samples, audio.sampleRate))
       setLoudness(previous => (player.current?.pending() ? previous : level(samples)))
     }
-    source.connect(processor)
-    processor.connect(audio.destination)
+    source.connect(node)
+    node.connect(audio.destination)
   }, [onMessage, stop, view.id])
 
   return { status, caption, heard, error, ended, loudness, active: status !== 'off', start, stop }

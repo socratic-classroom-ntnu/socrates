@@ -62,10 +62,18 @@ def write(tmp_path: Path, text: str) -> Path:
     return path
 
 
-def test_the_shipped_bank_is_the_six_canvas_topics_in_order():
+def test_the_shipped_bank_starts_with_the_six_canvas_topics_in_order():
     items = practice.load_bank()
-    assert [(i.id, i.title, i.category, i.body) for i in items] == EXPECTED
-    assert all(i.recommended for i in items)
+    assert [(i.id, i.title, i.category, i.body) for i in items[: len(EXPECTED)]] == EXPECTED
+    assert all(i.recommended for i in items[: len(EXPECTED)])
+
+
+def test_the_shipped_bank_includes_the_collected_topics():
+    # 2026-11 題目蒐集的 20 題接在首批六題之後；其中 4 題不推薦給學生，只在「看全部題目」出現
+    items = practice.load_bank()
+    collected = items[len(EXPECTED) :]
+    assert len(collected) == 20
+    assert sum(not i.recommended for i in collected) == 4
 
 
 def test_a_small_valid_file_loads(tmp_path):

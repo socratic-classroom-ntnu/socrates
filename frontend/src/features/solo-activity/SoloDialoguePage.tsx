@@ -32,6 +32,7 @@ export function SoloDialoguePage() {
   const [actionError, setActionError] = useState<unknown>(null)
   const [pendingStudent, setPendingStudent] = useState<{ text: string; first: boolean } | null>(null)
   const [pendingAction, setPendingAction] = useState<SoloAction | null>(null)
+  const [voiceSlot, setVoiceSlot] = useState<HTMLDivElement | null>(null)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   // Set once a read shows the sent message already stored, while the reply is still pending.
   const [savedEarly, setSavedEarly] = useState(false)
@@ -152,6 +153,7 @@ export function SoloDialoguePage() {
         confirming={can(view, 'confirm_viewpoint') || can(view, 'revise_viewpoint')}
         revising={view.revising}
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
+        voice={<div ref={setVoiceSlot} className="solo-voice-slot" />}
       />
       <section className="solo-conversation">
         {REVIEW_STATES.includes(view.state)
@@ -167,7 +169,7 @@ export function SoloDialoguePage() {
               retrying={pendingAction === 'retry'}
               onRetry={() => { void perform('retry') }}
             />
-            <VoiceMode view={view} onView={setView} />
+            <VoiceMode view={view} onView={setView} slot={voiceSlot} />
             <SoloComposer
               key={`composer-${view.id}-${scenario.index}`}
               view={view}

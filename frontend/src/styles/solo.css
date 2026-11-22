@@ -317,15 +317,24 @@
 .solo-voice-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 24px 0; }
 .solo-voice-entry__button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--ui-color-primary); border-radius: 999px; background: var(--ui-color-panel); color: var(--ui-color-primary); font-weight: 700; }
 .solo-voice-entry__note { margin: 0; color: var(--ui-color-ink); opacity: .75; font-size: .92rem; }
-.solo-voice { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: min(320px, calc(100vw - 32px)); display: grid; justify-items: center; gap: 10px; padding: 20px 16px 16px; border-radius: 18px; background: var(--ui-color-panel); box-shadow: 0 12px 32px rgba(40, 30, 10, .22); }
-.solo-voice--full { inset: 0; right: auto; bottom: auto; width: 100vw; height: 100dvh; border-radius: 0; align-content: center; padding: 24px 16px; background: var(--ui-color-dark); color: var(--ui-color-on-dark); }
-.solo-voice__sphere { width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--ui-color-panel), var(--ui-color-primary) 62%, var(--ui-color-dark)); transition: transform .08s linear; }
-.solo-voice--full .solo-voice__sphere { width: min(46vw, 220px); height: min(46vw, 220px); }
-.solo-voice__sphere--thinking, .solo-voice__sphere--connecting { animation: solo-voice-pulse 1.2s ease-in-out infinite; }
-@keyframes solo-voice-pulse { 50% { transform: scale(.9); opacity: .75; } }
+.solo-voice-slot:empty { display: none; }
+.solo-voice { display: grid; justify-items: center; gap: 10px; padding: 14px 14px 16px; border-radius: 14px; background: var(--ui-color-dark); color: var(--ui-color-on-dark); }
+/* Without a slot (a page that gives none) the card floats at the bottom right. */
+.solo-conversation > .solo-voice:not(.solo-voice--full) { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: min(320px, calc(100vw - 32px)); box-shadow: 0 12px 32px rgba(40, 30, 10, .22); }
+.solo-voice__head { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; color: #e8c766; font-size: .92rem; }
+.solo-voice__toggle { padding: 2px 4px; border: 0; background: transparent; color: var(--ui-color-on-dark); font-weight: 700; }
+.solo-voice--full { position: fixed; inset: 0; z-index: 60; width: 100vw; height: 100dvh; border-radius: 0; align-content: center; padding: 24px 16px; background: var(--ui-color-panel); color: var(--ui-color-ink); }
+.solo-voice--full .solo-voice__head { position: absolute; top: 16px; right: 20px; left: 20px; color: var(--ui-color-dark); }
+.solo-voice--full .solo-voice__toggle { color: var(--ui-color-dark); }
+.solo-voice__sphere { width: 112px; height: 112px; overflow: visible; fill: none; stroke: #9ad3bf; stroke-width: 1.1; stroke-linejoin: round; }
+.solo-voice--full .solo-voice__sphere { width: min(52vw, 240px); height: min(52vw, 240px); stroke: var(--ui-color-primary); }
+.solo-voice__ring { stroke-width: 1.6; }
+.solo-voice__ring--inner { stroke-width: .6; stroke-dasharray: 1.2 1.6; }
+.solo-voice__frame { transition: transform .12s linear; transform-origin: 0 0; }
+.solo-voice__sphere--thinking .solo-voice__frame, .solo-voice__sphere--connecting .solo-voice__frame { animation: solo-voice-turn 6s linear infinite; }
+@keyframes solo-voice-turn { to { transform: rotate(360deg); } }
 .solo-voice__status { margin: 0; font-weight: 700; }
 .solo-voice__caption { max-width: 640px; max-height: 38dvh; overflow-y: auto; margin: 0; padding: 0 8px; font-size: 1.15rem; line-height: 1.7; text-align: center; white-space: pre-wrap; }
 .solo-voice__heard { margin: 0; font-size: .9rem; opacity: .8; text-align: center; }
-.solo-voice__actions { display: flex; gap: 10px; }
-.solo-voice__actions button { min-height: 40px; padding: 8px 14px; border: 1px solid currentColor; border-radius: 10px; background: transparent; color: inherit; }
-@media (prefers-reduced-motion: reduce) { .solo-voice__sphere { transition: none; animation: none; } }
+.solo-voice__exit { min-height: 36px; padding: 6px 14px; border: 1px solid currentColor; border-radius: 10px; background: transparent; color: inherit; }
+@media (prefers-reduced-motion: reduce) { .solo-voice__frame { transition: none; animation: none; } }

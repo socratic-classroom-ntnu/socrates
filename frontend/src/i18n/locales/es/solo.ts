@@ -38,6 +38,7 @@ export default {
     saved: 'Tu mensaje está guardado y no se perderá. Puedes esperar un momento y pulsar Reintentar, o salir y volver más tarde; la conversación seguirá aquí.', retry: 'Reintentar',
   },
   voice: {
+    who: 'Sócrates',
     enter: 'Modo de voz', enterHint: 'Habla con Sócrates en voz alta', panel: 'Modo de voz', fullscreen: 'Pantalla completa', exitFullscreen: 'Reducir', toTyping: 'Volver a escribir',
     connecting: 'Conectando…', listening: 'Escuchando…', thinking: 'Pensando en lo que dijiste…', speaking: 'Sócrates está hablando', youSaid: 'Dijiste: {{text}}',
     micDenied: 'Se negó el acceso al micrófono. Permítelo en el navegador o sigue escribiendo.', unsupported: 'Este navegador no admite el modo de voz. Puedes seguir escribiendo.',

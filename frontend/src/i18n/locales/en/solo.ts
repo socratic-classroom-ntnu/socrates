@@ -38,6 +38,7 @@ export default {
     saved: 'Your message is saved and will not be lost. You can wait a moment and press Retry, or leave and come back later; the conversation will pick up right here.', retry: 'Retry',
   },
   voice: {
+    who: 'Socrates',
     enter: 'Voice mode', enterHint: 'Talk with Socrates out loud', panel: 'Voice mode', fullscreen: 'Full screen', exitFullscreen: 'Shrink', toTyping: 'Back to typing',
     connecting: 'Connecting…', listening: 'Listening…', thinking: 'Thinking about what you said…', speaking: 'Socrates is speaking', youSaid: 'You said: {{text}}',
     micDenied: 'Microphone access was denied. Allow it in your browser settings, or keep typing.', unsupported: 'This browser does not support voice mode. You can keep typing.',

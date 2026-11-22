@@ -119,7 +119,7 @@ describe('語音模式的連線', () => {
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
     const socket = FakeSocket.last!
     act(() => { socket.onopen?.() })
-    fireEvent.click(screen.getByRole('button', { name: '全螢幕' }))
+    fireEvent.click(screen.getByRole('button', { name: /全螢幕/ }))
     act(() => { socket.receive({ type: 'caption', text: '我整理一下你目前的想法。' }) })
     expect(screen.getByText('我整理一下你目前的想法。')).toBeInTheDocument()
     act(() => { socket.receive({ type: 'view', view: { ...base, state: 'confirming' } }) })
@@ -137,6 +137,23 @@ describe('語音模式的連線', () => {
     expect(sources[0].stop).not.toHaveBeenCalled()
     act(() => { socket.receive({ type: 'interrupted' }) })
     expect(sources[0].stop).toHaveBeenCalled()
+  })
+
+  it('蘇格拉底卡放進頁面給的左欄位置，全螢幕時蓋住整頁', async () => {
+    const slot = document.createElement('div')
+    document.body.appendChild(slot)
+    render(<PublicConfigProvider initial={{ group_mode: true, voice_mode: true }}>
+      <VoiceMode view={base} onView={jest.fn()} slot={slot} />
+    </PublicConfigProvider>)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: '語音模式' })) })
+    act(() => { FakeSocket.last!.onopen?.() })
+    const card = screen.getByRole('region', { name: '語音模式' })
+    expect(slot).toContainElement(card)
+    expect(card).toHaveTextContent('蘇格拉底')
+    expect(card.querySelectorAll('polygon')).toHaveLength(3)
+    fireEvent.click(screen.getByRole('button', { name: /全螢幕/ }))
+    expect(slot).not.toContainElement(screen.getByRole('dialog', { name: '語音模式' }))
+    slot.remove()
   })
 
   it('後端要切回打字時關掉語音並顯示原因', async () => {

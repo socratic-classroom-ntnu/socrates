@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import time
+from typing import Any
+
+from sqlalchemy.orm import Session
 
 from app.modules.ai_providers.service import (
     platform_binding,
@@ -31,9 +34,10 @@ DEFAULT_LOCALE = "zh-Hant"
 TIMEOUT_SECONDS = 130
 
 
-def _bindings(db, course: Course) -> list[dict]:
+def _bindings(db: Session, course: Course) -> list[dict[str, Any]]:
     """The course teacher's default then fallback connection; the 系統 AI only when those leave
     nothing usable and the 後台 switch allows it — the same rule as the solo activity's tutor."""
+    bindings: list[dict[str, Any]]
     bindings, _ = resolve_owner_chain(db, course.owner_id, ROLE)
     if bindings or not toggle_enabled(db, "system_ai_fallback"):
         return bindings
@@ -41,9 +45,10 @@ def _bindings(db, course: Course) -> list[dict]:
     return [system] if system is not None else []
 
 
-def prepare(db, teacher: Account, activity: Activity, at: float) -> dict:
+def prepare(db: Session, teacher: Account, activity: Activity, at: float) -> dict[str, Any]:
     narrative = activities.narrative_for_expansion(db, activity, at)
-    bindings = _bindings(db, db.get(Course, activity.course_id))
+    course = db.get(Course, activity.course_id)
+    bindings = _bindings(db, course) if course is not None else []
     if not bindings:
         raise DomainError("EXPANSION_UNAVAILABLE", 424)
     context = {"narrative": narrative, "output_locale": teacher.locale or DEFAULT_LOCALE}
@@ -57,10 +62,10 @@ def prepare(db, teacher: Account, activity: Activity, at: float) -> dict:
     }
 
 
-async def write(prepared: dict) -> ActivityExpansion:
+async def write(prepared: dict[str, Any]) -> ActivityExpansion:
     """Each connection in order, every attempt audited; EXPANSION_UNAVAILABLE when none gives one."""
 
-    async def no_delta(_):
+    async def no_delta(_: str) -> None:
         return None
 
     for binding in prepared["bindings"]:

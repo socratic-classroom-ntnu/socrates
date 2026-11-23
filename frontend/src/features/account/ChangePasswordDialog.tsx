@@ -1,321 +1,123 @@
-
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { ApiError, api } from '../../contract/classroomClient'
 import { useT } from '../../i18n/useT'
-import { Button } from '../../ui'
+import { Button, Field, FieldError, FormError, PasswordInput, describedBy } from '../../ui'
+import { AccountFrame, type FrameVariant } from './AccountFrame'
+import { PasswordRules } from './PasswordRules'
+import { passwordRulesPass } from './passwordChecks'
 import styles from './ChangePasswordDialog.module.css'
 
 type Props = {
+  /** 電腦版是對話框，手機是 /account/password 內頁（Figma M10–M12） */
+  variant?: FrameVariant
   onClose: () => void
   onSuccess: () => void
 }
 
-const PASSWORD_RULE =
-  /^(?=.{8,32}$)(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*_\-+=.?~])[A-Za-z0-9!@#$%^&*_\-+=.?~]+$/
+type FormFailure = '' | 'rateLimited' | 'unavailable' | 'failure'
 
-const PASSWORD_CHECKS = [
-  {
-    label: 'length',
-    test: (value: string) => value.length >= 8 && value.length <= 32,
-  },
-  {
-    label: 'uppercase',
-    test: (value: string) => /[A-Z]/.test(value),
-  },
-  {
-    label: 'lowercase',
-    test: (value: string) => /[a-z]/.test(value),
-  },
-  {
-    label: 'number',
-    test: (value: string) => /[0-9]/.test(value),
-  },
-  {
-    label: 'special',
-    test: (value: string) => /[!@#$%^&*_\-+=.?~]/.test(value),
-  },
-]
+const FORM_ID = 'change-password-form'
 
-function EyeIcon({ hidden }: { hidden: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-      <circle cx="12" cy="12" r="3" />
-      {hidden && <path d="M3 3 21 21" />}
-    </svg>
-  )
+/** 422 裡有沒有新密碼欄位的錯誤（FastAPI 的 detail 是 [{ loc, type, msg, input }]）。 */
+function rejectsNewPassword(detail: unknown): boolean {
+  return Array.isArray(detail) && detail.some(issue => {
+    const loc = issue && typeof issue === 'object' ? (issue as { loc?: unknown }).loc : undefined
+    return Array.isArray(loc) && loc[loc.length - 1] === 'new_password'
+  })
 }
 
-export function ChangePasswordDialog({ onClose, onSuccess }: Props) {
+export function ChangePasswordDialog({ variant = 'dialog', onClose, onSuccess }: Props) {
   const { t } = useT('shell')
-  const { t: commonT } = useT('common')
+  const tr = (key: string) => t(`accountSettings.passwordDialog.${key}`)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [currentWrong, setCurrentWrong] = useState(false)
+  const [newRejected, setNewRejected] = useState(false)
+  const [failure, setFailure] = useState<FormFailure>('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<'' | 'required' | 'invalid' | 'mismatch' | 'incorrect' | 'rateLimited' | 'unavailable' | 'failure'>('')
 
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !busy) onClose()
-    }
-
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
-  }, [busy, onClose])
+  const mismatch = confirmPassword !== '' && confirmPassword !== newPassword
+  const ready = currentPassword !== '' && passwordRulesPass(newPassword) && confirmPassword === newPassword && !busy
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (busy) return
-
-    setError('')
-
-    if (!currentPassword) {
-      setError('required')
-      return
-    }
-
-    if (!PASSWORD_RULE.test(newPassword)) {
-      setError('invalid')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('mismatch')
-      return
-    }
-
+    if (!ready) return
     setBusy(true)
-
+    setFailure('')
     try {
-      await api('/account/password', 'PUT', {
-        current_password: currentPassword,
-        new_password: newPassword,
-      })
-
+      await api('/account/password', 'PUT', { current_password: currentPassword, new_password: newPassword })
       onSuccess()
     } catch (caught) {
-      // classroomClient 把失敗轉成 ApiError，錯誤碼在 detail
+      // classroomClient 把失敗轉成 ApiError，錯誤碼（或 422 的欄位錯誤）在 detail
       const detail = caught instanceof ApiError ? caught.detail : undefined
-
-      if (detail === 'CURRENT_PASSWORD_INVALID') {
-        setError('incorrect')
-      } else if (detail === 'PASSWORD_CHANGE_RATE_LIMITED') {
-        setError('rateLimited')
-      } else if (detail === 'PASSWORD_CHANGE_UNAVAILABLE') {
-        setError('unavailable')
-      } else {
-        setError('failure')
-      }
+      if (detail === 'CURRENT_PASSWORD_INVALID') setCurrentWrong(true)
+      else if (caught instanceof ApiError && caught.status === 422 && rejectsNewPassword(detail)) setNewRejected(true)
+      else if (detail === 'PASSWORD_CHANGE_RATE_LIMITED') setFailure('rateLimited')
+      else if (detail === 'PASSWORD_CHANGE_UNAVAILABLE') setFailure('unavailable')
+      else setFailure('failure')
     } finally {
       setBusy(false)
     }
   }
 
-  return (
-    <div
-      className={styles.overlay}
-      onMouseDown={event => {
-        if (event.target === event.currentTarget && !busy) {
-          onClose()
-        }
-      }}
-    >
-      <section
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="change-password-title"
-      >
-        <div className={styles.header}>
-          <div>
-            <h2 id="change-password-title">{t('accountSettings.password.change')}</h2>
-            <p>{t('accountSettings.passwordDialog.description')}</p>
-          </div>
-          <button
-            type="button"
-            className={styles.close}
-            aria-label={commonT('close')}
-            disabled={busy}
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </div>
+  const close = () => { if (!busy) onClose() }
 
-        <form onSubmit={event => void submit(event)}>
-          <div className={styles.field}>
-            <label htmlFor="current-password">{t('accountSettings.passwordDialog.current')}</label>
-            <div className={styles.passwordInput}>
-              <input
-                id="current-password"
-                type={showCurrentPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={currentPassword}
-                disabled={busy}
-                onChange={event => {
-                  setCurrentPassword(event.target.value)
-                  setError('')
-                }}
-                required
-                autoFocus
-              />
-              <button
-                type="button"
-                className={styles.eyeButton}
-                onClick={() => setShowCurrentPassword(value => !value)}
-                aria-label={t(`accountSettings.passwordDialog.${showCurrentPassword ? 'hide' : 'show'}`, {
-                  field: t('accountSettings.passwordDialog.current'),
-                })}
-                aria-pressed={showCurrentPassword}
-                disabled={busy}
-              >
-                <EyeIcon hidden={showCurrentPassword} />
-              </button>
-            </div>
-          </div>
+  return <AccountFrame
+    variant={variant}
+    title={tr('title')}
+    onClose={close}
+    closeOnBackdrop={!busy}
+    footer={<>
+      <Button variant="outline" disabled={busy} onClick={close}>{tr('cancel')}</Button>
+      <Button type="submit" form={FORM_ID} variant="primary" disabled={!ready}>{busy ? tr('saving') : tr('save')}</Button>
+    </>}
+  >
+    <form id={FORM_ID} className={styles.form} onSubmit={event => void submit(event)} noValidate>
+      <p className={styles.description}>{tr('description')}</p>
 
+      <Field id="current-password" label={tr('current')} invalid={currentWrong}>
+        <PasswordInput
+          id="current-password"
+          autoComplete="current-password"
+          value={currentPassword}
+          disabled={busy}
+          data-autofocus
+          aria-invalid={currentWrong || undefined}
+          aria-describedby={describedBy(currentWrong && 'current-password-error')}
+          onChange={event => { setCurrentPassword(event.target.value); setCurrentWrong(false); setFailure('') }}
+        />
+        {currentWrong && <FieldError id="current-password-error">{tr('incorrect')}</FieldError>}
+      </Field>
 
-          <div className={styles.field}>
-            <label htmlFor="new-password">{t('accountSettings.passwordDialog.new')}</label>
-            <div className={styles.passwordInput}>
-              <input
-                id="new-password"
-                type={showNewPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                value={newPassword}
-                disabled={busy}
-                onChange={event => {
-                  setNewPassword(event.target.value)
-                  setError('')
-                }}
-                required
-              />
-              <button
-                type="button"
-                className={styles.eyeButton}
-                onClick={() => setShowNewPassword(value => !value)}
-                aria-label={t(`accountSettings.passwordDialog.${showNewPassword ? 'hide' : 'show'}`, {
-                  field: t('accountSettings.passwordDialog.new'),
-                })}
-                aria-pressed={showNewPassword}
-                disabled={busy}
-              >
-                <EyeIcon hidden={showNewPassword} />
-              </button>
-            </div>
-            {newPassword && PASSWORD_RULE.test(newPassword) ? (
-              <p className={styles.validPassword} role="status">
-                <span aria-hidden="true">✓</span>
-                {t('accountSettings.passwordDialog.valid')}
-              </p>
-            ) : (
-              <div
-                className={styles.passwordRules}
-                aria-label={t('accountSettings.passwordDialog.rulesLabel')}
-              >
-                {PASSWORD_CHECKS.map(rule => {
-                  const passed = rule.test(newPassword)
+      <Field id="new-password" label={tr('new')} invalid={newRejected}>
+        <PasswordInput
+          id="new-password"
+          autoComplete="new-password"
+          value={newPassword}
+          disabled={busy}
+          aria-invalid={newRejected || undefined}
+          aria-describedby={describedBy(newRejected && 'new-password-error', 'new-password-rules')}
+          onChange={event => { setNewPassword(event.target.value); setNewRejected(false); setFailure('') }}
+        />
+        {newRejected && <FieldError id="new-password-error">{tr('invalid')}</FieldError>}
+        <PasswordRules id="new-password-rules" password={newPassword} />
+      </Field>
 
-                  return (
-                    <div
-                      key={rule.label}
-                      className={`${styles.passwordRule} ${
-                        passed ? styles.rulePassed : styles.rulePending
-                      }`}
-                    >
-                      <span aria-hidden="true">
-                        {passed ? '✓' : '○'}
-                      </span>
-                      <span>{t(`accountSettings.passwordDialog.${rule.label}`)}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-          <div className={styles.field}>
-            <label htmlFor="confirm-password">{t('accountSettings.passwordDialog.confirm')}</label>
-            <div className={styles.passwordInput}>
-              <input
-                id="confirm-password"
-                type={showConfirmPassword ? 'text' : 'password'}
-                autoComplete="new-password"
-                value={confirmPassword}
-                disabled={busy}
-                onChange={event => {
-                  setConfirmPassword(event.target.value)
-                  setError('')
-                }}
-                required
-              />
-              <button
-                type="button"
-                className={styles.eyeButton}
-                onClick={() => setShowConfirmPassword(value => !value)}
-                aria-label={t(`accountSettings.passwordDialog.${showConfirmPassword ? 'hide' : 'show'}`, {
-                  field: t('accountSettings.passwordDialog.confirm'),
-                })}
-                aria-pressed={showConfirmPassword}
-                disabled={busy}
-              >
-                <EyeIcon hidden={showConfirmPassword} />
-              </button>
-            </div>
-            {confirmPassword.length > 0 && (
-            <p
-                className={
-                newPassword === confirmPassword
-                    ? styles.validPassword
-                    : styles.invalidPassword
-                }
-                role="status"
-            >
-                {newPassword === confirmPassword
-                ? t('accountSettings.passwordDialog.match')
-                : t('accountSettings.passwordDialog.mismatch')}
-            </p>
-            )}
-          </div>
+      <Field id="confirm-password" label={tr('confirm')} invalid={mismatch}>
+        <PasswordInput
+          id="confirm-password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          disabled={busy}
+          aria-invalid={mismatch || undefined}
+          aria-describedby={describedBy(mismatch && 'confirm-password-error')}
+          onChange={event => { setConfirmPassword(event.target.value); setFailure('') }}
+        />
+        {mismatch && <FieldError id="confirm-password-error">{tr('mismatch')}</FieldError>}
+      </Field>
 
-          {error && (
-            <p className={styles.error} role="alert">
-              {t(`accountSettings.passwordDialog.${error}`)}
-            </p>
-          )}
-
-          <div className={styles.actions}>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={busy}
-              onClick={onClose}
-            >
-              {t('accountSettings.passwordDialog.cancel')}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={busy}
-            >
-              {busy ? t('accountSettings.passwordDialog.saving') : t('accountSettings.passwordDialog.save')}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
-  )
+      {failure && <FormError role="alert">{tr(failure)}</FormError>}
+    </form>
+  </AccountFrame>
 }

@@ -1,14 +1,16 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dialog } from '../../components/Dialog'
-import { Button } from '../../ui'
+import { Button, FieldError, FieldHint, FormError, describedBy } from '../../ui'
+import { AccountFrame, type FrameVariant } from './AccountFrame'
 import { checkAccountDeletion, deleteAccount, ApiError } from '../../contract/classroomClient'
 import { useAuth } from '../auth/AuthContext'
 import { useT } from '../../i18n/useT'
 import styles from './DeleteAccountDialog.module.css'
 
 type Props = {
+  /** 電腦版是對話框，手機是 /account/delete 內頁（Figma M13–M16） */
+  variant?: FrameVariant
   username: string
   onClose: () => void
 }
@@ -16,7 +18,7 @@ type Props = {
 type Step = 'checking' | 'blocked' | 'warning' | 'confirm'
 type ErrorKey = '' | 'checkFailed' | 'usernameMismatch' | 'unavailable' | 'failed'
 
-export function DeleteAccountDialog({ username, onClose }: Props) {
+export function DeleteAccountDialog({ variant = 'dialog', username, onClose }: Props) {
   const { t } = useT('shell')
   const { clearSession } = useAuth()
   const navigate = useNavigate()
@@ -33,6 +35,8 @@ export function DeleteAccountDialog({ username, onClose }: Props) {
   const tr = (key: string) => t(`accountSettings.deleteAccount.${key}`)
   const matches =
     enteredUsername.trim().toLowerCase() === username.toLowerCase()
+  // 打了字但跟帳號不一樣就提示（Figma M16）；後端也比對，回 ACCOUNT_USERNAME_MISMATCH 時顯示同一句
+  const typedMismatch = enteredUsername.trim() !== '' && !matches
 
   useEffect(() => {
     const controller = new AbortController()
@@ -105,43 +109,52 @@ export function DeleteAccountDialog({ username, onClose }: Props) {
     if (!submitting.current) onClose()
   }
 
+  const mismatchShown = typedMismatch || error === 'usernameMismatch'
+  const formError = error && error !== 'usernameMismatch' ? error : ''
+  const FORM_ID = 'delete-account-form'
+
   return (
-    <Dialog
+    <AccountFrame
+      variant={variant}
       title={tr('title')}
       tone="danger"
       onClose={close}
       closeOnBackdrop={!busy}
+      steps={step === 'warning' || step === 'confirm'
+        ? <p className={styles.step}>{tr(step === 'warning' ? 'step1' : 'step2')}</p>
+        : undefined}
       footer={
         step === 'warning' ? (
           <>
-            <Button variant="quiet" onClick={close}>
-              {tr('cancel')}
-            </Button>
-            <Button variant="danger" onClick={() => setStep('confirm')}>
-              {tr('continue')}
-            </Button>
+            <Button variant="outline" onClick={close}>{tr('keep')}</Button>
+            <Button variant="danger" onClick={() => setStep('confirm')}>{tr('continue')}</Button>
           </>
         ) : step === 'blocked' ? (
-          <Button variant="quiet" onClick={close}>
-            {tr('close')}
-          </Button>
+          <Button variant="primary" onClick={close}>{tr('understood')}</Button>
+        ) : step === 'confirm' ? (
+          <>
+            <Button variant="outline" disabled={busy} onClick={close}>{tr('cancel')}</Button>
+            <Button type="submit" form={FORM_ID} variant="danger" disabled={busy || !matches}>
+              {busy ? tr('deleting') : tr('confirmDelete')}
+            </Button>
+          </>
         ) : undefined
       }
     >
       {step === 'checking' && (
         <div className={styles.content}>
           <p role="status">{tr('checking')}</p>
-          {error && <p role="alert" className={styles.error}>{tr(error)}</p>}
+          {error && <FormError role="alert">{tr(error)}</FormError>}
           {error && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setError('')
-              setCheckAttempt(value => value + 1)
-            }}
-          >
-            {tr('retry')}
-          </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setError('')
+                setCheckAttempt(value => value + 1)
+              }}
+            >
+              {tr('retry')}
+            </Button>
           )}
         </div>
       )}
@@ -156,25 +169,32 @@ export function DeleteAccountDialog({ username, onClose }: Props) {
               ))}
             </ul>
           )}
-          {error && <p role="alert" className={styles.error}>{tr(error)}</p>}
+          {error && <FormError role="alert">{tr(error)}</FormError>}
         </div>
       )}
 
       {step === 'warning' && (
         <div className={styles.content}>
+          <h2 className={styles.question}>{tr('question')}</h2>
           <p>{tr('warning')}</p>
-          <p>{tr('preservedData')}</p>
-          <p className={styles.warning}>{tr('irreversible')}</p>
+          <div className={styles.impact}>
+            <p className={styles.impactTitle}>{tr('irreversible')}</p>
+            <ul>
+              <li>{tr('impactData')}</li>
+              <li>{tr('impactRestore')}</li>
+            </ul>
+          </div>
         </div>
       )}
 
       {step === 'confirm' && (
-        <form onSubmit={event => void submit(event)} className={styles.content}>
+        <form id={FORM_ID} onSubmit={event => void submit(event)} className={styles.content} noValidate>
+          <h2 className={styles.question}>{tr('confirmTitle')}</h2>
           <p>{tr('confirmDescription')}</p>
-          <label htmlFor="delete-account-username">
+          <p className={styles.username}>{username}</p>
+          <label htmlFor="delete-account-username" className={styles.label}>
             {tr('usernameLabel')}
           </label>
-          <strong className={styles.username}>{username}</strong>
           <input
             ref={usernameInput}
             id="delete-account-username"
@@ -182,39 +202,24 @@ export function DeleteAccountDialog({ username, onClose }: Props) {
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
+            placeholder={t('accountSettings.deleteAccount.placeholder', { username })}
             value={enteredUsername}
             disabled={busy}
             onChange={event => {
               setEnteredUsername(event.target.value)
               setError('')
             }}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? 'delete-account-error' : undefined}
+            aria-invalid={mismatchShown || undefined}
+            aria-describedby={describedBy(mismatchShown ? 'delete-account-error' : 'delete-account-hint')}
             className={styles.input}
             data-autofocus
           />
-
-          {error && <p id="delete-account-error" role="alert" className={styles.error}>{tr(error)}</p>}
-
-          <div className={styles.actions}>
-            <Button
-              type="button"
-              variant="quiet"
-              disabled={busy}
-              onClick={() => setStep('warning')}
-            >
-              {tr('back')}
-            </Button>
-            <Button
-              type="submit"
-              variant="danger"
-              disabled={busy || !matches}
-            >
-              {busy ? tr('deleting') : tr('confirmDelete')}
-            </Button>
-          </div>
+          {mismatchShown
+            ? <FieldError id="delete-account-error" role="alert">{tr('usernameMismatch')}</FieldError>
+            : <FieldHint id="delete-account-hint">{tr('confirmHint')}</FieldHint>}
+          {formError && <FormError role="alert">{tr(formError)}</FormError>}
         </form>
       )}
-    </Dialog>
+    </AccountFrame>
   )
 }

@@ -58,7 +58,7 @@ export function AnnouncementsTab({ onError }: { onError: OnError }) {
           <td><time dateTime={new Date(row.published_at * 1000).toISOString()}>{adminTime(locale, row.published_at)}</time></td>
           <td>{t(`announcements.audiences.${row.audience}`)}</td>
           <td>{row.title}</td>
-          <td>{row.published_by_username}</td>
+          <td>{row.published_by_username ?? t('announcements.deletedPublisher')}</td>
           <td><Button variant="outline" className={styles.removeButton} onClick={() => setDeleting(row)}>
             {t('announcements.delete')}
           </Button></td>

@@ -6,6 +6,7 @@ email, password, avatar, sessions, email tokens and AI keys go.
 
 import base64
 
+from pydantic import TypeAdapter
 from sqlalchemy import select
 
 from app.modules.ai_providers.repositories import (
@@ -14,6 +15,7 @@ from app.modules.ai_providers.repositories import (
     SessionProviderSecret,
 )
 from app.modules.course_management.repositories import Enrollment
+from app.modules.identity_access.contracts import AccountView
 from app.modules.identity_access.repositories import (
     Account,
     EmailToken,
@@ -175,3 +177,9 @@ def test_the_name_and_email_can_be_registered_again(client):
     user(client, "learner")
 
     assert account_row("learner").kind == "registered"
+
+
+def test_the_account_contract_names_the_deleted_kind():
+    # 需求：identity_access 的 kind 也要有 deleted，跟名單、雷達、意見回饋一致
+    kind = TypeAdapter(AccountView.model_fields["kind"].annotation)
+    assert kind.validate_python("deleted") == "deleted"

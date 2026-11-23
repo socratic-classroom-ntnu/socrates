@@ -8,7 +8,7 @@ import { BottomNav } from '../ui'
 import { AccountMenu, type NavEntry } from './AccountMenu'
 import { AccountSheet } from './AccountSheet'
 import { useLogout } from './accountSummary'
-import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
+import { InsideAppShell, ShellActiveContext, ShellBackContext, ShellNavHiddenContext, type ShellActive, type ShellBack } from '../shared/shellContext'
 import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
 import { avatarSrc } from '../contract/accountClient'
@@ -76,6 +76,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const phone = useIsPhone()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [back, setBack] = useState<ShellBack>(null)
+  const [navHidden, setNavHidden] = useState(false)
   // 直接包進來的一頁（跨角色說明頁）不屬於任何導覽項目，不標目前頁
   // 頁面宣告的優先（例如我的對話的私人活動頁），否則依網址
   const [declared, setDeclared] = useState<ShellActive>(null)
@@ -96,7 +97,9 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const content = <div className="app-shell__content" id="app-content">
     <ShellActiveContext.Provider value={setDeclared}>
     <ShellBackContext.Provider value={setBack}>
+    <ShellNavHiddenContext.Provider value={setNavHidden}>
       <InsideAppShell.Provider value={true}>{children ?? <Outlet />}</InsideAppShell.Provider>
+    </ShellNavHiddenContext.Provider>
     </ShellBackContext.Provider>
     </ShellActiveContext.Provider>
     <NotificationLayer />
@@ -122,6 +125,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
         name={account?.display_name || account?.username || ''}
         avatarUrl={avatarSrc(account)}
         hasUnread={hasUnread}
+        navHidden={navHidden}
       >
         {content}
       </StudentPhoneShell>
@@ -179,6 +183,7 @@ function StudentPhoneShell({
   name,
   avatarUrl,
   hasUnread,
+  navHidden,
   children,
 }: {
   top: ReactNode
@@ -186,6 +191,7 @@ function StudentPhoneShell({
   name: string
   avatarUrl?: string
   hasUnread: boolean
+  navHidden: boolean
   children: ReactNode
 }) {
   const { t } = useT('shell')
@@ -199,11 +205,11 @@ function StudentPhoneShell({
     if (wasOpen.current && !sheet && !logout.confirm) me.current?.focus()
     wasOpen.current = sheet
   }, [sheet, logout.confirm])
-  return <div className="app-shell app-shell--phone app-shell--bottom-nav">
+  return <div className={'app-shell app-shell--phone' + (navHidden ? '' : ' app-shell--bottom-nav')}>
     <a className="app-shell__skip" href="#app-content">{t('skip')}</a>
     <header className="app-shell__topbar">{top}</header>
     {children}
-    {!typing && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
+    {!typing && !navHidden && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
       { key: 'home', label: t('nav.home'), icon: ITEMS[0].icon, to: '/', current: active === 'home' },
       { key: 'dialogues', label: t('nav.dialogues'), icon: ITEMS[1].icon, to: '/my-dialogues', current: active === 'dialogues' },
       { key: 'notifications', label: t('nav.notificationsShort'), icon: <NotificationBell mobile />, to: '/notifications', current: active === 'notifications', dotLabel: hasUnread ? t('nav.unread') : undefined },

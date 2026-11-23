@@ -48,6 +48,7 @@ import { AdminGate } from '../features/admin/AdminGate'
 import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
 import { AccountSettingsPage } from '../features/account/AccountSettingsPage'
+import { AccountSubpage } from '../features/account/AccountSubpage'
 import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { NotificationsProvider } from '../features/notifications/NotificationsProvider'
 
@@ -121,6 +122,10 @@ export function AppRoutes() {
           <Route path="/groups" element={<GroupsPage />} />
         </Route>
         <Route path="/account" element={<AccountSettingsPage />} />
+        {/* 手機內頁（M02–M16）；電腦寬度回 /account，用對話框 */}
+        <Route path="/account/avatar" element={<AccountSubpage kind="avatar" />} />
+        <Route path="/account/password" element={<AccountSubpage kind="password" />} />
+        <Route path="/account/delete" element={<AccountSubpage kind="delete" />} />
       </Route>
       </Route>
       {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}

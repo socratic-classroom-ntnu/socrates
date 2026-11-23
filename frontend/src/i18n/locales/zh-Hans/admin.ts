@@ -15,6 +15,7 @@ export default {
     "audience": "对象",
     "title": "标题",
     "publisher": "发布者",
+    "deletedPublisher": "已删除的账号",
     "delete": "删除",
     "empty": "还没有公告",
     "emptyHint": "点击「新增公告」发布，目标用户下次进入网站时会看到。",

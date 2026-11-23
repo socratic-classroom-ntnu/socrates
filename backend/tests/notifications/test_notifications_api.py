@@ -49,6 +49,20 @@ def test_admin_can_publish_list_and_delete(client):
     assert client.get(ADMIN).json() == [second]
 
 
+def test_a_deleted_publisher_has_no_name(client):
+    other = user(client, "boss", account_role="teacher")
+    make_admin("boss")
+    user(client, "fizzy", account_role="teacher")
+    make_admin("fizzy")
+    publish(client)
+    deleted = client.request("DELETE", "/api/v2/account", json={"username": "fizzy"})
+    assert deleted.status_code == 200, deleted.text
+
+    switch(client, other)
+    [row] = client.get(ADMIN).json()
+    assert row["published_by_username"] is None
+
+
 @pytest.mark.parametrize(
     "fields",
     [

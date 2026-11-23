@@ -511,7 +511,8 @@
             "enum": [
               "guest",
               "expired_guest",
-              "registered"
+              "registered",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -1699,8 +1700,15 @@
             "type": "string"
           },
           "published_by_username": {
-            "title": "Published By Username",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By Username"
           },
           "title": {
             "maxLength": 40,
@@ -4869,7 +4877,8 @@
             "enum": [
               "guest",
               "expired_guest",
-              "registered"
+              "registered",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"

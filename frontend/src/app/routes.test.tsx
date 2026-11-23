@@ -356,6 +356,26 @@ describe('teacher pages on a phone', () => {
   })
 })
 
+// 個人設定的手機內頁（M02–M16）：手機進得去，電腦回 /account
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s is a phone page of the account settings', async (url) => {
+  const desktopMatchMedia = window.matchMedia
+  try {
+    phone()
+    mockSession(verified)
+    open(url)
+    expect(await screen.findByRole('button', { name: '返回' })).toBeInTheDocument()
+    expect(where()).toBe(url)
+  } finally {
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktopMatchMedia })
+  }
+})
+
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s on a computer goes back to /account', async (url) => {
+  mockSession(verified)
+  open(url)
+  await waitFor(() => expect(where()).toBe('/account'))
+})
+
 test('create-course on a desktop opens the drawer on the home page', async () => {
   mockSession(teacher)
   open('/teach/create-course')

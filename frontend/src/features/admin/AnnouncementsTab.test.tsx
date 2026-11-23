@@ -28,6 +28,12 @@ test('shows the author and requires confirmation before deleting', async () => {
   expect(deleteAnnouncement).toHaveBeenCalledWith('123')
 })
 
+test('a publisher who deleted their account shows as a deleted account', async () => {
+  jest.mocked(listAnnouncements).mockResolvedValue([{ ...all, published_by_username: null }])
+  render(<AnnouncementsTab onError={jest.fn()} />)
+  expect(await screen.findByText('已刪除的帳號')).toBeInTheDocument()
+})
+
 test('validates fields and immediately adds a published announcement', async () => {
   jest.mocked(listAnnouncements).mockResolvedValue([])
   await openPublishForm()

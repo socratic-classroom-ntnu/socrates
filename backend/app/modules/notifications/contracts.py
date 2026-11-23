@@ -17,7 +17,8 @@ class AnnouncementInput(BaseModel):
 class AnnouncementView(AnnouncementInput):
     id: str
     published_by: str
-    published_by_username: str
+    # None when the publisher has deleted their account
+    published_by_username: str | None
     published_at: float
 
 

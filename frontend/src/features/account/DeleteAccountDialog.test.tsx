@@ -27,8 +27,8 @@ function setup() {
 }
 
 async function confirm() {
-  fireEvent.click(await screen.findByRole('button', { name: '繼續' }))
-  const input = screen.getByRole('textbox', { name: '帳號名稱' })
+  fireEvent.click(await screen.findByRole('button', { name: '繼續刪除' }))
+  const input = screen.getByRole('textbox', { name: '使用者帳號' })
   expect(input).toHaveFocus()
   return input
 }
@@ -60,7 +60,9 @@ test('blocks deletion and lists owned courses', async () => {
   jest.mocked(checkAccountDeletion).mockResolvedValue({ can_delete: false, courses: ['Ethics'] })
   setup()
   expect(await screen.findByText('Ethics')).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: '繼續' })).not.toBeInTheDocument()
+  expect(screen.getByText('你還有以下課程，目前無法自行刪除帳號。需要刪除請用「意見回饋」聯絡我們。')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '我知道了' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '繼續刪除' })).not.toBeInTheDocument()
   expect(deleteAccount).not.toHaveBeenCalled()
 })
 
@@ -69,7 +71,7 @@ test('allows retry after an eligibility failure', async () => {
   setup()
   expect(await screen.findByRole('alert')).toHaveTextContent('無法檢查刪除資格')
   fireEvent.click(screen.getByRole('button', { name: '重新檢查' }))
-  expect(await screen.findByRole('button', { name: '繼續' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: '繼續刪除' })).toBeInTheDocument()
   expect(checkAccountDeletion).toHaveBeenCalledTimes(2)
 })
 
@@ -116,7 +118,65 @@ test('translates an existing error when the locale changes', async () => {
   const input = await confirm()
   fireEvent.change(input, { target: { value: 'Teacher' } })
   fireEvent.submit(input.closest('form')!)
-  expect(await screen.findByRole('alert')).toHaveTextContent('輸入的帳號名稱不正確')
+  expect(await screen.findByRole('alert')).toHaveTextContent('帳號不一致，請再次確認使用者帳號')
   await act(async () => { await applyLocale('en') })
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('The username does not match.'))
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('The username does not match. Check it and try again.'))
+})
+
+test('step 1 follows Figma: what deleting means, keep or continue', async () => {
+  setup()
+  expect(await screen.findByText('確定要刪除嗎？')).toBeInTheDocument()
+  expect(screen.getByText('步驟 1／2')).toBeInTheDocument()
+  expect(screen.getByText('此操作無法復原')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: '保留帳號' }))
+  expect(onClose).toHaveBeenCalled()
+})
+
+test('step 2 marks a username that does not match while typing', async () => {
+  setup()
+  const input = await confirm()
+  expect(screen.getByText('步驟 2／2')).toBeInTheDocument()
+  expect(screen.getByText('輸入完全相同的帳號後，才能永久刪除。')).toBeInTheDocument()
+  expect(input).not.toHaveAttribute('aria-invalid', 'true')
+
+  fireEvent.change(input, { target: { value: 'Teache' } })
+
+  expect(input).toHaveAttribute('aria-invalid', 'true')
+  expect(screen.getByText('帳號不一致，請再次確認使用者帳號')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '永久刪除帳號' })).toBeDisabled()
+})
+
+test('取消 on step 2 cancels the deletion instead of going back a step', async () => {
+  setup()
+  await confirm()
+  fireEvent.click(screen.getByRole('button', { name: '取消' }))
+  expect(onClose).toHaveBeenCalled()
+  expect(deleteAccount).not.toHaveBeenCalled()
+})
+
+test('as a phone page it has a title, a back button and no dialog', async () => {
+  render(
+    <MemoryRouter initialEntries={['/account/delete']}>
+      <Routes>
+        <Route path="/account/delete" element={<DeleteAccountDialog variant="page" username="Teacher" onClose={onClose} />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  expect(await screen.findByRole('heading', { level: 1, name: '刪除帳號' })).toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: '返回' }))
+  expect(onClose).toHaveBeenCalled()
+})
+
+test('a teacher with courses sees the course list on the phone page too', async () => {
+  jest.mocked(checkAccountDeletion).mockResolvedValue({ can_delete: false, courses: ['Ethics'] })
+  render(
+    <MemoryRouter initialEntries={['/account/delete']}>
+      <Routes>
+        <Route path="/account/delete" element={<DeleteAccountDialog variant="page" username="Teacher" onClose={onClose} />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+  expect(await screen.findByText('Ethics')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '我知道了' })).toBeInTheDocument()
 })

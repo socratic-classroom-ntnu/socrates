@@ -1,7 +1,10 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Dialog } from '../../components/Dialog'
 import { api } from '../../contract/classroomClient'
-import { Button, FieldError, RadioCards } from '../../ui'
+import { useIsPhone } from '../../shared/useIsPhone'
+import { Button, FieldError, FormError, RadioCards } from '../../ui'
 import { useAuth } from '../auth/AuthContext'
 import { accountName } from '../../shared/accountName'
 import styles from './AccountSettingsPage.module.css'
@@ -12,6 +15,7 @@ import { useChangeLocale } from '../auth/useChangeLocale'
 import { useT } from '../../i18n/useT'
 import { LANGUAGE_NAMES, LOCALES } from '../../i18n/locale'
 import { DeleteAccountDialog } from './DeleteAccountDialog'
+import type { AccountNotice } from './AccountSubpage'
 
 const MAX_NAME_LENGTH = 40
 
@@ -29,12 +33,29 @@ export function AccountSettingsPage() {
 
   const currentName = accountName(account)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(false)
+  const phone = useIsPhone()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const notice = (location.state as AccountNotice | null)?.notice
 
   useEffect(() => {
     if (!editing) setName(currentName)
   }, [currentName, editing])
 
+  // 手機改完密碼從內頁回來（M10 → M00）：顯示一次成功提示，清掉 state，重新整理就不再出現
+  useEffect(() => {
+    if (notice !== 'passwordUpdated') return
+    setPasswordSuccess('updated')
+    navigate(location.pathname, { replace: true, state: null })
+  }, [notice, navigate, location.pathname])
+
   if (!account) return null
+  if (account.kind === 'guest' || account.kind === 'expired_guest') return <Navigate to="/" replace />
+
+  async function pickLanguage(value: (typeof LOCALES)[number]) {
+    if (await changeLocale(value)) setLanguageOpen(false)
+  }
 
   function cancel() {
     setName(currentName)
@@ -190,7 +211,8 @@ export function AccountSettingsPage() {
             variant="outline"
             onClick={() => {
               setPasswordSuccess('')
-              setPasswordOpen(true)
+              if (phone) navigate('/account/password')
+              else setPasswordOpen(true)
             }}
           >
             {t('accountSettings.password.change')}
@@ -217,49 +239,95 @@ export function AccountSettingsPage() {
       <section className={styles.card} aria-labelledby="language-title">
         <h2 id="language-title">{t('accountSettings.language.title')}</h2>
 
-        <div className={styles.languages}>
-          <RadioCards
-            legend={t('accountSettings.language.title')}
-            name="account-language"
-            options={LOCALES.map(value => ({
-              value,
-              label: LANGUAGE_NAMES[value],
-            }))}
-            value={locale}
-            onChange={value => {
-              void changeLocale(value)
-            }}
-            disabled={saving}
-          />
-        </div>
+        {phone ? (
+          <button
+            type="button"
+            className={styles.row}
+            aria-label={`${t('accountSettings.language.title')}：${LANGUAGE_NAMES[locale]}`}
+            onClick={() => setLanguageOpen(true)}
+          >
+            <span>{LANGUAGE_NAMES[locale]}</span>
+            <span className={styles.chevron} aria-hidden="true">›</span>
+          </button>
+        ) : (
+          <div className={styles.languages}>
+            <RadioCards
+              legend={t('accountSettings.language.title')}
+              name="account-language"
+              options={LOCALES.map(value => ({
+                value,
+                label: LANGUAGE_NAMES[value],
+              }))}
+              value={locale}
+              onChange={value => {
+                void changeLocale(value)
+              }}
+              disabled={saving}
+            />
+          </div>
+        )}
 
-        {saving && (
+        {saving && !languageOpen && (
           <p className={styles.muted} role="status">
             {t('accountSettings.language.saving')}
           </p>
         )}
 
-        {failure && (
-          <p role="alert" style={{ color: '#c03939', marginTop: 12 }}>
-            {t('accountSettings.language.failure')}
-          </p>
-        )}
+        {failure && !languageOpen && <FormError role="alert">{t('accountSettings.language.failure')}</FormError>}
       </section>
+
+      {languageOpen && (
+        <Dialog title={t('accountSettings.language.title')} placement="bottom" onClose={() => { if (!saving) setLanguageOpen(false) }}>
+          <div className={styles.sheet}>
+            <p className={styles.sheetTitle} aria-hidden="true">{t('accountSettings.language.title')}</p>
+            {/* 一列一個按鈕：Tab 逐一走、Enter 選；目前的語言標 aria-current（Figma M09 的打勾） */}
+            <ul className={styles.languageList} aria-label={t('accountSettings.language.title')}>
+              {LOCALES.map(value => (
+                <li key={value}>
+                  <button
+                    type="button"
+                    aria-current={value === locale ? 'true' : undefined}
+                    className={styles.languageOption}
+                    disabled={saving}
+                    onClick={() => void pickLanguage(value)}
+                  >
+                    {LANGUAGE_NAMES[value]}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {failure && <FormError role="alert">{t('accountSettings.language.failure')}</FormError>}
+            <Button variant="outline" disabled={saving} onClick={() => setLanguageOpen(false)}>
+              {t('accountSettings.profile.cancel')}
+            </Button>
+          </div>
+        </Dialog>
+      )}
 
       <section className={styles.dangerSection} aria-labelledby="danger-title">
         <h2 id="danger-title">{t('accountSettings.deleteAccount.sectionTitle')}</h2>
-        <div className={styles.dangerCard}>
-          <div>
-            <h3>{t('accountSettings.deleteAccount.title')}</h3>
-            <p>{t('accountSettings.deleteAccount.description')}</p>
+        {phone ? (
+          <button type="button" className={styles.dangerRow} onClick={() => navigate('/account/delete')}>
+            <span className={styles.dangerText}>
+              <span className={styles.dangerTitle}>{t('accountSettings.deleteAccount.title')}</span>
+              <span className={styles.dangerHint}>{t('accountSettings.deleteAccount.irreversible')}</span>
+            </span>
+            <span className={styles.chevron} aria-hidden="true">›</span>
+          </button>
+        ) : (
+          <div className={styles.dangerCard}>
+            <div>
+              <h3>{t('accountSettings.deleteAccount.title')}</h3>
+              <p>{t('accountSettings.deleteAccount.description')}</p>
+            </div>
+            <Button
+              variant="danger"
+              onClick={() => setDeleteOpen(true)}
+            >
+              {t('accountSettings.deleteAccount.action')}
+            </Button>
           </div>
-          <Button
-            variant="danger"
-            onClick={() => setDeleteOpen(true)}
-          >
-            {t('accountSettings.deleteAccount.action')}
-          </Button>
-        </div>
+        )}
       </section>
       {deleteOpen && (
         <DeleteAccountDialog

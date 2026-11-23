@@ -214,7 +214,7 @@ class AccountView(Strict):
     points: int
     achievements: list[str]
     locale: Locale | None = None
-    kind: Literal["guest", "expired_guest", "registered"] = "registered"
+    kind: Literal["guest", "expired_guest", "registered", "deleted"] = "registered"
     account_role: AccountRole
     is_admin: bool = False
     # Guests only: 168 hours after joining; the daily job then clears the name and marks the

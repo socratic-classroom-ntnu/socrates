@@ -3,7 +3,6 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { RadioCards } from './RadioCards'
 
-
 const OPTIONS = [
   { value: 'zh-Hant', label: '繁體中文' },
   { value: 'en', label: 'English', description: 'English language' },
@@ -69,4 +68,25 @@ test('radios share the same name', () => {
   screen.getAllByRole('radio').forEach(option => {
     expect(option).toHaveAttribute('name', 'language')
   })
+})
+
+test.each([
+  [2, '2', '2'],
+  [3, '3', '3'],
+  [4, '4', '2'],
+])('%i options set the desktop and mobile column counts', (count, desktop, mobile) => {
+  const options = Array.from({ length: count }, (_, i) => ({ value: `v${i}`, label: `選項 ${i}` }))
+  render(
+    <RadioCards legend="欄數" name="columns" options={options} value="v0" onChange={() => {}} />,
+  )
+
+  const grid = screen.getAllByRole('radio')[0].closest('label')!.parentElement!
+  expect(grid.style.getPropertyValue('--radio-cards-count')).toBe(desktop)
+  expect(grid.style.getPropertyValue('--radio-cards-mobile-count')).toBe(mobile)
+})
+
+test('page className is added after the component class', () => {
+  render(<RadioCards legend="語言設定" name="language" options={OPTIONS} value="zh-Hant" onChange={() => {}} className="page-modes" />)
+
+  expect(screen.getByRole('group', { name: '語言設定' }).className.split(' ')).toEqual(['fieldset', 'page-modes'])
 })

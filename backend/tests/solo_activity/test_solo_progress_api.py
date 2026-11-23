@@ -25,6 +25,7 @@ from tests.solo_activity.test_solo_attempts_api import (
     start,
     to_confirming,
 )
+from tests.solo_activity.test_solo_roster_api import set_times
 
 
 def progress(client, activity_id):
@@ -211,6 +212,29 @@ def test_attention_after_300_seconds(client, tutor, monkeypatch):
     # Done students are never waiting on anyone, however long ago they acted.
     assert student_row(view, "review同學")["attention"] is False
     assert view["summary"]["attention"] == 1
+
+
+def test_no_attention_once_the_activity_has_ended(client, tutor, monkeypatch):
+    """C7: after the end no one can answer any more, so no one is waiting to be looked at."""
+    _, replies = tutor
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    replies.append(OPENING)
+    answer(client, attempt["id"])
+    with storage.transaction() as db:
+        last_message = max(db.scalars(select(SoloMessage.created_at)))
+    set_times(s["activity_id"], ends_at=last_message + 100)
+
+    switch(client, s["teacher"])
+    monkeypatch.setattr(solo_progress, "now", lambda: last_message + 301)
+    view = ok(progress(client, s["activity_id"]))
+    assert view["status"] == "ended"
+    row = student_row(view, "student同學")
+    # Still shown as unfinished and idle; only the flag asking the teacher to look is off.
+    assert row["overall"] == "in_progress"
+    assert row["last_activity_at"] == pytest.approx(last_message)
+    assert row["attention"] is False
+    assert view["summary"] == {"enrolled": 1, "started": 1, "done": 0, "attention": 0}
 
 
 def test_enrolled_without_attempt_is_not_started(client, tutor):

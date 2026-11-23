@@ -32,3 +32,10 @@
   - 結果存在 `solo_radars`（每個活動一列），附來源統整的指紋；有統整新增或改變時下一次讀取重算，老師改過的軸名一併重設。
   - 沒有任何留存統整、老師沒有可用的 AI 連線、或模型兩條路都失敗：409 `RADAR_NOT_READY`。
 - `PATCH /solo/activities/{id}/radar/dimensions/{index}`：老師改軸名；還沒有雷達時 409 `RADAR_NOT_READY`，index 超出時 404 `RADAR_DIMENSION_NOT_FOUND`。
+
+## 活動結束後（C7）
+
+- 活動一結束（`ends_at` 到了，或老師按「立即結束」）就一刀切：還沒開始的人不能開始（409 `ACTIVITY_NOT_OPEN`），已經開始的人也停在原地。
+- 已開始的作答：`available_actions` 一律是 `[]`（`attempt_machine.actions_for(..., activity_ended=True)`），任何動作都回 409 `ACTIVITY_ENDED`，在存任何東西之前就擋下。`GET /solo/attempts/{id}` 與 `POST /solo/activities/{id}/attempt` 照樣回傳這段作答，學生只能讀。
+- 做到一半的作答保留結束當下的 `state`，不補成 `completed`、不補寫最終統整：老師的進度頁看到的是「進行中」，雷達只算已完成且有最終統整的作答。
+- 結束前已經送出、正在等 AI 的那一則：學生訊息在活動開放時就存了，AI 的回覆回來後照常寫進紀錄（Tx2 不看活動是否結束），只是之後不能再回答。

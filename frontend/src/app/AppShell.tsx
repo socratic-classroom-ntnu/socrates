@@ -25,7 +25,7 @@ const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] =
   { key: 'groups', href: '/groups', icon: icon(<><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20a6 6 0 0 1 12 0M14 20a4.5 4.5 0 0 1 7-3.7" /></>) },
   { key: 'bank', href: '/teacher/home?view=bank', fullLoad: true, icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
   { key: 'store', href: '/teacher/home?view=store', fullLoad: true, icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
-  { key: 'settings', href: '/teacher/home?view=settings', fullLoad: true, icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
+  { key: 'settings', href: '/teach/ai-settings', icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
 ]
 
 // 帳號只有一個角色（P22）：側欄依角色。「分組課」只給老師，而且要多人模式開著（後台開關，Fizzy 11/18）；
@@ -51,6 +51,7 @@ function writeCollapsed(value: boolean): void {
 export function activeItem(pathname: string, search: string): NavKey | null {
   if (/^\/admin(\/|$)/.test(pathname)) return 'admin'
   if (/^\/my-dialogues\/?$/.test(pathname)) return 'dialogues'
+  if (/^\/teach\/ai-settings\/?$/.test(pathname)) return 'settings'
   if (pathname === '/' || pathname.startsWith('/learn/') || pathname.startsWith('/teach/')) return 'home'
   if (/^\/groups\/?$/.test(pathname) || pathname.startsWith('/teacher/courses/')) return 'groups'
   if (/^\/teacher\/home\/?$/.test(pathname)) {

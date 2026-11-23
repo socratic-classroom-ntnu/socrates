@@ -1,4 +1,6 @@
 
+import type { CSSProperties } from 'react'
+import { classNames } from '../classNames'
 import styles from './RadioCards.module.css'
 
 export type RadioCardOption<T extends string> = {
@@ -15,6 +17,7 @@ export function RadioCards<T extends string>({
   value,
   onChange,
   disabled = false,
+  className,
 }: {
   legend: string
   name: string
@@ -22,12 +25,20 @@ export function RadioCards<T extends string>({
   value: T
   onChange: (value: T) => void
   disabled?: boolean
+  /** The page's own class, added after the component's on the fieldset. */
+  className?: string
 }) {
   return (
-    <fieldset className={styles.fieldset} disabled={disabled}>
+    <fieldset className={classNames(styles.fieldset, className)} disabled={disabled}>
       <legend className={styles.legend}>{legend}</legend>
 
-      <div className={styles.options}>
+      <div
+        className={styles.options}
+        style={{
+          '--radio-cards-count': options.length,
+          '--radio-cards-mobile-count': options.length > 3 ? 2 : options.length,
+        } as CSSProperties}
+      >
         {options.map(option => (
           <label key={option.value} className={styles.card}>
             <input

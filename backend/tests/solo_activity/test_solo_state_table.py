@@ -84,6 +84,14 @@ def test_actions_per_state(build, expected):
     assert sm.actions_for(build(), T0) == expected
 
 
+@pytest.mark.parametrize(
+    "build", [fresh, unavailable, in_dialogue, confirming, between, reviewing, awaiting]
+)
+def test_an_ended_activity_offers_nothing_in_any_state(build):
+    """C7: ending the activity stops every attempt where it is, a stale wait included."""
+    assert sm.actions_for(build(), T0 + 151, activity_ended=True) == []
+
+
 def test_awaiting_tutor_offers_retry_only_when_stale():
     a = awaiting()
     assert a.state == "awaiting_tutor"

@@ -439,18 +439,26 @@ def test_teacher_without_profile_reports_missing_provider(client, tutor):
     assert [m["text"] for m in view["messages"]] == ["不能主動害人"]
 
 
-def test_started_attempt_continues_after_activity_ends(client, tutor):
-    _, replies = tutor
+def test_started_attempt_stops_when_activity_ends(client, tutor):
+    """Ending is a cut for everyone: an attempt already begun is kept, read-only (C7).
+    More cases in test_solo_ended_activity.py."""
+    calls, _ = tutor
     s = setup(client)
     attempt = ok(start(client, s["activity_id"]))
+    assert attempt["available_actions"] == ["send_message"]
     switch(client, s["teacher"])
     assert act(client, s["activity_id"], "end_now").status_code == 200
     switch(client, s["student"])
-    assert ok(start(client, s["activity_id"]))["id"] == attempt["id"]
+    reopened = ok(start(client, s["activity_id"]))
+    assert reopened["id"] == attempt["id"]
+    assert reopened["available_actions"] == []
     view = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}"))
     assert view["status"] == "ended" and view["attempt"]["id"] == attempt["id"]
-    replies.append(OPENING)
-    assert answer(client, attempt["id"])["state"] == "in_dialogue"
+    response = do(client, attempt["id"], "send_message", {"text": "不能主動害人"})
+    assert (response.status_code, response.json()) == (409, {"detail": "ACTIVITY_ENDED"})
+    assert calls == []
+    after = ok(client.get(f"/api/v2/solo/attempts/{attempt['id']}"))
+    assert after["state"] == "answering" and after["messages"] == []
 
 
 SECOND = "你站在天橋上，旁邊有一位陌生人。把他推下去可以擋住電車，救下五個人。"

@@ -20,6 +20,7 @@ jest.mock('./legacyRoutes', () => {
   }
 })
 jest.mock('../features/student-classroom/GroupsPage', () => ({ GroupsPage: () => <p>groups-page</p> }))
+jest.mock('../features/ai-settings/AIConnectionPage', () => ({ AIConnectionPage: () => <p>ai-settings-page</p> }))
 // 課程與單人活動的新頁換成標記：各頁自己的測試負責內容
 jest.mock('../features/solo-activity/SoloActivityPage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
@@ -58,6 +59,10 @@ jest.mock('../features/course/teach/editor/ActivityEditorPage', () => {
 jest.mock('../features/course/teach/TeacherCoursePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { TeacherCoursePage: () => <p>teacher-course-page:{loc().pathname}</p> }
+})
+jest.mock('../features/course/teach/transcript/TeacherTranscriptPage', () => {
+  const { useParams } = jest.requireActual<typeof import('react-router-dom')>('react-router-dom')
+  return { TeacherTranscriptPage: () => { const { activityId, enrollmentId } = useParams(); return <p>{`teacher-transcript-page:${activityId}:${enrollmentId}`}</p> } }
 })
 jest.mock('../features/course/teach/TeacherLivePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
@@ -116,7 +121,6 @@ beforeEach(() => {
 
 test.each([
   ['/groups', 'groups-page'],
-  ['/groups?view=providers', 'groups-page'],
   ['/classrooms/r1?mode=teacher', 'room:r1'],
   ['/teacher/home?view=store', 'teacher-home:?view=store'],
   ['/teacher/courses/c1', 'teacher-course:c1'],
@@ -141,11 +145,12 @@ test.each([
   ['/teach/courses/c1/activities/new', 'editor-page:/teach/courses/c1/activities/new'],
   ['/teach/activities/a1/edit', 'editor-page:/teach/activities/a1/edit'],
   ['/teach/activities/a1', 'teacher-live-page:a1'],
+  ['/teach/activities/a1/students/e9', 'teacher-transcript-page:a1:e9'],
   ['/teach/activities/a1/analysis', 'teacher-analysis-page:a1'],
   ['/teach/activities/a1/analysis/ai', '功能開發中'],
   ['/teach/courses/c1/projector', 'course-projector-page'],
   ['/teach/activities/a1/projector', 'activity-projector-page'],
-  ['/account', '功能開發中'],
+  ['/account', '個人檔案'],
   ['/my-dialogues', 'my-dialogues-page'],
   // 訪客帳號面板的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24）
   ['/guest/register', 'guest-upgrade-page'],
@@ -157,12 +162,30 @@ test.each([
   expect(where()).toBe(url)
 })
 
-test('old providers link moves to the groups page', async () => {
-  mockSession(verified)
-  open('/?view=providers')
-  await waitFor(() => expect(where()).toBe('/groups?view=providers'))
-  expect(await screen.findByText('groups-page')).toBeInTheDocument()
+test('the AI connection page is a teacher page', async () => {
+  mockSession(teacher)
+  open('/teach/ai-settings')
+  expect(await screen.findByText('ai-settings-page')).toBeInTheDocument()
 })
+
+test('a student opening the AI connection page sees that it is a teacher page', async () => {
+  mockSession(verified)
+  open('/teach/ai-settings')
+  expect(await screen.findByRole('heading', { name: '這是老師的頁面' })).toBeInTheDocument()
+  expect(screen.queryByText('ai-settings-page')).not.toBeInTheDocument()
+  expect(where()).toBe('/teach/ai-settings')
+})
+
+// 舊的多連線頁能改同一份設定，留著會讓新頁面顯示的跟學生實際用的不一樣：一律轉到新網址。
+test.each(['/?view=providers', '/groups?view=providers', '/teacher/home?view=settings'])(
+  'the old AI settings entry %s moves to the new page',
+  async url => {
+    mockSession(teacher)
+    open(url)
+    await waitFor(() => expect(where()).toBe('/teach/ai-settings'))
+    expect(await screen.findByText('ai-settings-page')).toBeInTheDocument()
+  },
+)
 
 test('unverified account on home goes to verify', async () => {
   mockSession({ ...verified, verified: false })
@@ -315,6 +338,7 @@ describe('teacher pages on a phone', () => {
   test.each([
     '/teach/courses/c1',
     '/teach/activities/a1/edit',
+    '/teach/activities/a1/students/e9',
     '/teach/courses/c1/projector',
     '/teach/create-course',
     '/teacher/home?view=bank',
@@ -330,6 +354,26 @@ describe('teacher pages on a phone', () => {
     expect(screen.getByRole('link', { name: '回首頁' })).toHaveAttribute('href', '/')
     expect(screen.queryByText(/我教的課/)).toBeNull()
   })
+})
+
+// 個人設定的手機內頁（M02–M16）：手機進得去，電腦回 /account
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s is a phone page of the account settings', async (url) => {
+  const desktopMatchMedia = window.matchMedia
+  try {
+    phone()
+    mockSession(verified)
+    open(url)
+    expect(await screen.findByRole('button', { name: '返回' })).toBeInTheDocument()
+    expect(where()).toBe(url)
+  } finally {
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktopMatchMedia })
+  }
+})
+
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s on a computer goes back to /account', async (url) => {
+  mockSession(verified)
+  open(url)
+  await waitFor(() => expect(where()).toBe('/account'))
 })
 
 test('create-course on a desktop opens the drawer on the home page', async () => {
@@ -498,7 +542,7 @@ describe('pages of the other role', () => {
       mockSession(who)
       const { unmount } = render(<MemoryRouter initialEntries={[url]}><AuthProvider><AppRoutes /></AuthProvider></MemoryRouter>)
       await waitFor(() => expect(screen.queryByText(/這是(老師|學生)的頁面/)).toBeNull())
-      expect(await screen.findByText(/home-page|groups-page|功能開發中|room:r1/)).toBeInTheDocument()
+      expect(await screen.findByText(/home-page|groups-page|個人檔案|room:r1/)).toBeInTheDocument()
       unmount()
     }
   })

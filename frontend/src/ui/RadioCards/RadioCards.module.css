@@ -1,0 +1,88 @@
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--ui-color-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
+  gap: 12px;
+}
+
+.card {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px 16px;
+  border: 1px solid var(--ui-color-line);
+  border-radius: 8px;
+  background: var(--ui-color-panel);
+  color: var(--ui-color-ink);
+  cursor: pointer;
+}
+
+.card:has(.radio:checked) {
+  border-color: var(--ui-color-primary);
+  background: var(--ui-color-primary-soft);
+}
+
+.card:has(.radio:checked) .label { font-weight: 700; }
+
+.card:has(.radio:focus-visible) {
+  outline: 2px solid var(--ui-color-primary);
+  outline-offset: 2px;
+}
+
+.card:has(.radio:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.radio {
+  appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--ui-color-border);
+  border-radius: 50%;
+  background: var(--ui-color-panel);
+  cursor: inherit;
+}
+
+.radio:checked {
+  border: 0;
+  background: url('./radio-selected.svg') center no-repeat;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.label { font-size: 14px; }
+.description { color: var(--ui-color-muted); font-size: 13px; }
+
+@media (forced-colors: active) {
+  .radio, .radio:checked {
+    appearance: auto;
+    background: none;
+  }
+}

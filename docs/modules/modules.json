@@ -205,6 +205,23 @@
       "todo": []
     },
     {
+      "id": "ai-connection",
+      "name": "AI Connection（AI 連線設定）",
+      "status": "ok",
+      "about": "老師的 AI 連線設定：一組自己的連線（全部 AI 共用一個模型）或系統提供；連線的欄位檢查、測試與模型清單（後台系統 AI 共用）。",
+      "paths": [
+        "backend/app/modules/ai_connection/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access",
+        "ai-providers",
+        "course-management",
+        "llm-runtime"
+      ],
+      "todo": []
+    },
+    {
       "id": "admin",
       "name": "Admin（後台）",
       "status": "ok",
@@ -216,8 +233,25 @@
         "platform",
         "identity-access",
         "ai-providers",
+        "ai-connection",
         "course-management",
         "llm-runtime"
+      ],
+      "todo": []
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications（通知中心）",
+      "status": "ok",
+      "about": "管理公告、動態計算通知與保存個人已讀紀錄。",
+      "paths": [
+        "backend/app/modules/notifications/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access",
+        "course-management",
+        "admin"
       ],
       "todo": []
     }
@@ -357,12 +391,33 @@
       ]
     },
     {
+      "name": "個人設定（/account）",
+      "backend": "identity-access",
+      "source": "backend/app/modules/identity_access/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "個人設定頁：顯示名稱、頭像、變更密碼、刪除帳號",
+      "frontend": [
+        "account"
+      ]
+    },
+    {
       "name": "後台（/admin）",
       "backend": "admin",
       "source": "backend/app/modules/admin/contracts.py → frontend/src/contract/classroomTypes.ts",
       "state": "產生型別 ✅",
       "consumer": "後台：功能開關、意見回饋、管理員",
       "frontend": [
+        "admin"
+      ]
+    },
+    {
+      "name": "通知（/notifications、/admin/announcements）",
+      "backend": "notifications",
+      "source": "backend/app/modules/notifications/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "通知中心、進站公告、後台公告管理",
+      "frontend": [
+        "notifications",
         "admin"
       ]
     }
@@ -616,6 +671,21 @@
       "todo": []
     },
     {
+      "id": "account",
+      "name": "個人設定",
+      "status": "ok",
+      "about": "帳號選單「設定」進來的頁面：顯示名稱、頭像（裁切後上傳）、變更密碼、語言、刪除帳號；電腦版用對話框，手機版用內頁。",
+      "paths": [
+        "frontend/src/features/account/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth"
+      ],
+      "todo": []
+    },
+    {
       "id": "admin",
       "name": "後台",
       "status": "ok",
@@ -628,6 +698,21 @@
         "contract",
         "auth",
         "feedback"
+      ],
+      "todo": []
+    },
+    {
+      "id": "notifications",
+      "name": "通知中心",
+      "status": "ok",
+      "about": "通知列表、通知對話框、進站公告與未讀狀態。",
+      "paths": [
+        "frontend/src/features/notifications/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth"
       ],
       "todo": []
     }

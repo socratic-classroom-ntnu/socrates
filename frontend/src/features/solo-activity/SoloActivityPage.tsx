@@ -122,9 +122,11 @@ export function SoloActivityPage() {
             {/* current_turn is the scenario's turn_index, and the first answer is turn 0. */}
             <b>{t('activity.resumeAt', { number: brief.scenario_index + 1, turn: brief.current_turn + 1 })}</b>
           </>)}
+        {/* C7: an ended activity takes no more answers; the dialogue page only shows the record. */}
+        {brief && !completed && data.status === 'ended' && <p className="solo-activity__closed">{t('activity.endedReadOnly')}</p>}
         {(brief || data.status === 'open')
           ? <button className="solo-activity__cta" type="button" disabled={starting} onClick={start}>
-            {brief ? t('activity.continue') : t('activity.start')}
+            {brief ? t(data.status === 'ended' ? 'activity.viewRecord' : 'activity.continue') : t('activity.start')}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
           </button>
           : <p className="solo-activity__closed">{t('activity.closed')}</p>}

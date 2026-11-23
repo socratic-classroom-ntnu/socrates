@@ -297,8 +297,9 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
-# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
-StudentKind = Literal["registered", "guest", "expired_guest"]
+# registered, a guest, a guest past its 168 hours (shown as 過期訪客 N, N = guest_number), or an
+# account its owner deleted (shown as 已刪除的帳號, no number; its answers still count).
+StudentKind = Literal["registered", "guest", "expired_guest", "deleted"]
 
 
 class SoloStudentProgressView(View):
@@ -314,7 +315,7 @@ class SoloStudentProgressView(View):
     final_status: FinalStatus | None
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
-    attention: bool  # in progress and idle for over ATTENTION_SECONDS
+    attention: bool  # activity not ended, in progress and idle for over ATTENTION_SECONDS
 
 
 class SoloActivityProgressView(View):
@@ -327,6 +328,71 @@ class SoloActivityProgressView(View):
     generated_at: float
     summary: SoloProgressSummaryView
     students: list[SoloStudentProgressView]
+
+
+# ---- the teacher reads one student's whole conversation (read only) -----------------------------
+# Their own classes, with every field listed: what is only the student's to act on (available
+# actions, digests, the notice, the principle hint, the turned-down summary) is not here, and the
+# teacher's model observations never leave the server.
+
+
+class TeacherActivityView(View):
+    id: str
+    title: str
+    course_id: str
+    course_name: str
+    status: Literal["draft", "scheduled", "open", "ended"]
+
+
+class TeacherStudentView(View):
+    enrollment_id: str
+    display_name: str  # empty once a guest's name is forgotten
+    kind: StudentKind
+    guest_number: int | None  # expired_guest only, as in SoloStudentProgressView
+    last_activity_at: float | None  # None before the student starts
+
+
+class TeacherScenarioView(View):
+    index: int
+    id: str
+    text: str
+    change: SoloScenarioChangeView | None
+    answer: str | None
+    status: ScenarioStatus
+    # None while unconfirmed, and for a capped scenario (what the student was shown is not given).
+    confirmed_summary: PersonalSummaryView | None
+    # When each 不太對 on this scenario's summary was pressed, oldest first. Its length is how many
+    # times; the page puts a system line at each time. Only 不太對 pressed after it was first
+    # recorded are here.
+    rejected_at: list[float]
+    # Where the scenario starts in `messages`; None before it has a message. Not affected by `after`.
+    first_message_id: str | None
+
+
+class TeacherAttemptView(View):
+    id: str
+    state: SoloState
+    scenario_index: int
+    # Only scenarios the student has reached (index <= scenario_index).
+    scenarios: list[TeacherScenarioView]
+    # Oldest first; only those after the message named by ``after`` when it is given.
+    messages: list[SoloMessageView]
+    # The summary waiting for the student's 對／不太對, while confirming.
+    candidate_summary: PersonalSummaryView | None
+    revising: bool
+    # Hidden (None) once the student turned it down twice.
+    final_summary: FinalSummaryView | None
+    final_status: FinalStatus | None
+    final_revised: bool
+    # The live page's own words for where the student is.
+    review_status: ReviewStatus
+    cells: list[SoloProgressCellView]
+
+
+class TeacherTranscriptView(View):
+    activity: TeacherActivityView
+    student: TeacherStudentView
+    attempt: TeacherAttemptView | None  # None until the student starts
 
 
 # ---- the course roster (the 學生 tab): who is in the course, and how far each has come -------
@@ -351,6 +417,7 @@ class SoloRosterSummaryView(View):
     registered: int
     guests: int
     expired_guests: int
+    deleted: int  # accounts their owners deleted; still in total
 
 
 class SoloCourseRosterView(View):

@@ -213,6 +213,20 @@ test('testing shows 正在連線 then 連線成功', async () => {
   expect(probe).toHaveBeenCalledWith({ adapter: 'openrouter', model: 'google/gemini-2.5-flash', api_key: 'sk-or-new-key' })
 })
 
+test('editing while a test is on its way ends 正在連線 and drops the old result', async () => {
+  await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
+  await fillForm()
+  let finish!: () => void
+  probe.mockReturnValue(new Promise(resolve => { finish = () => resolve({ ok: true }) }))
+  fireEvent.click(screen.getByRole('button', { name: '測試' }))
+  expect(screen.getByRole('button', { name: '正在連線⋯' })).toBeDisabled()
+  fireEvent.change(keyField(), { target: { value: 'sk-or-other-key' } })
+  expect(screen.queryByRole('button', { name: '正在連線⋯' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '測試' })).toBeEnabled()
+  await act(async () => { finish() })
+  expect(screen.queryByText('連線成功')).not.toBeInTheDocument()
+})
+
 test('an invalid key marks only the key field, no banner (A11)', async () => {
   await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
   await fillForm()
@@ -251,6 +265,20 @@ test('the first setup applies without asking', async () => {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '套用' })) })
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(apply).toHaveBeenCalledWith({ adapter: 'openrouter', model: 'google/gemini-2.5-flash', api_key: 'sk-or-new-key' })
+  expect(screen.getByText(/已連線，套用到全部 AI/)).toBeInTheDocument()
+})
+
+test('while 套用 is on its way the fields take no edits', async () => {
+  await openPage(systemFresh)
+  fireEvent.click(radio('自己的金鑰'))
+  await fillForm()
+  let finish!: () => void
+  apply.mockReturnValue(new Promise(resolve => { finish = () => resolve(ownInUse) }))
+  fireEvent.click(screen.getByRole('button', { name: '套用' }))
+  fireEvent.change(keyField(), { target: { value: 'sk-or-other-key' } })
+  expect(keyField()).toHaveValue('sk-or-new-key')
+  expect(screen.getByRole('button', { name: '正在連線⋯' })).toBeDisabled()
+  await act(async () => { finish() })
   expect(screen.getByText(/已連線，套用到全部 AI/)).toBeInTheDocument()
 })
 
@@ -304,6 +332,21 @@ test('a compatible service opens the advanced fields for its URL', async () => {
   chooseService('自訂相容服務')
   expect(screen.getByLabelText('服務網址')).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: /取得/ })).not.toBeInTheDocument()
+})
+
+test('another service or address drops a pasted key that was not saved', async () => {
+  await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
+  chooseService('OpenRouter')
+  fireEvent.change(keyField(), { target: { value: 'sk-or-new-key' } })
+  chooseService('OpenAI')
+  expect(keyField()).toHaveValue('')
+  chooseService('自訂相容服務')
+  fireEvent.change(screen.getByLabelText('服務網址'), { target: { value: 'https://llm.example.edu/v1' } })
+  fireEvent.change(keyField(), { target: { value: 'sk-school-key' } })
+  fireEvent.change(screen.getByLabelText('服務網址'), { target: { value: 'https://other.example.com/v1' } })
+  expect(keyField()).toHaveValue('')
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 700)) })
+  for (const [request] of models.mock.calls) expect(request).not.toHaveProperty('api_key')
 })
 
 // ---- 我的用量 ----------------------------------------------------------------------------------

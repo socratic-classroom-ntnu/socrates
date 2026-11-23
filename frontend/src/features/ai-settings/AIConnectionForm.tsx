@@ -95,14 +95,20 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
   }, [source, canList])
 
   function edit(name: keyof Form, value: string) {
+    // 套用 saves what was sent: the fields stay as they look (Figma A07) but take no edits until it answers.
+    if (applying) return
+    // Any edit drops a test still on its way, so 「正在連線」 ends here too.
     latest.current += 1
     setForm(current => ({
       ...current,
       [name]: value,
       // Another service: no model carried over (不預選), the URL only for a compatible one.
       ...(name === 'adapter' && value !== current.adapter ? { model: '', baseUrl: value === COMPATIBLE ? current.baseUrl : '' } : {}),
+      // Another service or address: a pasted key never goes to the new place (spec: 金鑰一定要重貼).
+      ...((name === 'adapter' || name === 'baseUrl') && value !== current[name] ? { apiKey: '' } : {}),
     }))
     if (name === 'adapter' && value === COMPATIBLE) setShowAdvanced(true)
+    setTesting(false)
     setTested(false)
     setFailure(null)
   }

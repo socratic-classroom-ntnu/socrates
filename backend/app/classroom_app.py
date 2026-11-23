@@ -28,8 +28,10 @@ from app.modules.app_shell.llm_workers import (
 )
 from app.modules.platform.env import env_int
 
-# 後台「系統 AI」: its 422s never quote the request body (spec P37).
+# Forms that carry an API key: their 422s never quote the request body (後台 spec P37).
 SYSTEM_AI_PATH = "/api/v2/admin/system-ai"
+AI_CONNECTION_PATH = "/api/v2/ai-settings/connection"
+KEY_FORM_PATHS = (SYSTEM_AI_PATH, AI_CONNECTION_PATH)
 
 
 @asynccontextmanager
@@ -89,9 +91,10 @@ def create_app(legacy=False, background=True):
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError):
-        """FastAPI's 422 quotes what was sent; on the 系統 AI form that may be an API key, so
-        those errors leave out `input` and `ctx` (後台 spec P37). Nothing here logs `exc`."""
-        if not request.url.path.startswith(SYSTEM_AI_PATH):
+        """FastAPI's 422 quotes what was sent; on a form with an API key (系統 AI, AI 連線設定)
+        that may be the key, so those errors leave out `input` and `ctx` (後台 spec P37).
+        Nothing here logs `exc`."""
+        if not request.url.path.startswith(KEY_FORM_PATHS):
             return await request_validation_exception_handler(request, exc)
         errors = [
             {key: value for key, value in error.items() if key not in ("input", "ctx")}

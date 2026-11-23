@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { classNames } from '../classNames'
 import styles from './RadioCards.module.css'
 
 export type RadioCardOption<T extends string> = {
@@ -15,6 +16,7 @@ export function RadioCards<T extends string>({
   value,
   onChange,
   disabled = false,
+  className,
 }: {
   legend: string
   name: string
@@ -22,9 +24,10 @@ export function RadioCards<T extends string>({
   value: T
   onChange: (value: T) => void
   disabled?: boolean
+  className?: string
 }) {
   const groupId = useId()
-  return <fieldset className={styles.group} disabled={disabled}>
+  return <fieldset className={classNames(styles.group, className)} disabled={disabled}>
     <legend className={styles.legend}>{legend}</legend>
     <div className={styles.options}>
       {options.map((option, index) => {

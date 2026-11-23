@@ -205,6 +205,23 @@
       "todo": []
     },
     {
+      "id": "ai-connection",
+      "name": "AI Connection（AI 連線設定）",
+      "status": "ok",
+      "about": "老師的 AI 連線設定：一組自己的連線（全部 AI 共用一個模型）或系統提供；連線的欄位檢查、測試與模型清單（後台系統 AI 共用）。",
+      "paths": [
+        "backend/app/modules/ai_connection/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access",
+        "ai-providers",
+        "course-management",
+        "llm-runtime"
+      ],
+      "todo": []
+    },
+    {
       "id": "admin",
       "name": "Admin（後台）",
       "status": "ok",
@@ -216,6 +233,7 @@
         "platform",
         "identity-access",
         "ai-providers",
+        "ai-connection",
         "course-management",
         "llm-runtime"
       ],

@@ -416,7 +416,7 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         digest = cast("ConfirmViewpointBody", body).summary_digest
         return machine.confirm_viewpoint(a, digest), None
     if action == "revise_viewpoint":
-        return machine.revise_viewpoint(a), None
+        return machine.revise_viewpoint(a, at), None
     if action == "next_scenario":
         return machine.next_scenario(a), None
     if action == "submit_review":

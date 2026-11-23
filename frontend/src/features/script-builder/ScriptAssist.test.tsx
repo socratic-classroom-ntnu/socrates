@@ -83,7 +83,7 @@ test('a server error code reads as Chinese and nothing is applied', async () => 
   render(<ScriptAssist document={newDocument()} onApply={onApply} />)
   fireEvent.change(screen.getByLabelText('想請 AI 怎麼協助？'), { target: { value: '幫我出題' } })
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '請 AI 提出建議' })) })
-  expect(screen.getByRole('alert')).toHaveTextContent('還沒有指定「AI 劇本協作」要用的模型')
+  expect(screen.getByRole('alert')).toHaveTextContent('還沒有指定 AI 協助出題要用的模型')
   expect(screen.getByRole('button', { name: '請 AI 提出建議' })).toBeEnabled()
   expect(onApply).not.toHaveBeenCalled()
 })

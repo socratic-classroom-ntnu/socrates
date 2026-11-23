@@ -52,7 +52,7 @@ const GROUP_CLASS = [
 // 跟 join、learn、solo 沒有共用的 class，先後不影響畫面。
 const COURSE = [
   'styles/placeholder-page.css', 'styles/dialog.css', 'styles/teach.css', 'styles/home.css',
-  'styles/join.css', 'styles/learn.css', 'styles/solo.css', 'styles/menu.css', 'styles/teacher-live.css', 'styles/teacher-analysis.css',
+  'styles/join.css', 'styles/learn.css', 'styles/solo.css', 'styles/menu.css', 'styles/teacher-live.css', 'styles/teacher-analysis.css', 'styles/teacher-transcript.css',
   'styles/date-time-field.css', 'styles/editor.css', 'styles/auth.css', 'styles/app-shell.css', 'styles/cross-role.css',
 ]
 

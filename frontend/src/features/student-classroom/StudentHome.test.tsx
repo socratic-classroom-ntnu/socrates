@@ -64,11 +64,17 @@ test('a wrong classroom code says not found and the error stays scoped to the jo
     fireEvent.click(screen.getByRole('button', { name: '加入課堂 →' }))
   })
   expect(await screen.findByRole('alert')).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: 'AI 連線設定' }))
-  expect(screen.queryByRole('alert')).toBeNull()
-  expect(screen.queryByText('找不到這個教室代碼，請確認後再輸入。')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '加入與近期課堂' }))
-  expect(screen.queryByRole('alert')).toBeNull()
+})
+
+test('AI 連線設定 goes to the new teacher page instead of the old in-page settings', async () => {
+  jest.mocked(api).mockResolvedValue([])
+  // jsdom cannot change pages: it reports the attempt, which is what this checks.
+  const attempts = jest.spyOn(console, 'error').mockImplementation(() => {})
+  render(<Home user={account} />)
+  fireEvent.click(await screen.findByRole('button', { name: 'AI 連線設定' }))
+  expect(attempts).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('navigation') }))
+  expect(screen.queryByRole('button', { name: '加入與近期課堂' })).toBeNull()
+  attempts.mockRestore()
 })
 
 test('an empty classroom code is blocked before any request', async () => {

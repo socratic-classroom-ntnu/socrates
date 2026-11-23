@@ -63,3 +63,20 @@ test('all radio options share the same name', () => {
     expect(radio).toHaveAttribute('name', 'audience')
   })
 })
+
+test('page className is added after the component class', () => {
+  render(
+    <RadioCards
+      legend="語言設定"
+      name="language"
+      options={options}
+      value="all"
+      onChange={() => {}}
+      className="page-modes"
+    />
+  )
+
+  const group = screen.getByRole('group', { name: '語言設定' })
+
+  expect(group.className.split(' ')).toEqual(['group', 'page-modes'])
+})

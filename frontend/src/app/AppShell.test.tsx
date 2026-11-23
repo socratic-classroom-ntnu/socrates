@@ -101,7 +101,7 @@ test('a teacher sidebar lists notifications after AI settings', async () => {
     ['首頁', '/'],
     ['個人題庫', '/teacher/home?view=bank'],
     ['題庫商店', '/teacher/home?view=store'],
-    ['AI 連線設定', '/teacher/home?view=settings'],
+    ['AI 連線設定', '/teach/ai-settings'],
     ['通知中心', '/notifications'],
   ])
 })
@@ -170,6 +170,7 @@ test.each([
   ['/teach/activities/a-1/edit', '首頁'],
   ['/teacher/home?view=bank', '個人題庫'],
   ['/teacher/home?view=settings', 'AI 連線設定'],
+  ['/teach/ai-settings', 'AI 連線設定'],
 ])('%s highlights %s', async (url, label) => {
   open(url)
   expect(await screen.findByRole('link', { name: label })).toHaveAttribute('aria-current', 'page')
@@ -295,7 +296,7 @@ test('with group mode on a teacher sidebar has group classes under home', async 
     ['分組課', '/groups'],
     ['個人題庫', '/teacher/home?view=bank'],
     ['題庫商店', '/teacher/home?view=store'],
-    ['AI 連線設定', '/teacher/home?view=settings'],
+    ['AI 連線設定', '/teach/ai-settings'],
     ['通知中心', '/notifications'],
   ])
 })

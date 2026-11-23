@@ -38,7 +38,8 @@
 | [Course Management（課程與活動）](./backend/course-management.md) | ✅ | `backend/app/modules/course_management/` | platform、identity-access | 0 |
 | [Solo Activity（單人活動）](./backend/solo-activity.md) | ✅ | `backend/app/modules/solo_activity/` | platform、identity-access、course-management、ai-providers、llm-runtime | 0 |
 | [Feedback（意見回饋）](./backend/feedback.md) | ✅ | `backend/app/modules/feedback/` | platform、identity-access | 0 |
-| [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access、ai-providers、course-management、llm-runtime | 0 |
+| [AI Connection（AI 連線設定）](./backend/ai-connection.md) | ✅ | `backend/app/modules/ai_connection/` | platform、identity-access、ai-providers、course-management、llm-runtime | 0 |
+| [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access、ai-providers、ai-connection、course-management、llm-runtime | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 

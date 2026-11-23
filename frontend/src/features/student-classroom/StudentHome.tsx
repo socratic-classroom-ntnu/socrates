@@ -24,6 +24,6 @@ export function Home({ user }) {
   if (mode === 'providers') return <main className="sc-home">{!insideShell && <header className="sc-top"><a href="/" className="sc-wordmark">Socrates<span>共思教室</span></a><span>{user.username}</span><button className="quiet" onClick={() => setMode('student')}>加入與近期課堂</button></header>}<ProviderSettings/></main>;
   return <JoinDoor user={user} rooms={rooms} note={note} onMode={next => {
     if (next === 'teacher') location.href = '/teacher/home';
-    else setMode('providers');
+    else location.href = '/teach/ai-settings';
   }}/>;
 }

@@ -1,0 +1,111 @@
+/* 教師看學生完整對話：左邊唯讀聊天室、右邊立場軌跡；顏色全部走 tokens.css 的 --ui-classroom-*，不寫死色碼 */
+/* 整頁不捲動：頁面就是一個視窗高，兩欄各自捲（外框會隨內容長高，所以這裡用視窗高而不是 100%） */
+.transcript-page { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; gap: 16px; }
+.transcript-head { align-items: flex-start; }
+.transcript-head h1 { margin: 0; font-size: 28px; line-height: 1.2; }
+.transcript-head__meta { margin: 0; display: flex; align-items: center; gap: 8px; color: var(--ui-color-muted); font-size: 13px; }
+.transcript-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 318px; grid-template-rows: minmax(0, 1fr); gap: 20px; }
+
+.transcript-banner { margin: 0; padding: 12px 16px; border-radius: 12px; font-size: 13px; }
+.transcript-banner--completed { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.transcript-banner--ended { background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); }
+.transcript-banner--unconfirmed, .transcript-banner--capped { background: var(--ui-color-warn-soft); color: var(--ui-color-warn-ink); }
+
+/* 左：聊天室 */
+.transcript-chat, .transcript-track { min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--ui-classroom-line); border-radius: 14px; background: var(--ui-classroom-paper); }
+.transcript-chat__head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--ui-classroom-board-green); color: var(--ui-classroom-chalk); }
+.transcript-chat__head h2 { flex: 1; min-width: 0; margin: 0; font-size: 16px; line-height: 25px; }
+.transcript-chat__body { position: relative; flex: 1; min-height: 0; display: flex; }
+.transcript-chat__scroll { position: relative; flex: 1; min-height: 0; overflow-y: auto; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.transcript-chat__foot { padding: 10px 12px; color: var(--ui-color-muted); font-size: 11px; line-height: 17px; }
+.transcript-chat__new {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 8px 16px; border: 0; border-radius: 999px;
+  background: var(--ui-color-dark); color: var(--ui-color-on-dark); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+
+.tc-avatar { flex: none; width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+.tc-avatar--gold { background: var(--ui-classroom-gold); color: var(--ui-classroom-ink); }
+.tc-avatar--student { background: color-mix(in srgb, var(--ui-color-primary) 23%, transparent); color: var(--ui-color-ink); }
+.tc-avatar--tutor { background: var(--ui-color-dark); color: var(--ui-classroom-gold); font-size: 16px; }
+
+.tc-scenario { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.tc-label { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--ui-classroom-panel); color: var(--ui-color-muted); font-size: 12px; font-weight: 700; line-height: 19px; }
+.tc-board { margin: 0 0 0; padding: 22px 24px; border: 6px solid var(--ui-classroom-wood); border-radius: 6px; background: var(--ui-color-dark); color: var(--ui-classroom-chalk); font-size: 14px; line-height: 22px; display: flex; flex-direction: column; gap: 10px; }
+.tc-board p { margin: 0; overflow-wrap: anywhere; }
+.tc-board__title { color: var(--ui-classroom-gold); }
+.tc-board__change { color: var(--ui-classroom-gold); font-size: 13px; }
+
+.tc-row { display: flex; gap: 10px; align-items: flex-start; }
+.tc-row--student { justify-content: flex-end; }
+.tc-line { min-width: 0; display: flex; gap: 6px; align-items: flex-end; justify-content: flex-end; }
+.tc-time { flex: none; color: var(--ui-color-muted); font-size: 11px; line-height: 19px; }
+.tc-bubble { margin: 0; max-width: 440px; padding: 12px 14px; font-size: 14px; line-height: 22px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.tc-bubble--student { background: var(--ui-classroom-hint); color: var(--ui-classroom-ink); border-radius: 16px 4px 16px 16px; }
+.tc-bubble--tutor { background: var(--ui-color-dark); color: var(--ui-classroom-chalk); border-radius: 4px 16px 16px 16px; }
+.tc-tutor { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.tc-tutor__name { color: var(--ui-color-muted); font-size: 12px; line-height: 19px; }
+
+.tc-system { margin: 0; text-align: center; color: var(--ui-color-muted); font-size: 12px; line-height: 19px; }
+.tc-system strong { font-weight: 700; }
+.tc-blank { color: var(--ui-color-muted); }
+
+/* 待確認的整理、回顧與反思 */
+.tc-card { padding: 18px 20px; border: 1px solid var(--ui-classroom-line); border-radius: 12px; background: var(--ui-classroom-paper); display: flex; flex-direction: column; gap: 12px; }
+.tc-card h3 { margin: 0; font-size: 16px; line-height: 24px; }
+.tc-card__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tc-card__caption { margin: 0; color: var(--ui-color-muted); font-size: 12px; line-height: 19px; }
+.tc-card__strong { margin: 0; font-weight: 700; }
+.tc-card--small { padding: 14px 16px; gap: 8px; }
+.tc-card--small p { margin: 0; font-size: 13px; line-height: 20px; }
+.tc-card p { overflow-wrap: anywhere; }
+.tc-rows, .tc-stack { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.tc-rows > div { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.tc-stack > div { display: flex; flex-direction: column; gap: 4px; }
+.tc-card dt { color: var(--ui-color-muted); font-size: 12px; font-weight: 700; }
+.tc-card dd { margin: 0; font-size: 14px; line-height: 22px; overflow-wrap: anywhere; }
+.tc-card dd p { margin: 0 0 4px; }
+.tc-chip { display: inline-block; padding: 2px 10px; border-radius: 6px; background: var(--ui-color-info); color: var(--ui-color-on-dark); font-size: 13px; font-weight: 700; }
+.tc-chip .tc-blank { color: var(--ui-color-on-dark-soft); }
+.tc-tag { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.tc-tag--ok { background: var(--ui-color-primary-soft); color: var(--ui-color-primary); }
+.tc-tag--warn { background: var(--ui-color-warn-soft); color: var(--ui-color-warn-ink); }
+.tc-review { display: flex; flex-direction: column; gap: 14px; }
+.tc-review h2 { margin: 6px 0 0; font-size: 20px; line-height: 28px; }
+.tc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.tc-quote { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--ui-color-neutral-soft); font-size: 13px; line-height: 20px; }
+.tc-note { padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 20px; }
+.tc-note p { margin: 2px 0 0; }
+.tc-note--warn { background: var(--ui-color-warn-soft); color: var(--ui-color-warn-ink); }
+
+/* 右：立場軌跡 */
+.transcript-track { padding: 22px 16px 16px; overflow-y: auto; }
+.transcript-track h2 { margin: 0 0 4px 1px; color: var(--ui-classroom-board-green); font-size: 18px; line-height: 28px; }
+.tt-progress { margin: 0 0 12px 1px; color: var(--ui-color-muted); font-size: 12px; }
+.tt-list { margin: 0; padding: 0; list-style: none; }
+.tt-row { position: relative; padding-left: 20px; }
+.tt-row::before { content: ''; position: absolute; left: 0; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--ui-classroom-board-green); }
+.tt-row:not(:last-child)::after { content: ''; position: absolute; left: 4px; top: 22px; bottom: -12px; width: 2px; background: var(--ui-classroom-board-green); }
+.tt-row--current { margin: 0 -16px; padding: 0 16px 0 36px; background: var(--ui-color-warning-soft); }
+.tt-row--current::before { left: 16px; }
+.tt-row--current:not(:last-child)::after { left: 20px; }
+.tt-row--warn { background: var(--ui-color-warn-soft); }
+.tt-row__button { all: unset; box-sizing: border-box; width: 100%; padding: 6px 0 16px; display: flex; flex-direction: column; gap: 9px; cursor: pointer; }
+.tt-row__button--static { cursor: default; }
+.tt-row__button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.tt-row__head { display: flex; align-items: center; gap: 6px; }
+.tt-row__head strong { flex: 1; font-size: 13px; line-height: 20px; }
+.tt-row__name { font-size: 14px; font-weight: 700; line-height: 22px; overflow-wrap: anywhere; }
+.tt-row__stance { font-size: 16px; font-weight: 700; line-height: 25px; overflow-wrap: anywhere; }
+.tt-row__note { color: var(--ui-color-muted); font-size: 12px; line-height: 19px; overflow-wrap: anywhere; }
+.tt-row__tag { align-self: flex-start; padding: 1px 8px; border-radius: 999px; background: var(--ui-color-warn-soft); color: var(--ui-color-warn-ink); font-size: 12px; font-weight: 700; }
+.tt-row__warn { color: var(--ui-color-warning-ink); font-size: 12px; line-height: 19px; }
+
+/* 09 尚未開始、10 載入中、11 載入失敗 */
+.transcript-state { flex: none; min-height: 288px; padding: 40px 24px; border: 1px solid var(--ui-classroom-line); border-radius: 14px; background: var(--ui-color-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.transcript-state h2 { margin: 6px 0 0; font-size: 20px; }
+.transcript-state p { margin: 0; color: var(--ui-color-muted); font-size: 14px; }
+.transcript-state__actions { margin-top: 8px; display: flex; gap: 10px; }
+.transcript-state__icon { width: 36px; height: 36px; color: var(--ui-color-muted); }
+.transcript-state__icon--loading { box-sizing: border-box; border: 3px solid var(--ui-color-muted); border-right-color: transparent; border-radius: 50%; animation: transcript-spin 1s linear infinite; }
+@keyframes transcript-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .transcript-state__icon--loading { animation: none; } }

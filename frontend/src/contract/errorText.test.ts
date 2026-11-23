@@ -24,6 +24,7 @@ test('sentences from the server pass through; unknown codes keep the code for re
 test('provider HTTP codes and bare statuses get readable text', () => {
   expect(errorText('PROVIDER_HTTP_401', 424)).toBe('AI 服務拒絕了這組 API 金鑰，請確認金鑰是否正確。')
   expect(errorText('PROVIDER_EMPTY_CONTENT', 422)).toContain('沒有回傳內容')
+  expect(errorText('PROVIDER_OUTPUT_TRUNCATED', 422)).toContain('被截斷')
   expect(errorText('PROVIDER_SCHEMA_MISMATCH', 422)).toContain('支援結構化輸出的模型')
   expect(errorText(undefined, 424)).toContain('AI 服務目前無法完成')
   expect(errorText(undefined, 422)).toBe('有欄位內容不符合格式，請檢查後再試。')
@@ -63,4 +64,11 @@ test('AI connection: duplicate name and malformed key point to the fix', () => {
   expect(errorText('PROVIDER_PROFILE_NAME_TAKEN', 409)).toContain('更新金鑰')
   const malformed = [{ type: 'value_error', loc: ['body', 'credential'], msg: 'Value error, PROVIDER_CREDENTIAL_MALFORMED' }]
   expect(errorText(malformed, 422)).toContain('重新複製')
+})
+
+test('AI script assist without a connection points to the new AI 連線設定 page', () => {
+  for (const code of ['SCRIPT_ASSIST_PROVIDER_REQUIRED', 'SCRIPT_ASSIST_MODEL_REQUIRED']) {
+    expect(errorText(code, 409)).toContain('「AI 連線設定」')
+    expect(errorText(code, 409)).not.toContain('帳號 AI 設定')
+  }
 })

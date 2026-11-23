@@ -7,7 +7,6 @@
 .breadcrumb { display: flex; gap: 8px; font-size: 12px; line-height: 1.5; color: var(--ui-color-muted); }
 .title { margin: 6px 0 0; font-size: 30px; line-height: 1.5; color: var(--ui-color-dark); }
 .lead { margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: var(--ui-color-muted); }
-.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* 頁首下方：提示訊息與兩張單選卡 */
 .top { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
@@ -23,19 +22,19 @@
 
 /* 單選卡（Figma 1364:28963）。class 名稱對應 ui/RadioCards 的 .fieldset／.options／.card／.content／.label／.description，
    它進 develop 後這段改成傳給它的 className */
-.modes { min-width: 0; margin: 0; padding: 0; border: 0; }
-.modeOptions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.modeCard { box-sizing: border-box; min-width: 0; min-height: 54px; padding: 8px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--ui-color-line); border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-ink); cursor: pointer; }
-.modeContent { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.modeLabel { font-size: 14px; font-weight: 400; line-height: 1.25; }
-.modeDescription { font-size: 13px; line-height: 1.25; color: var(--ui-color-muted); }
-.modeCard input { appearance: none; box-sizing: border-box; flex-shrink: 0; width: 16px; height: 16px; margin: 0; border: 1.5px solid var(--ui-color-border); border-radius: 50%; background: var(--ui-color-panel); cursor: inherit; }
-.modeCard:has(input:checked) { border-color: var(--ui-color-primary); background: var(--ui-color-primary-soft); }
-.modeCard:has(input:checked) .modeLabel { font-weight: 700; }
-.modeCard input:checked { border: 0; background: radial-gradient(circle, var(--ui-color-panel) 0 3px, var(--ui-color-primary) 3.5px); }
-.modeCard:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
-.modes:disabled .modeCard { cursor: progress; }
-.modeCard:has(input:focus-visible) { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+/* 共用 RadioCards 是個人設定的四欄 11px；這頁照 Figma 1364:28963 從外面改（元素選擇器，比元件的單一 class 優先） */
+.modes > legend { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.modes > div { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.modes label { min-height: 54px; padding: 8px 16px; gap: 12px; border-color: var(--ui-color-line); border-radius: 8px; background: var(--ui-color-panel); color: var(--ui-color-ink); }
+.modes label > span { gap: 2px; }
+.modes label > span > span:first-child { font-size: 14px; font-weight: 400; line-height: 1.25; }
+.modes label > span > span + span { font-size: 13px; line-height: 1.25; color: var(--ui-color-muted); }
+.modes label input[type='radio'] { width: 16px; height: 16px; border: 1.5px solid var(--ui-color-border); background: var(--ui-color-panel); cursor: inherit; }
+.modes label:has(input:checked) { border-color: var(--ui-color-primary); background: var(--ui-color-primary-soft); }
+.modes label:has(input:checked) > span > span:first-child { font-weight: 700; }
+.modes label input[type='radio']:checked { border: 0; background: radial-gradient(circle, var(--ui-color-panel) 0 3px, var(--ui-color-primary) 3.5px); }
+.modes label:has(input:disabled) { cursor: not-allowed; opacity: 0.55; }
+.modes:disabled label { cursor: progress; }
 
 /* 內容：單選卡下方 46（Figma 單選卡外框 60 高＋40） */
 .stack { margin-top: 46px; display: flex; flex-direction: column; gap: 24px; min-width: 0; }

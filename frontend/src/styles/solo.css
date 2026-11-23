@@ -321,12 +321,12 @@
 .solo-voice { display: grid; justify-items: center; gap: 10px; padding: 14px 14px 16px; border-radius: 14px; background: var(--ui-color-dark); color: var(--ui-color-on-dark); }
 /* Without a slot (a page that gives none) the card floats at the bottom right. */
 .solo-conversation > .solo-voice:not(.solo-voice--full) { position: fixed; right: 20px; bottom: 20px; z-index: 40; width: min(320px, calc(100vw - 32px)); box-shadow: 0 12px 32px rgba(40, 30, 10, .22); }
-.solo-voice__head { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; color: #e8c766; font-size: .92rem; }
+.solo-voice__head { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; color: var(--ui-color-voice-gold); font-size: .92rem; }
 .solo-voice__toggle { padding: 2px 4px; border: 0; background: transparent; color: var(--ui-color-on-dark); font-weight: 700; }
 .solo-voice--full { position: fixed; inset: 0; z-index: 60; width: 100vw; height: 100dvh; border-radius: 0; align-content: center; padding: 24px 16px; background: var(--ui-color-panel); color: var(--ui-color-ink); }
 .solo-voice--full .solo-voice__head { position: absolute; top: 16px; right: 20px; left: 20px; color: var(--ui-color-dark); }
 .solo-voice--full .solo-voice__toggle { color: var(--ui-color-dark); }
-.solo-voice__sphere { width: 112px; height: 112px; overflow: visible; fill: none; stroke: #9ad3bf; stroke-width: 1.1; stroke-linejoin: round; }
+.solo-voice__sphere { width: 112px; height: 112px; overflow: visible; fill: none; stroke: var(--ui-color-voice-line); stroke-width: 1.1; stroke-linejoin: round; }
 .solo-voice--full .solo-voice__sphere { width: min(52vw, 240px); height: min(52vw, 240px); stroke: var(--ui-color-primary); }
 .solo-voice__ring { stroke-width: 1.6; }
 .solo-voice__ring--inner { stroke-width: .6; stroke-dasharray: 1.2 1.6; }

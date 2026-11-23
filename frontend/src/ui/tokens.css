@@ -46,6 +46,9 @@
   --ui-color-ended-ink: #A3311A;
   --ui-color-warn-soft: #FFF3D4;
   --ui-color-warn-ink: #6E4B0B;
+  /* 語音模式（solo.css .solo-voice）：暗底上的標題金與球的線框綠，值照 Figma 749:324 */
+  --ui-color-voice-gold: #E8C766;
+  --ui-color-voice-line: #9AD3BF;
   /* 教師「完整對話」頁用的：學生對話頁（solo.css）已經在用的米白、深綠、木框黑板與黃泡泡，值照 Figma classroom/* */
   --ui-classroom-paper: #FFFDF8;
   --ui-classroom-line: #DDD5C6;

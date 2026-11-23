@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from app.modules.ai_connection.contracts import ModelOption
 from app.modules.platform.model_base import TrimmedModel
 
 
@@ -79,15 +80,6 @@ class SystemAIModelsInput(BaseModel):
     adapter: str
     api_key: str | None = None
     base_url: str | None = None
-
-
-class ModelOption(BaseModel):
-    id: str
-    name: str
-    # OpenRouter only (from the id's prefix); other services: null, the page shows the service.
-    provider: str | None
-    # OpenRouter free models: listed, but marked as likely rate-limited (spec P40).
-    free: bool
 
 
 class SystemAIModelsView(BaseModel):

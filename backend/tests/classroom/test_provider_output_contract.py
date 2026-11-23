@@ -151,6 +151,46 @@ def test_openrouter_requires_structured_output_capability(monkeypatch):
     assert captured["max_tokens"] == 250
 
 
+def gemini_body(text, finish="STOP"):
+    return {
+        "candidates": [{"content": {"parts": [{"text": text}]}, "finishReason": finish}],
+        "usageMetadata": {},
+    }
+
+
+def test_gemini_thinking_has_its_own_budget_on_top_of_the_output(monkeypatch):
+    monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+    captured = {}
+
+    async def request(*_, **kwargs):
+        captured.update(kwargs["payload"]["generationConfig"])
+        return FakeResponse(gemini_body(json.dumps({"suggestion_text": "新的角度"})))
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    result, _, _ = asyncio.run(
+        gateway._gemini_generate(
+            binding("gemini"), [{"role": "user", "content": "test"}], OtherSuggestionResult
+        )
+    )
+    assert result == {"suggestion_text": "新的角度"}
+    assert captured["maxOutputTokens"] == 250
+    assert captured["thinkingConfig"] == {"thinkingBudget": 50}
+
+
+def test_gemini_cut_off_at_the_token_cap_is_truncated_not_a_schema_mismatch(monkeypatch):
+    async def request(*_, **__):
+        return FakeResponse(gemini_body('{"suggestion_text": "新的', finish="MAX_TOKENS"))
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    with pytest.raises(ProviderWait, match="PROVIDER_OUTPUT_TRUNCATED"):
+        asyncio.run(
+            gateway._gemini_generate(
+                binding("gemini"), [{"role": "user", "content": "test"}], OtherSuggestionResult
+            )
+        )
+
+
 def test_openrouter_model_capabilities_are_exposed(monkeypatch):
     async def request(*_, **__):
         return FakeResponse(
@@ -219,8 +259,29 @@ def test_generate_audit_separates_reasoning_and_visible_output(monkeypatch):
     assert audit["reasoning_budget_tokens"] == 50
 
 
+def test_gemini_audit_records_the_reasoning_budget(monkeypatch):
+    async def generate(_binding, _messages, _schema):
+        return {"suggestion_text": "新的角度"}, {}, "fixture-model"
+
+    async def no_delta(_):
+        return None
+
+    monkeypatch.setattr(gateway, "_gemini_generate", generate)
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+    _, audit = asyncio.run(
+        gateway.generate(
+            binding("gemini"),
+            [{"role": "user", "content": "test"}],
+            OtherSuggestionResult,
+            no_delta,
+        )
+    )
+    assert audit["reasoning_budget_tokens"] == 50
+
+
 def test_provider_error_status_preserves_typed_application_bodies():
     assert provider_error_status("PROVIDER_EMPTY_CONTENT") == 422
+    assert provider_error_status("PROVIDER_OUTPUT_TRUNCATED") == 422
     assert provider_error_status("PROVIDER_SCHEMA_MISMATCH") == 422
     assert provider_error_status("SCRIPT_ASSIST_INVALID_OUTPUT") == 422
     assert provider_error_status("PROVIDER_HTTP_401") == 424

@@ -62,6 +62,7 @@ JOB_ROLE = {
 PROVIDER_OUTPUT_REASONS = frozenset(
     {
         "PROVIDER_EMPTY_CONTENT",
+        "PROVIDER_OUTPUT_TRUNCATED",
         "PROVIDER_SCHEMA_MISMATCH",
         "SCRIPT_ASSIST_INVALID_OUTPUT",
     }
@@ -935,6 +936,188 @@ async def list_models(binding: dict) -> list[dict]:
 
     result = await classroom_gateway.discover_models(binding)
     return list(result["models"])
+
+
+# ---- 老師的 AI 連線設定（一組連線、全部 AI 共用；ai_connection 模組讀寫用）----
+
+
+@dataclass(frozen=True)
+class OwnerConnection:
+    """A teacher's one connection as the AI 連線設定 page shows it. Never carries the key."""
+
+    profile_id: str
+    adapter: str
+    model: str
+    base_url: str | None
+    name: str
+    key_last4: str | None
+    enabled: bool
+    # False when a student's dialogue cannot use the key: a login-session key that is gone, no
+    # key at all, or one that no longer decrypts.
+    key_usable: bool
+    # Compared again under the lock before a save, with profile_id.
+    updated_at: float
+
+
+def _owner_profile(db, owner_id: str) -> tuple[AccountAISettings, ProviderProfile] | None:
+    """The connection a student's dialogue uses, picked as `_owner_bindings` does: default then
+    fallback, past a disabled or keyless one (a key that no longer decrypts stops there: students
+    get its error). When students can use neither, the first one, kept for the page to show."""
+    settings = db.get(AccountAISettings, owner_id)
+    if settings is None:
+        return None
+    found = []
+    for profile_id in (settings.default_profile_id, settings.fallback_profile_id):
+        if profile_id:
+            profile = db.scalar(
+                select(ProviderProfile).where(
+                    ProviderProfile.id == profile_id, ProviderProfile.owner_id == owner_id
+                )
+            )
+            if profile is not None:
+                found.append(profile)
+    for profile in found:
+        if profile.enabled and _students_reach(db, settings, profile):
+            return settings, profile
+    return (settings, found[0]) if found else None
+
+
+def _students_reach(db, settings: AccountAISettings, profile: ProviderProfile) -> bool:
+    """Whether a student's dialogue stops at this profile: a key, or one that fails to decrypt."""
+    try:
+        return bool(profile_secret(db, profile, session_token_hash=settings.session_token_hash))
+    except (DomainError, ValueError, KeyError, TypeError, AttributeError):
+        return True
+
+
+def _owner_secret(db, settings: AccountAISettings, profile: ProviderProfile) -> str | None:
+    try:
+        return profile_secret(db, profile, session_token_hash=settings.session_token_hash)
+    except (DomainError, ValueError, KeyError, TypeError, AttributeError):
+        logger.warning("老師的金鑰解不開（provider_profile %s）", profile.id)
+        return None
+
+
+def owner_connection(db, owner_id: str) -> OwnerConnection | None:
+    """The teacher's connection with the tutor's model from the matrix before the profile's own
+    (what a student's dialogue uses)."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return None
+    settings, profile = found
+    return OwnerConnection(
+        profile_id=profile.id,
+        adapter=profile.adapter,
+        model=(settings.model_matrix or {}).get("socratic_tutor") or profile.default_model,
+        base_url=profile.base_url,
+        name=profile.name,
+        key_last4=profile.secret_last4,
+        enabled=profile.enabled,
+        key_usable=bool(_owner_secret(db, settings, profile)),
+        updated_at=profile.updated_at,
+    )
+
+
+def owner_connection_config(db, owner_id: str) -> PlatformConfig | None:
+    """The teacher's connection with its key, for a test or save that keeps the key; None when
+    there is none or its key cannot be used."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return None
+    settings, profile = found
+    secret = _owner_secret(db, settings, profile)
+    if not secret:
+        return None
+    model = (settings.model_matrix or {}).get("socratic_tutor") or profile.default_model
+    return PlatformConfig(profile.adapter, model, secret, profile.base_url)
+
+
+def lock_owner(db, owner_id: str) -> None:
+    """Serialize one teacher's connection writes (two tabs saving at once)."""
+    db.scalar(select(Account.id).where(Account.id == owner_id).with_for_update())
+
+
+def profile_name_taken(db, owner_id: str, name: str, keep_id: str | None) -> bool:
+    query = select(ProviderProfile.id).where(
+        ProviderProfile.owner_id == owner_id, ProviderProfile.name == name
+    )
+    if keep_id is not None:
+        query = query.where(ProviderProfile.id != keep_id)
+    return db.scalar(query) is not None
+
+
+def write_owner_connection(
+    db, owner_id: str, config: PlatformConfig, *, name: str, profile_id: str | None
+) -> None:
+    """Save a tested connection as the teacher's only one: into `profile_id` (same service and
+    address), or a new row when None, the old row left alone (other settings may point at it).
+    The key is always kept encrypted; every role gets the model and the fallback is cleared."""
+    from sqlalchemy.exc import IntegrityError
+
+    if profile_id is not None:
+        row = owned_profile(db, owner_id, profile_id, lock=True)
+    else:
+        row = ProviderProfile(
+            owner_id=owner_id,
+            name=name,
+            adapter=config.adapter,
+            default_model=config.model,
+            credential_mode="PERSISTENT",
+        )
+        db.add(row)
+        db.flush()
+    row.name = name
+    row.adapter = config.adapter
+    row.base_url = config.base_url
+    row.default_model = config.model
+    row.enabled = True
+    row.credential_mode = "PERSISTENT"
+    encrypted, version = _seal(config.api_key, profile_id=row.id, owner_id=owner_id)
+    row.encrypted_secret = encrypted
+    row.secret_last4 = config.api_key[-4:]
+    row.key_version = version
+    row.updated_at = time.time()
+    settings = db.get(AccountAISettings, owner_id)
+    if settings is None:
+        try:
+            with db.begin_nested():
+                settings = AccountAISettings(owner_id=owner_id)
+                db.add(settings)
+        except IntegrityError:
+            settings = db.get(AccountAISettings, owner_id)
+            if settings is None:
+                raise
+    settings.default_profile_id = row.id
+    settings.fallback_profile_id = None
+    # Every role, never {}: 個人題庫's AI 協助出題 refuses without ai_script_authoring's model.
+    settings.model_matrix = dict.fromkeys(ROLE_KEYS, config.model)
+    settings.revision = int(settings.revision or 0) + 1
+    settings.updated_at = time.time()
+
+
+def switch_owner_connection(db, owner_id: str, *, enabled: bool) -> None:
+    """系統提供 (False) or the teacher's kept connection back on (True); the key stays as it is.
+
+    The connection becomes the default and the fallback is cleared either way, so a student's
+    dialogue uses exactly what the page shows: the 系統 AI, or this connection. A change bumps
+    `updated_at`, so a save tested against the old state is refused."""
+    found = _owner_profile(db, owner_id)
+    if found is None:
+        return
+    settings, profile = found
+    if (
+        profile.enabled == enabled
+        and settings.default_profile_id == profile.id
+        and settings.fallback_profile_id is None
+    ):
+        return
+    row = owned_profile(db, owner_id, profile.id, lock=True)
+    row.enabled = enabled
+    row.updated_at = time.time()
+    settings.default_profile_id = row.id
+    settings.fallback_profile_id = None
+    settings.revision = int(settings.revision or 0) + 1
+    settings.updated_at = time.time()
 
 
 # Voice mode: the Gemini Live session the solo dialogue's relay opens (key read from platform

@@ -43,6 +43,8 @@ class Account(Base):
     __tablename__ = "accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     username: Mapped[str] = mapped_column(String(64), unique=True)
+    display_name_override: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    avatar_filename: Mapped[str | None] = mapped_column(String(100), nullable=True)
     # Null for guests, who have neither; unique only among accounts that have one.
     email: Mapped[str | None] = mapped_column(String(254), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)

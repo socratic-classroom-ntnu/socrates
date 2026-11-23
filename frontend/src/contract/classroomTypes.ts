@@ -2,7 +2,7 @@
 export interface components { schemas: {
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string; "avatar_url"?: (string | null) };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
   "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
@@ -31,6 +31,9 @@ export interface components { schemas: {
   "BankQuestionSummary": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null) };
   "BankSearchResult": { "items": Array<components["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
+  "Body_upload_account_avatar_api_v2_account_avatar_post": { "file": string };
+  "ChangePasswordRequest": { "current_password": string; "new_password": string };
+  "ChangePasswordView": { "status": "PASSWORD_CHANGED" };
   "ChartSemanticsView": { "sunburst": string; "sankey": string; "graph": string; "heatmap": string; "timeline": string };
   "CitationSourceView": { /** ID of the student message whose exact text contains quote. */ "message_id": string; /** Exact, unnormalised substring of the referenced SoloMessageView.text. */ "quote": string; /** Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text. */ "start": number; /** Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote. */ "end": number };
   "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision": number };
@@ -57,6 +60,9 @@ export interface components { schemas: {
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
   "CreateRoom": { "script_id": string };
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
+  "DeleteAccountCoursesView": { "can_delete": boolean; "courses": Array<string> };
+  "DeleteAccountRequest": { "username": string };
+  "DeleteAccountView": { "status": "ACCOUNT_DELETED" };
   "DemoAccountView": { "username": string; "role": "teacher" | "student" };
   "DemoLoginView": { "password": string; "accounts": Array<components["schemas"]["DemoAccountView"]> };
   "DeployAuthor": { "kind": "deploy" };
@@ -93,7 +99,7 @@ export interface components { schemas: {
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
-  "LoginView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
+  "LoginView": { "id": string; "username": string; "email": string; "email_masked": string; "verified": boolean; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (components["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind": "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin": boolean; "guest_expires_at"?: (number | null); "display_name": string; "avatar_url"?: (string | null); "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
   "MailRequest": { "email": string };
   "MailRequestView": { "status": "REQUEST_RECORDED"; "message": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type": "human" | "llm_student"; "persona_id"?: (string | null) };
@@ -111,6 +117,7 @@ export interface components { schemas: {
   "PracticeStarted": { "activity_id": string; "attempt_id": string };
   "PracticeTopic": { "id": string; "title": string; "body": string; "category": "life" | "honesty" | "self" | "tech"; "recommended": boolean };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
+  "ProfileUpdate": { "display_name": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicActivityPreview": { "course_name": string; "allow_guest": boolean; "status": "scheduled" | "open" | "ended" };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (components["schemas"]["DemoLoginView"] | null); "features": components["schemas"]["FeaturesView"] };
@@ -186,7 +193,7 @@ export interface components { schemas: {
 export interface requestComponents { schemas: {
   "AISettingsView": { "default_profile_id": (string | null); "fallback_profile_id": (string | null); "model_matrix": Record<string, string>; "budgets": Record<string, unknown>; "revision": number };
   "AIStudentCreatedView": { "account_id": string; "membership_id": string; "alias": string; "persona_id": string; "model": string; "provider_profile_id"?: (string | null) };
-  "AccountView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string };
+  "AccountView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string; "avatar_url"?: (string | null) };
   "ActivityDetailsUpdate": { "title"?: (string | null); "ends_at"?: (number | null) };
   "ActivityDraft": { "title": string; "scenario": string; "starts_at"?: (number | null); "ends_at": number };
   "ActivityJoin": { "display_name": string };
@@ -215,6 +222,9 @@ export interface requestComponents { schemas: {
   "BankQuestionSummary": { "id": string; "title": string; "tags": Array<string>; "scenario_excerpt": string; "option_count": number; "author": (string | null); "mine": boolean; "published_at": number; "revision": number; "source_script_id"?: (string | null); "source_question_id"?: (string | null) };
   "BankSearchResult": { "items": Array<requestComponents["schemas"]["BankQuestionSummary"]>; "total": number; "offset": number; "limit": number };
   "BankUnpublishResult": { "id": string; "status": string };
+  "Body_upload_account_avatar_api_v2_account_avatar_post": { "file": string };
+  "ChangePasswordRequest": { "current_password": string; "new_password": string };
+  "ChangePasswordView": { "status": "PASSWORD_CHANGED" };
   "ChartSemanticsView": { "sunburst": string; "sankey": string; "graph": string; "heatmap": string; "timeline": string };
   "CitationSourceView": { /** ID of the student message whose exact text contains quote. */ "message_id": string; /** Exact, unnormalised substring of the referenced SoloMessageView.text. */ "quote": string; /** Zero-based inclusive offset in UTF-16 code units to quote's first exact occurrence in SoloMessageView.text. */ "start": number; /** Zero-based exclusive offset in UTF-16 code units into SoloMessageView.text; text.slice(start, end) equals quote. */ "end": number };
   "ClassroomAISettingsView": { "default_profile_id"?: (string | null); "fallback_profile_id"?: (string | null); "model_matrix"?: Record<string, string>; "scenario_overrides"?: Record<string, unknown>; "budgets"?: Record<string, unknown>; "revision"?: number };
@@ -241,6 +251,9 @@ export interface requestComponents { schemas: {
   "CreateProfile": { "name": string; "adapter": string; "base_url"?: (string | null); "organization"?: (string | null); "project"?: (string | null); "default_model": string; "credential_mode"?: "PERSISTENT" | "SESSION"; "credential"?: (string | null) };
   "CreateRoom": { "script_id": string };
   "CredentialUpdate": { "credential": string; "credential_mode": "PERSISTENT" | "SESSION" };
+  "DeleteAccountCoursesView": { "can_delete": boolean; "courses": Array<string> };
+  "DeleteAccountRequest": { "username": string };
+  "DeleteAccountView": { "status": "ACCOUNT_DELETED" };
   "DemoAccountView": { "username": string; "role": "teacher" | "student" };
   "DemoLoginView": { "password": string; "accounts": Array<requestComponents["schemas"]["DemoAccountView"]> };
   "DeployAuthor": { "kind"?: "deploy" };
@@ -277,7 +290,7 @@ export interface requestComponents { schemas: {
   "LibraryClassroomView": { "id": string; "title": string; "revision": number };
   "LocaleUpdate": { "locale": "zh-Hant" | "zh-Hans" | "en" | "es" };
   "Login": { "login": string; "password": string };
-  "LoginView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string; "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
+  "LoginView": { "id": string; "username": string; "email": string; "email_masked"?: string; "verified": boolean; "authority_state"?: "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "verification_delivery"?: (requestComponents["schemas"]["VerificationDelivery"] | null); "csrf_token": string; "points": number; "achievements": Array<string>; "locale"?: ("zh-Hant" | "zh-Hans" | "en" | "es" | null); "kind"?: "guest" | "expired_guest" | "registered"; "account_role": "student" | "teacher"; "is_admin"?: boolean; "guest_expires_at"?: (number | null); "display_name"?: string; "avatar_url"?: (string | null); "guest_merge": "MERGED" | "NONE" | "REFUSED_TEACHER" };
   "MailRequest": { "email": string };
   "MailRequestView": { "status": "REQUEST_RECORDED"; "message": string };
   "MemberView": { "id": string; "alias": string; "avatar": string; "seat": number; "online": boolean; "points": number; "achievements": Array<string>; "username"?: (string | null); "actor_type"?: "human" | "llm_student"; "persona_id"?: (string | null) };
@@ -295,6 +308,7 @@ export interface requestComponents { schemas: {
   "PracticeStarted": { "activity_id": string; "attempt_id": string };
   "PracticeTopic": { "id": string; "title": string; "body": string; "category": "life" | "honesty" | "self" | "tech"; "recommended": boolean };
   "ProfileDeletedView": { "status": "DELETED"; "profile_id": string };
+  "ProfileUpdate": { "display_name": string };
   "ProfileView": { "id": string; "name": string; "adapter": "openrouter" | "openai" | "anthropic" | "gemini" | "openai-compatible"; "base_url": (string | null); "organization": (string | null); "project": (string | null); "default_model": string; "credential_mode": "PERSISTENT" | "SESSION"; "has_credential": boolean; "secret_last4": (string | null); "enabled": boolean; "metadata": Record<string, unknown>; "updated_at": number };
   "PublicActivityPreview": { "course_name": string; "allow_guest": boolean; "status": "scheduled" | "open" | "ended" };
   "PublicConfigView": { "google_cse_id": string; "search_scope": string; "search_state": string; "debug_mode": boolean; "demo_login"?: (requestComponents["schemas"]["DemoLoginView"] | null); "features": requestComponents["schemas"]["FeaturesView"] };
@@ -368,8 +382,27 @@ export interface requestComponents { schemas: {
 } }
 
 export interface paths {
+  "/account": {
+    "delete": { body: requestComponents["schemas"]["DeleteAccountRequest"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["DeleteAccountView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/account/avatar": {
+    "post": { body: requestComponents["schemas"]["Body_upload_account_avatar_api_v2_account_avatar_post"]; bodyRequired: true; requestMedia: "multipart/form-data"; response: components["schemas"]["AccountView"]; responseMedia: "application/json"; path: never; query: never };
+    "delete": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["AccountView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/account/avatar/{filename}": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: unknown; responseMedia: "application/json"; path: { "filename": string }; query: never };
+  };
+  "/account/deletion-check": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["DeleteAccountCoursesView"]; responseMedia: "application/json"; path: never; query: never };
+  };
   "/account/locale": {
     "put": { body: requestComponents["schemas"]["LocaleUpdate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AccountView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/account/password": {
+    "put": { body: requestComponents["schemas"]["ChangePasswordRequest"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["ChangePasswordView"]; responseMedia: "application/json"; path: never; query: never };
+  };
+  "/account/profile": {
+    "patch": { body: requestComponents["schemas"]["ProfileUpdate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["AccountView"]; responseMedia: "application/json"; path: never; query: never };
   };
   "/activities/{activity_id}": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["ActivityTeacherView"]; responseMedia: "application/json"; path: { "activity_id": string }; query: never };

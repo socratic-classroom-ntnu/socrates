@@ -5,7 +5,7 @@ import type { components } from '../../contract/classroomTypes'
 import { publishDevAccount } from '../dev-console/devConsoleStore'
 import { applyLocale, currentLocale } from '../../i18n'
 
-export type Account = components['schemas']['AccountView']
+export type Account = components['schemas']['AccountView'] & {avatar_url?: string | null}
 type Status = 'loading' | 'anonymous' | 'ready'
 
 type Auth = {
@@ -15,6 +15,7 @@ type Auth = {
   signIn(view: Account): void
   replaceAccount(view: Account): void
   signOut(): Promise<void>
+  clearSession(): void
 }
 
 const AuthContext = createContext<Auth | null>(null)
@@ -50,11 +51,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [adopt])
 
-  const signOut = useCallback(async () => {
-    await api('/auth/logout', 'POST')
+  const clearSession = useCallback(() => {
+    setCSRF('')
     setAccount(null)
     setStatus('anonymous')
   }, [])
+
+  const signOut = useCallback(async () => {
+    await api('/auth/logout', 'POST')
+    clearSession()
+  }, [clearSession])
 
   useEffect(() => { void refresh() }, [refresh])
   // 訪客過期或 session 失效：重新讀一次帳號，未登入時 RequireAuth 會帶著目前網址導到登入頁
@@ -62,8 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => { publishDevAccount(account) }, [account]) // 開發控制台沿用這次 /auth/me，不另外查詢
 
   const value = useMemo(
-    () => ({ status, account, refresh, signIn: adopt, replaceAccount, signOut }),
-    [status, account, refresh, adopt, replaceAccount, signOut],
+    () => ({
+      status,
+      account,
+      refresh,
+      signIn: adopt,
+      replaceAccount,
+      signOut,
+      clearSession,
+    }),
+    [status, account, refresh, adopt, replaceAccount, signOut, clearSession],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

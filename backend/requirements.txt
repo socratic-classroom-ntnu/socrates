@@ -18,3 +18,5 @@ cryptography==50.0.1
 numpy==2.5.4
 onnxruntime==1.31.1
 tokenizers==0.23.3
+Pillow
+python-multipart

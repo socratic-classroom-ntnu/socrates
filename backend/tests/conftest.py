@@ -51,7 +51,8 @@ _ensure_test_database(_TEST_URL)
 
 from sqlalchemy.orm import Session as OrmSession  # noqa: E402
 
-from app.modules.platform.db import Base, engine  # noqa: E402
+from app.modules.platform.db import engine  # noqa: E402
+from app.modules.platform.storage import Base  # noqa: E402
 from app.modules.app_shell import models as _models  # noqa: E402,F401  所有模組的 ORM 先進 metadata
 from app.modules.app_shell import wiring as _wiring  # noqa: E402,F401  跨模組 hook
 

@@ -7,6 +7,8 @@ import { LANGUAGE_NAMES, LOCALES } from '../i18n/locale'
 import { useT } from '../i18n/useT'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
 import { GUEST_REGISTER, RoleTag, useAccountSummary, useLogout } from './accountSummary'
+import { useAuth } from '../features/auth/AuthContext'
+import { avatarSrc } from '../features/account/avatarApi'
 
 export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean; separated?: boolean }
 
@@ -21,6 +23,8 @@ export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 't
   const { changeLocale, failure } = useChangeLocale()
   const navigate = useNavigate()
   const { name, tag, tagLabel, guest, secondLine } = useAccountSummary()
+  const { account } = useAuth()
+  const avatarUrl = avatarSrc(account?.avatar_url)
   const logout = useLogout()
 
   const language: MenuItem = {
@@ -41,10 +45,12 @@ export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 't
     <span className="account-menu__name-row"><span className={nameClass}>{name}</span><RoleTag tag={tag} label={tagLabel} /></span>
     {secondLine && <span className="account-menu__email">{secondLine}</span>}
   </span>
-  const header = <div className="account-menu__header"><Avatar name={name} size="lg" />{who('account-menu__header-name')}</div>
+  
+  const header = <div className="account-menu__header"><Avatar name={name} size="lg" src={avatarUrl} />{who('account-menu__header-name')}</div>
   const trigger = compact
-    ? <Avatar name={name} />
-    : <><Avatar name={name} />{who('account-menu__name')}<span className="account-menu__chevron" aria-hidden="true">›</span></>
+    ? <Avatar name={name} src={avatarUrl} />
+    : <><Avatar name={name} src={avatarUrl} />{who('account-menu__name')}<span className="account-menu__chevron" aria-hidden="true">›</span></>
+
 
   return <div className={'account-menu' + (compact ? ' account-menu--compact' : '')}>
     <Menu

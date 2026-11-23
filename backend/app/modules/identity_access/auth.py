@@ -50,12 +50,13 @@ GUEST_SUFFIX = 9
 
 
 def display_name(account) -> str:
-    """The name people see: a guest's nickname, a registered account's username."""
+    """Return the public name for an account."""
     if account.kind == "guest":
         return account.username[:-GUEST_SUFFIX]
-    if account.kind == "expired_guest":
+    if account.kind in ("expired_guest", "deleted"):
         return ""
-    return account.username
+    return account.display_name_override or account.username
+
 
 
 def account_view(db, account, csrf=""):
@@ -63,6 +64,7 @@ def account_view(db, account, csrf=""):
         "id": account.id,
         "username": account.username,
         "display_name": display_name(account),
+        "avatar_url": (f"/account/avatar/{account.avatar_filename}"if account.avatar_filename else None),
         "email": account.email or "",
         "email_masked": mask_recipient(account.email) if account.email else "",
         "verified": account.verified,
@@ -84,6 +86,23 @@ def account_view(db, account, csrf=""):
 def set_locale(account, locale: str) -> None:
     account.locale = locale
 
+
+def change_password(db, account, current_password: str, new_password: str):
+    """Verify the current password and update the account password."""
+    if not account.password_hash:
+        raise DomainError("PASSWORD_CHANGE_UNAVAILABLE", 403)
+
+    try:
+        HASHER.verify(account.password_hash, current_password)
+    except (VerifyMismatchError, InvalidHashError) as exc:
+        raise DomainError("CURRENT_PASSWORD_INVALID", 400) from exc
+
+    if secrets.compare_digest(current_password, new_password):
+        raise DomainError("PASSWORD_UNCHANGED", 400)
+
+    account.password_hash = HASHER.hash(new_password)
+
+    return {"status": "PASSWORD_CHANGED"}
 
 def _new_session(db, account):
     token = secrets.token_urlsafe(32)
@@ -237,6 +256,7 @@ def _claim_identity(db, username, email, now, upgrading=None):
         select(Account)
         .where((Account.username == username) | (Account.email == email))
         .where(Account.id != (upgrading.id if upgrading else ""))
+        .where(Account.kind != "deleted")
         .with_for_update()
     ).all()
     for field, code in (("username", "USERNAME_TAKEN"), ("email", "EMAIL_TAKEN")):
@@ -286,7 +306,11 @@ def login(body, guest_token=None):
             )
         )
         # Equal-work password verification also applies to unknown accounts and to guests.
-        if account is None or account.password_hash is None:
+        if (
+            account is None
+            or account.kind != "registered"
+            or account.password_hash is None
+        ):
             HASHER.hash(body.password)
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401)
         try:
@@ -305,6 +329,8 @@ def identity(db, token, csrf=None, mutation=False, verified=True, allow_guest=Fa
     if session is None:
         raise DomainError("LOGIN_REQUIRED", 401)
     account = db.get(Account, session.account_id)
+    if account is None or account.kind == "deleted":
+        raise DomainError("LOGIN_REQUIRED", 401)
     # A guest's session ends together with the guest, so guest expiry is checked first: the
     # student then sees GUEST_EXPIRED (scan the QR code again), not a login prompt. An
     # expired_guest has passed it too.

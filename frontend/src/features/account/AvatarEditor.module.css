@@ -1,0 +1,45 @@
+.editorTrigger { position: relative; display: flex; flex-direction: column; align-items: center; }
+.avatarButton { position: relative; width: 120px; height: 120px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.currentAvatar, .defaultAvatar { display: flex; width: 120px; height: 120px; align-items: center; justify-content: center; border-radius: 50%; object-fit: cover; }
+.defaultAvatar { background: #dce9e3; color: #315c4b; font-size: 58px; font-weight: 700; }
+.editBadge { position: absolute; right: 2px; bottom: 2px; display: flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 3px solid white; border-radius: 50%; background: #315c4b; color: white; }
+.menu { position: absolute; top: 126px; z-index: 10; width: 150px; padding: 6px; border: 1px solid #e5e7eb; border-radius: 10px; background: white; box-shadow: 0 8px 24px #00000018; }
+.menu button { display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 6px; background: transparent; color: #111827; text-align: left; cursor: pointer; }
+.menu button:hover { background: #f3f5f4; }
+.menu .deleteOption { color: #c03939; }
+.backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: #00000080; }
+.modal { width: min(100%, 560px); max-height: 90vh; overflow-y: auto; border-radius: 16px; background: #fff; box-shadow: 0 20px 60px #00000030; }
+.modalHeader { display: flex; align-items: center; justify-content: space-between; padding: 22px 28px; border-bottom: 1px solid #e5e7eb; }
+.modalHeader h2 { margin: 0; color: #111827; font-size: 20px; font-weight: 700; }
+.closeButton { border: 0; background: transparent; color: #6b7280; font-size: 28px; cursor: pointer; }
+.steps { display: flex; justify-content: space-between; gap: 8px; padding: 22px 28px; }
+.step, .activeStep { flex: 1; padding: 10px 4px; border-bottom: 3px solid #e5e7eb; color: #9ca3af; font-size: 12px; text-align: center; }
+.activeStep { border-bottom-color: #315c4b; color: #315c4b; font-weight: 700; }
+.modalBody { min-height: 330px; padding: 8px 28px 28px; }
+.dropZone { display: flex; min-height: 300px; flex-direction: column; align-items: center; justify-content: center; padding: 24px; border: 2px dashed #a7bcb2; border-radius: 12px; background: #f8fbf9; text-align: center; }
+.uploadIcon { display: flex; width: 56px; height: 56px; align-items: center; justify-content: center; border-radius: 50%; background: #e4eeea; color: #315c4b; font-size: 30px; }
+.hint { color: #6b7280; font-size: 12px; }
+.cropSection, .confirmSection { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.instruction { margin: 0; color: #4b5563; font-size: 13px; text-align: center; }
+.cropViewport { position: relative; width: 280px; height: 280px; overflow: hidden; border-radius: 50%; background: #ffffff; cursor: grab; touch-action: none; user-select: none; }
+.cropViewport:active { cursor: grabbing; }
+.cropImage { position: absolute; top: 50%; left: 50%; max-width: none; pointer-events: none; user-select: none; }
+.cropMask { position: absolute; inset: 0; border: 3px solid #315c4b; border-radius: 50%; pointer-events: none; }
+.zoomLabel { color: #374151; font-size: 13px; }
+.zoomSlider { width: min(100%, 280px); accent-color: #315c4b; }
+.preview { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; }
+.confirmSection > p { text-align: center; }
+.footer { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 28px; border-top: 1px solid #e5e7eb; }
+.primaryButton, .secondaryButton { min-height: 40px; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.primaryButton { border: 1px solid #315c4b; background: #315c4b; color: #fff; }
+.secondaryButton { border: 1px solid #d1d5db; background: #fff; color: #374151; }
+.primaryButton:disabled, .secondaryButton:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { margin: 12px 0 0; color: #c03939; font-size: 13px; text-align: center; }
+.hiddenInput { display: none; }
+@media (max-width: 480px) {
+  .backdrop { padding: 12px; }
+  .modalHeader, .steps, .footer { padding-right: 16px; padding-left: 16px; }
+  .modalBody { padding-right: 16px; padding-left: 16px; }
+  .steps { gap: 4px; }
+  .step, .activeStep { font-size: 11px; }
+}

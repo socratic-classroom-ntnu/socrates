@@ -123,6 +123,31 @@ class PasswordResetView(Strict):
     status: Literal["PASSWORD_RESET"]
 
 
+class ChangePasswordRequest(Strict):
+    current_password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=8, max_length=32)
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_rule(cls, value: str) -> str:
+        return password_policy(value)
+
+
+class ChangePasswordView(Strict):
+    status: Literal["PASSWORD_CHANGED"]
+
+class DeleteAccountRequest(Strict):
+    username: str = Field(min_length=1, max_length=64)
+
+
+class DeleteAccountView(Strict):
+    status: Literal["ACCOUNT_DELETED"]
+
+
+class DeleteAccountCoursesView(Strict):
+    can_delete: bool
+    courses: list[str]
+
 class MailRequestView(Strict):
     """POST /auth/forgot-password: the same answer whether or not the email has an account, so
     the endpoint cannot be used to learn which emails are registered."""
@@ -189,6 +214,7 @@ class AccountView(Strict):
     # The name to show: a guest's nickname (never the username's random suffix), otherwise the
     # username; empty once a guest has expired.
     display_name: str = ""
+    avatar_url: str | None = None
 
 
 # What logging in did with a guest session on the same device: MERGED (its records moved to
@@ -204,6 +230,15 @@ class LoginView(AccountView):
 class LocaleUpdate(Strict):
     locale: Locale
 
+class ProfileUpdate(Strict):
+    display_name: Annotated[
+        str,
+        StringConstraints(
+            strip_whitespace=True,
+            min_length=1,
+            max_length=40,
+        ),
+    ]
 
 class GuestRecordHook(Protocol):
     """What every module that keeps student records provides for guests (the app shell registers

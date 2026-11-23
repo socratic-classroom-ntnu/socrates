@@ -45,6 +45,7 @@ import { RoleGate } from './RoleGate'
 import { AdminGate } from '../features/admin/AdminGate'
 import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
+import { AccountSettingsPage } from '../features/account/AccountSettingsPage'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
 // 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
@@ -60,11 +61,6 @@ function legacyRedirect(pathname: string, search: string): string | null {
 
 type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis'
 
-// 這一批不做的入口：共用佔位頁，說明文字依入口換。
-function Placeholder({ kind }: { kind?: PlaceholderKind }) {
-  const { t } = useT('common')
-  return <ComingSoonPage body={kind ? t(`comingSoon.${kind}`) : undefined} />
-}
 
 // 教師端的佔位頁回到所屬課程；活動頁要先查活動才知道課程，查不到就回「我的授課」
 function TeachPlaceholder({ kind }: { kind: PlaceholderKind }) {
@@ -117,7 +113,7 @@ export function AppRoutes() {
         <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
           <Route path="/groups" element={<GroupsPage />} />
         </Route>
-        <Route path="/account" element={<Placeholder kind="account" />} />
+        <Route path="/account" element={<AccountSettingsPage />} />
       </Route>
       </Route>
       {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}

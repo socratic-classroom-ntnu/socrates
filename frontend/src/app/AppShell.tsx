@@ -11,6 +11,7 @@ import { useLogout } from './accountSummary'
 import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
+import { avatarSrc } from '../features/account/avatarApi'
 
 type NavKey = 'home' | 'dialogues' | 'groups' | 'bank' | 'store' | 'settings' | 'admin'
 
@@ -106,7 +107,16 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
         {content}
       </div>
     }
-    return <StudentPhoneShell top={top} active={active} name={account?.username ?? ''}>{content}</StudentPhoneShell>
+    return (
+      <StudentPhoneShell
+        top={top}
+        active={active}
+        name={account?.display_name || account?.username || ''}
+        avatarUrl={avatarSrc(account?.avatar_url)}
+      >
+        {content}
+      </StudentPhoneShell>
+    )
   }
 
   return <div className={'app-shell' + (collapsed ? ' app-shell--collapsed' : '')}>
@@ -151,7 +161,19 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
  * 學生手機（P24–P26）：頂部列沒有頭像；最下方底部導覽「首頁」「我」（「我的對話」那格由另一份需求加），
  * 頭像移到「我」，點了從下方滑出帳號面板。對話頁不在外框裡，所以沒有底部導覽。
  */
-function StudentPhoneShell({ top, active, name, children }: { top: ReactNode; active: NavKey | null; name: string; children: ReactNode }) {
+function StudentPhoneShell({
+  top,
+  active,
+  name,
+  avatarUrl,
+  children,
+}: {
+  top: ReactNode
+  active: NavKey | null
+  name: string
+  avatarUrl?: string
+  children: ReactNode
+}) {
   const { t } = useT('shell')
   const [sheet, setSheet] = useState(false)
   const logout = useLogout()
@@ -170,7 +192,7 @@ function StudentPhoneShell({ top, active, name, children }: { top: ReactNode; ac
     {!typing && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
       { key: 'home', label: t('nav.home'), icon: ITEMS[0].icon, to: '/', current: active === 'home' },
       { key: 'dialogues', label: t('nav.dialogues'), icon: ITEMS[1].icon, to: '/my-dialogues', current: active === 'dialogues' },
-      { key: 'me', label: t('nav.me'), icon: <Avatar name={name} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
+      { key: 'me', label: t('nav.me'), icon: <Avatar name={name} src={avatarUrl} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
     ]} />}
     {sheet && <AccountSheet onClose={() => setSheet(false)} onLogout={logout.request} />}
     {logout.confirm}

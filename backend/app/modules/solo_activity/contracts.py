@@ -314,7 +314,7 @@ class SoloStudentProgressView(View):
     final_status: FinalStatus | None
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
-    attention: bool  # in progress and idle for over ATTENTION_SECONDS
+    attention: bool  # activity not ended, in progress and idle for over ATTENTION_SECONDS
 
 
 class SoloActivityProgressView(View):

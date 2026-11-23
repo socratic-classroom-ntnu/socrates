@@ -20,6 +20,7 @@ jest.mock('./legacyRoutes', () => {
   }
 })
 jest.mock('../features/student-classroom/GroupsPage', () => ({ GroupsPage: () => <p>groups-page</p> }))
+jest.mock('../features/ai-settings/AIConnectionPage', () => ({ AIConnectionPage: () => <p>ai-settings-page</p> }))
 // 課程與單人活動的新頁換成標記：各頁自己的測試負責內容
 jest.mock('../features/solo-activity/SoloActivityPage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
@@ -120,7 +121,6 @@ beforeEach(() => {
 
 test.each([
   ['/groups', 'groups-page'],
-  ['/groups?view=providers', 'groups-page'],
   ['/classrooms/r1?mode=teacher', 'room:r1'],
   ['/teacher/home?view=store', 'teacher-home:?view=store'],
   ['/teacher/courses/c1', 'teacher-course:c1'],
@@ -162,12 +162,30 @@ test.each([
   expect(where()).toBe(url)
 })
 
-test('old providers link moves to the groups page', async () => {
-  mockSession(verified)
-  open('/?view=providers')
-  await waitFor(() => expect(where()).toBe('/groups?view=providers'))
-  expect(await screen.findByText('groups-page')).toBeInTheDocument()
+test('the AI connection page is a teacher page', async () => {
+  mockSession(teacher)
+  open('/teach/ai-settings')
+  expect(await screen.findByText('ai-settings-page')).toBeInTheDocument()
 })
+
+test('a student opening the AI connection page sees that it is a teacher page', async () => {
+  mockSession(verified)
+  open('/teach/ai-settings')
+  expect(await screen.findByRole('heading', { name: '這是老師的頁面' })).toBeInTheDocument()
+  expect(screen.queryByText('ai-settings-page')).not.toBeInTheDocument()
+  expect(where()).toBe('/teach/ai-settings')
+})
+
+// 舊的多連線頁能改同一份設定，留著會讓新頁面顯示的跟學生實際用的不一樣：一律轉到新網址。
+test.each(['/?view=providers', '/groups?view=providers', '/teacher/home?view=settings'])(
+  'the old AI settings entry %s moves to the new page',
+  async url => {
+    mockSession(teacher)
+    open(url)
+    await waitFor(() => expect(where()).toBe('/teach/ai-settings'))
+    expect(await screen.findByText('ai-settings-page')).toBeInTheDocument()
+  },
+)
 
 test('unverified account on home goes to verify', async () => {
   mockSession({ ...verified, verified: false })

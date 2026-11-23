@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import math
 import os
 import socket
 import time
@@ -397,6 +398,15 @@ def _estimated_cost(binding: dict, usage: dict) -> float | None:
     )
 
 
+def _reported_cost(adapter: str, usage: dict) -> float | None:
+    """What OpenRouter charged for this call (`usage.cost`, US dollars, sent on every response);
+    None when it did not say or for another service, whose `cost` would mean something else."""
+    cost = usage.get("cost") if adapter == "openrouter" and isinstance(usage, dict) else None
+    if isinstance(cost, bool) or not isinstance(cost, (int, float)):
+        return None
+    return float(cost) if math.isfinite(cost) and cost >= 0 else None
+
+
 async def generate(binding, messages, schema, on_delta):
     started = time.monotonic()
     adapter = binding["adapter"]
@@ -420,7 +430,12 @@ async def generate(binding, messages, schema, on_delta):
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
-    return result, _audit(binding, usage, actual_model, started)
+    audit = _audit(binding, usage, actual_model, started)
+    # Successful calls only: a failed one records no cost (需求，維持現狀).
+    cost = _reported_cost(adapter, usage)
+    if cost is not None:
+        audit["estimated_cost"] = cost
+    return result, audit
 
 
 def _audit(binding, usage: dict, actual_model, started: float) -> dict:

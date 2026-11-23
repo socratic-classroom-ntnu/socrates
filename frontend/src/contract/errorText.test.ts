@@ -65,3 +65,10 @@ test('AI connection: duplicate name and malformed key point to the fix', () => {
   const malformed = [{ type: 'value_error', loc: ['body', 'credential'], msg: 'Value error, PROVIDER_CREDENTIAL_MALFORMED' }]
   expect(errorText(malformed, 422)).toContain('重新複製')
 })
+
+test('AI script assist without a connection points to the new AI 連線設定 page', () => {
+  for (const code of ['SCRIPT_ASSIST_PROVIDER_REQUIRED', 'SCRIPT_ASSIST_MODEL_REQUIRED']) {
+    expect(errorText(code, 409)).toContain('「AI 連線設定」')
+    expect(errorText(code, 409)).not.toContain('帳號 AI 設定')
+  }
+})

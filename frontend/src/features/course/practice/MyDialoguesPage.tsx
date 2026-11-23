@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, api } from '../../../contract/classroomClient'
 import type { components } from '../../../contract/classroomTypes'
@@ -21,6 +21,19 @@ type PracticeList = components['schemas']['PracticeList']
 const GUEST_REGISTER = '/guest/register'
 // 「還可以聊這些」在電腦上只放兩張，其餘從「看全部題目」挑（畫布 MyDialogList）
 const DESKTOP_MORE = 2
+// 第一次進來、訪客、手機的「還可以聊這些」最多放幾張推薦題；題庫比這多時，每次進頁面隨機換一批
+const FEATURED = 6
+
+/** Up to `count` topics picked at random, kept in bank order; all of them when they fit. */
+function pickFeatured(topics: Topic[], count: number): Topic[] {
+  if (topics.length <= count) return topics
+  const indexes = topics.map((_, index) => index)
+  for (let i = 0; i < count; i++) {
+    const j = i + Math.floor(Math.random() * (indexes.length - i))
+    ;[indexes[i], indexes[j]] = [indexes[j], indexes[i]]
+  }
+  return indexes.slice(0, count).sort((a, b) => a - b).map(index => topics[index])
+}
 
 /**
  * 學生「我的對話」（spec §10 M15、M17、M19；畫布 MyDialogFirst／List／Quota／Guest＋Phone）。
@@ -56,7 +69,9 @@ export function MyDialoguesPage() {
 
   // 卡片只放推薦題；「看全部題目」的挑題視窗列整個題庫
   const allTopics = bank.data ?? []
-  const topics = allTopics.filter(topic => topic.recommended)
+  // Kept while the bank is the same, so the random picks below hold for the whole visit.
+  const topics = useMemo(() => (bank.data ?? []).filter(topic => topic.recommended), [bank.data])
+  const featured = useMemo(() => pickFeatured(topics, FEATURED), [topics])
   // 題庫和列表都要回來才畫；任一支失敗就說沒載入成功，不留一片空白
   const loading = (bank.loading && !bank.data) || (!guest && list.loading && !list.data)
   const failed = !loading && (!bank.data || (!guest && !list.data))
@@ -66,12 +81,12 @@ export function MyDialoguesPage() {
     {phone && <JoinCodeForm variant="phone" />}
     <section className={styles.panel} aria-label={t('title')}>
       {guest
-        ? <GuestView topics={topics} loading={loading} failed={failed} />
+        ? <GuestView topics={featured} loading={loading} failed={failed} />
         : <>
           {loading && <div aria-busy="true" className={styles.loading} />}
           {failed && <FormError role="alert">{t('loadFailed')}</FormError>}
           {!loading && !failed && list.data && (list.data.dialogues.length === 0
-            ? <FirstTime topics={topics} remaining={list.data.quota.remaining} busy={busy} onStart={start} />
+            ? <FirstTime topics={featured} remaining={list.data.quota.remaining} busy={busy} onStart={start} />
             : <WithDialogues data={list.data} topics={topics} phone={phone} busy={busy} onStart={start} onPick={() => setPicking(true)} />)}
           {error !== null && <FormError role="alert">{errorMessage(t, error)}</FormError>}
         </>}
@@ -105,10 +120,12 @@ function WithDialogues({ data, topics, phone, busy, onStart, onPick }: {
 }) {
   const { t } = useT('practice')
   const { quota, dialogues } = data
-  const started = new Set(dialogues.map(dialogue => dialogue.topic_id))
-  // M17：只列還沒做答過的題目
-  const unstarted = topics.filter(topic => !started.has(topic.id))
-  const more = phone ? unstarted : unstarted.slice(0, DESKTOP_MORE)
+  // M17：只列還沒做答過的題目；手機一次抽好，不在每次重畫時換題
+  const more = useMemo(() => {
+    const started = new Set(dialogues.map(dialogue => dialogue.topic_id))
+    const unstarted = topics.filter(topic => !started.has(topic.id))
+    return phone ? pickFeatured(unstarted, FEATURED) : unstarted.slice(0, DESKTOP_MORE)
+  }, [topics, dialogues, phone])
   const exhausted = quota.remaining <= 0
   return <>
     <div className={styles.bar}>

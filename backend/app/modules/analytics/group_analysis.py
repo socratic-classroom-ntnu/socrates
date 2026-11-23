@@ -4,7 +4,7 @@ from hashlib import sha256
 from copy import deepcopy
 
 from app.modules.group_dialogue.service import stance_distribution
-from app.modules.solo_activity.metrics import student_metrics
+from app.modules.solo_activity.service import Judged, student_metrics
 
 
 def pseudonym(classroom_id, member_id):
@@ -27,7 +27,8 @@ def person_metrics(state, member_id):
     The personal dialogue stays private to the student, so no message ids leave here: the lists
     that name the messages behind a metric or a mark are empty.
     """
-    judged, shifts, tested = [], 0, False
+    judged: list[Judged] = []
+    shifts, tested = 0, False
     for run_index, run in enumerate(state.get("runs") or []):
         messages = ((run.get("personal") or {}).get(member_id) or {}).get("messages") or []
         last_student = None

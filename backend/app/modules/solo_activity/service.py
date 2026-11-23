@@ -51,6 +51,12 @@ from app.modules.solo_activity.attempt_machine import (
 )
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage, SoloSummarySource
 
+# Public surface for other modules: the group class's analysis computes the same metrics.
+from app.modules.solo_activity.metrics import (
+    Judged as Judged,
+    student_metrics as student_metrics,
+)
+
 # Runs work after the response (the route's BackgroundTasks): the final summary, and placing a
 # stated position in the stance space. None runs it inline.
 Defer = Callable[[dict], None]

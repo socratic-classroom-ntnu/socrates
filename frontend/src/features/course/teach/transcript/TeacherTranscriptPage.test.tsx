@@ -308,6 +308,85 @@ describe('the stance track', () => {
   })
 })
 
+describe('the stop the teacher is looking at', () => {
+  // The yellow row is where the student is; the dark bar is where the teacher is reading. They are two marks.
+  const rowOf = async (number: number) => within(await track()).getAllByRole('listitem')[number - 1]
+  const viewed = (row: HTMLElement) => within(row).queryByText('正在檢視') !== null
+
+  // jsdom has no Element.scrollTo and no layout, so the scroller gets both: scenario 1 at 0, scenario 2 at 640.
+  async function openWithLayout() {
+    open(transcript({ attempt: confirming() }))
+    const c = await chat()
+    const scroll = within(c).getByTestId('transcript-scroll')
+    scroll.scrollTo = jest.fn()
+    const state = { top: 0, height: 2000, client: 400 }
+    Object.defineProperty(scroll, 'scrollHeight', { configurable: true, get: () => state.height })
+    Object.defineProperty(scroll, 'clientHeight', { configurable: true, get: () => state.client })
+    Object.defineProperty(scroll, 'scrollTop', { configurable: true, get: () => state.top, set: value => { state.top = value } })
+    ;[0, 640].forEach((top, index) => Object.defineProperty(c.querySelector(`[data-scenario="${index}"]`) as HTMLElement, 'offsetTop', { configurable: true, value: top }))
+    const scrollTo = async (top: number) => { state.top = top; fireEvent.scroll(scroll) }
+    return { scroll, scrollTo }
+  }
+
+  test('it starts on the stop the student is at', async () => {
+    open(transcript({ attempt: confirming() }))
+    await chat()
+    expect(viewed(await rowOf(2))).toBe(true)
+    expect(viewed(await rowOf(1))).toBe(false)
+  })
+
+  test('clicking a stop moves the mark there; the yellow stays with the student', async () => {
+    await openWithLayout()
+    fireEvent.click(within(await rowOf(1)).getByRole('button'))
+    expect(viewed(await rowOf(1))).toBe(true)
+    expect(viewed(await rowOf(2))).toBe(false)
+    expect(await rowOf(2)).toHaveAttribute('aria-current', 'step')
+    expect(await rowOf(1)).not.toHaveAttribute('aria-current')
+  })
+
+  test('scrolling the chat moves the mark to the scenario under the top of the view', async () => {
+    const { scrollTo } = await openWithLayout()
+    await scrollTo(0)
+    expect(viewed(await rowOf(1))).toBe(true)
+    await scrollTo(600) // scenario 2 starts at 640, inside the upper third of a 400px view
+    expect(viewed(await rowOf(2))).toBe(true)
+    expect(viewed(await rowOf(1))).toBe(false)
+    await scrollTo(300) // back up
+    expect(viewed(await rowOf(1))).toBe(true)
+  })
+
+  test('at the bottom the mark is on the latest scenario, however short it is', async () => {
+    const { scrollTo } = await openWithLayout()
+    await scrollTo(0)
+    await scrollTo(1600) // 2000 − 1600 − 400 = 0 from the bottom
+    expect(viewed(await rowOf(2))).toBe(true)
+  })
+
+  test('while a jump is still scrolling, the scrolling does not move the mark off the stop that was clicked', async () => {
+    const { scroll, scrollTo } = await openWithLayout()
+    await scrollTo(1600)
+    fireEvent.click(within(await rowOf(1)).getByRole('button'))
+    await scrollTo(900) // a frame of the smooth scroll, which would read as scenario 2
+    expect(viewed(await rowOf(1))).toBe(true)
+    // once it has stopped the reader is in charge again
+    fireEvent(scroll, new Event('scrollend'))
+    await scrollTo(700)
+    expect(viewed(await rowOf(2))).toBe(true)
+  })
+
+  test('a refresh does not pull the mark back to the stop the student is at', async () => {
+    jest.useFakeTimers()
+    open(() => transcript({ attempt: confirming() }))
+    await act(async () => { await Promise.resolve(); await Promise.resolve() })
+    const c = await chat()
+    ;(within(c).getByTestId('transcript-scroll') as HTMLElement).scrollTo = jest.fn()
+    fireEvent.click(within(await rowOf(1)).getByRole('button'))
+    await act(async () => { jest.advanceTimersByTime(10_000); await Promise.resolve(); await Promise.resolve() })
+    expect(viewed(await rowOf(1))).toBe(true)
+    expect(viewed(await rowOf(2))).toBe(false)
+  })
+})
+
 describe('09 not started, 10 loading, 11 failed', () => {
   test('09: no conversation, with the way back', async () => {
     open(transcript({ attempt: null }))

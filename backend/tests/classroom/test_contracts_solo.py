@@ -138,7 +138,6 @@ INVALID = [
     (ScenarioExtension, "延伸要改變條件", lambda s: s["change"].update(after="軌道上的一個陌生人")),
     (ScenarioExtension, "延伸要指出測試學生哪句話", lambda s: s.update(sources=[])),
     (ScenarioExtension, "要說出改的是哪一個條件", lambda s: s["change"].pop("condition")),
-    (StanceClassification, "沒有立場要給 null，不是空字串", lambda s: s.update(stance_id="")),
     (ActivityExpansion, "立場 id 不可重複", lambda s: s["stances"][1].update(id="s1")),
     (StanceClassification, "confidence 只能是三個等級之一", lambda s: s.update(confidence="sure")),
     (FinalSummary, "trajectory 至少一步", lambda s: s.update(trajectory=[])),
@@ -164,6 +163,31 @@ def test_invalid_sample_fails(model, change):
     change(sample)
     with pytest.raises(ValidationError):
         model.model_validate(sample)
+
+
+# Some models (Claude Haiku) write "" where the schema says null. Asked again for "content", they
+# pick a stance instead, so "" is read as no stance rather than failed.
+@pytest.mark.parametrize(
+    ("model", "blank", "read"),
+    [
+        (StanceClassification, lambda s: s.update(stance_id=""), lambda m: m.stance_id),
+        (
+            SoloTutorTurn,
+            lambda s: s["observations"].update(stance_id=""),
+            lambda m: m.observations.stance_id,
+        ),
+        (
+            FinalSummary,
+            lambda s: s["trajectory"][0].update(stance_id=""),
+            lambda m: m.trajectory[0].stance_id,
+        ),
+    ],
+    ids=["StanceClassification", "SoloTutorTurn", "FinalSummary"],
+)
+def test_an_empty_stance_id_means_no_stance(model, blank, read):
+    sample = deepcopy(VALID[model])
+    blank(sample)
+    assert read(model.model_validate(sample)) is None
 
 
 def test_summary_keeps_the_personal_summary_fields_and_carries_citations():

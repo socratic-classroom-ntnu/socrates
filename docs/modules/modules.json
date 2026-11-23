@@ -238,6 +238,22 @@
         "llm-runtime"
       ],
       "todo": []
+    },
+    {
+      "id": "notifications",
+      "name": "Notifications（通知中心）",
+      "status": "ok",
+      "about": "管理公告、動態計算通知與保存個人已讀紀錄。",
+      "paths": [
+        "backend/app/modules/notifications/"
+      ],
+      "uses": [
+        "platform",
+        "identity-access",
+        "course-management",
+        "admin"
+      ],
+      "todo": []
     }
   ],
   "contracts": [
@@ -381,6 +397,17 @@
       "state": "產生型別 ✅",
       "consumer": "後台：功能開關、意見回饋、管理員",
       "frontend": [
+        "admin"
+      ]
+    },
+    {
+      "name": "通知（/notifications、/admin/announcements）",
+      "backend": "notifications",
+      "source": "backend/app/modules/notifications/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "通知中心、進站公告、後台公告管理",
+      "frontend": [
+        "notifications",
         "admin"
       ]
     }
@@ -646,6 +673,21 @@
         "contract",
         "auth",
         "feedback"
+      ],
+      "todo": []
+    },
+    {
+      "id": "notifications",
+      "name": "通知中心",
+      "status": "ok",
+      "about": "通知列表、通知對話框、進站公告與未讀狀態。",
+      "paths": [
+        "frontend/src/features/notifications/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth"
       ],
       "todo": []
     }

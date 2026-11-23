@@ -94,7 +94,7 @@ test('marks current nav item', async () => {
 })
 
 // P22：側欄依帳號角色；兩邊都沒有「分組課」（路由不擋）
-test('a teacher sidebar lists home, the two banks and AI settings', async () => {
+test('a teacher sidebar lists notifications after AI settings', async () => {
   open('/')
   const nav = await screen.findByRole('navigation', { name: '主選單' })
   expect(within(within(nav).getByRole('list')).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
@@ -102,16 +102,18 @@ test('a teacher sidebar lists home, the two banks and AI settings', async () => 
     ['個人題庫', '/teacher/home?view=bank'],
     ['題庫商店', '/teacher/home?view=store'],
     ['AI 連線設定', '/teach/ai-settings'],
+    ['通知中心', '/notifications'],
   ])
 })
 
-test('a student sidebar lists home and my dialogues', async () => {
+test('a student sidebar lists notifications after my dialogues', async () => {
   asStudent()
   open('/')
   const nav = await screen.findByRole('navigation', { name: '主選單' })
   expect(within(within(nav).getByRole('list')).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
     ['首頁', '/'],
     ['我的對話', '/my-dialogues'],
+    ['通知中心', '/notifications'],
   ])
 })
 
@@ -295,6 +297,7 @@ test('with group mode on a teacher sidebar has group classes under home', async 
     ['個人題庫', '/teacher/home?view=bank'],
     ['題庫商店', '/teacher/home?view=store'],
     ['AI 連線設定', '/teach/ai-settings'],
+    ['通知中心', '/notifications'],
   ])
 })
 
@@ -350,6 +353,7 @@ describe('student phone', () => {
     expect(within(nav).getAllByRole('link').map(link => [link.textContent, link.getAttribute('href')])).toEqual([
       ['首頁', '/'],
       ['我的對話', '/my-dialogues'],
+      ['通知', '/notifications'],
     ])
     expect(within(nav).getByRole('link', { name: '首頁' })).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('button', { name: '我' })).toHaveAttribute('aria-expanded', 'false')

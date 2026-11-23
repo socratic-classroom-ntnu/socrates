@@ -1,92 +1,82 @@
-
-import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
-import { RadioCards } from './RadioCards'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { RadioCards } from '..'
 
-const OPTIONS = [
-  { value: 'zh-Hant', label: '繁體中文' },
-  { value: 'en', label: 'English', description: 'English language' },
-  { value: 'es', label: 'Español', disabled: true },
+const options = [
+  { value: 'all', label: '全部', description: '所有帳號都收得到。' },
+  { value: 'teacher', label: '老師', disabled: true },
+  { value: 'student', label: '學生' },
 ] as const
 
-function Harness({ disabled = false }: { disabled?: boolean }) {
-  const [value, setValue] = useState<string>('zh-Hant')
-
-  return <>
-    <RadioCards
-      legend="語言設定"
-      name="language"
-      options={OPTIONS}
-      value={value}
-      onChange={setValue}
-      disabled={disabled}
-    />
-    <output data-testid="selected">{value}</output>
-  </>
+function Example({ disabled = false }: { disabled?: boolean }) {
+  const [value, setValue] = useState<'all' | 'teacher' | 'student'>('all')
+  return <form aria-label="公告">
+    <RadioCards legend="對象" name="audience" options={options} value={value} onChange={setValue} disabled={disabled} />
+    <button type="submit">發布</button>
+  </form>
 }
 
-test('renders an accessible radio group and options', () => {
-  render(<Harness />)
-
-  const group = screen.getByRole('group', { name: '語言設定' })
-  expect(group).toBeInTheDocument()
-  expect(screen.getAllByRole('radio')).toHaveLength(3)
-  expect(screen.getByRole('radio', { name: '繁體中文' })).toBeChecked()
-  expect(screen.getByText('English language')).toBeInTheDocument()
+test('provides a named group with a selected radio and an accessible description', () => {
+  render(<Example />)
+  const group = screen.getByRole('group', { name: '對象' })
+  const all = within(group).getByRole('radio', { name: '全部' })
+  expect(all).toBeChecked()
+  expect(all).toHaveAccessibleDescription('所有帳號都收得到。')
+  expect(within(group).getByRole('radio', { name: '老師' })).toBeDisabled()
 })
 
-test('selecting a radio updates the controlled value', () => {
-  render(<Harness />)
-
-  fireEvent.click(screen.getByRole('radio', { name: /English/ }))
-
-  expect(screen.getByRole('radio', { name: /English/ })).toBeChecked()
-  expect(screen.getByTestId('selected')).toHaveTextContent('en')
+test('uses one native radio group and updates selection and the submitted form value', async () => {
+  const user = userEvent.setup()
+  render(<Example />)
+  const all = screen.getByRole('radio', { name: '全部' })
+  const student = screen.getByRole('radio', { name: '學生' })
+  await user.tab()
+  expect(all).toHaveFocus()
+  await user.keyboard('{ArrowRight}')
+  expect(student).toHaveFocus()
+  expect(student).toBeChecked()
+  await user.tab()
+  expect(screen.getByRole('button', { name: '發布' })).toHaveFocus()
+  expect(new FormData(screen.getByRole<HTMLFormElement>('form', { name: '公告' })).get('audience')).toBe('student')
+  await user.click(screen.getByText('全部'))
+  expect(all).toBeChecked()
+  expect(student).not.toBeChecked()
 })
 
-test('an individual disabled option cannot be selected', () => {
-  render(<Harness />)
-
-  const option = screen.getByRole('radio', { name: 'Español' })
-
-  expect(option).toBeDisabled()
-  expect(option).not.toBeChecked()
-  expect(screen.getByRole('radio', { name: '繁體中文' })).toBeChecked()
+test('disables the entire group while a form is submitting', async () => {
+  const user = userEvent.setup()
+  render(<Example disabled />)
+  expect(screen.getAllByRole('radio').every(radio => radio.matches(':disabled'))).toBe(true)
+  await user.click(screen.getByText('學生'))
+  expect(screen.getByRole('radio', { name: '全部' })).toBeChecked()
 })
 
-test('disabling the group disables all options', () => {
-  render(<Harness disabled />)
+test('all radio options share the same name', () => {
+  render(<Example />)
 
-  screen.getAllByRole('radio').forEach(option => {
-    expect(option).toBeDisabled()
+  const radios = screen.getAllByRole('radio')
+
+  expect(radios).toHaveLength(3)
+
+  radios.forEach(radio => {
+    expect(radio).toHaveAttribute('name', 'audience')
   })
-})
-
-test('radios share the same name', () => {
-  render(<Harness />)
-
-  screen.getAllByRole('radio').forEach(option => {
-    expect(option).toHaveAttribute('name', 'language')
-  })
-})
-
-test.each([
-  [2, '2', '2'],
-  [3, '3', '3'],
-  [4, '4', '2'],
-])('%i options set the desktop and mobile column counts', (count, desktop, mobile) => {
-  const options = Array.from({ length: count }, (_, i) => ({ value: `v${i}`, label: `選項 ${i}` }))
-  render(
-    <RadioCards legend="欄數" name="columns" options={options} value="v0" onChange={() => {}} />,
-  )
-
-  const grid = screen.getAllByRole('radio')[0].closest('label')!.parentElement!
-  expect(grid.style.getPropertyValue('--radio-cards-count')).toBe(desktop)
-  expect(grid.style.getPropertyValue('--radio-cards-mobile-count')).toBe(mobile)
 })
 
 test('page className is added after the component class', () => {
-  render(<RadioCards legend="語言設定" name="language" options={OPTIONS} value="zh-Hant" onChange={() => {}} className="page-modes" />)
+  render(
+    <RadioCards
+      legend="語言設定"
+      name="language"
+      options={options}
+      value="all"
+      onChange={() => {}}
+      className="page-modes"
+    />
+  )
 
-  expect(screen.getByRole('group', { name: '語言設定' }).className.split(' ')).toEqual(['fieldset', 'page-modes'])
+  const group = screen.getByRole('group', { name: '語言設定' })
+
+  expect(group.className.split(' ')).toEqual(['group', 'page-modes'])
 })

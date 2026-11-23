@@ -11,8 +11,11 @@ import { useLogout } from './accountSummary'
 import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
+import { NotificationBell } from '../features/notifications/NotificationBell'
+import { NotificationLayer } from '../features/notifications/NotificationLayer'
+import { useNotifications } from '../features/notifications/NotificationsProvider'
 
-type NavKey = 'home' | 'dialogues' | 'groups' | 'bank' | 'store' | 'settings' | 'admin'
+type NavKey = 'home' | 'dialogues' | 'groups' | 'bank' | 'store' | 'settings' | 'notifications' | 'admin'
 
 const icon = (path: ReactNode) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 
@@ -25,14 +28,15 @@ const ITEMS: { key: NavKey; href: string; icon: ReactNode; fullLoad?: true }[] =
   { key: 'bank', href: '/teacher/home?view=bank', fullLoad: true, icon: icon(<path d="M4 4v16M9 4v16M14 4l5 16" />) },
   { key: 'store', href: '/teacher/home?view=store', fullLoad: true, icon: icon(<><path d="M4 9l1.5-5h13L20 9" /><path d="M4 9h16v11H4z" /><path d="M9 20v-6h6v6" /></>) },
   { key: 'settings', href: '/teach/ai-settings', icon: icon(<><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>) },
+  { key: 'notifications', href: '/notifications', icon: <NotificationBell /> },
 ]
 
 // 帳號只有一個角色（P22）：側欄依角色。「分組課」只給老師，而且要多人模式開著（後台開關，Fizzy 11/18）；
 // 開關還沒讀到或讀取失敗都不顯示，跟 GroupModeGate 一致。學生進分組教室靠加入碼或連結，沒有入口。
 // 訪客的角色一律是學生，側欄跟學生一樣：「我的對話」點進去是註冊後才能使用的說明頁。
 const NAV_BY_ROLE: Record<'student' | 'teacher', NavKey[]> = {
-  student: ['home', 'dialogues'],
-  teacher: ['home', 'groups', 'bank', 'store', 'settings'],
+  student: ['home', 'dialogues', 'notifications'],
+  teacher: ['home', 'groups', 'bank', 'store', 'settings', 'notifications'],
 }
 
 const ADMIN_ICON = icon(<><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" /><path d="M9 12l2 2 4-4" /></>)
@@ -50,6 +54,7 @@ function writeCollapsed(value: boolean): void {
 export function activeItem(pathname: string, search: string): NavKey | null {
   if (/^\/admin(\/|$)/.test(pathname)) return 'admin'
   if (/^\/my-dialogues\/?$/.test(pathname)) return 'dialogues'
+  if (/^\/notifications\/?$/.test(pathname)) return 'notifications'
   if (/^\/teach\/ai-settings\/?$/.test(pathname)) return 'settings'
   if (pathname === '/' || pathname.startsWith('/learn/') || pathname.startsWith('/teach/')) return 'home'
   if (/^\/groups\/?$/.test(pathname) || pathname.startsWith('/teacher/courses/')) return 'groups'
@@ -65,6 +70,7 @@ export function activeItem(pathname: string, search: string): NavKey | null {
 export function AppShell({ children }: { children?: ReactNode } = {}) {
   const { t } = useT('shell')
   const { account } = useAuth()
+  const hasUnread = useNotifications()?.hasUnread ?? false
   const { pathname, search } = useLocation()
   const phone = useIsPhone()
   const [collapsed, setCollapsed] = useState(readCollapsed)
@@ -92,6 +98,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
       <InsideAppShell.Provider value={true}>{children ?? <Outlet />}</InsideAppShell.Provider>
     </ShellBackContext.Provider>
     </ShellActiveContext.Provider>
+    <NotificationLayer />
   </div>
 
   if (phone) {
@@ -107,7 +114,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
         {content}
       </div>
     }
-    return <StudentPhoneShell top={top} active={active} name={account?.username ?? ''}>{content}</StudentPhoneShell>
+    return <StudentPhoneShell top={top} active={active} name={account?.username ?? ''} hasUnread={hasUnread}>{content}</StudentPhoneShell>
   }
 
   return <div className={'app-shell' + (collapsed ? ' app-shell--collapsed' : '')}>
@@ -119,12 +126,15 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
       </Link>
       <ul className="app-shell__items">
         {navItems.map(item => {
+          const unread = item.key === 'notifications' && hasUnread
           const props = {
             'aria-current': active === item.key ? 'page' as const : undefined,
-            'aria-label': collapsed ? item.label : undefined,
+            'aria-label': unread ? `${item.label} ${t('nav.unread')}` : collapsed ? item.label : undefined,
             title: collapsed ? item.label : undefined,
           }
-          const body = <>{item.icon}{!collapsed && item.label}</>
+          const body = <>{item.icon}{!collapsed && item.label}
+            {unread && <span className="app-shell__unread" aria-hidden="true" />}
+          </>
           return <li key={item.key} className={item.separated ? 'app-shell__separated' : undefined}>
             {item.fullLoad ? <a href={item.href} {...props}>{body}</a> : <Link to={item.href} {...props}>{body}</Link>}
           </li>
@@ -149,10 +159,12 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
 }
 
 /**
- * 學生手機（P24–P26）：頂部列沒有頭像；最下方底部導覽「首頁」「我」（「我的對話」那格由另一份需求加），
+ * 學生手機（P24–P26）：頂部列沒有頭像；最下方是首頁、我的對話、通知、我。
  * 頭像移到「我」，點了從下方滑出帳號面板。對話頁不在外框裡，所以沒有底部導覽。
  */
-function StudentPhoneShell({ top, active, name, children }: { top: ReactNode; active: NavKey | null; name: string; children: ReactNode }) {
+function StudentPhoneShell({ top, active, name, hasUnread, children }: {
+  top: ReactNode; active: NavKey | null; name: string; hasUnread: boolean; children: ReactNode
+}) {
   const { t } = useT('shell')
   const [sheet, setSheet] = useState(false)
   const logout = useLogout()
@@ -171,6 +183,7 @@ function StudentPhoneShell({ top, active, name, children }: { top: ReactNode; ac
     {!typing && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
       { key: 'home', label: t('nav.home'), icon: ITEMS[0].icon, to: '/', current: active === 'home' },
       { key: 'dialogues', label: t('nav.dialogues'), icon: ITEMS[1].icon, to: '/my-dialogues', current: active === 'dialogues' },
+      { key: 'notifications', label: t('nav.notificationsShort'), icon: <NotificationBell mobile />, to: '/notifications', current: active === 'notifications', dotLabel: hasUnread ? t('nav.unread') : undefined },
       { key: 'me', label: t('nav.me'), icon: <Avatar name={name} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
     ]} />}
     {sheet && <AccountSheet onClose={() => setSheet(false)} onLogout={logout.request} />}

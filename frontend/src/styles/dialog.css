@@ -9,6 +9,9 @@
   box-sizing: border-box; border-radius: 16px; background: var(--ui-color-panel); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
 }
 .dialog__header { display: flex; align-items: center; gap: 12px; padding: 22px 28px 8px; }
+.dialog__heading { min-width: 0; flex: 1; display: grid; gap: 8px; justify-items: start; }
+.dialog__heading h2 { display: block; }
+.dialog__heading + .dialog__close { align-self: flex-start; }
 .dialog__header h2 {
   min-width: 0; flex-grow: 1; margin: 0; overflow: hidden; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
@@ -31,6 +34,7 @@
   padding: 16px 28px; border-top: 1px solid #ECECE8;
 }
 .dialog__panel--wide { width: 820px; }
+.dialog__panel--medium { width: 640px; }
 .dialog__panel--danger .dialog__header { border-bottom: 1px solid #ECECE8; padding-bottom: 16px; }
 .dialog--right { align-items: stretch; justify-content: flex-end; padding: 0; }
 .dialog--right .dialog__panel { width: 460px; max-height: none; height: 100%; border-radius: 0; box-shadow: -12px 0 32px rgba(0, 0, 0, 0.16); }

@@ -23,12 +23,13 @@ from app.modules.course_management.enrollment import (
 )
 from app.modules.course_management.guest_records import HOOK as course_guest_records
 from app.modules.identity_access.service import register_guest_hook, registered_guest_hooks
+from app.modules.notifications.guest_records import HOOK as notification_guest_records
 from app.modules.solo_activity.enrollment_records import HOOK as solo_enrollment_records
 from app.modules.solo_activity.guest_records import HOOK as solo_guest_records
 
 # Every module that keeps a guest's records. Without one, logging in would leave that module's
 # records with the guest, and expiry would keep the guest's name there.
-REQUIRED_GUEST_HOOKS = frozenset({"course-management", "solo-activity"})
+REQUIRED_GUEST_HOOKS = frozenset({"course-management", "solo-activity", "notifications"})
 # Every module that keeps a student's answers in a course's activities. Without one, removing a
 # student from a course would leave that module's answers behind.
 REQUIRED_ENROLLMENT_HOOKS = frozenset({"solo-activity"})
@@ -46,6 +47,7 @@ def install() -> None:
     extend_account_view(account_classroom_progress)
     register_guest_hook("course-management", course_guest_records)
     register_guest_hook("solo-activity", solo_guest_records)
+    register_guest_hook("notifications", notification_guest_records)
     register_enrollment_hook("solo-activity", solo_enrollment_records)
 
 

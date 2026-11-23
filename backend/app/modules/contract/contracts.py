@@ -22,6 +22,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ADMIN_NOT_FOUND": ("admin", "identity_access"),
     "ADMIN_TOGGLE_NOT_FOUND": ("admin",),
     "ADMIN_UNVERIFIED": ("identity_access",),
+    "ANNOUNCEMENT_INVALID": ("notifications",),
     "ACTIVITY_NOT_FOUND": (
         "course_management",
         "solo_activity",

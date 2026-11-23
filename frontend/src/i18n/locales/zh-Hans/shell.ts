@@ -3,6 +3,9 @@ import type { Shape } from '../../shape';
 
 const shell: Shape<typeof zhHant> = {
   nav: {
+    notifications: "通知中心",
+    notificationsShort: "通知",
+    unread: "有未读",
     admin: '后台',
     label: '主菜单',
     home: '首页',

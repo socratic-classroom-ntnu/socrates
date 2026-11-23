@@ -327,7 +327,7 @@ const identityContracts = path.resolve(__dirname, '../../../../backend/app/modul
 const withBackend = fs.existsSync(identityContracts) ? test : test.skip
 
 withBackend('register limits match the backend Register contract', () => {
-  const source = fs.readFileSync(identityContracts, 'utf8')
+  const source = fs.readFileSync(identityContracts, 'utf8').replace(/\r\n/g, '\n')
   // 帳密三欄在 Credentials（Register 與訪客升級共用），Register 另加 account_role
   const register = source.match(/class Credentials\(Strict\):([\s\S]*?)\n\n/)?.[1] || ''
   expect(source).toMatch(/class Register\(Credentials\):\n[\s\S]*?account_role: AccountRole \| None = None/)

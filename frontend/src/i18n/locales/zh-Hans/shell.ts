@@ -24,7 +24,7 @@ const shell: Shape<typeof zhHant> = {
       hide: '隐藏{{field}}',
       required: '请输入当前密码',
       invalid: '新密码需为 8～32 个字符，包含英文大小写字母、数字及特殊字符',
-      unchanged: '新密码不能与当前密码相同',
+      rateLimited: '尝试太多次，请稍后再试',
       incorrect: '当前密码不正确',
       unavailable: '此账号无法使用密码修改功能',
       failure: '密码修改失败，请确认登录状态后重试',

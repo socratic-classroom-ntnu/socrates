@@ -99,7 +99,7 @@ def roster_view(db: Session, account: Account, course_id: str, at: float) -> dic
 
     count = {
         name: sum(1 for k in kinds.values() if k["kind"] == name)
-        for name in ("registered", "guest", "expired_guest")
+        for name in ("registered", "guest", "expired_guest", "deleted")
     }
     return {
         "course_id": course.id,
@@ -111,6 +111,7 @@ def roster_view(db: Session, account: Account, course_id: str, at: float) -> dic
             "registered": count["registered"],
             "guests": count["guest"],
             "expired_guests": count["expired_guest"],
+            "deleted": count["deleted"],
         },
         "students": students,
     }

@@ -97,9 +97,6 @@ def change_password(db, account, current_password: str, new_password: str):
     except (VerifyMismatchError, InvalidHashError) as exc:
         raise DomainError("CURRENT_PASSWORD_INVALID", 400) from exc
 
-    if secrets.compare_digest(current_password, new_password):
-        raise DomainError("PASSWORD_UNCHANGED", 400)
-
     account.password_hash = HASHER.hash(new_password)
 
     return {"status": "PASSWORD_CHANGED"}

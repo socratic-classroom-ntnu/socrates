@@ -1,6 +1,6 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
-import { api } from '../../contract/classroomClient'
+import { ApiError, api } from '../../contract/classroomClient'
 import { useT } from '../../i18n/useT'
 import { Button } from '../../ui'
 import styles from './ChangePasswordDialog.module.css'
@@ -66,7 +66,7 @@ export function ChangePasswordDialog({ onClose, onSuccess }: Props) {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<'' | 'required' | 'invalid' | 'mismatch' | 'unchanged' | 'incorrect' | 'unavailable' | 'failure'>('')
+  const [error, setError] = useState<'' | 'required' | 'invalid' | 'mismatch' | 'incorrect' | 'rateLimited' | 'unavailable' | 'failure'>('')
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -98,11 +98,6 @@ export function ChangePasswordDialog({ onClose, onSuccess }: Props) {
       return
     }
 
-    if (currentPassword === newPassword) {
-      setError('unchanged')
-      return
-    }
-
     setBusy(true)
 
     try {
@@ -113,20 +108,13 @@ export function ChangePasswordDialog({ onClose, onSuccess }: Props) {
 
       onSuccess()
     } catch (caught) {
-      const response = (
-        caught as {
-          response?: {
-            data?: { detail?: unknown }
-          }
-        }
-      ).response
-
-      const detail = response?.data?.detail
+      // classroomClient 把失敗轉成 ApiError，錯誤碼在 detail
+      const detail = caught instanceof ApiError ? caught.detail : undefined
 
       if (detail === 'CURRENT_PASSWORD_INVALID') {
         setError('incorrect')
-      } else if (detail === 'PASSWORD_UNCHANGED') {
-        setError('unchanged')
+      } else if (detail === 'PASSWORD_CHANGE_RATE_LIMITED') {
+        setError('rateLimited')
       } else if (detail === 'PASSWORD_CHANGE_UNAVAILABLE') {
         setError('unavailable')
       } else {

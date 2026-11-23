@@ -199,6 +199,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '{{count}} matching',
     range: 'Showing {{from}}–{{to}}',
     separator: ' · ',
+    deleted: '{{count}} deleted',
     paging: 'Student list pages',
     previous: 'Previous',
     next: 'Next',
@@ -215,6 +216,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: 'Guest',
     expired: 'Expired guest {{number}}',
+    deleted: 'Deleted account',
   },
   transcript: {
     blank: '(Not explained yet)',

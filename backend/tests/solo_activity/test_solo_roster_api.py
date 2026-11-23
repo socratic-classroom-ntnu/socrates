@@ -103,7 +103,13 @@ def test_who_is_on_the_roster_and_what_it_shows(client, tutor):
     assert (
         enrollment_of(s["teacher"]["id"], course_id) not in students
     )  # the owner is not a student
-    assert view["summary"] == {"total": 3, "registered": 1, "guests": 1, "expired_guests": 1}
+    assert view["summary"] == {
+        "total": 3,
+        "registered": 1,
+        "guests": 1,
+        "expired_guests": 1,
+        "deleted": 0,
+    }
 
     registered = students[enrollment_of(s["student"]["id"], course_id)]
     assert registered["kind"] == "registered"

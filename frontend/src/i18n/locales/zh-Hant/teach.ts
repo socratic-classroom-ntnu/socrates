@@ -186,6 +186,7 @@ export default {
     matched: '符合 {{count}} 位',
     range: '顯示第 {{from}}–{{to}} 位',
     separator: '・',
+    deleted: '已刪除 {{count}} 位',
     paging: '名單分頁',
     previous: '上一頁',
     next: '下一頁',
@@ -202,6 +203,7 @@ export default {
   guest: {
     tag: '訪客',
     expired: '過期訪客 {{number}}',
+    deleted: '已刪除的帳號',
   },
   transcript: {
     blank: '（還沒說明）',

@@ -55,6 +55,20 @@ def forget_sessions(db: Session, token_hashes: list[str]) -> None:
     db.execute(delete(LoginSession).where(LoginSession.token_hash.in_(token_hashes)))
 
 
+def sign_out_other_sessions(db: Session, account_id: str, keep: str) -> None:
+    """End every login session of the account except ``keep`` (after a password change)."""
+    forget_sessions(
+        db,
+        list(
+            db.scalars(
+                select(LoginSession.token_hash).where(
+                    LoginSession.account_id == account_id, LoginSession.token_hash != keep
+                )
+            )
+        ),
+    )
+
+
 def anonymize_account_mail(db: Session, account_id: str) -> None:
     """Cancel queued mail and remove stored personal mail content."""
     rows = db.execute(

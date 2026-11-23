@@ -41,6 +41,7 @@ from app.modules.identity_access import avatar
 from app.modules.identity_access.account_deletion import (
     anonymize_account,
     owned_courses,
+    sign_out_other_sessions,
 )
 from app.modules.platform.errors import DomainError
 from app.modules.platform.storage import transaction
@@ -118,19 +119,18 @@ def update_profile(body: ProfileUpdate, request: Request):
 @router.put("/account/password", response_model=ChangePasswordView)
 def update_password(body: ChangePasswordRequest, request: Request):
     with transaction() as db:
-        a, _ = account(
-            db,
-            request,
-            mutation=True,
-            verified=False,
+        a, _ = account(db, request, mutation=True, verified=False)
+        # Five tries per account in ten minutes, right or wrong. Counted in a transaction of its
+        # own, so a wrong current password (which rolls the change back) still counts.
+        enforce_rate_limit(
+            db, "account-password:" + a.id, 5, 600, error_code="PASSWORD_CHANGE_RATE_LIMITED"
         )
-
-        return auth.change_password(
-            db,
-            a,
-            body.current_password,
-            body.new_password,
-        )
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        result = auth.change_password(db, a, body.current_password, body.new_password)
+        # Every other device signs in again with the new password; this one stays.
+        sign_out_other_sessions(db, a.id, s.token_hash)
+        return result
 
 
 @router.put("/account/avatar", response_model=AccountView)

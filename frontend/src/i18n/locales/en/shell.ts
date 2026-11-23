@@ -24,7 +24,7 @@ const shell: Shape<typeof zhHant> = {
       hide: 'Hide: {{field}}',
       required: 'Enter your current password',
       invalid: 'New password must be 8–32 characters and include uppercase and lowercase English letters, a number, and a special character',
-      unchanged: 'New password must differ from your current password',
+      rateLimited: 'Too many tries. Try again later.',
       incorrect: 'Current password is incorrect',
       unavailable: 'Password changes are unavailable for this account',
       failure: 'Failed to change password. Check that you are signed in and try again.',

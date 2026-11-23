@@ -107,7 +107,6 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "LOGIN_REQUIRED": ("ai_providers", "identity_access"),
     "ORIGIN_BINDING_REQUIRED": ("identity_access",),
     "PASSWORD_CHANGE_UNAVAILABLE": ("identity_access",),
-    "PASSWORD_UNCHANGED": ("identity_access",),
     "PERSONAL_CONFIRM_REQUIRED": ("group_dialogue",),
     "PERSONAL_DIALOGUE_REQUIRED": ("group_dialogue",),
     "PERSONAL_RETRY_REQUIRED": ("group_dialogue",),
@@ -164,6 +163,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
 }
 
 DYNAMIC_REASON_CODES: tuple[str, ...] = (
+    # 個人設定的變更密碼次數限制，由 enforce_rate_limit 的 error_code 帶出（identity_access/routes.py）。
+    "PASSWORD_CHANGE_RATE_LIMITED",
     # The teacher's AI 連線設定 form checks and test kinds, raised with this prefix by
     # ai_connection/service.py.
     "AI_CONNECTION_ADAPTER_INVALID",

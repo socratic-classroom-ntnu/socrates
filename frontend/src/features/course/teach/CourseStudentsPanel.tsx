@@ -36,7 +36,7 @@ export function CourseStudentsPanel({ courseId, onChanged }: { courseId: string;
   const now = new Date(data.generated_at * 1000)
   const shownName = (student: Student) => student.kind === 'expired_guest'
     ? t('guest.expired', { number: student.guest_number ?? '' })
-    : student.display_name
+    : student.kind === 'deleted' ? t('guest.deleted') : student.display_name
   const matched = data.students.filter(student => matchesSearch(shownName(student), student.email, query))
   const current = clampPage(page, matched.length, PAGE_SIZE)
   const range = pageRange(current, matched.length, PAGE_SIZE)
@@ -45,6 +45,7 @@ export function CourseStudentsPanel({ courseId, onChanged }: { courseId: string;
 
   const footer = [
     t('students.summary', { total: summary.total, registered: summary.registered, guests: summary.guests, expired: summary.expired_guests }),
+    ...(summary.deleted > 0 ? [t('students.deleted', { count: summary.deleted })] : []),
     ...(query.trim() ? [t('students.matched', { count: matched.length })] : []),
     ...(matched.length > 0 ? [t('students.range', { from: range.from, to: range.to })] : []),
   ].join(t('students.separator'))

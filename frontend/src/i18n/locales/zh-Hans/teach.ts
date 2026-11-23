@@ -175,6 +175,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '符合 {{count}} 位',
     range: '显示第 {{from}}–{{to}} 位',
     separator: '・',
+    deleted: '已删除 {{count}} 位',
     paging: '名单分页',
     previous: '上一页',
     next: '下一页',
@@ -191,6 +192,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: '访客',
     expired: '过期访客 {{number}}',
+    deleted: '已删除的账号',
   },
   transcript: {
     blank: '（还没说明）',

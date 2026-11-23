@@ -3125,7 +3125,8 @@
                 "enum": [
                   "registered",
                   "guest",
-                  "expired_guest"
+                  "expired_guest",
+                  "deleted"
                 ],
                 "type": "string"
               },
@@ -7214,7 +7215,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -7777,7 +7779,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -7810,6 +7813,10 @@
       "SoloRosterSummaryView": {
         "additionalProperties": false,
         "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "integer"
+          },
           "expired_guests": {
             "title": "Expired Guests",
             "type": "integer"
@@ -7831,7 +7838,8 @@
           "total",
           "registered",
           "guests",
-          "expired_guests"
+          "expired_guests",
+          "deleted"
         ],
         "title": "SoloRosterSummaryView",
         "type": "object"
@@ -8005,7 +8013,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -8593,7 +8602,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"

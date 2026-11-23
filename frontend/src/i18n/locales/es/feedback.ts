@@ -45,6 +45,7 @@ export default {
       anonymous: 'Sin sesión',
     },
     expiredGuest: 'Invitado vencido',
+    deletedAccount: 'Cuenta eliminada',
     nowAccount: 'ahora {{name}}',
     noKind: '—',
     openDetail: 'Ver detalles',

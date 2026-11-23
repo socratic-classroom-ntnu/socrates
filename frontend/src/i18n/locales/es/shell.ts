@@ -24,7 +24,7 @@ const shell: Shape<typeof zhHant> = {
       hide: 'Ocultar: {{field}}',
       required: 'Introduce tu contraseña actual',
       invalid: 'La nueva contraseña debe tener entre 8 y 32 caracteres e incluir letras inglesas mayúsculas y minúsculas, un número y un carácter especial',
-      unchanged: 'La nueva contraseña debe ser distinta de la actual',
+      rateLimited: 'Demasiados intentos. Vuelve a intentarlo más tarde.',
       incorrect: 'La contraseña actual es incorrecta',
       unavailable: 'No se puede cambiar la contraseña de esta cuenta',
       failure: 'No se pudo cambiar la contraseña. Comprueba que has iniciado sesión e inténtalo de nuevo.',

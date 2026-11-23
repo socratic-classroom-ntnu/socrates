@@ -21,7 +21,7 @@ export default {
       hide: '隱藏{{field}}',
       required: '請輸入目前密碼',
       invalid: '新密碼需為 8～32 字元，包含英文大小寫、數字及特殊字元',
-      unchanged: '新密碼不能與目前密碼相同',
+      rateLimited: '嘗試太多次，請稍後再試',
       incorrect: '目前密碼不正確',
       unavailable: '此帳號無法使用密碼變更功能',
       failure: '密碼修改失敗，請確認登入狀態後再試',

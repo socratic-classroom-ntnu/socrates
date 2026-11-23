@@ -1,4 +1,3 @@
-
 from types import SimpleNamespace
 
 from app.modules.identity_access.auth import display_name

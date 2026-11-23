@@ -19,6 +19,7 @@ from app.modules.identity_access.email_delivery import (
     queue_delivery,
 )
 from app.modules.platform.errors import DomainError
+from app.modules.identity_access import avatar
 from app.modules.identity_access.guests import merge_guest_records
 from app.modules.identity_access.repositories import Account, EmailToken, LoginSession, Mail
 from app.modules.platform.storage import digest, transaction
@@ -58,13 +59,12 @@ def display_name(account) -> str:
     return account.display_name_override or account.username
 
 
-
 def account_view(db, account, csrf=""):
     view = {
         "id": account.id,
         "username": account.username,
         "display_name": display_name(account),
-        "avatar_url": (f"/account/avatar/{account.avatar_filename}"if account.avatar_filename else None),
+        "avatar_updated_at": avatar.version(db, account.id),
         "email": account.email or "",
         "email_masked": mask_recipient(account.email) if account.email else "",
         "verified": account.verified,
@@ -103,6 +103,7 @@ def change_password(db, account, current_password: str, new_password: str):
     account.password_hash = HASHER.hash(new_password)
 
     return {"status": "PASSWORD_CHANGED"}
+
 
 def _new_session(db, account):
     token = secrets.token_urlsafe(32)
@@ -306,11 +307,7 @@ def login(body, guest_token=None):
             )
         )
         # Equal-work password verification also applies to unknown accounts and to guests.
-        if (
-            account is None
-            or account.kind != "registered"
-            or account.password_hash is None
-        ):
+        if account is None or account.kind != "registered" or account.password_hash is None:
             HASHER.hash(body.password)
             raise DomainError("AUTH_INVALID_CREDENTIALS", 401)
         try:

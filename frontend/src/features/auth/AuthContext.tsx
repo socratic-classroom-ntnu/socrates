@@ -5,7 +5,7 @@ import type { components } from '../../contract/classroomTypes'
 import { publishDevAccount } from '../dev-console/devConsoleStore'
 import { applyLocale, currentLocale } from '../../i18n'
 
-export type Account = components['schemas']['AccountView'] & {avatar_url?: string | null}
+export type Account = components['schemas']['AccountView']
 type Status = 'loading' | 'anonymous' | 'ready'
 
 type Auth = {

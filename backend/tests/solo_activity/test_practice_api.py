@@ -99,6 +99,7 @@ def test_starting_builds_a_private_course_an_open_activity_and_an_attempt(client
         attempt = db.get(SoloAttempt, started["attempt_id"])
         assert (attempt.activity_id, attempt.account_id) == (activity.id, student["id"])
 
+
 def test_private_course_uses_custom_display_name_without_overwriting_existing_enrollment(
     client, student, at
 ):
@@ -115,9 +116,7 @@ def test_private_course_uses_custom_display_name_without_overwriting_existing_en
     assert first.status_code == 201, first.text
 
     with storage.transaction() as db:
-        enrollment = db.scalar(
-            select(Enrollment).where(Enrollment.account_id == student["id"])
-        )
+        enrollment = db.scalar(select(Enrollment).where(Enrollment.account_id == student["id"]))
         assert enrollment is not None
         assert enrollment.display_name == "小慧"
         course_id = enrollment.course_id
@@ -143,6 +142,7 @@ def test_private_course_uses_custom_display_name_without_overwriting_existing_en
         assert enrollments[0].display_name == "小慧"
 
     assert count(Course) == 1
+
 
 def test_the_same_topic_can_be_started_again_in_the_same_private_course(client, student, at):
     first, second = start(client).json(), start(client).json()

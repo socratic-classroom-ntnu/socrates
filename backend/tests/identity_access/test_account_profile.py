@@ -1,5 +1,4 @@
-
-from tests.course_management.conftest import PASSWORD, user, client
+from tests.course_management.conftest import PASSWORD, user
 
 
 def test_update_display_name_roundtrip(client):
@@ -86,6 +85,7 @@ def test_profile_requires_login(client):
     )
 
     assert response.status_code == 401
+
 
 def test_guest_cannot_update_display_name(client):
     response = client.post(

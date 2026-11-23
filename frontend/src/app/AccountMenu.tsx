@@ -8,7 +8,7 @@ import { useT } from '../i18n/useT'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
 import { GUEST_REGISTER, RoleTag, useAccountSummary, useLogout } from './accountSummary'
 import { useAuth } from '../features/auth/AuthContext'
-import { avatarSrc } from '../features/account/avatarApi'
+import { avatarSrc } from '../contract/accountClient'
 
 export type NavEntry = { key: string; label: string; href: string; icon: ReactNode; fullLoad?: boolean; separated?: boolean }
 
@@ -24,7 +24,7 @@ export function AccountMenu({ variant }: { variant: 'sidebar' | 'collapsed' | 't
   const navigate = useNavigate()
   const { name, tag, tagLabel, guest, secondLine } = useAccountSummary()
   const { account } = useAuth()
-  const avatarUrl = avatarSrc(account?.avatar_url)
+  const avatarUrl = avatarSrc(account)
   const logout = useLogout()
 
   const language: MenuItem = {

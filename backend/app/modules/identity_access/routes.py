@@ -30,23 +30,22 @@ from app.modules.identity_access.contracts import (
     VerificationMailView,
     VerificationStatusView,
     VerifiedView,
+    AvatarUpload,
     ChangePasswordRequest,
     ChangePasswordView,
     DeleteAccountRequest,
     DeleteAccountView,
     DeleteAccountCoursesView,
 )
-from app.modules.platform.errors import DomainError
-from app.modules.platform.storage import transaction
-from fastapi import File, UploadFile
-from fastapi.responses import FileResponse
-
-from app.modules.identity_access.avatar import (save_avatar,avatar_path,delete_avatar,)
-router = APIRouter()
+from app.modules.identity_access import avatar
 from app.modules.identity_access.account_deletion import (
     anonymize_account,
     owned_courses,
 )
+from app.modules.platform.errors import DomainError
+from app.modules.platform.storage import transaction
+
+router = APIRouter()
 
 
 @router.post("/auth/register", response_model=AccountView)
@@ -102,6 +101,7 @@ def update_locale(body: LocaleUpdate, request: Request):
         auth.set_locale(a, body.locale)
         return auth.account_view(db, a, s.csrf_token)
 
+
 @router.patch("/account/profile", response_model=AccountView)
 def update_profile(body: ProfileUpdate, request: Request):
     with transaction() as db:
@@ -113,6 +113,7 @@ def update_profile(body: ProfileUpdate, request: Request):
         )
         a.display_name_override = body.display_name
         return auth.account_view(db, a, s.csrf_token)
+
 
 @router.put("/account/password", response_model=ChangePasswordView)
 def update_password(body: ChangePasswordRequest, request: Request):
@@ -131,47 +132,36 @@ def update_password(body: ChangePasswordRequest, request: Request):
             body.new_password,
         )
 
-@router.post("/account/avatar", response_model=AccountView)
-async def upload_account_avatar(request: Request, file: UploadFile = File(...)):
-    filename = None
 
-    try:
-        with transaction() as db:
-            a, s = account(
-                db,
-                request,
-                mutation=True,
-                verified=False,
-            )
-
-            data = await file.read(5 * 1024 * 1024 + 1)
-            filename = save_avatar(data)
-
-            previous = a.avatar_filename
-            a.avatar_filename = filename
-            result = auth.account_view(db, a, s.csrf_token)
-
-    except Exception:
-        if filename:
-            delete_avatar(filename)
-        raise
-
-    if previous:
-        delete_avatar(previous)
-
-    return result
+@router.put("/account/avatar", response_model=AccountView)
+def put_account_avatar(body: AvatarUpload, request: Request):
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        avatar.save(db, a.id, body.mime, avatar.decode(body.mime, body.data_base64))
+        return auth.account_view(db, a, s.csrf_token)
 
 
+@router.get(
+    "/account/avatar",
+    response_model=bytes,
+    response_class=Response,
+    responses={200: {"content": {"image/jpeg": {}, "image/png": {}}}},
+)
+def get_account_avatar(request: Request) -> Response:
+    """The picture itself, for <img>: the page adds ?v=<avatar_updated_at> so a new one is read.
 
-@router.get("/account/avatar/{filename}")
-def get_account_avatar(filename: str):
-    path = avatar_path(filename)
-    if not path.is_file():
-        raise DomainError("AVATAR_NOT_FOUND", 404)
+    Typed as bytes so the contract gate sees a response model; returning a Response skips it.
+    """
+    with transaction() as db:
+        a, _ = account(db, request, verified=False)
+        mime, image = avatar.read(db, a.id)
+    return Response(image, media_type=mime, headers={"Cache-Control": "private, no-cache"})
 
-    return FileResponse(path, media_type="image/png")
 
-@router.get("/account/deletion-check",response_model=DeleteAccountCoursesView,)
+@router.get(
+    "/account/deletion-check",
+    response_model=DeleteAccountCoursesView,
+)
 def check_account_deletion(request: Request):
     """Check whether the current account can be deleted."""
 
@@ -185,31 +175,18 @@ def check_account_deletion(request: Request):
         courses = owned_courses(db, a.id)
 
         return {
-            "can_delete": (
-                a.kind == "registered"
-                and len(courses) == 0
-            ),
+            "can_delete": (a.kind == "registered" and len(courses) == 0),
             "courses": courses,
         }
+
 
 @router.delete("/account/avatar", response_model=AccountView)
 def delete_account_avatar(request: Request):
     with transaction() as db:
-        a, s = account(
-            db,
-            request,
-            mutation=True,
-            verified=False,
-        )
+        a, s = account(db, request, mutation=True, verified=False)
+        avatar.remove(db, a.id)
+        return auth.account_view(db, a, s.csrf_token)
 
-        previous = a.avatar_filename
-        a.avatar_filename = None
-        result = auth.account_view(db, a, s.csrf_token)
-
-    if previous:
-        delete_avatar(previous)
-
-    return result
 
 @router.delete("/account", response_model=DeleteAccountView)
 def delete_account(
@@ -217,8 +194,6 @@ def delete_account(
     request: Request,
     response: Response,
 ):
-    from app.modules.identity_access.avatar import delete_avatar
-
     with transaction() as db:
         a, _ = account(
             db,
@@ -235,16 +210,12 @@ def delete_account(
         # Lock the account row before changing its identity.
         locked = db.get(type(a), a.id, with_for_update=True)
 
-        previous_avatar = anonymize_account(db, locked)
-
-    # The database transaction has committed successfully.
-    # Only now remove the physical avatar file.
-    if previous_avatar:
-        delete_avatar(previous_avatar)
+        anonymize_account(db, locked)
 
     response.delete_cookie(auth.COOKIE, path="/")
 
     return {"status": "ACCOUNT_DELETED"}
+
 
 @router.post("/auth/logout", response_model=SignedOutView)
 def logout(request: Request, response: Response):

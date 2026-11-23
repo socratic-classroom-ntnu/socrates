@@ -15,7 +15,7 @@ import { CreateCourseDrawer } from '../teach/CreateCourseDrawer'
 import { LearningCard, TeachingCard } from './CourseCards'
 import { JoinCodeForm } from './JoinCodeForm'
 import '../../../styles/home.css'
-import { avatarSrc } from '../../account/avatarApi'
+import { avatarSrc } from '../../../contract/accountClient'
 
 type Lists = components['schemas']['CourseLists']
 
@@ -138,7 +138,7 @@ function TeacherPhoneHome() {
     <h1>{t('teacherPhone.title')}</h1>
     <p>{t('teacherPhone.body')}</p>
     <p className="home__signed-in">
-      <Avatar name={name} src={avatarSrc(account?.avatar_url)} />
+      <Avatar name={name} src={avatarSrc(account)} />
       <span>{t('teacherPhone.signedIn', { name })}</span>
       <span className="home__role-tag">{t('teacherPhone.role')}</span>
     </p>

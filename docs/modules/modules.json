@@ -375,6 +375,16 @@
       ]
     },
     {
+      "name": "個人設定（/account）",
+      "backend": "identity-access",
+      "source": "backend/app/modules/identity_access/contracts.py → frontend/src/contract/classroomTypes.ts",
+      "state": "產生型別 ✅",
+      "consumer": "個人設定頁：顯示名稱、頭像、變更密碼、刪除帳號",
+      "frontend": [
+        "account"
+      ]
+    },
+    {
       "name": "後台（/admin）",
       "backend": "admin",
       "source": "backend/app/modules/admin/contracts.py → frontend/src/contract/classroomTypes.ts",
@@ -625,6 +635,21 @@
       "about": "每一頁右下角的回饋按鈕與對話框（類型、說明、截圖、聯絡方式），以及給後台用的回饋列表與詳情。",
       "paths": [
         "frontend/src/features/feedback/"
+      ],
+      "uses": [
+        "platform",
+        "contract",
+        "auth"
+      ],
+      "todo": []
+    },
+    {
+      "id": "account",
+      "name": "個人設定",
+      "status": "ok",
+      "about": "帳號選單「設定」進來的頁面：顯示名稱、頭像（裁切後上傳）、變更密碼、語言、刪除帳號；電腦版用對話框，手機版用內頁。",
+      "paths": [
+        "frontend/src/features/account/"
       ],
       "uses": [
         "platform",

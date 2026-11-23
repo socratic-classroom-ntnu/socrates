@@ -1,7 +1,6 @@
-
 """Tests for changing a signed-in account's password."""
 
-from tests.course_management.conftest import PASSWORD, user, client
+from tests.course_management.conftest import PASSWORD, user
 
 PASSWORD_URL = "/api/v2/account/password"
 NEW_PASSWORD = "NewPassword123!"

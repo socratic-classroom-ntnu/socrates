@@ -11,7 +11,7 @@ import { useLogout } from './accountSummary'
 import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
 import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
-import { avatarSrc } from '../features/account/avatarApi'
+import { avatarSrc } from '../contract/accountClient'
 
 type NavKey = 'home' | 'dialogues' | 'groups' | 'bank' | 'store' | 'settings' | 'admin'
 
@@ -113,7 +113,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
         top={top}
         active={active}
         name={account?.display_name || account?.username || ''}
-        avatarUrl={avatarSrc(account?.avatar_url)}
+        avatarUrl={avatarSrc(account)}
       >
         {content}
       </StudentPhoneShell>

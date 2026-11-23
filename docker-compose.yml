@@ -31,7 +31,6 @@ services:
       - ./frontend:/frontend:ro
       - ./docs:/docs:ro
       - ./deploy:/deploy:ro
-      - avatars:/data/avatars
     ports: ["8000:8000"]
     depends_on:
       db: { condition: service_healthy }
@@ -49,4 +48,3 @@ services:
 
 volumes:
   pgdata:
-  avatars:

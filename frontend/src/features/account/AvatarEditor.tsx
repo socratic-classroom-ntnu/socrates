@@ -8,18 +8,20 @@ import {
   type PointerEvent,
 } from 'react'
 import type { Account } from '../auth/AuthContext'
-import { deleteAvatar, uploadAvatar, avatarSrc } from './avatarApi'
+import { deleteAvatar, uploadAvatar } from '../../contract/accountClient'
 import styles from './AvatarEditor.module.css'
 
 type Props = {
   name: string
-  avatarUrl?: string | null
+  /** avatarSrc(account)：目前頭像的網址，沒有頭像是 undefined */
+  avatarUrl?: string
   onUpdated: (account: Account) => void
 }
 
 type Step = 'select' | 'crop' | 'confirm'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024
+// 原圖上限 10 MB（需求：Figma 寫的 5 GB 是筆誤）；存的是裁好、壓成 JPEG 的 256×256 小圖
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 const CROP_SIZE = 280
 const OUTPUT_SIZE = 256
 
@@ -40,6 +42,8 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
   const dragRef = useRef<{ x: number; y: number } | null>(null)
   const objectUrlRef = useRef('')
   const previewUrlRef = useRef('')
+  // 裁好的 JPEG；存檔時直接上傳這份，不再從預覽網址讀回來
+  const previewBlobRef = useRef<Blob | null>(null)
 
   const baseScale = imageSize.width && imageSize.height
     ? Math.max(CROP_SIZE / imageSize.width, CROP_SIZE / imageSize.height)
@@ -64,6 +68,7 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
 
     objectUrlRef.current = ''
     previewUrlRef.current = ''
+    previewBlobRef.current = null
     imageRef.current = null
 
     setImageUrl('')
@@ -113,7 +118,7 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError('圖片大小不可超過 5 MB')
+      setError('圖片大小不可超過 10 MB')
       return
     }
 
@@ -216,7 +221,8 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         result => result ? resolve(result) : reject(new Error('CROP_FAILED')),
-        'image/png',
+        'image/jpeg',
+        0.85,
       )
     })
 
@@ -232,6 +238,7 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
 
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
       previewUrlRef.current = result.url
+      previewBlobRef.current = result.blob
 
       setPreview(result.url)
       setStep('confirm')
@@ -243,14 +250,13 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
   }
 
   async function saveAvatar() {
-    if (!preview) return
+    const blob = previewBlobRef.current
+    if (!preview || !blob) return
 
     setBusy(true)
     setError('')
 
     try {
-      const response = await fetch(preview)
-      const blob = await response.blob()
       const updated = await uploadAvatar(blob)
 
       onUpdated(updated)
@@ -298,7 +304,7 @@ export function AvatarEditor({ name, avatarUrl, onUpdated }: Props) {
           aria-expanded={menuOpen}
         >
           {avatarUrl ? (
-            <img src={avatarSrc(avatarUrl)} alt="" className={styles.currentAvatar} />
+            <img src={avatarUrl} alt="" className={styles.currentAvatar} />
           ) : (
             <span className={styles.defaultAvatar}>
               {name.slice(0, 1).toUpperCase()}

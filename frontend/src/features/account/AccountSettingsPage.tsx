@@ -5,6 +5,7 @@ import { Button, FieldError, RadioCards } from '../../ui'
 import { useAuth } from '../auth/AuthContext'
 import { accountName } from '../../shared/accountName'
 import styles from './AccountSettingsPage.module.css'
+import { avatarSrc } from '../../contract/accountClient'
 import { AvatarEditor } from './AvatarEditor'
 import { ChangePasswordDialog } from './ChangePasswordDialog'
 import { useChangeLocale } from '../auth/useChangeLocale'
@@ -172,7 +173,7 @@ export function AccountSettingsPage() {
           <div className={styles.avatarArea}>
             <AvatarEditor
                 name={currentName}
-                avatarUrl={account.avatar_url}
+                avatarUrl={avatarSrc(account)}
                 onUpdated={replaceAccount}
             />
             </div>

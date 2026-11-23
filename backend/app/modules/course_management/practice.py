@@ -23,7 +23,7 @@ from app.modules.course_management.repositories import Activity, Course, Enrollm
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.env import env_int, env_str
 from app.modules.platform.errors import DomainError
-from app.modules.identity_access.auth import display_name
+from app.modules.identity_access.service import display_name
 
 BANK_PATH = Path(__file__).with_name("practice_bank.yaml")
 

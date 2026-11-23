@@ -123,6 +123,13 @@ class PasswordResetView(Strict):
     status: Literal["PASSWORD_RESET"]
 
 
+class AvatarUpload(Strict):
+    """The cropped picture, shaped like a feedback screenshot: the browser sends JPEG."""
+
+    mime: Literal["image/jpeg", "image/png"]
+    data_base64: str
+
+
 class ChangePasswordRequest(Strict):
     current_password: str = Field(min_length=1, max_length=256)
     new_password: str = Field(min_length=8, max_length=32)
@@ -136,6 +143,7 @@ class ChangePasswordRequest(Strict):
 class ChangePasswordView(Strict):
     status: Literal["PASSWORD_CHANGED"]
 
+
 class DeleteAccountRequest(Strict):
     username: str = Field(min_length=1, max_length=64)
 
@@ -147,6 +155,7 @@ class DeleteAccountView(Strict):
 class DeleteAccountCoursesView(Strict):
     can_delete: bool
     courses: list[str]
+
 
 class MailRequestView(Strict):
     """POST /auth/forgot-password: the same answer whether or not the email has an account, so
@@ -214,7 +223,9 @@ class AccountView(Strict):
     # The name to show: a guest's nickname (never the username's random suffix), otherwise the
     # username; empty once a guest has expired.
     display_name: str = ""
-    avatar_url: str | None = None
+    # When the current avatar was saved; null without one. The picture is GET /account/avatar,
+    # and the page adds this as ?v= so a new picture is read again.
+    avatar_updated_at: float | None = None
 
 
 # What logging in did with a guest session on the same device: MERGED (its records moved to
@@ -230,6 +241,7 @@ class LoginView(AccountView):
 class LocaleUpdate(Strict):
     locale: Locale
 
+
 class ProfileUpdate(Strict):
     display_name: Annotated[
         str,
@@ -239,6 +251,25 @@ class ProfileUpdate(Strict):
             max_length=40,
         ),
     ]
+
+
+class AccountRecordHook(Protocol):
+    """What a module that keeps something tied to an account provides for deleting that account
+    (the app shell registers it with service.register_account_hook). All run in the caller's
+    transaction and never commit.
+
+    blocking_courses: names of what keeps the account from being deleted (courses it owns).
+    forget_sessions: drop what is bound to these login sessions; called before they are deleted.
+    forget_account: drop the account's secrets and stop using what it set up; rows that other
+    records point at stay.
+    """
+
+    def blocking_courses(self, db: Session, account_id: str) -> list[str]: ...
+
+    def forget_sessions(self, db: Session, token_hashes: list[str]) -> None: ...
+
+    def forget_account(self, db: Session, account_id: str) -> None: ...
+
 
 class GuestRecordHook(Protocol):
     """What every module that keeps student records provides for guests (the app shell registers

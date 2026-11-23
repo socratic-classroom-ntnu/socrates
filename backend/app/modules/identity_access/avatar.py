@@ -1,70 +1,66 @@
+"""Account profile pictures, kept in the database next to the account.
 
-"""Validation and persistent storage for account profile pictures."""
+The browser crops and shrinks the picture before sending it, so the server only checks the file
+header and the size; it never decodes the image.
+"""
 
-from io import BytesIO
-from pathlib import Path
-from uuid import uuid4
-import os
+import base64
+import binascii
+import time
 
-from PIL import Image, UnidentifiedImageError
+from sqlalchemy.orm import Session
 
+from app.modules.identity_access.repositories import AccountAvatar
 from app.modules.platform.errors import DomainError
 
+MAX_BYTES = 200 * 1024
+# base64 grows the data by a third; anything longer cannot decode to MAX_BYTES or less.
+MAX_BASE64 = (MAX_BYTES + 2) // 3 * 4
+# The same header check as feedback screenshots (feedback/service.py MAGIC), kept here so
+# identity_access does not depend on the feedback module.
+MAGIC: dict[str, bytes] = {
+    "image/png": b"\x89PNG\r\n\x1a\n",
+    "image/jpeg": b"\xff\xd8\xff",
+}
 
-AVATAR_DIR = Path(os.environ.get("SOCRATES_AVATAR_DIR", "/data/avatars"))
-MAX_UPLOAD_BYTES = 5 * 1024 * 1024
-MAX_IMAGE_PIXELS = 20_000_000
-OUTPUT_SIZE = (256, 256)
 
-
-def save_avatar(data: bytes) -> str:
-    """Validate an uploaded image and return its generated filename."""
-    if not data or len(data) > MAX_UPLOAD_BYTES:
-        raise DomainError("AVATAR_SIZE_INVALID", 400)
-
+def decode(mime: str, data_base64: str) -> bytes:
+    if mime not in MAGIC or len(data_base64) > MAX_BASE64:
+        raise DomainError("AVATAR_INVALID", 422)
     try:
-        with Image.open(BytesIO(data)) as image:
-            if image.format not in ("JPEG", "PNG"):
-                raise DomainError("AVATAR_FORMAT_INVALID", 400)
-
-            if image.width * image.height > MAX_IMAGE_PIXELS:
-                raise DomainError("AVATAR_DIMENSIONS_INVALID", 400)
-
-            image.load()
-            if image.size != OUTPUT_SIZE:
-                raise DomainError("AVATAR_CROP_INVALID", 400)
-            image = image.convert("RGB")
-            image.thumbnail(OUTPUT_SIZE)
-
-            # Frontend will provide a square cropped image.
-            if image.size != OUTPUT_SIZE:
-                raise DomainError("AVATAR_CROP_INVALID", 400)
-
-            output = BytesIO()
-            image.save(output, format="PNG")
-    except (UnidentifiedImageError, OSError, ValueError) as exc:
-        raise DomainError("AVATAR_FORMAT_INVALID", 400) from exc
-
-    AVATAR_DIR.mkdir(parents=True, exist_ok=True)
-
-    filename = f"{uuid4().hex}.png"
-    destination = AVATAR_DIR / filename
-    destination.write_bytes(output.getvalue())
-    return filename
+        data = base64.b64decode(data_base64, validate=True)
+    except (binascii.Error, ValueError):
+        raise DomainError("AVATAR_INVALID", 422) from None
+    if not data or len(data) > MAX_BYTES or not data.startswith(MAGIC[mime]):
+        raise DomainError("AVATAR_INVALID", 422)
+    return data
 
 
-def avatar_path(filename: str) -> Path:
-    """Resolve a generated filename without allowing directory traversal."""
-    if (
-        len(filename) != 36
-        or not filename.endswith(".png")
-        or any(character not in "0123456789abcdef" for character in filename[:-4])
-    ):
+def save(db: Session, account_id: str, mime: str, data: bytes) -> None:
+    row = db.get(AccountAvatar, account_id, with_for_update=True)
+    # Strictly later than the last version, so the browser reads the new picture.
+    now = max(time.time(), row.updated_at + 0.001) if row is not None else time.time()
+    if row is None:
+        db.add(AccountAvatar(account_id=account_id, mime=mime, image=data, updated_at=now))
+    else:
+        row.mime, row.image, row.updated_at = mime, data, now
+    db.flush()
+
+
+def remove(db: Session, account_id: str) -> None:
+    row = db.get(AccountAvatar, account_id)
+    if row is not None:
+        db.delete(row)
+        db.flush()
+
+
+def read(db: Session, account_id: str) -> tuple[str, bytes]:
+    row = db.get(AccountAvatar, account_id)
+    if row is None:
         raise DomainError("AVATAR_NOT_FOUND", 404)
+    return row.mime, row.image
 
-    return AVATAR_DIR / filename
 
-
-def delete_avatar(filename: str | None) -> None:
-    if filename:
-        avatar_path(filename).unlink(missing_ok=True)
+def version(db: Session, account_id: str) -> float | None:
+    row = db.get(AccountAvatar, account_id)
+    return row.updated_at if row is not None else None

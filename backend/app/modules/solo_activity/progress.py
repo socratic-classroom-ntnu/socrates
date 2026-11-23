@@ -6,7 +6,7 @@ summaries never leave this module: the teacher sees confirmed viewpoints in stat
 """
 
 import time
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import func, select
 
@@ -92,7 +92,7 @@ def _flag_metrics(db, activity_id: str) -> dict[str, dict]:
     }
 
 
-NO_METRICS = {"metrics": None, "marks": [], "mark_message_ids": []}
+NO_METRICS: dict[str, Any] = {"metrics": None, "marks": [], "mark_message_ids": []}
 
 
 def progress_view(db, account: Account, activity_id: str, at: float) -> dict:

@@ -221,6 +221,19 @@ describe('phone', () => {
     expect(screen.getByRole('button', { name: '加入' })).toBeInTheDocument()
   })
 
+  test('「還可以聊這些」shows at most six topics never started, a random six on each visit', async () => {
+    phone()
+    const random = jest.spyOn(Math, 'random').mockReturnValue(0)
+    try {
+      open([dialogue({ topic_id: 'topic-1' })], 1, { 'GET /solo/practice/bank': MANY })
+      const more = await screen.findByRole('region', { name: '還可以聊這些' })
+      expect(within(more).getAllByRole('button', { name: /開始對話/ }).map(card => card.querySelector('b')?.textContent))
+        .toEqual(['題目 2', '題目 3', '題目 4', '題目 5', '題目 6', '題目 7'])
+    } finally {
+      random.mockRestore()
+    }
+  })
+
   test('the picker is a list that opens one topic at a time', async () => {
     phone()
     open([dialogue()], 1, { 'POST /solo/practice': { activity_id: 'a-8', attempt_id: 't-8' } })

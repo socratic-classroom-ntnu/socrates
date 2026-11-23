@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+import unicodedata
 from dataclasses import asdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
@@ -602,6 +603,17 @@ def _located(citations, texts: dict) -> list[dict]:
     return located
 
 
+def _same_text(text: str) -> str:
+    """Scenario text compared loosely: width forms folded and whitespace ignored."""
+    return "".join(unicodedata.normalize("NFKC", text).split())
+
+
+def _repeats(scenario: str, context: dict) -> bool:
+    """Whether a written scenario is the one just confirmed or an earlier one, word for word."""
+    given = [context["scenario"], *context["earlier_scenarios"]]
+    return _same_text(scenario) in {_same_text(text) for text in given}
+
+
 async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     """Write the scenario if it is still wanted; either way the student gets the current view.
 
@@ -611,6 +623,13 @@ async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     called = await _call_program(
         prepared, EXTENSION_PROGRAM, ScenarioExtension, "solo.scenario_extension"
     )
+    if called is not None and _repeats(called[0].scenario, prepared["context"]):
+        # A "next" scenario that is one the student already had changes nothing: ask once more.
+        called = await _call_program(
+            prepared, EXTENSION_PROGRAM, ScenarioExtension, "solo.scenario_extension"
+        )
+        if called is not None and _repeats(called[0].scenario, prepared["context"]):
+            called = None
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])
         row = _locked_attempt(db, account, prepared["attempt_id"])

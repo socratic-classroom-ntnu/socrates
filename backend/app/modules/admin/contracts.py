@@ -92,3 +92,71 @@ class ModelOption(BaseModel):
 
 class SystemAIModelsView(BaseModel):
     models: list[ModelOption]
+
+
+# ---- 報表：QA 在網站上照題單作答後，從後台紀錄算出的評測與語音用量 ----
+
+
+class EvalCaseView(BaseModel):
+    """One case of the eval set, with what the recorded runs of it scored (0–1; null = unmeasured)."""
+
+    id: str
+    category: str
+    # What the student types, in order, each as its own message.
+    messages: list[str]
+    # The site language the case expects the student to have chosen.
+    locale: str
+    runs: int
+    schema_: float | None = Field(alias="schema", serialization_alias="schema")
+    move: float | None
+    flags: float | None
+    check: float | None
+    language: float | None
+    leaked: int
+    notes: list[str]
+
+    model_config = {"populate_by_name": True}
+
+
+class EvalMeasureView(BaseModel):
+    key: Literal["schema", "flags", "move", "check", "language", "citations"]
+    rate: float | None
+    count: int
+
+
+class EvalReportView(BaseModel):
+    scenario: str
+    tutor_goal: str
+    days: int
+    runs: int
+    leaked: int
+    totals: list[EvalMeasureView]
+    cases: list[EvalCaseView]
+
+
+class VoiceSessionView(BaseModel):
+    at: float
+    username: str | None
+    endpoint: str
+    model: str | None
+    input_tokens: int
+    output_tokens: int
+    audio_input_tokens: int
+    audio_output_tokens: int
+    # Null when no rate is set (voice) or the call recorded none (the confirmation judge).
+    cost: float | None
+
+
+class VoiceTotalsView(BaseModel):
+    sessions: int
+    input_tokens: int
+    output_tokens: int
+    cost: float | None
+
+
+class VoiceReportView(BaseModel):
+    days: int
+    # Whether VOICE_INPUT_COST_PER_MILLION and VOICE_OUTPUT_COST_PER_MILLION are both set.
+    costed: bool
+    sessions: list[VoiceSessionView]
+    totals: VoiceTotalsView

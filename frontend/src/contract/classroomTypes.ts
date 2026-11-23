@@ -62,6 +62,9 @@ export interface components { schemas: {
   "DemoLoginView": { "password": string; "accounts": Array<components["schemas"]["DemoAccountView"]> };
   "DeployAuthor": { "kind": "deploy" };
   "DiscoveredModel": { "id": string; "name": (string | null); "pricing"?: unknown; "supported_parameters": Array<string>; "structured_outputs": (boolean | null); "reasoning": (Record<string, unknown> | null) };
+  "EvalCaseView": { "id": string; "category": string; "messages": Array<string>; "locale": string; "runs": number; "schema": (number | null); "move": (number | null); "flags": (number | null); "check": (number | null); "language": (number | null); "leaked": number; "notes": Array<string> };
+  "EvalMeasureView": { "key": "schema" | "flags" | "move" | "check" | "language" | "citations"; "rate": (number | null); "count": number };
+  "EvalReportView": { "scenario": string; "tutor_goal": string; "days": number; "runs": number; "leaked": number; "totals": Array<components["schemas"]["EvalMeasureView"]>; "cases": Array<components["schemas"]["EvalCaseView"]> };
   "FeaturesView": { "group_mode": boolean };
   "FeedbackCreate": { "kind"?: ("problem" | "suggestion" | "other" | null); "message": string; "contact"?: (string | null); "page": string; "viewport": components["schemas"]["Viewport"]; "locale": string; "screenshot"?: (components["schemas"]["ScreenshotUpload"] | null) };
   "FeedbackCreated": { "id": string };
@@ -191,6 +194,9 @@ export interface components { schemas: {
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": components["schemas"]["VerificationStatusDelivery"] };
   "VerifiedView": { "status": "VERIFIED" };
   "Viewport": { "w": number; "h": number };
+  "VoiceReportView": { "days": number; "costed": boolean; "sessions": Array<components["schemas"]["VoiceSessionView"]>; "totals": components["schemas"]["VoiceTotalsView"] };
+  "VoiceSessionView": { "at": number; "username": (string | null); "endpoint": string; "model": (string | null); "input_tokens": number; "output_tokens": number; "audio_input_tokens": number; "audio_output_tokens": number; "cost": (number | null) };
+  "VoiceTotalsView": { "sessions": number; "input_tokens": number; "output_tokens": number; "cost": (number | null) };
 } }
 
 export interface requestComponents { schemas: {
@@ -256,6 +262,9 @@ export interface requestComponents { schemas: {
   "DemoLoginView": { "password": string; "accounts": Array<requestComponents["schemas"]["DemoAccountView"]> };
   "DeployAuthor": { "kind"?: "deploy" };
   "DiscoveredModel": { "id": string; "name": (string | null); "pricing"?: unknown; "supported_parameters": Array<string>; "structured_outputs": (boolean | null); "reasoning": (Record<string, unknown> | null) };
+  "EvalCaseView": { "id": string; "category": string; "messages": Array<string>; "locale": string; "runs": number; "schema": (number | null); "move": (number | null); "flags": (number | null); "check": (number | null); "language": (number | null); "leaked": number; "notes": Array<string> };
+  "EvalMeasureView": { "key": "schema" | "flags" | "move" | "check" | "language" | "citations"; "rate": (number | null); "count": number };
+  "EvalReportView": { "scenario": string; "tutor_goal": string; "days": number; "runs": number; "leaked": number; "totals": Array<requestComponents["schemas"]["EvalMeasureView"]>; "cases": Array<requestComponents["schemas"]["EvalCaseView"]> };
   "FeaturesView": { "group_mode": boolean };
   "FeedbackCreate": { "kind"?: ("problem" | "suggestion" | "other" | null); "message": string; "contact"?: (string | null); "page": string; "viewport": requestComponents["schemas"]["Viewport"]; "locale": string; "screenshot"?: (requestComponents["schemas"]["ScreenshotUpload"] | null) };
   "FeedbackCreated": { "id": string };
@@ -385,6 +394,9 @@ export interface requestComponents { schemas: {
   "VerificationStatusView": { "verified": boolean; "email_masked": string; "authority_state": "EMAIL_VERIFICATION" | "FULL_PRODUCT"; "delivery": requestComponents["schemas"]["VerificationStatusDelivery"] };
   "VerifiedView": { "status": "VERIFIED" };
   "Viewport": { "w": number; "h": number };
+  "VoiceReportView": { "days": number; "costed": boolean; "sessions": Array<requestComponents["schemas"]["VoiceSessionView"]>; "totals": requestComponents["schemas"]["VoiceTotalsView"] };
+  "VoiceSessionView": { "at": number; "username": (string | null); "endpoint": string; "model": (string | null); "input_tokens": number; "output_tokens": number; "audio_input_tokens": number; "audio_output_tokens": number; "cost": (number | null) };
+  "VoiceTotalsView": { "sessions": number; "input_tokens": number; "output_tokens": number; "cost": (number | null) };
 } }
 
 export interface paths {
@@ -425,6 +437,12 @@ export interface paths {
   };
   "/admin/admins/{account_id}": {
     "delete": { body: never; bodyRequired: false; requestMedia: "none"; response: null; responseMedia: "none"; path: { "account_id": string }; query: never };
+  };
+  "/admin/reports/eval": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["EvalReportView"]; responseMedia: "application/json"; path: never; query: { "days"?: number } };
+  };
+  "/admin/reports/voice": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["VoiceReportView"]; responseMedia: "application/json"; path: never; query: { "days"?: number } };
   };
   "/admin/system-ai": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["SystemAIView"]; responseMedia: "application/json"; path: never; query: never };

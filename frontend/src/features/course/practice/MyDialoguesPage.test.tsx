@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { ApiError } from '../../../contract/classroomClient'
 import { mockApi, renderAt, signedIn } from '../../../testing/pageHarness'
 import { MyDialoguesPage } from './MyDialoguesPage'
@@ -14,6 +14,12 @@ const BANK = [
   { id: 'lie-to-save-friend', title: '說謊救朋友', body: '你的朋友躲進了你家。你會說謊嗎？', category: 'honesty', recommended: true },
   { id: 'ship-of-theseus', title: '忒修斯之船', body: '全部換完之後，它還是同一艘船嗎？', category: 'self', recommended: true },
 ]
+// 比卡片放得下的還多：第一次進來和訪客只放其中六題
+const MANY = Array.from({ length: 10 }, (_, index) => ({
+  id: `topic-${index + 1}`, title: `題目 ${index + 1}`, body: `第 ${index + 1} 題的情境。`, category: 'tech', recommended: true,
+}))
+const NOT_RECOMMENDED = { id: 'not-recommended', title: '不推薦的題目', body: '只在全部題目裡出現。', category: 'self', recommended: false }
+const cardTitles = () => screen.getAllByRole('button', { name: /開始對話/ }).map(card => card.querySelector('b')?.textContent ?? '')
 // 2026-11-13（五）12:00 台北
 const THURSDAY = Date.UTC(2026, 10, 13, 4, 0) / 1000
 const dialogue = (extra: Record<string, unknown> = {}) => ({
@@ -58,6 +64,29 @@ describe('first time (MyDialogFirst)', () => {
     await act(async () => { fireEvent.click(cards[1]) })
     expect(calls.find(call => call.key === 'POST /solo/practice')?.body).toEqual({ bank_item_id: 'trolley' })
     await waitFor(() => expect(where()).toBe('/learn/activities/a-9/dialogue'))
+  })
+
+  test('a larger bank shows six recommended topics, a new random six on each visit', async () => {
+    const random = jest.spyOn(Math, 'random').mockReturnValue(0)
+    try {
+      open([], 0, { 'GET /solo/practice/bank': [...MANY, NOT_RECOMMENDED] })
+      await screen.findByRole('heading', { name: '挑一個題目開始' })
+      expect(cardTitles()).toEqual(['題目 1', '題目 2', '題目 3', '題目 4', '題目 5', '題目 6'])
+      cleanup()
+
+      random.mockReturnValue(0.99)
+      open([], 0, { 'GET /solo/practice/bank': [...MANY, NOT_RECOMMENDED] })
+      await screen.findByRole('heading', { name: '挑一個題目開始' })
+      const titles = cardTitles()
+      expect(titles).toHaveLength(6)
+      expect(titles).toContain('題目 10')
+      expect(new Set(titles).size).toBe(6)
+      // Still in bank order, and never a topic kept for 看全部題目.
+      expect(titles).toEqual([...titles].sort((a, b) => Number(a.split(' ')[1]) - Number(b.split(' ')[1])))
+      expect(titles).not.toContain('不推薦的題目')
+    } finally {
+      random.mockRestore()
+    }
   })
 })
 
@@ -170,6 +199,16 @@ describe('guest (MyDialogGuest)', () => {
       expect(card).toHaveTextContent('註冊後可以開始')
     }
     expect(calls.some(call => call.key === 'GET /solo/practice')).toBe(false)
+  })
+
+  test('a guest also sees at most six locked topics', async () => {
+    mockApi({
+      'GET /auth/me': { ...signedIn, kind: 'guest', email: '' },
+      'GET /solo/practice/bank': MANY,
+    })
+    renderAt('/my-dialogues', '/my-dialogues', <MyDialoguesPage />)
+    const locked = await screen.findByRole('region', { name: '註冊後可以聊這些' })
+    expect(within(locked).getAllByRole('button')).toHaveLength(6)
   })
 })
 

@@ -14,7 +14,7 @@ const shell: Shape<typeof zhHant> = {
       lowercase: 'Incluye una letra inglesa minúscula',
       number: 'Incluye un número',
       special: 'Incluye un carácter especial',
-      valid: '✓ La nueva contraseña cumple todos los requisitos',
+      valid: 'La nueva contraseña cumple todos los requisitos',
       match: '✓ Las contraseñas coinciden',
       mismatch: '× Las contraseñas no coinciden',
       save: 'Guardar nueva contraseña',

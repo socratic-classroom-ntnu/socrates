@@ -229,33 +229,34 @@ export function ChangePasswordDialog({ onClose, onSuccess }: Props) {
                 <EyeIcon hidden={showNewPassword} />
               </button>
             </div>
-            <div
-            className={styles.passwordRules}
-            aria-label={t('accountSettings.passwordDialog.rulesLabel')}
-            >
-            {PASSWORD_CHECKS.map(rule => {
-                const passed = rule.test(newPassword)
-
-                return (
-                <div
-                    key={rule.label}
-                    className={`${styles.passwordRule} ${
-                    passed ? styles.rulePassed : styles.rulePending
-                    }`}
-                >
-                    <span aria-hidden="true">
-                    {passed ? '✓' : '○'}
-                    </span>
-                    <span>{t(`accountSettings.passwordDialog.${rule.label}`)}</span>
-                </div>
-                )
-            })}
-            </div>
-
-            {newPassword && PASSWORD_RULE.test(newPassword) && (
-            <p className={styles.validPassword} role="status">
+            {newPassword && PASSWORD_RULE.test(newPassword) ? (
+              <p className={styles.validPassword} role="status">
+                <span aria-hidden="true">✓</span>
                 {t('accountSettings.passwordDialog.valid')}
-            </p>
+              </p>
+            ) : (
+              <div
+                className={styles.passwordRules}
+                aria-label={t('accountSettings.passwordDialog.rulesLabel')}
+              >
+                {PASSWORD_CHECKS.map(rule => {
+                  const passed = rule.test(newPassword)
+
+                  return (
+                    <div
+                      key={rule.label}
+                      className={`${styles.passwordRule} ${
+                        passed ? styles.rulePassed : styles.rulePending
+                      }`}
+                    >
+                      <span aria-hidden="true">
+                        {passed ? '✓' : '○'}
+                      </span>
+                      <span>{t(`accountSettings.passwordDialog.${rule.label}`)}</span>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
           <div className={styles.field}>

@@ -14,7 +14,7 @@ const shell: Shape<typeof zhHant> = {
       lowercase: 'Contains a lowercase English letter',
       number: 'Contains a number',
       special: 'Contains a special character',
-      valid: '✓ New password meets all requirements',
+      valid: 'New password meets all requirements',
       match: '✓ Passwords match',
       mismatch: '× Passwords do not match',
       save: 'Save new password',

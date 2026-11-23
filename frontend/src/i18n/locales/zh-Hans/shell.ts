@@ -14,7 +14,7 @@ const shell: Shape<typeof zhHant> = {
       lowercase: '包含英文小写字母',
       number: '包含数字',
       special: '包含特殊字符',
-      valid: '✓ 新密码符合所有规则',
+      valid: '新密码符合所有规则',
       match: '✓ 两次输入的密码一致',
       mismatch: '× 两次输入的密码不一致',
       save: '保存新密码',

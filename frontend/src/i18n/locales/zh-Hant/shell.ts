@@ -11,7 +11,7 @@ export default {
       lowercase: '包含英文小寫字母',
       number: '包含數字',
       special: '包含特殊字元',
-      valid: '✓ 新密碼符合所有規則',
+      valid: '新密碼符合所有規則',
       match: '✓ 兩次輸入的密碼一致',
       mismatch: '× 兩次輸入的密碼不一致',
       save: '儲存新密碼',

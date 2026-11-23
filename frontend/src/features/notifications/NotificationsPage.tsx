@@ -1,42 +1,44 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { Notification } from '../../contract/notificationClient'
 import { useT } from '../../i18n/useT'
-import { useIsPhone } from '../../shared/useIsPhone'
 import { Button, FormError } from '../../ui'
 import { NoticeLabel, NotificationDialog } from './NotificationDialog'
 import { useNotificationText } from './notificationText'
 import { useNotifications } from './NotificationsProvider'
 import styles from './Notifications.module.css'
 
-function NotificationCard({ item, phone, open }: { item: Notification; phone: boolean; open(): void }) {
+function NotificationCard({ item, open }: { item: Notification; open(): void }) {
   const { t } = useT('notifications')
   const { title, content } = useNotificationText(item)
-  const body = <span className={styles.cardBody}>
-    <span className={styles.cardHeading}>
-      <span className={styles.dot} data-read={item.read}>
-        {!item.read && <span className="sr-only">{t('unread')}</span>}
-      </span>
-      <NoticeLabel type={item.type} />
-      <span className={styles.cardTitle}>{title}</span>
-    </span>
-    <span className={styles.summary}>{content}</span>
-  </span>
-  const label = t('viewNamed', { title })
+  const summaryId = useId()
+  const unreadId = `${summaryId}-unread`
   return <li>
-    {phone
-      ? <Button className={styles.mobileCard} type="button" aria-label={label} onClick={open} data-read={item.read}>
-        {body}<span className={styles.chevron} aria-hidden="true" />
-      </Button>
-      : <div className={styles.card} data-read={item.read}>
-        {body}<Button className={styles.view} variant="quiet" aria-label={label} onClick={open}>{t('view')}</Button>
-      </div>}
+    <Button
+      className={styles.card}
+      aria-label={t('viewNamed', { title })}
+      aria-describedby={item.read ? summaryId : `${unreadId} ${summaryId}`}
+      onClick={open}
+      data-read={item.read}
+    >
+      <span className={styles.cardBody}>
+        <span className={styles.cardHeading}>
+          <span className={styles.dot} data-read={item.read}>
+            {!item.read && <span className="sr-only" id={unreadId}>{t('unread')}</span>}
+          </span>
+          <NoticeLabel type={item.type} />
+          <span className={styles.cardTitle}>{title}</span>
+        </span>
+        <span className={styles.summary} id={summaryId}>{content}</span>
+      </span>
+      <span className={styles.view} aria-hidden="true">{t('view')}</span>
+      <span className={styles.chevron} aria-hidden="true" />
+    </Button>
   </li>
 }
 
 export function NotificationsPage() {
   const { t } = useT('notifications')
   const notifications = useNotifications()
-  const phone = useIsPhone()
   const [selected, setSelected] = useState<Notification | null>(null)
   if (!notifications) return null
   const { list, reload, markRead } = notifications
@@ -56,7 +58,7 @@ export function NotificationsPage() {
         <Button variant="outline" onClick={reload}>{t('retry')}</Button>
       </div>}
       {list.status === 'ready' && (list.items.length ? <ul className={styles.list}>
-        {list.items.map(item => <NotificationCard key={item.id} item={item} phone={phone} open={() => {
+        {list.items.map(item => <NotificationCard key={item.id} item={item} open={() => {
           setSelected(item)
           void markRead(item)
         }} />)}

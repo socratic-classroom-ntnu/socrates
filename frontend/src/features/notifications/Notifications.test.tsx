@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { StrictMode } from 'react'
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from '../../app/AppShell'
@@ -54,6 +55,7 @@ afterEach(() => {
 })
 
 test('lists read and unread items, opens the detail and clears the last unread dot', async () => {
+  const user = userEvent.setup()
   jest.mocked(getNotifications).mockResolvedValue([announcement('announcement:1', '維護公告'), expiry, activity])
   render(tree('/notifications'))
   expect(await screen.findByText('維護公告')).toBeInTheDocument()
@@ -61,18 +63,40 @@ test('lists read and unread items, opens the detail and clears the last unread d
   expect(screen.getByText('全站公告')).toBeInTheDocument()
   expect(screen.getByText('帳號提醒')).toBeInTheDocument()
   expect(screen.getByText('課程通知')).toBeInTheDocument()
-  fireEvent.click(screen.getAllByRole('button', { name: /查看完整內容/ })[0])
+  const card = screen.getByRole('button', { name: '查看完整內容：維護公告' })
+  expect(card).toHaveAccessibleDescription(/^未讀 第一行\s+第二行$/)
+  await user.click(screen.getAllByText('查看完整內容')[0])
   const dialog = screen.getByRole('dialog', { name: '維護公告' })
   expect(within(dialog).getByText('00:00 — 06:00')).toBeInTheDocument()
   expect(within(dialog).getByText(/第一行/)).toHaveTextContent('第一行 第二行')
   await waitFor(() => expect(screen.getByRole('link', { name: '通知中心' })).toBeInTheDocument())
+  expect(card).toHaveAccessibleDescription(/^第一行\s+第二行$/)
   expect(markNotificationRead).toHaveBeenCalledWith('announcement:1')
+  expect(markNotificationRead).toHaveBeenCalledTimes(1)
   fireEvent.keyDown(document, { key: 'Escape' })
   fireEvent.click(screen.getAllByRole('button', { name: /查看完整內容/ })[1])
   expect(screen.getByRole('link', { name: '前往註冊帳號' })).toHaveAttribute('href', '/guest/register')
   fireEvent.keyDown(document, { key: 'Escape' })
   fireEvent.click(screen.getAllByRole('button', { name: /查看完整內容/ })[2])
   expect(screen.getByRole('link', { name: '前往活動頁面' })).toHaveAttribute('href', '/learn/activities/a-1')
+})
+
+test.each(['{Enter}', '[Space]'])('teachers can open a card with %s and close the details independently', async key => {
+  const user = userEvent.setup()
+  viewer('teacher')
+  jest.mocked(getNotifications).mockResolvedValue([announcement('announcement:1', '維護公告')])
+  render(tree('/notifications'))
+  const card = await screen.findByRole('button', { name: '查看完整內容：維護公告' })
+  const row = within(screen.getByRole('region', { name: '所有通知' })).getByRole('listitem')
+  expect(within(row).getAllByRole('button')).toEqual([card])
+  expect(within(card).queryByRole('link')).not.toBeInTheDocument()
+  card.focus()
+  await user.keyboard(key)
+  const dialog = screen.getByRole('dialog', { name: '維護公告' })
+  await user.click(within(dialog).getByRole('button', { name: '我知道了' }))
+  expect(dialog).not.toBeInTheDocument()
+  expect(card).toHaveFocus()
+  expect(markNotificationRead).toHaveBeenCalledTimes(1)
 })
 
 test('retries a failed request and displays the empty state', async () => {

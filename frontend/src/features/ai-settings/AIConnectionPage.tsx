@@ -10,7 +10,7 @@ import { COMPATIBLE, CONSOLES, FIELD_OF, KEY_PAGES, useFailureText, useServiceNa
 import { ModeChoice, type Mode } from './ModeChoice'
 import { dollars, UsagePanel, usedShare, type Usage } from './UsagePanel'
 
-type Editing = null | 'replace' | 'advanced'
+type Editing = null | 'replace'
 const IDLE: FormState = { adapter: '', failure: null, busy: false }
 
 /**
@@ -128,7 +128,6 @@ export function AIConnectionPage() {
       ? <div className={styles.columns}>
         <AIConnectionForm
           view={view}
-          advanced={editing === 'advanced'}
           onApplied={show}
           onCancel={editing !== null || choosingOwn ? () => { setEditing(null); setChoosingOwn(false); setForm(IDLE) } : undefined}
           onState={setForm}
@@ -143,7 +142,7 @@ export function AIConnectionPage() {
           {ownUsage && share !== null && remaining > 0 && share > 0.9 && <ConnectionAlert tone="warning">
             {t('aiSettings.lowQuota', { amount: dollars(remaining), percent: ((remaining / (ownUsage.limit ?? 1)) * 100).toFixed(1), service })}
           </ConnectionAlert>}
-          <OwnCard view={view} onReplace={() => setEditing('replace')} onAdvanced={() => setEditing('advanced')} />
+          <OwnCard view={view} onReplace={() => setEditing('replace')} />
           {usage && <UsagePanel usage={usage} adapter={own.adapter} onRefresh={loadUsage} />}
         </div>
         : <div className={styles.stack}>
@@ -192,7 +191,7 @@ function SystemCard({ model }: { model: string | null }) {
 }
 
 /** A08：已連線的自己的金鑰。 */
-function OwnCard({ view, onReplace, onAdvanced }: { view: AIConnectionView; onReplace: () => void; onAdvanced: () => void }) {
+function OwnCard({ view, onReplace }: { view: AIConnectionView; onReplace: () => void }) {
   const { t } = useT('teach')
   const serviceName = useServiceName()
   const own = view.own!
@@ -208,7 +207,6 @@ function OwnCard({ view, onReplace, onAdvanced }: { view: AIConnectionView; onRe
     </dl>
     <div className={styles.cardFoot}>
       <p className={styles.status} data-ok={own.key_usable}>{'●  '}{t(own.key_usable ? 'aiSettings.connected' : 'aiSettings.keyBroken')}</p>
-      <button type="button" className={styles.textButton} onClick={onAdvanced}>{t('aiSettings.advancedOpen')}</button>
     </div>
   </section>
 }

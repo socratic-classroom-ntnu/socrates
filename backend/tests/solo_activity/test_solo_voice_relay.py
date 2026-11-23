@@ -121,6 +121,17 @@ async def play(h, *events):
                 return
 
 
+async def said(h, text):
+    """Wait until the relay's last instruction to Gemini is ``text``: the final summary is written
+    by a call that starts only after the confirmation call finishes, so play() can return between
+    the two."""
+    for _ in range(300):
+        if h.live.texts and h.live.texts[-1] == text:
+            return
+        await asyncio.sleep(0.01)
+    assert h.live.texts[-1] == text
+
+
 def messages(attempt_id):
     with storage.transaction() as db:
         rows = db.scalars(
@@ -333,7 +344,7 @@ def test_the_final_summary_is_read_and_confirmed_by_voice(client, tutor, voice_o
         await play(h, *socrates_says(text))
         replies.extend([yes, NO_SCENARIO, FINAL])
         await play(h, *student_says("對"), vr.LiveEvent("audio", b"\x06"))
-        assert h.live.texts[-1] == vr.READ_VERBATIM.format(final)
+        await said(h, vr.READ_VERBATIM.format(final))
         await play(h, *socrates_says(final))
         replies.append(yes)
         await play(h, *student_says("對"), vr.LiveEvent("audio", b"\x07"))

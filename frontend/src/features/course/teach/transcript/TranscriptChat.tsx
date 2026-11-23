@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { formatDateTime } from '../../../../i18n/format'
 import { useT } from '../../../../i18n/useT'
 import { PendingSummary, ReviewSection } from './TranscriptCards'
@@ -7,6 +7,10 @@ import { firstChar, stageLabel, type T } from './transcriptText'
 
 // As the student's own timeline does (SoloTimeline): within this far of the bottom the reader is "at the bottom".
 const FOLLOW_LATEST_THRESHOLD = 96
+// The reader is "in" the scenario whose start has scrolled past this share of the view's height from the top.
+const VIEW_LINE = 0.3
+// A jump's scrolling is not the reader's: it is ignored until the browser says it stopped, or after this long where it does not say.
+const JUMP_SETTLE_MS = 1000
 
 /** Where a jump lands. Written as one function so a later one can aim at a sentence instead of a scenario's start. */
 export function scrollToTarget(container: HTMLElement, target: HTMLElement) {
@@ -15,11 +19,22 @@ export function scrollToTarget(container: HTMLElement, target: HTMLElement) {
   container.scrollTo({ top: Math.max(0, target.offsetTop - 12), behavior: reduced ? 'auto' : 'smooth' })
 }
 
+/** The scenario the reader is in: the last one whose start is above the view line; at the bottom, the latest one. */
+function scenarioInView(container: HTMLElement, atBottom: boolean): number | null {
+  const starts = Array.from(container.querySelectorAll<HTMLElement>('[data-scenario]'))
+  if (starts.length === 0) return null
+  if (atBottom) return Number(starts[starts.length - 1].dataset.scenario)
+  const line = container.scrollTop + container.clientHeight * VIEW_LINE
+  let found = starts[0]
+  for (const start of starts) if (start.offsetTop <= line) found = start
+  return Number(found.dataset.scenario)
+}
+
 export type ChatHandle = { jumpToScenario(index: number): void }
 
-type Props = { attempt: Attempt; studentName: string; footer: string }
+type Props = { attempt: Attempt; studentName: string; footer: string; onViewing?(index: number): void }
 
-export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptChat({ attempt, studentName, footer }, ref) {
+export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptChat({ attempt, studentName, footer, onViewing }, ref) {
   const { t, locale } = useT('teach')
   const scroller = useRef<HTMLDivElement>(null)
   const atBottom = useRef(true)
@@ -30,11 +45,30 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
   // A card or a system line can arrive without a message, and the reader at the bottom should follow that too.
   const growthKey = items.map(item => item.key).join(':')
 
+  // While a jump scrolls, the stop that was clicked stays the viewed one: the chat cannot always bring a short last
+  // scenario to the top, and the frames on the way pass over scenarios nobody asked for.
+  const jumping = useRef(false)
+  const settle = useRef<number | undefined>(undefined)
+  function endJump() {
+    jumping.current = false
+    window.clearTimeout(settle.current)
+  }
+  useEffect(() => {
+    const container = scroller.current
+    container?.addEventListener('scrollend', endJump)
+    return () => { container?.removeEventListener('scrollend', endJump); window.clearTimeout(settle.current) }
+  }, [])
+
   useImperativeHandle(ref, () => ({
     jumpToScenario(index) {
       const container = scroller.current
       const target = container?.querySelector<HTMLElement>(`[data-scenario="${index}"]`)
-      if (container && target) scrollToTarget(container, target)
+      if (!container || !target) return
+      onViewing?.(index)
+      jumping.current = true
+      window.clearTimeout(settle.current)
+      settle.current = window.setTimeout(endJump, JUMP_SETTLE_MS)
+      scrollToTarget(container, target)
     },
   }))
 
@@ -61,6 +95,10 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
     if (atBottom.current) {
       seen.current = new Set(ids)
       setUnseen(0)
+    }
+    if (!jumping.current) {
+      const viewing = scenarioInView(container, atBottom.current)
+      if (viewing !== null) onViewing?.(viewing)
     }
   }
 

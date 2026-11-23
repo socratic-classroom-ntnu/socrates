@@ -258,6 +258,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: 'El estudiante rechazó el resumen final dos veces; sin confirmar',
       reviewNone: 'El estudiante no generó un resumen final',
       jump: 'Ir al inicio del escenario {{number}}',
+      viewing: 'Viendo ahora',
     },
     review: {
       title: 'Repaso y reflexión', finalTitle: 'Resumen final', confirmed: 'Confirmado', pending: 'Pendiente del estudiante',

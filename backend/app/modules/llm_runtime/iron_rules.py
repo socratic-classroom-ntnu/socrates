@@ -16,12 +16,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
+import time
 from collections.abc import Awaitable, Callable, Iterator
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, cast
+
+from app.modules.platform import interaction_log
 
 JSON = dict[str, Any]
 
@@ -417,6 +421,44 @@ async def guarded_generate(
     kind: str,
     context: JSON | None = None,
     generate: Generate | None = None,
+) -> tuple[JSON, JSON]:
+    """以鐵則包住一次 provider 呼叫，並把這次呼叫與完整回覆側錄進後台「分析紀錄」。"""
+    started = time.monotonic()
+    try:
+        result, audit = await _guarded_call(
+            binding, messages, schema, on_delta, kind=kind, context=context, generate=generate
+        )
+    except Exception as error:
+        await asyncio.to_thread(
+            interaction_log.record_model,
+            kind=kind,
+            binding=binding,
+            context=context,
+            started=started,
+            error=error,
+        )
+        raise
+    await asyncio.to_thread(
+        interaction_log.record_model,
+        kind=kind,
+        binding=binding,
+        context=context,
+        started=started,
+        result=result,
+        audit=audit,
+    )
+    return result, audit
+
+
+async def _guarded_call(
+    binding: JSON,
+    messages: list[JSON],
+    schema: Any,
+    on_delta: Callable[[str], Awaitable[None]],
+    *,
+    kind: str,
+    context: JSON | None,
+    generate: Generate | None,
 ) -> tuple[JSON, JSON]:
     """以鐵則包住一次 provider 呼叫：前處理 → 產生（最多兩次）→ 檢查 → 才串流可見文字。"""
     from app.modules.ai_providers.service import ProviderSchemaMismatch

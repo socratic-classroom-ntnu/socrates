@@ -1,4 +1,5 @@
-"""後台「報表」：評測與語音用量，都從已經留下的紀錄算，不另外呼叫模型。
+"""後台「報表」：評測與語音用量，都從已經留下的紀錄算，不另外呼叫模型；以及「分析紀錄」的
+摘要與下載。
 
 評測（llm_runtime 的題單）：QA 以學生身分在一個情境＝題單情境的活動裡，依序送出某一題的每一則
 訊息，那一題就算作答過一次。分數只看導師對最後一則的回覆：回覆文字、它的 move，以及那則學生
@@ -23,6 +24,10 @@ from app.modules.admin.contracts import (
     EvalCaseView,
     EvalMeasureView,
     EvalReportView,
+    InteractionCountView,
+    InteractionExportView,
+    InteractionLogView,
+    InteractionRecordView,
     VoiceReportView,
     VoiceSessionView,
     VoiceTotalsView,
@@ -38,6 +43,8 @@ from app.modules.llm_runtime.service import (
     score_eval_case,
 )
 from app.modules.platform.env import env_str
+from app.modules.platform.repositories import InteractionEvent
+from app.modules.platform.toggles import toggle_enabled
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 
 DAY = 86400
@@ -245,4 +252,59 @@ def voice_report(db: Session, days: int, now: float | None = None) -> VoiceRepor
             output_tokens=sum(s.output_tokens for s in sessions),
             cost=round(sum(costs), 8) if costs else None,
         ),
+    )
+
+
+# ---- 分析紀錄（platform/interaction_log 寫的側錄）------------------------------------------
+
+
+def _events(db: Session, days: int, now: float | None) -> Any:
+    since = (now or time.time()) - days * DAY
+    return db.scalars(
+        select(InteractionEvent)
+        .where(InteractionEvent.at >= since)
+        .order_by(InteractionEvent.at, InteractionEvent.id)
+    )
+
+
+def interaction_log(db: Session, days: int, now: float | None = None) -> InteractionLogView:
+    counts: dict[tuple[str, str], list[float]] = {}
+    subjects: set[str] = set()
+    total = 0
+    for event in _events(db, days, now):
+        total += 1
+        if event.subject:
+            subjects.add(event.subject)
+        entry = counts.setdefault((event.kind, event.name), [0, 0.0])
+        entry[0] += 1
+        entry[1] = max(entry[1], float(event.at))
+    rows = sorted(counts.items(), key=lambda item: (-item[1][0], item[0]))
+    return InteractionLogView(
+        days=days,
+        enabled=toggle_enabled(db, "interaction_log"),
+        total=total,
+        subjects=len(subjects),
+        counts=[
+            InteractionCountView(kind=kind, name=name, count=int(n), last_at=last)  # type: ignore[arg-type]
+            for (kind, name), (n, last) in rows
+        ],
+    )
+
+
+def interaction_export(db: Session, days: int, now: float | None = None) -> InteractionExportView:
+    """Every record in the range, oldest first."""
+    return InteractionExportView(
+        days=days,
+        records=[
+            InteractionRecordView(
+                at=event.at,
+                kind=event.kind,
+                name=event.name,
+                subject=event.subject,
+                outcome=event.outcome,
+                latency_ms=event.latency_ms,
+                data=event.data,
+            )
+            for event in _events(db, days, now)
+        ],
     )

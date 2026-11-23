@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { getEvalReport, getVoiceReport, type EvalReportView, type VoiceReportView } from '../../contract/classroomClient'
+import { getEvalReport, getInteractionLog, getVoiceReport, interactionLogFile, type EvalReportView, type InteractionLogView, type VoiceReportView } from '../../contract/classroomClient'
 import { applyLocale } from '../../i18n'
 import { useAuth } from '../auth/AuthContext'
 import { AdminGate } from './AdminGate'
@@ -8,12 +8,17 @@ import { AdminPage } from './AdminPage'
 
 jest.mock('../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../contract/classroomClient')>('../../contract/classroomClient')
-  return { ApiError: actual.ApiError, getEvalReport: jest.fn(), getVoiceReport: jest.fn(), listToggles: jest.fn() }
+  return {
+    ApiError: actual.ApiError, getEvalReport: jest.fn(), getVoiceReport: jest.fn(), getInteractionLog: jest.fn(),
+    interactionLogFile: jest.fn(), listToggles: jest.fn(),
+  }
 })
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }))
 
 const evals = getEvalReport as jest.Mock
 const voice = getVoiceReport as jest.Mock
+const interactions = getInteractionLog as jest.Mock
+const logFile = interactionLogFile as jest.Mock
 const me = { id: 'a-1', username: 'wang', kind: 'registered', verified: true, is_admin: true, account_role: 'teacher' }
 const SCENARIO = '一輛失控的電車正駛向五名工人。'
 
@@ -52,6 +57,17 @@ const VOICE: VoiceReportView = {
   totals: { sessions: 1, input_tokens: 1200, output_tokens: 800, cost: 0.0132 },
 }
 
+const LOG: InteractionLogView = {
+  days: 7,
+  enabled: true,
+  total: 12,
+  subjects: 3,
+  counts: [
+    { kind: 'request', name: 'POST /api/v2/solo/attempts/{attempt_id}/{action}', count: 8, last_at: 1_763_533_920 },
+    { kind: 'model', name: 'solo_tutor', count: 4, last_at: 1_763_533_920 },
+  ],
+}
+
 function renderReports() {
   return render(<MemoryRouter initialEntries={['/admin/reports']}>
     <Routes>
@@ -66,6 +82,7 @@ beforeEach(async () => {
   await applyLocale('zh-Hant')
   evals.mockReset().mockResolvedValue(EVAL)
   voice.mockReset().mockResolvedValue(VOICE)
+  interactions.mockReset().mockResolvedValue(LOG)
   ;(useAuth as jest.Mock).mockReturnValue({ status: 'ready', account: me, refresh: jest.fn() })
 })
 
@@ -113,4 +130,37 @@ test('a failed read says so', async () => {
   evals.mockRejectedValue(new Error('down'))
   renderReports()
   expect(await screen.findByRole('alert')).toHaveTextContent('讀不到報表，請重新整理頁面。')
+})
+
+test('the interaction log shows counts by kind and saves every record for the range', async () => {
+  const created = jest.fn(() => 'blob:log')
+  const revoked = jest.fn()
+  Object.assign(URL, { createObjectURL: created, revokeObjectURL: revoked })
+  const click = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  logFile.mockResolvedValue(new Blob(['{}\n']))
+  renderReports()
+  const list = await screen.findByRole('table', { name: '各類紀錄' })
+  expect(within(list).getByRole('row', { name: /模型回覆 solo_tutor 4/ })).toBeInTheDocument()
+  expect(within(list).getByRole('row', { name: /操作 POST \/api\/v2\/solo\/attempts/ })).toHaveTextContent('8')
+  fireEvent.click(screen.getByRole('button', { name: '最近 30 天' }))
+  await waitFor(() => expect(interactions).toHaveBeenLastCalledWith(30))
+  fireEvent.click(screen.getByRole('button', { name: '下載完整紀錄（JSON Lines）' }))
+  await waitFor(() => expect(click).toHaveBeenCalled())
+  expect(logFile).toHaveBeenCalledWith(30)
+  expect(revoked).toHaveBeenCalledWith('blob:log')
+  click.mockRestore()
+})
+
+test('a failed download says so', async () => {
+  logFile.mockRejectedValue(new Error('down'))
+  renderReports()
+  fireEvent.click(await screen.findByRole('button', { name: '下載完整紀錄（JSON Lines）' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('下載失敗，請再試一次。')
+})
+
+test('with the switch off the log says nothing is being recorded', async () => {
+  interactions.mockResolvedValue({ ...LOG, enabled: false, total: 0, subjects: 0, counts: [] })
+  renderReports()
+  expect(await screen.findByText('後台開關「分析紀錄」關著，現在不會側錄。')).toBeInTheDocument()
+  expect(screen.getByText('這段時間沒有紀錄。')).toBeInTheDocument()
 })

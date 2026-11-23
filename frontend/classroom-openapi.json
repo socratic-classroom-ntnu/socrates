@@ -4063,6 +4063,158 @@
         "title": "ImportQuestion",
         "type": "object"
       },
+      "InteractionCountView": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "request",
+              "model"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_at": {
+            "title": "Last At",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "count",
+          "last_at"
+        ],
+        "title": "InteractionCountView",
+        "type": "object"
+      },
+      "InteractionExportView": {
+        "description": "Every record in the range, oldest first; the page saves them as JSON Lines.",
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionRecordView"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "records"
+        ],
+        "title": "InteractionExportView",
+        "type": "object"
+      },
+      "InteractionLogView": {
+        "description": "後台「分析紀錄」的摘要：每一種操作／模型程式各幾筆；完整紀錄用 export 下載。",
+        "properties": {
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionCountView"
+            },
+            "title": "Counts",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "subjects": {
+            "title": "Subjects",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "enabled",
+          "total",
+          "subjects",
+          "counts"
+        ],
+        "title": "InteractionLogView",
+        "type": "object"
+      },
+      "InteractionRecordView": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "data": {
+            "title": "Data",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "request",
+              "model"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "name",
+          "subject",
+          "outcome",
+          "latency_ms",
+          "data"
+        ],
+        "title": "InteractionRecordView",
+        "type": "object"
+      },
       "JoinPreview": {
         "additionalProperties": false,
         "properties": {
@@ -9924,6 +10076,97 @@
           }
         },
         "summary": "Remove Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/interaction-log": {
+      "get": {
+        "operationId": "get_interaction_log_api_v2_admin_interaction_log_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionLogView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Interaction Log",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/interaction-log/export": {
+      "get": {
+        "description": "Every record in the range, for improving prompts offline; the page saves it as JSON Lines.",
+        "operationId": "export_interaction_log_api_v2_admin_interaction_log_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionExportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Interaction Log",
         "tags": [
           "admin"
         ]

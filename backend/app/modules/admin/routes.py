@@ -7,6 +7,8 @@ from app.modules.admin.contracts import (
     AdminCreate,
     AdminView,
     EvalReportView,
+    InteractionExportView,
+    InteractionLogView,
     SystemAIInput,
     SystemAIModelsInput,
     SystemAIModelsView,
@@ -120,3 +122,20 @@ def get_voice_report(request: Request, days: int = Query(7, ge=1, le=90)) -> Voi
     with transaction() as db:
         service.admin_account(db, request)
         return reports.voice_report(db, days)
+
+
+@router.get("/interaction-log", response_model=InteractionLogView)
+def get_interaction_log(request: Request, days: int = Query(7, ge=1, le=90)) -> InteractionLogView:
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.interaction_log(db, days)
+
+
+@router.get("/interaction-log/export", response_model=InteractionExportView)
+def export_interaction_log(
+    request: Request, days: int = Query(7, ge=1, le=90)
+) -> InteractionExportView:
+    """Every record in the range, for improving prompts offline; the page saves it as JSON Lines."""
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.interaction_export(db, days)

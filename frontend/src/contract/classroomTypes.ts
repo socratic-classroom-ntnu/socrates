@@ -90,6 +90,10 @@ export interface components { schemas: {
   "GuestUpgrade": { "username": string; "email": string; "password": string };
   "HTTPValidationError": { "detail"?: Array<components["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
+  "InteractionCountView": { "kind": "request" | "model"; "name": string; "count": number; "last_at": number };
+  "InteractionExportView": { "days": number; "records": Array<components["schemas"]["InteractionRecordView"]> };
+  "InteractionLogView": { "days": number; "enabled": boolean; "total": number; "subjects": number; "counts": Array<components["schemas"]["InteractionCountView"]> };
+  "InteractionRecordView": { "at": number; "kind": "request" | "model"; "name": string; "subject": (string | null); "outcome": string; "latency_ms": (number | null); "data": Record<string, unknown> };
   "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string; "open_activity_title": (string | null); "allow_guest": boolean };
   "JoinRoom": { "code": string; "alias": string; "avatar": string };
   "LegacyGroupView": { "kind": "Legacy"; "id": string };
@@ -290,6 +294,10 @@ export interface requestComponents { schemas: {
   "GuestUpgrade": { "username": string; "email": string; "password": string };
   "HTTPValidationError": { "detail"?: Array<requestComponents["schemas"]["ValidationError"]> };
   "ImportQuestion": { "action_id": string; "script_id": string };
+  "InteractionCountView": { "kind": "request" | "model"; "name": string; "count": number; "last_at": number };
+  "InteractionExportView": { "days": number; "records": Array<requestComponents["schemas"]["InteractionRecordView"]> };
+  "InteractionLogView": { "days": number; "enabled": boolean; "total": number; "subjects": number; "counts": Array<requestComponents["schemas"]["InteractionCountView"]> };
+  "InteractionRecordView": { "at": number; "kind": "request" | "model"; "name": string; "subject": (string | null); "outcome": string; "latency_ms": (number | null); "data": Record<string, unknown> };
   "JoinPreview": { "course_id": string; "name": string; "teacher_name": string; "already_enrolled": boolean; "default_display_name": string; "open_activity_title": (string | null); "allow_guest": boolean };
   "JoinRoom": { "code": string; "alias": string; "avatar"?: string };
   "LegacyGroupView": { "kind": "Legacy"; "id": string };
@@ -437,6 +445,12 @@ export interface paths {
   };
   "/admin/admins/{account_id}": {
     "delete": { body: never; bodyRequired: false; requestMedia: "none"; response: null; responseMedia: "none"; path: { "account_id": string }; query: never };
+  };
+  "/admin/interaction-log": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["InteractionLogView"]; responseMedia: "application/json"; path: never; query: { "days"?: number } };
+  };
+  "/admin/interaction-log/export": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["InteractionExportView"]; responseMedia: "application/json"; path: never; query: { "days"?: number } };
   };
   "/admin/reports/eval": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["EvalReportView"]; responseMedia: "application/json"; path: never; query: { "days"?: number } };

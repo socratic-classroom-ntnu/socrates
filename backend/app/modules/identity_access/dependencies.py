@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import Request, Response, WebSocket
 from sqlalchemy.orm import Session
 
+from app.modules.platform import interaction_log
 from app.modules.platform.env import env_str
 from app.modules.platform.errors import DomainError
 from app.modules.platform.rate_limit import enforce_rate_limit
@@ -53,7 +54,7 @@ def account(
     """The request's account; guests are rejected unless the endpoint passes allow_guest=True."""
     if mutation:
         same_origin(request)
-    return auth.identity(
+    found = auth.identity(
         db,
         request.cookies.get(auth.COOKIE),
         request.headers.get("x-csrf-token"),
@@ -61,6 +62,9 @@ def account(
         verified,
         allow_guest,
     )
+    # 後台「分析紀錄」: this request's records carry a keyed hash of the account, not the account.
+    interaction_log.attach(request.state, found[0].id)
+    return found
 
 
 def auth_limit(request: Request, kind: str) -> None:

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getEvalReport, getVoiceReport, type EvalReportView, type VoiceReportView } from '../../contract/classroomClient'
+import { getEvalReport, getInteractionLog, getVoiceReport, interactionLogFile, type EvalReportView, type InteractionLogView, type VoiceReportView } from '../../contract/classroomClient'
 import { useT } from '../../i18n/useT'
-import { Chip, ChipGroup, CopyButton, FormError } from '../../ui'
+import { Button, Chip, ChipGroup, CopyButton, FormError } from '../../ui'
 import styles from './Admin.module.css'
 import { adminTime } from './adminTime'
 
@@ -25,12 +25,13 @@ export function ReportsTab({ onError }: { onError: OnError }) {
   const [days, setDays] = useState<Range>(7)
   const [evals, setEvals] = useState<EvalReportView | null>(null)
   const [voice, setVoice] = useState<VoiceReportView | null>(null)
+  const [log, setLog] = useState<InteractionLogView | null>(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
     let live = true
     setFailed(false)
-    void Promise.all([getEvalReport(days), getVoiceReport(days)])
-      .then(([e, v]) => { if (live) { setEvals(e); setVoice(v) } })
+    void Promise.all([getEvalReport(days), getVoiceReport(days), getInteractionLog(days)])
+      .then(([e, v, l]) => { if (live) { setEvals(e); setVoice(v); setLog(l) } })
       .catch((failure: unknown) => { if (live) { setFailed(true); onError(failure) } })
     return () => { live = false }
   }, [days, onError])
@@ -43,6 +44,7 @@ export function ReportsTab({ onError }: { onError: OnError }) {
     {failed && <FormError role="alert">{t('reports.loadFailed')}</FormError>}
     {evals && <EvalSection report={evals} />}
     {voice && <VoiceSection report={voice} />}
+    {log && <LogSection log={log} days={days} />}
   </>
 }
 
@@ -136,6 +138,63 @@ function VoiceSection({ report }: { report: VoiceReportView }) {
             <td className={styles.num}>{t('reports.voice.withAudio', { total: session.input_tokens, audio: session.audio_input_tokens })}</td>
             <td className={styles.num}>{t('reports.voice.withAudio', { total: session.output_tokens, audio: session.audio_output_tokens })}</td>
             <td className={styles.num}>{cost(session.cost)}</td>
+          </tr>)}
+        </tbody>
+      </table>}
+  </section>
+}
+
+function LogSection({ log, days }: { log: InteractionLogView; days: number }) {
+  const { t, locale } = useT('admin')
+  const [saving, setSaving] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
+
+  async function save() {
+    setSaving(true)
+    setSaveFailed(false)
+    try {
+      const url = URL.createObjectURL(await interactionLogFile(days))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `interaction-log-${days}d.jsonl`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setSaveFailed(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <section className={`${styles.card} ${styles.panel}`} aria-label={t('reports.log.title')}>
+    <div className={styles.panelHead}>
+      <div>
+        <h2 className={styles.panelTitle}>{t('reports.log.title')}</h2>
+        <p className={styles.panelLead}>{t('reports.log.lead')}</p>
+      </div>
+      <Button variant="outline" onClick={() => { void save() }} disabled={saving}>{t('reports.log.download')}</Button>
+    </div>
+    {saveFailed && <FormError role="alert">{t('reports.log.downloadFailed')}</FormError>}
+    {!log.enabled && <p className={styles.warning}>{t('reports.log.off')}</p>}
+    <dl className={styles.facts}>
+      <div><dt>{t('reports.log.total')}</dt><dd className={styles.factStrong}>{log.total}</dd></div>
+      <div><dt>{t('reports.log.subjects')}</dt><dd>{log.subjects}</dd></div>
+    </dl>
+    {log.counts.length === 0
+      ? <p className={styles.hint}>{t('reports.log.empty')}</p>
+      : <table className={styles.table} aria-label={t('reports.log.list')}>
+        <thead><tr>
+          <th>{t('reports.log.kind')}</th>
+          <th>{t('reports.log.name')}</th>
+          <th className={styles.num}>{t('reports.log.count')}</th>
+          <th>{t('reports.log.last')}</th>
+        </tr></thead>
+        <tbody>
+          {log.counts.map(row => <tr key={`${row.kind} ${row.name}`}>
+            <td>{t(row.kind === 'model' ? 'reports.log.model' : 'reports.log.request')}</td>
+            <td className={styles.mono}>{row.name}</td>
+            <td className={styles.num}>{row.count}</td>
+            <td>{adminTime(locale, row.last_at)}</td>
           </tr>)}
         </tbody>
       </table>}

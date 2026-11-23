@@ -1,6 +1,6 @@
 """後台 API 的形狀（spec 〈介面〉）。"""
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -160,3 +160,38 @@ class VoiceReportView(BaseModel):
     costed: bool
     sessions: list[VoiceSessionView]
     totals: VoiceTotalsView
+
+
+class InteractionCountView(BaseModel):
+    kind: Literal["request", "model"]
+    name: str
+    count: int
+    last_at: float
+
+
+class InteractionLogView(BaseModel):
+    """後台「分析紀錄」的摘要：每一種操作／模型程式各幾筆；完整紀錄用 export 下載。"""
+
+    days: int
+    enabled: bool
+    total: int
+    # How many different de-identified people the records come from.
+    subjects: int
+    counts: list[InteractionCountView]
+
+
+class InteractionRecordView(BaseModel):
+    at: float
+    kind: Literal["request", "model"]
+    name: str
+    subject: str | None
+    outcome: str
+    latency_ms: int | None
+    data: dict[str, Any]
+
+
+class InteractionExportView(BaseModel):
+    """Every record in the range, oldest first; the page saves them as JSON Lines."""
+
+    days: int
+    records: list[InteractionRecordView]

@@ -374,6 +374,20 @@ export function getVoiceReport(days: number) {
   return typedApi('/admin/reports/voice', 'GET', { query: { days } })
 }
 
+export type InteractionLogView = components['schemas']['InteractionLogView']
+
+/** 後台「分析紀錄」的摘要：每一種操作與模型程式各幾筆。 */
+export function getInteractionLog(days: number) {
+  return typedApi('/admin/interaction-log', 'GET', { query: { days } })
+}
+
+/** 這段時間的完整紀錄，整理成 JSON Lines（一筆一行）的檔案內容，給頁面存檔用。 */
+export async function interactionLogFile(days: number): Promise<Blob> {
+  const { records } = await typedApi('/admin/interaction-log/export', 'GET', { query: { days } })
+  const lines = records.map(record => JSON.stringify(record) + '\n')
+  return new Blob(lines, { type: 'application/x-ndjson' })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

@@ -15,7 +15,7 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     script = _script()
 
     # 單一 head：分岔會讓 `alembic upgrade head` 在部署時失敗。
-    assert script.get_heads() == ["0033"]
+    assert script.get_heads() == ["0034"]
     # 教室的 schema 接在單人對話的最後一支上，而不是另起一條鏈。
     assert script.get_revision("0010").down_revision == "9a0c1d2e3f42"
     # 題庫商店（issue #17）接在教室 schema 之後。
@@ -62,6 +62,8 @@ def test_classroom_migration_extends_the_solo_dialogue_head() -> None:
     assert script.get_revision("0032").down_revision == "0031"
     # 最終統整的每則引用一列：新表 solo_summary_sources。
     assert script.get_revision("0033").down_revision == "0032"
+    # 後台「分析紀錄」：一張新表，每個操作或模型呼叫一列，帳號只存 hash。
+    assert script.get_revision("0034").down_revision == "0033"
 
 
 @pytest.mark.parametrize("revision", SQUASHED)

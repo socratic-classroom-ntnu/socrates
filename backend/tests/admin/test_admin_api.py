@@ -194,7 +194,7 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
     assert client.get("/api/v2/public-config").json()["features"] == {"group_mode": False}
     user(client, "fizzy", account_role="teacher")
     make_admin("fizzy")
-    row, fallback = client.get("/api/v2/admin/toggles").json()
+    row, fallback, interaction = client.get("/api/v2/admin/toggles").json()
     assert row == {
         "key": "group_mode",
         "name": "多人模式",
@@ -214,6 +214,12 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
         "updated_by_name": None,
         "disable_warning": "關掉後，沒設金鑰的老師，課程裡的學生對話會無法繼續，直到老師自己設好 AI 連線。之後可以再打開。",
     }
+    # 分析紀錄: on by default; turning it off asks first.
+    assert (interaction["key"], interaction["enabled"]) == ("interaction_log", True)
+    assert (
+        interaction["disable_warning"]
+        == "關掉後就不再側錄，已經存下的紀錄不受影響。之後可以再打開。"
+    )
     before = time.time()
     response = client.put("/api/v2/admin/toggles/group_mode", json={"enabled": True})
     assert response.status_code == 200, response.text

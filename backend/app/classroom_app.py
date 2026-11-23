@@ -8,6 +8,7 @@ from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.modules.llm_runtime import prompts
+from app.modules.platform import interaction_log
 from app.modules.course_management import service as course_service
 from app.modules.ai_providers import service as ai_service
 from app.modules.admin import service as admin_service
@@ -98,6 +99,9 @@ def create_app(legacy=False, background=True):
             for error in exc.errors()
         ]
         return JSONResponse({"detail": jsonable_encoder(errors)}, status_code=422)
+
+    # 後台「分析紀錄」: every change made through the API, de-identified (platform/interaction_log).
+    app.add_middleware(interaction_log.Middleware)
 
     @app.middleware("http")
     async def security_headers(request, call_next):

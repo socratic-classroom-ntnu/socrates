@@ -13,7 +13,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACTION_ID_PAYLOAD_CONFLICT": ("classroom_core", "content_authoring", "group_dialogue"),
     "ACTION_SCOPE_REQUIRED": ("content_authoring",),
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),
-    "ACTIVITY_ENDED": ("course_management",),
+    "ACTIVITY_ENDED": ("course_management", "solo_activity"),
     "ACTIVITY_LOCKED": ("course_management",),
     "ADMIN_ACCOUNT_NOT_FOUND": ("identity_access",),
     "ADMIN_ALREADY": ("identity_access",),

@@ -4,8 +4,12 @@ import { buildTrack, stageOf } from './transcriptModel'
 import { stageLabel, type T } from './transcriptText'
 import { Written } from './TranscriptCards'
 
-/** The right column: one stop per scenario the student has reached, then the review once it begins (Figma 03–12). */
-export function TranscriptTrack({ attempt, name, onJump }: { attempt: Attempt; name: string; onJump(index: number): void }) {
+/**
+ * The right column: one stop per scenario the student has reached, then the review once it begins (Figma 03–12).
+ * Two marks: the yellow row is where the student is (`current`); the dark bar is the scenario the teacher is
+ * reading in the chat (`viewing`), which follows a click here and the chat's own scrolling.
+ */
+export function TranscriptTrack({ attempt, name, viewing, onJump }: { attempt: Attempt; name: string; viewing: number; onJump(index: number): void }) {
   const { t } = useT('teach')
   const rows = buildTrack(attempt)
   const done = rows.filter(row => row.status === 'confirmed').length
@@ -17,7 +21,8 @@ export function TranscriptTrack({ attempt, name, onJump }: { attempt: Attempt; n
     <ol className="tt-list">
       {rows.map(row => {
         const label = stageLabel(t as T, { kind: 'cell', status: row.status, turns: row.turns })
-        return <li key={row.index} className={`tt-row${row.current ? ' tt-row--current' : ''}`} aria-current={row.current ? 'step' : undefined}>
+        const viewed = row.index === viewing
+        return <li key={row.index} className={`tt-row${row.current ? ' tt-row--current' : ''}${viewed ? ' tt-row--viewing' : ''}`} aria-current={row.current ? 'step' : undefined}>
           <button type="button" className="tt-row__button" onClick={() => onJump(row.index)}>
             <span className="tt-row__head">
               <strong>{t('transcript.scenarioLabel', { number: row.index + 1 })}</strong>
@@ -35,6 +40,7 @@ export function TranscriptTrack({ attempt, name, onJump }: { attempt: Attempt; n
             {(row.status === 'in_dialogue' || row.status === 'answering') && <span className="tt-row__note">{t('transcript.track.noStance')}</span>}
             {row.rejections > 0 && <span className="tt-row__warn">{t('transcript.track.rejected', { count: row.rejections })}</span>}
             <span className="sr-only">{t('transcript.track.jump', { number: row.index + 1 })}</span>
+            {viewed && <span className="sr-only">{t('transcript.track.viewing')}</span>}
           </button>
         </li>
       })}

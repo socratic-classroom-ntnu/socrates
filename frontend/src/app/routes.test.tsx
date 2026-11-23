@@ -60,6 +60,10 @@ jest.mock('../features/course/teach/TeacherCoursePage', () => {
   const { useLocation: loc } = jest.requireActual('react-router-dom')
   return { TeacherCoursePage: () => <p>teacher-course-page:{loc().pathname}</p> }
 })
+jest.mock('../features/course/teach/transcript/TeacherTranscriptPage', () => {
+  const { useParams } = jest.requireActual<typeof import('react-router-dom')>('react-router-dom')
+  return { TeacherTranscriptPage: () => { const { activityId, enrollmentId } = useParams(); return <p>{`teacher-transcript-page:${activityId}:${enrollmentId}`}</p> } }
+})
 jest.mock('../features/course/teach/TeacherLivePage', () => {
   const { useParams } = jest.requireActual('react-router-dom')
   return { TeacherLivePage: () => { const { activityId } = useParams(); return <p>{`teacher-live-page:${activityId}`}</p> } }
@@ -141,6 +145,7 @@ test.each([
   ['/teach/courses/c1/activities/new', 'editor-page:/teach/courses/c1/activities/new'],
   ['/teach/activities/a1/edit', 'editor-page:/teach/activities/a1/edit'],
   ['/teach/activities/a1', 'teacher-live-page:a1'],
+  ['/teach/activities/a1/students/e9', 'teacher-transcript-page:a1:e9'],
   ['/teach/activities/a1/analysis', 'teacher-analysis-page:a1'],
   ['/teach/activities/a1/analysis/ai', '功能開發中'],
   ['/teach/courses/c1/projector', 'course-projector-page'],
@@ -333,6 +338,7 @@ describe('teacher pages on a phone', () => {
   test.each([
     '/teach/courses/c1',
     '/teach/activities/a1/edit',
+    '/teach/activities/a1/students/e9',
     '/teach/courses/c1/projector',
     '/teach/create-course',
     '/teacher/home?view=bank',

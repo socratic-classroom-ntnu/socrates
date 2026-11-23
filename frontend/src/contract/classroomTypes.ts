@@ -179,6 +179,11 @@ export interface components { schemas: {
   "SystemAIModelsView": { "models": Array<components["schemas"]["ModelOption"]> };
   "SystemAITestView": { "ok": true };
   "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((components["schemas"]["AdminAuthor"] | components["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "TeacherActivityView": { "id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended" };
+  "TeacherAttemptView": { "id": string; "state": "answering" | "awaiting_tutor" | "tutor_unavailable" | "in_dialogue" | "confirming" | "between_scenarios" | "reviewing" | "awaiting_reflection_prompt" | "reflecting" | "budget_exhausted" | "completed"; "scenario_index": number; "scenarios": Array<components["schemas"]["TeacherScenarioView"]>; "messages": Array<components["schemas"]["SoloMessageView"]>; "candidate_summary": (components["schemas"]["PersonalSummaryView"] | null); "revising": boolean; "final_summary": (components["schemas"]["FinalSummaryView"] | null); "final_status": ("confirmed" | "unconfirmed" | null); "final_revised": boolean; "review_status": "not_started" | "in_progress" | "completed"; "cells": Array<components["schemas"]["SoloProgressCellView"]> };
+  "TeacherScenarioView": { "index": number; "id": string; "text": string; "change": (components["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null); "rejected_at": Array<number>; "first_message_id": (string | null) };
+  "TeacherStudentView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest"; "guest_number": (number | null); "last_activity_at": (number | null) };
+  "TeacherTranscriptView": { "activity": components["schemas"]["TeacherActivityView"]; "student": components["schemas"]["TeacherStudentView"]; "attempt": (components["schemas"]["TeacherAttemptView"] | null) };
   "ToggleUpdate": { "enabled": boolean };
   "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
@@ -372,6 +377,11 @@ export interface requestComponents { schemas: {
   "SystemAIModelsView": { "models": Array<requestComponents["schemas"]["ModelOption"]> };
   "SystemAITestView": { "ok"?: true };
   "SystemAIView": { "configured": boolean; "adapter": (string | null); "model": (string | null); "base_url": (string | null); "key_last4": (string | null); "updated_at": (number | null); "updated_by": ((requestComponents["schemas"]["AdminAuthor"] | requestComponents["schemas"]["DeployAuthor"]) | null); "fallback_enabled": boolean };
+  "TeacherActivityView": { "id": string; "title": string; "course_id": string; "course_name": string; "status": "draft" | "scheduled" | "open" | "ended" };
+  "TeacherAttemptView": { "id": string; "state": "answering" | "awaiting_tutor" | "tutor_unavailable" | "in_dialogue" | "confirming" | "between_scenarios" | "reviewing" | "awaiting_reflection_prompt" | "reflecting" | "budget_exhausted" | "completed"; "scenario_index": number; "scenarios": Array<requestComponents["schemas"]["TeacherScenarioView"]>; "messages": Array<requestComponents["schemas"]["SoloMessageView"]>; "candidate_summary": (requestComponents["schemas"]["PersonalSummaryView"] | null); "revising": boolean; "final_summary": (requestComponents["schemas"]["FinalSummaryView"] | null); "final_status": ("confirmed" | "unconfirmed" | null); "final_revised": boolean; "review_status": "not_started" | "in_progress" | "completed"; "cells": Array<requestComponents["schemas"]["SoloProgressCellView"]> };
+  "TeacherScenarioView": { "index": number; "id": string; "text": string; "change": (requestComponents["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (requestComponents["schemas"]["PersonalSummaryView"] | null); "rejected_at": Array<number>; "first_message_id": (string | null) };
+  "TeacherStudentView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest"; "guest_number": (number | null); "last_activity_at": (number | null) };
+  "TeacherTranscriptView": { "activity": requestComponents["schemas"]["TeacherActivityView"]; "student": requestComponents["schemas"]["TeacherStudentView"]; "attempt": (requestComponents["schemas"]["TeacherAttemptView"] | null) };
   "ToggleUpdate": { "enabled": boolean };
   "ToggleView": { "key": string; "name": string; "description": string; "enabled": boolean; "updated_at": (number | null); "updated_by_name": (string | null); "disable_warning": (string | null) };
   "TokenRequest": { "token": string };
@@ -667,6 +677,9 @@ export interface paths {
   };
   "/solo/activities/{activity_id}/radar/dimensions/{index}": {
     "patch": { body: requestComponents["schemas"]["RadarDimensionUpdate"]; bodyRequired: true; requestMedia: "application/json"; response: components["schemas"]["RadarView"]; responseMedia: "application/json"; path: { "activity_id": string; "index": number }; query: never };
+  };
+  "/solo/activities/{activity_id}/students/{enrollment_id}/attempt": {
+    "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["TeacherTranscriptView"]; responseMedia: "application/json"; path: { "activity_id": string; "enrollment_id": string }; query: { "after"?: (string | null) } };
   };
   "/solo/attempts/{attempt_id}": {
     "get": { body: never; bodyRequired: false; requestMedia: "none"; response: components["schemas"]["SoloAttemptView"]; responseMedia: "application/json"; path: { "attempt_id": string }; query: never };

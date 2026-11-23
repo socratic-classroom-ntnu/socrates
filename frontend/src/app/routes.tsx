@@ -47,6 +47,8 @@ import { RoleGate } from './RoleGate'
 import { AdminGate } from '../features/admin/AdminGate'
 import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
+import { AccountSettingsPage } from '../features/account/AccountSettingsPage'
+import { AccountSubpage } from '../features/account/AccountSubpage'
 import { NotificationsPage } from '../features/notifications/NotificationsPage'
 import { NotificationsProvider } from '../features/notifications/NotificationsProvider'
 
@@ -66,11 +68,6 @@ function legacyRedirect(pathname: string, search: string): string | null {
 
 type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis'
 
-// 這一批不做的入口：共用佔位頁，說明文字依入口換。
-function Placeholder({ kind }: { kind?: PlaceholderKind }) {
-  const { t } = useT('common')
-  return <ComingSoonPage body={kind ? t(`comingSoon.${kind}`) : undefined} />
-}
 
 // 教師端的佔位頁回到所屬課程；活動頁要先查活動才知道課程，查不到就回「我的授課」
 function TeachPlaceholder({ kind }: { kind: PlaceholderKind }) {
@@ -124,7 +121,11 @@ export function AppRoutes() {
         <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
           <Route path="/groups" element={<GroupsPage />} />
         </Route>
-        <Route path="/account" element={<Placeholder kind="account" />} />
+        <Route path="/account" element={<AccountSettingsPage />} />
+        {/* 手機內頁（M02–M16）；電腦寬度回 /account，用對話框 */}
+        <Route path="/account/avatar" element={<AccountSubpage kind="avatar" />} />
+        <Route path="/account/password" element={<AccountSubpage kind="password" />} />
+        <Route path="/account/delete" element={<AccountSubpage kind="delete" />} />
       </Route>
       </Route>
       {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}

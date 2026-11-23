@@ -50,7 +50,7 @@ def _check_announcement(body: AnnouncementInput) -> None:
         raise DomainError("ANNOUNCEMENT_INVALID", 422)
 
 
-def _announcement_view(row: repo.Announcement, username: str) -> AnnouncementView:
+def _announcement_view(row: repo.Announcement, username: str | None) -> AnnouncementView:
     return AnnouncementView(
         id=row.id,
         audience=row.audience,
@@ -81,7 +81,11 @@ def publish(db: Session, actor: Account, body: AnnouncementInput) -> Announcemen
 
 
 def list_announcements(db: Session) -> list[AnnouncementView]:
-    return [_announcement_view(row, username) for row, username in repo.list_announcements(db)]
+    # A deleted publisher's username is a placeholder (deleted-<id>); show no name, like feedback.
+    return [
+        _announcement_view(row, None if kind == "deleted" else username)
+        for row, username, kind in repo.list_announcements(db)
+    ]
 
 
 def remove(db: Session, announcement_id: str) -> None:

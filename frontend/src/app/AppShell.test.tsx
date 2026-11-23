@@ -5,7 +5,7 @@ import { TeacherShell } from '../features/authoring/TeacherDashboard'
 import { AppShell } from './AppShell'
 import { AuthProvider, useAuth } from '../features/auth/AuthContext'
 import { PublicConfigProvider } from '../shared/publicConfig'
-import { useShellActive, useShellBack } from '../shared/shellContext'
+import { useHideShellNav, useShellActive, useShellBack } from '../shared/shellContext'
 import { LanguageSwitcher } from '../features/auth/LanguageSwitcher'
 
 jest.mock('../contract/classroomClient', () => {
@@ -343,6 +343,11 @@ function CoursePage() {
   return <p>course-page</p>
 }
 
+function FlowPage() {
+  useHideShellNav()
+  return <p>flow-page</p>
+}
+
 // P24：學生手機：頂部列沒有頭像；最下方底部導覽「首頁」「我」
 describe('student phone', () => {
   beforeEach(() => { phone(); asStudent() })
@@ -369,6 +374,13 @@ describe('student phone', () => {
     const nav = screen.getByRole('navigation', { name: '主選單' })
     expect(within(nav).getByRole('link', { name: '首頁' })).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('link', { name: 'Socrates Classroom' })).toBeNull()
+  })
+
+  test('a flow page (account settings M10) hides the bottom nav and keeps the brand on top', async () => {
+    open('/account/password', <FlowPage />)
+    await screen.findByText('flow-page')
+    expect(screen.queryByRole('navigation', { name: '主選單' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Socrates Classroom' })).toBeInTheDocument()
   })
 
   test('我 opens the account sheet; Escape closes it and gives focus back', async () => {

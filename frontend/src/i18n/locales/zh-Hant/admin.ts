@@ -15,6 +15,7 @@ export default {
     "audience": "對象",
     "title": "標題",
     "publisher": "發布者",
+    "deletedPublisher": "已刪除的帳號",
     "delete": "刪除",
     "empty": "還沒有公告",
     "emptyHint": "按「新增公告」發布，對象的使用者下次進站會看到。",

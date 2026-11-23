@@ -45,10 +45,11 @@ def save_announcement(db: Session, announcement: Announcement) -> None:
     db.flush()
 
 
-def list_announcements(db: Session) -> Sequence[tuple[Announcement, str]]:
+def list_announcements(db: Session) -> Sequence[tuple[Announcement, str, str]]:
+    """Each announcement with its publisher's username and account kind."""
     return (
         db.execute(
-            select(Announcement, Account.username)
+            select(Announcement, Account.username, Account.kind)
             .join(Account, Account.id == Announcement.published_by)
             .order_by(Announcement.published_at.desc(), Announcement.id.desc())
         )

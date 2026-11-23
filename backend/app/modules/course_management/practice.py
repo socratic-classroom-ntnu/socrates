@@ -23,6 +23,7 @@ from app.modules.course_management.repositories import Activity, Course, Enrollm
 from app.modules.identity_access.repositories import Account
 from app.modules.platform.env import env_int, env_str
 from app.modules.platform.errors import DomainError
+from app.modules.identity_access.service import display_name
 
 BANK_PATH = Path(__file__).with_name("practice_bank.yaml")
 
@@ -157,7 +158,7 @@ def ensure_practice_course(db: Session, student: Account, owner: Account) -> Cou
                     Enrollment(
                         course_id=course.id,
                         account_id=student.id,
-                        display_name=student.username[:40],
+                        display_name=display_name(student)[:40],
                     )
                 )
                 db.flush()

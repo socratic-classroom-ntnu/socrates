@@ -186,6 +186,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '{{count}} coinciden',
     range: 'Mostrando {{from}}–{{to}}',
     separator: ' · ',
+    deleted: '{{count}} eliminadas',
     paging: 'Páginas de la lista',
     previous: 'Anterior',
     next: 'Siguiente',
@@ -202,6 +203,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: 'Invitado',
     expired: 'Invitado caducado {{number}}',
+    deleted: 'Cuenta eliminada',
   },
   transcript: {
     blank: '(Aún sin explicar)',

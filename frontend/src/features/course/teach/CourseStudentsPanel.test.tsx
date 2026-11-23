@@ -45,7 +45,7 @@ function roster(students: Student[] = [...first, ...rest], counted = 2): Roster 
   const count = (kind: Student['kind']) => students.filter(s => s.kind === kind).length
   return {
     course_id: 'c-1', course_name: '科技倫理', generated_at: generatedAt, counted_activities: counted,
-    summary: { total: students.length, registered: count('registered'), guests: count('guest'), expired_guests: count('expired_guest') },
+    summary: { total: students.length, registered: count('registered'), guests: count('guest'), expired_guests: count('expired_guest'), deleted: count('deleted') },
     students,
   }
 }
@@ -114,6 +114,15 @@ test('the footer counts every kind and pages eight at a time (P5)', async () => 
   for (let i = 0; i < 3; i += 1) fireEvent.click(screen.getByRole('button', { name: '下一頁' }))
   expect(footer()).toHaveTextContent('顯示第 33–35 位')
   expect(screen.getByRole('button', { name: '下一頁' })).toBeDisabled()
+})
+
+test('a student who deleted their account is listed as 已刪除的帳號 and counted on their own', async () => {
+  const gone = student({ enrollment_id: 'e-gone', display_name: '', kind: 'deleted', email: null, completed_activities: 1 })
+  open({ 'GET /solo/courses/c-1/students': roster([first[0], gone]) })
+
+  const row = await screen.findByRole('row', { name: /已刪除的帳號/ })
+  expect(row).not.toHaveTextContent('訪客')
+  expect(footer()).toHaveTextContent('共 2 位學生（正式學生 1 位、訪客 0 位、過期訪客 0 位）・已刪除 1 位')
 })
 
 test('search filters by the shown name or email and goes back to the first page (P11, P14)', async () => {

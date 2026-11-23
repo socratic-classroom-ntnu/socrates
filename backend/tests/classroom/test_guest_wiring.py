@@ -16,7 +16,7 @@ from app.modules.app_shell import llm_workers
 from app.modules.app_shell import wiring
 from app.modules.course_management import enrollment
 from app.modules.course_management.repositories import Enrollment
-from app.modules.identity_access import guests
+from app.modules.identity_access import account_deletion, guests
 from app.modules.identity_access.auth import GUEST_SECONDS
 from app.modules.identity_access.repositories import Account
 from app.modules.platform import storage as storage
@@ -44,6 +44,19 @@ def test_the_app_refuses_to_start_without_one(monkeypatch):
     hooks.pop("solo-activity")
     monkeypatch.setattr(guests, "GUEST_HOOKS", hooks)
     with pytest.raises(RuntimeError, match="solo-activity"):
+        create_app(background=False)
+
+
+def test_account_deletion_reaches_ai_providers_and_courses():
+    assert set(account_deletion.registered_account_hooks()) >= wiring.REQUIRED_ACCOUNT_HOOKS
+    assert wiring.REQUIRED_ACCOUNT_HOOKS == {"ai-providers", "course-management"}
+
+
+def test_the_app_refuses_to_start_without_an_account_hook(monkeypatch):
+    hooks = dict(account_deletion.ACCOUNT_HOOKS)
+    hooks.pop("ai-providers")
+    monkeypatch.setattr(account_deletion, "ACCOUNT_HOOKS", hooks)
+    with pytest.raises(RuntimeError, match="ai-providers"):
         create_app(background=False)
 
 

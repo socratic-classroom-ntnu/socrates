@@ -45,6 +45,7 @@ export default {
       anonymous: '未登入',
     },
     expiredGuest: '過期訪客',
+    deletedAccount: '已刪除的帳號',
     nowAccount: '現在是 {{name}}',
     noKind: '—',
     openDetail: '看詳情',

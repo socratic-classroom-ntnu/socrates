@@ -8,8 +8,11 @@ front/back seam so a check can say when one side drifts from the other.
 # Codes raised from a variable (provider outcomes, identity conflicts) are listed under DYNAMIC.
 REASON_CODES: dict[str, tuple[str, ...]] = {
     "ACCOUNT_DATA_TAKEN": ("identity_access",),
+    "ACCOUNT_DELETE_UNAVAILABLE": ("identity_access",),
+    "ACCOUNT_HAS_COURSES": ("identity_access",),
     "ACCOUNT_PENDING_VERIFICATION": ("identity_access",),
     "ACCOUNT_ROLE_FORBIDDEN": ("ai_connection", "course_management", "solo_activity"),
+    "ACCOUNT_USERNAME_MISMATCH": ("identity_access",),
     "ACTION_ID_PAYLOAD_CONFLICT": ("classroom_core", "content_authoring", "group_dialogue"),
     "ACTION_SCOPE_REQUIRED": ("content_authoring",),
     "ACTIVITY_ACTION_UNAVAILABLE": ("course_management",),
@@ -46,6 +49,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "ARGUMENT_SIZE": ("classroom_core",),
     "AUTH_INVALID_CREDENTIALS": ("identity_access",),
     "AUTH_TOKEN_INVALID": ("identity_access",),
+    "AVATAR_INVALID": ("identity_access",),
+    "AVATAR_NOT_FOUND": ("identity_access",),
     "BANK_IMPORT_INVALID": ("content_authoring",),
     "BANK_OWNER_REQUIRED": ("content_authoring",),
     "BANK_QUESTION_INVALID": ("content_authoring",),
@@ -68,6 +73,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "COURSE_CODE_REQUIRED": ("classroom_core",),
     "COURSE_NOT_FOUND": ("course_management", "solo_activity"),
     "CURRENT_GROUP_CONFIGURATION_REQUIRED": ("group_dialogue",),
+    "CURRENT_PASSWORD_INVALID": ("identity_access",),
     "CURRENT_PHASE_ACTIONS": ("classroom_core",),
     "CURRENT_POPULATED_ROSTER_REQUIRED": ("group_dialogue",),
     "CURRENT_ROSTER_DIGEST_REQUIRED": ("group_dialogue",),
@@ -101,6 +107,7 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "LOBBY_REQUIRED": ("classroom_core", "group_dialogue"),
     "LOGIN_REQUIRED": ("ai_providers", "identity_access"),
     "ORIGIN_BINDING_REQUIRED": ("identity_access",),
+    "PASSWORD_CHANGE_UNAVAILABLE": ("identity_access",),
     "PERSONAL_CONFIRM_REQUIRED": ("group_dialogue",),
     "PERSONAL_DIALOGUE_REQUIRED": ("group_dialogue",),
     "PERSONAL_RETRY_REQUIRED": ("group_dialogue",),
@@ -157,6 +164,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
 }
 
 DYNAMIC_REASON_CODES: tuple[str, ...] = (
+    # 個人設定的變更密碼次數限制，由 enforce_rate_limit 的 error_code 帶出（identity_access/routes.py）。
+    "PASSWORD_CHANGE_RATE_LIMITED",
     # The teacher's AI 連線設定 form checks and test kinds, raised with this prefix by
     # ai_connection/service.py.
     "AI_CONNECTION_ADAPTER_INVALID",

@@ -8,9 +8,10 @@ import { BottomNav } from '../ui'
 import { AccountMenu, type NavEntry } from './AccountMenu'
 import { AccountSheet } from './AccountSheet'
 import { useLogout } from './accountSummary'
-import { InsideAppShell, type ShellActive, ShellActiveContext, type ShellBack, ShellBackContext } from '../shared/shellContext'
+import { InsideAppShell, ShellActiveContext, ShellBackContext, ShellNavHiddenContext, type ShellActive, type ShellBack } from '../shared/shellContext'
 import { useFeatures } from '../shared/publicConfig'
 import { useIsPhone } from '../shared/useIsPhone'
+import { avatarSrc } from '../contract/accountClient'
 import { NotificationBell } from '../features/notifications/NotificationBell'
 import { NotificationLayer } from '../features/notifications/NotificationLayer'
 import { useNotifications } from '../features/notifications/NotificationsProvider'
@@ -75,6 +76,7 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const phone = useIsPhone()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [back, setBack] = useState<ShellBack>(null)
+  const [navHidden, setNavHidden] = useState(false)
   // 直接包進來的一頁（跨角色說明頁）不屬於任何導覽項目，不標目前頁
   // 頁面宣告的優先（例如我的對話的私人活動頁），否則依網址
   const [declared, setDeclared] = useState<ShellActive>(null)
@@ -95,7 +97,9 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
   const content = <div className="app-shell__content" id="app-content">
     <ShellActiveContext.Provider value={setDeclared}>
     <ShellBackContext.Provider value={setBack}>
+    <ShellNavHiddenContext.Provider value={setNavHidden}>
       <InsideAppShell.Provider value={true}>{children ?? <Outlet />}</InsideAppShell.Provider>
+    </ShellNavHiddenContext.Provider>
     </ShellBackContext.Provider>
     </ShellActiveContext.Provider>
     <NotificationLayer />
@@ -114,7 +118,18 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
         {content}
       </div>
     }
-    return <StudentPhoneShell top={top} active={active} name={account?.username ?? ''} hasUnread={hasUnread}>{content}</StudentPhoneShell>
+    return (
+      <StudentPhoneShell
+        top={top}
+        active={active}
+        name={account?.display_name || account?.username || ''}
+        avatarUrl={avatarSrc(account)}
+        hasUnread={hasUnread}
+        navHidden={navHidden}
+      >
+        {content}
+      </StudentPhoneShell>
+    )
   }
 
   return <div className={'app-shell' + (collapsed ? ' app-shell--collapsed' : '')}>
@@ -162,8 +177,22 @@ export function AppShell({ children }: { children?: ReactNode } = {}) {
  * 學生手機（P24–P26）：頂部列沒有頭像；最下方是首頁、我的對話、通知、我。
  * 頭像移到「我」，點了從下方滑出帳號面板。對話頁不在外框裡，所以沒有底部導覽。
  */
-function StudentPhoneShell({ top, active, name, hasUnread, children }: {
-  top: ReactNode; active: NavKey | null; name: string; hasUnread: boolean; children: ReactNode
+function StudentPhoneShell({
+  top,
+  active,
+  name,
+  avatarUrl,
+  hasUnread,
+  navHidden,
+  children,
+}: {
+  top: ReactNode
+  active: NavKey | null
+  name: string
+  avatarUrl?: string
+  hasUnread: boolean
+  navHidden: boolean
+  children: ReactNode
 }) {
   const { t } = useT('shell')
   const [sheet, setSheet] = useState(false)
@@ -176,15 +205,15 @@ function StudentPhoneShell({ top, active, name, hasUnread, children }: {
     if (wasOpen.current && !sheet && !logout.confirm) me.current?.focus()
     wasOpen.current = sheet
   }, [sheet, logout.confirm])
-  return <div className="app-shell app-shell--phone app-shell--bottom-nav">
+  return <div className={'app-shell app-shell--phone' + (navHidden ? '' : ' app-shell--bottom-nav')}>
     <a className="app-shell__skip" href="#app-content">{t('skip')}</a>
     <header className="app-shell__topbar">{top}</header>
     {children}
-    {!typing && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
+    {!typing && !navHidden && <BottomNav label={t('nav.label')} className="app-shell__bottom-nav" items={[
       { key: 'home', label: t('nav.home'), icon: ITEMS[0].icon, to: '/', current: active === 'home' },
       { key: 'dialogues', label: t('nav.dialogues'), icon: ITEMS[1].icon, to: '/my-dialogues', current: active === 'dialogues' },
       { key: 'notifications', label: t('nav.notificationsShort'), icon: <NotificationBell mobile />, to: '/notifications', current: active === 'notifications', dotLabel: hasUnread ? t('nav.unread') : undefined },
-      { key: 'me', label: t('nav.me'), icon: <Avatar name={name} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
+      { key: 'me', label: t('nav.me'), icon: <Avatar name={name} src={avatarUrl} />, onSelect: () => setSheet(open => !open), expanded: sheet, buttonRef: me },
     ]} />}
     {sheet && <AccountSheet onClose={() => setSheet(false)} onLogout={logout.request} />}
     {logout.confirm}

@@ -17,6 +17,7 @@ export default {
     "audience": "Destinatarios",
     "title": "Título",
     "publisher": "Publicado por",
+    "deletedPublisher": "Cuenta eliminada",
     "delete": "Eliminar",
     "empty": "Todavía no hay anuncios",
     "emptyHint": "Selecciona «Nuevo anuncio» para publicar un aviso que los destinatarios verán en su próxima visita.",

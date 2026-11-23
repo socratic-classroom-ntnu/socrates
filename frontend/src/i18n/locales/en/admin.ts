@@ -17,6 +17,7 @@ export default {
     "audience": "Audience",
     "title": "Title",
     "publisher": "Published by",
+    "deletedPublisher": "Deleted account",
     "delete": "Delete",
     "empty": "No announcements yet",
     "emptyHint": "Select “New announcement” to post a notice for users to see on their next visit.",

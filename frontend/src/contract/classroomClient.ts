@@ -403,3 +403,15 @@ export function openClassroomSocket(roomId: string, mode: string, lastSeq: numbe
   const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
   return new WebSocket(`${scheme}://${location.host}/api/v2/classrooms/${roomId}/ws?mode=${mode}&last_seq=${lastSeq}`);
 }
+export type DeleteAccountResponse = components['schemas']['DeleteAccountView']
+
+export function checkAccountDeletion(signal?: AbortSignal) {
+  return typedApi('/account/deletion-check', 'GET', { signal })
+}
+
+/** 刪除目前登入帳號；成功後由呼叫端清除前端登入狀態。 */
+export async function deleteAccount(
+  username: string,
+): Promise<DeleteAccountResponse> {
+  return typedApi('/account', 'DELETE', { body: { username } })
+}

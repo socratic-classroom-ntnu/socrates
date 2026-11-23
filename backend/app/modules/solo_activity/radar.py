@@ -110,11 +110,12 @@ def _students(
         if row is None or final.get("status") is None or final.get("summary") is None:
             continue
         kind = kinds[enrollment.id]
-        name = (
-            f"匿名訪客 {kind['guest_number']}"
-            if kind["kind"] == "expired_guest" or not enrollment.display_name
-            else enrollment.display_name
-        )
+        if kind["kind"] == "deleted":
+            name = "已刪除的帳號"
+        elif kind["kind"] == "expired_guest" or not enrollment.display_name:
+            name = f"匿名訪客 {kind['guest_number']}"
+        else:
+            name = enrollment.display_name
         found.append(
             {
                 "student_id": enrollment.id,

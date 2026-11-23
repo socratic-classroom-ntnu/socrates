@@ -89,6 +89,10 @@
 .tt-row--current::before { left: 16px; }
 .tt-row--current:not(:last-child)::after { left: 20px; }
 .tt-row--warn { background: var(--ui-color-warn-soft); }
+/* 正在看的情境（跟著點選與聊天捲動）：左邊一條深綠色的粗線；黃底仍然只表示學生現在在哪一關 */
+.tt-row--viewing > .tt-row__button::before { content: ''; position: absolute; left: -16px; top: 4px; bottom: 12px; width: 4px; border-radius: 0 3px 3px 0; background: var(--ui-classroom-board-green); }
+.tt-row--current.tt-row--viewing > .tt-row__button::before { left: 0; }
+.tt-row--viewing .tt-row__name { color: var(--ui-classroom-board-green); }
 .tt-row__button { all: unset; box-sizing: border-box; width: 100%; padding: 6px 0 16px; display: flex; flex-direction: column; gap: 9px; cursor: pointer; }
 .tt-row__button--static { cursor: default; }
 .tt-row__button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }

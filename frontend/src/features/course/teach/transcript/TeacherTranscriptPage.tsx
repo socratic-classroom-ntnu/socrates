@@ -23,6 +23,8 @@ export function TeacherTranscriptPage() {
   const resource = useResource<Transcript>(activityId && enrollmentId ? `/solo/activities/${activityId}/students/${enrollmentId}/attempt` : null)
   const [retrying, setRetrying] = useState(false)
   const chat = useRef<ChatHandle>(null)
+  // The scenario the teacher is reading; until the chat reports one it is the student's own.
+  const [viewing, setViewing] = useState<number | null>(null)
   const data = resource.data
   const stopped = data ? isStopped(data) : false
   const backTo = activityId ? `/teach/activities/${activityId}` : '/'
@@ -59,8 +61,8 @@ export function TeacherTranscriptPage() {
     body = <>
       {banner && <p className={`transcript-banner transcript-banner--${banner}`} role="status">{t(`transcript.banner.${banner}`)}</p>}
       <div className="transcript-body">
-        <TranscriptChat ref={chat} attempt={attempt} studentName={name} footer={footer} />
-        <TranscriptTrack attempt={attempt} name={name} onJump={index => chat.current?.jumpToScenario(index)} />
+        <TranscriptChat ref={chat} attempt={attempt} studentName={name} footer={footer} onViewing={setViewing} />
+        <TranscriptTrack attempt={attempt} name={name} viewing={viewing ?? attempt.scenario_index} onJump={index => chat.current?.jumpToScenario(index)} />
       </div>
     </>
   }

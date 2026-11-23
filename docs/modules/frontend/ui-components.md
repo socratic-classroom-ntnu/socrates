@@ -1,7 +1,7 @@
 ---
-description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、密碼欄、下拉選單、狀態標籤、篩選 chip、複製鈕、QR、底部導覽
+description: 前端共用元件（frontend/src/ui）的使用規範：按鈕、連結按鈕、圖示按鈕、表單欄位、錯誤訊息、密碼欄、下拉選單、單選卡、狀態標籤、篩選 chip、複製鈕、QR、底部導覽
 globs: frontend/src/**/*.tsx
-keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Select, RadioCards , StatusPill, Chip, ChipGroup, CopyButton, QrCode, BottomNav, className, CSS Modules]
+keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Select, RadioCards, StatusPill, Chip, ChipGroup, CopyButton, QrCode, BottomNav, className, CSS Modules]
 ---
 
 # 前端共用元件（`frontend/src/ui`）
@@ -22,7 +22,7 @@ keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Sele
 | `FormError` | 整張表單或整頁的錯誤 | 一般的 `<p>` props，通常加 `role="alert"` |
 | `PasswordInput` | 密碼欄，右側有顯示／隱藏密碼的眼睛按鈕 | 其餘 props 與 `ref` 都給 `<input>`（不收 `type`）；預設遮住；欄位 `disabled` 時眼睛也停用。所有帳號密碼欄都用它（API key 這類金鑰欄不用） |
 | `Select` | 下拉選單（取代原生 `<select>`；選中的打勾、可用鍵盤） | `value`、`options`（每項 `value`、`label`，可加第二行 `description` 與右側 `badge`）、`onChange`、`listLabel`（清單名稱，通常同欄位標題）；`search` 加搜尋框、`typedLabel` 允許直接用搜尋框打的字、`note` 是清單上方一行說明（也可以是函式，拿到搜尋字與符合數）、`align: 'end'` 讓較寬的清單往左展開；`id` 等於 `Field` 的 `id`，`invalid`／`describedBy` 照 `Field` 的規則接 |
-| `RadioCards` | 單選卡片群組（例如語言設定），以卡片形式呈現選項 | `legend` 為群組標題、`name` 為 radio 群組名稱；`options` 每項包含 `value`、`label`，可選填 `description`、`disabled`；`value` 為目前選取值，`onChange` 回傳選取值；群組也支援 `disabled` |
+| `RadioCards` | 原生單選群組，選項呈現為卡片 | `legend` 是群組名稱，`name` 是表單欄位名，同一表單每組各用不同的名稱；`options` 每項有 `value`、`label`，可加 `description` 或 `disabled`；`value`、`onChange` 控制選取，`disabled` 可停用整組 |
 | `StatusPill` | 狀態標籤 | `tone`：`open`、`scheduled`、`draft`、`ended`、`quiet` |
 | `Chip` | 可切換的篩選 chip | `pressed`（會變成 `aria-pressed`） |
 | `ChipGroup` | 一排 chip | `label` 是這組的名稱（`role="group"`） |
@@ -30,11 +30,10 @@ keywords: [Button, ButtonLink, IconButton, Field, FormError, PasswordInput, Sele
 | `QrCode` | 網址的 QR 圖 | `value`、`alt`、`size` |
 | `BottomNav` | 手機底部導覽（學生端） | `label` 是導覽名稱；`items` 每格有 `to`（連結，`current` 標目前頁）或 `onSelect`（按鈕，`expanded` 標面板開著）；固定在畫面最下方，頁面內容要自己留出 64px＋安全區的底部空間 |
 
-
 ## 什麼情境用哪個
 
 - 導頁用 `ButtonLink`，不要寫 `<Button onClick={() => navigate(…)}>`。
-- 欄位一律包 `Field`。說明和錯誤用 `FieldHint`、`FieldError` 放進 children，先後照該頁的設計，各給一個 id；控制項寫 `aria-describedby={describedBy(error && '<id>-error', '<id>-hint')}`，只接畫面上有出現的，順序跟畫面一樣。例：`frontend/src/features/course/teach/editor/QuestionForm.tsx` 的情境敘述。
+- 個別欄位用 `Field`；單選群組用 `RadioCards` 自帶的 `fieldset` 與 `legend`。說明和錯誤用 `FieldHint`、`FieldError` 放進欄位，各給一個 id；控制項用 `describedBy()` 依顯示順序連到可見的說明和錯誤。
 - 狀態轉換按鈕（開始、結束、刪除…）仍然只依後端的 `available_actions` 顯示，見 `frontend/src/features/solo-activity/SoloDialoguePage.tsx`；這些元件只管外觀。
 - 只收 class 字串的舊元件（例如 `Menu` 的 `triggerClassName`）用 `iconButtonClass()`，不要寫死 class 名稱。
 

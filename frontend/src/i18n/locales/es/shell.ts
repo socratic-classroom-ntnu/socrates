@@ -84,6 +84,9 @@ const shell: Shape<typeof zhHant> = {
     }
   },
   nav: {
+    notifications: "Notificaciones",
+    notificationsShort: "Avisos",
+    unread: "Sin leer",
     admin: 'Administración',
     label: 'Menú principal',
     home: 'Inicio',

@@ -1,7 +1,7 @@
 """個人設定：帳號的顯示名稱（accounts.display_name_override）與頭像表（account_avatars，圖片存在資料庫，帳號 id 為 key）。
 
-Revision ID: 0030
-Revises: 0029
+Revision ID: 0031
+Revises: 0030
 Create Date: 2026-11-23 23:30:00.000000
 
 """
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "0030"
-down_revision: Union[str, None] = "0029"
+revision: str = "0031"
+down_revision: Union[str, None] = "0030"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

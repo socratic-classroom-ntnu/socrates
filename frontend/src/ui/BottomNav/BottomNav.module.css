@@ -13,4 +13,5 @@
 .item:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: -4px; border-radius: 8px; }
 .active { color: var(--ui-color-primary); font-weight: 700; }
 .marker { position: absolute; top: 0; width: 36px; height: 3px; border-radius: 0 0 3px 3px; background: var(--ui-color-primary); }
-.icon { display: flex; align-items: center; justify-content: center; height: 24px; }
+.icon { position: relative; display: flex; align-items: center; justify-content: center; height: 24px; }
+.dot { position: absolute; right: -3px; top: -2px; width: 10px; height: 10px; border: 1px solid var(--ui-color-panel); border-radius: 50%; background: var(--ui-color-primary); }

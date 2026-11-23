@@ -1,3 +1,7 @@
+import esNotifications from './locales/es/notifications';
+import enNotifications from './locales/en/notifications';
+import hansNotifications from './locales/zh-Hans/notifications';
+import hantNotifications from './locales/zh-Hant/notifications';
 import enAuth from './locales/en/auth';
 import enCommon from './locales/en/common';
 import enFeedback from './locales/en/feedback';
@@ -52,15 +56,15 @@ import hantPractice from './locales/zh-Hant/practice';
 import hantTeach from './locales/zh-Hant/teach';
 import type { Locale } from './locale';
 
-export const NAMESPACES = ['common', 'auth', 'shell', 'teach', 'home', 'join', 'learn', 'editor', 'solo', 'practice', 'guest', 'feedback', 'admin'] as const;
+export const NAMESPACES = ['common', 'auth', 'shell', 'teach', 'home', 'join', 'learn', 'editor', 'solo', 'practice', 'guest', 'feedback', 'admin', 'notifications'] as const;
 export type Namespace = typeof NAMESPACES[number];
 
 // Bundled up front: four small locales are cheaper than a loading state on every page.
-const sourceResources = { common: hantCommon, auth: hantAuth, shell: hantShell, teach: hantTeach, home: hantHome, join: hantJoin, learn: hantLearn, editor: hantEditor, solo: hantSolo, practice: hantPractice, guest: hantGuest, feedback: hantFeedback, admin: hantAdmin };
+const sourceResources = { common: hantCommon, auth: hantAuth, shell: hantShell, teach: hantTeach, home: hantHome, join: hantJoin, learn: hantLearn, editor: hantEditor, solo: hantSolo, practice: hantPractice, guest: hantGuest, feedback: hantFeedback, admin: hantAdmin, notifications: hantNotifications };
 
 export const resources: Record<Locale, Record<Namespace, unknown>> = {
   'zh-Hant': sourceResources,
-  'zh-Hans': { common: hansCommon, auth: hansAuth, shell: hansShell, teach: hansTeach, home: hansHome, join: hansJoin, learn: hansLearn, editor: hansEditor, solo: hansSolo, practice: hansPractice, guest: hansGuest, feedback: hansFeedback, admin: hansAdmin },
-  en: { common: enCommon, auth: enAuth, shell: enShell, teach: enTeach, home: enHome, join: enJoin, learn: enLearn, editor: enEditor, solo: enSolo, practice: enPractice, guest: enGuest, feedback: enFeedback, admin: enAdmin },
-  es: { common: esCommon, auth: esAuth, shell: esShell, teach: esTeach, home: esHome, join: esJoin, learn: esLearn, editor: esEditor, solo: esSolo, practice: esPractice, guest: esGuest, feedback: esFeedback, admin: esAdmin },
+  'zh-Hans': { common: hansCommon, auth: hansAuth, shell: hansShell, teach: hansTeach, home: hansHome, join: hansJoin, learn: hansLearn, editor: hansEditor, solo: hansSolo, practice: hansPractice, guest: hansGuest, feedback: hansFeedback, admin: hansAdmin, notifications: hansNotifications },
+  en: { common: enCommon, auth: enAuth, shell: enShell, teach: enTeach, home: enHome, join: enJoin, learn: enLearn, editor: enEditor, solo: enSolo, practice: enPractice, guest: enGuest, feedback: enFeedback, admin: enAdmin, notifications: enNotifications },
+  es: { common: esCommon, auth: esAuth, shell: esShell, teach: esTeach, home: esHome, join: esJoin, learn: esLearn, editor: esEditor, solo: esSolo, practice: esPractice, guest: esGuest, feedback: esFeedback, admin: esAdmin, notifications: esNotifications },
 };

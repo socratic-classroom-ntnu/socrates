@@ -79,3 +79,31 @@
 .pickerFree { flex-shrink: 0; padding: 2px 8px; border-radius: 999px; background: var(--ui-color-warning-soft); color: var(--ui-color-warning-ink); font-size: 12px; font-weight: 700; }
 /* 金鑰欄不是登入密碼：用一般文字欄遮成圓點，瀏覽器才不會帶入帳號密碼 */
 .input[data-masked='true'] { -webkit-text-security: disc; }
+
+.announcementToolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.announcementTableFrame { overflow-x: auto; }
+.announcementTable { width: 100%; min-width: 680px; table-layout: fixed; border-collapse: collapse; color: var(--ui-color-ink); font-size: 14px; }
+.announcementTable th, .announcementTable td { padding: 10px 16px; text-align: start; }
+.announcementTable th { background: var(--ui-color-panel-hover); }
+.announcementTable th:first-child { width: 16%; }
+.announcementTable th:nth-child(2) { width: 11%; }
+.announcementTable th:nth-child(4) { width: 13%; }
+.announcementTable th:last-child { width: 96px; }
+.announcementTable td { border-top: 1px solid var(--ui-color-line); overflow-wrap: anywhere; }
+.announcementTable td:first-child, .announcementTable td:last-child { white-space: nowrap; }
+.announcementTable td:last-child { text-align: end; }
+.announcementTable .removeButton { border-color: var(--ui-color-danger); }
+.announcementEmpty {
+  display: grid; justify-items: center; gap: 12px; padding: 40px 24px;
+  border: 1px dashed var(--ui-color-border); border-radius: 14px; background: var(--ui-color-panel);
+}
+.announcementEmpty span {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--ui-color-primary-soft) url('./announcement-empty.svg') no-repeat center;
+}
+.announcementEmpty strong { font-size: 18px; color: var(--ui-color-ink); }
+.announcementEmpty p, .announcementDeleteQuestion { margin: 0; }
+.announcementEmpty p { color: var(--ui-color-ink-soft); font-size: 14px; }
+.announcementDeleteQuestion { color: var(--ui-color-ink); font-weight: 700; margin-bottom: 8px; overflow-wrap: anywhere; }
+.announcementForm { display: grid; gap: 18px; }
+.announcementSchedule { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }

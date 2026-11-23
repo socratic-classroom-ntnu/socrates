@@ -27,13 +27,14 @@ from tests.solo_activity.test_solo_attempts_api import OPENING, answer, ok, star
 from tests.solo_activity.test_solo_guests import join_as_guest, setup
 
 
-def test_both_guest_record_modules_are_wired():
+def test_guest_record_modules_are_wired():
     assert (
         set(guests.GUEST_HOOKS)
         >= wiring.REQUIRED_GUEST_HOOKS
         == {
             "course-management",
             "solo-activity",
+            "notifications",
         }
     )
 

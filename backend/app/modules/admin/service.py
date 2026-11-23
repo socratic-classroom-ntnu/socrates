@@ -40,7 +40,9 @@ def admin_guard(request: Request) -> None:
     """Router dependency: runs before FastAPI validates the body or query, so an invalid request
     from someone who is not an admin still gets ADMIN_NOT_FOUND instead of a 422 (spec P15)."""
     with transaction() as db:
-        admin_account(db, request, mutation=request.method not in ("GET", "HEAD", "OPTIONS"))
+        admin_account(db, request)
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            admin_account(db, request, mutation=True)
 
 
 def _name(db: Session, account_id: str | None) -> str | None:

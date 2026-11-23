@@ -94,10 +94,10 @@ function chooseModel(id: string) {
 }
 const saveButton = () => screen.getByRole('button', { name: '儲存' })
 
-test('the tabs are switches, system AI, feedback, admins', async () => {
+test('announcements follows the admins tab', async () => {
   renderAt('/admin')
   const tabs = await screen.findAllByRole('tab')
-  expect(tabs.map(tab => tab.textContent)).toEqual(['功能開關', '系統 AI', '意見回饋', '管理員'])
+  expect(tabs.map(tab => tab.textContent)).toEqual(['功能開關', '系統 AI', '意見回饋', '管理員', '公告'])
   expect(tabs[1]).toHaveAttribute('href', '/admin/system-ai')
 })
 

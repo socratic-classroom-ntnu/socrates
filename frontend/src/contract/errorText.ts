@@ -119,6 +119,7 @@ const CODES: Record<string, string> = {
   PROVIDER_ADAPTER_REQUIRED: '請選擇 AI 服務。',
   PROVIDER_AVAILABILITY: 'AI 服務暫時無法使用，請稍後再試。',
   PROVIDER_EMPTY_CONTENT: 'AI 服務這次沒有回傳內容，請再試一次或改選其他模型。',
+  PROVIDER_OUTPUT_TRUNCATED: 'AI 服務的回應超過長度上限、被截斷了，請再試一次。',
   PROVIDER_SCHEMA_MISMATCH: 'AI 服務回傳的內容格式不符合這項功能，請改選支援結構化輸出的模型。',
   PROVIDER_TIMEOUT: 'AI 服務回應時間較長，請稍後再試。',
   PROVIDER_BASE_URL_REQUIRED: '這個 AI 服務需要填自訂服務網址。',

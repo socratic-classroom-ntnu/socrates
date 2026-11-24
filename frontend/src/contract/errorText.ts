@@ -68,6 +68,8 @@ const CODES: Record<string, string> = {
   ENROLLMENT_NOT_FOUND: '這位學生已經不在課程裡了。',
   ENROLL_CODE_NOT_FOUND: '找不到這個課程代碼，請確認後再輸入。',
   EXISTING_GROUP_ARGUMENT_REQUIRED: '要回應的那則原話已不存在，請重新選擇。',
+  EXPANSION_LOCKED: '已有學生開始作答，立場空間不能再修改。',
+  EXPANSION_UNAVAILABLE: '立場空間沒辦法產生：請確認 AI 連線可用後再試，或直接自己寫立場。',
   FEEDBACK_MESSAGE_REQUIRED: '請寫下回饋內容。',
   FEEDBACK_NOT_FOUND: '找不到這個頁面。',
   FEEDBACK_SCREENSHOT_INVALID: '截圖只能是 PNG、JPEG 或 WebP 圖片，而且不能超過 750 KB。',

@@ -7,6 +7,7 @@ from pydantic import Field, StringConstraints, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from app.modules.identity_access.contracts import AccountView, Locale
+from app.modules.llm_runtime.contracts import ActivityExpansion
 from app.modules.platform.contracts import Strict
 
 ActivityStatus = Literal["draft", "scheduled", "open", "ended"]
@@ -223,6 +224,8 @@ class ActivityTeacherView(Strict):
     has_unpublished_changes: bool
     revision: int | None
     draft: ActivityDraft
+    # The stance space for the narrative; it goes into the revision on the next publish.
+    expansion: ActivityExpansion | None
     starts_at: float | None
     ends_at: float | None
     available_actions: list[TeacherAction]

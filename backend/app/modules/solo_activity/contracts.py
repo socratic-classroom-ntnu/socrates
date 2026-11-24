@@ -229,6 +229,9 @@ class SoloMessageView(View):
     # A student's sentence on what is off in the final summary (不太對): it belongs to the review,
     # not to the scenario whose index it carries.
     final_feedback: bool
+    # Student messages only: the language the student chose when writing it ("en", "zh-Hant"…).
+    # The text is kept exactly as written; nothing is translated.
+    locale: str | None
 
 
 class SoloAttemptView(View):
@@ -351,6 +354,14 @@ class TeacherStudentView(View):
     last_activity_at: float | None  # None before the student starts
 
 
+class TeacherStanceView(View):
+    stance_id: str
+    label: str  # the stance's label in the revision the attempt runs on
+    confidence: Literal["low", "medium", "high"]
+    message_id: str  # the student's latest message it was placed from
+    at: float
+
+
 class TeacherScenarioView(View):
     index: int
     id: str
@@ -366,6 +377,9 @@ class TeacherScenarioView(View):
     rejected_at: list[float]
     # Where the scenario starts in `messages`; None before it has a message. Not affected by `after`.
     first_message_id: str | None
+    # Where the student's stated position sits in the activity's stance space, oldest first: a
+    # change of mind adds one and the earlier ones stay. Empty without a stance space.
+    stances: list[TeacherStanceView]
 
 
 class TeacherAttemptView(View):

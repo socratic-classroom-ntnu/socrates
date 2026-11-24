@@ -82,6 +82,7 @@ const activityView = (card: S['ActivityTeacherCard']) => ({
   id: card.id, course_id: 'c-1', status: card.status, locked: card.locked, revision: card.status === 'draft' ? null : 1,
   has_unpublished_changes: false, starts_at: card.starts_at, ends_at: card.ends_at, available_actions: card.available_actions,
   draft: { title: card.title, scenario: '一輛失控的電車正駛向五名工人。', starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
+  expansion: null,
 }) satisfies S['ActivityTeacherView']
 
 const joinPreview = {
@@ -115,10 +116,10 @@ const attempt = {
     status: 'in_progress', confirmed_summary: null,
   }],
   messages: [
-    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', scenario_index: 0, created_at: now - 300, move: null, revise_hint: null, final_feedback: false },
-    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', scenario_index: 0, created_at: now - 280, move: 'probe', revise_hint: null, final_feedback: false },
-    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', scenario_index: 0, created_at: now - 120, move: null, revise_hint: null, final_feedback: false },
-    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null, final_feedback: false },
+    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', scenario_index: 0, created_at: now - 300, move: null, revise_hint: null, final_feedback: false, locale: 'zh-Hant' },
+    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', scenario_index: 0, created_at: now - 280, move: 'probe', revise_hint: null, final_feedback: false, locale: null },
+    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', scenario_index: 0, created_at: now - 120, move: null, revise_hint: null, final_feedback: false, locale: 'zh-Hant' },
+    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null, final_feedback: false, locale: null },
   ],
   candidate_summary: null, rejected_summary: null, summary_digest: null, principle_hint: null, notice: null,
   final_summary: null, final_digest: null, final_status: null, final_revised: false,

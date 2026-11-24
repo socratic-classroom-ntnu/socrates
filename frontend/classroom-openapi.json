@@ -297,6 +297,43 @@
         "title": "ActivityDraft",
         "type": "object"
       },
+      "ActivityExpansion": {
+        "additionalProperties": false,
+        "description": "activity_expansion output: the teacher's narrative → a stance space and probe directions.\n\nThe teacher reviews and edits this before it is locked into the ActivityRevision.",
+        "properties": {
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/Stance"
+            },
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Stances",
+            "type": "array"
+          },
+          "tutor_goal": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stances",
+          "tutor_goal",
+          "probe_hints"
+        ],
+        "title": "ActivityExpansion",
+        "type": "object"
+      },
       "ActivityJoin": {
         "additionalProperties": false,
         "properties": {
@@ -609,6 +646,16 @@
             ],
             "title": "Ends At"
           },
+          "expansion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityExpansion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "has_unpublished_changes": {
             "title": "Has Unpublished Changes",
             "type": "boolean"
@@ -662,6 +709,7 @@
           "has_unpublished_changes",
           "revision",
           "draft",
+          "expansion",
           "starts_at",
           "ends_at",
           "available_actions"
@@ -7118,6 +7166,17 @@
             "title": "Id",
             "type": "string"
           },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "move": {
             "anyOf": [
               {
@@ -7179,7 +7238,8 @@
           "created_at",
           "move",
           "revise_hint",
-          "final_feedback"
+          "final_feedback",
+          "locale"
         ],
         "title": "SoloMessageView",
         "type": "object"
@@ -7567,6 +7627,36 @@
           "attention"
         ],
         "title": "SoloStudentProgressView",
+        "type": "object"
+      },
+      "Stance": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description"
+        ],
+        "title": "Stance",
         "type": "object"
       },
       "StanceOptionView": {
@@ -8053,6 +8143,13 @@
             "title": "Rejected At",
             "type": "array"
           },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/TeacherStanceView"
+            },
+            "title": "Stances",
+            "type": "array"
+          },
           "status": {
             "enum": [
               "in_progress",
@@ -8076,9 +8173,49 @@
           "status",
           "confirmed_summary",
           "rejected_at",
-          "first_message_id"
+          "first_message_id",
+          "stances"
         ],
         "title": "TeacherScenarioView",
+        "type": "object"
+      },
+      "TeacherStanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message_id": {
+            "title": "Message Id",
+            "type": "string"
+          },
+          "stance_id": {
+            "title": "Stance Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance_id",
+          "label",
+          "confidence",
+          "message_id",
+          "at"
+        ],
+        "title": "TeacherStanceView",
         "type": "object"
       },
       "TeacherStudentView": {
@@ -8878,6 +9015,100 @@
           }
         },
         "summary": "Copy Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/expansion": {
+      "post": {
+        "description": "Write a stance space from the draft's narrative with the teacher's AI connection.",
+        "operationId": "write_expansion_api_v2_activities__activity_id__expansion_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Expansion",
+        "tags": [
+          "activities"
+        ]
+      },
+      "put": {
+        "description": "The teacher's own edit of the stance space; it goes into the revision on publish.",
+        "operationId": "update_expansion_api_v2_activities__activity_id__expansion_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityExpansion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Expansion",
         "tags": [
           "activities"
         ]

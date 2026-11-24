@@ -538,6 +538,32 @@ def test_audio_goes_out_only_in_step_with_the_checked_transcript(client, tutor, 
     asyncio.run(with_relay(h, script))
 
 
+def test_audio_of_the_next_sentence_waits_for_that_sentence_to_pass(client, tutor, voice_on):
+    """Review #204 (F1): once a sentence passes, the next sentence's audio arriving ahead of its
+    transcript stays held: what goes out is fixed when a sentence passes, not grown by later
+    audio."""
+    _, replies = tutor
+    replies.append(OPENING)
+    attempt_id, h, _ = begin(client, tutor)
+    first, second = "你說的主動是什麼意思？", "這兩個情況有什麼不同？"
+
+    async def script():
+        await play(h, *student_says("不能主動害人"))
+        await play(h, *[vr.LiveEvent("audio", CHUNK)] * 10, vr.LiveEvent("output_text", first))
+        after_first = sum(len(chunk) for chunk in h.audio_out)
+        assert after_first > 0
+        # Two seconds of the second sentence's audio, its transcript not here yet.
+        await play(h, *[vr.LiveEvent("audio", CHUNK)] * 20)
+        assert sum(len(chunk) for chunk in h.audio_out) == after_first
+        await play(h, vr.LiveEvent("output_text", second))
+        after_second = sum(len(chunk) for chunk in h.audio_out)
+        assert after_first < after_second < 30 * len(CHUNK)
+        await play(h, vr.LiveEvent("turn_complete"))
+        assert sum(len(chunk) for chunk in h.audio_out) == 30 * len(CHUNK)
+
+    asyncio.run(with_relay(h, script))
+
+
 def test_late_audio_after_a_fully_checked_sentence_still_plays(client, tutor, voice_on):
     _, replies = tutor
     replies.append(OPENING)

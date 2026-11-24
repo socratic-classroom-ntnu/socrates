@@ -51,9 +51,10 @@ ToTyping = Literal["done", "quota", "disabled", "idle", "error"]
 # when no turn finishes; this long without anyone speaking ends voice mode.
 SETTLE_SECONDS = 30.0
 IDLE_SECONDS = 180.0
-# The transcript carries no timings, so audio is let through in proportion to how much of the
-# transcript is checked, holding back this much (0.3 s of 24 kHz PCM16) for audio that may run
-# ahead of its transcript; the rest goes when the whole reply is checked at the turn's end.
+# The transcript carries no timings, so when a sentence passes, audio is let through in proportion
+# to how much of the transcript is checked, holding back this much (0.3 s of 24 kHz PCM16) for audio
+# that may run ahead of its transcript. Audio arriving after that waits for the next sentence to
+# pass; the rest goes when the whole reply is checked at the turn's end.
 HOLD_BACK_BYTES = 14_400
 
 _SENTENCE_END = re.compile(r"[。！？!?.；;…]")
@@ -112,6 +113,9 @@ class _Turn:
     held: list[bytes] = field(default_factory=list)
     audio_bytes: int = 0  # all the audio of this reply so far
     released_bytes: int = 0  # of which this much reached the student
+    # How much may reach the student, fixed when a sentence passes: audio arriving later (the
+    # next sentence's, ahead of its transcript) waits for that sentence to pass.
+    allowed_bytes: float = 0.0
     text: str = ""  # everything the transcript says so far
     released: str = ""  # what was let through to the student
     checked_to: int = 0
@@ -368,13 +372,10 @@ class VoiceRelay:
             await self._release()
 
     async def _release(self, whole: bool = False) -> None:
-        """Let held audio through up to the checked share of the transcript (all of it once the
+        """Let held audio through up to what the last passed sentence allowed (all of it once the
         whole reply is checked)."""
         t = self.turn
-        if whole:
-            allowed = float("inf")
-        else:
-            allowed = t.audio_bytes * t.checked_to / max(len(t.text), 1) - HOLD_BACK_BYTES
+        allowed = float("inf") if whole else t.allowed_bytes
         while t.held and t.released_bytes + len(t.held[0]) <= allowed:
             chunk = t.held.pop(0)
             t.released_bytes += len(chunk)
@@ -399,6 +400,7 @@ class VoiceRelay:
             t.held.clear()
             return
         t.checked_to = upto
+        t.allowed_bytes = t.audio_bytes * upto / max(len(t.text), 1) - HOLD_BACK_BYTES
         t.released = t.text[:upto]
         await self.send_json({"type": "caption", "text": to_script(t.released, self.locale)})
         await self._release()

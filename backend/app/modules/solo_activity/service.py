@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import asdict
+from dataclasses import asdict, fields, replace
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
@@ -35,6 +35,8 @@ from app.modules.llm_runtime.contracts import (
     FinalSummary,
     PersonalTutorTurn,
     ScenarioExtension,
+    SoloFlags,
+    StanceClassification,
 )
 from app.modules.llm_runtime.service import compile_program, guarded_generate, locate_citation
 from app.modules.platform.errors import DomainError
@@ -49,8 +51,19 @@ from app.modules.solo_activity.attempt_machine import (
 )
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 
-# Runs the final summary after the response (the route's BackgroundTasks); None runs it inline.
+# Runs work after the response (the route's BackgroundTasks): the final summary, and placing a
+# stated position in the stance space. None runs it inline.
 Defer = Callable[[dict], None]
+STANCE_PROGRAM = "stance_classify"
+
+
+class SoloTurn(PersonalTutorTurn):
+    """The tutor's reply as the solo activity reads it: the ten flags on the student's latest
+    message come with it once the solo prompt asks for them (PROMPT-DESIGN §3); a reply without
+    them is still a reply."""
+
+    flags: SoloFlags | None = None
+
 
 if TYPE_CHECKING:
     from app.modules.solo_activity.contracts import (
@@ -149,16 +162,25 @@ def _locked_attempt(db, account: Account, attempt_id: str) -> SoloAttempt:
     return row
 
 
+def _known(cls: type, stored: dict) -> dict:
+    """The stored fields this version knows: going back to it after a later version stored more
+    (a new field per scenario, say) still reads every attempt."""
+    names = {f.name for f in fields(cls)}
+    return {key: value for key, value in stored.items() if key in names}
+
+
 def _state(row: SoloAttempt) -> AttemptState:
     return AttemptState(
         attempt_id=row.id,
         state=cast(Any, row.state),
         scenario_index=row.scenario_index,
-        progress=tuple(ScenarioProgress(**entry) for entry in row.progress),
+        progress=tuple(
+            ScenarioProgress(**_known(ScenarioProgress, entry)) for entry in row.progress
+        ),
         pending_key=row.pending_key,
         pending_since=row.pending_since,
         notice=cast(Any, row.notice),
-        final=FinalProgress(**(row.final or {})),
+        final=FinalProgress(**_known(FinalProgress, row.final or {})),
     )
 
 
@@ -174,8 +196,11 @@ def _store(row: SoloAttempt, a: AttemptState) -> None:
     row.updated_at = time.time()
 
 
-def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None, meta=None) -> None:
-    """The attempt row is locked, so the next seq cannot race."""
+def _add_message(
+    db, row: SoloAttempt, role: str, text: str, observations=None, meta=None, locale=None
+) -> None:
+    """The attempt row is locked, so the next seq cannot race. ``locale`` is the language the
+    student chose when writing; the text itself is kept exactly as written, never translated."""
     last = db.scalar(select(func.max(SoloMessage.seq)).where(SoloMessage.attempt_id == row.id))
     db.add(
         SoloMessage(
@@ -186,6 +211,7 @@ def _add_message(db, row: SoloAttempt, role: str, text: str, observations=None, 
             text=text,
             observations=observations,
             meta=meta,
+            locale=locale,
         )
     )
     db.flush()
@@ -258,6 +284,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "move": (m.meta or {}).get("move") if m.role == "tutor" else None,
                 "revise_hint": (m.meta or {}).get("revise_hint") if m.role == "student" else None,
                 "final_feedback": bool((m.meta or {}).get("final_feedback")),
+                "locale": m.locale if m.role == "student" else None,
             }
             for m in _messages(db, row.id)
             if m.scenario_index <= a.scenario_index
@@ -379,6 +406,16 @@ def start(db, account: Account, activity_id: str, at: float) -> dict:
 # ---- actions -------------------------------------------------------------------------------
 
 
+def _content(db, row: SoloAttempt) -> dict:
+    """The published content this attempt runs on: its own revision, never a later one."""
+    revision = db.get(ActivityRevision, row.revision_id)
+    return (revision.content if revision is not None else None) or {}
+
+
+def _student_locale(account: Account) -> str:
+    return account.locale or DEFAULT_LOCALE
+
+
 def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.PendingTurn) -> dict:
     """Only this scenario's text, this student's answer and this scenario's dialogue."""
     progress = a.progress[pending.scenario_index]
@@ -386,7 +423,8 @@ def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.Pendi
     context = {
         # Teacher keys (llm_runtime's TEACHER_KEYS): never screened as student input.
         "scenario": progress.text,
-        "tutor_goal": DEFAULT_TUTOR_GOAL,
+        # The activity's own goal once the teacher accepted a stance space (course-management).
+        "tutor_goal": _content(db, row).get("tutor_goal") or DEFAULT_TUTOR_GOAL,
         "answer": progress.answer,
         # The first student message is the first answer, already given as answer.
         "history": [{"role": m.role, "text": m.text} for m in messages[1:]],
@@ -400,14 +438,14 @@ def _tutor_context(db, row: SoloAttempt, a: AttemptState, pending: machine.Pendi
     return context
 
 
-def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
+def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float, locale: str):
     """The pure transition for one action; saves the student's message when there is one."""
     if action == "send_message":
         enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
         message = cast("SendMessageBody", body)
         new, pending = machine.send_message(a, message.text, at, revise_hint=message.revise_hint)
         meta = {"revise_hint": message.revise_hint} if message.revise_hint is not None else None
-        _add_message(db, row, "student", message.text, meta=meta)
+        _add_message(db, row, "student", message.text, meta=meta, locale=locale)
         return new, pending
     if action == "retry":
         enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
@@ -429,7 +467,9 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
     raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
 
 
-def _final_transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: float):
+def _final_transition(
+    db, row: SoloAttempt, a: AttemptState, action: str, body, at: float, locale: str
+):
     """The two final-summary actions that ask for a summary: they return a final pending call."""
     enforce_rate_limit(db, f"solo:{row.id}", 20, 60, error_code="RATE_LIMITED")
     if action == "retry_reflection_prompt":
@@ -439,7 +479,7 @@ def _final_transition(db, row: SoloAttempt, a: AttemptState, action: str, body, 
         raise DomainError("SOLO_REVISE_HINT_INVALID", 422)
     new, pending = machine.continue_reflection(a, at)
     # The sentence is the student's own words: kept, and quotable by the next summary.
-    _add_message(db, row, "student", message.text, meta={"final_feedback": True})
+    _add_message(db, row, "student", message.text, meta={"final_feedback": True}, locale=locale)
     return new, pending
 
 
@@ -447,12 +487,14 @@ def begin_action(db, account: Account, attempt_id: str, action: str, body, at: f
     """Tx1. Returns either the final view or what finish_action needs to call the provider."""
     row = _locked_attempt(db, account, attempt_id)
     if action in ("retry_reflection_prompt", "continue_reflection"):
-        new, final_pending = _final_transition(db, row, _state(row), action, body, at)
+        new, final_pending = _final_transition(
+            db, row, _state(row), action, body, at, _student_locale(account)
+        )
         if final_pending is None:
             _store(row, new)
             return {"view": _attempt_view(db, row, at)}
         return _prepare_final(db, row, new, final_pending, account, at)
-    new, pending = _transition(db, row, _state(row), action, body, at)
+    new, pending = _transition(db, row, _state(row), action, body, at, _student_locale(account))
     if pending is None:
         _store(row, new)
         if action == "confirm_viewpoint" and new.state == "reviewing":
@@ -621,7 +663,7 @@ async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     return await finish_action(follow, defer)
 
 
-async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
+async def _call_tutor(prepared: dict) -> tuple[SoloTurn, bool] | None:
     """Each binding in order; every attempt is audited. None when all of them fail.
 
     The call goes through the iron rules: a reply that breaks them is generated once more,
@@ -647,7 +689,7 @@ async def _call_tutor(prepared: dict) -> tuple[PersonalTutorTurn, bool] | None:
                 ),
                 PROVIDER_TIMEOUT_SECONDS,
             )
-            turn = PersonalTutorTurn.model_validate(result)
+            turn = SoloTurn.model_validate(result)
         except Exception as exc:  # noqa: BLE001 — any provider failure leaves the turn retryable
             reason = (
                 getattr(exc, "reason", None)
@@ -691,6 +733,7 @@ async def finish_action(prepared: dict, defer: Defer | None = None) -> dict:
             return prepared["waiting_view"]
         return await _finish_final(prepared)
     called = await _call_tutor(prepared)
+    placing: dict | None = None
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])
         row = _locked_attempt(db, account, prepared["attempt_id"])
@@ -715,9 +758,118 @@ async def finish_action(prepared: dict, defer: Defer | None = None) -> dict:
                     turn.observations.model_dump(),
                     meta={"move": turn.move},
                 )
+                _keep_flags(db, row, turn)
+                placing = _prepare_stance(db, row, new, turn, account, prepared["bindings"])
         if new is not None:
             _store(row, new)
-        return _attempt_view(db, row, now())
+        view = _attempt_view(db, row, now())
+    if placing is not None:
+        if defer is not None:
+            defer(placing)
+        else:
+            await write_stance(placing)
+    return view
+
+
+def _keep_flags(db, row: SoloAttempt, turn: SoloTurn) -> None:
+    """The flags judge the student's latest message, so they are kept on that message."""
+    if turn.flags is None:
+        return
+    latest = db.scalar(
+        select(SoloMessage)
+        .where(SoloMessage.attempt_id == row.id, SoloMessage.role == "student")
+        .order_by(SoloMessage.seq.desc())
+        .limit(1)
+    )
+    if latest is not None:
+        latest.flags = turn.flags.model_dump()
+
+
+# ---- placing a stated position in the stance space (Ken 2) -----------------------------------
+
+
+def _prepare_stance(
+    db, row: SoloAttempt, a: AttemptState, turn: PersonalTutorTurn, account: Account, bindings
+) -> dict | None:
+    """What placing the student's position needs, or None when there is nothing to place.
+
+    Placed when the tutor first hears a position in a scenario and again whenever it reports a
+    change of mind; only the student's words since the last placement go in.
+    """
+    content = _content(db, row)
+    stances = content.get("stance_space")
+    if not stances or not turn.observations.has_position:
+        return None
+    progress = a.current
+    if progress.stances and not turn.observations.position_shifted:
+        return None
+    said = [
+        m
+        for m in _messages(db, row.id)
+        if m.scenario_index == a.scenario_index and m.role == "student"
+    ]
+    placed = progress.stances[-1]["message_id"] if progress.stances else None
+    ids = [m.id for m in said]
+    if placed in ids:
+        said = said[ids.index(placed) + 1 :]
+    if not said:
+        return None
+    context = {
+        "narrative": content.get("scenario", progress.text),
+        "stances": stances,
+        "student_text": "\n".join(m.text for m in said),
+        "output_locale": _student_locale(account),
+    }
+    messages, schema, _ = compile_program(db, STANCE_PROGRAM, context)
+    return {
+        "stance": True,
+        "attempt_id": row.id,
+        "account_id": account.id,
+        "scenario_index": a.scenario_index,
+        "message_id": said[-1].id,
+        "stance_ids": [stance["id"] for stance in stances],
+        "bindings": bindings,
+        "messages": messages,
+        "schema": schema,
+        "context": context,
+    }
+
+
+async def write_stance(prepared: dict) -> None:
+    """Record where the position sits. A failed call, no recognisable claim or an id outside the
+    stance space records nothing: the earlier stances stay as they were."""
+    called = await _call_program(
+        prepared, STANCE_PROGRAM, StanceClassification, "solo.stance_classify"
+    )
+    if called is None:
+        return
+    placed, _ = called
+    if placed.stance_id is None or placed.stance_id not in prepared["stance_ids"]:
+        return
+    with transaction() as db:
+        account = db.get(Account, prepared["account_id"])
+        row = _locked_attempt(db, account, prepared["attempt_id"])
+        a = _state(row)
+        index = prepared["scenario_index"]
+        progress = a.progress[index]
+        if any(item["message_id"] == prepared["message_id"] for item in progress.stances):
+            return
+        entry = {
+            "stance_id": placed.stance_id,
+            "confidence": placed.confidence,
+            "message_id": prepared["message_id"],
+            "at": now(),
+        }
+        updated = replace(progress, stances=[*progress.stances, entry])
+        _store(row, replace(a, progress=(*a.progress[:index], updated, *a.progress[index + 1 :])))
+
+
+async def write_deferred(prepared: dict) -> None:
+    """The route's background work: a stance placement or the final summary."""
+    if prepared.get("stance"):
+        await write_stance(prepared)
+    else:
+        await write_final(prepared)
 
 
 # ---- the final summary (O6) ---------------------------------------------------------------
@@ -847,7 +999,7 @@ def final_summaries(db, activity_id: str) -> list[dict]:
     )
     found = []
     for row in rows:
-        final = FinalProgress(**(row.final or {}))
+        final = FinalProgress(**_known(FinalProgress, row.final or {}))
         if final.status is None or final.summary is None:
             continue
         found.append(

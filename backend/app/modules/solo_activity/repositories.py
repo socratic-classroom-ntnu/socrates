@@ -50,6 +50,11 @@ class SoloMessage(Base):
     observations: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Student: {revise_hint} after 不太對, kept for statistics. Tutor: {move}.
     meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Student messages: the language the student chose when writing it; the text stays as written.
+    locale: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # Student messages the tutor judged: its ten 0/1 flags (llm_runtime SoloFlags). Only the
+    # teacher's metrics read them; the student's own view never carries them.
+    flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
 
 

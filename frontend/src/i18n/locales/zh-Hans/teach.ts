@@ -175,6 +175,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '符合 {{count}} 位',
     range: '显示第 {{from}}–{{to}} 位',
     separator: '・',
+    deleted: '已删除 {{count}} 位',
     paging: '名单分页',
     previous: '上一页',
     next: '下一页',
@@ -191,6 +192,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: '访客',
     expired: '过期访客 {{number}}',
+    deleted: '已删除的账号',
   },
   transcript: {
     blank: '（还没说明）',
@@ -247,6 +249,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: '最终整理学生否决 2 次，结果未确认',
       reviewNone: '学生没有生成最终整理',
       jump: '滚动到情境 {{number}} 的开头',
+      viewing: '正在查看',
     },
     review: {
       title: '观点回顾与反思', finalTitle: '最终整理', confirmed: '已确认', pending: '待学生确认',
@@ -355,7 +358,6 @@ const teach: Shape<typeof zhHant> = {
     sharedBody: '成功后会取代原本的连接。\n不会建立第二组或備用连接。',
     ownCardTitle: '自己的密钥',
     replace: '更换密钥或模型',
-    advancedOpen: '进阶设置  ›',
     service: '服务',
     model: '模型',
     key: 'API 密钥',
@@ -388,8 +390,6 @@ const teach: Shape<typeof zhHant> = {
     noModelList: '读不到模型清单：{{reason}} 也可以直接输入模型代码。',
     modelCount: '全部模型  ·  {{count}} 个',
     matchCount: '找到 {{count}} 个',
-    advanced: '进阶设置',
-    name: '连接名称',
     baseUrl: '服务网址',
     test: '测试',
     tested: '连接成功',
@@ -399,7 +399,6 @@ const teach: Shape<typeof zhHant> = {
     apply: '套用',
     confirm: '確认',
     confirmReplaceTitle: '確认更换密钥或模型？',
-    confirmAdvancedTitle: '確认更改进阶设置？',
     confirmStrong: '新设置驗證成功后才会套用。',
     confirmBody: '若更换失败，系统会維持原有的模型设置，您仍可继续使用目前的连接。',
     confirmSystemTitle: '改回系统提供？',

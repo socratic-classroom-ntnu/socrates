@@ -9,7 +9,7 @@ from app.modules.platform.model_base import TrimmedModel
 FeedbackKind = Literal["problem", "suggestion", "other"]
 FeedbackIdentity = Literal["teacher", "student", "guest", "anonymous"]
 ScreenshotMime = Literal["image/png", "image/jpeg", "image/webp"]
-AccountKind = Literal["registered", "guest", "expired_guest"]
+AccountKind = Literal["registered", "guest", "expired_guest", "deleted"]
 
 
 class Viewport(TrimmedModel):

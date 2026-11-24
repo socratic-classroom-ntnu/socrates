@@ -150,7 +150,7 @@ test.each([
   ['/teach/activities/a1/analysis/ai', '功能開發中'],
   ['/teach/courses/c1/projector', 'course-projector-page'],
   ['/teach/activities/a1/projector', 'activity-projector-page'],
-  ['/account', '功能開發中'],
+  ['/account', '個人檔案'],
   ['/my-dialogues', 'my-dialogues-page'],
   // 訪客帳號面板的兩個入口：註冊升級（G16–G19）與登入併入（G20–G24）
   ['/guest/register', 'guest-upgrade-page'],
@@ -356,6 +356,26 @@ describe('teacher pages on a phone', () => {
   })
 })
 
+// 個人設定的手機內頁（M02–M16）：手機進得去，電腦回 /account
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s is a phone page of the account settings', async (url) => {
+  const desktopMatchMedia = window.matchMedia
+  try {
+    phone()
+    mockSession(verified)
+    open(url)
+    expect(await screen.findByRole('button', { name: '返回' })).toBeInTheDocument()
+    expect(where()).toBe(url)
+  } finally {
+    Object.defineProperty(window, 'matchMedia', { configurable: true, value: desktopMatchMedia })
+  }
+})
+
+test.each(['/account/avatar', '/account/password', '/account/delete'])('%s on a computer goes back to /account', async (url) => {
+  mockSession(verified)
+  open(url)
+  await waitFor(() => expect(where()).toBe('/account'))
+})
+
 test('create-course on a desktop opens the drawer on the home page', async () => {
   mockSession(teacher)
   open('/teach/create-course')
@@ -522,7 +542,7 @@ describe('pages of the other role', () => {
       mockSession(who)
       const { unmount } = render(<MemoryRouter initialEntries={[url]}><AuthProvider><AppRoutes /></AuthProvider></MemoryRouter>)
       await waitFor(() => expect(screen.queryByText(/這是(老師|學生)的頁面/)).toBeNull())
-      expect(await screen.findByText(/home-page|groups-page|功能開發中|room:r1/)).toBeInTheDocument()
+      expect(await screen.findByText(/home-page|groups-page|個人檔案|room:r1/)).toBeInTheDocument()
       unmount()
     }
   })

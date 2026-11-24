@@ -100,6 +100,50 @@ def test_starting_builds_a_private_course_an_open_activity_and_an_attempt(client
         assert (attempt.activity_id, attempt.account_id) == (activity.id, student["id"])
 
 
+def test_private_course_uses_custom_display_name_without_overwriting_existing_enrollment(
+    client, student, at
+):
+    # 學生先設定個人顯示名稱
+    r = client.patch(
+        "/api/v2/account/profile",
+        json={"display_name": "小慧"},
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["display_name"] == "小慧"
+
+    # 首次建立私人課程
+    first = start(client)
+    assert first.status_code == 201, first.text
+
+    with storage.transaction() as db:
+        enrollment = db.scalar(select(Enrollment).where(Enrollment.account_id == student["id"]))
+        assert enrollment is not None
+        assert enrollment.display_name == "小慧"
+        course_id = enrollment.course_id
+
+    # 學生再次修改個人顯示名稱
+    r = client.patch(
+        "/api/v2/account/profile",
+        json={"display_name": "慧馨"},
+    )
+    assert r.status_code == 200, r.text
+
+    # 再次開始對話，應沿用既有私人課程
+    second = start(client)
+    assert second.status_code == 201, second.text
+
+    with storage.transaction() as db:
+        enrollments = db.scalars(
+            select(Enrollment).where(Enrollment.account_id == student["id"])
+        ).all()
+
+        assert len(enrollments) == 1
+        assert enrollments[0].course_id == course_id
+        assert enrollments[0].display_name == "小慧"
+
+    assert count(Course) == 1
+
+
 def test_the_same_topic_can_be_started_again_in_the_same_private_course(client, student, at):
     first, second = start(client).json(), start(client).json()
     assert first["activity_id"] != second["activity_id"]

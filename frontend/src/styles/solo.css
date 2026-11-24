@@ -169,6 +169,8 @@
 .solo-progress-list span { color: #6c665f; font-size: 13px; }
 .solo-next { display: flex; justify-content: flex-end; padding: 18px 24px 20px; border-top: 1px solid #ddd5c6; background: #fffdf8; }
 .solo-action-status { margin: 10px 24px 0; color: #2f4a3f; font-size: 13px; font-weight: 700; }
+/* C7：活動結束後只能看紀錄；說明放在對話下方原本輸入框的位置 */
+.solo-ended { margin: 12px 14px 4px; padding: 14px 18px; border: 1px solid var(--ui-color-border); border-radius: 12px; background: var(--ui-color-neutral-soft); color: var(--ui-color-ink-soft); font-size: 14px; line-height: 1.6; }
 .solo-viewpoint { margin: 0 14px 4px; padding: 22px 24px; border: 1px solid #d2c8b8; border-radius: 16px; background: #fffdf8; box-shadow: 0 10px 26px rgb(55 45 32 / 10%); }
 /* 最終統整（.solo-final）的卡片還有自己的標題列 */
 .solo-viewpoint > header { display: flex; align-items: flex-start; gap: 12px; }
@@ -294,6 +296,7 @@
   .solo-viewpoint__actions > * { width: 100%; }
   .solo-review { margin: 0 12px 14px; padding: 16px; }
   .solo-review p { font-size: 18px; }
+  .solo-ended { margin: 10px 12px; }
   .solo-action-status,
   .solo-action-error { margin: 10px 12px; }
 }

@@ -32,7 +32,7 @@ const classroomContracts = path.resolve(__dirname, '../../../../backend/app/modu
 const withBackend = fs.existsSync(classroomContracts) ? test : test.skip
 
 withBackend('the alias limit matches JoinRoom.alias in the backend contract', () => {
-  const source = fs.readFileSync(classroomContracts, 'utf8')
+  const source = fs.readFileSync(classroomContracts, 'utf8').replace(/\r\n/g, '\n')
   const joinRoom = source.match(/class JoinRoom\(Strict\):([\s\S]*?)\n\n/)
   expect(joinRoom).not.toBeNull()
   const limit = joinRoom?.[1].match(/alias: str = Field\([^)]*max_length=(\d+)/)

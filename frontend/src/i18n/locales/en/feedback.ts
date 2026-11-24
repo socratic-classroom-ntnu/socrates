@@ -45,6 +45,7 @@ export default {
       anonymous: 'Signed out',
     },
     expiredGuest: 'Expired guest',
+    deletedAccount: 'Deleted account',
     nowAccount: 'now {{name}}',
     noKind: '—',
     openDetail: 'View details',

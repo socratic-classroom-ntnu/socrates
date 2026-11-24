@@ -8,7 +8,8 @@ import { useAuth } from './AuthContext'
 /**
  * Switch the interface language. Signed in, the choice is also saved to the account and the
  * context is updated, so a later refresh does not put the old value back; if saving fails the
- * previous language comes back and `failure` explains why.
+ * previous language comes back and `failure` explains why. Resolves to whether it was kept
+ * (the phone language list closes only then).
  */
 export function useChangeLocale() {
   const { locale } = useT('shell')
@@ -16,17 +17,19 @@ export function useChangeLocale() {
   const [failure, setFailure] = useState<unknown>(null)
   const [saving, setSaving] = useState(false)
 
-  async function changeLocale(value: Locale): Promise<void> {
+  async function changeLocale(value: Locale): Promise<boolean> {
     const previousLocale = account?.locale ?? locale
     setFailure(null)
     await applyLocale(value)
-    if (!account) return
+    if (!account) return true
     setSaving(true)
     try {
       replaceAccount(await api('/account/locale', 'PUT', { locale: value }))
+      return true
     } catch (error) {
       await applyLocale(previousLocale)
       setFailure(error ?? new Error('locale update failed'))
+      return false
     } finally {
       setSaving(false)
     }

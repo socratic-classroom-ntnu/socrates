@@ -6,6 +6,7 @@ import { AuthProvider } from '../auth/AuthContext'
 import { applyLocale } from '../../i18n'
 import { readableText } from '../auth/testText'
 import { mockApi, signedIn, Where } from '../../testing/pageHarness'
+import { readSoloDraft, soloDraftKey } from './soloDraft'
 
 jest.mock('../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../contract/classroomClient')>('../../contract/classroomClient')
@@ -906,6 +907,67 @@ test('stale action refreshes the view', async () => {
 
   expect(await screen.findByText('狀態已更新')).toHaveAttribute('role', 'status')
   await waitFor(() => expect(calls.filter(call => call.key === 'GET /solo/attempts/attempt-1')).toHaveLength(2))
+})
+
+// C7: once the activity ends nobody may answer; the page keeps the record and says why.
+test('a send refused because the activity ended turns the page read-only', async () => {
+  let ended = false
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': () => ended ? { ...activity, status: 'ended' } : activity,
+    'GET /solo/attempts/attempt-1': () => ended ? { ...dialogueAttempt, available_actions: [] } : dialogueAttempt,
+    'POST /solo/attempts/attempt-1/send_message': () => { ended = true; throw new ApiError(409, 'ACTIVITY_ENDED') },
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  fireEvent.change(await screen.findByLabelText('回答蘇格拉底'), { target: { value: '時間到了還想說。' } })
+  fireEvent.click(screen.getByRole('button', { name: '送出回答' }))
+
+  expect(await screen.findByText('這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。')).toHaveAttribute('role', 'status')
+  expect(screen.queryByLabelText('回答蘇格拉底')).toBeNull()
+  expect(screen.queryByRole('button', { name: '送出回答' })).toBeNull()
+  expect(screen.queryByRole('alert')).toBeNull()
+  // The record stays, and what the student had typed is still in the draft.
+  expect(screen.getByText('站在旁邊不行動，也是一種選擇嗎？')).toBeInTheDocument()
+  expect(readSoloDraft(soloDraftKey('attempt-1', 0))).toBe('時間到了還想說。')
+  expect(calls.filter(call => call.key === 'GET /solo/activities/a-1')).toHaveLength(2)
+  expect(calls.filter(call => call.key === 'GET /solo/attempts/attempt-1')).toHaveLength(2)
+})
+
+test('an ended activity shows the record with no composer, not even the paused one', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': { ...activity, status: 'ended' },
+    'GET /solo/attempts/attempt-1': {
+      ...savedTurn, state: 'tutor_unavailable', notice: 'tutor_unavailable', available_actions: [],
+    },
+  })
+
+  expect(await screen.findByText('這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。')).toBeInTheDocument()
+  expect(screen.getByText('我覺得沒有行動也算一種選擇。')).toBeInTheDocument()
+  expect(screen.queryByText('等蘇格拉底回應後，就可以繼續回答')).toBeNull()
+  expect(screen.queryByRole('button', { name: '重試' })).toBeNull()
+  expect(screen.queryByLabelText('回答蘇格拉底')).toBeNull()
+})
+
+test('the page reads the attempt again when the end time comes', async () => {
+  let ended = false
+  const endsAt = Date.now() / 1000 + 0.3
+  const calls = mockApi({
+    'GET /auth/me': signedIn,
+    'GET /solo/activities/a-1': () => ended ? { ...activity, status: 'ended', ends_at: endsAt } : { ...activity, ends_at: endsAt },
+    'GET /solo/attempts/attempt-1': () => ended ? { ...dialogueAttempt, available_actions: [] } : dialogueAttempt,
+  })
+  render(<MemoryRouter initialEntries={['/learn/activities/a-1/dialogue']}>
+    <AuthProvider><AppRoutes /></AuthProvider>
+  </MemoryRouter>)
+
+  expect(await screen.findByLabelText('回答蘇格拉底')).toBeInTheDocument()
+  ended = true
+  expect(await screen.findByText('這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。', undefined, { timeout: 4000 })).toBeInTheDocument()
+  expect(screen.queryByLabelText('回答蘇格拉底')).toBeNull()
+  expect(calls.filter(call => call.key === 'GET /solo/activities/a-1')).toHaveLength(2)
 })
 
 test('network failure refreshes the view', async () => {

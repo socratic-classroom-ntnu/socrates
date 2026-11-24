@@ -5,6 +5,7 @@ import { accountName } from '../../shared/accountName'
 import { useT } from '../../i18n/useT'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import '../../styles/join.css'
+import { avatarSrc } from '../../contract/accountClient'
 
 /** J0／J1／J2m: full-screen join pages with the brand and, once signed in, the user's avatar. */
 export function JoinLayout({ children, scene = false }: { children: ReactNode; scene?: boolean }) {
@@ -17,7 +18,7 @@ export function JoinLayout({ children, scene = false }: { children: ReactNode; s
       <a className="join-page__brand" href="/"><span className="join-page__mark" aria-hidden="true">問</span>{t('brand')}</a>
       {(!account || account.kind === 'guest') && <LanguageSwitcher className="language-switcher--bare" />}
       {account?.kind === 'guest' && <span className="join-page__chip">{tg('chip')}</span>}
-      {account && account.kind !== 'guest' && <span className="join-page__user"><Avatar name={accountName(account)} /><span>{accountName(account)}</span></span>}
+      {account && account.kind !== 'guest' && (<span className="join-page__user"> <Avatar name= {accountName(account)}src={avatarSrc(account)}/><span>{accountName(account)}</span></span>)}
     </header>
     <main className="join-page__main">{children}</main>
   </div>

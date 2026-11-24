@@ -2,6 +2,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import { ApiError } from '../../../contract/classroomClient'
 import { mockApi, renderAt } from '../../../testing/pageHarness'
 import { CreateCourseDrawer } from './CreateCourseDrawer'
+import { accountName } from '../../../shared/accountName'
 
 jest.mock('../../../contract/classroomClient', () => {
   const actual = jest.requireActual<typeof import('../../../contract/classroomClient')>('../../../contract/classroomClient')
@@ -25,6 +26,51 @@ test('defaults teacher name to account and opens the new course', async () => {
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: '建立課程' })) })
   expect(calls.find(call => call.key === 'POST /courses')?.body).toEqual({ name: '科技倫理', teacher_name: 'Fizzy', intro: '', goals: '' })
   await waitFor(() => expect(where()).toBe('/teach/courses/c-1'))
+})
+
+test('uses custom display name as default teacher name', async () => {
+  const calls = mockApi({
+    'GET /auth/me': {
+      id: 'u-2',
+      username: 'estella123',
+      display_name: '王老師',
+      email: 'teacher@example.org',
+      email_masked: 't***@example.org',
+      verified: true,
+      authority_state: 'FULL_PRODUCT',
+      csrf_token: 'c',
+      points: 0,
+      achievements: [],
+      locale: 'zh-Hant',
+      kind: 'registered',
+      account_role: 'teacher',
+    },
+    'POST /courses': { id: 'c-1' },
+  })
+
+  open()
+
+  const teacherName = await screen.findByLabelText(/教師名稱/)
+  expect(teacherName).toHaveValue('王老師')
+
+  fireEvent.change(screen.getByLabelText(/課程名稱/), {
+    target: { value: '科技倫理' },
+  })
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '建立課程' }))
+  })
+
+  expect(calls.find(call => call.key === 'POST /courses')?.body).toEqual({
+    name: '科技倫理',
+    teacher_name: '王老師',
+    intro: '',
+    goals: '',
+  })
+
+  await waitFor(() => {
+    expect(where()).toBe('/teach/courses/c-1')
+  })
 })
 
 test('shows field errors from 422', async () => {
@@ -88,4 +134,12 @@ test('cannot close while submitting', async () => {
   fireEvent.click(screen.getByRole('button', { name: '關閉' }))
   expect(onClose).not.toHaveBeenCalled()
   await act(async () => { finish({ id: 'c-1' }) })
+})
+test('accountName prefers custom display name over username', () => {
+  const account = {
+    username: 'estella123',
+    display_name: '王老師',
+  }
+
+  expect(accountName(account)).toBe('王老師')
 })

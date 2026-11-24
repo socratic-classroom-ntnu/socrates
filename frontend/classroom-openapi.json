@@ -457,6 +457,17 @@
             "title": "Authority State",
             "type": "string"
           },
+          "avatar_updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Updated At"
+          },
           "csrf_token": {
             "title": "Csrf Token",
             "type": "string"
@@ -500,7 +511,8 @@
             "enum": [
               "guest",
               "expired_guest",
-              "registered"
+              "registered",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -737,6 +749,65 @@
           "enrolled_now"
         ],
         "title": "ActivityJoinResult",
+        "type": "object"
+      },
+      "ActivityNotice": {
+        "properties": {
+          "activity_id": {
+            "title": "Activity Id",
+            "type": "string"
+          },
+          "activity_name": {
+            "title": "Activity Name",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "pop_up": {
+            "title": "Pop Up",
+            "type": "boolean"
+          },
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          },
+          "time": {
+            "title": "Time",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "activity",
+            "default": "activity",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "time",
+          "read",
+          "pop_up",
+          "course_name",
+          "activity_id",
+          "activity_name"
+        ],
+        "title": "ActivityNotice",
         "type": "object"
       },
       "ActivityStudentCard": {
@@ -1446,6 +1517,218 @@
         "title": "AnalysisTreeNodeView",
         "type": "object"
       },
+      "AnnouncementInput": {
+        "properties": {
+          "audience": {
+            "enum": [
+              "all",
+              "teacher",
+              "student"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "maintenance_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Date"
+          },
+          "maintenance_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance End"
+          },
+          "maintenance_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Start"
+          },
+          "title": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "audience",
+          "title",
+          "content"
+        ],
+        "title": "AnnouncementInput",
+        "type": "object"
+      },
+      "AnnouncementNotice": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "maintenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MaintenanceWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pop_up": {
+            "title": "Pop Up",
+            "type": "boolean"
+          },
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          },
+          "time": {
+            "title": "Time",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "announcement",
+            "default": "announcement",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "time",
+          "read",
+          "pop_up",
+          "maintenance"
+        ],
+        "title": "AnnouncementNotice",
+        "type": "object"
+      },
+      "AnnouncementView": {
+        "properties": {
+          "audience": {
+            "enum": [
+              "all",
+              "teacher",
+              "student"
+            ],
+            "title": "Audience",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "maintenance_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Date"
+          },
+          "maintenance_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance End"
+          },
+          "maintenance_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maintenance Start"
+          },
+          "published_at": {
+            "title": "Published At",
+            "type": "number"
+          },
+          "published_by": {
+            "title": "Published By",
+            "type": "string"
+          },
+          "published_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By Username"
+          },
+          "title": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "audience",
+          "title",
+          "content",
+          "id",
+          "published_by",
+          "published_by_username",
+          "published_at"
+        ],
+        "title": "AnnouncementView",
+        "type": "object"
+      },
       "AttachScript": {
         "additionalProperties": false,
         "properties": {
@@ -1511,6 +1794,30 @@
           "classroom_id"
         ],
         "title": "AttachedScriptView",
+        "type": "object"
+      },
+      "AvatarUpload": {
+        "additionalProperties": false,
+        "description": "The cropped picture, shaped like a feedback screenshot: the browser sends JPEG.",
+        "properties": {
+          "data_base64": {
+            "title": "Data Base64",
+            "type": "string"
+          },
+          "mime": {
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ],
+            "title": "Mime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mime",
+          "data_base64"
+        ],
+        "title": "AvatarUpload",
         "type": "object"
       },
       "BankImportResult": {
@@ -1777,6 +2084,44 @@
           "status"
         ],
         "title": "BankUnpublishResult",
+        "type": "object"
+      },
+      "ChangePasswordRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 32,
+            "minLength": 8,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest",
+        "type": "object"
+      },
+      "ChangePasswordView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "PASSWORD_CHANGED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ChangePasswordView",
         "type": "object"
       },
       "ChartSemanticsView": {
@@ -2778,6 +3123,59 @@
         "title": "CredentialUpdate",
         "type": "object"
       },
+      "DeleteAccountCoursesView": {
+        "additionalProperties": false,
+        "properties": {
+          "can_delete": {
+            "title": "Can Delete",
+            "type": "boolean"
+          },
+          "courses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Courses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "can_delete",
+          "courses"
+        ],
+        "title": "DeleteAccountCoursesView",
+        "type": "object"
+      },
+      "DeleteAccountRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "title": "DeleteAccountRequest",
+        "type": "object"
+      },
+      "DeleteAccountView": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "ACCOUNT_DELETED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "DeleteAccountView",
+        "type": "object"
+      },
       "DemoAccountView": {
         "properties": {
           "role": {
@@ -3004,7 +3402,8 @@
                 "enum": [
                   "registered",
                   "guest",
-                  "expired_guest"
+                  "expired_guest",
+                  "deleted"
                 ],
                 "type": "string"
               },
@@ -3982,6 +4381,55 @@
         "title": "GuestCourseJoin",
         "type": "object"
       },
+      "GuestExpiryNotice": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "guest_expires_at": {
+            "title": "Guest Expires At",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "pop_up": {
+            "title": "Pop Up",
+            "type": "boolean"
+          },
+          "read": {
+            "title": "Read",
+            "type": "boolean"
+          },
+          "time": {
+            "title": "Time",
+            "type": "number"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "guest_expiry",
+            "default": "guest_expiry",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "content",
+          "time",
+          "read",
+          "pop_up",
+          "guest_expires_at"
+        ],
+        "title": "GuestExpiryNotice",
+        "type": "object"
+      },
       "GuestJoin": {
         "additionalProperties": false,
         "description": "Joining without registering: a nickname shown to the class and the interface language.",
@@ -4371,6 +4819,17 @@
             "title": "Authority State",
             "type": "string"
           },
+          "avatar_updated_at": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Updated At"
+          },
           "csrf_token": {
             "title": "Csrf Token",
             "type": "string"
@@ -4423,7 +4882,8 @@
             "enum": [
               "guest",
               "expired_guest",
-              "registered"
+              "registered",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -4516,6 +4976,29 @@
           "message"
         ],
         "title": "MailRequestView",
+        "type": "object"
+      },
+      "MaintenanceWindow": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "start",
+          "end"
+        ],
+        "title": "MaintenanceWindow",
         "type": "object"
       },
       "MemberView": {
@@ -4673,6 +5156,19 @@
           "free"
         ],
         "title": "ModelOption",
+        "type": "object"
+      },
+      "NotificationReadInput": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "NotificationReadInput",
         "type": "object"
       },
       "Option": {
@@ -5074,6 +5570,22 @@
           "profile_id"
         ],
         "title": "ProfileDeletedView",
+        "type": "object"
+      },
+      "ProfileUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name"
+        ],
+        "title": "ProfileUpdate",
         "type": "object"
       },
       "ProfileView": {
@@ -7066,7 +7578,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -7629,7 +8142,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -7662,6 +8176,10 @@
       "SoloRosterSummaryView": {
         "additionalProperties": false,
         "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "integer"
+          },
           "expired_guests": {
             "title": "Expired Guests",
             "type": "integer"
@@ -7683,7 +8201,8 @@
           "total",
           "registered",
           "guests",
-          "expired_guests"
+          "expired_guests",
+          "deleted"
         ],
         "title": "SoloRosterSummaryView",
         "type": "object"
@@ -7857,7 +8376,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -8445,7 +8965,8 @@
             "enum": [
               "registered",
               "guest",
-              "expired_guest"
+              "expired_guest",
+              "deleted"
             ],
             "title": "Kind",
             "type": "string"
@@ -8966,6 +9487,131 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v2/account": {
+      "delete": {
+        "operationId": "delete_account_api_v2_account_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Account"
+      }
+    },
+    "/api/v2/account/avatar": {
+      "delete": {
+        "operationId": "delete_account_avatar_api_v2_account_avatar_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Delete Account Avatar"
+      },
+      "get": {
+        "description": "The picture itself, for <img>: the page adds ?v=<avatar_updated_at> so a new one is read.\n\nTyped as bytes so the contract gate sees a response model; returning a Response skips it.",
+        "operationId": "get_account_avatar_api_v2_account_avatar_get",
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Account Avatar"
+      },
+      "put": {
+        "operationId": "put_account_avatar_api_v2_account_avatar_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvatarUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Account Avatar"
+      }
+    },
+    "/api/v2/account/deletion-check": {
+      "get": {
+        "description": "Check whether the current account can be deleted.",
+        "operationId": "check_account_deletion_api_v2_account_deletion_check_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteAccountCoursesView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Check Account Deletion"
+      }
+    },
     "/api/v2/account/locale": {
       "put": {
         "operationId": "update_locale_api_v2_account_locale_put",
@@ -9002,6 +9648,82 @@
           }
         },
         "summary": "Update Locale"
+      }
+    },
+    "/api/v2/account/password": {
+      "put": {
+        "operationId": "update_password_api_v2_account_password_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePasswordView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Password"
+      }
+    },
+    "/api/v2/account/profile": {
+      "patch": {
+        "operationId": "update_profile_api_v2_account_profile_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Profile"
       }
     },
     "/api/v2/activities/{activity_id}": {
@@ -9560,6 +10282,105 @@
           }
         },
         "summary": "Remove Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/announcements": {
+      "get": {
+        "operationId": "announcements_api_v2_admin_announcements_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnouncementView"
+                  },
+                  "title": "Response Announcements Api V2 Admin Announcements Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Announcements",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "publish_announcement_api_v2_admin_announcements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnouncementView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Announcement",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/announcements/{announcement_id}": {
+      "delete": {
+        "operationId": "delete_announcement_api_v2_admin_announcements__announcement_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "announcement_id",
+            "required": true,
+            "schema": {
+              "title": "Announcement Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Announcement",
         "tags": [
           "admin"
         ]
@@ -12363,6 +13184,83 @@
           }
         },
         "summary": "Revision Metadata"
+      }
+    },
+    "/api/v2/notifications": {
+      "get": {
+        "operationId": "notifications_api_v2_notifications_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "discriminator": {
+                      "mapping": {
+                        "activity": "#/components/schemas/ActivityNotice",
+                        "announcement": "#/components/schemas/AnnouncementNotice",
+                        "guest_expiry": "#/components/schemas/GuestExpiryNotice"
+                      },
+                      "propertyName": "type"
+                    },
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/AnnouncementNotice"
+                      },
+                      {
+                        "$ref": "#/components/schemas/GuestExpiryNotice"
+                      },
+                      {
+                        "$ref": "#/components/schemas/ActivityNotice"
+                      }
+                    ]
+                  },
+                  "title": "Response Notifications Api V2 Notifications Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Notifications",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v2/notifications/read": {
+      "post": {
+        "operationId": "mark_notification_read_api_v2_notifications_read_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationReadInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Notification Read",
+        "tags": [
+          "notifications"
+        ]
       }
     },
     "/api/v2/provider-profiles": {

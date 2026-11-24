@@ -40,6 +40,7 @@
 | [Feedback（意見回饋）](./backend/feedback.md) | ✅ | `backend/app/modules/feedback/` | platform、identity-access | 0 |
 | [AI Connection（AI 連線設定）](./backend/ai-connection.md) | ✅ | `backend/app/modules/ai_connection/` | platform、identity-access、ai-providers、course-management、llm-runtime | 0 |
 | [Admin（後台）](./backend/admin.md) | ✅ | `backend/app/modules/admin/` | platform、identity-access、ai-providers、ai-connection、course-management、llm-runtime | 0 |
+| [Notifications（通知中心）](./backend/notifications.md) | ✅ | `backend/app/modules/notifications/` | platform、identity-access、course-management、admin | 0 |
 
 **前端模組**（default owner：前端開發團隊）
 
@@ -58,7 +59,9 @@
 | [課程](./frontend/course.md) | ✅ | `frontend/src/features/course/` | platform、contract、auth、solo-activity | 0 |
 | [單人活動](./frontend/solo-activity.md) | ✅ | `frontend/src/features/solo-activity/` | platform、contract | 0 |
 | [意見回饋](./frontend/feedback.md) | ✅ | `frontend/src/features/feedback/` | platform、contract、auth | 0 |
+| [個人設定](./frontend/account.md) | ✅ | `frontend/src/features/account/` | platform、contract、auth | 0 |
 | [後台](./frontend/admin.md) | ✅ | `frontend/src/features/admin/` | platform、contract、auth、feedback | 0 |
+| [通知中心](./frontend/notifications.md) | ✅ | `frontend/src/features/notifications/` | platform、contract、auth | 0 |
 
 **契約（兩端唯一的接縫）**
 
@@ -77,7 +80,9 @@
 | 課程與活動（/courses/*、/course-join/*、/activities/*） | course-management | course | backend/app/modules/course_management/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 | 單人活動（/solo/*） | solo-activity | solo-activity、course | backend/app/modules/solo_activity/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 | 意見回饋（/feedback） | feedback | feedback | backend/app/modules/feedback/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
+| 個人設定（/account） | identity-access | account | backend/app/modules/identity_access/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 | 後台（/admin） | admin | admin | backend/app/modules/admin/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
+| 通知（/notifications、/admin/announcements） | notifications | notifications、admin | backend/app/modules/notifications/contracts.py → frontend/src/contract/classroomTypes.ts | 產生型別 ✅ |
 
 <!-- module-map:end -->
 

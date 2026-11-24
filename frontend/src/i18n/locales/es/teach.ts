@@ -186,6 +186,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '{{count}} coinciden',
     range: 'Mostrando {{from}}–{{to}}',
     separator: ' · ',
+    deleted: '{{count}} eliminadas',
     paging: 'Páginas de la lista',
     previous: 'Anterior',
     next: 'Siguiente',
@@ -202,6 +203,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: 'Invitado',
     expired: 'Invitado caducado {{number}}',
+    deleted: 'Cuenta eliminada',
   },
   transcript: {
     blank: '(Aún sin explicar)',
@@ -258,6 +260,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: 'El estudiante rechazó el resumen final dos veces; sin confirmar',
       reviewNone: 'El estudiante no generó un resumen final',
       jump: 'Ir al inicio del escenario {{number}}',
+      viewing: 'Viendo ahora',
     },
     review: {
       title: 'Repaso y reflexión', finalTitle: 'Resumen final', confirmed: 'Confirmado', pending: 'Pendiente del estudiante',
@@ -386,7 +389,6 @@ const teach: Shape<typeof zhHant> = {
     sharedBody: 'Si sale bien, reemplaza la conexión actual.\nNo se crea una segunda conexión ni una de respaldo.',
     ownCardTitle: 'Tu propia clave',
     replace: 'Cambiar clave o modelo',
-    advancedOpen: 'Ajustes avanzados  ›',
     service: 'Servicio',
     model: 'Modelo',
     key: 'Clave de API',
@@ -423,8 +425,6 @@ const teach: Shape<typeof zhHant> = {
     matchCount: '{{count}} encontrados',
     matchCount_one: '{{count}} encontrado',
     matchCount_other: '{{count}} encontrados',
-    advanced: 'Ajustes avanzados',
-    name: 'Nombre de la conexión',
     baseUrl: 'URL del servicio',
     test: 'Probar',
     tested: 'Conectado',
@@ -434,7 +434,6 @@ const teach: Shape<typeof zhHant> = {
     apply: 'Aplicar',
     confirm: 'Confirmar',
     confirmReplaceTitle: '¿Cambiar la clave o el modelo?',
-    confirmAdvancedTitle: '¿Cambiar los ajustes avanzados?',
     confirmStrong: 'El ajuste nuevo se aplica solo si pasa la prueba.',
     confirmBody: 'Si el cambio falla, se mantiene el modelo actual y puedes seguir usando la conexión actual.',
     confirmSystemTitle: '¿Volver a la IA del sistema?',

@@ -297,8 +297,9 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
-# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
-StudentKind = Literal["registered", "guest", "expired_guest"]
+# registered, a guest, a guest past its 168 hours (shown as 過期訪客 N, N = guest_number), or an
+# account its owner deleted (shown as 已刪除的帳號, no number; its answers still count).
+StudentKind = Literal["registered", "guest", "expired_guest", "deleted"]
 
 
 class SoloStudentProgressView(View):
@@ -314,7 +315,7 @@ class SoloStudentProgressView(View):
     final_status: FinalStatus | None
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
-    attention: bool  # in progress and idle for over ATTENTION_SECONDS
+    attention: bool  # activity not ended, in progress and idle for over ATTENTION_SECONDS
 
 
 class SoloActivityProgressView(View):
@@ -416,6 +417,7 @@ class SoloRosterSummaryView(View):
     registered: int
     guests: int
     expired_guests: int
+    deleted: int  # accounts their owners deleted; still in total
 
 
 class SoloCourseRosterView(View):

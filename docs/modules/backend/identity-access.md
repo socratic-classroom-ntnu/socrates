@@ -65,6 +65,7 @@
 
 契約：
 - 帳號（/auth/*）（產生型別 ✅；端點在 routes/classroom.py）
+- 個人設定（/account）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

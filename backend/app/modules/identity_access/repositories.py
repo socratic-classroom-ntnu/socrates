@@ -3,7 +3,7 @@
 import time
 from typing import Any
 
-from sqlalchemy import Float, ForeignKey, JSON, String, Text
+from sqlalchemy import Float, ForeignKey, JSON, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.modules.platform.storage import Base
@@ -43,6 +43,8 @@ class Account(Base):
     __tablename__ = "accounts"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     username: Mapped[str] = mapped_column(String(64), unique=True)
+    # The name chosen in 個人設定; null means the username is shown.
+    display_name_override: Mapped[str | None] = mapped_column(String(40), nullable=True)
     # Null for guests, who have neither; unique only among accounts that have one.
     email: Mapped[str | None] = mapped_column(String(254), unique=True, nullable=True)
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -62,6 +64,18 @@ class Account(Base):
     # "admin" for platform admins (the 後台), otherwise null. Independent of account_role: a
     # teacher or a student may be an admin; guests never are.
     platform_role: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
+
+class AccountAvatar(Base):
+    """The cropped profile picture: at most one per account, the image itself in the row."""
+
+    __tablename__ = "account_avatars"
+    account_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("accounts.id", ondelete="CASCADE"), primary_key=True
+    )
+    mime: Mapped[str] = mapped_column(String(16))
+    image: Mapped[bytes] = mapped_column(LargeBinary)
+    updated_at: Mapped[float] = mapped_column(Float)
 
 
 class LoginSession(Base):

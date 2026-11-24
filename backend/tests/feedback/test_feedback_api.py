@@ -389,3 +389,18 @@ def test_the_app_clears_old_screenshots_once_an_hour(client, monkeypatch):
         db.get(Feedback, row.id).created_at = time.time() - 91 * 86400
     assert llm_workers.purge_feedback_screenshots() == 1
     assert rows()[0].screenshot is None
+
+
+def test_a_sender_who_deleted_their_account_is_listed_without_a_name(client):
+    user(client, "learner")
+    assert send(client).status_code == 201
+    gone = client.request("DELETE", "/api/v2/account", json={"username": "learner"})
+    assert gone.status_code == 200, gone.text
+    user(client, "fizzy", account_role="teacher")
+    make_admin("fizzy")
+
+    page = client.get("/api/v2/feedback")
+
+    assert page.status_code == 200, page.text
+    (item,) = page.json()["items"]
+    assert (item["account_kind"], item["account_name"]) == ("deleted", None)

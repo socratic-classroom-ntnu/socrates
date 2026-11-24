@@ -21,6 +21,7 @@ export function SenderText({ item }: { item: FeedbackItem }) {
   const { t } = useT('feedback')
   const who = t(`list.identity.${item.identity}`)
   const name = item.account_kind === 'expired_guest' ? t('list.expiredGuest')
+    : item.account_kind === 'deleted' ? t('list.deletedAccount')
     : item.identity === 'guest' && item.account_kind === 'registered' ? t('list.nowAccount', { name: item.account_name ?? '' })
       : item.account_name
   return <>

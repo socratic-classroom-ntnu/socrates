@@ -7,6 +7,8 @@ import { LANGUAGE_NAMES, LOCALES } from '../i18n/locale'
 import { useT } from '../i18n/useT'
 import { useChangeLocale } from '../features/auth/useChangeLocale'
 import { GUEST_LOGIN, GUEST_REGISTER, RoleTag, useAccountSummary } from './accountSummary'
+import { useAuth } from '../features/auth/AuthContext'
+import { avatarSrc } from '../contract/accountClient'
 
 const icon = (path: ReactNode) => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 const ICONS = {
@@ -25,6 +27,8 @@ export function AccountSheet({ onClose, onLogout }: { onClose(): void; onLogout(
   const navigate = useNavigate()
   const { changeLocale, failure } = useChangeLocale()
   const { name, tag, tagLabel, guest, secondLine } = useAccountSummary()
+  const { account } = useAuth()
+  const avatarUrl = avatarSrc(account)
   const [languages, setLanguages] = useState(false)
 
   const go = (to: string) => { onClose(); navigate(to) }
@@ -32,7 +36,7 @@ export function AccountSheet({ onClose, onLogout }: { onClose(): void; onLogout(
   return <Dialog title={t('account.sheet')} placement="bottom" onClose={onClose}>
       <div className="account-sheet">
         <div className="account-sheet__who">
-          <Avatar name={name} size="lg" />
+          <Avatar name={name} size="lg" src={avatarUrl} />
           <span className="account-sheet__lines">
             <span className="account-sheet__name-row"><b>{name}</b><RoleTag tag={tag} label={tagLabel} /></span>
             {secondLine && <span className="account-sheet__second">{secondLine}</span>}

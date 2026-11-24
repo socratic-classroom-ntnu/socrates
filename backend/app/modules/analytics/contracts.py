@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal
 from pydantic import Field
 from app.modules.platform.contracts import Strict
+from app.modules.solo_activity.contracts import SoloMark, SoloMetricsView
 
 
 class StanceOptionView(Strict):
@@ -78,6 +79,12 @@ class AnalysisPersonView(Strict):
     confirmed: bool
     confirmation_digest: str | None
     timeline: list[AnalysisNodeView]
+    # The solo activity's metrics and marks from the personal tutor's flags (one definition:
+    # solo_activity/metrics.py); None before any message was judged. The personal dialogue is
+    # private to the student, so the message-id lists are always empty here.
+    metrics: SoloMetricsView | None
+    marks: list[SoloMark]
+    mark_message_ids: list[str]
 
 
 class AnalysisTreeNodeView(Strict):

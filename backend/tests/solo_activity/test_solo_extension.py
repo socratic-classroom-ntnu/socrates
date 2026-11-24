@@ -224,3 +224,58 @@ def test_a_settled_view_at_the_floor_writes_nothing_more(client, tutor):
     view = confirm(client, attempt_id, view)
     assert view["state"] == "reviewing"
     assert len(extension_calls(calls)) == 1
+
+
+# ---- a "next" scenario that is the same scenario --------------------------------------------
+
+# A turn where the student changed position: after such a stage the rule asks for one more.
+SHIFTED = {**NOT_MET, "observations": {**NOT_MET["observations"], "position_shifted": True}}
+
+
+def test_a_scenario_written_back_unchanged_is_asked_for_once_more(client, tutor):
+    calls, replies = tutor
+    # The model echoes the scenario the student just confirmed, apart from spacing and width.
+    same = {**EXTENSION, "scenario": "  " + SCENARIO.replace("，", ",") + "\n"}
+    _, attempt_id, view = to_confirmed_view(client, replies, [same, EXTENSION])
+    assert len(extension_calls(calls)) == 2
+    assert view["state"] == "between_scenarios"
+    moved = ok(do(client, attempt_id, "next_scenario"))
+    assert moved["scenarios"][1]["text"] == EXTENSION["scenario"]
+    assert moved["scenarios"][1]["text"] != moved["scenarios"][0]["text"]
+
+
+def test_a_scenario_unchanged_twice_writes_none_and_the_student_reviews(client, tutor):
+    calls, replies = tutor
+    same = {**EXTENSION, "scenario": SCENARIO}
+    _, attempt_id, view = to_confirmed_view(client, replies, [same, same])
+    assert len(extension_calls(calls)) == 2
+    assert view["state"] == "reviewing"
+    assert len(ok(client.get(f"/api/v2/solo/attempts/{attempt_id}"))["scenarios"]) == 1
+
+
+def test_an_earlier_scenario_is_not_given_again(client, tutor):
+    calls, replies = tutor
+    _, attempt_id, _ = to_confirmed_view(client, replies, EXTENSION)
+    ok(do(client, attempt_id, "next_scenario"))
+    replies.append(NOT_MET)
+    answer(client, attempt_id, "朋友也一樣，我不會主動害人")
+    replies.append(SHIFTED)
+    ok(do(client, attempt_id, "send_message", {"text": "可是如果是朋友我會猶豫"}))
+    # The turn right after a shift never confirms: the new position is probed first.
+    replies.extend([MET, MET])
+    ok(do(client, attempt_id, "send_message", {"text": "我改成會拉桿"}))
+    view = ok(do(client, attempt_id, "send_message", {"text": "因為救更多人"}))
+    assert view["state"] == "confirming"
+    third = {
+        **EXTENSION,
+        "scenario": "一輛失控的電車正駛向五名工人。你站在拉桿旁：拉下它，電車會轉向另一條軌道，那裡有你的家人。",
+        "sources": [{"message_ref": "m1", "quote": "朋友也一樣"}],
+    }
+    back = {**third, "scenario": SCENARIO}
+    replies.extend([back, third])
+    view = confirm(client, attempt_id, view)
+    assert view["state"] == "between_scenarios"
+    texts = [c["scenario"] for c in extension_calls(calls)]
+    assert len(texts) == 3
+    moved = ok(do(client, attempt_id, "next_scenario"))
+    assert moved["scenarios"][2]["text"] == third["scenario"]

@@ -69,6 +69,9 @@ class Activity(Base):
     course_id: Mapped[str] = mapped_column(String(36), ForeignKey("courses.id"), index=True)
     title: Mapped[str] = mapped_column(String(300))
     draft: Mapped[dict] = mapped_column(JSON)
+    # The stance space the teacher accepted for the narrative (llm_runtime ActivityExpansion);
+    # None until one is written or typed. Publish copies it into the revision with the draft.
+    expansion: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     starts_at: Mapped[float | None] = mapped_column(Float, nullable=True)
     ends_at: Mapped[float | None] = mapped_column(Float, nullable=True)
     published_at: Mapped[float | None] = mapped_column(Float, nullable=True)

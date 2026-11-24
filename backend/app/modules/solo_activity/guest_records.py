@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.course_management.repositories import Enrollment
 from app.modules.identity_access.repositories import Account
-from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
+from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage, SoloSummarySource
 
 
 def student_kinds(db: Session, enrolled: list[Enrollment], at: float) -> dict[str, dict[str, Any]]:
@@ -48,6 +48,7 @@ class SoloGuestRecords:
         )
         for row in db.scalars(select(SoloAttempt).where(SoloAttempt.account_id == guest_id)):
             if row.activity_id in taken:
+                db.execute(delete(SoloSummarySource).where(SoloSummarySource.attempt_id == row.id))
                 db.execute(delete(SoloMessage).where(SoloMessage.attempt_id == row.id))
                 db.delete(row)
             else:

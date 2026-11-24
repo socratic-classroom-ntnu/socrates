@@ -31,6 +31,7 @@ from app.modules.platform.errors import DomainError
 
 if TYPE_CHECKING:
     from app.modules.course_management.contracts import ActivityDetailsUpdate, ActivityDraft
+    from app.modules.llm_runtime.contracts import ActivityExpansion
 
 # Fields a teacher may change without a new revision, and the course snapshot publish adds.
 _OPERATIONAL = ("title", "starts_at", "ends_at")
@@ -117,6 +118,41 @@ def _content_hash(content: dict) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def _expansion_content(expansion: dict | None) -> dict:
+    """What a revision holds of the stance space: the stances under ``stance_space`` (the key the
+    solo activity reads), with the tutor's goal and probe hints beside them."""
+    if not expansion:
+        return {}
+    return {
+        "stance_space": deepcopy(expansion["stances"]),
+        "tutor_goal": expansion["tutor_goal"],
+        "probe_hints": deepcopy(expansion["probe_hints"]),
+    }
+
+
+def _require_unlocked(db, row: Activity, at: float) -> None:
+    """The stance space changes only while the content may: before the first attempt locks it."""
+    if is_locked(db, row):
+        raise DomainError("EXPANSION_LOCKED", 409)
+    require_action(db, row, "update", at)
+
+
+def narrative_for_expansion(db, activity: Activity, at: float) -> str:
+    """The narrative a new stance space is written from; refused once the content is locked."""
+    _require_unlocked(db, activity, at)
+    return activity.draft["scenario"]
+
+
+def set_expansion(db, activity: Activity, expansion: ActivityExpansion, at: float) -> Activity:
+    """Keep a stance space for the draft. The lock is taken and checked again here: a first
+    attempt may have locked the revision while the stance space was being written."""
+    row = _lock_row(db, activity.id)
+    _require_unlocked(db, row, at)
+    row.expansion = expansion.model_dump()
+    row.updated_at = at
+    return row
+
+
 def publish(db, activity: Activity, at: float) -> ActivityRevision:
     row = _lock_row(db, activity.id)
     if is_locked(db, row):
@@ -128,7 +164,12 @@ def publish(db, activity: Activity, at: float) -> ActivityRevision:
         raise DomainError("ACTIVITY_TIME_INVALID", 422)
     course = db.get(Course, row.course_id)
     previous = current_revision(db, row)
-    content = {**deepcopy(draft), "course_intro": course.intro, "course_goals": course.goals}
+    content = {
+        **deepcopy(draft),
+        **_expansion_content(row.expansion),
+        "course_intro": course.intro,
+        "course_goals": course.goals,
+    }
     revision = ActivityRevision(
         activity_id=row.id,
         number=(previous.number if previous else 0) + 1,
@@ -218,6 +259,7 @@ def has_unpublished_changes(db, activity: Activity) -> bool:
     if (draft["title"], starts_at, draft["ends_at"]) != live:
         return True
     planned = {k: v for k, v in draft.items() if k not in _OPERATIONAL}
+    planned.update(_expansion_content(activity.expansion))
     served = {k: v for k, v in revision.content.items() if k not in _OPERATIONAL + _COURSE_SNAPSHOT}
     return _content_hash(planned) != _content_hash(served)
 
@@ -225,7 +267,10 @@ def has_unpublished_changes(db, activity: Activity) -> bool:
 def copy(db, activity: Activity) -> Activity:
     """A fresh draft with the same content; the title is copied unchanged."""
     duplicate = Activity(
-        course_id=activity.course_id, title=activity.title, draft=deepcopy(activity.draft)
+        course_id=activity.course_id,
+        title=activity.title,
+        draft=deepcopy(activity.draft),
+        expansion=deepcopy(activity.expansion),
     )
     db.add(duplicate)
     db.flush()
@@ -256,6 +301,7 @@ def teacher_view(db, activity: Activity, at: float) -> dict:
         "has_unpublished_changes": has_unpublished_changes(db, activity),
         "revision": revision.number if revision else None,
         "draft": activity.draft,
+        "expansion": activity.expansion,
         "starts_at": activity.starts_at if published else activity.draft["starts_at"],
         "ends_at": activity.ends_at if published else activity.draft["ends_at"],
         "available_actions": actions_for(db, activity, at),

@@ -15,12 +15,9 @@ export default {
     saved: '对话会自动保存，离开后回来会接着上次的地方。',
   },
   dialogue: { back: '回到活动页', backToPractice: '回到我的对话', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}', ended: '这个活动已经结束，不能再回答。你写过的内容都还在，可以回头看。' },
-  scenarioTitle: '情境 {{number}}', teacherSource: '情境由老师设置，苏格拉底不会改写它',
+  scenarioTitle: '情境 {{number}}',
   board: { expand: '展开情境', collapse: '收起情境' },
-  myAnswer: '我的回答', answerPending: '送出第一个回答后会出现在这里。',
-  aboutTitle: '这段对话在做什么',
-  aboutBody: '苏格拉底不评断对错，只会一直问你“为什么”，帮你把理由和例外说清楚。你准备好时，它会整理你的想法，请你确认。',
-  whyConfirmTitle: '为什么要确认', whyConfirmBody: '确认后，这就是你在这个情境的起点观点。之后回顾时，你可以看到自己的想法是怎么走过来的。',
+  myAnswer: '我的回答',
   timeline: {
     label: '对话记录', socratesMark: '苏', socrates: '苏格拉底', me: '我', meFirst: '我・第一个回答',
     opening: '{{name}}，先读一读黑板上的情境。如果此刻做决定的人是你，你会怎么做？用你自己的话说说看，打字或用说的都可以。没有标准答案，我想听的是你真正的想法。',
@@ -44,8 +41,6 @@ export default {
     progress: '我的进度', confirmed: '已确认', current: '进行中', capped: '尚未厘清',
   },
   revise: {
-    asideTitle: '整理不对很正常',
-    asideBody: '苏格拉底的整理只是它的理解。说出哪里不对，本身就是在把想法说清楚。改完之后，它会重新整理一次给你确认。',
     echoTitle: '你觉得这段整理不太对',
     reason: '理由：{{value}}', conditions: '条件：{{value}}', separator: ' ／ ',
     ask: '谢谢你说出来，是我没抓准。是哪一部分不像你？立场、理由，还是条件？用你自己的话说就好。',

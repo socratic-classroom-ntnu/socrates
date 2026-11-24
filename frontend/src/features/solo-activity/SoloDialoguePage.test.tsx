@@ -1235,7 +1235,8 @@ test('revising shows rejected summary and structured quick options (X1)', async 
   for (const name of ['立場不太對', '理由不太對', '條件不太對', '我其實改變想法了']) {
     expect(screen.getByRole('button', { name })).toBeInTheDocument()
   }
-  expect(screen.getByText('整理不對很正常')).toBeInTheDocument()
+  // fb002: no explanatory note in the left column while revising.
+  expect(screen.queryByText('整理不對很正常')).toBeNull()
 })
 
 test('quick option is single-select, cancellable, and sends revise_hint', async () => {
@@ -1358,14 +1359,17 @@ test('my answer card shows the first answer once it is stored', async () => {
   expect(card.querySelector('[data-option]')).toBeNull()
 })
 
-test('my answer card waits for the first answer', async () => {
+test('before the first answer there is no answer card and no note explaining the page (fb002)', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': attempt,
   })
 
-  const card = await screen.findByRole('region', { name: '我的回答' })
-  expect(card).toHaveTextContent('送出第一個回答後會出現在這裡。')
+  await screen.findByRole('heading', { name: '情境 1' })
+  expect(screen.queryByRole('region', { name: '我的回答' })).toBeNull()
+  for (const note of ['情境由老師設定，蘇格拉底不會改寫它', '這段對話在做什麼', '為什麼要確認']) {
+    expect(screen.queryByText(note)).toBeNull()
+  }
 })
 
 test('revising flag false hides x1 panel', async () => {

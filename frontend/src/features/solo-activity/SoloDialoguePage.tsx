@@ -169,8 +169,6 @@ export function SoloDialoguePage() {
     <div className="solo-dialogue__columns">
       <ScenarioBoard
         scenario={scenario}
-        confirming={can(view, 'confirm_viewpoint') || can(view, 'revise_viewpoint')}
-        revising={view.revising}
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
       />
       <section className="solo-conversation">

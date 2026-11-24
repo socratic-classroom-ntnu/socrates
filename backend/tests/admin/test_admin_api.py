@@ -214,8 +214,8 @@ def test_group_mode_is_off_until_an_admin_turns_it_on(client):
         "updated_by_name": None,
         "disable_warning": "關掉後，沒設金鑰的老師，課程裡的學生對話會無法繼續，直到老師自己設好 AI 連線。之後可以再打開。",
     }
-    # 分析紀錄: on by default; turning it off asks first.
-    assert (interaction["key"], interaction["enabled"]) == ("interaction_log", True)
+    # 分析紀錄: off until an admin turns it on; turning it off asks first.
+    assert (interaction["key"], interaction["enabled"]) == ("interaction_log", False)
     assert (
         interaction["disable_warning"]
         == "關掉後就不再側錄，已經存下的紀錄不受影響。之後可以再打開。"

@@ -144,7 +144,7 @@ export default {
       lead: "每一个改变状态的操作、每一次模型的完整回复都侧录在这里；账号换成无法反推的代号，密码、密钥、账号名、Email、显示名都不记。读取页面不记。",
       download: "下载完整记录（JSON Lines）",
       downloadFailed: "下载失败，请再试一次。",
-      off: "后台开关「分析记录」关着，现在不会侧录。",
+      off: "现在没有在侧录：后台开关「分析记录」关着，或部署还没设 INTERACTION_LOG_KEY。",
       total: "记录",
       subjects: "人数（去识别化）",
       empty: "这段时间没有记录。",

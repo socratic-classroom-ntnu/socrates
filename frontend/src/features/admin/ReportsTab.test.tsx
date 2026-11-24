@@ -161,6 +161,6 @@ test('a failed download says so', async () => {
 test('with the switch off the log says nothing is being recorded', async () => {
   interactions.mockResolvedValue({ ...LOG, enabled: false, total: 0, subjects: 0, counts: [] })
   renderReports()
-  expect(await screen.findByText('後台開關「分析紀錄」關著，現在不會側錄。')).toBeInTheDocument()
+  expect(await screen.findByText('現在沒有在側錄：後台開關「分析紀錄」關著，或部署還沒設 INTERACTION_LOG_KEY。')).toBeInTheDocument()
   expect(screen.getByText('這段時間沒有紀錄。')).toBeInTheDocument()
 })

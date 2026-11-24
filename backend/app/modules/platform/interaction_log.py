@@ -50,6 +50,9 @@ HIDDEN_KEYS = frozenset(
         "email",
         "display_name",
         "real_name",
+        "nickname",
+        "teacher_name",
+        "alias",
     }
 )
 # Requests whose bodies are never read: sign-in, the account, AI connections, the 系統 AI.
@@ -68,19 +71,37 @@ _subject: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 )
 
 
-def _key() -> bytes:
-    seed = env_str("INTERACTION_LOG_KEY") or env_str("DATABASE_URL") or "socrates-local"
+KEY_ENV = "INTERACTION_LOG_KEY"
+RETENTION_ENV = "INTERACTION_LOG_RETENTION_DAYS"
+DEFAULT_RETENTION_DAYS = 30
+
+
+def _key() -> bytes | None:
+    """The deployment's own key; without it nothing is recorded (no key is ever derived)."""
+    seed = env_str(KEY_ENV).strip()
+    if not seed:
+        return None
     return hashlib.sha256(("socrates/interaction-log/v1:" + seed).encode()).digest()
 
 
-def pseudonym(account_id: str) -> str:
-    """The same short value for the same account; the account id cannot be read back from it."""
-    digest = hmac.new(_key(), account_id.encode(), hashlib.sha256).hexdigest()
+def configured() -> bool:
+    """Whether the deployment set INTERACTION_LOG_KEY; without it nothing is recorded."""
+    return _key() is not None
+
+
+def pseudonym(value: str) -> str:
+    """The same short value for the same id; the id cannot be read back from it."""
+    key = _key()
+    if key is None:
+        raise RuntimeError(KEY_ENV + " is not set")
+    digest = hmac.new(key, value.encode(), hashlib.sha256).hexdigest()
     return digest[:SUBJECT_LENGTH]
 
 
 def attach(state: Any, account_id: str) -> None:
     """Called once the request's account is known: later records in this request carry it."""
+    if _key() is None:
+        return
     subject = pseudonym(account_id)
     _subject.set(subject)
     try:
@@ -89,10 +110,37 @@ def attach(state: Any, account_id: str) -> None:
         pass
 
 
+def _is_id(key: str) -> bool:
+    key = key.lower()
+    return key == "id" or key.endswith("_id") or key == "ids" or key.endswith("_ids")
+
+
+# Database ids are uuids; short ids such as a stance id ("s1") or a message ref are not people.
+ID_MIN_LENGTH = 16
+
+
+def _hashed(value: Any) -> Any:
+    if isinstance(value, str) and len(value) >= ID_MIN_LENGTH:
+        return pseudonym(value)
+    if isinstance(value, list):
+        return [_hashed(v) for v in value]
+    return value
+
+
+def _scrubbed(key: str, value: Any) -> Any:
+    if key.lower() in HIDDEN_KEYS:
+        return MASK
+    if _is_id(key):
+        return _hashed(value)
+    return scrub(value)
+
+
 def scrub(value: Any) -> Any:
-    """A copy with every hidden key's value masked."""
+    """A copy with every hidden key's value masked and every database id (under a key named id,
+    *_id or *_ids) replaced by its keyed hash, so no record points back at an account, attempt
+    or course."""
     if isinstance(value, dict):
-        return {k: (MASK if str(k).lower() in HIDDEN_KEYS else scrub(v)) for k, v in value.items()}
+        return {k: _scrubbed(str(k), v) for k, v in value.items()}
     if isinstance(value, list):
         return [scrub(v) for v in value]
     return value
@@ -117,6 +165,8 @@ def record(
     from app.modules.platform.storage import transaction
     from app.modules.platform.toggles import toggle_enabled
 
+    if _key() is None:
+        return
     try:
         with transaction() as db:
             if not toggle_enabled(db, TOGGLE):
@@ -238,3 +288,55 @@ def _body(raw: bytes) -> Any:
         return json.loads(raw)
     except ValueError:
         return {"bytes": len(raw)}
+
+
+def retention_days() -> int:
+    raw = env_str(RETENTION_ENV).strip()
+    try:
+        days = int(raw) if raw else DEFAULT_RETENTION_DAYS
+    except ValueError:
+        days = DEFAULT_RETENTION_DAYS
+    return max(1, days)
+
+
+def purge(now: float | None = None) -> int:
+    """Delete records older than the retention (INTERACTION_LOG_RETENTION_DAYS, default 30)."""
+    from sqlalchemy import delete
+
+    from app.modules.platform.repositories import InteractionEvent
+    from app.modules.platform.storage import transaction
+
+    cutoff = (time.time() if now is None else now) - retention_days() * 86400
+    with transaction() as db:
+        result = db.execute(delete(InteractionEvent).where(InteractionEvent.at < cutoff))
+        return int(getattr(result, "rowcount", 0) or 0)
+
+
+class GuestRecords:
+    """The guest hook (identity-access GuestRecordHook), wired by the app shell: a guest's records
+    follow them into the account they log in to, and are deleted when the guest expires."""
+
+    def reassign(self, db: Any, guest_id: str, account_id: str) -> None:
+        from sqlalchemy import update
+
+        from app.modules.platform.repositories import InteractionEvent
+
+        if _key() is None:
+            return
+        db.execute(
+            update(InteractionEvent)
+            .where(InteractionEvent.subject == pseudonym(guest_id))
+            .values(subject=pseudonym(account_id))
+        )
+
+    def forget_name(self, db: Any, guest_id: str) -> None:
+        from sqlalchemy import delete
+
+        from app.modules.platform.repositories import InteractionEvent
+
+        if _key() is None:
+            return
+        db.execute(delete(InteractionEvent).where(InteractionEvent.subject == pseudonym(guest_id)))
+
+
+GUEST_HOOK = GuestRecords()

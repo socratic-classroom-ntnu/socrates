@@ -146,7 +146,7 @@ export default {
       lead: "Aquí se registra cada cambio hecho en el sitio y cada respuesta completa del modelo. Las cuentas se reemplazan por códigos que no permiten identificarlas; nunca se guardan contraseñas, claves, nombres de usuario, correos ni nombres visibles. Leer una página no se registra.",
       download: "Descargar todos los registros (JSON Lines)",
       downloadFailed: "No se pudo descargar. Inténtalo de nuevo.",
-      off: "El interruptor Registro de interacciones está apagado, así que no se registra nada.",
+      off: "No se registra nada: el interruptor Registro de interacciones está apagado o el despliegue no ha definido INTERACTION_LOG_KEY.",
       total: "Registros",
       subjects: "Personas (anonimizadas)",
       empty: "No hay registros en este periodo.",

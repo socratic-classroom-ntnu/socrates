@@ -43,6 +43,7 @@ from app.modules.llm_runtime.service import (
     score_eval_case,
 )
 from app.modules.platform.env import env_str
+from app.modules.platform.interaction_log import configured as interaction_recording_configured
 from app.modules.platform.repositories import InteractionEvent
 from app.modules.platform.toggles import toggle_enabled
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
@@ -281,7 +282,7 @@ def interaction_log(db: Session, days: int, now: float | None = None) -> Interac
     rows = sorted(counts.items(), key=lambda item: (-item[1][0], item[0]))
     return InteractionLogView(
         days=days,
-        enabled=toggle_enabled(db, "interaction_log"),
+        enabled=toggle_enabled(db, "interaction_log") and interaction_recording_configured(),
         total=total,
         subjects=len(subjects),
         counts=[

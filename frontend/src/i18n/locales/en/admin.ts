@@ -146,7 +146,7 @@ export default {
       lead: "Every change made through the site and every full model response is recorded here. Accounts become codes that can't be traced back; passwords, keys, usernames, emails and display names are never kept. Reading a page is not recorded.",
       download: "Download every record (JSON Lines)",
       downloadFailed: "Couldn't download. Please try again.",
-      off: "The Interaction log switch is off, so nothing is being recorded.",
+      off: "Nothing is being recorded: the Interaction log switch is off, or the deployment has not set INTERACTION_LOG_KEY.",
       total: "Records",
       subjects: "People (de-identified)",
       empty: "No records in this range.",

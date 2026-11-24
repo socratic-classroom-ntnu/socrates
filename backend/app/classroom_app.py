@@ -24,6 +24,7 @@ from app.modules.app_shell.llm_workers import (
     clock_loop,
     feedback_purge_loop,
     guest_expiry_loop,
+    interaction_log_purge_loop,
     llm_loop,
     mail_loop,
 )
@@ -44,6 +45,7 @@ async def lifespan(app):
         admin_service.ensure_builtin_admin(db)
     worker_count = max(1, env_int("CLASSROOM_LLM_WORKERS", 4))
     loops = [BUS.listen, BUS.sweep, clock_loop, mail_loop, guest_expiry_loop, feedback_purge_loop]
+    loops.append(interaction_log_purge_loop)
     loops += [llm_loop] * worker_count
     tasks = [asyncio.create_task(fn()) for fn in loops]
     try:

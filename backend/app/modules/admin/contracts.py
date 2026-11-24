@@ -173,6 +173,7 @@ class InteractionLogView(BaseModel):
     """後台「分析紀錄」的摘要：每一種操作／模型程式各幾筆；完整紀錄用 export 下載。"""
 
     days: int
+    # Recording now: the switch is on and the deployment set INTERACTION_LOG_KEY.
     enabled: bool
     total: int
     # How many different de-identified people the records come from.

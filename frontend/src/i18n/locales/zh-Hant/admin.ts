@@ -144,7 +144,7 @@ export default {
       lead: "每一個改變狀態的操作、每一次模型的完整回覆都側錄在這裡；帳號換成無法回推的代號，密碼、金鑰、帳號名稱、Email、顯示名稱都不記。讀取畫面不記。",
       download: "下載完整紀錄（JSON Lines）",
       downloadFailed: "下載失敗，請再試一次。",
-      off: "後台開關「分析紀錄」關著，現在不會側錄。",
+      off: "現在沒有在側錄：後台開關「分析紀錄」關著，或部署還沒設 INTERACTION_LOG_KEY。",
       total: "紀錄",
       subjects: "人數（去識別化）",
       empty: "這段時間沒有紀錄。",

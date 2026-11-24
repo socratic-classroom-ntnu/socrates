@@ -44,8 +44,8 @@ DB_TOGGLES: dict[str, ToggleDef] = {
     # 後台「分析紀錄」: side records of every change and every model response, de-identified.
     "interaction_log": ToggleDef(
         name="分析紀錄",
-        description="側錄每一個操作和每一次模型回覆，去識別化後存在後台，供之後改進用。",
-        default=True,
+        description="側錄每一個操作和每一次模型回覆，去識別化後存在後台，供之後改進用。部署要設 INTERACTION_LOG_KEY 才會記。",
+        default=False,
         disable_warning="關掉後就不再側錄，已經存下的紀錄不受影響。之後可以再打開。",
     ),
 }

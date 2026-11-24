@@ -14,7 +14,7 @@ export default {
     start: '開始對話', continue: '繼續對話', viewRecord: '查看紀錄', endedReadOnly: '活動已結束，可以回頭看自己的紀錄，但不能再回答。', closed: '這個活動目前不能開始。',
     saved: '對話會自動保存，離開後回來會接著上次的地方。',
   },
-  dialogue: { back: '回到活動頁', backToPractice: '回到我的對話', logo: '問', subtitle: '和蘇格拉底談談你的想法', count: '情境 {{current}}', ended: '這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。' },
+  dialogue: { back: '回到活動頁', backToCourse: '回到課程', backToPractice: '回到我的對話', logo: '問', subtitle: '和蘇格拉底談談你的想法', count: '情境 {{current}}', ended: '這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。' },
   scenarioTitle: '情境 {{number}}', teacherSource: '情境由老師設定，蘇格拉底不會改寫它',
   board: { expand: '展開情境', collapse: '收起情境' },
   myAnswer: '我的回答', answerPending: '送出第一個回答後會出現在這裡。',

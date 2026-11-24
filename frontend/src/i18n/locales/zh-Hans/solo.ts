@@ -14,7 +14,7 @@ export default {
     start: '开始对话', continue: '继续对话', viewRecord: '查看记录', endedReadOnly: '活动已结束，可以回头看自己的记录，但不能再回答。', closed: '这个活动目前不能开始。',
     saved: '对话会自动保存，离开后回来会接着上次的地方。',
   },
-  dialogue: { back: '回到活动页', backToPractice: '回到我的对话', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}', ended: '这个活动已经结束，不能再回答。你写过的内容都还在，可以回头看。' },
+  dialogue: { back: '回到活动页', backToCourse: '回到课程', backToPractice: '回到我的对话', logo: '问', subtitle: '和苏格拉底谈谈你的想法', count: '情境 {{current}}', ended: '这个活动已经结束，不能再回答。你写过的内容都还在，可以回头看。' },
   scenarioTitle: '情境 {{number}}', teacherSource: '情境由老师设置，苏格拉底不会改写它',
   board: { expand: '展开情境', collapse: '收起情境' },
   myAnswer: '我的回答', answerPending: '送出第一个回答后会出现在这里。',

@@ -14,7 +14,7 @@ export default {
     start: 'Iniciar diálogo', continue: 'Continuar diálogo', viewRecord: 'Ver tu diálogo', endedReadOnly: 'Esta actividad terminó. Puedes repasar tu diálogo, pero ya no puedes responder.', closed: 'Esta actividad no se puede iniciar ahora.',
     saved: 'El diálogo se guarda automáticamente para que puedas volver al mismo punto.',
   },
-  dialogue: { back: 'Volver a la actividad', backToPractice: 'Volver a Mis diálogos', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}', ended: 'Esta actividad terminó, así que ya no puedes responder. Todo lo que escribiste sigue aquí para repasarlo.' },
+  dialogue: { back: 'Volver a la actividad', backToCourse: 'Volver al curso', backToPractice: 'Volver a Mis diálogos', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}', ended: 'Esta actividad terminó, así que ya no puedes responder. Todo lo que escribiste sigue aquí para repasarlo.' },
   scenarioTitle: 'Escenario {{number}}', teacherSource: 'Tu docente estableció este escenario. Sócrates no lo reescribirá.',
   board: { expand: 'Mostrar el escenario', collapse: 'Ocultar el escenario' },
   myAnswer: 'Mi respuesta', answerPending: 'Tu primera respuesta aparecerá aquí cuando la envíes.',

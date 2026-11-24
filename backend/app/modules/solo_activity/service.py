@@ -236,6 +236,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "answer": progress.answer,
                 "status": progress.status,
                 "confirmed_summary": progress.confirmed_summary,
+                "capped_summary": progress.capped_summary,
             }
         )
     confirming = a.state == "confirming"

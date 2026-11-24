@@ -67,6 +67,7 @@ export default {
     closing: '{{name}}, you have worked through every scenario. Next, let us look back at your whole line of thought.',
     eyebrow: 'Your progress', title: 'All scenarios are done', subtitle: 'Look back at what you thought today',
     confirmedCard: 'Scenario {{number}}: viewpoint confirmed',
+    cappedCard: 'Scenario {{number}}: not settled, here is where it ended',
   },
   final: {
     feedbackLabel: 'What you said was off', feedback: 'You said: “{{text}}”',

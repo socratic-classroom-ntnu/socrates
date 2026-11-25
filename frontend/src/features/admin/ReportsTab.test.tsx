@@ -126,6 +126,14 @@ test('choosing a range reads both reports again for it', async () => {
   expect(screen.getByRole('button', { name: '最近 30 天' })).toHaveAttribute('aria-pressed', 'true')
 })
 
+test('the shortest range says it is the last 24 hours, which is what it counts', async () => {
+  renderReports()
+  await screen.findByRole('table', { name: '評測總表' })
+  fireEvent.click(screen.getByRole('button', { name: '最近 24 小時' }))
+  await waitFor(() => expect(evals).toHaveBeenLastCalledWith(1))
+  expect(screen.queryByRole('button', { name: '今天' })).not.toBeInTheDocument()
+})
+
 test('a failed read says so', async () => {
   evals.mockRejectedValue(new Error('down'))
   renderReports()

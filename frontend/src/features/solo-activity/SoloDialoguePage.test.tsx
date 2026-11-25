@@ -1619,8 +1619,54 @@ test('a private practice dialogue goes back to my dialogues', async () => {
     'GET /solo/activities/a-1': { ...activity, title: '電車難題', practice: true },
     'GET /solo/attempts/attempt-1': { ...attempt, activity_title: '電車難題' },
   })
-  const back = await screen.findByRole('link', { name: '回到我的對話' })
-  expect(back).toHaveAttribute('href', '/my-dialogues')
+  // The logo and the text link (fb001) both lead there.
+  const back = await screen.findAllByRole('link', { name: '回到我的對話' })
+  expect(back.map(link => link.getAttribute('href'))).toEqual(['/my-dialogues', '/my-dialogues'])
+  expect(screen.queryByRole('link', { name: '回到課程' })).toBeNull()
+})
+
+test('the top bar has a 回到課程 link to the course page (fb001)', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': dialogueAttempt,
+  })
+  const back = await screen.findByRole('link', { name: '回到課程' })
+  expect(back).toHaveAttribute('href', '/learn/courses/c-1')
+})
+
+describe('Enter in the answer box (fb003)', () => {
+  function sendCalls(calls: Array<{ key: string }>) {
+    return calls.filter(call => call.key === 'POST /solo/attempts/attempt-1/send_message')
+  }
+  async function openBox() {
+    const calls = renderPageWithCalls({
+      'GET /solo/activities/a-1': activity,
+      'GET /solo/attempts/attempt-1': dialogueAttempt,
+      'POST /solo/attempts/attempt-1/send_message': () => new Promise(() => undefined),
+    })
+    const box = await screen.findByLabelText('回答蘇格拉底')
+    fireEvent.change(box, { target: { value: '我覺得沒有行動也算一種選擇。' } })
+    return { calls, box }
+  }
+
+  test('Enter sends the message', async () => {
+    const { calls, box } = await openBox()
+    await act(async () => { fireEvent.keyDown(box, { key: 'Enter' }) })
+    expect(sendCalls(calls)).toEqual([{ key: 'POST /solo/attempts/attempt-1/send_message', body: { text: '我覺得沒有行動也算一種選擇。' } }])
+  })
+
+  test('Shift+Enter starts a new line instead of sending', async () => {
+    const { calls, box } = await openBox()
+    await act(async () => { fireEvent.keyDown(box, { key: 'Enter', shiftKey: true }) })
+    expect(sendCalls(calls)).toEqual([])
+  })
+
+  test('Enter that picks an input method candidate does not send', async () => {
+    const { calls, box } = await openBox()
+    await act(async () => { fireEvent.keyDown(box, { key: 'Enter', isComposing: true }) })
+    await act(async () => { fireEvent.keyDown(box, { key: 'Enter', keyCode: 229 }) })
+    expect(sendCalls(calls)).toEqual([])
+  })
 })
 
 test('a failed summary says so and offers trying again', async () => {

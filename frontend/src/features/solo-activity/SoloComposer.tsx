@@ -108,6 +108,13 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
         disabled={disabled}
         placeholder={disabled ? t('composer.waitingPlaceholder') : answering ? t('composer.answerPlaceholder') : t('composer.placeholder')}
         onChange={event => updateText(event.target.value)}
+        onKeyDown={event => {
+          // fb003: Enter sends, Shift+Enter starts a new line. Enter that picks an IME candidate
+          // (注音、拼音) is the input method's, not a send.
+          if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.keyCode === 229) return
+          event.preventDefault()
+          void submit()
+        }}
       />
       {speech.supported && <button
         className="solo-composer__voice"

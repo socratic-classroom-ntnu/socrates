@@ -14,7 +14,7 @@ export default {
     start: 'Start dialogue', continue: 'Continue dialogue', viewRecord: 'View your dialogue', endedReadOnly: 'This activity has ended. You can look back at your dialogue, but you can no longer answer.', closed: 'This activity cannot be started right now.',
     saved: 'Your dialogue is saved automatically, so you can return to the same place later.',
   },
-  dialogue: { back: 'Back to activity', backToPractice: 'Back to My dialogues', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}', ended: 'This activity has ended, so you can no longer answer. Everything you wrote is still here to look back on.' },
+  dialogue: { back: 'Back to activity', backToCourse: 'Back to course', backToPractice: 'Back to My dialogues', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}', ended: 'This activity has ended, so you can no longer answer. Everything you wrote is still here to look back on.' },
   scenarioTitle: 'Scenario {{number}}',
   board: { expand: 'Show the scenario', collapse: 'Hide the scenario' },
   myAnswer: 'My answer',

@@ -11,7 +11,7 @@ import { ADAPTERS, COMPATIBLE, FIELD_OF, useFailureText, useServiceName, type Fi
 import { ConnectionAlert } from './ConnectionAlert'
 import { ConnectionModelPicker, type ModelList } from './ConnectionModelPicker'
 
-type Form = { adapter: string; model: string; apiKey: string; baseUrl: string; name: string }
+type Form = { adapter: string; model: string; apiKey: string; baseUrl: string }
 type Failure = { code: string; message: string }
 /** What the page shows around the form: the top error (A10、A12), the side card, 「測試中」. */
 export type FormState = { adapter: string; failure: Failure | null; busy: boolean }
@@ -21,12 +21,11 @@ const NOT_A_LOGIN = { 'data-1p-ignore': true, 'data-lpignore': 'true', 'data-bwi
 /** Typing a key waits this long before the list is asked for again. */
 const LIST_DELAY_MS = 500
 
-/** A blank key or name stays out of the request: the backend keeps the saved key / the service's name. */
+/** A blank key stays out of the request: the backend keeps the saved key. No name: the backend names it after the service. */
 function bodyOf(form: Form): AIConnectionInput {
   const body: AIConnectionInput = { adapter: form.adapter, model: form.model.trim() }
   if (form.apiKey.trim()) body.api_key = form.apiKey.trim()
   if (form.adapter === COMPATIBLE) body.base_url = form.baseUrl.trim()
-  if (form.name.trim()) body.name = form.name.trim()
   return body
 }
 
@@ -38,14 +37,13 @@ function sourceOf(form: Form): AIConnectionModelsInput {
 const sameAddress = (typed: string, saved: string | null) => typed.trim().replace(/\/+$/, '') === (saved ?? '')
 
 /**
- * 設定表單（Figma A02、A05、A07、A10–A12、B03／B04）：選服務 → 貼金鑰 → 選模型（不預選）。
+ * 設定表單（Figma A02、A05、A07、A10–A12、B04）：選服務 → 貼金鑰 → 選模型（不預選）。
+ * 沒有「進階設定」：連線名稱一律用服務名稱；自訂相容服務的服務網址直接放在服務下面。
  * 「測試」只測；「套用」由後端先測、成功才存，失敗時原本的連線不變。取代正在用的自己的金鑰前
- * 先確認：只改連線名稱用 B02，其他用 B01；第一次設定或從系統提供換過來不確認。
+ * 先確認（B01）；第一次設定或從系統提供換過來不確認。
  */
-export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState }: {
+export function AIConnectionForm({ view, onApplied, onCancel, onState }: {
   view: AIConnectionView
-  /** Opened from 「進階設定 ›」: the current service and model filled in, the advanced fields open. */
-  advanced: boolean
   onApplied: (view: AIConnectionView) => void
   onCancel?: () => void
   onState: (state: FormState) => void
@@ -54,15 +52,12 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
   const serviceName = useServiceName()
   const failureText = useFailureText()
   const own = view.own
-  const [form, setForm] = useState<Form>(() => advanced && own
-    ? { adapter: own.adapter, model: own.model, apiKey: '', baseUrl: own.base_url ?? '', name: own.name }
-    : { adapter: '', model: '', apiKey: '', baseUrl: '', name: '' })
-  const [showAdvanced, setShowAdvanced] = useState(advanced)
+  const [form, setForm] = useState<Form>({ adapter: '', model: '', apiKey: '', baseUrl: '' })
   const [testing, setTesting] = useState(false)
   const [tested, setTested] = useState(false)
   const [applying, setApplying] = useState(false)
   const [failure, setFailure] = useState<Failure | null>(null)
-  const [confirm, setConfirm] = useState<'replace' | 'advanced' | null>(null)
+  const [confirm, setConfirm] = useState(false)
   // Bumped by every edit and every new test: a reply that is not for the latest one is dropped.
   const latest = useRef(0)
   const [list, setList] = useState<ModelList>({ state: 'idle' })
@@ -107,7 +102,6 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
       // Another service or address: a pasted key never goes to the new place (spec: 金鑰一定要重貼).
       ...((name === 'adapter' || name === 'baseUrl') && value !== current[name] ? { apiKey: '' } : {}),
     }))
-    if (name === 'adapter' && value === COMPATIBLE) setShowAdvanced(true)
     setTesting(false)
     setTested(false)
     setFailure(null)
@@ -129,7 +123,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
   }
 
   async function apply() {
-    setConfirm(null)
+    setConfirm(false)
     setApplying(true)
     setFailure(null)
     try {
@@ -146,10 +140,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
     if (!ready || busy) return
     // Only when it replaces the teacher's own key in use (第一次設定、從系統提供換過來不確認).
     if (view.mode === 'own' && own) {
-      const onlyName = form.adapter === own.adapter && !form.apiKey.trim() && form.model.trim() === own.model
-        && (form.adapter !== COMPATIBLE || sameAddress(form.baseUrl, own.base_url))
-        && Boolean(form.name.trim()) && form.name.trim() !== own.name
-      setConfirm(onlyName ? 'advanced' : 'replace')
+      setConfirm(true)
       return
     }
     void apply()
@@ -167,7 +158,7 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
   return <>
     <form aria-label={title} autoComplete="off" className={`${styles.card} ${styles.form}`} onSubmit={submit}>
       <h2 className={styles.cardTitle}>{title}</h2>
-      <div className={styles.fields} data-advanced={showAdvanced}>
+      <div className={styles.fields} data-compatible={form.adapter === COMPATIBLE}>
         <Field id="ai-adapter" label={t('aiSettings.serviceLabel')} invalid={Boolean(errorOn('adapter'))}>
           <Select
             id="ai-adapter"
@@ -182,6 +173,19 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
           />
           {errorOn('adapter') && <FieldError id="ai-adapter-error">{errorOn('adapter')}</FieldError>}
         </Field>
+        {form.adapter === COMPATIBLE && <Field id="ai-baseUrl" className={styles.urlField} label={t('aiSettings.baseUrl')} invalid={Boolean(errorOn('baseUrl'))}>
+          <input
+            id="ai-baseUrl"
+            className={styles.input}
+            value={form.baseUrl}
+            placeholder="https://"
+            spellCheck={false}
+            onChange={event => edit('baseUrl', event.target.value)}
+            aria-invalid={errorOn('baseUrl') ? true : undefined}
+            aria-describedby={errorOn('baseUrl') ? 'ai-baseUrl-error' : undefined}
+          />
+          {errorOn('baseUrl') && <FieldError id="ai-baseUrl-error">{errorOn('baseUrl')}</FieldError>}
+        </Field>}
         <Field id="ai-model" className={styles.modelField} label={t('aiSettings.modelLabel')} invalid={Boolean(errorOn('model'))}>
           <ConnectionModelPicker
             id="ai-model"
@@ -219,36 +223,6 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
         {tested && <div className={styles.tested}><ConnectionAlert tone="done" role="status">{t('aiSettings.tested')}</ConnectionAlert></div>}
       </Field>
       </div>
-      {/* B03：展開後「進階設定 ⌃」移到分隔線上面當標題，按鈕列不再放它 */}
-      {showAdvanced && <div className={styles.advanced}>
-        <button type="button" className={styles.advancedHead} aria-expanded onClick={() => setShowAdvanced(false)}>{t('aiSettings.advanced')}{'  ⌃'}</button>
-        <Field id="ai-name" label={t('aiSettings.name')} invalid={Boolean(errorOn('name'))}>
-          <input
-            id="ai-name"
-            className={styles.input}
-            value={form.name}
-            placeholder={service || undefined}
-            maxLength={100}
-            onChange={event => edit('name', event.target.value)}
-            aria-invalid={errorOn('name') ? true : undefined}
-            aria-describedby={errorOn('name') ? 'ai-name-error' : undefined}
-          />
-          {errorOn('name') && <FieldError id="ai-name-error">{errorOn('name')}</FieldError>}
-        </Field>
-        {form.adapter === COMPATIBLE && <Field id="ai-baseUrl" label={t('aiSettings.baseUrl')} invalid={Boolean(errorOn('baseUrl'))}>
-          <input
-            id="ai-baseUrl"
-            className={styles.input}
-            value={form.baseUrl}
-            placeholder="https://"
-            spellCheck={false}
-            onChange={event => edit('baseUrl', event.target.value)}
-            aria-invalid={errorOn('baseUrl') ? true : undefined}
-            aria-describedby={errorOn('baseUrl') ? 'ai-baseUrl-error' : undefined}
-          />
-          {errorOn('baseUrl') && <FieldError id="ai-baseUrl-error">{errorOn('baseUrl')}</FieldError>}
-        </Field>}
-      </div>}
       {busy
         ? <div className={styles.actions}>
           <span className={styles.spacer} />
@@ -258,19 +232,16 @@ export function AIConnectionForm({ view, advanced, onApplied, onCancel, onState 
           </Button>
         </div>
         : <div className={styles.actions}>
-          {!showAdvanced && <button type="button" className={styles.textButton} aria-expanded={false} onClick={() => setShowAdvanced(true)}>
-            {t('aiSettings.advanced')}↗
-          </button>}
           <span className={styles.spacer} />
           {onCancel && <Button variant="outline" className={styles.smallButton} onClick={onCancel}>{t('aiSettings.cancel')}</Button>}
           <Button type="submit" variant="primary" className={styles.smallButton} disabled={!ready || Boolean(failure)}>{t('aiSettings.apply')}</Button>
         </div>}
     </form>
     {confirm && <Dialog
-      title={t(confirm === 'advanced' ? 'aiSettings.confirmAdvancedTitle' : 'aiSettings.confirmReplaceTitle')}
-      onClose={() => setConfirm(null)}
+      title={t('aiSettings.confirmReplaceTitle')}
+      onClose={() => setConfirm(false)}
       footer={<>
-        <Button variant="outline" onClick={() => setConfirm(null)}>{t('aiSettings.cancel')}</Button>
+        <Button variant="outline" onClick={() => setConfirm(false)}>{t('aiSettings.cancel')}</Button>
         <Button variant="primary" data-autofocus onClick={() => { void apply() }}>{t('aiSettings.confirm')}</Button>
       </>}
     >

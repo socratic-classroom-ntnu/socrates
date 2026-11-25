@@ -42,7 +42,7 @@ type FakeRecognition = {
   interimResults: boolean
   onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
   onend: (() => void) | null
-  onerror: (() => void) | null
+  onerror: ((event: { error: string }) => void) | null
   start(): void
   stop(): void
 }
@@ -240,6 +240,46 @@ test.each([
 
   fireEvent.click(await screen.findByRole('button', { name: voiceLabel }))
   expect(recognitionInstances[0].lang).toBe(expectedLanguage)
+})
+
+describe('when dictation stops without text it says why (PR-19)', () => {
+  async function pressMic() {
+    enableSpeechRecognition()
+    renderPage({
+      'GET /solo/activities/a-1': activity,
+      'GET /solo/attempts/attempt-1': dialogueAttempt,
+    })
+    fireEvent.click(await screen.findByRole('button', { name: '用說的' }))
+    return recognitionInstances[0]
+  }
+
+  test('a browser without a speech service (Helium) is told to use Chrome or Edge', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onerror?.({ error: 'network' }))
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('這個瀏覽器連不到語音辨識服務')
+    expect(screen.getByRole('button', { name: '用說的' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('a blocked microphone says where to allow it', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onerror?.({ error: 'not-allowed' }))
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('麥克風沒有被允許')
+  })
+
+  test('ending with nothing heard says so, and the note clears on the next press', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onend?.())
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('沒有聽到聲音')
+    fireEvent.click(screen.getByRole('button', { name: '用說的' }))
+    expect(document.querySelector('.solo-composer__voice-note')).toBeNull()
+  })
+
+  test('a transcript leaves no note', async () => {
+    const recognition = await pressMic()
+    act(() => deliverTranscript(recognition, '我覺得要看情況。'))
+    act(() => recognition.onend?.())
+    expect(document.querySelector('.solo-composer__voice-note')).toBeNull()
+  })
 })
 
 test('voice button shows recording state, stops on a second press, and disables while waiting', async () => {
@@ -1235,7 +1275,8 @@ test('revising shows rejected summary and structured quick options (X1)', async 
   for (const name of ['立場不太對', '理由不太對', '條件不太對', '我其實改變想法了']) {
     expect(screen.getByRole('button', { name })).toBeInTheDocument()
   }
-  expect(screen.getByText('整理不對很正常')).toBeInTheDocument()
+  // fb002: no explanatory note in the left column while revising.
+  expect(screen.queryByText('整理不對很正常')).toBeNull()
 })
 
 test('quick option is single-select, cancellable, and sends revise_hint', async () => {
@@ -1358,14 +1399,17 @@ test('my answer card shows the first answer once it is stored', async () => {
   expect(card.querySelector('[data-option]')).toBeNull()
 })
 
-test('my answer card waits for the first answer', async () => {
+test('before the first answer there is no answer card and no note explaining the page (fb002)', async () => {
   renderPage({
     'GET /solo/activities/a-1': activity,
     'GET /solo/attempts/attempt-1': attempt,
   })
 
-  const card = await screen.findByRole('region', { name: '我的回答' })
-  expect(card).toHaveTextContent('送出第一個回答後會出現在這裡。')
+  await screen.findByRole('heading', { name: '情境 1' })
+  expect(screen.queryByRole('region', { name: '我的回答' })).toBeNull()
+  for (const note of ['情境由老師設定，蘇格拉底不會改寫它', '這段對話在做什麼', '為什麼要確認']) {
+    expect(screen.queryByText(note)).toBeNull()
+  }
 })
 
 test('revising flag false hides x1 panel', async () => {
@@ -1423,6 +1467,31 @@ test('next button absent without next_scenario action', async () => {
 
   await screen.findByText('情境 1 的觀點已確認')
   expect(screen.queryByRole('button', { name: /下一個情境/ })).toBeNull()
+})
+
+test('in the next scenario the earlier one keeps its whole confirmed summary (fb004)', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': secondScenarioAttempt,
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  const card = within(timeline).getByText('情境 1 的觀點已確認').closest('article')!
+  expect(within(card).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(within(card).getByText('如果軌道上的人是我認識的人，我可能會改變選擇。')).toBeInTheDocument()
+})
+
+test('a capped earlier scenario still shows the summary it ended with (fb004)', async () => {
+  const cappedFirst = { ...firstConfirmed, status: 'capped', confirmed_summary: null, capped_summary: confirmingAttempt.candidate_summary }
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...secondScenarioAttempt, scenarios: [cappedFirst, secondScenarioAttempt.scenarios[1]] },
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  const card = within(timeline).getByText('情境 1 尚未釐清，這是當時的整理').closest('article')!
+  expect(within(card).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(within(timeline).queryByText('情境 1 的觀點已確認')).toBeNull()
 })
 
 test('next scenario appends the new scenario verbatim and the fixed intuition prompt', async () => {

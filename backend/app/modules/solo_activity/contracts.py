@@ -192,6 +192,9 @@ class SoloScenarioView(View):
     answer: str | None  # the student's first answer; None until given
     status: ScenarioStatus
     confirmed_summary: PersonalSummaryView | None
+    # A capped scenario: the summary the student saw and acknowledged, so an earlier scenario still
+    # shows what it ended with. None otherwise. Only the student's own view carries it.
+    capped_summary: PersonalSummaryView | None = None
 
 
 class FinalSummaryPointView(View):
@@ -297,8 +300,9 @@ class SoloProgressCellView(View):
     turns: int | None  # in_dialogue only
 
 
-# registered, a guest, or a guest past its 168 hours (shown as 過期訪客 N, N = guest_number).
-StudentKind = Literal["registered", "guest", "expired_guest"]
+# registered, a guest, a guest past its 168 hours (shown as 過期訪客 N, N = guest_number), or an
+# account its owner deleted (shown as 已刪除的帳號, no number; its answers still count).
+StudentKind = Literal["registered", "guest", "expired_guest", "deleted"]
 
 
 class SoloStudentProgressView(View):
@@ -416,6 +420,7 @@ class SoloRosterSummaryView(View):
     registered: int
     guests: int
     expired_guests: int
+    deleted: int  # accounts their owners deleted; still in total
 
 
 class SoloCourseRosterView(View):

@@ -199,6 +199,7 @@ const teach: Shape<typeof zhHant> = {
     matched: '{{count}} matching',
     range: 'Showing {{from}}–{{to}}',
     separator: ' · ',
+    deleted: '{{count}} deleted',
     paging: 'Student list pages',
     previous: 'Previous',
     next: 'Next',
@@ -215,6 +216,7 @@ const teach: Shape<typeof zhHant> = {
   guest: {
     tag: 'Guest',
     expired: 'Expired guest {{number}}',
+    deleted: 'Deleted account',
   },
   transcript: {
     blank: '(Not explained yet)',
@@ -271,6 +273,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: 'The student turned the final summary down twice; not confirmed',
       reviewNone: 'The student did not produce a final summary',
       jump: 'Scroll to the start of scenario {{number}}',
+      viewing: 'Now viewing',
     },
     review: {
       title: 'Review and reflection', finalTitle: 'Final summary', confirmed: 'Confirmed', pending: 'Waiting for the student',
@@ -399,7 +402,6 @@ const teach: Shape<typeof zhHant> = {
     sharedBody: 'A successful setup replaces the current connection.\nNo second or backup connection is created.',
     ownCardTitle: 'Your own key',
     replace: 'Change key or model',
-    advancedOpen: 'Advanced settings  ›',
     service: 'Service',
     model: 'Model',
     key: 'API key',
@@ -436,8 +438,6 @@ const teach: Shape<typeof zhHant> = {
     matchCount: '{{count}} found',
     matchCount_one: '{{count}} found',
     matchCount_other: '{{count}} found',
-    advanced: 'Advanced settings',
-    name: 'Connection name',
     baseUrl: 'Service URL',
     test: 'Test',
     tested: 'Connected',
@@ -447,7 +447,6 @@ const teach: Shape<typeof zhHant> = {
     apply: 'Apply',
     confirm: 'Confirm',
     confirmReplaceTitle: 'Change the key or model?',
-    confirmAdvancedTitle: 'Change the advanced settings?',
     confirmStrong: 'The new setting applies only after it passes the test.',
     confirmBody: 'If the change fails, the current model setting stays and you can keep using the current connection.',
     confirmSystemTitle: 'Switch back to the system-provided AI?',

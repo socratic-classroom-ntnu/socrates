@@ -240,11 +240,36 @@ def _locale_texts(value: object, key: str | None = None) -> Iterator[str]:
             yield from _locale_texts(item, key)
 
 
+SCRIPT_DIR = RULES_DIR / "script"
+# Quoted words are the student's own and keep their script: 「」『』“” and straight quotes.
+_QUOTED = re.compile(r'「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"')
+
+
+@lru_cache(maxsize=4)
+def _only_in(variant: str) -> frozenset[str]:
+    """Han characters used only in one script (script/zh-Hans-only.txt, zh-Hant-only.txt)."""
+    text = (ROOT / SCRIPT_DIR / f"zh-{variant}-only.txt").read_text(encoding="utf-8")
+    return frozenset("".join(line for line in text.splitlines() if not line.startswith("#")))
+
+
+def han_variant(locale: str) -> str | None:
+    """Hant for zh-Hant／zh-TW／HK／MO, Hans for zh-Hans／zh-CN／SG; None for plain zh."""
+    parts = locale.replace("_", "-").lower().split("-")
+    if parts[0] != "zh" or len(parts) < 2:
+        return None
+    if parts[1] in ("hant", "tw", "hk", "mo"):
+        return "Hant"
+    if parts[1] in ("hans", "cn", "sg"):
+        return "Hans"
+    return None
+
+
 def in_locale(text: str, locale: str) -> bool:
     """A script-level check: the letters are mostly in the locale's script.
 
-    It tells Chinese from English or Korean, not Traditional from Simplified; unknown locales
-    and texts without letters pass.
+    For Chinese with a script (zh-Hant, zh-TW, zh-Hans, ...) the text also may not use a
+    character only the other script has, outside quotes: a zh-Hant reply with 这 or 说 fails,
+    and so does a zh-Hans reply with 這 or 說. Unknown locales and texts without letters pass.
     """
     han = sum("\u4e00" <= c <= "\u9fff" or "\u3400" <= c <= "\u4dbf" for c in text)
     kana = sum("\u3040" <= c <= "\u30ff" for c in text)
@@ -252,7 +277,13 @@ def in_locale(text: str, locale: str) -> bool:
     latin = sum(c.isascii() and c.isalpha() for c in text)
     language = locale.split("-")[0].lower()
     if language == "zh":
-        return han >= latin + kana + hangul
+        if han < latin + kana + hangul:
+            return False
+        variant = han_variant(locale)
+        if variant is None:
+            return True
+        other = _only_in("Hans" if variant == "Hant" else "Hant")
+        return not any(c in other for c in _QUOTED.sub("", text))
     if language == "ja":
         return kana > 0 or han + kana + hangul + latin == 0
     if language == "ko":
@@ -358,7 +389,10 @@ def _note(messages: list[JSON], note: str) -> list[JSON]:
 
 
 RETRY_FIX = {
-    "WRONG_LANGUAGE": "給人看的文字一律改用 output_locale 的語言寫，引用學生的話照原文。",
+    "WRONG_LANGUAGE": (
+        "給人看的文字一律改用 output_locale 的語言與字體寫（zh-Hant 用繁體字、zh-Hans 用簡體字），"
+        "引用學生的話照原文。"
+    ),
     "NO_VALID_CITATION": "引用只能用 student_messages 裡的 ref，quote 從那則 text 逐字複製一段。",
 }
 

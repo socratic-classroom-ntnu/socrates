@@ -70,13 +70,22 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
   // X2, or a reply that never came (stale wait): retry in the conversation instead of thinking.
   const offerRetry = can(view, 'retry') && !retrying
   let studentIndex = 0
-  // Earlier scenarios stay in the same conversation, collapsed to their confirmed viewpoint.
+  // Earlier scenarios stay in the same conversation, collapsed to the summary they ended with:
+  // the confirmed viewpoint, or for a capped one the summary the student acknowledged (fb004).
   const earlier = view.scenarios.filter(item => item.index < view.scenario_index)
   function confirmedCard(item: SoloScenario) {
-    if (!item.confirmed_summary) return null
-    return <article key={`confirmed-${item.id}`} className="solo-confirmed">
-      <strong><span aria-hidden="true">✓ </span>{t('review.confirmedCard', { number: item.index + 1 })}</strong>
-      <p>{item.confirmed_summary.reason_summary}</p>
+    const summary = item.confirmed_summary ?? item.capped_summary
+    if (!summary) return null
+    const confirmed = Boolean(item.confirmed_summary)
+    return <article key={`confirmed-${item.id}`} className={`solo-confirmed${confirmed ? '' : ' solo-confirmed--capped'}`}>
+      <strong>{confirmed && <span aria-hidden="true">✓ </span>}{t(confirmed ? 'review.confirmedCard' : 'review.cappedCard', { number: item.index + 1 })}</strong>
+      <dl>
+        <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary}</dd></div>
+        {summary.relevant_conditions.length > 0 && <div>
+          <dt>{t('viewpoint.conditions')}</dt>
+          <dd><ul>{summary.relevant_conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></dd>
+        </div>}
+      </dl>
     </article>
   }
 

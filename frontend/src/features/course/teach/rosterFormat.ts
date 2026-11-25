@@ -38,10 +38,11 @@ export function formatJoined(seconds: number, now: Date, locale: Locale): string
   return shortDate(new Date(seconds * 1000), now, locale)
 }
 
-type Named = { display_name: string; kind: 'registered' | 'guest' | 'expired_guest' }
+type Named = { display_name: string; kind: 'registered' | 'guest' | 'expired_guest' | 'deleted' }
 
 /** P15: a registered student's first visible character (a whole emoji sequence), a guest's 訪. */
 export function avatarInitial(student: Named, t: Translate): string {
+  if (student.kind === 'deleted') return '?'
   if (student.kind !== 'registered') return t('students.avatarGuest')
   const name = student.display_name.trim()
   if (!name) return '?'

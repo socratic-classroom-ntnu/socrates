@@ -32,3 +32,15 @@ export function useShellActive(active: ShellActive): void {
     return () => setActive(null)
   }, [setActive, active])
 }
+
+// 手機的流程內頁（個人設定的變更密碼、刪除帳號、更換頭像，Figma M02–M07、M10–M16）沒有底部導覽：
+// 內頁自己的按鈕列固定在最下面。頁面宣告要藏，離開就恢復。
+export const ShellNavHiddenContext = createContext<(hidden: boolean) => void>(() => {})
+
+export function useHideShellNav(): void {
+  const setHidden = useContext(ShellNavHiddenContext)
+  useEffect(() => {
+    setHidden(true)
+    return () => setHidden(false)
+  }, [setHidden])
+}

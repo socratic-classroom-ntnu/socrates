@@ -24,6 +24,10 @@ from app.modules.identity_access.dependencies import (  # noqa: E402
 from app.modules.identity_access.email_delivery import (  # noqa: E402
     apply_resend_webhook as apply_resend_webhook,
 )
+from app.modules.identity_access.account_deletion import (  # noqa: E402
+    register_account_hook as register_account_hook,
+    registered_account_hooks as registered_account_hooks,
+)
 from app.modules.identity_access.guests import (  # noqa: E402
     expire_guests as expire_guests,
     merge_guest_records as merge_guest_records,

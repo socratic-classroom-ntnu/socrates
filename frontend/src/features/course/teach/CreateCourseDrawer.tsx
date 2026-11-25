@@ -9,6 +9,7 @@ import { useT } from '../../../i18n/useT'
 import { Button, Field as FormField, FieldError, FieldHint, FormError } from '../../../ui'
 import { type FieldProblem, fieldProblemsFrom422 } from './fieldErrors'
 import '../../../styles/teach.css'
+import { accountName } from '../../../shared/accountName'
 
 type Field = 'name' | 'teacher_name' | 'intro' | 'goals'
 const FIELDS: readonly Field[] = ['name', 'teacher_name', 'intro', 'goals']
@@ -20,7 +21,7 @@ export function CreateCourseDrawer({ onClose }: { onClose(): void }) {
   const { t } = useT('teach')
   const { account } = useAuth()
   const navigate = useNavigate()
-  const [values, setValues] = useState<Record<Field, string>>({ name: '', teacher_name: account?.username ?? '', intro: '', goals: '' })
+  const [values, setValues] = useState<Record<Field, string>>({name: '',teacher_name: accountName(account),intro: '',goals: '',})
   const [problems, setProblems] = useState<Partial<Record<Field, FieldProblem>>>({})
   const [failure, setFailure] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)

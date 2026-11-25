@@ -31,7 +31,7 @@ export function useServiceName() {
     adapter === COMPATIBLE ? t('aiSettings.compatible') : PRODUCTS[adapter ?? ''] ?? adapter ?? ''
 }
 
-export type FieldName = 'adapter' | 'model' | 'apiKey' | 'baseUrl' | 'name'
+export type FieldName = 'adapter' | 'model' | 'apiKey' | 'baseUrl'
 
 /** 哪個錯誤標在哪一欄；其餘（額度、逾時、連不上、被別的分頁改過）放頁面頂端。 */
 export const FIELD_OF: Record<string, FieldName> = {
@@ -45,8 +45,6 @@ export const FIELD_OF: Record<string, FieldName> = {
   AI_CONNECTION_BASE_URL_REQUIRED: 'baseUrl',
   AI_CONNECTION_BASE_URL_INVALID: 'baseUrl',
   AI_CONNECTION_BASE_URL_NOT_ALLOWED: 'baseUrl',
-  AI_CONNECTION_NAME_INVALID: 'name',
-  AI_CONNECTION_NAME_TAKEN: 'name',
 }
 
 /** The backend's error code, or '' for anything else (the message then comes from ApiError). */

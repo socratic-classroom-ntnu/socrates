@@ -32,10 +32,13 @@
 }
 .app-shell__items { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .app-shell__items a {
+  position: relative;
   display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box; padding: 8px 12px;
   border-radius: 8px; color: var(--shell-ink-soft); font-size: 15px; line-height: 1.35; text-decoration: none;
 }
 .app-shell__items a svg { flex-shrink: 0; }
+.app-shell__unread { width: 8px; height: 8px; margin-left: auto; flex: 0 0 8px; border-radius: 50%; background: var(--ui-color-primary); }
+.app-shell--collapsed .app-shell__unread { position: absolute; top: 8px; right: 8px; }
 /* 平台管理員的「後台」：一般項目下方，分隔線之後（Figma AD1、AD2） */
 .app-shell__separated { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ui-color-line); }
 .app-shell__items a:hover { background: var(--shell-bg); }
@@ -45,6 +48,8 @@
   flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--ui-color-info); color: var(--ui-color-panel);
   display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
 }
+/* 個人設定上傳的頭像：圖片填滿圓形；讀不到時 Avatar 退回名字的第一個字 */
+.app-shell__avatar-image { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .app-shell__avatar--lg { width: 40px; height: 40px; font-size: 17px; }
 .account-menu { position: relative; }
 .account-menu .menu { display: flex; }

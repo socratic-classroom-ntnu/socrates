@@ -10,6 +10,8 @@ export type BottomNavItem = {
   icon: ReactNode
   to?: string
   current?: boolean
+  /** Accessible description of the dot on the icon. */
+  dotLabel?: string
   onSelect?(): void
   /** 按鈕打開的面板開著時為 true（aria-expanded），外觀同選取中。 */
   expanded?: boolean
@@ -24,8 +26,9 @@ export function BottomNav({ label, items, className }: { label: string; items: B
     {items.map(item => {
       const body = <>
         {(item.current || item.expanded) && <span className={styles.marker} aria-hidden="true" />}
-        <span className={styles.icon} aria-hidden="true">{item.icon}</span>
+        <span className={styles.icon} aria-hidden="true">{item.icon}{item.dotLabel && <span className={styles.dot} />}</span>
         <span>{item.label}</span>
+        {item.dotLabel && <span className="sr-only">{item.dotLabel}</span>}
       </>
       const active = classNames(styles.item, (item.current || item.expanded) && styles.active)
       return item.to !== undefined

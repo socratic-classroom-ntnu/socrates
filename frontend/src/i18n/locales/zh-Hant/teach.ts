@@ -186,6 +186,7 @@ export default {
     matched: '符合 {{count}} 位',
     range: '顯示第 {{from}}–{{to}} 位',
     separator: '・',
+    deleted: '已刪除 {{count}} 位',
     paging: '名單分頁',
     previous: '上一頁',
     next: '下一頁',
@@ -202,6 +203,7 @@ export default {
   guest: {
     tag: '訪客',
     expired: '過期訪客 {{number}}',
+    deleted: '已刪除的帳號',
   },
   transcript: {
     blank: '（還沒說明）',
@@ -258,6 +260,7 @@ export default {
       reviewUnconfirmed: '最終整理學生否決 2 次，結果未確認',
       reviewNone: '學生沒有產生最終整理',
       jump: '捲到情境 {{number}} 的開頭',
+      viewing: '正在檢視',
     },
     review: {
       title: '觀點回顧與反思', finalTitle: '最終整理', confirmed: '已確認', pending: '待學生確認',
@@ -366,7 +369,6 @@ export default {
     sharedBody: '成功後會取代原本的連線。\n不會建立第二組或備用連線。',
     ownCardTitle: '自己的金鑰',
     replace: '更換金鑰或模型',
-    advancedOpen: '進階設定  ›',
     service: '服務',
     model: '模型',
     key: 'API 金鑰',
@@ -399,8 +401,6 @@ export default {
     noModelList: '讀不到模型清單：{{reason}} 也可以直接輸入模型代碼。',
     modelCount: '全部模型  ·  {{count}} 個',
     matchCount: '找到 {{count}} 個',
-    advanced: '進階設定',
-    name: '連線名稱',
     baseUrl: '服務網址',
     test: '測試',
     tested: '連線成功',
@@ -410,7 +410,6 @@ export default {
     apply: '套用',
     confirm: '確認',
     confirmReplaceTitle: '確認更換金鑰或模型？',
-    confirmAdvancedTitle: '確認更改進階設定？',
     confirmStrong: '新設定驗證成功後才會套用。',
     confirmBody: '若更換失敗，系統會維持原有的模型設定，您仍可繼續使用目前的連線。',
     confirmSystemTitle: '改回系統提供？',

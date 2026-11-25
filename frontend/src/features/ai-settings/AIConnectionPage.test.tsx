@@ -305,29 +305,17 @@ test('a blank key keeps the saved one for the same service', async () => {
   await waitFor(() => expect(models).toHaveBeenCalledWith({ adapter: 'openrouter' }))
 })
 
-test('only renaming asks with the advanced-settings dialog (B02)', async () => {
+test('there are no advanced settings: no name field, no 進階設定 link or button', async () => {
   await openPage(ownInUse)
-  fireEvent.click(screen.getByRole('button', { name: '進階設定 ›' }))
-  fireEvent.change(screen.getByLabelText('連線名稱'), { target: { value: '學校的金鑰' } })
-  fireEvent.click(screen.getByRole('button', { name: '套用' }))
-  const dialog = screen.getByRole('dialog', { name: '確認更改進階設定？' })
-  apply.mockResolvedValue(ownInUse)
-  await act(async () => { fireEvent.click(within(dialog).getByRole('button', { name: '確認' })) })
-  expect(apply).toHaveBeenCalledWith({ adapter: 'openrouter', model: 'google/gemini-2.5-flash', name: '學校的金鑰' })
+  expect(screen.queryByRole('button', { name: /進階設定/ })).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: '更換金鑰或模型' }))
+  chooseService('OpenRouter')
+  expect(screen.queryByRole('button', { name: /進階設定/ })).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('連線名稱')).not.toBeInTheDocument()
+  expect(screen.queryByLabelText('服務網址')).not.toBeInTheDocument()
 })
 
-test('a name already taken shows under the name field', async () => {
-  await openPage(ownInUse)
-  fireEvent.click(screen.getByRole('button', { name: '進階設定 ›' }))
-  fireEvent.change(screen.getByLabelText('連線名稱'), { target: { value: '別的' } })
-  apply.mockRejectedValue(new ApiError(409, 'AI_CONNECTION_NAME_TAKEN'))
-  fireEvent.click(screen.getByRole('button', { name: '套用' }))
-  await act(async () => { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: '確認' })) })
-  expect(screen.getByLabelText('連線名稱')).toHaveAttribute('aria-invalid', 'true')
-  expect(screen.getByText('已經有同名的連線。')).toBeInTheDocument()
-})
-
-test('a compatible service opens the advanced fields for its URL', async () => {
+test('a compatible service shows its URL field right under the service', async () => {
   await openPage({ mode: 'system', system: SYSTEM_OFF, own: null })
   chooseService('自訂相容服務')
   expect(screen.getByLabelText('服務網址')).toBeInTheDocument()

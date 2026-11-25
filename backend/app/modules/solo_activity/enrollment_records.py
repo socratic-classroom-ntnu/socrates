@@ -10,7 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.modules.course_management.repositories import Activity
-from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
+from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage, SoloSummarySource
 
 
 class SoloEnrollmentRecords:
@@ -26,6 +26,7 @@ class SoloEnrollmentRecords:
         )
         if not ids:
             return
+        db.execute(delete(SoloSummarySource).where(SoloSummarySource.attempt_id.in_(ids)))
         db.execute(delete(SoloMessage).where(SoloMessage.attempt_id.in_(ids)))
         db.execute(delete(SoloAttempt).where(SoloAttempt.id.in_(ids)))
         db.flush()

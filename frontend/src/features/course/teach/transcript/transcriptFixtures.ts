@@ -9,14 +9,14 @@ export const summary = (over: Partial<Summary> = {}): Summary => ({
 })
 
 export function message(id: string, role: 'student' | 'tutor', text: string, at: number, over: Partial<Message> = {}): Message {
-  return { id, scenario_index: 0, role, text, created_at: at, move: role === 'tutor' ? 'probe' : null, revise_hint: null, final_feedback: false, ...over }
+  return { id, scenario_index: 0, role, text, created_at: at, move: role === 'tutor' ? 'probe' : null, revise_hint: null, final_feedback: false, locale: role === 'student' ? 'zh-Hant' : null, ...over }
 }
 
 export function scenario(index: number, over: Partial<Scenario> = {}): Scenario {
   const texts = ['一輛失控的電車即將撞上五名工人。你可以拉下拉桿，但那條軌道上有一名工人。你會拉嗎？', '你站在天橋上，旁邊有一位陌生人。你可以推他下去擋住電車。你會推嗎？', '手術室裡有五位病人各需要一個器官。你可以摘取一位健康病人的器官。你會嗎？']
   return {
     index, id: `s${index + 1}`, text: texts[index] ?? `第 ${index + 1} 個情境。`, change: null, answer: null, status: 'in_progress',
-    confirmed_summary: null, rejected_at: [], first_message_id: null, ...over,
+    confirmed_summary: null, rejected_at: [], first_message_id: null, stances: [], ...over,
   }
 }
 

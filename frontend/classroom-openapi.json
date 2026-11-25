@@ -297,6 +297,43 @@
         "title": "ActivityDraft",
         "type": "object"
       },
+      "ActivityExpansion": {
+        "additionalProperties": false,
+        "description": "activity_expansion output: the teacher's narrative → a stance space and probe directions.\n\nThe teacher reviews and edits this before it is locked into the ActivityRevision.",
+        "properties": {
+          "probe_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Probe Hints",
+            "type": "array"
+          },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/Stance"
+            },
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Stances",
+            "type": "array"
+          },
+          "tutor_goal": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stances",
+          "tutor_goal",
+          "probe_hints"
+        ],
+        "title": "ActivityExpansion",
+        "type": "object"
+      },
       "ActivityJoin": {
         "additionalProperties": false,
         "properties": {
@@ -609,6 +646,16 @@
             ],
             "title": "Ends At"
           },
+          "expansion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActivityExpansion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "has_unpublished_changes": {
             "title": "Has Unpublished Changes",
             "type": "boolean"
@@ -662,6 +709,7 @@
           "has_unpublished_changes",
           "revision",
           "draft",
+          "expansion",
           "starts_at",
           "ends_at",
           "available_actions"
@@ -1057,6 +1105,34 @@
             "title": "Id",
             "type": "string"
           },
+          "mark_message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mark Message Ids",
+            "type": "array"
+          },
+          "marks": {
+            "items": {
+              "enum": [
+                "danger_tendency",
+                "malicious_off_topic"
+              ],
+              "type": "string"
+            },
+            "title": "Marks",
+            "type": "array"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloMetricsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "nickname": {
             "title": "Nickname",
             "type": "string"
@@ -1074,7 +1150,10 @@
           "nickname",
           "confirmed",
           "confirmation_digest",
-          "timeline"
+          "timeline",
+          "metrics",
+          "marks",
+          "mark_message_ids"
         ],
         "title": "AnalysisPersonView",
         "type": "object"
@@ -2564,6 +2643,203 @@
         "title": "DiscoveredModel",
         "type": "object"
       },
+      "EvalCaseView": {
+        "description": "One case of the eval set, with what the recorded runs of it scored (0–1; null = unmeasured).",
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "check": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check"
+          },
+          "flags": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flags"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "leaked": {
+            "title": "Leaked",
+            "type": "integer"
+          },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "move": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Move"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "messages",
+          "locale",
+          "runs",
+          "schema",
+          "move",
+          "flags",
+          "check",
+          "language",
+          "leaked",
+          "notes"
+        ],
+        "title": "EvalCaseView",
+        "type": "object"
+      },
+      "EvalMeasureView": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "enum": [
+              "schema",
+              "flags",
+              "move",
+              "check",
+              "language",
+              "citations"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate"
+          }
+        },
+        "required": [
+          "key",
+          "rate",
+          "count"
+        ],
+        "title": "EvalMeasureView",
+        "type": "object"
+      },
+      "EvalReportView": {
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/EvalCaseView"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "leaked": {
+            "title": "Leaked",
+            "type": "integer"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "scenario": {
+            "title": "Scenario",
+            "type": "string"
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/EvalMeasureView"
+            },
+            "title": "Totals",
+            "type": "array"
+          },
+          "tutor_goal": {
+            "title": "Tutor Goal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "tutor_goal",
+          "days",
+          "runs",
+          "leaked",
+          "totals",
+          "cases"
+        ],
+        "title": "EvalReportView",
+        "type": "object"
+      },
       "FeaturesView": {
         "description": "後台的功能開關目前的狀態（spec P9）。",
         "properties": {
@@ -3785,6 +4061,158 @@
           "script_id"
         ],
         "title": "ImportQuestion",
+        "type": "object"
+      },
+      "InteractionCountView": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "request",
+              "model"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_at": {
+            "title": "Last At",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "count",
+          "last_at"
+        ],
+        "title": "InteractionCountView",
+        "type": "object"
+      },
+      "InteractionExportView": {
+        "description": "Every record in the range, oldest first; the page saves them as JSON Lines.",
+        "properties": {
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionRecordView"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "records"
+        ],
+        "title": "InteractionExportView",
+        "type": "object"
+      },
+      "InteractionLogView": {
+        "description": "後台「分析紀錄」的摘要：每一種操作／模型程式各幾筆；完整紀錄用 export 下載。",
+        "properties": {
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionCountView"
+            },
+            "title": "Counts",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "subjects": {
+            "title": "Subjects",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "enabled",
+          "total",
+          "subjects",
+          "counts"
+        ],
+        "title": "InteractionLogView",
+        "type": "object"
+      },
+      "InteractionRecordView": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "data": {
+            "title": "Data",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "request",
+              "model"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "name",
+          "subject",
+          "outcome",
+          "latency_ms",
+          "data"
+        ],
+        "title": "InteractionRecordView",
         "type": "object"
       },
       "JoinPreview": {
@@ -7118,6 +7546,17 @@
             "title": "Id",
             "type": "string"
           },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          },
           "move": {
             "anyOf": [
               {
@@ -7179,9 +7618,83 @@
           "created_at",
           "move",
           "revise_hint",
-          "final_feedback"
+          "final_feedback",
+          "locale"
         ],
         "title": "SoloMessageView",
+        "type": "object"
+      },
+      "SoloMetricView": {
+        "additionalProperties": false,
+        "properties": {
+          "message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Message Ids",
+            "type": "array"
+          },
+          "trend": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "trend",
+          "message_ids"
+        ],
+        "title": "SoloMetricView",
+        "type": "object"
+      },
+      "SoloMetricsView": {
+        "additionalProperties": false,
+        "properties": {
+          "depth": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "distraction": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "engagement": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "initiative": {
+            "$ref": "#/components/schemas/SoloMetricView"
+          },
+          "judged_messages": {
+            "title": "Judged Messages",
+            "type": "integer"
+          },
+          "position_shifts": {
+            "title": "Position Shifts",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "engagement",
+          "distraction",
+          "depth",
+          "initiative",
+          "position_shifts",
+          "judged_messages"
+        ],
+        "title": "SoloMetricsView",
         "type": "object"
       },
       "SoloProgressCellView": {
@@ -7535,6 +8048,34 @@
             ],
             "title": "Last Activity At"
           },
+          "mark_message_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Mark Message Ids",
+            "type": "array"
+          },
+          "marks": {
+            "items": {
+              "enum": [
+                "danger_tendency",
+                "malicious_off_topic"
+              ],
+              "type": "string"
+            },
+            "title": "Marks",
+            "type": "array"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SoloMetricsView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "overall": {
             "enum": [
               "not_started",
@@ -7564,9 +8105,42 @@
           "review_status",
           "final_status",
           "last_activity_at",
-          "attention"
+          "attention",
+          "metrics",
+          "marks",
+          "mark_message_ids"
         ],
         "title": "SoloStudentProgressView",
+        "type": "object"
+      },
+      "Stance": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description"
+        ],
+        "title": "Stance",
         "type": "object"
       },
       "StanceOptionView": {
@@ -8053,6 +8627,13 @@
             "title": "Rejected At",
             "type": "array"
           },
+          "stances": {
+            "items": {
+              "$ref": "#/components/schemas/TeacherStanceView"
+            },
+            "title": "Stances",
+            "type": "array"
+          },
           "status": {
             "enum": [
               "in_progress",
@@ -8076,9 +8657,49 @@
           "status",
           "confirmed_summary",
           "rejected_at",
-          "first_message_id"
+          "first_message_id",
+          "stances"
         ],
         "title": "TeacherScenarioView",
+        "type": "object"
+      },
+      "TeacherStanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "message_id": {
+            "title": "Message Id",
+            "type": "string"
+          },
+          "stance_id": {
+            "title": "Stance Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance_id",
+          "label",
+          "confidence",
+          "message_id",
+          "at"
+        ],
+        "title": "TeacherStanceView",
         "type": "object"
       },
       "TeacherStudentView": {
@@ -8619,6 +9240,145 @@
         ],
         "title": "Viewport",
         "type": "object"
+      },
+      "VoiceReportView": {
+        "properties": {
+          "costed": {
+            "title": "Costed",
+            "type": "boolean"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceSessionView"
+            },
+            "title": "Sessions",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/VoiceTotalsView"
+          }
+        },
+        "required": [
+          "days",
+          "costed",
+          "sessions",
+          "totals"
+        ],
+        "title": "VoiceReportView",
+        "type": "object"
+      },
+      "VoiceSessionView": {
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "audio_input_tokens": {
+            "title": "Audio Input Tokens",
+            "type": "integer"
+          },
+          "audio_output_tokens": {
+            "title": "Audio Output Tokens",
+            "type": "integer"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "endpoint": {
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "required": [
+          "at",
+          "username",
+          "endpoint",
+          "model",
+          "input_tokens",
+          "output_tokens",
+          "audio_input_tokens",
+          "audio_output_tokens",
+          "cost"
+        ],
+        "title": "VoiceSessionView",
+        "type": "object"
+      },
+      "VoiceTotalsView": {
+        "properties": {
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "input_tokens": {
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "sessions": {
+            "title": "Sessions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sessions",
+          "input_tokens",
+          "output_tokens",
+          "cost"
+        ],
+        "title": "VoiceTotalsView",
+        "type": "object"
       }
     }
   },
@@ -8878,6 +9638,100 @@
           }
         },
         "summary": "Copy Activity",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/api/v2/activities/{activity_id}/expansion": {
+      "post": {
+        "description": "Write a stance space from the draft's narrative with the teacher's AI connection.",
+        "operationId": "write_expansion_api_v2_activities__activity_id__expansion_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Expansion",
+        "tags": [
+          "activities"
+        ]
+      },
+      "put": {
+        "description": "The teacher's own edit of the stance space; it goes into the revision on publish.",
+        "operationId": "update_expansion_api_v2_activities__activity_id__expansion_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activity_id",
+            "required": true,
+            "schema": {
+              "title": "Activity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityExpansion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityTeacherView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Expansion",
         "tags": [
           "activities"
         ]
@@ -9222,6 +10076,187 @@
           }
         },
         "summary": "Remove Admin",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/interaction-log": {
+      "get": {
+        "operationId": "get_interaction_log_api_v2_admin_interaction_log_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionLogView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Interaction Log",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/interaction-log/export": {
+      "get": {
+        "description": "Every record in the range, for improving prompts offline; the page saves it as JSON Lines.",
+        "operationId": "export_interaction_log_api_v2_admin_interaction_log_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InteractionExportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Interaction Log",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/reports/eval": {
+      "get": {
+        "operationId": "get_eval_report_api_v2_admin_reports_eval_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvalReportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Eval Report",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v2/admin/reports/voice": {
+      "get": {
+        "operationId": "get_voice_report_api_v2_admin_reports_voice_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 7,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceReportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Voice Report",
         "tags": [
           "admin"
         ]

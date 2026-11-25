@@ -82,6 +82,7 @@ const activityView = (card: S['ActivityTeacherCard']) => ({
   id: card.id, course_id: 'c-1', status: card.status, locked: card.locked, revision: card.status === 'draft' ? null : 1,
   has_unpublished_changes: false, starts_at: card.starts_at, ends_at: card.ends_at, available_actions: card.available_actions,
   draft: { title: card.title, scenario: '一輛失控的電車正駛向五名工人。', starts_at: card.starts_at, ends_at: card.ends_at ?? now + 3 * DAY },
+  expansion: null,
 }) satisfies S['ActivityTeacherView']
 
 const joinPreview = {
@@ -115,10 +116,10 @@ const attempt = {
     status: 'in_progress', confirmed_summary: null,
   }],
   messages: [
-    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', scenario_index: 0, created_at: now - 300, move: null, revise_hint: null, final_feedback: false },
-    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', scenario_index: 0, created_at: now - 280, move: 'probe', revise_hint: null, final_feedback: false },
-    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', scenario_index: 0, created_at: now - 120, move: null, revise_hint: null, final_feedback: false },
-    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null, final_feedback: false },
+    { id: 'm-1', role: 'student', text: '五個人比一個人多，救多數人比較好。', scenario_index: 0, created_at: now - 300, move: null, revise_hint: null, final_feedback: false, locale: 'zh-Hant' },
+    { id: 'm-2', role: 'tutor', text: '你提到「多數」。如果那一名工人是你認識的人，你的判斷會改變嗎？', scenario_index: 0, created_at: now - 280, move: 'probe', revise_hint: null, final_feedback: false, locale: null },
+    { id: 'm-3', role: 'student', text: '會猶豫，但我覺得道理上還是應該拉。', scenario_index: 0, created_at: now - 120, move: null, revise_hint: null, final_feedback: false, locale: 'zh-Hant' },
+    { id: 'm-4', role: 'tutor', text: '「道理上」和「實際上」之間的落差，你覺得是什麼造成的？', scenario_index: 0, created_at: now - 100, move: 'clarify', revise_hint: null, final_feedback: false, locale: null },
   ],
   candidate_summary: null, rejected_summary: null, summary_digest: null, principle_hint: null, notice: null,
   final_summary: null, final_digest: null, final_status: null, final_revised: false,
@@ -130,13 +131,13 @@ const progress = {
   ends_at: now + 3 * DAY, generated_at: now,
   summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
-    { enrollment_id: 'e-1', display_name: '小華', kind: 'registered', guest_number: null, final_status: null, overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-1', display_name: '小華', kind: 'registered', guest_number: null, final_status: null, overall: 'done', review_status: 'in_progress', attention: false, last_activity_at: now - 600,
       cells: [{ status: 'confirmed', turns: 4 }, { status: 'confirmed', turns: 3 }] },
-    { enrollment_id: 'e-2', display_name: '阿明', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-2', display_name: '阿明', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: true, last_activity_at: now - 1800,
       cells: [{ status: 'confirming', turns: 6 }] },
-    { enrollment_id: 'e-3', display_name: '佳穎', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-3', display_name: '佳穎', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', review_status: 'not_started', attention: false, last_activity_at: now - 60,
       cells: [{ status: 'confirmed', turns: 2 }, { status: 'in_dialogue', turns: 1 }] },
-    { enrollment_id: 'e-4', display_name: '志豪', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-4', display_name: '志豪', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', review_status: 'not_started', attention: false, last_activity_at: null,
       cells: [] },
   ],
 } satisfies S['SoloActivityProgressView']

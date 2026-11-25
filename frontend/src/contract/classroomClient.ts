@@ -360,6 +360,34 @@ export function listSystemAIModels(body: SystemAIModelsInput) {
   return typedApi('/admin/system-ai/models', 'POST', { body })
 }
 
+export type EvalReportView = components['schemas']['EvalReportView']
+export type EvalCaseView = components['schemas']['EvalCaseView']
+export type VoiceReportView = components['schemas']['VoiceReportView']
+
+/** 後台「報表」：QA 照題單在網站上作答後的評測，從紀錄算，不呼叫模型；days＝往回看幾天。 */
+export function getEvalReport(days: number) {
+  return typedApi('/admin/reports/eval', 'GET', { query: { days } })
+}
+
+/** 後台「報表」：每一場語音對話的 token 與估計費用（單價是部署設定）。 */
+export function getVoiceReport(days: number) {
+  return typedApi('/admin/reports/voice', 'GET', { query: { days } })
+}
+
+export type InteractionLogView = components['schemas']['InteractionLogView']
+
+/** 後台「分析紀錄」的摘要：每一種操作與模型程式各幾筆。 */
+export function getInteractionLog(days: number) {
+  return typedApi('/admin/interaction-log', 'GET', { query: { days } })
+}
+
+/** 這段時間的完整紀錄，整理成 JSON Lines（一筆一行）的檔案內容，給頁面存檔用。 */
+export async function interactionLogFile(days: number): Promise<Blob> {
+  const { records } = await typedApi('/admin/interaction-log/export', 'GET', { query: { days } })
+  const lines = records.map(record => JSON.stringify(record) + '\n')
+  return new Blob(lines, { type: 'application/x-ndjson' })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

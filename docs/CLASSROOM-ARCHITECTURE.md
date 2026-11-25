@@ -143,6 +143,9 @@ Full account與互動record存backend；學生summary只投影統計與自己的
 Stage為frontend Nginx與backend兩個應用容器，外部Postgres、郵件（預設 Resend API，SMTP 選用）、host Tunnel。
 backend 由 `WEB_CONCURRENCY`（預設 2）個 uvicorn process 組成，每個 process 跑 `CLASSROOM_LLM_WORKERS`
 （預設 4）個 LLM loop，以及 clock、mail、LISTEN、sweep 各一個 loop。
+後台的兩個選用設定：`INTERACTION_LOG_KEY`（「分析紀錄」用來把帳號與各種 id 換成雜湊的金鑰；沒設就完全不記，後台開關預設也是關）、
+`INTERACTION_LOG_RETENTION_DAYS`（分析紀錄保留天數，預設 30，每小時清一次）；`VOICE_INPUT_COST_PER_MILLION`、
+`VOICE_OUTPUT_COST_PER_MILLION`（報表裡語音估計費用的每百萬 token 單價，沒設就不算費用）。
 2×60負載在獨立CI資料庫（`scripts/classroom_load.py`）；部署後的 `deploy/stage/smoke.sh` 檢查首頁、readiness、
 auth 路由與版本資訊，完整的教師／學生流程依 `deploy/stage/README.md` 第 4 節人工驗收。
 Latency數值為實測目標，依receipt回讀。

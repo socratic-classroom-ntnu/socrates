@@ -27,13 +27,15 @@ from tests.solo_activity.test_solo_attempts_api import OPENING, answer, ok, star
 from tests.solo_activity.test_solo_guests import join_as_guest, setup
 
 
-def test_both_guest_record_modules_are_wired():
+def test_every_guest_record_module_is_wired():
+    # platform: the 後台 interaction log keeps records under a hash of the guest's account.
     assert (
         set(guests.GUEST_HOOKS)
         >= wiring.REQUIRED_GUEST_HOOKS
         == {
             "course-management",
             "solo-activity",
+            "platform",
         }
     )
 

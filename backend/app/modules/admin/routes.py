@@ -1,11 +1,14 @@
 """後台 routes under /admin: switches and platform admins (spec 〈介面〉)."""
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
-from app.modules.admin import service, system_ai
+from app.modules.admin import reports, service, system_ai
 from app.modules.admin.contracts import (
     AdminCreate,
     AdminView,
+    EvalReportView,
+    InteractionExportView,
+    InteractionLogView,
     SystemAIInput,
     SystemAIModelsInput,
     SystemAIModelsView,
@@ -13,6 +16,7 @@ from app.modules.admin.contracts import (
     SystemAIView,
     ToggleUpdate,
     ToggleView,
+    VoiceReportView,
 )
 from app.modules.identity_access import service as identity
 from app.modules.platform.storage import transaction
@@ -101,3 +105,37 @@ async def list_system_ai_models(body: SystemAIModelsInput, request: Request) -> 
         owner_id, stored, _ = system_ai.current(db)
     config = system_ai.with_key(draft, stored)
     return SystemAIModelsView(models=await system_ai.models(config, owner_id))
+
+
+# ---- 報表：從紀錄算，不呼叫模型；days＝往回看幾天 ----
+
+
+@router.get("/reports/eval", response_model=EvalReportView, response_model_by_alias=True)
+def get_eval_report(request: Request, days: int = Query(7, ge=1, le=90)) -> EvalReportView:
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.eval_report(db, days)
+
+
+@router.get("/reports/voice", response_model=VoiceReportView)
+def get_voice_report(request: Request, days: int = Query(7, ge=1, le=90)) -> VoiceReportView:
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.voice_report(db, days)
+
+
+@router.get("/interaction-log", response_model=InteractionLogView)
+def get_interaction_log(request: Request, days: int = Query(7, ge=1, le=90)) -> InteractionLogView:
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.interaction_log(db, days)
+
+
+@router.get("/interaction-log/export", response_model=InteractionExportView)
+def export_interaction_log(
+    request: Request, days: int = Query(7, ge=1, le=90)
+) -> InteractionExportView:
+    """Every record in the range, for improving prompts offline; the page saves it as JSON Lines."""
+    with transaction() as db:
+        service.admin_account(db, request)
+        return reports.interaction_export(db, days)

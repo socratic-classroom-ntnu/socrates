@@ -20,6 +20,7 @@ from app.modules.group_dialogue.ai_students import fallback_turn
 from app.modules.llm_runtime.prompts import compile_program
 from app.modules.ai_providers.classroom_provider import ProviderWait
 from app.modules.llm_runtime.iron_rules import guarded_generate
+from app.modules.platform import interaction_log
 from app.modules.platform.env import env_int
 from app.modules.ai_providers.service import public_binding
 from app.modules.classroom_core.service import room_provider_chain
@@ -498,6 +499,19 @@ async def feedback_purge_loop():
         except Exception as exc:
             print("CLASSROOM_FEEDBACK_PURGE " + type(exc).__name__, flush=True)
         await asyncio.sleep(FEEDBACK_PURGE_SECONDS)
+
+
+# 後台「分析紀錄」: records older than INTERACTION_LOG_RETENTION_DAYS (default 30) are deleted.
+INTERACTION_LOG_PURGE_SECONDS = 3600
+
+
+async def interaction_log_purge_loop():
+    while True:
+        try:
+            await asyncio.to_thread(interaction_log.purge)
+        except Exception as exc:
+            print("CLASSROOM_INTERACTION_LOG_PURGE " + type(exc).__name__, flush=True)
+        await asyncio.sleep(INTERACTION_LOG_PURGE_SECONDS)
 
 
 def send_mail_once():

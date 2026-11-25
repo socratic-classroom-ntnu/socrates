@@ -6,6 +6,7 @@ import pytest
 
 from app.modules.platform import toggles
 from tests.course_management.conftest import client  # noqa: F401
+from tests.solo_activity.conftest import tutor  # noqa: F401 — the scripted provider (報表)
 
 
 @pytest.fixture(autouse=True)

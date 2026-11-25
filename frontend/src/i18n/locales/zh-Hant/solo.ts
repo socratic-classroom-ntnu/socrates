@@ -15,12 +15,9 @@ export default {
     saved: '對話會自動保存，離開後回來會接著上次的地方。',
   },
   dialogue: { back: '回到活動頁', backToPractice: '回到我的對話', logo: '問', subtitle: '和蘇格拉底談談你的想法', count: '情境 {{current}}', ended: '這個活動已經結束，不能再回答。你寫過的內容都還在，可以回頭看。' },
-  scenarioTitle: '情境 {{number}}', teacherSource: '情境由老師設定，蘇格拉底不會改寫它',
+  scenarioTitle: '情境 {{number}}',
   board: { expand: '展開情境', collapse: '收起情境' },
-  myAnswer: '我的回答', answerPending: '送出第一個回答後會出現在這裡。',
-  aboutTitle: '這段對話在做什麼',
-  aboutBody: '蘇格拉底不評斷對錯，只會一直問你「為什麼」，幫你把理由和例外說清楚。你準備好時，它會整理你的想法，請你確認。',
-  whyConfirmTitle: '為什麼要確認', whyConfirmBody: '確認後，這就是你在這個情境的起點觀點。之後回顧時，你可以看到自己的想法是怎麼走過來的。',
+  myAnswer: '我的回答',
   timeline: {
     label: '對話紀錄', socratesMark: '蘇', socrates: '蘇格拉底', me: '我', meFirst: '我・第一個回答',
     opening: '{{name}}，先讀一讀黑板上的情境。如果此刻做決定的人是你，你會怎麼做？用你自己的話說說看，打字或用說的都可以。沒有標準答案，我想聽的是你真正的想法。',
@@ -45,8 +42,6 @@ export default {
     progress: '我的進度', confirmed: '已確認', current: '進行中', capped: '尚未釐清',
   },
   revise: {
-    asideTitle: '整理不對很正常',
-    asideBody: '蘇格拉底的整理只是它的理解。說出哪裡不對，本身就是在把想法說清楚。改完之後，它會重新整理一次給你確認。',
     echoTitle: '你覺得這段整理不太對',
     reason: '理由：{{value}}', conditions: '條件：{{value}}', separator: ' ／ ',
     ask: '謝謝你說出來，是我沒抓準。是哪一部分不像你？立場、理由，還是條件？用你自己的話說就好。',

@@ -15,12 +15,9 @@ export default {
     saved: 'Your dialogue is saved automatically, so you can return to the same place later.',
   },
   dialogue: { back: 'Back to activity', backToPractice: 'Back to My dialogues', logo: 'S', subtitle: 'Talk through your ideas with Socrates', count: 'Scenario {{current}}', ended: 'This activity has ended, so you can no longer answer. Everything you wrote is still here to look back on.' },
-  scenarioTitle: 'Scenario {{number}}', teacherSource: 'Your teacher set this scenario. Socrates will not rewrite it.',
+  scenarioTitle: 'Scenario {{number}}',
   board: { expand: 'Show the scenario', collapse: 'Hide the scenario' },
-  myAnswer: 'My answer', answerPending: 'Your first answer will appear here after you submit it.',
-  aboutTitle: 'What this dialogue does',
-  aboutBody: 'Socrates does not judge right or wrong. It asks why so you can make your reasons and exceptions clearer. When you are ready, it will summarize your view for you to confirm.',
-  whyConfirmTitle: 'Why confirm this', whyConfirmBody: 'Once confirmed, this becomes your starting view for this scenario. In the review, you can see how your thinking developed.',
+  myAnswer: 'My answer',
   timeline: {
     label: 'Dialogue history', socratesMark: 'S', socrates: 'Socrates', me: 'Me', meFirst: 'Me · First answer',
     opening: '{{name}}, read the situation on the board first. If you had to decide right now, what would you do? Tell me in your own words, by typing or by voice. There is no standard answer; I want to hear what you really think.',
@@ -45,8 +42,6 @@ export default {
     progress: 'My progress', confirmed: 'Confirmed', current: 'In progress', capped: 'Not settled yet',
   },
   revise: {
-    asideTitle: 'It is fine if the summary is off',
-    asideBody: 'The summary is only how Socrates understood you. Saying what is off is itself part of making your thinking clear. After you explain, it will summarize again for you to confirm.',
     echoTitle: 'You felt this summary was not quite right',
     reason: 'Reason: {{value}}', conditions: 'Conditions: {{value}}', separator: ' / ',
     ask: 'Thank you for saying so; I did not quite get it. Which part does not sound like you: the position, the reason, or the conditions? Say it in your own words.',

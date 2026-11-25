@@ -15,12 +15,9 @@ export default {
     saved: 'El diálogo se guarda automáticamente para que puedas volver al mismo punto.',
   },
   dialogue: { back: 'Volver a la actividad', backToPractice: 'Volver a Mis diálogos', logo: 'S', subtitle: 'Explora tus ideas con Sócrates', count: 'Escenario {{current}}', ended: 'Esta actividad terminó, así que ya no puedes responder. Todo lo que escribiste sigue aquí para repasarlo.' },
-  scenarioTitle: 'Escenario {{number}}', teacherSource: 'Tu docente estableció este escenario. Sócrates no lo reescribirá.',
+  scenarioTitle: 'Escenario {{number}}',
   board: { expand: 'Mostrar el escenario', collapse: 'Ocultar el escenario' },
-  myAnswer: 'Mi respuesta', answerPending: 'Tu primera respuesta aparecerá aquí cuando la envíes.',
-  aboutTitle: 'Qué hace este diálogo',
-  aboutBody: 'Sócrates no juzga si algo está bien o mal. Pregunta por qué para ayudarte a aclarar tus razones y excepciones. Cuando estés listo, resumirá tu postura para que la confirmes.',
-  whyConfirmTitle: 'Por qué confirmarla', whyConfirmBody: 'Al confirmarla, se convierte en tu postura inicial para este escenario. En el repaso podrás ver cómo evolucionó tu pensamiento.',
+  myAnswer: 'Mi respuesta',
   timeline: {
     label: 'Historial del diálogo', socratesMark: 'S', socrates: 'Sócrates', me: 'Yo', meFirst: 'Yo · Primera respuesta',
     opening: '{{name}}, lee primero la situación de la pizarra. Si tuvieras que decidir ahora mismo, ¿qué harías? Cuéntamelo con tus palabras, escribiendo o usando la voz. No hay una respuesta estándar; quiero saber qué piensas de verdad.',
@@ -45,8 +42,6 @@ export default {
     progress: 'Mi progreso', confirmed: 'Confirmado', current: 'En curso', capped: 'Sin definir',
   },
   revise: {
-    asideTitle: 'Es normal que el resumen no acierte',
-    asideBody: 'El resumen es solo lo que Sócrates entendió. Decir qué no encaja ya es aclarar lo que piensas. Después volverá a resumirlo para que lo confirmes.',
     echoTitle: 'Sentiste que este resumen no era del todo correcto',
     reason: 'Razón: {{value}}', conditions: 'Condiciones: {{value}}', separator: ' / ',
     ask: 'Gracias por decírmelo; no lo entendí bien. ¿Qué parte no se parece a ti: la postura, la razón o las condiciones? Dilo con tus propias palabras.',

@@ -34,6 +34,8 @@ DIRECT_ROLES = ("other_suggestion", "connection_probe")
 KNOWN_CHECKS = frozenset({"screen_input", "no_leak", "pull_back", "language", "citations"})
 # Failing these twice is an error even for roles with a pull-back sentence: that sentence is
 # fixed Chinese text with no citations, so it cannot fix either.
+# Schema failures a reminder can fix: a required string left "" and a list with too few items.
+SHORT_RULES = frozenset({"string_too_short", "too_short"})
 TYPED_REASONS = frozenset({"WRONG_LANGUAGE", "NO_VALID_CITATION"})
 # Fields the model copies or picks from a fixed set rather than writes in output_locale.
 NOT_IN_LOCALE = frozenset(
@@ -395,18 +397,23 @@ RETRY_FIX = {
 }
 
 
-def empty_note(paths: list[str]) -> str:
-    return (
-        f"格式提醒：上一個回應的 {'、'.join(paths)} 是空的；這些欄位必須有內容，其餘照原本的要求。"
+def short_note(fields: list[tuple[str, str]]) -> str:
+    said = "；".join(
+        f"{path} 是空的，必須有內容"
+        if rule == "string_too_short"
+        else f"{path} 的項目太少，要補到格式要求的數量"
+        for path, rule in fields
     )
+    return f"格式提醒：上一個回應的 {said}；其餘照原本的要求。"
 
 
-def left_empty(failure: Any) -> list[str]:
-    """Paths of the required strings the model left "" (every string minimum is 1 character);
-    [] when anything else broke the schema, which a reminder would not fix."""
-    if not failure.fields or any(rule != "string_too_short" for _, rule in failure.fields):
+def fell_short(failure: Any) -> list[tuple[str, str]]:
+    """The (path, rule) pairs when the model only came in under a minimum: a required string left
+    "" or a list with too few items (Claude Haiku ignores both). [] when anything else broke the
+    schema, which a reminder would not fix."""
+    if not failure.fields or any(rule not in SHORT_RULES for _, rule in failure.fields):
         return []
-    return [path for path, _ in failure.fields]
+    return list(failure.fields)
 
 
 def retry_note(reason: str) -> str:
@@ -469,19 +476,20 @@ async def guarded_generate(
     if hint:
         prompt = _note(prompt, OVERRIDE_NOTE)
     reasons: list[str] = []
-    empty: list[str] = []
+    short: list[tuple[str, str]] = []
     try:
         result, audit = await generate(binding, prompt, schema, hold)
         reason = check(kind, result, hint, context)
     except ProviderSchemaMismatch as failure:
-        empty = left_empty(failure)
-        if not empty:
+        short = fell_short(failure)
+        if not short:
             raise
-        audit, reason = failure.audit, "EMPTY_FIELD"
+        strings_only = all(rule == "string_too_short" for _, rule in short)
+        audit, reason = failure.audit, "EMPTY_FIELD" if strings_only else "TOO_FEW_ITEMS"
     if reason:
         reasons.append(reason)
         first = audit
-        note = empty_note(empty) if empty else retry_note(reason)
+        note = short_note(short) if short else retry_note(reason)
         result, audit = await generate(binding, _note(prompt, note), schema, hold)
         audit = merge_usage(first, audit)
         reason = check(kind, result, hint, context)

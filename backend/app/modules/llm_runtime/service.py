@@ -13,6 +13,15 @@ from app.modules.llm_runtime.iron_rules import (  # noqa: E402
 from app.modules.llm_runtime.prompts import (  # noqa: E402
     compile_program as compile_program,
 )
+from app.modules.llm_runtime import evals as _evals  # noqa: E402
+
+# The eval set and its scorer, for the 後台 report (admin) as for tests/evals/run_evals.py.
+EVAL_DEFAULT_LOCALE = _evals.DEFAULT_LOCALE
+EVAL_MEASURES = _evals.MEASURES
+load_eval_cases = _evals.load
+eval_rate = _evals.rate
+score_eval_case = _evals.score
+eval_student_texts = _evals.student_texts
 
 
 def should_advance(

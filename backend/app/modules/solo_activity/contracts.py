@@ -229,6 +229,9 @@ class SoloMessageView(View):
     # A student's sentence on what is off in the final summary (不太對): it belongs to the review,
     # not to the scenario whose index it carries.
     final_feedback: bool
+    # Student messages only: the language the student chose when writing it ("en", "zh-Hant"…).
+    # The text is kept exactly as written; nothing is translated.
+    locale: str | None
 
 
 class SoloAttemptView(View):
@@ -301,6 +304,25 @@ class SoloProgressCellView(View):
 StudentKind = Literal["registered", "guest", "expired_guest"]
 
 
+class SoloMetricView(View):
+    value: float  # 0–100, a reference indicator for the teacher, not a score
+    # The recent window against the whole, shown only past ±10; None when level or not tracked.
+    trend: Literal["up", "down"] | None
+    message_ids: list[str]  # the student's messages behind it (the flags at 1)
+
+
+class SoloMetricsView(View):
+    engagement: SoloMetricView  # 認真度
+    distraction: SoloMetricView  # 分心度
+    depth: SoloMetricView  # 思考深度
+    initiative: SoloMetricView  # 主動性 (no trend)
+    position_shifts: int  # 立場變化: tutor turns that reported a change of position
+    judged_messages: int  # how many of the student's messages the tutor judged
+
+
+SoloMark = Literal["danger_tendency", "malicious_off_topic"]
+
+
 class SoloStudentProgressView(View):
     enrollment_id: str
     display_name: str  # empty once a guest's name is forgotten
@@ -315,6 +337,11 @@ class SoloStudentProgressView(View):
     # The later of the last message and the attempt's last update; None before starting.
     last_activity_at: float | None
     attention: bool  # in progress and idle for over ATTENTION_SECONDS
+    # From the tutor's flags (solo_activity/metrics.py); None before any message was judged.
+    metrics: SoloMetricsView | None
+    # 危險傾向／惡意離題 on any message: the teacher's row is marked; the student never sees it.
+    marks: list[SoloMark]
+    mark_message_ids: list[str]
 
 
 class SoloActivityProgressView(View):
@@ -351,6 +378,14 @@ class TeacherStudentView(View):
     last_activity_at: float | None  # None before the student starts
 
 
+class TeacherStanceView(View):
+    stance_id: str
+    label: str  # the stance's label in the revision the attempt runs on
+    confidence: Literal["low", "medium", "high"]
+    message_id: str  # the student's latest message it was placed from
+    at: float
+
+
 class TeacherScenarioView(View):
     index: int
     id: str
@@ -366,6 +401,9 @@ class TeacherScenarioView(View):
     rejected_at: list[float]
     # Where the scenario starts in `messages`; None before it has a message. Not affected by `after`.
     first_message_id: str | None
+    # Where the student's stated position sits in the activity's stance space, oldest first: a
+    # change of mind adds one and the earlier ones stay. Empty without a stance space.
+    stances: list[TeacherStanceView]
 
 
 class TeacherAttemptView(View):

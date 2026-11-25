@@ -360,6 +360,20 @@ export function listSystemAIModels(body: SystemAIModelsInput) {
   return typedApi('/admin/system-ai/models', 'POST', { body })
 }
 
+export type EvalReportView = components['schemas']['EvalReportView']
+export type EvalCaseView = components['schemas']['EvalCaseView']
+export type VoiceReportView = components['schemas']['VoiceReportView']
+
+/** 後台「報表」：QA 照題單在網站上作答後的評測，從紀錄算，不呼叫模型；days＝往回看幾天。 */
+export function getEvalReport(days: number) {
+  return typedApi('/admin/reports/eval', 'GET', { query: { days } })
+}
+
+/** 後台「報表」：每一場語音對話的 token 與估計費用（單價是部署設定）。 */
+export function getVoiceReport(days: number) {
+  return typedApi('/admin/reports/voice', 'GET', { query: { days } })
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })

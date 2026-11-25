@@ -10,9 +10,10 @@ import { useAuth } from '../auth/AuthContext'
 import { FeedbackTable } from '../feedback/FeedbackTable'
 import styles from './Admin.module.css'
 import { adminTime } from './adminTime'
+import { ReportsTab } from './ReportsTab'
 import { SystemAITab } from './SystemAITab'
 
-type Tab = 'toggles' | 'systemAI' | 'feedback' | 'admins'
+type Tab = 'toggles' | 'systemAI' | 'feedback' | 'admins' | 'reports'
 type OnError = (failure: unknown) => void
 
 const LOST_ACCESS = new Set(['ADMIN_NOT_FOUND', 'FEEDBACK_NOT_FOUND'])
@@ -29,9 +30,10 @@ const TABS: { key: Tab; to: string }[] = [
   { key: 'systemAI', to: '/admin/system-ai' },
   { key: 'feedback', to: '/admin/feedback' },
   { key: 'admins', to: '/admin/admins' },
+  { key: 'reports', to: '/admin/reports' },
 ]
 
-/** 後台（Figma AD3–AD9、後台 spec P11–P15、P31）：四個分頁對應四個網址；只做電腦版。 */
+/** 後台（Figma AD3–AD9、後台 spec P11–P15、P31）：每個分頁對應一個網址；只做電腦版。 */
 export function AdminPage({ tab }: { tab: Tab }) {
   const { t } = useT('admin')
   const phone = useIsPhone()
@@ -46,6 +48,7 @@ export function AdminPage({ tab }: { tab: Tab }) {
     {tab === 'systemAI' && <SystemAITab onError={onError} />}
     {tab === 'feedback' && <FeedbackTable onError={onError} />}
     {tab === 'admins' && <AdminsTab onError={onError} />}
+    {tab === 'reports' && <ReportsTab onError={onError} />}
   </main>
 }
 

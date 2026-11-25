@@ -6,7 +6,7 @@
 ## Scope（由 docs/modules/modules.json 產生；邊界 ✅）
 
 - 端：後端；default owner：後端開發團隊
-- 可依賴的模組：platform、identity-access
+- 可依賴的模組：platform、identity-access、ai-providers、llm-runtime
 
 檔案範圍：
 - `backend/app/modules/course_management/`

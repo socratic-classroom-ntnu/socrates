@@ -79,3 +79,13 @@
 .pickerFree { flex-shrink: 0; padding: 2px 8px; border-radius: 999px; background: var(--ui-color-warning-soft); color: var(--ui-color-warning-ink); font-size: 12px; font-weight: 700; }
 /* 金鑰欄不是登入密碼：用一般文字欄遮成圓點，瀏覽器才不會帶入帳號密碼 */
 .input[data-masked='true'] { -webkit-text-security: disc; }
+
+/* 報表 */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { padding: 8px 10px; text-align: left; font-size: 13px; font-weight: 700; color: var(--ui-color-muted); border-bottom: 1px solid var(--ui-color-border); }
+.table td { padding: 10px; vertical-align: top; border-top: 1px solid var(--ui-color-line); }
+.table td .meta { display: block; margin-top: 2px; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.typed { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.scenario { padding: 14px 16px; border-radius: 10px; background: var(--ui-color-neutral-soft); display: flex; align-items: flex-start; gap: 16px; }
+.scenario p { margin: 0; flex-grow: 1; font-size: 15px; line-height: 1.6; }

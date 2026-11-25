@@ -237,6 +237,7 @@ def test_the_attempt_lists_its_fields_and_no_more(client, tutor):
         "confirmed_summary",
         "rejected_at",
         "first_message_id",
+        "stances",
     }
     assert set(seen["messages"][0]) == {
         "id",
@@ -247,6 +248,7 @@ def test_the_attempt_lists_its_fields_and_no_more(client, tutor):
         "move",
         "revise_hint",
         "final_feedback",
+        "locale",
     }
 
 

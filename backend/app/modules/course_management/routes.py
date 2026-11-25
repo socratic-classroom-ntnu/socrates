@@ -11,6 +11,7 @@ from fastapi import APIRouter, Request, Response
 from app.modules.course_management import activities as activity_service
 from app.modules.course_management import courses as service
 from app.modules.course_management import enrollment
+from app.modules.course_management import expansion as expansion_service
 from app.modules.course_management.contracts import (
     ActivityDetailsUpdate,
     ActivityDraft,
@@ -33,6 +34,7 @@ from app.modules.course_management.contracts import (
     PublicActivityPreview,
     PublicJoinPreview,
 )
+from app.modules.llm_runtime.contracts import ActivityExpansion
 from app.modules.identity_access.service import (
     COOKIE,
     account,
@@ -304,6 +306,33 @@ def copy_activity(activity_id: str, request: Request):
         at = activity_service.now()
         activity_service.require_action(db, activity, "copy", at)
         return activity_service.teacher_view(db, activity_service.copy(db, activity), at)
+
+
+@activities_router.post("/{activity_id}/expansion", response_model=ActivityTeacherView)
+async def write_expansion(activity_id: str, request: Request):
+    """Write a stance space from the draft's narrative with the teacher's AI connection."""
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        activity = _teacher_activity(db, current, activity_id)
+        prepared = expansion_service.prepare(db, current, activity, activity_service.now())
+    written = await expansion_service.write(prepared)
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        activity = _teacher_activity(db, current, activity_id)
+        at = activity_service.now()
+        activity = activity_service.set_expansion(db, activity, written, at)
+        return activity_service.teacher_view(db, activity, at)
+
+
+@activities_router.put("/{activity_id}/expansion", response_model=ActivityTeacherView)
+def update_expansion(activity_id: str, body: ActivityExpansion, request: Request):
+    """The teacher's own edit of the stance space; it goes into the revision on publish."""
+    with transaction() as db:
+        current, _ = account(db, request, mutation=True)
+        activity = _teacher_activity(db, current, activity_id)
+        at = activity_service.now()
+        activity = activity_service.set_expansion(db, activity, body, at)
+        return activity_service.teacher_view(db, activity, at)
 
 
 @activities_router.get("/{activity_id}", response_model=ActivityTeacherView)

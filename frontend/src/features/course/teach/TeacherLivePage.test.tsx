@@ -19,10 +19,10 @@ const progress: Progress = {
   status: 'open', ends_at: generatedAt + 3600, generated_at: generatedAt,
   summary: { enrolled: 4, started: 3, done: 1, attention: 1 },
   students: [
-    { enrollment_id: 'e-1', display_name: '小安', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirmed', turns: 4 }, { status: 'in_dialogue', turns: 3 }], review_status: 'not_started', last_activity_at: generatedAt - 120, attention: true },
-    { enrollment_id: 'e-2', display_name: '小博', kind: 'registered', guest_number: null, final_status: null, overall: 'done', cells: [{ status: 'confirmed', turns: 3 }, { status: 'confirmed', turns: 5 }], review_status: 'in_progress', last_activity_at: generatedAt - 20, attention: false },
-    { enrollment_id: 'e-3', display_name: '小慈', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', cells: [], review_status: 'not_started', last_activity_at: null, attention: false },
-    { enrollment_id: 'e-4', display_name: '小德', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirming', turns: 2 }], review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false },
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-1', display_name: '小安', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirmed', turns: 4 }, { status: 'in_dialogue', turns: 3 }], review_status: 'not_started', last_activity_at: generatedAt - 120, attention: true },
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-2', display_name: '小博', kind: 'registered', guest_number: null, final_status: null, overall: 'done', cells: [{ status: 'confirmed', turns: 3 }, { status: 'confirmed', turns: 5 }], review_status: 'in_progress', last_activity_at: generatedAt - 20, attention: false },
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-3', display_name: '小慈', kind: 'registered', guest_number: null, final_status: null, overall: 'not_started', cells: [], review_status: 'not_started', last_activity_at: null, attention: false },
+    { metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-4', display_name: '小德', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress', cells: [{ status: 'confirming', turns: 2 }], review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false },
   ],
 }
 
@@ -30,7 +30,7 @@ function activity(actions: Activity['available_actions'] = ['end_now']): Activit
   return {
     id: 'a-1', course_id: 'c-1', status: 'open', locked: true, has_unpublished_changes: false,
     revision: 1, draft: { title: progress.title, scenario: '一輛失控的電車正駛向五名工人。', ends_at: progress.ends_at! },
-    starts_at: generatedAt - 3600, ends_at: progress.ends_at, available_actions: actions,
+    expansion: null, starts_at: generatedAt - 3600, ends_at: progress.ends_at, available_actions: actions,
   }
 }
 
@@ -123,7 +123,7 @@ test('a capped scenario shows as not settled, not as answering or confirmed', as
     view: {
       ...progress,
       students: [{
-        enrollment_id: 'e-5', display_name: '小恩', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress',
+        metrics: null, marks: [], mark_message_ids: [], enrollment_id: 'e-5', display_name: '小恩', kind: 'registered', guest_number: null, final_status: null, overall: 'in_progress',
         cells: [{ status: 'capped', turns: 10 }, { status: 'in_dialogue', turns: 1 }],
         review_status: 'not_started', last_activity_at: generatedAt - 30, attention: false,
       }],

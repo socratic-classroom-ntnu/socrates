@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+import unicodedata
 from dataclasses import asdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
@@ -128,6 +129,11 @@ def _status(activity: Activity, at: float) -> str:
     return status(cast(ActivityTimes, activity), at)
 
 
+def _ended(activity: Activity, at: float) -> bool:
+    """An ended activity (time up, or the teacher's 立即結束) takes no more answers, from anyone."""
+    return _status(activity, at) == "ended"
+
+
 def _own_attempt(db, activity_id: str, account_id: str) -> SoloAttempt | None:
     return db.scalar(
         select(SoloAttempt).where(
@@ -231,6 +237,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
                 "answer": progress.answer,
                 "status": progress.status,
                 "confirmed_summary": progress.confirmed_summary,
+                "capped_summary": progress.capped_summary,
             }
         )
     confirming = a.state == "confirming"
@@ -272,7 +279,7 @@ def _attempt_view(db, row: SoloAttempt, at: float) -> dict:
         "final_digest": final.digest if a.state == "reflecting" else None,
         "final_status": final.status if a.state == "completed" else None,
         "final_revised": final.rejections > 0,
-        "available_actions": machine.actions_for(a, at),
+        "available_actions": machine.actions_for(a, at, activity_ended=_ended(activity, at)),
     }
 
 
@@ -332,6 +339,7 @@ def ensure_available(db, account: Account, attempt_id: str, action: str, at: flo
     row = db.get(SoloAttempt, attempt_id)
     if row is None or row.account_id != account.id:
         raise DomainError("SOLO_ATTEMPT_NOT_FOUND", 404)
+    _refuse_if_ended(db, row, at)
     if action not in machine.actions_for(_state(row), at):
         raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
 
@@ -416,7 +424,7 @@ def _transition(db, row: SoloAttempt, a: AttemptState, action: str, body, at: fl
         digest = cast("ConfirmViewpointBody", body).summary_digest
         return machine.confirm_viewpoint(a, digest), None
     if action == "revise_viewpoint":
-        return machine.revise_viewpoint(a), None
+        return machine.revise_viewpoint(a, at), None
     if action == "next_scenario":
         return machine.next_scenario(a), None
     if action == "submit_review":
@@ -443,9 +451,20 @@ def _final_transition(db, row: SoloAttempt, a: AttemptState, action: str, body, 
     return new, pending
 
 
+def _refuse_if_ended(db, row: SoloAttempt, at: float) -> None:
+    """ACTIVITY_ENDED for any action once the activity has ended, before anything is saved."""
+    if _ended(db.get(Activity, row.activity_id), at):
+        raise DomainError("ACTIVITY_ENDED", 409)
+
+
 def begin_action(db, account: Account, attempt_id: str, action: str, body, at: float) -> dict:
-    """Tx1. Returns either the final view or what finish_action needs to call the provider."""
+    """Tx1. Returns either the final view or what finish_action needs to call the provider.
+
+    An ended activity refuses every action. A provider call already started before the end
+    still lands in Tx2: the student's message was accepted while the activity was open.
+    """
     row = _locked_attempt(db, account, attempt_id)
+    _refuse_if_ended(db, row, at)
     if action in ("retry_reflection_prompt", "continue_reflection"):
         new, final_pending = _final_transition(db, row, _state(row), action, body, at)
         if final_pending is None:
@@ -585,6 +604,17 @@ def _located(citations, texts: dict) -> list[dict]:
     return located
 
 
+def _same_text(text: str) -> str:
+    """Scenario text compared loosely: width forms folded and whitespace ignored."""
+    return "".join(unicodedata.normalize("NFKC", text).split())
+
+
+def _repeats(scenario: str, context: dict) -> bool:
+    """Whether a written scenario is the one just confirmed or an earlier one, word for word."""
+    given = [context["scenario"], *context["earlier_scenarios"]]
+    return _same_text(scenario) in {_same_text(text) for text in given}
+
+
 async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     """Write the scenario if it is still wanted; either way the student gets the current view.
 
@@ -594,6 +624,13 @@ async def _finish_extension(prepared: dict, defer: Defer | None = None) -> dict:
     called = await _call_program(
         prepared, EXTENSION_PROGRAM, ScenarioExtension, "solo.scenario_extension"
     )
+    if called is not None and _repeats(called[0].scenario, prepared["context"]):
+        # A "next" scenario that is one the student already had changes nothing: ask once more.
+        called = await _call_program(
+            prepared, EXTENSION_PROGRAM, ScenarioExtension, "solo.scenario_extension"
+        )
+        if called is not None and _repeats(called[0].scenario, prepared["context"]):
+            called = None
     with transaction() as db:
         account = db.get(Account, prepared["account_id"])
         row = _locked_attempt(db, account, prepared["attempt_id"])

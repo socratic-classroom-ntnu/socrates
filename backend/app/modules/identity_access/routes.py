@@ -14,6 +14,7 @@ from app.modules.platform.rate_limit import enforce_rate_limit
 from app.modules.identity_access.contracts import (
     AccountView,
     GuestJoin,
+    ProfileUpdate,
     GuestUpgrade,
     LocaleUpdate,
     Login,
@@ -29,6 +30,18 @@ from app.modules.identity_access.contracts import (
     VerificationMailView,
     VerificationStatusView,
     VerifiedView,
+    AvatarUpload,
+    ChangePasswordRequest,
+    ChangePasswordView,
+    DeleteAccountRequest,
+    DeleteAccountView,
+    DeleteAccountCoursesView,
+)
+from app.modules.identity_access import avatar
+from app.modules.identity_access.account_deletion import (
+    anonymize_account,
+    owned_courses,
+    sign_out_other_sessions,
 )
 from app.modules.platform.errors import DomainError
 from app.modules.platform.storage import transaction
@@ -88,6 +101,120 @@ def update_locale(body: LocaleUpdate, request: Request):
         a, s = account(db, request, mutation=True, verified=False, allow_guest=True)
         auth.set_locale(a, body.locale)
         return auth.account_view(db, a, s.csrf_token)
+
+
+@router.patch("/account/profile", response_model=AccountView)
+def update_profile(body: ProfileUpdate, request: Request):
+    with transaction() as db:
+        a, s = account(
+            db,
+            request,
+            mutation=True,
+            verified=False,
+        )
+        a.display_name_override = body.display_name
+        return auth.account_view(db, a, s.csrf_token)
+
+
+@router.put("/account/password", response_model=ChangePasswordView)
+def update_password(body: ChangePasswordRequest, request: Request):
+    with transaction() as db:
+        a, _ = account(db, request, mutation=True, verified=False)
+        # Five tries per account in ten minutes, right or wrong. Counted in a transaction of its
+        # own, so a wrong current password (which rolls the change back) still counts.
+        enforce_rate_limit(
+            db, "account-password:" + a.id, 5, 600, error_code="PASSWORD_CHANGE_RATE_LIMITED"
+        )
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        result = auth.change_password(db, a, body.current_password, body.new_password)
+        # Every other device signs in again with the new password; this one stays.
+        sign_out_other_sessions(db, a.id, s.token_hash)
+        return result
+
+
+@router.put("/account/avatar", response_model=AccountView)
+def put_account_avatar(body: AvatarUpload, request: Request):
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        avatar.save(db, a.id, body.mime, avatar.decode(body.mime, body.data_base64))
+        return auth.account_view(db, a, s.csrf_token)
+
+
+@router.get(
+    "/account/avatar",
+    response_model=bytes,
+    response_class=Response,
+    responses={200: {"content": {"image/jpeg": {}, "image/png": {}}}},
+)
+def get_account_avatar(request: Request) -> Response:
+    """The picture itself, for <img>: the page adds ?v=<avatar_updated_at> so a new one is read.
+
+    Typed as bytes so the contract gate sees a response model; returning a Response skips it.
+    """
+    with transaction() as db:
+        a, _ = account(db, request, verified=False)
+        mime, image = avatar.read(db, a.id)
+    return Response(image, media_type=mime, headers={"Cache-Control": "private, no-cache"})
+
+
+@router.get(
+    "/account/deletion-check",
+    response_model=DeleteAccountCoursesView,
+)
+def check_account_deletion(request: Request):
+    """Check whether the current account can be deleted."""
+
+    with transaction() as db:
+        a, _ = account(
+            db,
+            request,
+            verified=False,
+        )
+
+        courses = owned_courses(db, a.id)
+
+        return {
+            "can_delete": (a.kind == "registered" and len(courses) == 0),
+            "courses": courses,
+        }
+
+
+@router.delete("/account/avatar", response_model=AccountView)
+def delete_account_avatar(request: Request):
+    with transaction() as db:
+        a, s = account(db, request, mutation=True, verified=False)
+        avatar.remove(db, a.id)
+        return auth.account_view(db, a, s.csrf_token)
+
+
+@router.delete("/account", response_model=DeleteAccountView)
+def delete_account(
+    body: DeleteAccountRequest,
+    request: Request,
+    response: Response,
+):
+    with transaction() as db:
+        a, _ = account(
+            db,
+            request,
+            mutation=True,
+            verified=False,
+        )
+
+        # Require the current username, ignoring surrounding
+        # whitespace and letter case.
+        if body.username.strip().casefold() != a.username.casefold():
+            raise DomainError("ACCOUNT_USERNAME_MISMATCH", 400)
+
+        # Lock the account row before changing its identity.
+        locked = db.get(type(a), a.id, with_for_update=True)
+
+        anonymize_account(db, locked)
+
+    response.delete_cookie(auth.COOKIE, path="/")
+
+    return {"status": "ACCOUNT_DELETED"}
 
 
 @router.post("/auth/logout", response_model=SignedOutView)

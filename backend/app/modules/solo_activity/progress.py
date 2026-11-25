@@ -79,6 +79,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         ).all()
     )
 
+    current = status(cast(ActivityTimes, activity), at)
     kinds = student_kinds(db, enrolled, at)
     students = []
     for enrollment in enrolled:
@@ -99,8 +100,10 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
                 "review_status": review_status(row.state) if row is not None else "not_started",
                 "final_status": final_status(row) if row is not None else None,
                 "last_activity_at": last_at,
+                # Once the activity has ended no one can answer, so no one is waiting (C7).
                 "attention": (
-                    overall == "in_progress"
+                    current != "ended"
+                    and overall == "in_progress"
                     and last_at is not None
                     and at - last_at > ATTENTION_SECONDS
                 ),
@@ -112,7 +115,7 @@ def progress_view(db, account: Account, activity_id: str, at: float) -> dict:
         "title": activity.title,
         "course_id": course.id,
         "course_name": course.name,
-        "status": status(cast(ActivityTimes, activity), at),
+        "status": current,
         "ends_at": activity.ends_at,
         "generated_at": at,
         "summary": {

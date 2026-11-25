@@ -360,6 +360,38 @@ export function listSystemAIModels(body: SystemAIModelsInput) {
   return typedApi('/admin/system-ai/models', 'POST', { body })
 }
 
+export type AIConnectionView = components['schemas']['AIConnectionView']
+export type AIConnectionInput = components['schemas']['AIConnectionInput']
+export type AIConnectionModelsInput = components['schemas']['AIConnectionModelsInput']
+export type AIConnectionUsageView = components['schemas']['AIConnectionUsageView']
+
+/** 老師的 AI 連線設定（一組連線、全部 AI 共用）：讀取只給末四碼；套用時後端先測、成功才存。 */
+export function getAIConnection() {
+  return typedApi('/ai-settings/connection', 'GET')
+}
+
+export function testAIConnection(body: AIConnectionInput) {
+  return typedApi('/ai-settings/connection/test', 'POST', { body })
+}
+
+export function applyAIConnection(body: AIConnectionInput) {
+  return typedApi('/ai-settings/connection', 'PUT', { body })
+}
+
+/** 系統提供＝停用自己的連線、金鑰保留；own＝切回保留的金鑰，不重新測試。 */
+export function setAIConnectionMode(mode: 'system' | 'own') {
+  return typedApi('/ai-settings/connection/mode', 'PUT', { body: { mode } })
+}
+
+/** 金鑰留空＝同服務同網址時用已存的。OpenRouter 只列支援 reasoning 的模型。 */
+export function listAIConnectionModels(body: AIConnectionModelsInput) {
+  return typedApi('/ai-settings/connection/models', 'POST', { body })
+}
+
+export function getAIConnectionUsage() {
+  return typedApi('/ai-settings/connection/usage', 'GET')
+}
+
 /** 部署版本（GET /api/release，不在 /api/v2 底下）。 */
 export async function getRelease() {
   const response = await http.get('/release', { baseURL: '/api' })
@@ -370,4 +402,16 @@ export async function getRelease() {
 export function openClassroomSocket(roomId: string, mode: string, lastSeq: number): WebSocket {
   const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
   return new WebSocket(`${scheme}://${location.host}/api/v2/classrooms/${roomId}/ws?mode=${mode}&last_seq=${lastSeq}`);
+}
+export type DeleteAccountResponse = components['schemas']['DeleteAccountView']
+
+export function checkAccountDeletion(signal?: AbortSignal) {
+  return typedApi('/account/deletion-check', 'GET', { signal })
+}
+
+/** 刪除目前登入帳號；成功後由呼叫端清除前端登入狀態。 */
+export async function deleteAccount(
+  username: string,
+): Promise<DeleteAccountResponse> {
+  return typedApi('/account', 'DELETE', { body: { username } })
 }

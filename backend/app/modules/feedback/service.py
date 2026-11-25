@@ -172,7 +172,9 @@ def list_page(db: Session, page: int) -> FeedbackPage:
                 release_id=row.release_id,
                 identity=cast(FeedbackIdentity, row.identity),
                 account_kind=cast(AccountKind | None, kind),
-                account_name=owner.username if owner and kind != "expired_guest" else None,
+                account_name=(
+                    owner.username if owner and kind not in ("expired_guest", "deleted") else None
+                ),
                 has_screenshot=row.screenshot is not None,
             )
         )

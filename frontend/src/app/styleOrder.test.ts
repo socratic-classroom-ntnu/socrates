@@ -5,6 +5,8 @@ import path from 'node:path'
 // （深度優先、依 import 的先後）從 main.tsx 走一遍 import，算出瀏覽器實際載入樣式表的順序。
 // export … from 也算（src/ui/index.ts 用它把元件連同樣式一起帶進來）
 const SRC = path.resolve(__dirname, '..')
+// 樣式分組與快照用 repo 相對路徑；實際讀檔仍交給 Node 的 path API。
+const relativeSourcePath = (file: string) => path.relative(SRC, file).split(path.sep).join('/')
 const IMPORT = /^\s*(?:import|export)\s+(type\s+)?(?:[^'";]*?\sfrom\s+)?['"]([^'"]+)['"]/gm
 
 function resolve(from: string, spec: string): string | null {
@@ -24,7 +26,7 @@ function stylesheetOrder(entry: string): string[] {
     for (const [, typeOnly, spec] of fs.readFileSync(file, 'utf8').matchAll(IMPORT)) {
       if (typeOnly || !spec.startsWith('.')) continue
       if (spec.endsWith('.css')) {
-        const sheet = path.relative(SRC, path.resolve(path.dirname(file), spec))
+        const sheet = relativeSourcePath(path.resolve(path.dirname(file), spec))
         if (!sheets.includes(sheet)) sheets.push(sheet)
         continue
       }
@@ -50,7 +52,7 @@ const GROUP_CLASS = [
 // 跟 join、learn、solo 沒有共用的 class，先後不影響畫面。
 const COURSE = [
   'styles/placeholder-page.css', 'styles/dialog.css', 'styles/teach.css', 'styles/home.css',
-  'styles/join.css', 'styles/learn.css', 'styles/solo.css', 'styles/menu.css', 'styles/teacher-live.css', 'styles/teacher-analysis.css',
+  'styles/join.css', 'styles/learn.css', 'styles/solo.css', 'styles/menu.css', 'styles/teacher-live.css', 'styles/teacher-analysis.css', 'styles/teacher-transcript.css',
   'styles/date-time-field.css', 'styles/editor.css', 'styles/auth.css', 'styles/app-shell.css', 'styles/cross-role.css',
 ]
 
@@ -72,7 +74,7 @@ const among = (list: string[]) => order.filter(sheet => list.includes(sheet))
 test('every imported stylesheet exists', () => {
   const missing = sourceFiles(SRC, /\.(tsx?|mjs)$/).flatMap(file => [...fs.readFileSync(path.join(SRC, file), 'utf8')
     .matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)['"](\.{1,2}\/[^'"]+\.css)['"]/g)]
-    .map(([, spec]) => path.relative(SRC, path.resolve(path.dirname(path.join(SRC, file)), spec)))
+    .map(([, spec]) => relativeSourcePath(path.resolve(path.dirname(path.join(SRC, file)), spec)))
     .filter(sheet => !fs.existsSync(path.join(SRC, sheet))).map(sheet => `${file} -> ${sheet}`))
   expect(missing).toEqual([])
 })
@@ -141,7 +143,7 @@ function allStylesheets(dir = SRC): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) return allStylesheets(full)
-    return entry.name.endsWith('.css') ? [path.relative(SRC, full)] : []
+    return entry.name.endsWith('.css') ? [relativeSourcePath(full)] : []
   })
 }
 
@@ -179,7 +181,7 @@ test('local @import only where allowed', () => {
   const imports = allStylesheets().flatMap(sheet => [...source(sheet).replace(/url\(\s*['"]?data:[^)]*\)/gi, 'url()').matchAll(IMPORT_AT_RULE)]
     .map(([, spec]) => spec)
     .filter(spec => !/^(https?:)?\/\//i.test(spec))
-    .map(spec => `${sheet} -> ${path.relative(SRC, path.resolve(path.dirname(path.join(SRC, sheet)), spec))}`))
+    .map(spec => `${sheet} -> ${relativeSourcePath(path.resolve(path.dirname(path.join(SRC, sheet)), spec))}`))
   withHint('本地 @import 有增減。@import 會在每個引用它的樣式表各展開一份，載入順序測試看不到，可能蓋掉頁面的覆寫；'
     + '請改在 JS 裡 import。確定要用，就加進這條的清單。',
   () => expect(imports.sort()).toEqual([
@@ -281,7 +283,7 @@ test('course sheets: palette colors are referenced through tokens', () => {
 
 // 棘輪：課程檔寫死的色碼只能變少。數量變少時把常數改成新的數字；某個顏色整個不見了，也從清單拿掉。
 // 只看數量擋不住「刪一個舊色、加一個新色」，所以另外列出現有的顏色：清單外的新顏色要先加進 tokens.css
-const COURSE_RAW_HEX = 271
+const COURSE_RAW_HEX = 269
 const COURSE_RAW_COLORS = [
   '#1E1C18', '#1E6B60', '#1F3A31', '#285344', '#2A2723', '#2C3F37', '#2E8B57', '#2F4A3F', '#31526B', '#3A362F',
   '#3A4B43', '#3F3424', '#4A3A0E', '#4A3A2C', '#4B514D', '#4E3824', '#57514A', '#594C3B', '#5A4129', '#5A432D',
@@ -312,7 +314,7 @@ function sourceFiles(dir = SRC, pattern = /\.tsx$/): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) return sourceFiles(full, pattern)
-    return pattern.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [path.relative(SRC, full)] : []
+    return pattern.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [relativeSourcePath(full)] : []
   })
 }
 

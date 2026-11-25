@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 
 from app.modules.admin import routes as admin
+from app.modules.ai_connection import routes as ai_connection
 from app.modules.ai_providers import routes as ai_providers
 from app.modules.analytics import routes as analytics
 from app.modules.classroom_core import library_routes as classroom_library
@@ -12,6 +13,7 @@ from app.modules.course_management import routes as course_management
 from app.modules.feedback import routes as feedback
 from app.modules.group_dialogue.routes import ai_students, groups
 from app.modules.identity_access import routes as identity
+from app.modules.notifications import routes as notifications
 from app.modules.platform import routes as platform
 from app.modules.solo_activity import routes as solo_activity
 
@@ -24,6 +26,7 @@ CLASSROOM_ROUTERS = (
     classroom_library.router,
     platform.router,
     ai_students.router,
+    ai_connection.router,
     ai_providers.router,
     question_bank.router,
     script_assist.router,
@@ -33,6 +36,8 @@ CLASSROOM_ROUTERS = (
     solo_activity.router,
     feedback.router,
     admin.router,
+    notifications.admin_router,
+    notifications.router,
 )
 
 

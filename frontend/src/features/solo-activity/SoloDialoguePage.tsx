@@ -15,6 +15,8 @@ import { can, currentScenario, REVIEW_STATES, type SoloAction, type SoloActivity
 import { ViewpointCard } from './ViewpointCard'
 
 const SAVE_CHECK_MS = 1000
+// setTimeout holds a signed 32-bit delay; a later end time is checked again when the page reloads.
+const MAX_TIMER_MS = 2 ** 31 - 1
 
 /** P9: the teacher removed the student from the course, and this attempt with it. */
 function attemptGone(error: unknown): boolean {
@@ -39,6 +41,18 @@ export function SoloDialoguePage() {
   const saveCheck = useRef<number | undefined>(undefined)
   useEffect(() => () => window.clearTimeout(saveCheck.current), [])
   useEffect(() => { if (attempt.data) setView(attempt.data) }, [attempt.data])
+  // C7: the moment the activity ends, read both again so the page turns read-only on its own.
+  const endsAt = activity.data?.status === 'open' ? activity.data.ends_at : null
+  const reloadActivity = activity.reload
+  const reloadAttempt = attempt.reload
+  useEffect(() => {
+    if (endsAt == null) return
+    // A clock already past the end while the server still says open: a refused send updates the page.
+    const delay = endsAt * 1000 - Date.now() + 500
+    if (delay <= 500 || delay > MAX_TIMER_MS) return
+    const timer = window.setTimeout(() => { void reloadActivity(); void reloadAttempt() }, delay)
+    return () => window.clearTimeout(timer)
+  }, [endsAt, reloadActivity, reloadAttempt])
   useEffect(() => {
     if (!view || !(view.state === 'awaiting_tutor' || view.state === 'awaiting_reflection_prompt') || pendingAction) return
     const timer = window.setInterval(() => { void attempt.reload() }, 3000)
@@ -70,7 +84,11 @@ export function SoloDialoguePage() {
       setView(next)
       return true
     } catch (error) {
-      if (error instanceof ApiError && error.status === 409 && error.detail === 'SOLO_ACTION_UNAVAILABLE') {
+      if (error instanceof ApiError && error.status === 409 && error.detail === 'ACTIVITY_ENDED') {
+        // The activity ended while the page was open: what is offered now is read again, and
+        // the ended notice below takes over from the error.
+        await Promise.all([activity.reload(), attempt.reload()])
+      } else if (error instanceof ApiError && error.status === 409 && error.detail === 'SOLO_ACTION_UNAVAILABLE') {
         await attempt.reload()
         setStatusMessage(t('statusUpdated'))
       } else if (!(error instanceof ApiError) || error.status === 0) {
@@ -122,6 +140,9 @@ export function SoloDialoguePage() {
     return sendWithSaveCheck('send_message', body, { text: body.text, first: view!.state === 'answering' })
   }
 
+  // Wording only: what the student may still do comes from available_actions, which is empty
+  // once the activity has ended.
+  const ended = activity.data.status === 'ended'
   const waiting = view.state === 'awaiting_tutor'
     || pendingAction === 'send_message'
     || pendingAction === 'retry'
@@ -142,14 +163,16 @@ export function SoloDialoguePage() {
         <strong><span className="solo-dialogue__course-name">{view.course_name} · </span>{view.activity_title}</strong>
         <span>{t('dialogue.subtitle')}</span>
       </div>
+      {/* fb001: a plain way out besides the logo; a practice dialogue goes back to 我的對話 */}
+      <Link className="solo-dialogue__exit" to={activity.data.practice ? '/my-dialogues' : `/learn/courses/${view.course_id}`}>
+        {t(activity.data.practice ? 'dialogue.backToPractice' : 'dialogue.backToCourse')}
+      </Link>
       <span className="solo-dialogue__count">{t('dialogue.count', { current: view.scenario_index + 1 })}</span>
       <span className="solo-dialogue__person" aria-label={view.display_name}>{view.display_name.slice(0, 1)}</span>
     </header>
     <div className="solo-dialogue__columns">
       <ScenarioBoard
         scenario={scenario}
-        confirming={can(view, 'confirm_viewpoint') || can(view, 'revise_viewpoint')}
-        revising={view.revising}
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
       />
       <section className="solo-conversation">
@@ -166,13 +189,14 @@ export function SoloDialoguePage() {
               retrying={pendingAction === 'retry'}
               onRetry={() => { void perform('retry') }}
             />
-            <SoloComposer
+            {/* Ended: not even the "answering resumes later" note of a paused composer. */}
+            {!ended && <SoloComposer
               key={`composer-${view.id}-${scenario.index}`}
               view={view}
               pending={pendingAction !== null}
               sending={pendingAction === 'send_message' && !savedEarly}
               onSend={sendMessage}
-            />
+            />}
             {can(view, 'next_scenario') && <div className="solo-next">
               <button className="solo-primary" type="button" disabled={pendingAction !== null} onClick={() => { void perform('next_scenario') }}>
                 {t('next.button')} <span aria-hidden="true">→</span>
@@ -187,6 +211,7 @@ export function SoloDialoguePage() {
               onRevise={async () => { await perform('revise_viewpoint') }}
             />
           </>}
+        {ended && <p className="solo-ended" role="status">{t('dialogue.ended')}</p>}
         {statusMessage && <p className="solo-action-status" role="status">{statusMessage}</p>}
         {actionError && <p className="solo-action-error" role="alert">{errorMessage(t, actionError, 'solo')}</p>}
       </section>

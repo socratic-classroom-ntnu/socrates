@@ -58,3 +58,13 @@ test.each([
   expect(await screen.findByRole('form', { name: '加入課堂' })).toBeInTheDocument()
   expect(!!screen.queryByRole('link', { name: '管理分組課（教師端）' })).toBe(shown)
 })
+
+// 訪客沒有 Email 可驗證，也進不了分組課（後端對訪客一律擋）：手打 /groups 不能停在「驗證連結會寄到 。」的空白驗證閘門
+test('a guest has no email to verify, so the groups page sends it home instead of the verification gate', async () => {
+  const guest = { ...signedIn, id: 'g-1', username: '安靜的燕子-9457630c', display_name: '安靜的燕子', kind: 'guest', email: '', email_masked: '', verified: false }
+  mockApi({ 'GET /auth/me': guest })
+  openGroups()
+  expect(await screen.findByText('other-page')).toBeInTheDocument()
+  expect(screen.getByTestId('where')).toHaveTextContent(/^\/$/)
+  expect(screen.queryByText('完成 Email 驗證')).toBeNull()
+})

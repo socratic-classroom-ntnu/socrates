@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import math
 import os
 import socket
 import time
@@ -314,6 +315,10 @@ async def _anthropic_generate(binding, messages, schema):
 
 
 async def _gemini_generate(binding, messages, schema):
+    # Gemini's thinking counts against maxOutputTokens, so a lone output budget can end the JSON
+    # early. As on the OpenAI path, the cap is both budgets and thinking gets its own.
+    output_budget = env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048)
+    reasoning_budget = env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
     model = quote(binding["model"], safe="-._/")
     prompt = "\n\n".join(
         f"{item.get('role', 'user')}: {item.get('content', '')}" for item in messages
@@ -327,14 +332,19 @@ async def _gemini_generate(binding, messages, schema):
             "generationConfig": {
                 "responseMimeType": "application/json",
                 "responseSchema": gemini_response_schema(schema),
-                "maxOutputTokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
+                "maxOutputTokens": output_budget + reasoning_budget,
+                "thinkingConfig": {"thinkingBudget": reasoning_budget},
             },
         },
         timeout=120,
     )
     body = _provider_json(response)
     try:
-        raw = body["candidates"][0]["content"]["parts"][0].get("text")
+        candidate = body["candidates"][0]
+        # Cut off at the token cap: the JSON is incomplete, which is not a schema mismatch.
+        if candidate.get("finishReason") == "MAX_TOKENS":
+            raise ProviderWait("PROVIDER_OUTPUT_TRUNCATED", 30)
+        raw = candidate["content"]["parts"][0].get("text")
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
     usage = body.get("usageMetadata", {})
@@ -388,6 +398,15 @@ def _estimated_cost(binding: dict, usage: dict) -> float | None:
     )
 
 
+def _reported_cost(adapter: str, usage: dict) -> float | None:
+    """What OpenRouter charged for this call (`usage.cost`, US dollars, sent on every response);
+    None when it did not say or for another service, whose `cost` would mean something else."""
+    cost = usage.get("cost") if adapter == "openrouter" and isinstance(usage, dict) else None
+    if isinstance(cost, bool) or not isinstance(cost, (int, float)):
+        return None
+    return float(cost) if math.isfinite(cost) and cost >= 0 else None
+
+
 async def generate(binding, messages, schema, on_delta):
     started = time.monotonic()
     adapter = binding["adapter"]
@@ -411,7 +430,12 @@ async def generate(binding, messages, schema, on_delta):
     visible = result.get("reply_text") or result.get("text") or ""
     if visible:
         await on_delta(visible)
-    return result, _audit(binding, usage, actual_model, started)
+    audit = _audit(binding, usage, actual_model, started)
+    # Successful calls only: a failed one records no cost (需求，維持現狀).
+    cost = _reported_cost(adapter, usage)
+    if cost is not None:
+        audit["estimated_cost"] = cost
+    return result, audit
 
 
 def _audit(binding, usage: dict, actual_model, started: float) -> dict:
@@ -430,7 +454,9 @@ def _audit(binding, usage: dict, actual_model, started: float) -> dict:
         "visible_output_tokens": visible_output_tokens,
         "output_budget_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
         "reasoning_budget_tokens": (
-            env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024) if adapter == "openrouter" else None
+            env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
+            if adapter in {"openrouter", "gemini"}
+            else None
         ),
         "estimated_cost": _estimated_cost(binding, usage),
         "fallback_used": False,

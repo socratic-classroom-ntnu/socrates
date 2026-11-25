@@ -73,6 +73,19 @@ test('the waiting card shows the masked email and resends with a cooldown', asyn
   expect(screen.getByRole('button', { name: /秒後可再次寄送/ })).toBeDisabled()
 })
 
+// 訪客沒有 Email 可驗證：開著舊的 /verify 網址（書籤、網址列自動完成、沒關的分頁）不能看到「寄到 。」的空白驗證頁
+test('a guest has no email to verify, so the page sends it on instead of waiting', async () => {
+  const guest = { id: 'g-1', username: '安靜的燕子-9457630c', display_name: '安靜的燕子', kind: 'guest', email: '', email_masked: '', verified: false, csrf_token: 'csrf', locale: 'zh-Hant' }
+  jest.mocked(api).mockImplementation(async (url: string) => {
+    if (url === '/auth/me') return guest
+    return []
+  })
+  openApp('/verify?next=' + encodeURIComponent('/my-dialogues'))
+  await waitFor(() => expect(here()).toBe('/my-dialogues'))
+  expect(api).not.toHaveBeenCalledWith('/auth/verification-status')
+  expect(screen.queryByRole('button', { name: '重新寄送驗證信' })).not.toBeInTheDocument()
+})
+
 // 後端的節流訊息是中文句子；新頁只看狀態碼，顯示自己的翻譯
 test('resend respects cooldown error code', async () => {
   jest.mocked(api).mockImplementation(async (url: string) => {

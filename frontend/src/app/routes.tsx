@@ -30,9 +30,11 @@ import { SoloDialoguePage } from '../features/solo-activity/SoloDialoguePage'
 import { TeacherCoursePage } from '../features/course/teach/TeacherCoursePage'
 import { TeacherAnalysisPage } from '../features/course/teach/TeacherAnalysisPage'
 import { TeacherLivePage } from '../features/course/teach/TeacherLivePage'
+import { TeacherTranscriptPage } from '../features/course/teach/transcript/TeacherTranscriptPage'
 import { ActivityEditorPage } from '../features/course/teach/editor/ActivityEditorPage'
 import { ActivityProjectorPage, CourseProjectorPage } from '../features/course/teach/ProjectorPages'
 import { CreateCourseRedirect, TeacherDesktopOnly } from '../features/course/teach/TeacherDesktopOnly'
+import { AIConnectionPage } from '../features/ai-settings/AIConnectionPage'
 import { GuestJoinPage } from '../features/auth/GuestJoinPage'
 import { GuestLoginPage, GuestUpgradePage } from '../features/auth/GuestAccountPages'
 import { LoginPage } from '../features/auth/LoginPage'
@@ -45,26 +47,27 @@ import { RoleGate } from './RoleGate'
 import { AdminGate } from '../features/admin/AdminGate'
 import { AdminPage } from '../features/admin/AdminPage'
 import { GroupModeGate } from '../shared/GroupModeGate'
+import { AccountSettingsPage } from '../features/account/AccountSettingsPage'
+import { AccountSubpage } from '../features/account/AccountSubpage'
+import { NotificationsPage } from '../features/notifications/NotificationsPage'
+import { NotificationsProvider } from '../features/notifications/NotificationsProvider'
 
 // 舊網址上的一次性 token 先轉到專用頁，不放進一般的登入返回網址。
-// 舊學生首頁的 AI 連線設定分頁搬到「分組課」頁。
+// 舊的 AI 連線設定入口（多連線頁）一律轉到新頁面：舊頁能改同一份設定，留著會讓新頁顯示的跟學生實際用的不一樣。
 function legacyRedirect(pathname: string, search: string): string | null {
   const params = new URLSearchParams(search)
   const verify = params.get('verify_token')
   if (verify) return '/verify?token=' + encodeURIComponent(verify)
   const reset = params.get('reset_token')
   if (reset) return '/login?mode=reset&token=' + encodeURIComponent(reset)
-  if (pathname === '/' && params.get('view') === 'providers') return '/groups?view=providers'
+  const view = params.get('view')
+  if (view === 'providers' && (pathname === '/' || pathname === '/groups')) return '/teach/ai-settings'
+  if (view === 'settings' && /^\/teacher\/home\/?$/.test(pathname)) return '/teach/ai-settings'
   return null
 }
 
 type PlaceholderKind = 'account' | 'activity' | 'live' | 'analysis' | 'aiAnalysis'
 
-// 這一批不做的入口：共用佔位頁，說明文字依入口換。
-function Placeholder({ kind }: { kind?: PlaceholderKind }) {
-  const { t } = useT('common')
-  return <ComingSoonPage body={kind ? t(`comingSoon.${kind}`) : undefined} />
-}
 
 // 教師端的佔位頁回到所屬課程；活動頁要先查活動才知道課程，查不到就回「我的授課」
 function TeachPlaceholder({ kind }: { kind: PlaceholderKind }) {
@@ -83,7 +86,7 @@ export function AppRoutes() {
   const { pathname, search } = useLocation()
   const redirect = legacyRedirect(pathname, search)
   if (redirect) return <Navigate to={redirect} replace />
-  return <Routes>
+  return <NotificationsProvider><Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route path="/verify" element={<VerifyPage />} />
     <Route path="/join/guest" element={<GuestJoinPage />} />
@@ -95,6 +98,7 @@ export function AppRoutes() {
         <Route path="/admin/system-ai" element={<AdminPage tab="systemAI" />} />
         <Route path="/admin/feedback" element={<AdminPage tab="feedback" />} />
         <Route path="/admin/admins" element={<AdminPage tab="admins" />} />
+        <Route path="/admin/announcements" element={<AdminPage tab="announcements" />} />
       </Route>
     </Route>
     <Route element={<RequireAuth />}>
@@ -113,11 +117,15 @@ export function AppRoutes() {
       <Route path="/activity-form" element={<DemoSurface title="教師出題表單"><ActivityFormModal onClose={() => location.assign('/')} onSubmit={() => location.assign('/')} /></DemoSurface>} />
       </Route>
       <Route element={<AppShell />}>
-        {/* /groups?view=providers 是舊的 AI 連線設定入口，GroupModeGate 放行（P20） */}
+        {/* 舊的 /groups?view=providers 已由 legacyRedirect 轉到 /teach/ai-settings */}
         <Route element={<GroupModeGate loading={<LoadingScreen />} />}>
           <Route path="/groups" element={<GroupsPage />} />
         </Route>
-        <Route path="/account" element={<Placeholder kind="account" />} />
+        <Route path="/account" element={<AccountSettingsPage />} />
+        {/* 手機內頁（M02–M16）；電腦寬度回 /account，用對話框 */}
+        <Route path="/account/avatar" element={<AccountSubpage kind="avatar" />} />
+        <Route path="/account/password" element={<AccountSubpage kind="password" />} />
+        <Route path="/account/delete" element={<AccountSubpage kind="delete" />} />
       </Route>
       </Route>
       {/* 訪客註冊升級（G16–G19）與登入併入（G20–G24） */}
@@ -139,6 +147,7 @@ export function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         {/* 學生「我的對話」：要求驗證；訪客由 RequireAuth 放行，頁面畫訪客版（註冊邀請＋鎖住的題目） */}
         <Route path="/my-dialogues" element={<MyDialoguesPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/learn/courses/:courseId" element={<StudentCoursePage />} />
         <Route path="/learn/activities/:activityId" element={<SoloActivityPage />} />
         {/* 教師端只做電腦版：手機寬度一律 S4m */}
@@ -150,8 +159,10 @@ export function AppRoutes() {
           <Route path="/teach/courses/:courseId/activities/new" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId/edit" element={<ActivityEditorPage />} />
           <Route path="/teach/activities/:activityId" element={<TeacherLivePage />} />
+          <Route path="/teach/activities/:activityId/students/:enrollmentId" element={<TeacherTranscriptPage />} />
           <Route path="/teach/activities/:activityId/analysis" element={<TeacherAnalysisPage />} />
           <Route path="/teach/activities/:activityId/analysis/ai" element={<TeachPlaceholder kind="aiAnalysis" />} />
+          <Route path="/teach/ai-settings" element={<AIConnectionPage />} />
         </Route>
         <Route element={<TeacherDesktopOnly />}>
           {/* 舊教師頁：個人題庫、題庫商店、AI 連線設定（?view=）放行，多人課程首頁與課程頁要多人模式（P8） */}
@@ -164,5 +175,5 @@ export function AppRoutes() {
       </Route>
     </Route>
     <Route path="*" element={<NotFoundPage />} />
-  </Routes>
+  </Routes></NotificationsProvider>
 }

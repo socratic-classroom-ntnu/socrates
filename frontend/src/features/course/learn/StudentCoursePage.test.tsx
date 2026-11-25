@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { Route } from 'react-router-dom'
 import { AppShell } from '../../../app/AppShell'
 import { ApiError } from '../../../contract/classroomClient'
@@ -163,6 +163,11 @@ test('the phone top bar goes back to home', async () => {
   phone()
   mockApi({ 'GET /courses/c-1?role=student': course, 'GET /courses/c-1/activities?role=student': { role: 'student', items } })
   renderAt('/learn/courses/c-1', '/unused', null, <Route element={<AppShell />}><Route path="/learn/courses/:courseId" element={<StudentCoursePage />} /></Route>)
-  const back = (await screen.findAllByRole('link', { name: '首頁' })).find(link => link.closest('header'))
+  // 底部導覽也有一個「首頁」，一開始就在；頂部列的返回連結要等頁面把返回目標設好才出現，所以要等的是頂部列那一個。
+  const back = await waitFor(() => {
+    const link = screen.getAllByRole('link', { name: '首頁' }).find(candidate => candidate.closest('header'))
+    if (!link) throw new Error('the top bar has no 首頁 link yet')
+    return link
+  })
   expect(back).toHaveAttribute('href', '/')
 })

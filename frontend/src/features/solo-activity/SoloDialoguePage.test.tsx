@@ -1425,6 +1425,31 @@ test('next button absent without next_scenario action', async () => {
   expect(screen.queryByRole('button', { name: /下一個情境/ })).toBeNull()
 })
 
+test('in the next scenario the earlier one keeps its whole confirmed summary (fb004)', async () => {
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': secondScenarioAttempt,
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  const card = within(timeline).getByText('情境 1 的觀點已確認').closest('article')!
+  expect(within(card).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(within(card).getByText('如果軌道上的人是我認識的人，我可能會改變選擇。')).toBeInTheDocument()
+})
+
+test('a capped earlier scenario still shows the summary it ended with (fb004)', async () => {
+  const cappedFirst = { ...firstConfirmed, status: 'capped', confirmed_summary: null, capped_summary: confirmingAttempt.candidate_summary }
+  renderPage({
+    'GET /solo/activities/a-1': activity,
+    'GET /solo/attempts/attempt-1': { ...secondScenarioAttempt, scenarios: [cappedFirst, secondScenarioAttempt.scenarios[1]] },
+  })
+
+  const timeline = await screen.findByRole('region', { name: '對話紀錄' })
+  const card = within(timeline).getByText('情境 1 尚未釐清，這是當時的整理').closest('article')!
+  expect(within(card).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(within(timeline).queryByText('情境 1 的觀點已確認')).toBeNull()
+})
+
 test('next scenario appends the new scenario verbatim and the fixed intuition prompt', async () => {
   const calls = mockApi({
     'GET /auth/me': signedIn,

@@ -67,6 +67,7 @@ export default {
     closing: '{{name}}, ya recorriste todos los escenarios. Ahora repasemos juntos todo tu razonamiento.',
     eyebrow: 'Tu progreso', title: 'Terminaste todos los escenarios', subtitle: 'Repasa lo que pensaste hoy',
     confirmedCard: 'Escenario {{number}}: postura confirmada',
+    cappedCard: 'Escenario {{number}}: sin aclarar, así quedó',
   },
   final: {
     feedbackLabel: 'Lo que dijiste que no encajaba', feedback: 'Dijiste: «{{text}}»',

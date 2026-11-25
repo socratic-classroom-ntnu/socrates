@@ -67,6 +67,7 @@ export default {
     closing: '{{name}}，每個情境都走完了。接下來，我們一起回頭看看你整個思路。',
     eyebrow: '你的進度', title: '情境都走完了', subtitle: '回頭看看今天的想法',
     confirmedCard: '情境 {{number}} 的觀點已確認',
+    cappedCard: '情境 {{number}} 尚未釐清，這是當時的整理',
   },
   final: {
     feedbackLabel: '你說哪裡不太對', feedback: '你說：「{{text}}」',

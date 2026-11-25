@@ -18,6 +18,7 @@ from tests.solo_activity.test_solo_attempts_api import (
     ok,
     setup,
     start,
+    to_confirming,
 )
 from tests.solo_activity.test_solo_progress_api import progress, student_row
 from tests.solo_activity.test_solo_state_table import T0, fresh, in_dialogue, turn
@@ -142,6 +143,30 @@ def test_the_student_sees_the_capped_summary_and_can_only_confirm(client, tutor)
     assert done["available_actions"] == ["retry_reflection_prompt", "submit_review"]
 
 
+def test_after_a_capped_scenario_the_student_still_sees_the_summary_it_ended_with(client, tutor):
+    """The scenario is over, but what the student acknowledged stays on their page (fb004)."""
+    _, replies = tutor
+    _, attempt_id, view = capped_attempt(client, replies)
+    shown = view["candidate_summary"]
+    done = confirm(client, attempt_id, view)
+    (scenario,) = done["scenarios"]
+    assert scenario["capped_summary"] == shown
+    assert (
+        ok(client.get(f"/api/v2/solo/attempts/{attempt_id}"))["scenarios"][0]["capped_summary"]
+        == shown
+    )
+
+
+def test_a_confirmed_scenario_has_no_capped_summary(client, tutor):
+    _, replies = tutor
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    view = to_confirming(client, attempt["id"], replies)
+    done = confirm(client, attempt["id"], view)
+    assert done["scenarios"][0]["confirmed_summary"] is not None
+    assert done["scenarios"][0]["capped_summary"] is None
+
+
 def test_the_teacher_sees_a_capped_cell_and_no_confirmed_viewpoint(client, tutor):
     _, replies = tutor
     s, attempt_id, view = capped_attempt(client, replies)
@@ -152,6 +177,19 @@ def test_the_teacher_sees_a_capped_cell_and_no_confirmed_viewpoint(client, tutor
     assert [c["status"] for c in row["cells"]] == ["capped"]
     analysis = ok(client.get(f"/api/v2/solo/activities/{s['activity_id']}/analysis"))
     assert student_row(analysis, "student同學")["confirmed_scenarios"] == 0
+
+
+def test_the_teacher_is_not_given_the_capped_summary(client, tutor):
+    """Only the student's own page carries it; the teacher's transcript leaves it out as before."""
+    _, replies = tutor
+    s, attempt_id, view = capped_attempt(client, replies)
+    confirm(client, attempt_id, view)
+    switch(client, s["teacher"])
+    enrollment = student_row(ok(progress(client, s["activity_id"])), "student同學")["enrollment_id"]
+    teacher = ok(
+        client.get(f"/api/v2/solo/activities/{s['activity_id']}/students/{enrollment}/attempt")
+    )
+    assert "capped_summary" not in teacher["attempt"]["scenarios"][0]
 
 
 def test_confirming_a_capped_summary_keeps_it_for_the_final_summary():

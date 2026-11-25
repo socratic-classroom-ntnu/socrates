@@ -73,11 +73,13 @@
 .solo-dialogue { --solo-bg: #f4f0e8; --solo-line: #ddd5c6; --solo-paper: #fffdf8; min-height: 100vh; background: var(--solo-bg); }
 .solo-dialogue--message { display: grid; place-items: center; align-content: center; gap: 16px; }
 .solo-dialogue--message h1 { margin: 0; font-size: 24px; }
-.solo-dialogue__topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 16px; min-height: 72px; padding: 10px 28px; border-bottom: 1px solid var(--solo-line); background: var(--solo-paper); }
+.solo-dialogue__topbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 16px; min-height: 72px; padding: 10px 28px; border-bottom: 1px solid var(--solo-line); background: var(--solo-paper); }
 .solo-dialogue__brand { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: #2f4a3f; color: #fffdf8; font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 800; text-decoration: none; }
 .solo-dialogue__course { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .solo-dialogue__course strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .solo-dialogue__course span { color: #6e5034; font-family: 'Noto Serif TC', serif; font-size: 13px; }
+.solo-dialogue__exit { padding: 7px 14px; border: 1px solid var(--ui-color-border); border-radius: 999px; color: var(--ui-color-ink); font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.solo-dialogue__exit:hover { background: var(--ui-color-panel-hover); }
 .solo-dialogue__count { padding: 7px 12px; border-radius: 999px; background: #efebe0; color: #57514a; font-size: 14px; font-weight: 700; }
 .solo-dialogue__person { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #e8c46a; font-weight: 800; }
 .solo-dialogue__columns { display: grid; grid-template-columns: minmax(360px, 42%) minmax(0, 1fr); min-height: calc(100vh - 72px); }
@@ -91,14 +93,9 @@
 .solo-question__toggle,
 .solo-dialogue__chevron { display: none; }
 .solo-question__scenario { margin: 0; white-space: pre-wrap; font-family: 'LXGW WenKai TC', 'Noto Serif TC', serif; font-size: 19px; line-height: 1.7; }
-.solo-question__source { display: flex; align-items: center; gap: 6px; margin: -8px 0 0; color: #57514a; font-size: 13px; }
-.solo-choice,
-.solo-explainer { padding: 18px 20px; border-radius: 12px; background: #fffdf8; }
-.solo-choice--empty { border: 1px dashed #a99e8a; background: transparent; }
-.solo-choice h2,
-.solo-explainer h2 { margin: 0 0 10px; font-size: 15px; }
-.solo-choice p,
-.solo-explainer p { margin: 6px 0 0; color: #57514a; font-size: 14px; line-height: 1.65; }
+.solo-choice { padding: 18px 20px; border-radius: 12px; background: #fffdf8; }
+.solo-choice h2 { margin: 0 0 10px; font-size: 15px; }
+.solo-choice p { margin: 6px 0 0; color: #57514a; font-size: 14px; line-height: 1.65; }
 .solo-choice__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .solo-choice__head h2 { margin: 0; }
 .solo-choice .solo-choice__reason { margin-top: 10px; color: #3a362f; font-family: 'LXGW WenKai TC', serif; font-size: 16px; line-height: 1.7; }
@@ -110,7 +107,6 @@
 [data-option='C'] { --stance: #d9a22e; --stance-ink: #1e1c18; }
 [data-option='D'] { --stance: #1e6b60; --stance-ink: #fffdf8; }
 .solo-stance-chip[data-option] { background: var(--stance); color: var(--stance-ink); }
-.solo-explainer { margin-top: auto; background: transparent; }
 .solo-conversation { display: flex; min-width: 0; max-height: calc(100vh - 72px); flex-direction: column; padding: 28px 36px 24px; }
 .solo-timeline { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 18px; overflow-y: auto; padding: 0 14px 22px; }
 .solo-message { display: flex; max-width: 82%; gap: 10px; }
@@ -196,6 +192,12 @@
 .solo-confirmed { align-self: stretch; padding: 16px 20px; border: 1px solid #ddd5c6; border-radius: 14px; background: #fffdf8; }
 .solo-confirmed strong { color: #2f4a3f; font-size: 15px; }
 .solo-confirmed p { margin: 6px 0 0; color: #3a362f; line-height: 1.65; }
+.solo-confirmed dl { margin: 6px 0 0; }
+.solo-confirmed dl > div + div { margin-top: 6px; }
+.solo-confirmed dt { color: var(--ui-color-muted); font-size: 12px; font-weight: 700; }
+.solo-confirmed dd { margin: 2px 0 0; color: var(--ui-color-ink-soft); line-height: 1.65; }
+.solo-confirmed ul { margin: 0; padding-left: 1.2em; }
+.solo-confirmed--capped strong { color: var(--ui-color-muted); }
 /* 輸入區的位置換成深綠橫條 */
 .solo-review { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 0 14px 18px; padding: 20px 24px; border-radius: 14px; background: #2f4a3f; color: #fffdf8; }
 .solo-review h2 { margin: 0; color: #e8c46a; font-size: 13px; font-weight: 700; }
@@ -240,7 +242,7 @@
 /* ---------- 手機版（設計稿 A0m／A1m／A2m）：一欄，黑板收在上方，對話整頁捲動，輸入區固定在底部 ---------- */
 @media (max-width: 767px) {
   .solo-dialogue:not(.solo-dialogue--message) { display: flex; height: 100vh; height: 100dvh; min-height: 0; flex-direction: column; }
-  .solo-dialogue__topbar { grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px; min-height: 56px; padding: 0 12px 0 4px; }
+  .solo-dialogue__topbar { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 4px; min-height: 56px; padding: 0 12px 0 4px; }
   .solo-dialogue__brand { width: 44px; height: 44px; background: transparent; color: var(--ui-color-ink); }
   .solo-dialogue__logo,
   .solo-dialogue__course > span,
@@ -249,13 +251,12 @@
   .solo-dialogue__chevron { display: block; }
   .solo-dialogue__course strong { font-size: 16px; }
   .solo-dialogue__count { padding: 5px 10px; font-size: 13px; }
+  .solo-dialogue__exit { padding: 5px 10px; font-size: 13px; }
   .solo-dialogue__columns { display: flex; flex: 1; min-height: 0; flex-direction: column; }
 
   .solo-question { flex: none; max-height: none; gap: 0; overflow: visible; padding: 10px 12px 0; border-right: 0; background: transparent; }
-  .solo-question__source,
   .solo-question .solo-choice,
-  .solo-question .solo-progress-list,
-  .solo-question .solo-explainer { display: none; }
+  .solo-question .solo-progress-list { display: none; }
   .solo-question__board { padding: 10px 14px; border-width: 4px; border-radius: 8px; }
   .solo-question__head { position: relative; display: flex; min-height: 32px; align-items: center; justify-content: space-between; gap: 8px; }
   .solo-question__head h1 { margin: 0; font-weight: 700; }

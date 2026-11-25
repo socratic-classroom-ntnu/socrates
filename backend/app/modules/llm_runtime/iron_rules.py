@@ -34,6 +34,8 @@ DIRECT_ROLES = ("other_suggestion", "connection_probe")
 KNOWN_CHECKS = frozenset({"screen_input", "no_leak", "pull_back", "language", "citations"})
 # Failing these twice is an error even for roles with a pull-back sentence: that sentence is
 # fixed Chinese text with no citations, so it cannot fix either.
+# Schema failures a reminder can fix: a required string left "" and a list with too few items.
+SHORT_RULES = frozenset({"string_too_short", "too_short"})
 TYPED_REASONS = frozenset({"WRONG_LANGUAGE", "NO_VALID_CITATION"})
 # Fields the model copies or picks from a fixed set rather than writes in output_locale.
 NOT_IN_LOCALE = frozenset(
@@ -238,11 +240,36 @@ def _locale_texts(value: object, key: str | None = None) -> Iterator[str]:
             yield from _locale_texts(item, key)
 
 
+SCRIPT_DIR = RULES_DIR / "script"
+# Quoted words are the student's own and keep their script: 「」『』“” and straight quotes.
+_QUOTED = re.compile(r'「[^」]*」|『[^』]*』|“[^”]*”|"[^"]*"')
+
+
+@lru_cache(maxsize=4)
+def _only_in(variant: str) -> frozenset[str]:
+    """Han characters used only in one script (script/zh-Hans-only.txt, zh-Hant-only.txt)."""
+    text = (ROOT / SCRIPT_DIR / f"zh-{variant}-only.txt").read_text(encoding="utf-8")
+    return frozenset("".join(line for line in text.splitlines() if not line.startswith("#")))
+
+
+def han_variant(locale: str) -> str | None:
+    """Hant for zh-Hant／zh-TW／HK／MO, Hans for zh-Hans／zh-CN／SG; None for plain zh."""
+    parts = locale.replace("_", "-").lower().split("-")
+    if parts[0] != "zh" or len(parts) < 2:
+        return None
+    if parts[1] in ("hant", "tw", "hk", "mo"):
+        return "Hant"
+    if parts[1] in ("hans", "cn", "sg"):
+        return "Hans"
+    return None
+
+
 def in_locale(text: str, locale: str) -> bool:
     """A script-level check: the letters are mostly in the locale's script.
 
-    It tells Chinese from English or Korean, not Traditional from Simplified; unknown locales
-    and texts without letters pass.
+    For Chinese with a script (zh-Hant, zh-TW, zh-Hans, ...) the text also may not use a
+    character only the other script has, outside quotes: a zh-Hant reply with 这 or 说 fails,
+    and so does a zh-Hans reply with 這 or 說. Unknown locales and texts without letters pass.
     """
     han = sum("\u4e00" <= c <= "\u9fff" or "\u3400" <= c <= "\u4dbf" for c in text)
     kana = sum("\u3040" <= c <= "\u30ff" for c in text)
@@ -250,7 +277,13 @@ def in_locale(text: str, locale: str) -> bool:
     latin = sum(c.isascii() and c.isalpha() for c in text)
     language = locale.split("-")[0].lower()
     if language == "zh":
-        return han >= latin + kana + hangul
+        if han < latin + kana + hangul:
+            return False
+        variant = han_variant(locale)
+        if variant is None:
+            return True
+        other = _only_in("Hans" if variant == "Hant" else "Hant")
+        return not any(c in other for c in _QUOTED.sub("", text))
     if language == "ja":
         return kana > 0 or han + kana + hangul + latin == 0
     if language == "ko":
@@ -356,23 +389,31 @@ def _note(messages: list[JSON], note: str) -> list[JSON]:
 
 
 RETRY_FIX = {
-    "WRONG_LANGUAGE": "給人看的文字一律改用 output_locale 的語言寫，引用學生的話照原文。",
+    "WRONG_LANGUAGE": (
+        "給人看的文字一律改用 output_locale 的語言與字體寫（zh-Hant 用繁體字、zh-Hans 用簡體字），"
+        "引用學生的話照原文。"
+    ),
     "NO_VALID_CITATION": "引用只能用 student_messages 裡的 ref，quote 從那則 text 逐字複製一段。",
 }
 
 
-def empty_note(paths: list[str]) -> str:
-    return (
-        f"格式提醒：上一個回應的 {'、'.join(paths)} 是空的；這些欄位必須有內容，其餘照原本的要求。"
+def short_note(fields: list[tuple[str, str]]) -> str:
+    said = "；".join(
+        f"{path} 是空的，必須有內容"
+        if rule == "string_too_short"
+        else f"{path} 的項目太少，要補到格式要求的數量"
+        for path, rule in fields
     )
+    return f"格式提醒：上一個回應的 {said}；其餘照原本的要求。"
 
 
-def left_empty(failure: Any) -> list[str]:
-    """Paths of the required strings the model left "" (every string minimum is 1 character);
-    [] when anything else broke the schema, which a reminder would not fix."""
-    if not failure.fields or any(rule != "string_too_short" for _, rule in failure.fields):
+def fell_short(failure: Any) -> list[tuple[str, str]]:
+    """The (path, rule) pairs when the model only came in under a minimum: a required string left
+    "" or a list with too few items (Claude Haiku ignores both). [] when anything else broke the
+    schema, which a reminder would not fix."""
+    if not failure.fields or any(rule not in SHORT_RULES for _, rule in failure.fields):
         return []
-    return [path for path, _ in failure.fields]
+    return list(failure.fields)
 
 
 def retry_note(reason: str) -> str:
@@ -435,19 +476,20 @@ async def guarded_generate(
     if hint:
         prompt = _note(prompt, OVERRIDE_NOTE)
     reasons: list[str] = []
-    empty: list[str] = []
+    short: list[tuple[str, str]] = []
     try:
         result, audit = await generate(binding, prompt, schema, hold)
         reason = check(kind, result, hint, context)
     except ProviderSchemaMismatch as failure:
-        empty = left_empty(failure)
-        if not empty:
+        short = fell_short(failure)
+        if not short:
             raise
-        audit, reason = failure.audit, "EMPTY_FIELD"
+        strings_only = all(rule == "string_too_short" for _, rule in short)
+        audit, reason = failure.audit, "EMPTY_FIELD" if strings_only else "TOO_FEW_ITEMS"
     if reason:
         reasons.append(reason)
         first = audit
-        note = empty_note(empty) if empty else retry_note(reason)
+        note = short_note(short) if short else retry_note(reason)
         result, audit = await generate(binding, _note(prompt, note), schema, hold)
         audit = merge_usage(first, audit)
         reason = check(kind, result, hint, context)

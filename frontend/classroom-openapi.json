@@ -8265,6 +8265,16 @@
             ],
             "title": "Answer"
           },
+          "capped_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PersonalSummaryView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "change": {
             "anyOf": [
               {

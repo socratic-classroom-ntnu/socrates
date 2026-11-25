@@ -27,6 +27,7 @@ export default {
     saved: 'Saved', thinking: 'Thinking about what you said…', hypothetical: 'Try another scenario · The original question stays the same',
   },
   composer: {
+    voiceNetwork: 'This browser cannot reach a speech recognition service (browsers without Google services, such as Helium or Brave, have none built in). Use Chrome or Edge, or type instead.', voiceDenied: 'The microphone is not allowed. Allow it in the site settings left of the address bar, then press the microphone again.', voiceNoMic: 'No microphone was found. Check that one is connected and not in use by another app.', voiceNoSpeech: 'No speech was heard. Move closer to the microphone and try again, or type instead.', voiceLanguage: 'This browser\'s speech recognition does not support this language. Use Chrome or Edge.', voiceOther: 'Voice input stopped. What you typed is still here; press the microphone again or type.',
     label: 'Reply to Socrates', placeholder: 'Tell me your reasons, or what you are unsure about…', waitingPlaceholder: 'You can continue after Socrates replies', unavailablePlaceholder: 'You can keep answering once Socrates responds',
     answerLabel: 'Your answer', answerPlaceholder: 'Say in your own words what you would do and why…',
     answerHint: 'Just answer in your own words. You do not need to pick a side, and there is no standard answer. Your draft is saved automatically.',

@@ -42,7 +42,7 @@ type FakeRecognition = {
   interimResults: boolean
   onresult: ((event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
   onend: (() => void) | null
-  onerror: (() => void) | null
+  onerror: ((event: { error: string }) => void) | null
   start(): void
   stop(): void
 }
@@ -240,6 +240,46 @@ test.each([
 
   fireEvent.click(await screen.findByRole('button', { name: voiceLabel }))
   expect(recognitionInstances[0].lang).toBe(expectedLanguage)
+})
+
+describe('when dictation stops without text it says why (PR-19)', () => {
+  async function pressMic() {
+    enableSpeechRecognition()
+    renderPage({
+      'GET /solo/activities/a-1': activity,
+      'GET /solo/attempts/attempt-1': dialogueAttempt,
+    })
+    fireEvent.click(await screen.findByRole('button', { name: '用說的' }))
+    return recognitionInstances[0]
+  }
+
+  test('a browser without a speech service (Helium) is told to use Chrome or Edge', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onerror?.({ error: 'network' }))
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('這個瀏覽器連不到語音辨識服務')
+    expect(screen.getByRole('button', { name: '用說的' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('a blocked microphone says where to allow it', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onerror?.({ error: 'not-allowed' }))
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('麥克風沒有被允許')
+  })
+
+  test('ending with nothing heard says so, and the note clears on the next press', async () => {
+    const recognition = await pressMic()
+    act(() => recognition.onend?.())
+    expect(screen.getByText((_, el) => el?.classList.contains('solo-composer__voice-note') ?? false)).toHaveTextContent('沒有聽到聲音')
+    fireEvent.click(screen.getByRole('button', { name: '用說的' }))
+    expect(document.querySelector('.solo-composer__voice-note')).toBeNull()
+  })
+
+  test('a transcript leaves no note', async () => {
+    const recognition = await pressMic()
+    act(() => deliverTranscript(recognition, '我覺得要看情況。'))
+    act(() => recognition.onend?.())
+    expect(document.querySelector('.solo-composer__voice-note')).toBeNull()
+  })
 })
 
 test('voice button shows recording state, stops on a second press, and disables while waiting', async () => {

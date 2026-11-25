@@ -27,6 +27,7 @@ export default {
     saved: '已保存', thinking: '正在想你说的话…', hypothetical: '换个情境想想 · 不改变原题',
   },
   composer: {
+    voiceNetwork: '这个浏览器连不到语音识别服务（Helium、Brave 这类去掉 Google 服务的浏览器没有内置语音识别），请改用 Chrome 或 Edge，或直接打字。', voiceDenied: '麦克风没有被允许：请在地址栏左侧的网站设置允许麦克风，再按一次麦克风。', voiceNoMic: '找不到可用的麦克风，请确认麦克风已接上、没有被其他程序占用。', voiceNoSpeech: '没有听到声音，请靠近麦克风再按一次，也可以直接打字。', voiceLanguage: '这个浏览器的语音识别不支持这个语言，请改用 Chrome 或 Edge。', voiceOther: '语音输入中断了，打好的字都还在；可以再按一次麦克风，或直接打字。',
     label: '回答苏格拉底', placeholder: '说说你的理由，或者你在犹豫什么…', waitingPlaceholder: '苏格拉底回复后，就可以接着写', unavailablePlaceholder: '等苏格拉底回复后，就可以继续回答',
     answerLabel: '你的回答', answerPlaceholder: '用你自己的话说说，你会怎么做、为什么…',
     answerHint: '用自己的话回答就好，不用选立场，也没有标准答案。草稿会自动保存。',

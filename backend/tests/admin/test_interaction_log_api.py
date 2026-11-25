@@ -2,6 +2,7 @@
 interaction_log.py），管理員在後台看摘要、下載完整紀錄。"""
 
 import json
+import threading
 import time
 import uuid
 
@@ -14,10 +15,13 @@ from app.modules.platform import interaction_log
 from app.modules.platform.toggles import set_toggle
 from app.modules.platform import storage as storage
 from app.modules.platform.repositories import InteractionEvent
+from app.modules.solo_activity import radar
 from tests.admin.test_admin_api import make_admin
+from tests.classroom.test_iron_rules import Fake, run, tutor
 from tests.course_management.conftest import PASSWORD, switch, user
 from tests.solo_activity.test_solo_attempts_api import NOT_MET, answer, ok, setup, start
-from tests.solo_activity.test_solo_guests import join_as_guest
+from tests.solo_activity.test_solo_guests import as_teacher, join_as_guest
+from tests.solo_activity.test_solo_radar_api import DIMENSIONS, complete, get_radar, scores
 
 KEY = "test-interaction-log-key"
 
@@ -31,6 +35,7 @@ def recording(monkeypatch, client):
 
 
 def events(kind=None):
+    interaction_log.flush()  # model records are written on their own thread, after the reply
     with storage.transaction() as db:
         query = select(InteractionEvent).order_by(InteractionEvent.id)
         if kind:
@@ -244,3 +249,49 @@ def test_records_past_the_retention_are_deleted(client, monkeypatch):
         for event in db.scalars(select(InteractionEvent)):
             event.at = time.time() - 2 * 86400
     assert interaction_log.purge() == 1 and events() == []
+
+
+def test_the_reply_does_not_wait_for_its_record(monkeypatch):
+    """The record is written after the reply returns, so a slow database never makes the student
+    wait or pushes the call past its timeout (review of #216)."""
+    opened = threading.Event()
+    written = []
+
+    def slow_record(*args, **kwargs):
+        opened.wait(5)
+        written.append(kwargs.get("subject"))
+
+    monkeypatch.setattr(interaction_log, "record", slow_record)
+
+    fake = Fake(tutor("你為什麼這樣想？"))
+    started = time.monotonic()
+    result, audit, _ = run(fake, "不能主動害人")
+    assert audit["iron_rules"]["outcome"] == "pass"
+    assert time.monotonic() - started < 2 and written == []
+    opened.set()
+    interaction_log.flush()
+    assert len(written) == 1
+
+
+def test_an_expired_guests_words_in_the_teachers_radar_go_with_them(client, tutor):
+    """The radar sends the class's words under the teacher's subject; each call lists whose words
+    it carried, so when a guest expires those records are deleted too (review of #216)."""
+    _, replies = tutor
+    s = setup(client)
+    guest = join_as_guest(client, s)
+    attempt = ok(start(client, s["activity_id"]))
+    complete(attempt["id"], words="訪客自己的話")
+    as_teacher(client, s)
+    replies.extend([DIMENSIONS, scores(quote="訪客自己的話")])
+    ok(get_radar(client, s))
+    teacher = interaction_log.pseudonym(s["teacher"]["id"])
+    mine = interaction_log.pseudonym(guest["id"])
+    calls = [
+        e for e in events("model") if e["name"] in (radar.DIMENSIONS_PROGRAM, radar.SCORING_PROGRAM)
+    ]
+    assert [e["name"] for e in calls] == [radar.DIMENSIONS_PROGRAM, radar.SCORING_PROGRAM]
+    assert all(e["subject"] == teacher and e["data"]["about_ids"] == [mine] for e in calls)
+    assert guest["id"] not in json.dumps(events(), ensure_ascii=False)
+    guests.expire_guests(now=time.time() + 10**7)
+    assert "訪客自己的話" not in json.dumps(events(), ensure_ascii=False)
+    assert events()  # the teacher's own requests stay

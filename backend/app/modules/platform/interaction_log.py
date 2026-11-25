@@ -6,7 +6,10 @@
   查詢參數、狀態碼、耗時，以及請求內容。登入、帳號、AI 連線與系統 AI 的請求內容一律不記
   （那裡有密碼和金鑰），其他請求內容裡的密碼、金鑰、帳號名稱、Email、顯示名稱也會先遮掉。
 - ``record_model``：每一次經過鐵則的模型呼叫一筆（llm_runtime 呼叫）：程式、模型、送進去的
-  context、完整的回覆、鐵則結果與 token 用量；呼叫失敗也記下原因。
+  context、完整的回覆、鐵則結果與 token 用量；呼叫失敗也記下原因。llm_runtime 經
+  ``record_model_later`` 交給一條寫紀錄的執行緒，回覆不等這筆寫完，資料庫慢也不會拖到學生。
+  送進去的內容含其他人的話時（例如老師開雷達），呼叫端把那些人列在 ``about``，存成
+  ``about_ids``（雜湊）；訪客過期時，提到他的紀錄跟他自己的一起刪。
 
 誰做的只記 ``subject``：帳號 id 以部署金鑰做 HMAC 後的前 24 個字元，同一個人每次都一樣、
 但從紀錄回推不到帳號。後台開關「分析紀錄」關掉時兩個入口都不寫。
@@ -16,6 +19,8 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 import hashlib
 import hmac
 import json
@@ -195,6 +200,9 @@ def record_model(
     result: dict[str, Any] | None = None,
     audit: dict[str, Any] | None = None,
     error: BaseException | None = None,
+    ended: float | None = None,
+    subject: str | None = None,
+    about: list[str] | None = None,
 ) -> None:
     rules = (audit or {}).get("iron_rules") or {}
     if error is not None:
@@ -213,9 +221,44 @@ def record_model(
             "result": result,
             "iron_rules": rules or None,
             "token_usage": (audit or {}).get("token_usage"),
+            # The people whose words were sent, as their keyed hash (scrub hashes *_ids).
+            "about_ids": list(about) if about else None,
         },
-        latency_ms=round((time.monotonic() - started) * 1000),
+        subject=subject,
+        latency_ms=round(((time.monotonic() if ended is None else ended) - started) * 1000),
     )
+
+
+# One writer thread: a model call hands its record over and returns at once, so the write never
+# counts toward the caller's timeout or makes a student wait for the database.
+_writer = ThreadPoolExecutor(max_workers=1, thread_name_prefix="interaction-log")
+_pending: set[Future[None]] = set()
+_pending_lock = threading.Lock()
+
+
+def _done(future: Future[None]) -> None:
+    with _pending_lock:
+        _pending.discard(future)
+
+
+def record_model_later(**fields: Any) -> None:
+    """``record_model`` on the writer thread. The subject and the time the call ended are taken
+    now, in the caller's request, not when the write happens."""
+    if _key() is None:
+        return
+    fields.setdefault("subject", _subject.get())
+    fields.setdefault("ended", time.monotonic())
+    future = _writer.submit(record_model, **fields)
+    with _pending_lock:
+        _pending.add(future)
+    future.add_done_callback(_done)
+
+
+def flush(timeout: float = 10.0) -> None:
+    """Wait for the records already handed to the writer thread (tests read right after)."""
+    with _pending_lock:
+        pending = list(_pending)
+    wait(pending, timeout=timeout)
 
 
 class Middleware:
@@ -330,13 +373,25 @@ class GuestRecords:
         )
 
     def forget_name(self, db: Any, guest_id: str) -> None:
-        from sqlalchemy import delete
+        from sqlalchemy import Text, cast, delete, or_
 
         from app.modules.platform.repositories import InteractionEvent
 
         if _key() is None:
             return
-        db.execute(delete(InteractionEvent).where(InteractionEvent.subject == pseudonym(guest_id)))
+        flush()
+        mine = pseudonym(guest_id)
+        # Their own records, and any record whose sent words were theirs (about_ids), such as a
+        # teacher's radar run over the class. The hash is 24 hex characters, so matching it in
+        # the record's text finds only records that carry it.
+        db.execute(
+            delete(InteractionEvent).where(
+                or_(
+                    InteractionEvent.subject == mine,
+                    cast(InteractionEvent.data, Text).like(f"%{mine}%"),
+                )
+            )
+        )
 
 
 GUEST_HOOK = GuestRecords()

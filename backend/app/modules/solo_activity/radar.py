@@ -118,6 +118,8 @@ def _students(
         found.append(
             {
                 "student_id": enrollment.id,
+                # Whose words these are, for the side record only (never in the stored radar).
+                "account_id": enrollment.account_id,
                 "display_name": name,
                 "attempt_id": row.id,
                 "summary": final["summary"],
@@ -325,7 +327,12 @@ async def _scoring_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
         }
         async with gate:
             result = await _call(
-                prepared, SCORING_PROGRAM, RadarScores, context, "solo.radar_scoring"
+                prepared,
+                SCORING_PROGRAM,
+                RadarScores,
+                context,
+                "solo.radar_scoring",
+                about=[student["account_id"]],
             )
         if result is None:
             return None
@@ -354,9 +361,16 @@ async def _scoring_route(prepared: Doc) -> tuple[list[Doc], list[Doc]] | None:
 
 
 async def _call(
-    prepared: Doc, kind: str, schema: type[BaseModel], context: Doc, endpoint: str
+    prepared: Doc,
+    kind: str,
+    schema: type[BaseModel],
+    context: Doc,
+    endpoint: str,
+    about: list[str] | None = None,
 ) -> Any:
-    """One program through the owner's bindings; the validated result, or None."""
+    """One program through the owner's bindings; the validated result, or None. ``about``: whose
+    words the context carries (default: every student in the run), so the side record of the
+    call is deleted with any of them."""
     with transaction() as db:
         messages, compiled, _ = compile_program(db, kind, context)
     called = await service._call_program(
@@ -366,6 +380,9 @@ async def _call(
             "messages": messages,
             "schema": compiled,
             "context": context,
+            "about": about
+            if about is not None
+            else [s["account_id"] for s in prepared["students"]],
         },
         kind,
         schema,

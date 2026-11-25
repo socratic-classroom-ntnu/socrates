@@ -588,6 +588,7 @@ async def _call_program(prepared: dict, kind: str, schema, endpoint: str):
                     no_delta,
                     kind=kind,
                     context=prepared["context"],
+                    about=prepared.get("about"),
                 ),
                 PROVIDER_TIMEOUT_SECONDS,
             )

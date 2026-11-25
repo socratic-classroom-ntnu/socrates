@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 import time
@@ -421,31 +420,30 @@ async def guarded_generate(
     kind: str,
     context: JSON | None = None,
     generate: Generate | None = None,
+    about: list[str] | None = None,
 ) -> tuple[JSON, JSON]:
-    """以鐵則包住一次 provider 呼叫，並把這次呼叫與完整回覆側錄進後台「分析紀錄」。"""
+    """以鐵則包住一次 provider 呼叫，並把這次呼叫與完整回覆側錄進後台「分析紀錄」。
+
+    紀錄交給寫紀錄的執行緒，回覆不等它寫完。``about``：送進去的內容裡有誰的話（帳號 id），
+    讓那人的紀錄刪除時這筆也跟著刪。"""
     started = time.monotonic()
     try:
         result, audit = await _guarded_call(
             binding, messages, schema, on_delta, kind=kind, context=context, generate=generate
         )
     except Exception as error:
-        await asyncio.to_thread(
-            interaction_log.record_model,
-            kind=kind,
-            binding=binding,
-            context=context,
-            started=started,
-            error=error,
+        interaction_log.record_model_later(
+            kind=kind, binding=binding, context=context, started=started, error=error, about=about
         )
         raise
-    await asyncio.to_thread(
-        interaction_log.record_model,
+    interaction_log.record_model_later(
         kind=kind,
         binding=binding,
         context=context,
         started=started,
         result=result,
         audit=audit,
+        about=about,
     )
     return result, audit
 

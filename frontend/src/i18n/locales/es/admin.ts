@@ -112,7 +112,7 @@ export default {
   },
   reports: {
     range: "Periodo",
-    days: { 1: "Hoy", 7: "Últimos 7 días", 30: "Últimos 30 días" },
+    days: { 1: "Últimas 24 horas", 7: "Últimos 7 días", 30: "Últimos 30 días" },
     lead: "Las dos tablas se calculan con lo que el sitio ya registró; no se llama a ningún modelo.",
     loadFailed: "No se pudieron cargar los informes. Recarga la página.",
     eval: {

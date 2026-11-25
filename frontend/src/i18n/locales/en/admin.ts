@@ -112,7 +112,7 @@ export default {
   },
   reports: {
     range: "Time range",
-    days: { 1: "Today", 7: "Last 7 days", 30: "Last 30 days" },
+    days: { 1: "Last 24 hours", 7: "Last 7 days", 30: "Last 30 days" },
     lead: "Both tables are computed from what the site already recorded; no model is called.",
     loadFailed: "Couldn't load the reports. Please refresh the page.",
     eval: {

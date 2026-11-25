@@ -27,6 +27,7 @@ export default {
     saved: 'Guardado', thinking: 'Estoy pensando en lo que dijiste…', hypothetical: 'Prueba otro escenario · La pregunta original no cambia',
   },
   composer: {
+    voiceNetwork: 'Este navegador no puede usar un servicio de reconocimiento de voz (los navegadores sin servicios de Google, como Helium o Brave, no lo incluyen). Usa Chrome o Edge, o escribe.', voiceDenied: 'El micrófono no está permitido. Permítelo en la configuración del sitio, a la izquierda de la barra de direcciones, y vuelve a pulsar el micrófono.', voiceNoMic: 'No se encontró un micrófono. Comprueba que esté conectado y que otra aplicación no lo esté usando.', voiceNoSpeech: 'No se oyó nada. Acércate al micrófono y vuelve a intentarlo, o escribe.', voiceLanguage: 'El reconocimiento de voz de este navegador no admite este idioma. Usa Chrome o Edge.', voiceOther: 'La entrada por voz se detuvo. Lo que escribiste sigue aquí; vuelve a pulsar el micrófono o escribe.',
     label: 'Responder a Sócrates', placeholder: 'Cuéntame tus razones, o qué te hace dudar…', waitingPlaceholder: 'Podrás continuar cuando Sócrates responda', unavailablePlaceholder: 'Podrás seguir respondiendo cuando Sócrates responda',
     answerLabel: 'Tu respuesta', answerPlaceholder: 'Cuenta con tus palabras qué harías y por qué…',
     answerHint: 'Responde con tus palabras. No hace falta elegir un bando y no hay una respuesta estándar. El borrador se guarda automáticamente.',

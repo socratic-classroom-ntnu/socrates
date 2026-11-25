@@ -27,6 +27,7 @@ export default {
     saved: '已保存', thinking: '正在想你說的話…', hypothetical: '換個情境想想 · 不改變原題',
   },
   composer: {
+    voiceNetwork: '這個瀏覽器連不到語音辨識服務（Helium、Brave 這類拿掉 Google 服務的瀏覽器沒有內建語音辨識），請改用 Chrome 或 Edge，或直接打字。', voiceDenied: '麥克風沒有被允許：請在網址列左側的網站設定允許麥克風，再按一次麥克風。', voiceNoMic: '找不到可用的麥克風，請確認麥克風已接上、沒有被其他程式占用。', voiceNoSpeech: '沒有聽到聲音，請靠近麥克風再按一次，也可以直接打字。', voiceLanguage: '這個瀏覽器的語音辨識不支援這個語言，請改用 Chrome 或 Edge。', voiceOther: '語音輸入中斷了，打好的字都還在；可以再按一次麥克風，或直接打字。',
     label: '回答蘇格拉底', placeholder: '說說你的理由，或者你在猶豫什麼…', waitingPlaceholder: '蘇格拉底回覆後，就可以接著寫', unavailablePlaceholder: '等蘇格拉底回應後，就可以繼續回答',
     answerLabel: '你的回答', answerPlaceholder: '用你自己的話說說，你會怎麼做、為什麼…',
     answerHint: '用自己的話回答就好，不用選立場，也沒有標準答案。草稿會自動保存。',

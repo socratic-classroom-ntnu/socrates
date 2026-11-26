@@ -43,7 +43,6 @@ export default {
   },
   revise: {
     echoTitle: 'Sentiste que este resumen no era del todo correcto',
-    reason: 'Razón: {{value}}', conditions: 'Condiciones: {{value}}', separator: ' / ',
     ask: 'Gracias por decírmelo; no lo entendí bien. ¿Qué parte no se parece a ti: la postura, la razón o las condiciones? Dilo con tus propias palabras.',
     quickLabel: '¿Qué no encaja? (Elige una opción)', quickPrompt: '¿Qué no encaja?',
     quickPosition: 'La postura no encaja', quickReason: 'La razón no encaja', quickConditions: 'Las condiciones no encajan', quickChanged: 'En realidad cambié de opinión',
@@ -53,7 +52,7 @@ export default {
   viewpoint: {
     title: 'Intenté resumir tu postura. ¿Está bien expresada?',
     blank: '(Aún sin explicar)',
-    reason: 'Razón', conditions: 'Condiciones',
+    position: 'Postura', reason: 'Razón', conditions: 'Condiciones',
     principle: 'Idea relacionada: {{principle}}', principleNote: 'Es solo una referencia, no una etiqueta para ti.',
     confirm: 'Sí, eso es lo que pienso', revise: 'No del todo, quiero explicarlo mejor',
     cappedTitle: 'Llegaste al límite de mensajes. Así queda hasta ahora. Este escenario no se marcará como confirmado.', cappedConfirm: 'De acuerdo, entendido',

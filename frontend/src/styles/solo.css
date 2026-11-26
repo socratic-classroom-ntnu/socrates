@@ -198,6 +198,12 @@
 .solo-confirmed dd { margin: 2px 0 0; color: var(--ui-color-ink-soft); line-height: 1.65; }
 .solo-confirmed ul { margin: 0; padding-left: 1.2em; }
 .solo-confirmed--capped strong { color: var(--ui-color-muted); }
+/* 學生按「不太對」的那份整理：跟觀點卡同樣分列（fb005） */
+.solo-rejected dl { margin: 6px 0 0; }
+.solo-rejected dl > div + div { margin-top: 6px; }
+.solo-rejected dt { color: var(--ui-color-muted); font-size: 12px; font-weight: 700; }
+.solo-rejected dd { margin: 2px 0 0; line-height: 1.65; }
+.solo-rejected ul { margin: 0; padding-left: 1.2em; }
 /* 輸入區的位置換成深綠橫條 */
 .solo-review { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin: 0 14px 18px; padding: 20px 24px; border-radius: 14px; background: #2f4a3f; color: #fffdf8; }
 .solo-review h2 { margin: 0; color: #e8c46a; font-size: 13px; font-weight: 700; }

@@ -1,5 +1,6 @@
 import { useT } from '../../i18n/useT'
 import { can, currentScenario, principleKey, type SoloAttemptView } from './soloView'
+import { SummaryRows } from './SummaryRows'
 
 type Props = {
   view: SoloAttemptView
@@ -30,16 +31,7 @@ export function ViewpointCard({ view, pending, onConfirm, onRevise }: Props) {
       </div>
     </article>
     <section className="solo-viewpoint" aria-labelledby="solo-viewpoint-title">
-      <dl>
-        <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary.trim()
-          ? summary.reason_summary
-          // Some models leave it empty until the student has said something to summarise.
-          : <span className="solo-viewpoint__blank">{t('viewpoint.blank')}</span>}</dd></div>
-        {summary.relevant_conditions.length > 0 && <div>
-          <dt>{t('viewpoint.conditions')}</dt>
-          <dd><ul>{summary.relevant_conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></dd>
-        </div>}
-      </dl>
+      <SummaryRows summary={summary} />
       {principle && <div className="solo-viewpoint__principle">
         <strong>{t('viewpoint.principle', { principle })}</strong>
         {summary.principle_note && <p>{summary.principle_note}</p>}

@@ -1056,7 +1056,8 @@ test('confirming shows summary and both choices', async () => {
   expect(card).not.toContainElement(ask)
   expect(card).not.toHaveTextContent('我試著整理你的想法')
   expect(card.querySelector('.solo-stance-chip')).toBeNull()
-  expect(card).not.toHaveTextContent('立場')
+  // fb005: the card lists the 立場 the 「立場不太對」 button refers to, as its first row.
+  expect(within(card).getAllByRole('term').map(term => term.textContent)).toEqual(['立場', '理由', '條件'])
   expect(card).toHaveTextContent('主動介入會讓我直接承擔另一個人的死亡。')
   expect(screen.getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
   expect(screen.getByText('如果軌道上的人是我認識的人，我可能會改變選擇。')).toBeInTheDocument()
@@ -1077,7 +1078,8 @@ test('a summary whose reason is still blank says so in grey and can still be ans
   const row = within(card).getByText('理由').closest('div')!
   const blank = within(row).getByText('（還沒說明）')
   expect(blank).toHaveClass('solo-viewpoint__blank')
-  expect(within(card).getAllByText('（還沒說明）')).toHaveLength(1)
+  // The blank fixture has no 立場 either, so that row says so too.
+  expect(within(card).getAllByText('（還沒說明）')).toHaveLength(2)
   expect(screen.getByRole('button', { name: '對，這就是我的想法' })).toBeEnabled()
   expect(screen.getByRole('button', { name: '不太對，我想再說清楚' })).toBeEnabled()
 })
@@ -1093,7 +1095,7 @@ test('a capped scenario with nothing written yet shows the same grey words and k
     },
   })
   const card = await screen.findByRole('region', { name: /訊息已達上限/ })
-  expect(within(card).getByText('（還沒說明）')).toHaveClass('solo-viewpoint__blank')
+  for (const blank of within(card).getAllByText('（還沒說明）')) expect(blank).toHaveClass('solo-viewpoint__blank')
   expect(screen.getByRole('button', { name: '好，我知道了' })).toBeEnabled()
 })
 
@@ -1113,7 +1115,8 @@ test('a reason of only blank space counts as not written', async () => {
     'GET /solo/attempts/attempt-1': { ...confirmingAttempt, candidate_summary: { ...blankSummary, reason_summary: '  \n ' } },
   })
   const card = await screen.findByRole('region', { name: '我試著整理你的想法，這樣說對嗎？' })
-  expect(within(card).getByText('（還沒說明）')).toBeInTheDocument()
+  const row = within(card).getByText('理由').closest('div')!
+  expect(within(row).getByText('（還沒說明）')).toBeInTheDocument()
 })
 
 test('a capped scenario says the limit was reached and is not agreed to as "my view"', async () => {
@@ -1266,9 +1269,12 @@ test('revising shows rejected summary and structured quick options (X1)', async 
 
   const timeline = await screen.findByRole('region', { name: '對話紀錄' })
   const echo = within(timeline).getByText('你覺得這段整理不太對').closest('article') as HTMLElement
-  expect(echo).not.toHaveTextContent('立場')
-  expect(echo).toHaveTextContent('理由：主動介入會讓我直接承擔另一個人的死亡。')
-  expect(echo).toHaveTextContent('條件：如果軌道上的人是我認識的人，我可能會改變選擇。')
+  // fb005: the summary they called off shows the same rows as the card (立場 first, conditions as a list),
+  // so each 「哪裡不太對」 button points at something on the screen.
+  expect(within(echo).getAllByRole('term').map(term => term.textContent)).toEqual(['立場', '理由', '條件'])
+  expect(within(echo).getByText('主動介入會讓我直接承擔另一個人的死亡。')).toBeInTheDocument()
+  expect(within(echo).getByRole('listitem')).toHaveTextContent('如果軌道上的人是我認識的人，我可能會改變選擇。')
+  expect(echo).not.toHaveTextContent('／')
   expect(within(timeline).getByText(/謝謝你說出來，是我沒抓準。是哪一部分不像你？/)).toBeInTheDocument()
   // The follow-up asked when the backend chose to confirm stays out while revising, too.
   expect(within(timeline).queryByText('那麼「選擇」對你來說是什麼？')).toBeNull()

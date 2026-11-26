@@ -258,7 +258,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: 'Current viewpoint summary', pending: 'Waiting for the student', caption: 'Only summarises the current view in scenario {{number}}; the student has not confirmed it.',
-      position: 'Stance', reason: 'Reason', conditions: 'Conditions', unresolved: 'Unresolved', principle: 'Principle', conditionsJoin: '; ',
+      position: 'Stance', reason: 'Reason', conditions: 'Conditions', unresolved: 'Unresolved', principle: 'Closest idea',
     },
     track: {
       noStance: 'No stance yet',

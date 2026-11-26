@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useT } from '../../i18n/useT'
 import { can, currentScenario, REVIEW_STATES, type SoloAttemptView, type SoloScenario } from './soloView'
+import { SummaryRows } from './SummaryRows'
 
 const FOLLOW_LATEST_THRESHOLD = 96
 // Matches the phone breakpoint in solo.css, where the whole conversation scrolls instead of the timeline.
@@ -79,13 +80,7 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
     const confirmed = Boolean(item.confirmed_summary)
     return <article key={`confirmed-${item.id}`} className={`solo-confirmed${confirmed ? '' : ' solo-confirmed--capped'}`}>
       <strong>{confirmed && <span aria-hidden="true">✓ </span>}{t(confirmed ? 'review.confirmedCard' : 'review.cappedCard', { number: item.index + 1 })}</strong>
-      <dl>
-        <div><dt>{t('viewpoint.reason')}</dt><dd>{summary.reason_summary}</dd></div>
-        {summary.relevant_conditions.length > 0 && <div>
-          <dt>{t('viewpoint.conditions')}</dt>
-          <dd><ul>{summary.relevant_conditions.map(condition => <li key={condition}>{condition}</li>)}</ul></dd>
-        </div>}
-      </dl>
+      <SummaryRows summary={summary} />
     </article>
   }
 
@@ -135,7 +130,7 @@ export function SoloTimeline({ view, pendingStudent = null, waiting = false, ret
       <article className="solo-message solo-message--student solo-rejected">
         <div>
           <strong>{t('revise.echoTitle')}</strong>
-          <p>{rejectedText(view.rejected_summary, t)}</p>
+          <SummaryRows summary={view.rejected_summary} />
         </div>
       </article>
       <article className="solo-message solo-message--tutor">
@@ -177,12 +172,3 @@ function withoutConfirmingFollowUp(view: SoloAttemptView) {
   return messages
 }
 
-type Summary = NonNullable<SoloAttemptView['rejected_summary']>
-
-function rejectedText(summary: Summary, t: (key: string, options?: Record<string, unknown>) => string) {
-  const parts = [
-    t('revise.reason', { value: summary.reason_summary }),
-    summary.relevant_conditions.length > 0 && t('revise.conditions', { value: summary.relevant_conditions.join('；') }),
-  ]
-  return parts.filter(Boolean).join(t('revise.separator'))
-}

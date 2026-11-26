@@ -245,7 +245,7 @@ export default {
     },
     summary: {
       title: '目前的觀點摘要', pending: '待學生確認', caption: '僅整理情境 {{number}} 的目前觀點，尚未經學生確認。',
-      position: '立場', reason: '理由', conditions: '條件', unresolved: '未釐清', principle: '原則', conditionsJoin: '；',
+      position: '立場', reason: '理由', conditions: '條件', unresolved: '未釐清', principle: '接近的想法',
     },
     track: {
       noStance: '還沒整理出立場',

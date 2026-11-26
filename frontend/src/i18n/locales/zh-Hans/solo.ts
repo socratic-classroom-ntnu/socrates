@@ -43,7 +43,6 @@ export default {
   },
   revise: {
     echoTitle: '你觉得这段整理不太对',
-    reason: '理由：{{value}}', conditions: '条件：{{value}}', separator: ' ／ ',
     ask: '谢谢你说出来，是我没抓准。是哪一部分不像你？立场、理由，还是条件？用你自己的话说就好。',
     quickLabel: '哪里不太对？（可选一项）', quickPrompt: '哪里不太对？',
     quickPosition: '立场不太对', quickReason: '理由不太对', quickConditions: '条件不太对', quickChanged: '我其实改变想法了',
@@ -53,7 +52,7 @@ export default {
   viewpoint: {
     title: '我试着整理你的想法，这样说对吗？',
     blank: '（还没说明）',
-    reason: '理由', conditions: '条件',
+    position: '立场', reason: '理由', conditions: '条件',
     principle: '接近的想法：{{principle}}', principleNote: '这只是参考，不是你的标签。',
     confirm: '对，这就是我的想法', revise: '不太对，我想再说清楚',
     cappedTitle: '消息已达上限，这是到目前为止的整理。这个情境不会标成“已确认”。', cappedConfirm: '好，我知道了',

@@ -245,7 +245,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: 'Resumen actual del punto de vista', pending: 'Pendiente del estudiante', caption: 'Solo resume el punto de vista actual del escenario {{number}}; el estudiante aún no lo ha confirmado.',
-      position: 'Postura', reason: 'Motivo', conditions: 'Condiciones', unresolved: 'Sin resolver', principle: 'Principio', conditionsJoin: '; ',
+      position: 'Postura', reason: 'Motivo', conditions: 'Condiciones', unresolved: 'Sin resolver', principle: 'Idea más cercana',
     },
     track: {
       noStance: 'Aún sin postura',

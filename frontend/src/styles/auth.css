@@ -49,7 +49,10 @@
 .language-switcher select {
   min-height: 40px; padding: 0 10px; border: 1px solid var(--auth-quiet-edge, #8C8578); border-radius: 6px;
   background: transparent; color: inherit; font: inherit;
+  /* 全站 :root 是 color-scheme: dark，原生下拉清單會畫成深底；選項字又是深色，就看不到（fb006）。下拉清單一律淺底深字。 */
+  color-scheme: light;
 }
+.language-switcher option { background: var(--ui-color-panel); color: var(--ui-color-ink); }
 .language-switcher__error { flex-basis: 100%; color: var(--auth-error, #A3322C); font-size: 12px; line-height: 1.4; }
 
 .auth-main {

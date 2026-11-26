@@ -71,7 +71,7 @@ export default {
     write: 'Resumir mi razonamiento', retry: 'Intentar de nuevo', finish: 'Terminar sin resumen',
     title: 'Intenté resumir todo tu razonamiento. ¿Es así?', subtitle: 'Sócrates lo escribió a partir de las posturas que confirmaste; tú decides si es correcto',
     points: 'Resumen', trajectory: 'Razonamiento', step: 'Escenario {{number}}', shift: 'Por qué cambió: {{reason}}',
-    position: 'Tu postura final', style: 'En qué te basas a menudo para juzgar', question: 'Una pregunta para llevarte', quote: 'Dijiste: «{{quote}}»',
+    position: 'Tu postura final', style: 'En qué te basas a menudo para juzgar', question: 'Una pregunta para seguir explorando', quote: 'Dijiste: «{{quote}}»',
     confirm: 'Sí, este es mi razonamiento', revise: 'No del todo',
     reviseLabel: '¿Qué no encaja? Basta con una frase', revisePlaceholder: 'Por ejemplo: en realidad no estoy tan seguro', reviseSend: 'Pedir a Sócrates que lo reescriba', reviseCancel: 'Cancelar',
     lastChance: 'Después de esto la actividad termina y este resumen queda marcado como «no confirmado».', reviseEnd: 'Enviar y terminar',

@@ -71,7 +71,7 @@ export default {
     write: 'Sum up my thinking', retry: 'Try again', finish: 'Finish without a summary',
     title: 'I tried to sum up your whole line of thought. Is this right?', subtitle: 'Socrates wrote this from the views you confirmed; you decide whether it is right',
     points: 'Summary', trajectory: 'Line of thought', step: 'Scenario {{number}}', shift: 'Why it changed: {{reason}}',
-    position: 'Your final position', style: 'What you often judge by', question: 'A question to take with you', quote: 'You said: “{{quote}}”',
+    position: 'Your final position', style: 'What you often judge by', question: 'A question to explore further', quote: 'You said: “{{quote}}”',
     confirm: 'Yes, this is my thinking', revise: 'Not quite',
     reviseLabel: 'What is off? One sentence is enough', revisePlaceholder: 'For example: I am not that sure, actually', reviseSend: 'Ask Socrates to rewrite it', reviseCancel: 'Cancel',
     lastChance: 'After this the activity ends, and this summary is marked “not confirmed”.', reviseEnd: 'Send and finish',

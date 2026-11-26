@@ -1,6 +1,6 @@
 import type { Locale } from './locale'
 
-export type DateStyle = 'date' | 'weekdayDate' | 'time' | 'dateTime' | 'weekdayDateTime'
+export type DateStyle = 'date' | 'weekdayDate' | 'time' | 'dateTime' | 'weekdayDateTime' | 'yearWeekdayDateTime'
 
 const OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   date: { month: 'numeric', day: 'numeric' },
@@ -8,6 +8,7 @@ const OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   time: { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
   dateTime: { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
   weekdayDateTime: { month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
+  yearWeekdayDateTime: { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
 }
 
 // zh 的 month:'short' 會變成「10月」；設計稿寫「10/24（五）23:59」，所以中文自己組。
@@ -25,6 +26,8 @@ function chineseWeekdayDateTime(date: Date, locale: Locale): string {
 export function formatDateTime(seconds: number, locale: Locale, style: DateStyle): string {
   const date = new Date(seconds * 1000)
   if (style === 'weekdayDateTime' && locale.startsWith('zh')) return chineseWeekdayDateTime(date, locale)
+  // 跨年的紀錄（我的對話）要看得出哪一年：「2026/11/13（五）12:00」
+  if (style === 'yearWeekdayDateTime' && locale.startsWith('zh')) return `${date.getFullYear()}/${chineseWeekdayDateTime(date, locale)}`
   if (style === 'weekdayDate' && locale.startsWith('zh')) return chineseWeekdayDate(date, locale)
   return new Intl.DateTimeFormat(locale, OPTIONS[style]).format(date)
 }

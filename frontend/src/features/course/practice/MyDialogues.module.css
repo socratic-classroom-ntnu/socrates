@@ -74,6 +74,23 @@
 .linkButton { border: 0; background: transparent; padding: 0; min-height: 40px; color: var(--ui-color-primary); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .linkButton:disabled { color: var(--ui-color-muted); cursor: not-allowed; }
 
+/* 最近的對話：篩選列（fb009）；原生下拉跟日期在全站深色 color-scheme 下會畫成深底，這裡一律淺底 */
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; color-scheme: light; }
+.filter { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ui-color-muted); }
+.filter select, .filter input {
+  box-sizing: border-box; min-height: 40px; padding: 0 10px; border: 1px solid var(--ui-color-border); border-radius: 8px;
+  background: var(--ui-color-panel); color: var(--ui-color-ink); font: inherit; font-size: 14px;
+}
+.filter select:focus-visible, .filter input:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.phone .filter { flex: 1 1 140px; }
+.filterCount { margin: 0; font-size: 13px; color: var(--ui-color-muted); }
+.noMatch { margin: 0; padding: 24px 0; text-align: center; font-size: 15px; color: var(--ui-color-muted); }
+
+/* 挑題視窗：聊過的題目（fb008） */
+.optionMeta { display: flex; align-items: center; gap: 8px; }
+.headEnd { flex-shrink: 0; display: flex; align-items: center; gap: 6px; }
+.pastNote { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; color: var(--ui-color-muted); }
+
 /* 訪客 */
 .guest {
   display: flex; flex-wrap: wrap; align-items: center; gap: 20px 28px; padding: 26px 28px; border-radius: 14px;

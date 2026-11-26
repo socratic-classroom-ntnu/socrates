@@ -71,7 +71,7 @@ export default {
     write: '整理我的思路', retry: '再試一次', finish: '先結束，不整理',
     title: '我試著整理你整個思路，這樣說對嗎？', subtitle: '蘇格拉底依你確認過的想法整理，是否正確由你決定',
     points: '統整', trajectory: '思路', step: '情境 {{number}}', shift: '轉變的原因：{{reason}}',
-    position: '最後的主張', style: '你判斷時常依據', question: '還可以帶走的問題', quote: '你說過：「{{quote}}」',
+    position: '最後的主張', style: '你判斷時常依據', question: '還可以衍生的問題', quote: '你說過：「{{quote}}」',
     confirm: '對，這就是我的思路', revise: '不太對',
     reviseLabel: '哪裡不對？寫一句就好', revisePlaceholder: '例如：我其實沒有那麼確定', reviseSend: '請蘇格拉底重寫', reviseCancel: '取消',
     lastChance: '這次之後就會結束，這份統整會標成「未確認」。', reviseEnd: '送出並結束',

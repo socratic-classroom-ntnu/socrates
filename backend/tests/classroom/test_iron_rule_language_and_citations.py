@@ -56,6 +56,14 @@ def run(*results, context=CONTEXT, kind="final_summary"):
         ("あなたは自分で押すのは違うと思う。", "ja", True),
         ("你認為親手做比較嚴重。", "tlh", True),
         ("……", "zh-TW", True),
+        # zh with a script: the other script's own characters fail, outside quotes.
+        ("我試著整理你的想法，这样说对吗？", "zh-Hant", False),
+        ("道德問題并没有標準答案。", "zh-TW", False),
+        ("我试着整理你的想法，这样说对吗？", "zh-Hans", True),
+        ("你認為這樣比較好。", "zh-Hans", False),
+        ("你說「这样不对」，為什麼？", "zh-Hant", True),
+        ("皇后只在乎結果嗎？", "zh-Hant", True),
+        ("你认为亲手做比较严重。", "zh", True),
     ],
 )
 def test_in_locale(text, locale, expected):
@@ -73,6 +81,20 @@ def test_wrong_language_is_regenerated_then_a_typed_error():
     english["final_position"] = "You would not sacrifice anyone yourself."
     with pytest.raises(IronRuleCheckFailed) as failed:
         run(english, english)
+    assert failed.value.reason == "WRONG_LANGUAGE"
+
+
+def test_simplified_characters_in_a_traditional_summary_are_regenerated_then_an_error():
+    """The script check tells 這 from 这 (QA 11-25: a zh-Hant page showed Simplified text)."""
+    simplified = summary(
+        {"message_ref": "m1", "quote": "五個人比較多"}, reasoning="你以行为本身判断对错。"
+    )
+    traditional = summary({"message_ref": "m1", "quote": "五個人比較多"})
+    (result, audit), calls = run(simplified, traditional)
+    assert len(calls) == 2 and result["reasoning_style"] == "你以行為本身判斷對錯。"
+    assert "zh-Hant 用繁體字" in calls[1][-1]["content"]
+    with pytest.raises(IronRuleCheckFailed) as failed:
+        run(simplified, simplified)
     assert failed.value.reason == "WRONG_LANGUAGE"
 
 

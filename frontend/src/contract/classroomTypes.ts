@@ -184,7 +184,7 @@ export interface components { schemas: {
   "SoloRosterSummaryView": { "total": number; "registered": number; "guests": number; "expired_guests": number; "deleted": number };
   "SoloScenarioChangeView": { "condition": string; "before": string; "after": string };
   "SoloScenarioProgressView": { "index": number; "status": "in_dialogue" | "confirmed" | "capped" };
-  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (components["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null) };
+  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (components["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (components["schemas"]["PersonalSummaryView"] | null); "capped_summary"?: (components["schemas"]["PersonalSummaryView"] | null) };
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest" | "deleted"; "guest_number": (number | null); "overall": "not_started" | "in_progress" | "done"; "cells": Array<components["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress" | "completed"; "final_status": ("confirmed" | "unconfirmed" | null); "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases": boolean };
@@ -396,7 +396,7 @@ export interface requestComponents { schemas: {
   "SoloRosterSummaryView": { "total": number; "registered": number; "guests": number; "expired_guests": number; "deleted": number };
   "SoloScenarioChangeView": { "condition": string; "before": string; "after": string };
   "SoloScenarioProgressView": { "index": number; "status": "in_dialogue" | "confirmed" | "capped" };
-  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (requestComponents["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (requestComponents["schemas"]["PersonalSummaryView"] | null) };
+  "SoloScenarioView": { "index": number; "id": string; "text": string; "change": (requestComponents["schemas"]["SoloScenarioChangeView"] | null); "answer": (string | null); "status": "in_progress" | "goal_met" | "capped"; "confirmed_summary": (requestComponents["schemas"]["PersonalSummaryView"] | null); "capped_summary"?: (requestComponents["schemas"]["PersonalSummaryView"] | null) };
   "SoloStudentProgressView": { "enrollment_id": string; "display_name": string; "kind": "registered" | "guest" | "expired_guest" | "deleted"; "guest_number": (number | null); "overall": "not_started" | "in_progress" | "done"; "cells": Array<requestComponents["schemas"]["SoloProgressCellView"]>; "review_status": "not_started" | "in_progress" | "completed"; "final_status": ("confirmed" | "unconfirmed" | null); "last_activity_at": (number | null); "attention": boolean };
   "StanceOptionView": { "option_id": string; "text": string; "count": number; "percent": number };
   "Start": { "action_id": string; "expected_roster_digest": string; "accept_temporary_aliases"?: boolean };

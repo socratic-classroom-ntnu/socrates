@@ -178,6 +178,7 @@ def acknowledge(
 ) -> VoiceStep:
     """A summary at the message limit: read, then acknowledged as the card does (stored capped)."""
     row = service._locked_attempt(db, account, attempt_id)
+    service._refuse_if_ended(db, row, at)  # #212: nothing is written once the activity has ended
     service._add_message(db, row, "tutor", heard)
     out = service.begin_action(
         db,
@@ -226,6 +227,8 @@ def answer(
         step = "not_confirmed"  # the final summary cannot be taken back, only written again
     audit = {**judgment.audit(), "faithful": faithful, "decision": step, "point": point.kind}
     row = service._locked_attempt(db, account, attempt_id)
+    # #212: 再問一次／再讀一次 write without begin_action, so they check the end here like it does.
+    service._refuse_if_ended(db, row, at)
     # What the student heard is stored as said, as typing stores the tutor's reply.
     service._add_message(db, row, "tutor", heard)
     if step in ("ask_again", "read_again"):

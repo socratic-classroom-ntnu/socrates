@@ -583,6 +583,9 @@ def available(db: Any, account: Account, attempt_id: str, at: float) -> machine.
     if not voice_mode_ready(db):
         raise DomainError("VOICE_MODE_DISABLED", 403)
     row = service._locked_attempt(db, account, attempt_id)
+    # #212: once the activity has ended (time up, or the teacher's 立即結束) voice cannot open
+    # either, whatever state the attempt is in; the same refusal every other action gets.
+    service._refuse_if_ended(db, row, at)
     a = service._state(row)
     actions = machine.actions_for(a, at)
     if "send_message" not in actions and a.state not in ("confirming", "reflecting", "reviewing"):

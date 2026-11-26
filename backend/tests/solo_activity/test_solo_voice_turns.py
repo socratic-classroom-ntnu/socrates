@@ -11,15 +11,21 @@ the answer presses 對 or 不太對 as the card would; a summary at the message 
 
 import asyncio
 
+import pytest
+
 from sqlalchemy import select
 
 from app.modules.identity_access.repositories import Account
 from app.modules.platform import storage
+from app.modules.platform.errors import DomainError
 from app.modules.solo_activity import service
+from app.modules.solo_activity import voice_relay as vr
 from app.modules.solo_activity import voice_judge as vj
 from app.modules.solo_activity import voice_turns as vt
 from app.modules.solo_activity.repositories import SoloAttempt, SoloMessage
 from app.modules.solo_activity.voice_readout import readout
+from tests.solo_activity.test_solo_ended_activity import end_now
+from tests.solo_activity.test_solo_voice_relay import voice_on  # noqa: F401  (fixture)
 from tests.solo_activity.test_solo_attempts_api import (
     MET,
     NOT_MET,
@@ -63,6 +69,7 @@ def answered(
     interrupted=False,
     asks=0,
     reads=0,
+    at=1_000_000.0,
 ):
     """The student's spoken answer to what Socrates just said (``step.say``).
 
@@ -98,7 +105,7 @@ def answered(
             judgment=judgment,
             asks=asks,
             reads=reads,
-            at=1_000_000.0,
+            at=at,
         )
     if out.tutor is not None:
         return asyncio.run(vt.finish_turn(out.tutor, _now(HEARD)))
@@ -445,3 +452,34 @@ def test_a_spoken_no_to_the_final_summary_writes_it_again_with_the_students_word
     assert ("student", "不對，我其實有猶豫") in messages(attempt_id)
     meta = last_student_meta(attempt_id)
     assert meta["final_feedback"] is True and meta["voice_confirmation"]["point"] == "final"
+
+
+# ---- #212: an ended activity takes nothing by voice either (review of #204, 11-24) ----------
+
+
+def test_after_the_teacher_ends_the_activity_voice_neither_opens_nor_writes(
+    client,
+    tutor,
+    voice_on,  # noqa: F811
+):
+    """After 立即結束 the student is at a summary to confirm: voice cannot join, and 再問一次
+    (which writes without begin_action) is refused with nothing written."""
+    _, replies = tutor
+    s = setup(client)
+    attempt_id = ok(start(client, s["activity_id"]))["id"]
+    replies.append(OPENING)
+    said(attempt_id, "不能主動害人")
+    replies.append(MET)
+    step = said(attempt_id, "因為是我親手造成的")
+    assert step.view["state"] == "confirming"
+    end_now(client, s)
+    at = service.now() + 1
+    with storage.transaction() as db:
+        with pytest.raises(DomainError) as joined:
+            vr.available(db, _account(db), attempt_id, at)
+    assert joined.value.code == "ACTIVITY_ENDED"
+    before = messages(attempt_id)
+    with pytest.raises(DomainError) as asked:
+        answered(attempt_id, step, "嗯……", replies, model=judged("unclear", ""), at=at)
+    assert asked.value.code == "ACTIVITY_ENDED"
+    assert messages(attempt_id) == before

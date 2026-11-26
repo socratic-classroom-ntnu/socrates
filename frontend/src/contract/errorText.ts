@@ -170,6 +170,8 @@ const CODES: Record<string, string> = {
   SOLO_REVISE_HINT_INVALID: '現在不能補充這個提示。',
   SOLO_STEP_NOT_READY: '這個步驟仍在開發中。',
   SOLO_SUMMARY_STALE: '整理內容已更新，請重新確認。',
+  VOICE_MODE_DISABLED: '語音模式目前沒有開放，可以繼續打字。',
+  VOICE_TIME_USED_UP: '今天的語音時間用完了，可以繼續打字',
   STARTED_CLASSROOM_REQUIRED: '課堂還沒開始。',
   STATEMENT_LENGTH_1_TO_12000: '內容請寫 1 到 12000 字。',
   STUDENT_MEMBERSHIP_REQUIRED: '只有課堂中的學生可以進行這個操作。',

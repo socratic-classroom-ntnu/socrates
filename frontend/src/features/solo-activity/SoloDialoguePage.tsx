@@ -13,6 +13,7 @@ import { SoloProgress } from './SoloProgress'
 import { SoloTimeline } from './SoloTimeline'
 import { can, currentScenario, REVIEW_STATES, type SoloAction, type SoloActivityView, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
 import { ViewpointCard } from './ViewpointCard'
+import { VoiceMode } from './voice/VoiceMode'
 
 const SAVE_CHECK_MS = 1000
 // setTimeout holds a signed 32-bit delay; a later end time is checked again when the page reloads.
@@ -33,6 +34,7 @@ export function SoloDialoguePage() {
   const [actionError, setActionError] = useState<unknown>(null)
   const [pendingStudent, setPendingStudent] = useState<{ text: string; first: boolean } | null>(null)
   const [pendingAction, setPendingAction] = useState<SoloAction | null>(null)
+  const [voiceSlot, setVoiceSlot] = useState<HTMLDivElement | null>(null)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   // Set once a read shows the sent message already stored, while the reply is still pending.
   const [savedEarly, setSavedEarly] = useState(false)
@@ -174,6 +176,7 @@ export function SoloDialoguePage() {
       <ScenarioBoard
         scenario={scenario}
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
+        voice={<div ref={setVoiceSlot} className="solo-voice-slot" />}
       />
       <section className="solo-conversation">
         {REVIEW_STATES.includes(view.state)
@@ -189,7 +192,8 @@ export function SoloDialoguePage() {
               retrying={pendingAction === 'retry'}
               onRetry={() => { void perform('retry') }}
             />
-            {/* Ended: not even the "answering resumes later" note of a paused composer. */}
+            {/* Ended: no voice mode, and not even the "answering resumes later" note of a paused composer. */}
+            {!ended && <VoiceMode view={view} onView={setView} slot={voiceSlot} />}
             {!ended && <SoloComposer
               key={`composer-${view.id}-${scenario.index}`}
               view={view}

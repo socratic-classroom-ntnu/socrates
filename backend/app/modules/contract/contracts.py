@@ -153,6 +153,8 @@ REASON_CODES: dict[str, tuple[str, ...]] = {
     "SOLO_REVISE_HINT_INVALID": ("solo_activity",),
     "SOLO_STEP_NOT_READY": ("solo_activity",),
     "SOLO_SUMMARY_STALE": ("solo_activity",),
+    "VOICE_MODE_DISABLED": ("solo_activity",),
+    "VOICE_TIME_USED_UP": ("solo_activity",),
     "STARTED_CLASSROOM_REQUIRED": ("classroom_core",),
     "STATEMENT_LENGTH_1_TO_12000": ("group_dialogue",),
     "STUDENT_MEMBERSHIP_REQUIRED": ("classroom_core",),

@@ -8,6 +8,8 @@ from app.modules.llm_runtime.iron_rules import (  # noqa: E402
     check as check,
     fallback_text as fallback_text,
     guarded_generate as guarded_generate,
+    leaks as leaks,
+    rules_for as rules_for,
     screen_input as screen_input,
 )
 from app.modules.llm_runtime.prompts import (  # noqa: E402

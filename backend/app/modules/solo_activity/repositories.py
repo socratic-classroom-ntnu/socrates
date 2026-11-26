@@ -71,3 +71,14 @@ class SoloRadar(Base):
     dimensions: Mapped[list] = mapped_column(JSON)
     students: Mapped[list] = mapped_column(JSON)
     computed_at: Mapped[float] = mapped_column(Float, default=time.time)
+
+
+class VoiceUsage(Base):
+    """Seconds of voice time one account used on one day (Asia/Taipei); no audio is ever kept."""
+
+    __tablename__ = "solo_voice_usage"
+
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("accounts.id"), primary_key=True)
+    day: Mapped[str] = mapped_column(String(10), primary_key=True)
+    seconds: Mapped[float] = mapped_column(Float, default=0.0)
+    updated_at: Mapped[float] = mapped_column(Float, default=time.time)

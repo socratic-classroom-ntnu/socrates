@@ -175,7 +175,7 @@ export function classroomRoutes(options: { signedIn: boolean; verified?: boolean
     'GET /classrooms': [] satisfies S['RoomSummary'][],
     // 開發控制台只在 debug_mode 為 true 時出現；基準照正式環境的樣子關掉
     // 多人模式：e2e 照舊在開著的情況下跑分組課頁（正式環境預設關閉，由單元測試涵蓋）
-    'GET /public-config': { debug_mode: false, google_cse_id: '', search_scope: '', search_state: 'disabled', features: { group_mode: true } } satisfies S['PublicConfigView'],
+    'GET /public-config': { debug_mode: false, google_cse_id: '', search_scope: '', search_state: 'disabled', features: { group_mode: true, voice_mode: false } } satisfies S['PublicConfigView'],
   }
   for (const card of teacherCards) routes[`GET /activities/${card.id}`] = activityView(card)
   if (options.signedIn) routes['GET /auth/me'] = me

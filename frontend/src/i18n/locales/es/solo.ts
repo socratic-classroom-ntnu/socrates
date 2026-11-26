@@ -35,6 +35,13 @@ export default {
     title: 'Sócrates no puede responder ahora', ownerMissing: 'Tu docente aún no configuró una conexión de IA',
     saved: 'Tu mensaje está guardado y no se perderá. Puedes esperar un momento y pulsar Reintentar, o salir y volver más tarde; la conversación seguirá aquí.', retry: 'Reintentar',
   },
+  voice: {
+    who: 'Sócrates',
+    enter: 'Modo de voz', enterHint: 'Habla con Sócrates en voz alta', panel: 'Modo de voz', fullscreen: 'Pantalla completa', exitFullscreen: 'Reducir', toTyping: 'Volver a escribir',
+    connecting: 'Conectando…', listening: 'Escuchando…', thinking: 'Pensando en lo que dijiste…', speaking: 'Sócrates está hablando', youSaid: 'Dijiste: {{text}}',
+    micDenied: 'Se negó el acceso al micrófono. Permítelo en el navegador o sigue escribiendo.', unsupported: 'Este navegador no admite el modo de voz. Puedes seguir escribiendo.',
+    unavailable: 'El modo de voz no está disponible ahora. Puedes seguir escribiendo.', service: 'El servicio de voz tuvo un problema. Puedes seguir escribiendo.',
+  },
   statusUpdated: 'El estado se actualizó',
   next: {
     button: 'Siguiente escenario', scenarioLabel: 'Un escenario nuevo',

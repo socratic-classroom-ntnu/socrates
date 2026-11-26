@@ -5,11 +5,13 @@ import type { SoloScenario } from './soloView'
 type Props = {
   scenario: SoloScenario
   progress?: ReactNode
+  // Where voice mode puts its 蘇格拉底 card (Figma 749:324: under the scenario, in this column).
+  voice?: ReactNode
 }
 
 // fb002: the column holds the scenario, the answer and the progress only; the notes explaining what
 // the page does (who wrote the scenario, what the dialogue is for, why confirm) are gone.
-export function ScenarioBoard({ scenario, progress = null }: Props) {
+export function ScenarioBoard({ scenario, progress = null, voice = null }: Props) {
   const { t } = useT('solo')
   // A0m／A1m: on a phone the board is open for the first answer, then folds to its title so the
   // conversation has the room. Desktop always shows the text and hides the toggle (solo.css).
@@ -33,6 +35,7 @@ export function ScenarioBoard({ scenario, progress = null }: Props) {
       </div>
       <p id="solo-scenario-text" className={`solo-question__scenario${open ? '' : ' solo-question__scenario--folded'}`}>{scenario.text}</p>
     </section>
+    {voice}
     {scenario.answer && <section className="solo-choice" aria-label={t('myAnswer')}>
       <div className="solo-choice__head"><h2>{t('myAnswer')}</h2></div>
       <p className="solo-choice__reason">{scenario.answer}</p>

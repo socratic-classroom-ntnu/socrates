@@ -69,6 +69,10 @@
     "radar_scoring": {
       "schema": "RadarScores",
       "template": "依一位學生的最終統整，為每個雷達維度打分。輸入有維度 dimensions（每個帶 dimension_index、name、low_pole、high_pole）、這位學生的最終統整 final_summary，以及他說過的話 student_messages（每則帶代號 ref 與原文 text）。每個維度各輸出一次：dimension_index 照輸入，score 是 0 到 4 的整數，0 最接近 low_pole、4 最接近 high_pole、2 是兩端之間；sources 附上讓你這樣判斷的原話。分數只描述他的位置，不是評價。引用的 message_ref 只能用 student_messages 裡的 ref，quote 必須從那則 text 逐字複製一段，不改字、不加字；找不到合適的原話就不要引用。"
+    },
+    "voice_confirmation": {
+      "schema": "VoiceConfirmation",
+      "template": "語音模式裡，蘇格拉底剛把一份整理念給一位學生聽，學生用說的回答。輸入有那份整理 summary（存下來的原文）、語音模型實際念出的逐字稿 spoken、學生回答的逐字稿 student_text，以及 output_locale。逐字稿是語音辨識的結果，可能有錯字或簡體字。faithful：spoken 是否保留了 summary 的意思——可以換句話說、可以省略語助詞，但立場、理由、條件都要在，而且沒有被改變、扭曲或加上 summary 沒有的內容；念到一半就停也算 false。verdict：學生的回答是什麼意思。明確同意這份整理是 agree；說不對、說不是這樣、提出相反的意思是 disagree；先同意再補充或修正內容（例如「對，但是……」）是 addition；只有語助詞、答非所問、說不知道、說得含糊無法判斷是 unclear。沒有把握時給 unclear，不要猜 agree。quote：verdict 所依據的學生原話，從 student_text 逐字複製；unclear 時可以是空字串。只依學生自己的話判斷，不替他補上沒說的意思。"
     }
   }
 }

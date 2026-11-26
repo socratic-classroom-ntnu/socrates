@@ -13,6 +13,7 @@
 
 契約：
 - 雷達圖（產生型別 ✅（GET／PATCH /solo/activities/{id}/radar））
+- 語音模式（WebSocket /solo/attempts/{id}/voice）（手寫型別（WebSocket 不在 OpenAPI）；取代原本的 TTS 列：Gemini Live 直接出聲、學生開口就停（interrupted），不另做文字→音訊）
 - 單人活動（/solo/*）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）

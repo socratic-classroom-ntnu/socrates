@@ -399,6 +399,22 @@ def revise_viewpoint(a: AttemptState, now: float | None = None) -> AttemptState:
     return replace(a, state="in_dialogue", progress=progress)
 
 
+def withdraw_viewpoint(a: AttemptState, digest: str) -> AttemptState:
+    """Voice mode only: the summary being read goes back unconfirmed, without counting as 不太對.
+
+    The student did not hear it with its meaning intact (cut off, or read twice and bent). Nothing is
+    recorded as turned down and the revise hold does not start; the dialogue goes on and policy.py
+    decides as usual when to offer a summary again. Not an action the student is offered: the
+    voice relay calls it after its own checks. Only the summary currently shown may be withdrawn.
+    """
+    if a.state != "confirming":
+        raise DomainError("SOLO_ACTION_UNAVAILABLE", 409)
+    if digest != a.current.summary_digest:
+        raise DomainError("SOLO_SUMMARY_STALE", 409)
+    progress = _with_current(a, candidate_summary=None, summary_digest=None)
+    return replace(a, state="in_dialogue", progress=progress)
+
+
 def next_scenario(a: AttemptState) -> AttemptState:
     """The next scenario's dialogue starts from nothing: its own answer, turns and shift."""
     _require(a, "next_scenario")

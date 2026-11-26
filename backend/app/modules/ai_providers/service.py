@@ -1118,3 +1118,11 @@ def switch_owner_connection(db, owner_id: str, *, enabled: bool) -> None:
     settings.fallback_profile_id = None
     settings.revision = int(settings.revision or 0) + 1
     settings.updated_at = time.time()
+
+
+# Voice mode: the Gemini Live session the solo dialogue's relay opens (key read from platform
+# config, never sent to the browser).
+from app.modules.ai_providers.gemini_live import LiveEvent  # noqa: E402
+from app.modules.ai_providers.gemini_live import open_session as open_voice_session  # noqa: E402
+
+__voice__ = (LiveEvent, open_voice_session)

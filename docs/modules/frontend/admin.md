@@ -13,6 +13,7 @@
 
 契約：
 - 後台（/admin）（產生型別 ✅）
+- 通知（/notifications、/admin/announcements）（產生型別 ✅）
 
 ## 待清違規（scripts/check_modules.py 讀出；修好後從 violations.json 刪掉那一行）
 

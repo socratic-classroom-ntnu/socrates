@@ -35,6 +35,13 @@ export default {
     title: '蘇格拉底暫時無法回應', ownerMissing: '老師尚未設定 AI 連線',
     saved: '你的訊息已經保存，不會不見。可以等一下再按重試，或先離開，回來時對話會停在這裡。', retry: '重試',
   },
+  voice: {
+    who: '蘇格拉底',
+    enter: '語音模式', enterHint: '用說的跟蘇格拉底對話', panel: '語音模式', fullscreen: '全螢幕', exitFullscreen: '縮小', toTyping: '切回打字',
+    connecting: '連線中…', listening: '正在聽你說…', thinking: '正在想你說的話…', speaking: '蘇格拉底說話中', youSaid: '你說：{{text}}',
+    micDenied: '麥克風權限被拒，請在瀏覽器設定允許使用麥克風，或繼續打字。', unsupported: '這個瀏覽器不支援語音模式，可以繼續打字。',
+    unavailable: '語音模式目前無法使用，可以繼續打字。', service: '語音服務出錯了，可以繼續打字。',
+  },
   statusUpdated: '狀態已更新',
   next: {
     button: '下一個情境', scenarioLabel: '新的情境',

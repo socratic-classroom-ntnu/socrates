@@ -289,6 +289,19 @@ class StanceClassification(Strict):
     rationale: str = Field(min_length=1, max_length=1000)
 
 
+class VoiceConfirmation(Strict):
+    """voice_confirmation output: in voice mode, whether the student agreed to the summary read to them.
+
+    faithful: what the voice model actually said keeps the summary's meaning (it may be reworded,
+    but nothing is changed, left out or added). verdict: what the student's answer means. quote: the
+    words of the answer the verdict rests on, copied from the student's transcript.
+    """
+
+    faithful: bool
+    verdict: Literal["agree", "disagree", "addition", "unclear"]
+    quote: str = Field(max_length=500)
+
+
 class TrajectoryStep(Strict):
     """One confirmed stage of the student's thinking, oldest first."""
 

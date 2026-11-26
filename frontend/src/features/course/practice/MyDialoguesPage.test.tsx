@@ -101,7 +101,8 @@ describe('with dialogues (MyDialogList)', () => {
     expect(first).toHaveTextContent('語言模型與學校學習')
     expect(first).toHaveTextContent('對話中')
     expect(first).toHaveTextContent('請問在 2026 年')
-    expect(first).toHaveTextContent('11/13（五）')
+    // fb009：要看得出哪一年、幾點開始
+    expect(first).toHaveTextContent(/開始於 2026\/11\/13（五）\d{2}:\d{2}/)
     expect(within(first).getByRole('link', { name: /繼續對話/ })).toHaveAttribute('href', '/learn/activities/a-1/dialogue')
     expect(second).toHaveTextContent('已完成')
     expect(within(second).getByRole('link', { name: /看回顧/ })).toHaveAttribute('href', '/learn/activities/a-2/dialogue')
@@ -293,4 +294,102 @@ test('看全部題目 lists every topic; the cards only show the recommended one
   const picker = screen.getByRole('dialog', { name: '挑一個想聊的題目' })
   expect(within(picker).getByRole('option', { name: /不推薦的題目/ })).toBeInTheDocument()
   expect(screen.getByRole('region', { name: '還可以聊這些' })).not.toHaveTextContent('不推薦的題目')
+})
+
+// 使用者回饋 fb009：最近的對話依開始時間排，可以照狀態、標籤、開始日期篩
+describe('filtering and ordering recent dialogues', () => {
+  const DAY = 24 * 60 * 60
+  const three = () => [
+    dialogue({ activity_id: 'a-old', topic_id: 'trolley', title: '電車難題', category: 'life', status: 'completed', created_at: THURSDAY - 10 * DAY }),
+    dialogue({ activity_id: 'a-new', created_at: THURSDAY }),
+    dialogue({ activity_id: 'a-mid', topic_id: 'lie-to-save-friend', title: '說謊救朋友', category: 'honesty', created_at: THURSDAY - 5 * DAY }),
+  ]
+  const titles = () => within(screen.getByRole('list', { name: '最近的對話' })).getAllByRole('heading').map(heading => heading.textContent)
+  const day = (seconds: number) => {
+    const date = new Date(seconds * 1000)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  test('newest start first by default, oldest first on request', async () => {
+    open(three(), 1)
+    await screen.findByRole('list', { name: '最近的對話' })
+    expect(titles()).toEqual(['語言模型與學校學習', '說謊救朋友', '電車難題'])
+    fireEvent.change(screen.getByLabelText('排序'), { target: { value: 'oldest' } })
+    expect(titles()).toEqual(['電車難題', '說謊救朋友', '語言模型與學校學習'])
+  })
+
+  test('status and tag narrow the list, and clearing brings everything back', async () => {
+    open(three(), 1)
+    await screen.findByRole('list', { name: '最近的對話' })
+    fireEvent.change(screen.getByLabelText('狀態'), { target: { value: 'completed' } })
+    expect(titles()).toEqual(['電車難題'])
+    expect(screen.getByText('符合的對話 1 段，共 3 段')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('狀態'), { target: { value: 'all' } })
+    fireEvent.change(screen.getByLabelText('標籤'), { target: { value: 'honesty' } })
+    expect(titles()).toEqual(['說謊救朋友'])
+    fireEvent.change(screen.getByLabelText('標籤'), { target: { value: 'self' } })
+    expect(screen.queryByRole('list', { name: '最近的對話' })).toBeNull()
+    expect(screen.getByText('沒有符合篩選的對話。')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '清除篩選' }))
+    expect(titles()).toHaveLength(3)
+    expect(screen.queryByRole('button', { name: '清除篩選' })).toBeNull()
+  })
+
+  test('a start-date range keeps the dialogues started on those days, both ends included', async () => {
+    open(three(), 1)
+    await screen.findByRole('list', { name: '最近的對話' })
+    fireEvent.change(screen.getByLabelText('開始日期從'), { target: { value: day(THURSDAY - 5 * DAY) } })
+    expect(titles()).toEqual(['語言模型與學校學習', '說謊救朋友'])
+    fireEvent.change(screen.getByLabelText('到'), { target: { value: day(THURSDAY - 5 * DAY) } })
+    expect(titles()).toEqual(['說謊救朋友'])
+  })
+})
+
+// 使用者回饋 fb008：挑題時看得出哪些聊過，可以回去看，不是只能再開一段
+describe('topics already talked about, in the picker', () => {
+  test('a finished topic is marked and offers its review next to a new dialogue', async () => {
+    const calls = open([
+      dialogue({ activity_id: 'a-2', topic_id: 'trolley', title: '電車難題', category: 'life', status: 'completed' }),
+      dialogue({ activity_id: 'a-3', topic_id: 'ship-of-theseus', status: 'in_progress' }),
+    ], 2, { 'POST /solo/practice': { activity_id: 'a-9', attempt_id: 't-9' } })
+    fireEvent.click(await screen.findByRole('button', { name: '新對話' }))
+    const picker = screen.getByRole('dialog', { name: '挑一個想聊的題目' })
+    expect(within(picker).getByRole('option', { name: /電車難題/ })).toHaveTextContent('已完成')
+    expect(within(picker).getByRole('option', { name: /忒修斯之船/ })).toHaveTextContent('對話中')
+    expect(within(picker).getByRole('option', { name: /說謊救朋友/ })).not.toHaveTextContent(/已完成|對話中/)
+
+    fireEvent.click(within(picker).getByRole('option', { name: /電車難題/ }))
+    expect(within(picker).getByText(/你在 2026\/11\/13（五）\d{2}:\d{2} 聊過這題/)).toBeInTheDocument()
+    expect(within(picker).getByRole('link', { name: /看回顧/ })).toHaveAttribute('href', '/learn/activities/a-2/dialogue')
+    expect(within(picker).queryByRole('button', { name: '開始對話' })).toBeNull()
+
+    fireEvent.click(within(picker).getByRole('option', { name: /忒修斯之船/ }))
+    expect(within(picker).getByRole('link', { name: /繼續對話/ })).toHaveAttribute('href', '/learn/activities/a-3/dialogue')
+
+    fireEvent.click(within(picker).getByRole('option', { name: /電車難題/ }))
+    await act(async () => { fireEvent.click(within(picker).getByRole('button', { name: '再開一段新對話' })) })
+    expect(calls.find(call => call.key === 'POST /solo/practice')?.body).toEqual({ bank_item_id: 'trolley' })
+    await waitFor(() => expect(where()).toBe('/learn/activities/a-9/dialogue'))
+  })
+
+  test('a topic never talked about still just starts', async () => {
+    open([dialogue({ activity_id: 'a-2', topic_id: 'trolley', status: 'completed' })], 1)
+    fireEvent.click(await screen.findByRole('button', { name: '新對話' }))
+    const picker = screen.getByRole('dialog', { name: '挑一個想聊的題目' })
+    fireEvent.click(within(picker).getByRole('option', { name: /說謊救朋友/ }))
+    expect(within(picker).getByRole('button', { name: '開始對話' })).toBeEnabled()
+    expect(within(picker).queryByRole('link', { name: /看回顧|繼續對話/ })).toBeNull()
+  })
+
+  test('on a phone the opened topic shows the same choice', async () => {
+    phone()
+    open([dialogue({ activity_id: 'a-2', topic_id: 'trolley', title: '電車難題', category: 'life', status: 'completed' })], 1)
+    fireEvent.click(await screen.findByRole('button', { name: /新對話/ }))
+    const picker = screen.getByRole('dialog', { name: '挑一個想聊的題目' })
+    const trolley = within(picker).getByRole('button', { name: /電車難題/ })
+    expect(trolley).toHaveTextContent('已完成')
+    fireEvent.click(trolley)
+    expect(within(picker).getByRole('link', { name: /看回顧/ })).toHaveAttribute('href', '/learn/activities/a-2/dialogue')
+    expect(within(picker).getByRole('button', { name: '再開一段新對話' })).toBeEnabled()
+  })
 })

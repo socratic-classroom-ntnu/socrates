@@ -71,7 +71,7 @@ export default {
     write: '整理我的思路', retry: '再试一次', finish: '先结束，不整理',
     title: '我试着整理你整个思路，这样说对吗？', subtitle: '苏格拉底依你确认过的想法整理，是否正确由你决定',
     points: '统整', trajectory: '思路', step: '情境 {{number}}', shift: '转变的原因：{{reason}}',
-    position: '最后的主张', style: '你判断时常依据', question: '还可以带走的问题', quote: '你说过：“{{quote}}”',
+    position: '最后的主张', style: '你判断时常依据', question: '还可以衍生的问题', quote: '你说过：“{{quote}}”',
     confirm: '对，这就是我的思路', revise: '不太对',
     reviseLabel: '哪里不对？写一句就好', revisePlaceholder: '例如：我其实没有那么确定', reviseSend: '请苏格拉底重写', reviseCancel: '取消',
     lastChance: '这次之后就会结束，这份统整会标成“未确认”。', reviseEnd: '送出并结束',

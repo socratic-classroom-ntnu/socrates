@@ -14,7 +14,7 @@ import { TopicPicker } from './TopicPicker'
 import styles from './MyDialogues.module.css'
 
 export type Topic = components['schemas']['PracticeTopic']
-type Dialogue = components['schemas']['PracticeDialogue']
+export type Dialogue = components['schemas']['PracticeDialogue']
 type PracticeList = components['schemas']['PracticeList']
 
 // 訪客註冊升級頁由免註冊需求做（這裡只連過去）
@@ -93,6 +93,7 @@ export function MyDialoguesPage() {
     </section>
     {picking && list.data && <TopicPicker
       topics={allTopics}
+      dialogues={list.data.dialogues}
       remaining={list.data.quota.remaining}
       phone={phone}
       busy={busy}
@@ -115,6 +116,74 @@ function FirstTime({ topics, remaining, busy, onStart }: { topics: Topic[]; rema
   </>
 }
 
+type StatusFilter = 'all' | Dialogue['status']
+type CategoryFilter = 'all' | Topic['category']
+type Order = 'newest' | 'oldest'
+const CATEGORIES: Topic['category'][] = ['life', 'honesty', 'self', 'tech']
+
+/** The reader's own calendar day of a backend time, as the `yyyy-mm-dd` a date input gives. */
+function localDay(seconds: number): string {
+  const date = new Date(seconds * 1000)
+  const pad = (value: number) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/**
+ * 「最近的對話」的篩選與排序（使用者回饋 fb009）：狀態、標籤、開始日期區間，依開始時間新到舊或舊到新。
+ * 全部在前端做；後端一次給齊這個學生的練習對話。
+ */
+function useDialogueFilter(dialogues: Dialogue[]) {
+  const [status, setStatus] = useState<StatusFilter>('all')
+  const [category, setCategory] = useState<CategoryFilter>('all')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [order, setOrder] = useState<Order>('newest')
+  const shown = useMemo(() => dialogues
+    .filter(dialogue => status === 'all' || dialogue.status === status)
+    .filter(dialogue => category === 'all' || dialogue.category === category)
+    .filter(dialogue => {
+      const day = localDay(dialogue.created_at)
+      return (!from || day >= from) && (!to || day <= to)
+    })
+    .sort((a, b) => order === 'newest' ? b.created_at - a.created_at : a.created_at - b.created_at),
+  [dialogues, status, category, from, to, order])
+  const active = status !== 'all' || category !== 'all' || from !== '' || to !== ''
+  function clear() { setStatus('all'); setCategory('all'); setFrom(''); setTo('') }
+  return { shown, active, clear, status, setStatus, category, setCategory, from, setFrom, to, setTo, order, setOrder }
+}
+
+function DialogueFilters({ filter }: { filter: ReturnType<typeof useDialogueFilter> }) {
+  const { t } = useT('practice')
+  return <div className={styles.filters} role="group" aria-label={t('filter.label')}>
+    <label className={styles.filter}>{t('filter.status')}
+      <select value={filter.status} onChange={event => filter.setStatus(event.target.value as StatusFilter)}>
+        <option value="all">{t('filter.all')}</option>
+        <option value="in_progress">{t('inProgress')}</option>
+        <option value="completed">{t('completed')}</option>
+      </select>
+    </label>
+    <label className={styles.filter}>{t('filter.category')}
+      <select value={filter.category} onChange={event => filter.setCategory(event.target.value as CategoryFilter)}>
+        <option value="all">{t('filter.all')}</option>
+        {CATEGORIES.map(category => <option key={category} value={category}>{t(`category.${category}`)}</option>)}
+      </select>
+    </label>
+    <label className={styles.filter}>{t('filter.from')}
+      <input type="date" value={filter.from} max={filter.to || undefined} onChange={event => filter.setFrom(event.target.value)} />
+    </label>
+    <label className={styles.filter}>{t('filter.to')}
+      <input type="date" value={filter.to} min={filter.from || undefined} onChange={event => filter.setTo(event.target.value)} />
+    </label>
+    <label className={styles.filter}>{t('filter.order')}
+      <select value={filter.order} onChange={event => filter.setOrder(event.target.value as Order)}>
+        <option value="newest">{t('filter.newest')}</option>
+        <option value="oldest">{t('filter.oldest')}</option>
+      </select>
+    </label>
+    {filter.active && <button type="button" className={styles.linkButton} onClick={filter.clear}>{t('filter.clear')}</button>}
+  </div>
+}
+
 function WithDialogues({ data, topics, phone, busy, onStart, onPick }: {
   data: PracticeList; topics: Topic[]; phone: boolean; busy: boolean; onStart(topic: Topic): void; onPick(): void
 }) {
@@ -127,6 +196,7 @@ function WithDialogues({ data, topics, phone, busy, onStart, onPick }: {
     return phone ? pickFeatured(unstarted, FEATURED) : unstarted.slice(0, DESKTOP_MORE)
   }, [topics, dialogues, phone])
   const exhausted = quota.remaining <= 0
+  const filter = useDialogueFilter(dialogues)
   return <>
     <div className={styles.bar}>
       <h2 className={styles.recentTitle}>{t('recent')} <span className={styles.count}>{dialogues.length}</span></h2>
@@ -136,9 +206,13 @@ function WithDialogues({ data, topics, phone, busy, onStart, onPick }: {
       </span>
     </div>
     {exhausted && <p role="status" className={styles.quota}>{t('quotaUsed', { limit: quota.limit })}</p>}
-    <ul className={styles.grid} aria-label={t('recent')}>
-      {dialogues.map(dialogue => <li key={dialogue.activity_id}><DialogueCard dialogue={dialogue} /></li>)}
-    </ul>
+    <DialogueFilters filter={filter} />
+    {filter.active && <p role="status" className={styles.filterCount}>{t('filter.shown', { shown: filter.shown.length, total: dialogues.length })}</p>}
+    {filter.shown.length === 0
+      ? <p className={styles.noMatch}>{t('filter.none')}</p>
+      : <ul className={styles.grid} aria-label={t('recent')}>
+        {filter.shown.map(dialogue => <li key={dialogue.activity_id}><DialogueCard dialogue={dialogue} /></li>)}
+      </ul>}
     {more.length > 0 && <section className={styles.more} aria-labelledby="practice-more">
       <div className={styles.moreBar}>
         <h3 id="practice-more">{t('more')}</h3>
@@ -162,7 +236,7 @@ function DialogueCard({ dialogue }: { dialogue: Dialogue }) {
     </div>
     <div className={styles.cardBody}>
       <span className={styles.excerpt}>{dialogue.body}</span>
-      <span className={styles.date}>{formatDateTime(dialogue.created_at, locale, 'weekdayDate')}</span>
+      <span className={styles.date}>{t('startedAt', { at: formatDateTime(dialogue.created_at, locale, 'yearWeekdayDateTime') })}</span>
     </div>
     {done
       ? <ButtonLink variant="quiet" className={styles.action} to={to}>{t('review')}<span aria-hidden="true">→</span></ButtonLink>

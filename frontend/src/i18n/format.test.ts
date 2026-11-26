@@ -41,3 +41,12 @@ test('weekday date without time', () => {
   expect(zh).not.toContain('23:59')
   expect(formatDateTime(seconds, 'en', 'weekdayDate')).toContain('Oct')
 })
+
+test('year, weekday, date and time for records that span years', () => {
+  expect(formatDateTime(seconds, 'zh-Hant', 'yearWeekdayDateTime')).toBe('2026/10/24（六）23:59')
+  const en = formatDateTime(seconds, 'en', 'yearWeekdayDateTime')
+  expect(en).toContain('2026')
+  expect(en).toContain('Oct')
+  expect(en).toContain('23:59')
+  expect(formatDateTime(seconds, 'es', 'yearWeekdayDateTime')).toMatch(/2026.*23:59/)
+})

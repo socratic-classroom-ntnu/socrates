@@ -5,6 +5,7 @@ import { api } from '../../contract/classroomClient'
 jest.mock('../../contract/classroomClient', () => ({ api: jest.fn() }))
 
 beforeEach(() => {
+  jest.mocked(api).mockClear()
   jest.mocked(api).mockImplementation(async (path: string) =>
     path === '/provider-profiles' ? [] : { default_profile_id: null, fallback_profile_id: null, model_matrix: {}, budgets: {} })
 })
@@ -17,6 +18,31 @@ test('an OpenRouter connection starts on the Free Router; other services ask for
   expect(screen.getByLabelText('預設模型（自行輸入）')).toHaveValue('')
   fireEvent.change(screen.getByRole('combobox', { name: /Provider|服務/ }), { target: { value: 'openrouter' } })
   expect(screen.getByRole('combobox', { name: '預設模型' })).toHaveValue('openrouter/free')
+})
+
+// P&R PR-17：選「其他（自行輸入）」卻沒填模型代碼時，按「建立連線」要在表單旁邊說原因，不是看起來沒反應
+test('a blank model code is explained next to the create button and nothing is sent', async () => {
+  await act(async () => { render(<ProviderSettings />) })
+  fireEvent.change(screen.getByLabelText('連線名稱'), { target: { value: '我的 OpenAI' } })
+  fireEvent.change(screen.getByRole('combobox', { name: /Provider|服務/ }), { target: { value: 'openai' } })
+  const form = screen.getByRole('button', { name: '建立連線' }).closest('form') as HTMLFormElement
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '建立連線' })) })
+  expect(within(form).getByRole('alert')).toHaveTextContent('請選擇或輸入預設模型。')
+  expect(jest.mocked(api).mock.calls.some(([path, method]) => path === '/provider-profiles' && method === 'POST')).toBe(false)
+  fireEvent.change(screen.getByLabelText('預設模型（自行輸入）'), { target: { value: 'gpt-4o-mini' } })
+  expect(within(form).queryByRole('alert')).toBeNull()
+})
+
+test('a refused connection says why next to the create button', async () => {
+  jest.mocked(api).mockImplementation(async (path: string, method?: string) => {
+    if (path === '/provider-profiles' && method === 'POST') throw new Error('自訂相容服務要填服務網址。')
+    return path === '/provider-profiles' ? [] : { default_profile_id: null, fallback_profile_id: null, model_matrix: {}, budgets: {} }
+  })
+  await act(async () => { render(<ProviderSettings />) })
+  fireEvent.change(screen.getByLabelText('連線名稱'), { target: { value: '我的服務' } })
+  const form = screen.getByRole('button', { name: '建立連線' }).closest('form') as HTMLFormElement
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: '建立連線' })) })
+  expect(within(form).getByRole('alert')).toHaveTextContent('自訂相容服務要填服務網址。')
 })
 
 test('creating a connection sends the Free Router as the model', async () => {

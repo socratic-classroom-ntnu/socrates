@@ -207,6 +207,8 @@ export function ProviderSettings() {
   const [rotation, setRotation] = useState({})
   const [models, setModels] = useState({})
   const [note, setNote] = useState('')
+  // 建立連線的結果寫在表單底下：頁尾的狀態列離按鈕太遠，按了像沒反應（P&R PR-17）
+  const [formNote, setFormNote] = useState('')
   const [busy, setBusy] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -230,9 +232,10 @@ export function ProviderSettings() {
   async function createProfile(event) {
     event.preventDefault()
     if (!form.default_model.trim()) {
-      setNote('請選擇或輸入預設模型。')
+      setFormNote('請選擇或輸入預設模型。')
       return
     }
+    setFormNote('')
     setBusy(true)
     try {
       await api('/provider-profiles', 'POST', {
@@ -246,7 +249,7 @@ export function ProviderSettings() {
       setNote('AI 連線已建立。')
       await refresh()
     } catch (error) {
-      setNote(errorText(error))
+      setFormNote(errorText(error))
     } finally {
       setBusy(false)
     }
@@ -379,7 +382,10 @@ export function ProviderSettings() {
             <ModelSelect
               label="預設模型"
               value={form.default_model}
-              onChange={default_model => setForm({ ...form, default_model })}
+              onChange={default_model => {
+                setForm({ ...form, default_model })
+                if (default_model.trim()) setFormNote('')
+              }}
               choices={form.adapter === 'openrouter' ? modelChoices([]) : []}
             />
           </label>
@@ -418,6 +424,7 @@ export function ProviderSettings() {
           </label>
         </div>
         <button disabled={busy}>建立連線</button>
+        {formNote && <p role="alert" className="provider-form-note">{formNote}</p>}
       </form>
 
       <div className="sc-script-grid">

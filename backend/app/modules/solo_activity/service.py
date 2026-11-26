@@ -13,7 +13,7 @@ from __future__ import annotations
 import asyncio
 import time
 import unicodedata
-from dataclasses import asdict
+from dataclasses import asdict, fields
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
 from uuid import uuid4
@@ -155,16 +155,25 @@ def _locked_attempt(db, account: Account, attempt_id: str) -> SoloAttempt:
     return row
 
 
+def _known(cls: type, stored: dict) -> dict:
+    """The stored fields this version knows: going back to it after a later version stored more
+    (a new field per scenario, say) still reads every attempt."""
+    names = {f.name for f in fields(cls)}
+    return {key: value for key, value in stored.items() if key in names}
+
+
 def _state(row: SoloAttempt) -> AttemptState:
     return AttemptState(
         attempt_id=row.id,
         state=cast(Any, row.state),
         scenario_index=row.scenario_index,
-        progress=tuple(ScenarioProgress(**entry) for entry in row.progress),
+        progress=tuple(
+            ScenarioProgress(**_known(ScenarioProgress, entry)) for entry in row.progress
+        ),
         pending_key=row.pending_key,
         pending_since=row.pending_since,
         notice=cast(Any, row.notice),
-        final=FinalProgress(**(row.final or {})),
+        final=FinalProgress(**_known(FinalProgress, row.final or {})),
     )
 
 
@@ -884,7 +893,7 @@ def final_summaries(db, activity_id: str) -> list[dict]:
     )
     found = []
     for row in rows:
-        final = FinalProgress(**(row.final or {}))
+        final = FinalProgress(**_known(FinalProgress, row.final or {}))
         if final.status is None or final.summary is None:
             continue
         found.append(

@@ -2,7 +2,16 @@ import { useRef, useState } from 'react'
 import { useT } from '../../i18n/useT'
 import { clearSoloDraft, readSoloDraft, soloDraftKey, writeSoloDraft } from './soloDraft'
 import { can, type SoloAttemptView, type SoloSendMessageBody } from './soloView'
-import { useSoloSpeechInput } from './useSoloSpeechInput'
+import { useSoloSpeechInput, type SpeechNote } from './useSoloSpeechInput'
+
+const VOICE_NOTE: Record<SpeechNote, string> = {
+  network: 'composer.voiceNetwork',
+  denied: 'composer.voiceDenied',
+  noMic: 'composer.voiceNoMic',
+  noSpeech: 'composer.voiceNoSpeech',
+  language: 'composer.voiceLanguage',
+  other: 'composer.voiceOther',
+}
 
 type Props = {
   view: SoloAttemptView
@@ -99,6 +108,13 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
         disabled={disabled}
         placeholder={disabled ? t('composer.waitingPlaceholder') : answering ? t('composer.answerPlaceholder') : t('composer.placeholder')}
         onChange={event => updateText(event.target.value)}
+        onKeyDown={event => {
+          // fb003: Enter sends, Shift+Enter starts a new line. Enter that picks an IME candidate
+          // (注音、拼音) is the input method's, not a send.
+          if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing || event.keyCode === 229) return
+          event.preventDefault()
+          void submit()
+        }}
       />
       {speech.supported && <button
         className="solo-composer__voice"
@@ -114,6 +130,7 @@ export function SoloComposer({ view, pending, sending = false, onSend }: Props) 
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
       </button>}
     </div>
+    {speech.note && !speech.recording && <p className="solo-composer__hint solo-composer__voice-note" role="status">{t(VOICE_NOTE[speech.note])}</p>}
     <p className="solo-composer__hint">{sending
       ? t('composer.sendingHint')
       : pending || awaiting

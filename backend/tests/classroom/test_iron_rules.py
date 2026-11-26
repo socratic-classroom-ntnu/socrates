@@ -245,6 +245,20 @@ def test_a_field_left_empty_twice_fails_as_before():
     assert len(fake.prompts) == 2
 
 
+def test_a_list_with_too_few_items_is_asked_again_with_the_field_named():
+    """Claude Haiku also ignores item minimums (ActivityExpansion wants 2–6 stances)."""
+    failure = ProviderSchemaMismatch([("stances", "too_short"), ("tutor_goal", "string_too_short")])
+    failure.audit = {"token_usage": {"total_tokens": 7}, "estimated_cost": 0.02, "latency_ms": 3}
+    reply = "如果那一個人是你認識的人，你的選擇會不同嗎？"
+    fake = Fake(failure, tutor(reply))
+    result, audit, _ = run(fake, "我會拉桿")
+    assert result["reply_text"] == reply
+    note = fake.prompts[1][0]["content"]
+    assert "stances 的項目太少" in note and "tutor_goal 是空的" in note
+    assert audit["iron_rules"]["reasons"] == ["TOO_FEW_ITEMS"]
+    assert audit["token_usage"]["total_tokens"] == 17
+
+
 def test_other_schema_failures_are_not_asked_again():
     fake = Fake(ProviderSchemaMismatch([("guard", "literal_error")]))
     with pytest.raises(ProviderSchemaMismatch):

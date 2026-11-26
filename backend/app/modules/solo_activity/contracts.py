@@ -192,6 +192,9 @@ class SoloScenarioView(View):
     answer: str | None  # the student's first answer; None until given
     status: ScenarioStatus
     confirmed_summary: PersonalSummaryView | None
+    # A capped scenario: the summary the student saw and acknowledged, so an earlier scenario still
+    # shows what it ended with. None otherwise. Only the student's own view carries it.
+    capped_summary: PersonalSummaryView | None = None
 
 
 class FinalSummaryPointView(View):

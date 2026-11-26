@@ -165,14 +165,16 @@ export function SoloDialoguePage() {
         <strong><span className="solo-dialogue__course-name">{view.course_name} · </span>{view.activity_title}</strong>
         <span>{t('dialogue.subtitle')}</span>
       </div>
+      {/* fb001: a plain way out besides the logo; a practice dialogue goes back to 我的對話 */}
+      <Link className="solo-dialogue__exit" to={activity.data.practice ? '/my-dialogues' : `/learn/courses/${view.course_id}`}>
+        {t(activity.data.practice ? 'dialogue.backToPractice' : 'dialogue.backToCourse')}
+      </Link>
       <span className="solo-dialogue__count">{t('dialogue.count', { current: view.scenario_index + 1 })}</span>
       <span className="solo-dialogue__person" aria-label={view.display_name}>{view.display_name.slice(0, 1)}</span>
     </header>
     <div className="solo-dialogue__columns">
       <ScenarioBoard
         scenario={scenario}
-        confirming={can(view, 'confirm_viewpoint') || can(view, 'revise_viewpoint')}
-        revising={view.revising}
         progress={view.scenarios.length > 1 ? <SoloProgress view={view} /> : null}
         voice={<div ref={setVoiceSlot} className="solo-voice-slot" />}
       />

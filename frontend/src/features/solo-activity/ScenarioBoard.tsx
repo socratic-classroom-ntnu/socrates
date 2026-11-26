@@ -4,14 +4,14 @@ import type { SoloScenario } from './soloView'
 
 type Props = {
   scenario: SoloScenario
-  confirming?: boolean
-  revising?: boolean
   progress?: ReactNode
   // Where voice mode puts its 蘇格拉底 card (Figma 749:324: under the scenario, in this column).
   voice?: ReactNode
 }
 
-export function ScenarioBoard({ scenario, confirming = false, revising = false, progress = null, voice = null }: Props) {
+// fb002: the column holds the scenario, the answer and the progress only; the notes explaining what
+// the page does (who wrote the scenario, what the dialogue is for, why confirm) are gone.
+export function ScenarioBoard({ scenario, progress = null, voice = null }: Props) {
   const { t } = useT('solo')
   // A0m／A1m: on a phone the board is open for the first answer, then folds to its title so the
   // conversation has the room. Desktop always shows the text and hides the toggle (solo.css).
@@ -35,21 +35,11 @@ export function ScenarioBoard({ scenario, confirming = false, revising = false, 
       </div>
       <p id="solo-scenario-text" className={`solo-question__scenario${open ? '' : ' solo-question__scenario--folded'}`}>{scenario.text}</p>
     </section>
-    {!confirming && scenario.index === 0 && <p className="solo-question__source">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
-      {t('teacherSource')}
-    </p>}
     {voice}
-    <section className={`solo-choice ${scenario.answer ? '' : 'solo-choice--empty'}`} aria-label={t('myAnswer')}>
+    {scenario.answer && <section className="solo-choice" aria-label={t('myAnswer')}>
       <div className="solo-choice__head"><h2>{t('myAnswer')}</h2></div>
-      {scenario.answer
-        ? <p className="solo-choice__reason">{scenario.answer}</p>
-        : <p>{t('answerPending')}</p>}
-    </section>
+      <p className="solo-choice__reason">{scenario.answer}</p>
+    </section>}
     {progress}
-    <section className="solo-explainer">
-      <h2>{revising ? t('revise.asideTitle') : confirming ? t('whyConfirmTitle') : t('aboutTitle')}</h2>
-      <p>{revising ? t('revise.asideBody') : confirming ? t('whyConfirmBody') : t('aboutBody')}</p>
-    </section>
   </aside>
 }

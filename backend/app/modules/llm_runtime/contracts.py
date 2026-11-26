@@ -1,8 +1,15 @@
 """Public structured-output contracts owned by LLM Runtime."""
 
 from typing import Annotated, Literal
-from pydantic import Field, field_validator, model_validator
+from pydantic import BeforeValidator, Field, field_validator, model_validator
 from app.modules.platform.contracts import Strict
+
+# A stance-space id, or null when there is none. Some models (Claude Haiku) write "" for null;
+# that reads as null, since asking again for "content" would make them pick a stance instead.
+StanceId = Annotated[
+    Annotated[str, Field(min_length=1, max_length=64)] | None,
+    BeforeValidator(lambda v: None if v == "" else v),
+]
 
 
 class Option(Strict):
@@ -160,8 +167,8 @@ class GroupTutorTurn(PersonalTutorTurn):
 class SoloObservations(Observations):
     """Observations plus the stance id, so policy.should_advance accepts them unchanged."""
 
-    # The stance-space id the student holds; null (never "") before they state a position.
-    stance_id: str | None = Field(min_length=1, max_length=64)
+    # The stance-space id the student holds; null before they state a position.
+    stance_id: StanceId
 
 
 class Citation(Strict):
@@ -277,7 +284,7 @@ class StanceClassification(Strict):
     the backend, not the model, checks the id exists in the activity's stance space.
     """
 
-    stance_id: str | None = Field(min_length=1, max_length=64)
+    stance_id: StanceId
     confidence: Literal["low", "medium", "high"]
     rationale: str = Field(min_length=1, max_length=1000)
 
@@ -298,7 +305,7 @@ class VoiceConfirmation(Strict):
 class TrajectoryStep(Strict):
     """One confirmed stage of the student's thinking, oldest first."""
 
-    stance_id: str | None = Field(min_length=1, max_length=64)
+    stance_id: StanceId
     position: str = Field(min_length=1, max_length=2000)
     # Why the student moved here from the previous step; empty for the first step.
     shift_reason: str = Field(max_length=2000)

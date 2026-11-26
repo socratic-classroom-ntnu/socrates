@@ -634,11 +634,20 @@ describe('reading the page without the Chinese punctuation', () => {
     expect(button).toHaveAccessibleName(/情境 1.*不拉拉桿.*捲到情境 1 的開頭/)
   })
 
-  test('English and Spanish use their own colon and separator', async () => {
+  test('the pending summary keeps the student card\'s order, with 未釐清 last (QA 07)', async () => {
+    const a = confirming()
+    a.candidate_summary = summary({ relevant_conditions: ['一'], unresolved_issue: '還沒想清楚', principle_note: '看結果' })
+    open(transcript({ attempt: a }))
+    const card = await screen.findByRole('region', { name: '目前的觀點摘要' })
+    expect(within(card).getAllByRole('term').map(term => term.textContent)).toEqual(['立場', '理由', '條件', '接近的想法', '未釐清'])
+  })
+
+  test('conditions are a list, as on the student\'s card, in any language', async () => {
     const a = confirming()
     a.candidate_summary = summary({ relevant_conditions: ['one', 'two'] })
     open(transcript({ attempt: a }), 'en')
-    expect(await screen.findByText('one; two')).toBeInTheDocument()
+    expect((await screen.findByText('one')).tagName).toBe('LI')
+    expect(screen.getByText('two').tagName).toBe('LI')
   })
 
   test('the final summary words each trajectory step with the locale\'s colon', async () => {

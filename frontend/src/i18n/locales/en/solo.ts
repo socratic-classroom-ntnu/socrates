@@ -50,7 +50,6 @@ export default {
   },
   revise: {
     echoTitle: 'You felt this summary was not quite right',
-    reason: 'Reason: {{value}}', conditions: 'Conditions: {{value}}', separator: ' / ',
     ask: 'Thank you for saying so; I did not quite get it. Which part does not sound like you: the position, the reason, or the conditions? Say it in your own words.',
     quickLabel: 'What is off? (Choose one)', quickPrompt: 'What is off?',
     quickPosition: 'The position is off', quickReason: 'The reason is off', quickConditions: 'The conditions are off', quickChanged: 'I actually changed my mind',
@@ -60,7 +59,7 @@ export default {
   viewpoint: {
     title: 'I tried to summarize your view. Does this sound right?',
     blank: '(Not explained yet)',
-    reason: 'Reason', conditions: 'Conditions',
+    position: 'Stance', reason: 'Reason', conditions: 'Conditions',
     principle: 'Related idea: {{principle}}', principleNote: 'This is a reference, not a label for you.',
     confirm: 'Yes, that is what I think', revise: 'Not quite, I want to explain more',
     cappedTitle: 'You reached the message limit. Here is where things stand. This scenario will not be marked as confirmed.', cappedConfirm: 'OK, got it',

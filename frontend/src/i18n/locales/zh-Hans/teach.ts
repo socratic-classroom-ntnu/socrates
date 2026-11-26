@@ -234,7 +234,7 @@ const teach: Shape<typeof zhHant> = {
     },
     summary: {
       title: '目前的观点摘要', pending: '待学生确认', caption: '仅整理情境 {{number}} 的目前观点，尚未经学生确认。',
-      position: '立场', reason: '理由', conditions: '条件', unresolved: '未厘清', principle: '原则', conditionsJoin: '；',
+      position: '立场', reason: '理由', conditions: '条件', unresolved: '未厘清', principle: '接近的想法',
     },
     track: {
       noStance: '还没整理出立场',

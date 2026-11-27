@@ -45,7 +45,7 @@ from app.modules.solo_activity import service, voice_judge, voice_turns, voice_u
 from app.modules.solo_activity.voice_readout import to_script
 from app.modules.solo_activity.voice_turns import Point, VoiceStep
 
-ToTyping = Literal["done", "quota", "disabled", "idle", "error"]
+ToTyping = Literal["done", "ended", "quota", "disabled", "idle", "error"]
 
 # The used time is settled at least this often while audio comes in, so the daily limit holds even
 # when no turn finishes; this long without anyone speaking ends voice mode.
@@ -69,6 +69,7 @@ LEAK_NOTE = (
 NEXT_SCENARIO = "我們看下一個情境，黑板上的內容是新的條件。你會怎麼做？為什麼？"
 TO_TYPING_TEXT: dict[ToTyping, str] = {
     "done": "這次的討論完成了，最後的整理在畫面上。",
+    "ended": "老師已經結束這個活動，語音先停在這裡。",
     "quota": voice_usage.USED_UP,
     "disabled": "語音模式已關閉，可以繼續打字。",
     "idle": "一段時間沒有聽到你說話，先切回打字。",
@@ -226,7 +227,14 @@ class VoiceRelay:
         while self.ended is None and not self.stopped:
             live = self.live
             async for event in live.events():
-                await self._on_event(event)
+                try:
+                    await self._on_event(event)
+                except DomainError as refused:
+                    # 立即結束 while voice was open: the next step is refused before anything is
+                    # written; the student is told why instead of the voice just going quiet.
+                    if refused.code != "ACTIVITY_ENDED":
+                        raise
+                    await self._end("ended")
                 if self.ended is not None or live is not self.live:
                     break
             else:
@@ -308,7 +316,13 @@ class VoiceRelay:
         heard, interrupted = self.heard_readout, self.readout_interrupted
         prepared = await self._db(
             lambda db, acc: voice_judge.prepare(
-                db, acc, self.attempt_id, summary=point.summary, heard=heard, said=said
+                db,
+                acc,
+                self.attempt_id,
+                summary=point.summary,
+                heard=heard,
+                said=said,
+                at=self.clock(),
             )
         )
         judgment = await voice_judge.judge(

@@ -620,3 +620,77 @@ def test_the_daily_limit_holds_even_when_nothing_arrives(client, tutor, voice_on
 
     asyncio.run(with_relay(h, script))
     assert h.json[-1]["reason"] == "quota"
+
+
+# PM review of #204 (11-27): the teacher's 立即結束 while voice is open.
+def _begin_at_real_time(client):
+    from app.modules.solo_activity import service
+
+    s = setup(client)
+    attempt = ok(start(client, s["activity_id"]))
+    t = [service.now()]
+    return s, attempt["id"], Harness(attempt["id"], lambda: t[0]), t
+
+
+def test_after_the_teacher_ends_the_activity_the_next_sentence_ends_voice_and_says_why(
+    client, tutor, voice_on
+):
+    """The student speaks after 立即結束: nothing is written, and instead of the voice just going
+    quiet the student is told the activity has ended."""
+    from app.modules.solo_activity import service
+    from tests.solo_activity.test_solo_ended_activity import end_now
+
+    _, replies = tutor
+    s, attempt_id, h, t = _begin_at_real_time(client)
+    replies.append(OPENING)
+    before = []
+
+    async def script():
+        end_now(client, s)
+        t[0] = service.now() + 1
+        before.extend(messages(attempt_id))
+        await play(h, *student_says("不能主動害人"), *socrates_says(REPLY))
+
+    asyncio.run(with_relay(h, script))
+    assert h.json[-1] == {
+        "type": "to_typing",
+        "reason": "ended",
+        "text": "老師已經結束這個活動，語音先停在這裡。",
+    }
+    assert messages(attempt_id) == before
+    assert b"\x01\x02" not in h.audio_out
+
+
+def test_after_the_teacher_ends_the_activity_an_answer_at_a_summary_is_not_judged(
+    client, tutor, voice_on, monkeypatch
+):
+    """At a confirmation point after 立即結束, the student's 對 is refused before the judging model
+    is called."""
+    from app.modules.solo_activity import service, voice_judge
+    from tests.solo_activity.test_solo_ended_activity import end_now
+
+    _, replies = tutor
+    s, attempt_id, h, t = _begin_at_real_time(client)
+    text = readout(MET["summary"], "zh-Hant")
+    judged = []
+
+    async def judge(*args, **kwargs):
+        judged.append(kwargs.get("said"))
+        raise AssertionError("judged after the end")
+
+    monkeypatch.setattr(voice_judge, "judge", judge)
+    before = []
+
+    async def script():
+        await play(h, *to_confirming(h, replies))
+        assert h.live.texts[-1] == vr.READ_VERBATIM.format(text)
+        await play(h, *socrates_says(text, b"\x05"))
+        end_now(client, s)
+        t[0] = service.now() + 1
+        before.extend(messages(attempt_id))
+        await play(h, *student_says("對"), vr.LiveEvent("output_text", "好。"))
+
+    asyncio.run(with_relay(h, script))
+    assert judged == []
+    assert h.json[-1]["type"] == "to_typing" and h.json[-1]["reason"] == "ended"
+    assert messages(attempt_id) == before

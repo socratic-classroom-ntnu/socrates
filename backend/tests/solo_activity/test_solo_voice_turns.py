@@ -80,7 +80,7 @@ def answered(
     with storage.transaction() as db:
         point = vt.point_of(db, _account(db), attempt_id, 1_000_000.0)
         prepared = vj.prepare(
-            db, _account(db), attempt_id, summary=point.summary, heard=heard, said=text
+            db, _account(db), attempt_id, summary=point.summary, heard=heard, said=text, at=at
         )
     judgment = asyncio.run(
         vj.judge(
@@ -393,7 +393,13 @@ def to_final(client, tutor, final):
     with storage.transaction() as db:
         point = vt.point_of(db, _account(db), attempt_id, 1_000_000.0)
         prepared = vj.prepare(
-            db, _account(db), attempt_id, summary=point.summary, heard=step.say, said="對"
+            db,
+            _account(db),
+            attempt_id,
+            summary=point.summary,
+            heard=step.say,
+            said="對",
+            at=1_000_000.0,
         )
     judgment = asyncio.run(
         vj.judge(

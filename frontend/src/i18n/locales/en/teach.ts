@@ -273,6 +273,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: 'The student turned the final summary down twice; not confirmed',
       reviewNone: 'The student did not produce a final summary',
       jump: 'Scroll to the start of scenario {{number}}',
+      jumpReview: 'Scroll to the review and reflection',
       viewing: 'Now viewing',
     },
     review: {

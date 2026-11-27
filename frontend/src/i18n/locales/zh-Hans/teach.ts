@@ -249,6 +249,7 @@ const teach: Shape<typeof zhHant> = {
       reviewUnconfirmed: '最终整理学生否决 2 次，结果未确认',
       reviewNone: '学生没有生成最终整理',
       jump: '滚动到情境 {{number}} 的开头',
+      jumpReview: '滚动到回顾与反思',
       viewing: '正在查看',
     },
     review: {

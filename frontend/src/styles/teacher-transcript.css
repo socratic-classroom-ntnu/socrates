@@ -94,7 +94,6 @@
 .tt-row--current.tt-row--viewing > .tt-row__button::before { left: 0; }
 .tt-row--viewing .tt-row__name { color: var(--ui-classroom-board-green); }
 .tt-row__button { all: unset; box-sizing: border-box; width: 100%; padding: 6px 0 16px; display: flex; flex-direction: column; gap: 9px; cursor: pointer; }
-.tt-row__button--static { cursor: default; }
 .tt-row__button:focus-visible { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
 .tt-row__head { display: flex; align-items: center; gap: 6px; }
 .tt-row__head strong { flex: 1; font-size: 13px; line-height: 20px; }

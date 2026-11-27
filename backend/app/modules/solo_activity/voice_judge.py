@@ -43,9 +43,14 @@ def prepare(
     summary: dict[str, Any],
     heard: str,
     said: str,
+    at: float,
 ) -> dict[str, Any] | None:
-    """What the judging call needs; None when the course has no model to call."""
+    """What the judging call needs; None when the course has no model to call.
+
+    ACTIVITY_ENDED once the activity has ended, so no judging call is made for an answer that
+    answer() would refuse anyway (#212)."""
     row = service._locked_attempt(db, account, attempt_id)
+    service._refuse_if_ended(db, row, at)
     activity = db.get(service.Activity, row.activity_id)
     course = db.get(service.Course, activity.course_id)
     bindings = service.course_bindings(db, course, service.ROLE)

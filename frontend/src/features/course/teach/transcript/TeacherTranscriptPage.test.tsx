@@ -387,6 +387,55 @@ describe('the stop the teacher is looking at', () => {
   })
 })
 
+describe('the review is a stop too', () => {
+  // Scenario 1 at 0, scenario 2 at 640, the review at 1400, in a 2000px chat seen through a 400px view.
+  async function openCompleted() {
+    open(transcript({ attempt: completed() }))
+    const c = await chat()
+    const scroll = within(c).getByTestId('transcript-scroll')
+    const scrollTo = jest.fn()
+    scroll.scrollTo = scrollTo
+    const state = { top: 1600 }
+    Object.defineProperty(scroll, 'scrollHeight', { configurable: true, get: () => 2000 })
+    Object.defineProperty(scroll, 'clientHeight', { configurable: true, get: () => 400 })
+    Object.defineProperty(scroll, 'scrollTop', { configurable: true, get: () => state.top, set: value => { state.top = value } })
+    const starts = [c.querySelector('[data-scenario="0"]'), c.querySelector('[data-scenario="1"]'), c.querySelector('[data-review]')] as HTMLElement[]
+    ;[0, 640, 1400].forEach((top, index) => Object.defineProperty(starts[index], 'offsetTop', { configurable: true, value: top }))
+    const scrollBy = async (top: number) => { state.top = top; fireEvent.scroll(scroll) }
+    return { scroll, scrollTo, scrollBy }
+  }
+  const rows = async () => within(await track()).getAllByRole('listitem')
+  const reviewRow = async () => (await rows()).at(-1) as HTMLElement
+  const viewed = (row: HTMLElement) => within(row).queryByText('正在檢視') !== null
+
+  test('once the student is in the review, the mark starts on 回顧與反思', async () => {
+    open(transcript({ attempt: completed() }))
+    await chat()
+    expect(viewed(await reviewRow())).toBe(true)
+    expect((await rows()).slice(0, -1).some(viewed)).toBe(false)
+  })
+
+  test('clicking 回顧與反思 scrolls the chat to the review and moves the mark there', async () => {
+    const { scrollTo } = await openCompleted()
+    fireEvent.click(within((await rows())[0]).getByRole('button'))
+    expect(viewed(await reviewRow())).toBe(false)
+    fireEvent.click(within(await track()).getByRole('button', { name: /捲到回顧與反思/ }))
+    expect(scrollTo).toHaveBeenLastCalledWith({ top: 1400 - 12, behavior: 'smooth' })
+    expect(viewed(await reviewRow())).toBe(true)
+    expect(viewed((await rows())[0])).toBe(false)
+  })
+
+  test('scrolling down into the review moves the mark from the last scenario to 回顧與反思', async () => {
+    const { scrollBy } = await openCompleted()
+    await scrollBy(700) // scenario 2 is under the top of the view
+    expect(viewed((await rows())[1])).toBe(true)
+    expect(viewed(await reviewRow())).toBe(false)
+    await scrollBy(1300) // the review starts inside the upper third of the view
+    expect(viewed(await reviewRow())).toBe(true)
+    expect(viewed((await rows())[1])).toBe(false)
+  })
+})
+
 describe('09 not started, 10 loading, 11 failed', () => {
   test('09: no conversation, with the way back', async () => {
     open(transcript({ attempt: null }))

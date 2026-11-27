@@ -11,7 +11,7 @@ import '../../../../styles/teacher-transcript.css'
 import { TranscriptChat, type ChatHandle } from './TranscriptChat'
 import { TranscriptState } from './TranscriptStates'
 import { TranscriptTrack } from './TranscriptTrack'
-import { isStopped, stopKind, type Transcript } from './transcriptModel'
+import { isStopped, stopKind, type Stop, type Transcript } from './transcriptModel'
 import { studentName, type T } from './transcriptText'
 
 const REFRESH_MS = 10_000
@@ -23,8 +23,8 @@ export function TeacherTranscriptPage() {
   const resource = useResource<Transcript>(activityId && enrollmentId ? `/solo/activities/${activityId}/students/${enrollmentId}/attempt` : null)
   const [retrying, setRetrying] = useState(false)
   const chat = useRef<ChatHandle>(null)
-  // The scenario the teacher is reading; until the chat reports one it is the student's own.
-  const [viewing, setViewing] = useState<number | null>(null)
+  // The stop the teacher is reading; until the chat reports one it is the student's own.
+  const [viewing, setViewing] = useState<Stop | null>(null)
   const data = resource.data
   const stopped = data ? isStopped(data) : false
   const backTo = activityId ? `/teach/activities/${activityId}` : '/'
@@ -57,12 +57,13 @@ export function TeacherTranscriptPage() {
     const footer = t(`transcript.footer.${stop ?? 'running'}`, { time })
     const attempt = data.attempt
     const capped = attempt.state === 'confirming' && attempt.scenarios.find(scenario => scenario.index === attempt.scenario_index)?.status === 'capped'
+    const own: Stop = attempt.review_status === 'not_started' ? attempt.scenario_index : 'review'
     const banner = stop === 'completed' ? 'completed' : stop === 'unconfirmed' ? 'unconfirmed' : capped ? 'capped' : stop === 'ended' ? 'ended' : null
     body = <>
       {banner && <p className={`transcript-banner transcript-banner--${banner}`} role="status">{t(`transcript.banner.${banner}`)}</p>}
       <div className="transcript-body">
         <TranscriptChat ref={chat} attempt={attempt} studentName={name} footer={footer} onViewing={setViewing} />
-        <TranscriptTrack attempt={attempt} name={name} viewing={viewing ?? attempt.scenario_index} onJump={index => chat.current?.jumpToScenario(index)} />
+        <TranscriptTrack attempt={attempt} name={name} viewing={viewing ?? own} onJump={target => chat.current?.jumpTo(target)} />
       </div>
     </>
   }

@@ -260,6 +260,7 @@ export default {
       reviewUnconfirmed: '最終整理學生否決 2 次，結果未確認',
       reviewNone: '學生沒有產生最終整理',
       jump: '捲到情境 {{number}} 的開頭',
+      jumpReview: '捲到回顧與反思',
       viewing: '正在檢視',
     },
     review: {

@@ -8,6 +8,9 @@ export type Summary = components['schemas']['PersonalSummaryView']
 export type FinalSummary = components['schemas']['FinalSummaryView']
 type ReviseHint = NonNullable<Message['revise_hint']>
 
+/** A stop on the track: a scenario by its index, or the review once it has begun. */
+export type Stop = number | 'review'
+
 export const REVIEW_STATES = ['reviewing', 'awaiting_reflection_prompt', 'reflecting', 'completed']
 
 /** The reason a student gave for 不太對, as the system line names it; the key is a `transcript.reason.*` text. */

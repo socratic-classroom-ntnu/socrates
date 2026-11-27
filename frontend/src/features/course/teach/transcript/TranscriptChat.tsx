@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, us
 import { formatDateTime } from '../../../../i18n/format'
 import { useT } from '../../../../i18n/useT'
 import { PendingSummary, ReviewSection } from './TranscriptCards'
-import { buildChat, messageIds, stageOf, type Attempt, type ChatItem, type Message } from './transcriptModel'
+import { buildChat, messageIds, stageOf, type Attempt, type ChatItem, type Message, type Stop } from './transcriptModel'
 import { firstChar, stageLabel, type T } from './transcriptText'
 
 // As the student's own timeline does (SoloTimeline): within this far of the bottom the reader is "at the bottom".
@@ -19,20 +19,25 @@ export function scrollToTarget(container: HTMLElement, target: HTMLElement) {
   container.scrollTo({ top: Math.max(0, target.offsetTop - 12), behavior: reduced ? 'auto' : 'smooth' })
 }
 
-/** The scenario the reader is in: the last one whose start is above the view line; at the bottom, the latest one. */
-function scenarioInView(container: HTMLElement, atBottom: boolean): number | null {
-  const starts = Array.from(container.querySelectorAll<HTMLElement>('[data-scenario]'))
+// Where each stop starts in the chat: a scenario's board, and the review's section once it has begun.
+const STOP_STARTS = '[data-scenario], [data-review]'
+const stopOf = (start: HTMLElement): Stop => start.dataset.review !== undefined ? 'review' : Number(start.dataset.scenario)
+const stopSelector = (stop: Stop) => stop === 'review' ? '[data-review]' : `[data-scenario="${stop}"]`
+
+/** The stop the reader is in: the last one whose start is above the view line; at the bottom, the latest one. */
+function stopInView(container: HTMLElement, atBottom: boolean): Stop | null {
+  const starts = Array.from(container.querySelectorAll<HTMLElement>(STOP_STARTS))
   if (starts.length === 0) return null
-  if (atBottom) return Number(starts[starts.length - 1].dataset.scenario)
+  if (atBottom) return stopOf(starts[starts.length - 1])
   const line = container.scrollTop + container.clientHeight * VIEW_LINE
   let found = starts[0]
   for (const start of starts) if (start.offsetTop <= line) found = start
-  return Number(found.dataset.scenario)
+  return stopOf(found)
 }
 
-export type ChatHandle = { jumpToScenario(index: number): void }
+export type ChatHandle = { jumpTo(stop: Stop): void }
 
-type Props = { attempt: Attempt; studentName: string; footer: string; onViewing?(index: number): void }
+type Props = { attempt: Attempt; studentName: string; footer: string; onViewing?(stop: Stop): void }
 
 export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptChat({ attempt, studentName, footer, onViewing }, ref) {
   const { t, locale } = useT('teach')
@@ -60,11 +65,11 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
   }, [])
 
   useImperativeHandle(ref, () => ({
-    jumpToScenario(index) {
+    jumpTo(stop) {
       const container = scroller.current
-      const target = container?.querySelector<HTMLElement>(`[data-scenario="${index}"]`)
+      const target = container?.querySelector<HTMLElement>(stopSelector(stop))
       if (!container || !target) return
-      onViewing?.(index)
+      onViewing?.(stop)
       jumping.current = true
       window.clearTimeout(settle.current)
       settle.current = window.setTimeout(endJump, JUMP_SETTLE_MS)
@@ -97,7 +102,7 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
       setUnseen(0)
     }
     if (!jumping.current) {
-      const viewing = scenarioInView(container, atBottom.current)
+      const viewing = stopInView(container, atBottom.current)
       if (viewing !== null) onViewing?.(viewing)
     }
   }
@@ -154,7 +159,7 @@ export const TranscriptChat = forwardRef<ChatHandle, Props>(function TranscriptC
       case 'confirm': return system(t('transcript.sys.confirm', { name: studentName }), item.key)
       case 'budget': return system(t('transcript.sys.budget', { name: studentName }), item.key)
       case 'pending': return <PendingSummary key={item.key} summary={item.summary} scenarioNumber={attempt.scenario_index + 1} />
-      case 'review': return <ReviewSection key={item.key} attempt={attempt} />
+      case 'review': return <div key={item.key} data-review=""><ReviewSection attempt={attempt} /></div>
     }
   }
 

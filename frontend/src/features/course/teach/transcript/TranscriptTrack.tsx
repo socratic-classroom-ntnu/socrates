@@ -1,15 +1,15 @@
 import { useT } from '../../../../i18n/useT'
-import type { Attempt } from './transcriptModel'
+import type { Attempt, Stop } from './transcriptModel'
 import { buildTrack, stageOf } from './transcriptModel'
 import { stageLabel, type T } from './transcriptText'
 import { Written } from './TranscriptCards'
 
 /**
  * The right column: one stop per scenario the student has reached, then the review once it begins (Figma 03–12).
- * Two marks: the yellow row is where the student is (`current`); the dark bar is the scenario the teacher is
+ * Two marks: the yellow row is where the student is (`current`); the dark bar is the stop the teacher is
  * reading in the chat (`viewing`), which follows a click here and the chat's own scrolling.
  */
-export function TranscriptTrack({ attempt, name, viewing, onJump }: { attempt: Attempt; name: string; viewing: number; onJump(index: number): void }) {
+export function TranscriptTrack({ attempt, name, viewing, onJump }: { attempt: Attempt; name: string; viewing: Stop; onJump(stop: Stop): void }) {
   const { t } = useT('teach')
   const rows = buildTrack(attempt)
   const done = rows.filter(row => row.status === 'confirmed').length
@@ -44,22 +44,24 @@ export function TranscriptTrack({ attempt, name, viewing, onJump }: { attempt: A
           </button>
         </li>
       })}
-      {inReview && <ReviewRow attempt={attempt} />}
+      {inReview && <ReviewRow attempt={attempt} viewed={viewing === 'review'} onJump={() => onJump('review')} />}
     </ol>
   </aside>
 }
 
-function ReviewRow({ attempt }: { attempt: Attempt }) {
+function ReviewRow({ attempt, viewed, onJump }: { attempt: Attempt; viewed: boolean; onJump(): void }) {
   const { t } = useT('teach')
   const stage = stageOf(attempt)
   const label = stageLabel(t as T, stage)
   const unconfirmed = stage.kind === 'review' && stage.key === 'unconfirmed'
   const completed = stage.kind === 'review' && stage.key === 'completed'
   const line = unconfirmed ? 'reviewUnconfirmed' : completed ? (attempt.final_summary ? 'reviewConfirmed' : 'reviewNone') : 'reviewInProgress'
-  return <li className={`tt-row tt-row--current${unconfirmed ? ' tt-row--warn' : ''}`}>
-    <span className="tt-row__button tt-row__button--static">
+  return <li className={`tt-row tt-row--current${unconfirmed ? ' tt-row--warn' : ''}${viewed ? ' tt-row--viewing' : ''}`} aria-current="step">
+    <button type="button" className="tt-row__button" onClick={onJump}>
       <span className="tt-row__head"><strong>{t('transcript.track.review')}</strong><span className={label.className}>{label.label}</span></span>
       <span className="tt-row__note">{t(`transcript.track.${line}`)}</span>
-    </span>
+      <span className="sr-only">{t('transcript.track.jumpReview')}</span>
+      {viewed && <span className="sr-only">{t('transcript.track.viewing')}</span>}
+    </button>
   </li>
 }

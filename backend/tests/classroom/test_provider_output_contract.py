@@ -151,6 +151,61 @@ def test_openrouter_requires_structured_output_capability(monkeypatch):
     assert captured["max_tokens"] == 250
 
 
+def test_openrouter_gemini_4_thinks_by_effort_with_room_for_the_answer(monkeypatch):
+    """Gemini 4 on OpenRouter ignores reasoning.max_tokens; its thinking took the whole 3,072-token
+    cap and cut the JSON off (production 11-27). It gets reasoning.effort and a larger cap instead."""
+    monkeypatch.setenv("CLASSROOM_MAX_OUTPUT_TOKENS", "200")
+    monkeypatch.setenv("CLASSROOM_REASONING_MAX_TOKENS", "50")
+    monkeypatch.setenv("CLASSROOM_REASONING_EFFORT_MAX_TOKENS", "4000")
+    captured = {}
+
+    async def request(*_, **kwargs):
+        captured.update(kwargs["payload"])
+        return FakeResponse(
+            {
+                "choices": [
+                    {
+                        "message": {"content": json.dumps({"suggestion_text": "新的角度"})},
+                        "finish_reason": "stop",
+                    }
+                ],
+                "usage": {},
+                "model": "google/gemini-4-hydrogen",
+            }
+        )
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    gemini4 = {**binding("openrouter"), "model": "google/gemini-4-hydrogen"}
+    result, _, _ = asyncio.run(
+        gateway._openai_generate(
+            gemini4, [{"role": "user", "content": "test"}], OtherSuggestionResult
+        )
+    )
+    assert result == {"suggestion_text": "新的角度"}
+    assert captured["reasoning"] == {"exclude": True, "effort": "low"}
+    assert captured["max_tokens"] == 4200
+
+
+def test_openrouter_cut_off_at_the_token_cap_is_truncated_not_a_schema_mismatch(monkeypatch):
+    async def request(*_, **__):
+        return FakeResponse(
+            {
+                "choices": [
+                    {"message": {"content": '{"suggestion_text": "新的'}, "finish_reason": "length"}
+                ],
+                "usage": {"completion_tokens": 3072},
+            }
+        )
+
+    monkeypatch.setattr(gateway, "_bounded_request", request)
+    with pytest.raises(ProviderWait, match="PROVIDER_OUTPUT_TRUNCATED"):
+        asyncio.run(
+            gateway._openai_generate(
+                binding("openrouter"), [{"role": "user", "content": "test"}], OtherSuggestionResult
+            )
+        )
+
+
 def gemini_body(text, finish="STOP"):
     return {
         "candidates": [{"content": {"parts": [{"text": text}]}, "finishReason": finish}],

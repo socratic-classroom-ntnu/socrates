@@ -236,9 +236,23 @@ def _validated_structured_result(value, schema, usage: dict | None = None) -> di
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
 
 
+def _reasoning_by_effort(binding) -> bool:
+    """OpenRouter models whose thinking cannot be capped by reasoning.max_tokens.
+
+    OpenRouter's Gemini 4 migration notes: reasoning.max_tokens is not supported and does not set
+    a thinking budget, reasoning cannot be turned off, and reasoning.effort (low/medium/high) is the
+    control. Sending max_tokens there let the thinking use the whole cap and cut the JSON off."""
+    model = str(binding.get("model") or "").lower()
+    return binding.get("adapter") == "openrouter" and "gemini-4" in model
+
+
 async def _openai_generate(binding, messages, schema):
     output_budget = env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048)
     reasoning_budget = env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
+    by_effort = _reasoning_by_effort(binding)
+    if by_effort:
+        # Room for effort-controlled thinking on top of the answer; the thinking is not cappable.
+        reasoning_budget = env_int("CLASSROOM_REASONING_EFFORT_MAX_TOKENS", 8192)
     payload = {
         "model": binding["model"],
         "messages": messages,
@@ -255,10 +269,11 @@ async def _openai_generate(binding, messages, schema):
     }
     if binding.get("adapter") == "openrouter":
         payload["provider"] = {"require_parameters": True}
-        payload["reasoning"] = {
-            "exclude": True,
-            "max_tokens": reasoning_budget,
-        }
+        payload["reasoning"] = (
+            {"exclude": True, "effort": "low"}
+            if by_effort
+            else {"exclude": True, "max_tokens": reasoning_budget}
+        )
     response = await _bounded_request(
         binding,
         method="POST",
@@ -268,7 +283,11 @@ async def _openai_generate(binding, messages, schema):
     )
     body = _provider_json(response)
     try:
-        message = body["choices"][0]["message"]
+        choice = body["choices"][0]
+        # Cut off at the token cap: the JSON is incomplete, which is not a schema mismatch.
+        if choice.get("finish_reason") == "length":
+            raise ProviderWait("PROVIDER_OUTPUT_TRUNCATED", 30)
+        message = choice["message"]
         raw = message.get("content")
     except (AttributeError, IndexError, KeyError, TypeError) as exc:
         raise ProviderWait("PROVIDER_SCHEMA_MISMATCH", 30) from exc
@@ -454,7 +473,9 @@ def _audit(binding, usage: dict, actual_model, started: float) -> dict:
         "visible_output_tokens": visible_output_tokens,
         "output_budget_tokens": env_int("CLASSROOM_MAX_OUTPUT_TOKENS", 2048),
         "reasoning_budget_tokens": (
-            env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
+            env_int("CLASSROOM_REASONING_EFFORT_MAX_TOKENS", 8192)
+            if _reasoning_by_effort(binding)
+            else env_int("CLASSROOM_REASONING_MAX_TOKENS", 1024)
             if adapter in {"openrouter", "gemini"}
             else None
         ),
